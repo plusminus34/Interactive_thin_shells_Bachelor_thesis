@@ -23,6 +23,14 @@ GLApplication::GLApplication(int x, int y, int w, int h){
 GLApplication::GLApplication() {
 	GLApplication::setGLAppInstance(this);
 
+#ifdef WIN32
+	SetCurrentDirectory((LPCTSTR)SCP_WORKING_DIR);
+	TCHAR pwd[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, pwd);
+	std::cout << "Working directory: " << pwd << std::endl;
+#endif // WIN32
+
+
 	if (!glfwInit()) {
 		// An error occured
 		Logger::print("GLFW initialization failed\n");

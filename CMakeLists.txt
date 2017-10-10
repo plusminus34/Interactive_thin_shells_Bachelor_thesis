@@ -6,6 +6,10 @@ project(SCP)
 # directory 'cmake' contains macros to find thirdparty libraries
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
+# set SCP working dir
+# TODO: find a better place than data ...
+add_definitions(-DSCP_WORKING_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+
 # dependencies project-wide
 find_package(Eigen3 3.3.4 REQUIRED)
 
