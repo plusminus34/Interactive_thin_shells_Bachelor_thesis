@@ -1,0 +1,157 @@
+
+#include <gtest/gtest.h>
+#include <OptimizationLib/ooqpei_gtest_eigen.hpp>
+#include <OptimizationLib/OoqpEigenInterface.hpp>
+
+#include <OptimizationLib/SQPFunctionMinimizer.h>
+#include <OptimizationLib/testObjectives/QuadObjAndLinCon.hpp>
+#include <OptimizationLib/testObjectives/Ex2ObjAndLinCon.hpp>
+#include <OptimizationLib/testObjectives/Ex1ConObj.hpp>
+#include <OptimizationLib/testObjectives/PortfolioSelectionObj.hpp>
+
+#include <MathLib/Matrix.h>
+
+TEST(SQPMinimizerTest, QuadObjAndLinCon_minimize)
+{
+  using namespace sooqp;
+  SQPFunctionMinimizer solver;
+  solver.setPrintOutput(false);
+
+  QuadObjAndLinCon objective;
+
+  Eigen::VectorXd p(2);
+  p(0) = 5;
+  p(1) = 4;
+  double functionValue = 0;
+
+  // solve
+  ASSERT_TRUE(solver.minimize(&objective, p, functionValue));
+
+  EXPECT_NEAR(-31.0, functionValue, 1e-3) << "Solution: " << p.transpose();
+  EXPECT_NEAR(3.0, p(0), 1e-3);
+  EXPECT_NEAR(2.0, p(1), 1e-3);
+
+}
+
+
+TEST(SQPMinimizerTest, DISABLED_Ex1ConObj_minimize)
+{
+  using namespace sooqp;
+  SQPFunctionMinimizer solver;
+  Ex1ConObj objective;
+  Eigen::VectorXd p(2);
+  p(0) = 1;
+  p(1) = 1;
+  double functionValue = 0;
+
+
+  solver.setPrintOutput(true);
+
+  // solve
+  ASSERT_TRUE(solver.minimize(&objective, p, functionValue));
+
+  EXPECT_NEAR(-sqrt(2.0)/2.0, p(0), 1e-3);
+  EXPECT_NEAR(-sqrt(2.0)/2.0, p(1), 1e-3);
+  EXPECT_NEAR(-sqrt(2.0)/2.0-sqrt(2.0)/2.0, functionValue, 1e-3);
+
+}
+
+
+
+TEST(SQPMinimizerTest, DISABLED_Ex2ObjAndLinCon_minimize)
+{
+  using namespace sooqp;
+  SQPFunctionMinimizer solver(1000,
+      0.0001,
+      0.0,
+      5,
+      DBL_MIN,
+      false,
+      false);
+
+  Ex2ObjAndLinCon objective;
+  Eigen::VectorXd p(2);
+  p(0) = 2;
+  p(1) = 3;
+  double functionValue = 0;
+
+
+  solver.setPrintOutput(true);
+  ooqpei::OoqpEigenInterface::setIsInDebugMode(false);
+
+  // solve
+  ASSERT_TRUE(solver.minimize(&objective, p, functionValue)) << "p: " << p.transpose();
+
+  ooqpei::OoqpEigenInterface::setIsInDebugMode(false);
+}
+
+
+TEST(SQPMinimizerTest, PortfolioSelectionObj_minimize)
+{
+  using namespace sooqp;
+  SQPFunctionMinimizer solver(1000,
+      0.0001,
+      0.0,
+      5,
+      -DBL_MAX,
+      false,
+      false);
+
+  PortfolioSelectionObj objective(4.0/5.0);
+  Eigen::VectorXd p(2);
+  p(0) = 5;
+  p(1) = 0;
+  double functionValue = 0;
+
+
+  solver.setPrintOutput(false);
+  ooqpei::OoqpEigenInterface::setIsInDebugMode(false);
+
+  Eigen::VectorXd pTest(2);
+  pTest(0) = 5;
+  pTest(1) = 0;
+  EXPECT_EQ(-40, objective.getObjectiveFunction()->computeValue(pTest));
+
+  // solve
+  ASSERT_TRUE(solver.minimize(&objective, p, functionValue)) << "p: " << p.transpose();
+
+
+  EXPECT_NEAR(2.5, p(0), 1e-3);
+  EXPECT_NEAR(2.5, p(1), 1e-3);
+  EXPECT_NEAR(-55.0, functionValue, 1e-3);
+
+
+  ooqpei::OoqpEigenInterface::setIsInDebugMode(false);
+}
+
+TEST(SQPMinimizerTest, PortfolioSelectionObj2_minimize)
+{
+  using namespace sooqp;
+  SQPFunctionMinimizer solver(1000,
+      0.0001,
+      0.0,
+      5,
+      DBL_MIN,
+      false,
+      false);
+
+  PortfolioSelectionObj objective(8.0/5.0);
+  Eigen::VectorXd p(2);
+
+  p(0) = 100;
+  p(1) = 100;
+  double functionValue = 0;
+
+  solver.setPrintOutput(false);
+  ooqpei::OoqpEigenInterface::setIsInDebugMode(false);
+
+  // solve
+  ASSERT_TRUE(solver.minimize(&objective, p, functionValue)) << "p: " << p.transpose();
+
+  EXPECT_NEAR(3.0/2.0, p(0), 1e-3);
+  EXPECT_NEAR(7.0/4.0, p(1), 1e-3);
+  EXPECT_NEAR(-29.0, functionValue, 1e-3);
+
+  ooqpei::OoqpEigenInterface::setIsInDebugMode(false);
+}
+

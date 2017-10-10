@@ -1,0 +1,136 @@
+/**
+ * Software License Agreement (BSD License)
+ *
+ * Copyright (c) 2015, Christian Gehring, Stelian Coros
+ * All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of Autonomous Systems Lab nor ETH Zurich nor
+ *     Carnegie Mellon University nor the names of its contributors
+ *     may be used to endorse or promote products derived from this
+ *     software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ */
+/*!
+* @file    FunctionConstraints_test.cpp
+* @author  Christian Gehring, Stelian Coros
+* @date    Aug 16, 2015
+*/
+
+
+#include <gtest/gtest.h>
+#include <OptimizationLib/ooqpei_gtest_eigen.hpp>
+
+#include <OptimizationLib/SQPFunctionMinimizer.h>
+
+#include <MathLib/Matrix.h>
+
+namespace sooqp {
+
+/*! Test class that implements the constraints:
+ * x^2 + y = 0 and
+ * -x*y - 10 <= 0
+ */
+class TestFunctionConstraints: public FunctionConstraints {
+public:
+  TestFunctionConstraints():FunctionConstraints() {
+    // equality constraints
+    eqConstraintVals.resize(1);
+    b.setZero(1);
+
+    // inequality constraints
+    ineqConstraintVals.resize(1);
+    f.setZero(1);
+    d = -std::numeric_limits<double>::max() * Eigen::VectorXd::Ones(dCdp.rows());
+
+    // bounds
+    l.setZero(2);
+    u = std::numeric_limits<double>::max() * Eigen::VectorXd::Ones(l.rows());
+
+  }
+  virtual ~TestFunctionConstraints() {
+
+  }
+
+  virtual const dVector& getEqualityConstraintValues(const dVector& p) {
+    // A = x^2 + y;
+    eqConstraintVals(0) = p(0)*p(0) + p(1);
+    return eqConstraintVals;
+  }
+
+  virtual const SparseMatrix& getEqualityConstraintsJacobian(const dVector& p) {
+    //  dAdp =  [ 2*x, 1]
+    dAdp.resize(1,2);
+    dAdp.coeffRef(0, 0) = p(0)*2;
+    dAdp.coeffRef(0, 1) = 1;
+    return dAdp;
+  }
+
+  virtual const dVector& getInequalityConstraintValues(const dVector& p) {
+    // C = -x*y - 10;
+    ineqConstraintVals(0) = -p(0)*p(1) - 10;
+    return ineqConstraintVals;
+  }
+
+  virtual const SparseMatrix& getInequalityConstraintsJacobian(const dVector& p) {
+    // dCdp = [ -y, -x]
+    dCdp.resize(1,2);
+    dCdp.coeffRef(0, 0) = -p(1);
+    dCdp.coeffRef(0, 1) = -p(0);
+    return dCdp;
+  }
+};
+
+
+} // namespace ooqp
+
+class FunctionContraintsTest : public testing::Test  {
+ public:
+  FunctionContraintsTest(): constraints(), p(2) {
+    // test sample:
+    p(0) = -1;
+    p(1) = 1;
+  }
+  sooqp::TestFunctionConstraints constraints;
+  dVector p;
+};
+
+
+TEST_F(FunctionContraintsTest, estimateEqualityConstraintsJacobian)
+{
+  using namespace sooqp;
+  SparseMatrix estimatedJacobian;
+  SparseMatrix trueEqualityConstraintsJacobian = constraints.getEqualityConstraintsJacobian(p);
+  constraints.estimateEqualityConstraintsJacobianAt(estimatedJacobian,p);
+  ASSERT_DOUBLE_SPARSE_MX_EQ(trueEqualityConstraintsJacobian, estimatedJacobian, 1e-3, "equality constraints jacobian");
+}
+
+TEST_F(FunctionContraintsTest, estimateInEqualityConstraintsJacobian)
+{
+  using namespace sooqp;
+  SparseMatrix estimatedJacobian;
+  SparseMatrix trueInequalityConstraintsJacobian = constraints.getInequalityConstraintsJacobian(p);
+  constraints.estimateInequalityConstraintsJacobianAt(estimatedJacobian,p);
+  ASSERT_DOUBLE_SPARSE_MX_EQ(trueInequalityConstraintsJacobian, estimatedJacobian, 1e-3, "inequality constraints jacobian");
+}

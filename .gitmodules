@@ -1,0 +1,6 @@
+[submodule "GUILib/ext/nanogui"]
+	path = GUILib/ext/nanogui
+	url = https://github.com/moritzge/nanogui
+[submodule "thirdparty/eigen3.3.4"]
+	path = thirdparty/eigen3.3.4
+	url = https://github.com/RLovelett/eigen

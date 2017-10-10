@@ -1,0 +1,840 @@
+RigidBody
+	name rb0
+	mass 0.672000
+	moi 0.001772 0.003824 0.002226 0.000000 -0.000000 -0.000000
+	position -0.000000 -0.013114 -0.000000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320-MotorPlate.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320-MotorPlate.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320-MotorPlate.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320-MotorPlate.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320-MotorPlate.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320-MotorPlate.obj
+	carveMesh None
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	carveMesh None
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh None
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh None
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh None
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	carveMesh None
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh None
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.021500 0.013114 0.060000
+	meshTransformation 0.500000 0.500000 0.500000 -0.500000 0.013500 -0.001286 0.060000
+	meshTransformation 0.500000 0.500000 0.500000 -0.500000 0.033500 -0.001286 0.060000
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 -0.033500 -0.001286 0.060000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.000000 0.013114 0.000000
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 -0.013500 -0.001286 0.060000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.021500 0.013114 0.060000
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 -0.048500 -0.001286 -0.060000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.056500 0.013114 -0.060000
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 -0.068500 -0.001286 -0.060000
+	meshTransformation 0.500000 0.500000 0.500000 -0.500000 0.048500 -0.001286 -0.060000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.056500 0.013114 0.000000
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 -0.068500 -0.001286 -0.000000
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 -0.048500 -0.001286 -0.000000
+	meshTransformation 0.500000 0.500000 0.500000 -0.500000 0.068500 -0.001286 -0.060000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.056500 0.013114 -0.060000
+	meshTransformation 0.500000 0.500000 0.500000 -0.500000 0.068500 -0.001286 0.000000
+	meshTransformation 0.500000 0.500000 0.500000 -0.500000 0.048500 -0.001286 0.000000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.056500 0.013114 0.000000
+	mappingInfo -1 -1
+	CDP Box -0.093500 -0.026286 -0.085000 0.093500 0.023714 0.085000
+/End
+
+
+RigidBody
+	name rb1
+	mass 0.122000
+	moi 0.000027 0.000061 0.000061 0.000000 0.000000 0.000000
+	position -0.067844 -0.014400 0.060000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 0.034344 -0.000000 0.000000
+	meshTransformation 0.707107 0.000000 -0.000000 0.707107 0.009344 -0.000000 0.000000
+	meshTransformation 0.707107 0.000000 -0.000000 0.707107 -0.010656 0.000000 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb2
+	mass 0.120000
+	moi 0.000037 0.000167 0.000174 -0.000018 -0.000000 -0.000000
+	position -0.138500 -0.019400 0.060000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	meshTransformation 0.707107 0.000000 0.000000 -0.707107 0.030000 0.005000 0.000000
+	meshTransformation 0.707107 0.000000 0.000000 -0.707107 -0.000000 0.005000 0.000000
+	meshTransformation 0.707107 0.000000 0.000000 -0.707107 -0.030000 0.005000 0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 -0.030000 -0.025000 -0.000000
+	meshTransformation 0.707107 0.000000 -0.000000 0.707107 0.060000 0.005000 0.000000
+	meshTransformation -0.000000 -0.000000 -0.000000 1.000000 -0.030000 0.005000 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb3
+	mass 0.182000
+	moi 0.000469 0.000038 0.000461 0.000000 0.000000 -0.000000
+	position -0.168500 -0.086158 0.060000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_PointFoot.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_PointFoot_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 -0.033242 -0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 -0.093242 -0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 0.041758 0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 0.021758 0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 -0.003242 -0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 -0.063242 -0.000000
+	endEffector 0.000000 -0.108242 -0.000000 0.010000
+	mappingInfo 0 17
+	CDP Sphere 0.000000 -0.108242 -0.000000 0.010000
+/End
+
+
+RigidBody
+	name rb4
+	mass 0.122000
+	moi 0.000027 0.000061 0.000061 -0.000000 0.000000 -0.000000
+	position 0.067844 -0.014400 0.060000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	meshTransformation 0.500000 0.500000 0.500000 -0.500000 -0.034344 -0.000000 0.000000
+	meshTransformation 0.000000 0.707107 0.707107 -0.000000 -0.009344 -0.000000 0.000000
+	meshTransformation 0.000000 0.707107 0.707107 -0.000000 0.010656 0.000000 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb5
+	mass 0.120000
+	moi 0.000037 0.000167 0.000174 0.000018 -0.000000 0.000000
+	position 0.138500 -0.019400 0.060000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	meshTransformation -0.000000 -0.707107 0.707107 -0.000000 -0.030000 0.005000 -0.000000
+	meshTransformation 0.000000 0.707107 0.707107 -0.000000 -0.060000 0.005000 -0.000000
+	meshTransformation -0.000000 -0.707107 0.707107 -0.000000 0.030000 0.005000 -0.000000
+	meshTransformation 0.000000 1.000000 -0.000000 0.000000 0.030000 0.005000 -0.000000
+	meshTransformation -0.000000 -0.707107 0.707107 -0.000000 0.000000 0.005000 -0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 0.030000 -0.025000 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb6
+	mass 0.182000
+	moi 0.000469 0.000038 0.000461 -0.000000 0.000000 0.000000
+	position 0.168500 -0.086158 0.060000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_PointFoot.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_PointFoot_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 0.000000 -0.093242 0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 0.000000 -0.033242 0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 0.000000 0.021758 -0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 0.000000 0.041758 -0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 0.000000 -0.063242 0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 0.000000 -0.003242 0.000000
+	endEffector 0.000000 -0.108242 0.000000 0.010000
+	mappingInfo 1 17
+	CDP Sphere 0.000000 -0.108242 0.000000 0.010000
+/End
+
+
+RigidBody
+	name rb7
+	mass 0.122000
+	moi 0.000027 0.000061 0.000061 0.000000 0.000000 0.000000
+	position -0.102844 -0.014400 -0.060000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	meshTransformation 0.707107 0.000000 -0.000000 0.707107 0.009344 -0.000000 0.000000
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 0.034344 -0.000000 0.000000
+	meshTransformation 0.707107 0.000000 -0.000000 0.707107 -0.010656 0.000000 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb8
+	mass 0.120000
+	moi 0.000037 0.000167 0.000174 -0.000018 -0.000000 -0.000000
+	position -0.173500 -0.019400 -0.060000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	meshTransformation 0.707107 0.000000 0.000000 -0.707107 -0.030000 0.005000 0.000000
+	meshTransformation 0.707107 0.000000 0.000000 -0.707107 0.030000 0.005000 0.000000
+	meshTransformation 0.707107 0.000000 0.000000 -0.707107 -0.000000 0.005000 0.000000
+	meshTransformation -0.000000 -0.000000 -0.000000 1.000000 -0.030000 0.005000 0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 -0.030000 -0.025000 -0.000000
+	meshTransformation 0.707107 0.000000 -0.000000 0.707107 0.060000 0.005000 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb9
+	mass 0.182000
+	moi 0.000469 0.000038 0.000461 0.000000 0.000000 -0.000000
+	position -0.203500 -0.086158 -0.060000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_PointFoot.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_PointFoot_BB.obj
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 0.041758 0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 0.021758 0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 -0.003242 -0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 -0.063242 -0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 -0.033242 -0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 -0.093242 -0.000000
+	endEffector 0.000000 -0.108242 -0.000000 0.010000
+	mappingInfo 2 17
+	CDP Sphere 0.000000 -0.108242 -0.000000 0.010000
+/End
+
+
+RigidBody
+	name rb10
+	mass 0.122000
+	moi 0.000027 0.000061 0.000061 -0.000000 0.000000 -0.000000
+	position 0.102844 -0.014400 -0.060000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	meshTransformation 0.000000 0.707107 0.707107 -0.000000 -0.009344 -0.000000 0.000000
+	meshTransformation 0.500000 0.500000 0.500000 -0.500000 -0.034344 -0.000000 0.000000
+	meshTransformation 0.000000 0.707107 0.707107 -0.000000 0.010656 0.000000 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb11
+	mass 0.120000
+	moi 0.000037 0.000167 0.000174 0.000018 -0.000000 0.000000
+	position 0.173500 -0.019400 -0.060000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	meshTransformation -0.000000 -0.707107 0.707107 -0.000000 -0.030000 0.005000 -0.000000
+	meshTransformation -0.000000 -0.707107 0.707107 -0.000000 0.030000 0.005000 -0.000000
+	meshTransformation 0.000000 1.000000 -0.000000 0.000000 0.030000 0.005000 -0.000000
+	meshTransformation -0.000000 -0.707107 0.707107 -0.000000 0.000000 0.005000 -0.000000
+	meshTransformation 0.000000 0.707107 0.707107 -0.000000 -0.060000 0.005000 -0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 0.030000 -0.025000 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb12
+	mass 0.182000
+	moi 0.000469 0.000038 0.000461 -0.000000 0.000000 0.000000
+	position 0.203500 -0.086158 -0.060000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_PointFoot.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_PointFoot_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 -0.000000 0.021758 -0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 -0.000000 -0.093242 0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 -0.000000 -0.033242 0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 -0.000000 -0.063242 0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 -0.000000 -0.003242 0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 -0.000000 0.041758 -0.000000
+	endEffector -0.000000 -0.108242 0.000000 0.010000
+	mappingInfo 3 17
+	CDP Sphere -0.000000 -0.108242 0.000000 0.010000
+/End
+
+
+RigidBody
+	name rb13
+	mass 0.122000
+	moi 0.000027 0.000061 0.000061 0.000000 0.000000 0.000000
+	position -0.102844 -0.014400 -0.000000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 0.034344 -0.000000 -0.000000
+	meshTransformation 0.707107 0.000000 -0.000000 0.707107 0.009344 -0.000000 -0.000000
+	meshTransformation 0.707107 0.000000 -0.000000 0.707107 -0.010656 0.000000 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb14
+	mass 0.120000
+	moi 0.000037 0.000167 0.000174 -0.000018 -0.000000 -0.000000
+	position -0.173500 -0.019400 -0.000000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	meshTransformation 0.707107 0.000000 -0.000000 0.707107 0.060000 0.005000 0.000000
+	meshTransformation -0.000000 -0.000000 -0.000000 1.000000 -0.030000 0.005000 0.000000
+	meshTransformation 0.707107 0.000000 0.000000 -0.707107 -0.000000 0.005000 0.000000
+	meshTransformation 0.707107 0.000000 0.000000 -0.707107 0.030000 0.005000 0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 -0.030000 -0.025000 -0.000000
+	meshTransformation 0.707107 0.000000 0.000000 -0.707107 -0.030000 0.005000 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb15
+	mass 0.182000
+	moi 0.000469 0.000038 0.000461 0.000000 0.000000 -0.000000
+	position -0.203500 -0.086158 -0.000000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_PointFoot.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_PointFoot_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 -0.033242 -0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 -0.093242 -0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 -0.063242 -0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 0.041758 0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 0.021758 0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 -0.003242 -0.000000
+	endEffector 0.000000 -0.108242 -0.000000 0.010000
+	mappingInfo 4 17
+	CDP Sphere 0.000000 -0.108242 -0.000000 0.010000
+/End
+
+
+RigidBody
+	name rb16
+	mass 0.122000
+	moi 0.000027 0.000061 0.000061 -0.000000 0.000000 -0.000000
+	position 0.102844 -0.014400 0.000000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	meshTransformation 0.500000 0.500000 0.500000 -0.500000 -0.034344 -0.000000 0.000000
+	meshTransformation 0.000000 0.707107 0.707107 -0.000000 0.010656 0.000000 -0.000000
+	meshTransformation 0.000000 0.707107 0.707107 -0.000000 -0.009344 -0.000000 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb17
+	mass 0.120000
+	moi 0.000037 0.000167 0.000174 0.000018 -0.000000 0.000000
+	position 0.173500 -0.019400 0.000000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_HornBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	meshTransformation 0.000000 0.707107 0.707107 -0.000000 -0.060000 0.005000 -0.000000
+	meshTransformation -0.000000 -0.707107 0.707107 -0.000000 -0.030000 0.005000 -0.000000
+	meshTransformation 0.000000 1.000000 -0.000000 0.000000 0.030000 0.005000 -0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 0.030000 -0.025000 0.000000
+	meshTransformation -0.000000 -0.707107 0.707107 -0.000000 0.030000 0.005000 -0.000000
+	meshTransformation -0.000000 -0.707107 0.707107 -0.000000 0.000000 0.005000 -0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb18
+	mass 0.182000
+	moi 0.000469 0.000038 0.000461 -0.000000 0.000000 0.000000
+	position 0.203500 -0.086158 0.000000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XL-320.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector.obj
+	mesh ../data/robotDesigner/motorMeshes/XL-320_PointFoot.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_BottomBracket_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_StraightConnector_BB.obj
+	carveMesh ../data/robotDesigner/motorMeshes/XL-320_PointFoot_BB.obj
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 -0.000000 0.041758 -0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 -0.000000 0.021758 -0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 -0.000000 -0.003242 0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 -0.000000 -0.033242 0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 -0.000000 -0.063242 0.000000
+	meshTransformation 0.000000 0.000000 1.000000 -0.000000 -0.000000 -0.093242 0.000000
+	endEffector -0.000000 -0.108242 0.000000 0.010000
+	mappingInfo 5 17
+	CDP Sphere -0.000000 -0.108242 0.000000 0.010000
+/End
+
+
+	hingeJoint
+		jointAxes 0.000000 1.000000 0.000000
+		dxlID -1
+		mappingInfo 0 1
+		name rb0_rb1
+		parent rb0
+		child rb1
+		jointCPos 0.034344 -0.000000 0.000000
+		jointPPos -0.033500 -0.001286 0.060000
+	/Joint
+
+
+	hingeJoint
+		jointAxes -0.000000 -0.000000 1.000000
+		dxlID -1
+		mappingInfo 0 5
+		name rb1_rb2
+		parent rb1
+		child rb2
+		jointCPos 0.060000 0.005000 0.000000
+		jointPPos -0.010656 0.000000 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes -0.000000 -0.000000 1.000000
+		dxlID -1
+		mappingInfo 0 12
+		name rb2_rb3
+		parent rb2
+		child rb3
+		jointCPos 0.000000 0.041758 0.000000
+		jointPPos -0.030000 -0.025000 -0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 -1.000000 0.000000
+		dxlID -1
+		mappingInfo 1 1
+		name rb0_rb4
+		parent rb0
+		child rb4
+		jointCPos -0.034344 -0.000000 0.000000
+		jointPPos 0.033500 -0.001286 0.060000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 -0.000000 -1.000000
+		dxlID -1
+		mappingInfo 1 5
+		name rb4_rb5
+		parent rb4
+		child rb5
+		jointCPos -0.060000 0.005000 -0.000000
+		jointPPos 0.010656 0.000000 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 -0.000000 -1.000000
+		dxlID -1
+		mappingInfo 1 12
+		name rb5_rb6
+		parent rb5
+		child rb6
+		jointCPos 0.000000 0.041758 -0.000000
+		jointPPos 0.030000 -0.025000 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 1.000000 0.000000
+		dxlID -1
+		mappingInfo 2 1
+		name rb0_rb7
+		parent rb0
+		child rb7
+		jointCPos 0.034344 -0.000000 0.000000
+		jointPPos -0.068500 -0.001286 -0.060000
+	/Joint
+
+
+	hingeJoint
+		jointAxes -0.000000 -0.000000 1.000000
+		dxlID -1
+		mappingInfo 2 5
+		name rb7_rb8
+		parent rb7
+		child rb8
+		jointCPos 0.060000 0.005000 0.000000
+		jointPPos -0.010656 0.000000 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes -0.000000 -0.000000 1.000000
+		dxlID -1
+		mappingInfo 2 12
+		name rb8_rb9
+		parent rb8
+		child rb9
+		jointCPos 0.000000 0.041758 0.000000
+		jointPPos -0.030000 -0.025000 -0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 -1.000000 0.000000
+		dxlID -1
+		mappingInfo 3 1
+		name rb0_rb10
+		parent rb0
+		child rb10
+		jointCPos -0.034344 -0.000000 0.000000
+		jointPPos 0.068500 -0.001286 -0.060000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 -0.000000 -1.000000
+		dxlID -1
+		mappingInfo 3 5
+		name rb10_rb11
+		parent rb10
+		child rb11
+		jointCPos -0.060000 0.005000 -0.000000
+		jointPPos 0.010656 0.000000 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 -0.000000 -1.000000
+		dxlID -1
+		mappingInfo 3 12
+		name rb11_rb12
+		parent rb11
+		child rb12
+		jointCPos -0.000000 0.041758 -0.000000
+		jointPPos 0.030000 -0.025000 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 1.000000 0.000000
+		dxlID -1
+		mappingInfo 4 1
+		name rb0_rb13
+		parent rb0
+		child rb13
+		jointCPos 0.034344 -0.000000 -0.000000
+		jointPPos -0.068500 -0.001286 -0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes -0.000000 -0.000000 1.000000
+		dxlID -1
+		mappingInfo 4 5
+		name rb13_rb14
+		parent rb13
+		child rb14
+		jointCPos 0.060000 0.005000 0.000000
+		jointPPos -0.010656 0.000000 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes -0.000000 -0.000000 1.000000
+		dxlID -1
+		mappingInfo 4 12
+		name rb14_rb15
+		parent rb14
+		child rb15
+		jointCPos 0.000000 0.041758 0.000000
+		jointPPos -0.030000 -0.025000 -0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 -1.000000 0.000000
+		dxlID -1
+		mappingInfo 5 1
+		name rb0_rb16
+		parent rb0
+		child rb16
+		jointCPos -0.034344 -0.000000 0.000000
+		jointPPos 0.068500 -0.001286 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 -0.000000 -1.000000
+		dxlID -1
+		mappingInfo 5 5
+		name rb16_rb17
+		parent rb16
+		child rb17
+		jointCPos -0.060000 0.005000 -0.000000
+		jointPPos 0.010656 0.000000 -0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 -0.000000 -1.000000
+		dxlID -1
+		mappingInfo 5 12
+		name rb17_rb18
+		parent rb17
+		child rb18
+		jointCPos -0.000000 0.041758 -0.000000
+		jointPPos 0.030000 -0.025000 0.000000
+	/Joint
+
+

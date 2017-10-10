@@ -1,0 +1,475 @@
+#include <GUILib/GLUtils.h>
+
+#include "TestAppRobotMotionOptimization.h"
+#include <GUILib/GLMesh.h>
+#include <GUILib/GLContentManager.h>
+#include <MathLib/MathLib.h>
+#include <RBSimLib/ODERBEngine.h>
+#include <ControlLib/SimpleLimb.h>
+
+//debug the controller - why does it look so different with robot.rbs vs robot2.rbs?!?
+//add just a stand-alone fbx player
+//why do the feet positions jump around? perhaps because of non-smooth velocity estimates. In this case, we should linearly interpolate those as well...
+
+void TW_CALL RestartMOPT(void* clientData) {
+	((TestAppRobotMotionOptimization*)clientData)->warmStartMOPT(true);
+}
+
+void TW_CALL LoadRobotToSim(void* clientData) {
+	((TestAppRobotMotionOptimization*)clientData)->loadToSim();
+}
+
+TestAppRobotMotionOptimization::TestAppRobotMotionOptimization(){
+	bgColor[0] = bgColor[1] = bgColor[2] = 1;
+	setWindowTitle("RobotDesigner");
+
+	waitForFrameRate = true;
+
+	TwAddSeparator(mainMenuBar, "sep2", "");
+
+	drawCDPs = false;
+	drawSkeletonView = false;
+	showGroundPlane = false;
+
+	TwAddButton(mainMenuBar, "LoadRobotToSim", LoadRobotToSim, this, " label='Load To Simulation' group='Sim' key='l' ");
+	TwAddButton(mainMenuBar, "WarmstartMOPT", RestartMOPT, this, " label='WarmStart MOPT' group='Sim' key='w' ");
+
+	TwAddVarRW(mainMenuBar, "RunOptions", TwDefineEnumFromString("RunOptions", "..."), &runOption, "group='Sim'");
+	DynamicArray<std::string> runOptionList;
+	runOptionList.push_back("\\Motion Optimization");
+	runOptionList.push_back("\\Motion Plan Animation");
+	runOptionList.push_back("\\Simulation-PositionControl");
+	runOptionList.push_back("\\Simulation-TorqueControl");
+	generateMenuEnumFromFileList("MainMenuBar/RunOptions", runOptionList);
+
+	TwAddVarRW(mainMenuBar, "do debug", TW_TYPE_BOOLCPP, &doDebug, " label='doDebug' group='Viz2' true='ON' false='OFF'");
+	TwAddVarRW(mainMenuBar, "drawMotionPlan", TW_TYPE_BOOLCPP, &drawMotionPlan, " label='drawMotionPlan' group='Viz2'");
+	TwAddVarRW(mainMenuBar, "DrawMeshes", TW_TYPE_BOOLCPP, &drawMeshes, " label='drawMeshes' group='Viz2'");
+	TwAddVarRW(mainMenuBar, "DrawMOIs", TW_TYPE_BOOLCPP, &drawMOIs, " label='drawMOIs' group='Viz2'");
+	TwAddVarRW(mainMenuBar, "DrawCDPs", TW_TYPE_BOOLCPP, &drawCDPs, " label='drawCDPs' group='Viz2'");
+	TwAddVarRW(mainMenuBar, "DrawSkeletonView", TW_TYPE_BOOLCPP, &drawSkeletonView, " label='drawSkeleton' group='Viz2'");
+	TwAddVarRW(mainMenuBar, "DrawJoints", TW_TYPE_BOOLCPP, &drawJoints, " label='drawJoints' group='Viz2'");
+	TwAddVarRW(mainMenuBar, "drawContactForces", TW_TYPE_BOOLCPP, &drawContactForces, " label='drawContactForces' group='Viz2'");
+	TwAddVarRW(mainMenuBar, "drawOrientation", TW_TYPE_BOOLCPP, &drawOrientation, " label='drawOrientation' group='Viz2'");
+
+	TwAddSeparator(mainMenuBar, "sep3", "");
+
+	TwAddSeparator(mainMenuBar, "sep4", "");
+
+//	TwAddVarRW(mainMenuBar, "PlanMotionPhase", TW_TYPE_DOUBLE, &motionPlanTime, "min=0 max=1 step=0.01 group='MotionOptimizationOptions'");
+//	TwAddVarRW(mainMenuBar, "", TW_TYPE_DOUBLE, &robotScale, "min=0.5 max=1.5 step=0.1 group='MotionOptimizationOptions'");
+//	TwAddVarCB(mainMenuBar, "Robot Scale", TW_TYPE_DOUBLE, setRobotScale, getRobotScale, this, "step=0.05");
+
+	simTimeStep = 1 / 120.0;
+//	Globals::g = 0;
+
+	int size[2];
+	int w, h;
+	TwGetParam(mainMenuBar, NULL, "size", TW_PARAM_INT32, 2, size);
+	w = (GLApplication::getMainWindowWidth()-size[0]) / 2;
+	h = GLApplication::getMainWindowHeight();
+	moptWindow = new MOPTWindow(size[0], 0, w, h, this);
+	setViewportParameters(size[0] + w, 0, w, h);
+	consoleWindow->setViewportParameters(size[0] + w, 0, w, 280);
+
+	showGroundPlane = true;
+	TwDefine(" MainMenuBar alpha=255 ");   // semi-transparent blue bar
+	bgColor[0] = bgColor[1] = bgColor[2] = 0.75;
+	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutRightAxis = 0.25;
+	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutUpAxis = 0.95;
+	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -1.5;
+
+	loadFile("../data/motionplans/spotMini/robot3.rbs");
+	loadFile("../data/motionplans/spotMini/robot.rs");
+//	loadToSim();
+	loadToSim(false);
+	loadFile("../data/motionPlans/spotMini/trot.p");
+
+	followCameraTarget = true;
+}
+
+TestAppRobotMotionOptimization::~TestAppRobotMotionOptimization(void){
+}
+
+//triggered when mouse moves
+bool TestAppRobotMotionOptimization::onMouseMoveEvent(double xPos, double yPos) {
+	perturbationForce = V3D();
+	int shiftDown = glfwGetKey(this->glfwWindow, GLFW_KEY_LEFT_SHIFT);
+	if (GlobalMouseState::lButtonPressed && shiftDown == GLFW_PRESS) {
+		setPerturbationForceFromMouseInput(xPos, yPos);
+		return true;
+	}
+
+	if (showMenus)
+		if (TwEventMousePosGLFW((int)xPos, (int)yPos)) return true;
+
+	if (moptWindow->isActive() || moptWindow->mouseIsWithinWindow(xPos, yPos))
+		if (moptWindow->onMouseMoveEvent(xPos, yPos)) return true;
+
+	if (GLApplication::onMouseMoveEvent(xPos, yPos)) return true;
+
+	return false;
+}
+
+//triggered when mouse buttons are pressed
+bool TestAppRobotMotionOptimization::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
+	perturbationForce = V3D();
+	int shiftDown = glfwGetKey(this->glfwWindow, GLFW_KEY_LEFT_SHIFT);
+	if (GlobalMouseState::lButtonPressed && shiftDown == GLFW_PRESS) {
+		setPerturbationForceFromMouseInput(xPos, yPos);
+		return true;
+	}
+
+	if (moptWindow->isActive() || moptWindow->mouseIsWithinWindow(xPos, yPos))
+		if (moptWindow->onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
+
+	if (GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
+
+	return false;
+}
+
+//triggered when using the mouse wheel
+bool TestAppRobotMotionOptimization::onMouseWheelScrollEvent(double xOffset, double yOffset) {
+	if (moptWindow->mouseIsWithinWindow(GlobalMouseState::lastMouseX, GlobalMouseState::lastMouseY))
+		if (moptWindow->onMouseWheelScrollEvent(xOffset, yOffset)) return true;
+
+	if (GLApplication::onMouseWheelScrollEvent(xOffset, yOffset)) return true;
+
+	return false;
+}
+
+bool TestAppRobotMotionOptimization::onKeyEvent(int key, int action, int mods) {
+	if (locomotionManager && locomotionManager->motionPlan){
+		if (key == GLFW_KEY_UP && action == GLFW_PRESS)
+			locomotionManager->motionPlan->desDistanceToTravel.z() += 0.1;
+		if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
+			locomotionManager->motionPlan->desDistanceToTravel.z() -= 0.1;
+		if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
+			locomotionManager->motionPlan->desDistanceToTravel.x() += 0.1;
+		if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
+			locomotionManager->motionPlan->desDistanceToTravel.x() -= 0.1;
+		if (key == GLFW_KEY_PERIOD && action == GLFW_PRESS)
+			locomotionManager->motionPlan->desTurningAngle += 0.1;
+		if (key == GLFW_KEY_SLASH && action == GLFW_PRESS)
+			locomotionManager->motionPlan->desTurningAngle -= 0.1;
+
+		boundToRange(&locomotionManager->motionPlan->desDistanceToTravel.z(), -0.5, 0.5);
+		boundToRange(&locomotionManager->motionPlan->desDistanceToTravel.x(), -0.5, 0.5);
+		boundToRange(&locomotionManager->motionPlan->desTurningAngle, -0.5, 0.5);
+	}
+
+	if (key == GLFW_KEY_O && action == GLFW_PRESS)
+		locomotionManager->motionPlan->writeRobotMotionAnglesToFile("../out/tmpMPAngles.mpa");
+	if (key == GLFW_KEY_P && action == GLFW_PRESS)
+		locomotionManager->motionPlan->writeRobotMotionAnglesToFile("../out/angle.p");
+	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
+		runOption = MOTION_PLAN_OPTIMIZATION;
+	if (key == GLFW_KEY_2 && action == GLFW_PRESS)
+		runOption = MOTION_PLAN_ANIMATION;
+	if (key == GLFW_KEY_3 && action == GLFW_PRESS)
+		runOption = PHYSICS_SIMULATION_WITH_POSITION_CONTROL;
+	if (key == GLFW_KEY_4 && action == GLFW_PRESS)
+		runOption = PHYSICS_SIMULATION_WITH_TORQUE_CONTROL;
+
+	if (GLApplication::onKeyEvent(key, action, mods)) return true;
+
+	return false;
+}
+
+bool TestAppRobotMotionOptimization::onCharacterPressedEvent(int key, int mods) {
+	if (GLApplication::onCharacterPressedEvent(key, mods)) return true;
+	return false;
+}
+
+void TestAppRobotMotionOptimization::loadFile(const char* fName) {
+	Logger::consolePrint("Loading file \'%s\'...\n", fName);
+	std::string fileName;
+	fileName.assign(fName);
+
+	std::string fNameExt = fileName.substr(fileName.find_last_of('.') + 1);
+
+	if (fNameExt.compare("rs") == 0) {
+		Logger::consolePrint("Load robot state from '%s'\n", fName);
+		if (robot) {
+			robot->loadReducedStateFromFile(fName);
+			delete initialRobotState;
+			initialRobotState = new ReducedRobotState(robot);
+		}
+		return;
+	}
+
+	if (fNameExt.compare("rbs") == 0 ){ 
+		delete rbEngine;
+		delete robot;
+		delete initialRobotState;
+		rbEngine = new ODERBEngine();
+		rbEngine->loadRBsFromFile(fName);
+		robot = new Robot(rbEngine->rbs[0]);
+		initialRobotState = new ReducedRobotState(robot);
+		setupSimpleRobotStructure(robot);
+		return;
+	}
+
+	if (fNameExt.compare("ffp") == 0) {
+		moptWindow->footFallPattern.loadFromFile(fName);
+		moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+		return;
+	}
+
+	if (fNameExt.compare("p") == 0) {
+		if (locomotionManager && locomotionManager->motionPlan){
+			locomotionManager->motionPlan->readParamsFromFile(fName);
+			locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
+			moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+		}
+		return;
+	}
+
+}
+
+void TestAppRobotMotionOptimization::loadToSim(bool initializeMOPT){
+	delete worldOracle;
+	worldOracle = new WorldOracle(Globals::worldUp, Globals::groundPlane);
+
+/* ------ load the robot and set up an initial motion plan for it ------*/
+
+	worldOracle->writeRBSFile("../out/tmpEnvironment.rbs");
+	rbEngine->loadRBsFromFile("../out/tmpEnvironment.rbs");
+
+	//now, start MOPT...
+	moptWindow->loadRobot(robot, initialRobotState);
+	warmStartMOPT(initializeMOPT);
+	Logger::consolePrint("Warmstart successful...\n");
+
+	Logger::consolePrint("The robot has %d legs, weighs %lfkgs and is %lfm tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
+}
+
+void TestAppRobotMotionOptimization::warmStartMOPT(bool initializeMotionPlan) {
+	delete positionController;
+	delete torqueController;
+	delete kinematicController;
+	delete locomotionManager;
+
+	locomotionManager = moptWindow->initializeNewMP(initializeMotionPlan);
+
+	positionController = new PositionBasedRobotController(robot, locomotionManager->motionPlan);
+	torqueController = new TorqueBasedRobotController(robot, locomotionManager->motionPlan);
+	kinematicController = new KinematicRobotController(robot, locomotionManager->motionPlan);
+
+}
+
+void TestAppRobotMotionOptimization::saveFile(const char* fName) {
+	Logger::consolePrint("SAVE FILE: Do not know what to do with file \'%s\'\n", fName);
+}
+
+void TestAppRobotMotionOptimization::runMOPTStep() {
+	double energyVal = moptWindow->runMOPTStep();
+}
+
+RobotController* TestAppRobotMotionOptimization::getActiveController() {
+	if (runOption == PHYSICS_SIMULATION_WITH_POSITION_CONTROL)
+		return positionController;
+	if (runOption == PHYSICS_SIMULATION_WITH_TORQUE_CONTROL)
+		return torqueController;
+	if (runOption == MOTION_PLAN_ANIMATION)
+		return kinematicController;
+	return NULL;
+}
+
+P3D TestAppRobotMotionOptimization::getCameraTarget() {
+	if (runOption != MOTION_PLAN_OPTIMIZATION)
+		return robot->root->getCMPosition();
+	else
+		return P3D(0, 1, 0);
+}
+
+// Run the App tasks
+void TestAppRobotMotionOptimization::process() {
+	//we need to sync the state of the robot with the motion plan when we first start physics-based tracking...
+	static int lastRunOptionSelected = runOption + 1;
+	RobotController* activeController = getActiveController();
+	if (lastRunOptionSelected != runOption && (runOption != MOTION_PLAN_OPTIMIZATION)) {
+		Logger::consolePrint("Syncronizing robot state\n");
+		activeController->initialize();
+		activeController->setDebugMode(doDebug);
+	}
+
+	lastRunOptionSelected = runOption;
+
+	if (runOption != MOTION_PLAN_OPTIMIZATION && activeController) {
+		double simulationTime = 0;
+		double maxRunningTime = 1.0 / desiredFrameRate;
+
+		while (simulationTime / maxRunningTime < animationSpeedupFactor) {
+			simulationTime += simTimeStep;
+
+			activeController->computeControlSignals(simTimeStep);
+
+			for (int i = 0; i < nPhysicsStepsPerControlStep; i++) {
+				activeController->applyControlSignals();
+				rbEngine->applyForceTo(robot->root, perturbationForce * forceScale, P3D());
+				if (activeController != kinematicController)
+					rbEngine->step(simTimeStep / nPhysicsStepsPerControlStep);
+				robot->bFrame->updateStateInformation();
+			}
+
+			activeController->advanceInTime(simTimeStep);
+
+			if (slowMo)
+				break;
+		}
+	}
+	else if (runOption == MOTION_PLAN_OPTIMIZATION) {
+		runMOPTStep();
+	}
+
+	if (activeController)
+		moptWindow->ffpViewer->cursorPosition = activeController->stridePhase;
+
+}
+
+void TestAppRobotMotionOptimization::setPerturbationForceFromMouseInput(double xPos, double yPos) {
+	Ray ray = getRayFromScreenCoords(xPos, yPos);
+	P3D pForce;
+	//		ray.getDistanceToPoint(robot->root->getCMPosition(), &pForce);
+	ray.getDistanceToPlane(Plane(robot->root->getCMPosition(), V3D(0, 1, 0)), &pForce);
+	//now we know how to compute this perturbation force...
+	perturbationForce = V3D(robot->root->getCMPosition(), pForce);
+	perturbationForce.y() = 0;
+	if (perturbationForce.length() > 2.0) perturbationForce = perturbationForce.unit() * 2.0;
+	forceScale = robot->getMass() * 1.5;
+}
+
+// Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
+void TestAppRobotMotionOptimization::drawScene() {
+	glColor3d(1, 1, 1);
+	glDisable(GL_LIGHTING);
+
+	//in case the user is manipulating any of parameters of the motion plan, update them.
+	
+	if (locomotionManager)
+		locomotionManager->drawMotionPlan(moptWindow->ffpViewer->cursorPosition, 0, (runOption == MOTION_PLAN_OPTIMIZATION) && drawMeshes, false, drawMotionPlan, drawContactForces, drawOrientation);
+/*
+	if (drawMotionPlan) {
+		glEnable(GL_LIGHTING);
+
+		P3D com = robot->computeCOM();
+		P3D bFrameCOM = robot->bFrame->bodyState.position;
+
+		com[1] = 0; bFrameCOM[1] = 0.001;
+		glColor3d(0, 1, 0);
+		drawSphere(com, 0.003);
+		glColor3d(0, 0, 1);
+		drawSphere(bFrameCOM, 0.003);
+		glDisable(GL_LIGHTING);
+	}
+*/
+
+	if (runOption != MOTION_PLAN_OPTIMIZATION) {
+		int flags = 0;
+		if (drawMeshes) flags |= SHOW_MESH | SHOW_MATERIALS | SHOW_ABSTRACT_VIEW;
+		if (drawSkeletonView) flags |= SHOW_BODY_FRAME | SHOW_ABSTRACT_VIEW;
+		if (drawMOIs) flags |= SHOW_MOI_BOX;
+		if (drawCDPs) flags |= SHOW_CD_PRIMITIVES;
+		if (drawJoints) flags |= SHOW_JOINTS;
+
+		glEnable(GL_LIGHTING);
+		rbEngine->drawRBs(flags);
+		glDisable(GL_LIGHTING);
+
+		glColor3d(1.0, 0.7, 0.7);
+		drawArrow(robot->root->getCMPosition(), robot->root->getCMPosition() + perturbationForce, 0.01, 12);
+
+
+		RobotController* activeController = getActiveController();
+		if (doDebug && activeController)
+			activeController->drawDebugInfo();
+
+	}
+}
+
+// This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
+void TestAppRobotMotionOptimization::drawAuxiliarySceneInfo() {
+	if (moptWindow) {
+		moptWindow->draw();
+		moptWindow->drawAuxiliarySceneInfo();
+	}
+
+
+}
+
+// Restart the application.
+void TestAppRobotMotionOptimization::restart() {
+
+}
+
+bool TestAppRobotMotionOptimization::processCommandLine(const std::string& cmdLine) {
+	if (GLApplication::processCommandLine(cmdLine)) return true;
+
+	return false;
+}
+
+void TestAppRobotMotionOptimization::adjustWindowSize(int width, int height) {
+	Logger::consolePrint("resize");
+
+	mainWindowWidth = width;
+	mainWindowHeight = height;
+	// Send the window size to AntTweakBar
+	TwWindowSize(width, height);
+
+	setViewportParameters(0, 0, mainWindowWidth, mainWindowHeight);
+
+	int size[2];
+	int w, h;
+	TwGetParam(mainMenuBar, NULL, "size", TW_PARAM_INT32, 2, size);
+	w = (GLApplication::getMainWindowWidth() - size[0]) / 2;
+	h = GLApplication::getMainWindowHeight();
+	setViewportParameters(size[0] + w, 0, w, h);
+}
+
+void TestAppRobotMotionOptimization::setupLights() {
+	GLfloat bright[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+	GLfloat mediumbright[] = { 0.3f, 0.3f, 0.3f, 1.0f };
+
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, bright);
+	glLightfv(GL_LIGHT2, GL_DIFFUSE, mediumbright);
+	glLightfv(GL_LIGHT3, GL_DIFFUSE, mediumbright);
+	glLightfv(GL_LIGHT4, GL_DIFFUSE, mediumbright);
+
+
+	GLfloat light0_position[] = { 0.0f, 10000.0f, 10000.0f, 0.0f };
+	GLfloat light0_direction[] = { 0.0f, -10000.0f, -10000.0f, 0.0f };
+
+	GLfloat light1_position[] = { 0.0f, 10000.0f, -10000.0f, 0.0f };
+	GLfloat light1_direction[] = { 0.0f, -10000.0f, 10000.0f, 0.0f };
+
+	GLfloat light2_position[] = { 0.0f, -10000.0f, 0.0f, 0.0f };
+	GLfloat light2_direction[] = { 0.0f, 10000.0f, -0.0f, 0.0f };
+
+	GLfloat light3_position[] = { 10000.0f, -10000.0f, 0.0f, 0.0f };
+	GLfloat light3_direction[] = { -10000.0f, 10000.0f, -0.0f, 0.0f };
+
+	GLfloat light4_position[] = { -10000.0f, -10000.0f, 0.0f, 0.0f };
+	GLfloat light4_direction[] = { 10000.0f, 10000.0f, -0.0f, 0.0f };
+
+
+	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
+	glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
+	glLightfv(GL_LIGHT2, GL_POSITION, light2_position);
+	glLightfv(GL_LIGHT3, GL_POSITION, light3_position);
+	glLightfv(GL_LIGHT4, GL_POSITION, light4_position);
+
+
+	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light0_direction);
+	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light1_direction);
+	glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, light2_direction);
+	glLightfv(GL_LIGHT3, GL_SPOT_DIRECTION, light3_direction);
+	glLightfv(GL_LIGHT4, GL_SPOT_DIRECTION, light4_direction);
+
+
+	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
+	glEnable(GL_LIGHT2);
+	glEnable(GL_LIGHT3);
+	glEnable(GL_LIGHT4);
+}

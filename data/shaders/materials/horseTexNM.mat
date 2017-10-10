@@ -1,0 +1,8 @@
+toonMaterial
+	shader diffuseTexturedNormalMapped
+	
+	texture textureSampler ../data/3dModels/horse/Horse.bmp
+	texture normalSampler ../data/3dModels/horse/Horse_NM.bmp
+
+/material
+

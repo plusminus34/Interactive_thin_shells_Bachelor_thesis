@@ -1,0 +1,133 @@
+
+#include <gtest/gtest.h>
+#include <OptimizationLib/OoqpEigenInterface.hpp>
+#include <OptimizationLib/ooqpei_gtest_eigen.hpp>
+
+using namespace ooqpei;
+using namespace ooqpei::eigen;
+using namespace std;
+
+TEST(OOQPEITest, LeastSquares)
+{
+  Eigen::Vector2d solution(10.0, 8.0);
+
+  SparseMatrix Q;
+  Q.resize(2, 2);
+  Q.insert(0, 0) = 1.0;
+  Q.insert(0, 1) = -1.0;
+  Q.insert(1, 0) = -1.0;
+  Q.insert(1, 1) = 2.0;
+  dVector c(2);
+  c << -2.0, -6.0;
+  dVector x;
+
+  ooqpei::OoqpEigenInterface::solve(Q, c, x);
+
+  expectNear(x, solution, 1e-8, OOQPEI_SOURCE_FILE_POS);
+}
+
+TEST(OOQPEITest, InequalityConstraints)
+{
+  Eigen::Vector2d solution(2.0 / 3.0, 1.0 + 1.0 / 3.0);
+
+  SparseMatrix Q;
+  Q.resize(2, 2);
+  Q.insert(0, 0) = 1.0;
+  Q.insert(0, 1) = -1.0;
+  Q.insert(1, 0) = -1.0;
+  Q.insert(1, 1) = 2.0;
+  dVector c(2);
+  c << -2.0, -6.0;
+  SparseMatrix A;
+  dVector b;
+  SparseMatrix C;
+  C.resize(3, 2);
+  C.insert(0, 0) = 1.0;
+  C.insert(0, 1) = 1.0;
+  C.insert(1, 0) = -1.0;
+  C.insert(1, 1) = 2.0;
+  C.insert(2, 0) = 2.0;
+  C.insert(2, 1) = 1.0;
+  dVector d(3);
+  d << -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max();
+  dVector f(3);
+  f << 2.0, 2.0, 3.0;
+  dVector l(2);
+  l << 0.0, 0.0;
+  dVector u(2);
+  u << 1000.0, 1000.0;
+  dVector x;
+
+  OoqpEigenInterface::solve(Q, c, A, b, C, d, f, l, u, x);
+
+  expectNear(x, solution, 1e-8, OOQPEI_SOURCE_FILE_POS);
+}
+
+TEST(OOQPEITest, LinearProgrammingNoConstraints)
+{
+  Vector3d solution(0.0, 0.0, 0.0);
+
+  SparseMatrix Q;
+  Q.resize(3, 3);
+  dVector c(3);
+  c << 5.0, 4.0, 6.0;
+  SparseMatrix A;
+  dVector b;
+  dVector l = dVector::Zero(3);
+  dVector u = Vector3d::Constant(std::numeric_limits<double>::max());
+  dVector x;
+
+  OoqpEigenInterface::solve(Q, c, A, b, l, u, x);
+
+  expectNear(x, solution, 1e-8, OOQPEI_SOURCE_FILE_POS);
+}
+
+TEST(OOQPEITest, LinearProgrammingWithInequalityConstraints)
+{
+  Vector3d solution(0.0, 15.0, 3.0);
+
+  SparseMatrix Q;
+  Q.resize(3, 3);
+  dVector c(3);
+  c << -5.0, -4.0, -6.0;
+  SparseMatrix A;
+  dVector b;
+  SparseMatrix C;
+  C.resize(3, 3);
+  C.insert(0, 0) =  1.0;
+  C.insert(0, 1) = -1.0;
+  C.insert(0, 2) =  1.0;
+  C.insert(1, 0) =  3.0;
+  C.insert(1, 1) =  2.0;
+  C.insert(1, 2) =  4.0;
+  C.insert(2, 0) =  3.0;
+  C.insert(2, 1) =  2.0;
+  C.insert(2, 2) =  0.0;
+  dVector d(3);
+  d = Vector3d::Constant(-std::numeric_limits<double>::max());
+  dVector f(3);
+  f << 20.0, 42.0, 30.0;
+  dVector l = dVector::Zero(3);
+  dVector u(3);
+  u = Vector3d::Constant(std::numeric_limits<double>::max());
+  dVector x;
+
+  OoqpEigenInterface::solve(Q, c, A, b, C, d, f, l, u, x);
+
+  expectNear(x, solution, 1e-8, OOQPEI_SOURCE_FILE_POS);
+}
+
+TEST(OOQPEITest, NaN)
+{
+  SparseMatrix Q;
+  Q.resize(2, 2);
+  Q.insert(0, 0) = NAN;
+  Q.insert(0, 1) = NAN;
+  Q.insert(1, 0) = NAN;
+  Q.insert(1, 1) = NAN;
+  dVector c(2);
+  c << NAN, NAN;
+  dVector x;
+
+  EXPECT_TRUE(ooqpei::OoqpEigenInterface::solve(Q, c, x));
+}

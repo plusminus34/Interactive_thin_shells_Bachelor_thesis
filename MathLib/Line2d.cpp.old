@@ -1,0 +1,84 @@
+#include "PolyLine3d.h"
+#include "Vector3d.h"
+#include "Quaternion.h"
+#include  <include/GLheaders.h>
+
+
+void PolyLine3d::loadFromFile(const char* fName){
+	FILE* fp = fopen(fName, "r");
+	points.clear();
+	if (fp == NULL) return;
+	int nPoints = 0;
+	fscanf(fp, "%d", &nPoints);
+	if(nPoints==0)
+		return;
+	double sx, sy, sz, tx, ty, tz;
+	fscanf(fp, "%lf %lf %lf %lf %lf %lf", &sx, &sy, &sz, &tx, &ty, &tz);
+	double a, vx, vy, vz;
+	fscanf(fp, "%lf %lf %lf %lf", &a, &vx, &vy, &vz);
+	Quaternion qRot = Quaternion::getRotationQuaternion(a, Vector3d(vx, vy, vz).unit());
+
+	//this is the spacing between points - the last point is implicitly set to the first one...
+	double dt = 1.0 / nPoints;
+	for (int i=0; i<nPoints;i++){
+		double px, py, pz;
+		fscanf(fp, "%lf %lf %lf", &px, &py, &pz);
+		points.addKnot(i*dt, Vector3d(tx, ty, tz) + qRot * Vector3d(px * sx, py * sy, pz * sz));
+	}
+
+	points.addKnot(1, points.getKnotValue(0));
+}
+
+void PolyLine3d::setPointList(const DynamicArray<Point3d>& pSet){
+	int nPoints = (int)pSet.size();
+	double dt = 1.0 / nPoints;
+	points.clear();
+	for (int i=0; i<nPoints;i++)
+		points.addKnot(i*dt, pSet[i]);
+
+	points.addKnot(1, pSet[0]);
+}
+
+Vector3d PolyLine3d::getCenter(){
+	Vector3d result;
+	if (points.getKnotCount() <= 1) return result;
+	for (int i=0; i<points.getKnotCount()-1;i++){
+		result += points.getKnotValue(i);
+	}
+
+	return result / (points.getKnotCount()-1);
+}
+
+void PolyLine3d::saveToFile(const char* fName){
+	FILE* fp = fopen(fName, "w");
+	if (fp == NULL) return;
+	int nPoints = points.getKnotCount() - 1;
+	fprintf(fp, "%d\n", nPoints);
+	Vector3d center = getCenter();
+	fprintf(fp, "%lf %lf %lf %lf %lf %lf\n", 1.0, 1.0, 1.0, center.x, center.y, center.z);
+	fprintf(fp, "%lf %lf %lf %lf\n", 0.0, 1.0, 0.0, 0.0);
+
+	//this is the spacing between points - the last point is implicitly set to the first one...
+	for (int i=0; i<nPoints;i++){
+		Vector3d p = points.getKnotValue(i) - center;
+		fprintf(fp, "%lf %lf %lf\n", p.x, p.y, p.z);
+	}
+	fclose(fp);
+}
+
+/**
+	Draws the poly line...
+*/
+void PolyLine3d::draw() const {
+	glBegin(GL_LINE_LOOP);
+	for (int i=0; i<points.getKnotCount()-1; i++)
+		glVertex3d(points.getKnotValue(i).x, points.getKnotValue(i).y, points.getKnotValue(i).z);
+	glEnd();
+
+	glPointSize(3.0);
+	glBegin(GL_POINTS);
+	for (int i=0; i<points.getKnotCount()-1; i++)
+		glVertex3d(points.getKnotValue(i).x, points.getKnotValue(i).y, points.getKnotValue(i).z);
+	glEnd();
+	glPointSize(1.0);
+}

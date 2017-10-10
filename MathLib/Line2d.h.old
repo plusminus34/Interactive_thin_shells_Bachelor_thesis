@@ -1,0 +1,30 @@
+#pragma once
+
+#include "MathLib.h"
+#include "Point3d.h"
+#include "Trajectory.h"
+
+/**
+	A representation of a 3d poly line.
+*/
+class PolyLine3d {
+public:
+	//the trajectory of 3d points. It is parameterized so that it starts 0 and ends at 1. It is assumed that along this parameterization, points are equally spaced
+	Trajectory3D points;
+
+public:
+	PolyLine3d(){}
+	~PolyLine3d(){}
+
+	void loadFromFile(const char* fName);
+	void saveToFile(const char* fName);
+
+	void setPointList(const DynamicArray<Point3d>& points);
+
+	Vector3d getCenter();
+
+	/**
+		Draws the poly line...
+	*/
+	void draw() const;
+};

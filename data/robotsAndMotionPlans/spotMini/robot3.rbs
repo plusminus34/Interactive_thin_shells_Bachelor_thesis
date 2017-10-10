@@ -1,0 +1,410 @@
+RigidBody
+	name rb0
+	mass 9.300000
+	moi 0.201500 0.205666 0.019666 0.000000 0.000000 0.000000
+	position 0.000000 -0.002054 0.000000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mappingInfo -1 -1
+	CDP Box -0.062000 -0.050000 -0.250000 0.062000 0.050000 0.250000
+/End
+
+
+
+
+RigidBody
+	name rb1
+	mass 0.154428
+	moi 0.000050 0.000058 0.000060 -0.000004 0.000000 0.000000
+	position -0.086000 -0.012604 -0.250000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mappingInfo -1 -1
+	CDP Capsule 0.001114 0.000490 0.000000 -0.001114 -0.000490 0.000000 0.025000
+/End
+
+
+
+
+RigidBody
+	name rb2
+	mass 0.154428
+	moi 0.000050 0.000058 0.000060 0.000004 -0.000000 0.000000
+	position 0.086000 -0.012604 -0.250000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mappingInfo -1 -1
+	CDP Capsule -0.001114 0.000490 0.000000 0.001114 -0.000490 0.000000 0.025000
+/End
+
+
+
+
+RigidBody
+	name rb3
+	mass 0.154428
+	moi 0.000050 0.000058 0.000060 -0.000004 -0.000000 -0.000000
+	position -0.086000 -0.012604 0.250000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mappingInfo -1 -1
+	CDP Capsule 0.001114 0.000490 -0.000000 -0.001114 -0.000490 -0.000000 0.025000
+/End
+
+
+
+
+RigidBody
+	name rb4
+	mass 0.154428
+	moi 0.000050 0.000058 0.000060 0.000004 0.000000 -0.000000
+	position 0.086000 -0.012604 0.250000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mappingInfo -1 -1
+	CDP Capsule -0.001114 0.000490 -0.000000 0.001114 -0.000490 -0.000000 0.025000
+/End
+
+
+
+
+RigidBody
+	name rb5
+	mass 0.706858
+	moi 0.003503 0.000221 0.003503 0.000000 0.000000 -0.000000
+	position -0.110000 -0.143154 -0.250000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mappingInfo -1 -1
+	CDP Capsule 0.000000 0.095000 0.000000 0.000000 -0.095000 0.000000 0.025000
+/End
+
+
+
+
+RigidBody
+	name rb6
+	mass 0.706858
+	moi 0.003503 0.000221 0.003503 0.000000 0.000000 -0.000000
+	position 0.110000 -0.143154 -0.250000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mappingInfo -1 -1
+	CDP Capsule 0.000000 0.095000 0.000000 0.000000 -0.095000 0.000000 0.025000
+/End
+
+
+
+
+RigidBody
+	name rb7
+	mass 0.706858
+	moi 0.003503 0.000221 0.003503 0.000000 0.000000 -0.000000
+	position -0.110000 -0.143154 0.250000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mappingInfo -1 -1
+	CDP Capsule 0.000000 0.095000 0.000000 0.000000 -0.095000 0.000000 0.025000
+/End
+
+
+
+
+RigidBody
+	name rb8
+	mass 0.706858
+	moi 0.003503 0.000221 0.003503 0.000000 0.000000 -0.000000
+	position 0.110000 -0.143154 0.250000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mappingInfo -1 -1
+	CDP Capsule 0.000000 0.095000 0.000000 0.000000 -0.095000 0.000000 0.025000
+/End
+
+
+
+
+RigidBody
+	name rb9
+	mass 0.883573
+	moi 0.006765 0.000276 0.006765 0.000000 0.000000 -0.000000
+	position -0.110000 -0.413154 -0.250000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	endEffector 0.000000 -0.150000 0.000000 0.010000
+	mappingInfo -1 -1
+	CDP Capsule 0.000000 0.125000 0.000000 0.000000 -0.100000 0.000000 0.025000
+	CDP Sphere 0.000000 -0.150000 0.000000 0.010000
+/End
+
+
+
+
+RigidBody
+	name rb10
+	mass 0.883573
+	moi 0.006765 0.000276 0.006765 0.000000 0.000000 -0.000000
+	position 0.110000 -0.413154 -0.250000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	endEffector 0.000000 -0.150000 0.000000 0.010000
+	mappingInfo -1 -1
+	CDP Capsule 0.000000 0.125000 0.000000 0.000000 -0.100000 0.000000 0.025000
+	CDP Sphere 0.000000 -0.150000 0.000000 0.010000
+/End
+
+
+
+
+RigidBody
+	name rb11
+	mass 0.883573
+	moi 0.006765 0.000276 0.006765 0.000000 0.000000 -0.000000
+	position -0.110000 -0.413154 0.250000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	endEffector 0.000000 -0.150000 0.000000 0.010000
+	mappingInfo -1 -1
+	CDP Capsule 0.000000 0.125000 0.000000 0.000000 -0.100000 0.000000 0.025000
+	CDP Sphere 0.000000 -0.150000 0.000000 0.010000
+/End
+
+
+
+
+RigidBody
+	name rb12
+	mass 0.883573
+	moi 0.006765 0.000276 0.006765 0.000000 0.000000 -0.000000
+	position 0.110000 -0.413154 0.250000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	endEffector 0.000000 -0.150000 0.000000 0.010000
+	mappingInfo -1 -1
+	CDP Capsule 0.000000 0.125000 0.000000 0.000000 -0.100000 0.000000 0.025000
+	CDP Sphere 0.000000 -0.150000 0.000000 0.010000
+/End
+
+
+
+
+	hingeJoint
+		jointAxes 0.000000 0.000000 1.000000
+		dxlID -1
+		mappingInfo -1 -1
+		name rb0_rb1
+		parent rb0
+		child rb1
+		jointCPos 0.024000 0.010550 0.000000
+		jointPPos -0.062000 0.000000 -0.250000
+	/Joint
+
+
+
+
+	hingeJoint
+		jointAxes 0.000000 0.000000 1.000000
+		dxlID -1
+		mappingInfo -1 -1
+		name rb0_rb4
+		parent rb0
+		child rb2
+		jointCPos -0.024000 0.010550 0.000000
+		jointPPos 0.062000 0.000000 -0.250000
+	/Joint
+
+
+
+
+	hingeJoint
+		jointAxes 0.000000 0.000000 1.000000
+		dxlID -1
+		mappingInfo -1 -1
+		name rb0_rb7
+		parent rb0
+		child rb3
+		jointCPos 0.024000 0.010550 0.000000
+		jointPPos -0.062000 0.000000 0.250000
+	/Joint
+
+
+
+
+	hingeJoint
+		jointAxes 0.000000 0.000000 1.000000
+		dxlID -1
+		mappingInfo -1 -1
+		name rb0_rb10
+		parent rb0
+		child rb4
+		jointCPos -0.024000 0.010550 0.000000
+		jointPPos 0.062000 0.000000 0.250000
+	/Joint
+
+
+
+
+	hingeJoint
+		jointAxes -1.000000 0.00000 0.000000
+		dxlID -1
+		mappingInfo -1 -1
+		name rb1_rb2
+		parent rb1
+		child rb5
+		jointCPos 0.000000 0.120000 0.000000
+		jointPPos -0.024000 -0.010550 0.000000
+	/Joint
+
+
+
+
+	hingeJoint
+		jointAxes 1.000000 0.00000 0.000000
+		dxlID -1
+		mappingInfo -1 -1
+		name rb4_rb5
+		parent rb2
+		child rb6
+		jointCPos 0.000000 0.120000 0.000000
+		jointPPos 0.024000 -0.010550 0.000000
+	/Joint
+
+
+
+
+	hingeJoint
+		jointAxes -1.000000 0.000001 0.000000
+		dxlID -1
+		mappingInfo -1 -1
+		name rb7_rb8
+		parent rb3
+		child rb7
+		jointCPos 0.000000 0.120000 0.000000
+		jointPPos -0.024000 -0.010550 -0.000000
+	/Joint
+
+
+
+
+	hingeJoint
+		jointAxes 1.000000 0.00000 0.000000
+		dxlID -1
+		mappingInfo -1 -1
+		name rb10_rb11
+		parent rb4
+		child rb8
+		jointCPos 0.000000 0.120000 0.000000
+		jointPPos 0.024000 -0.010550 -0.000000
+	/Joint
+
+
+
+
+	hingeJoint
+		jointAxes -1.000000 0.00000 0.000000
+		dxlID -1
+		mappingInfo -1 -1
+		name rb2_rb3
+		parent rb5
+		child rb9
+		jointCPos 0.000000 0.150000 0.000000
+		jointPPos 0.000000 -0.120000 0.000000
+	/Joint
+
+
+
+
+	hingeJoint
+		jointAxes 1.000000 0.00000 0.000000
+		dxlID -1
+		mappingInfo -1 -1
+		name rb5_rb6
+		parent rb6
+		child rb10
+		jointCPos 0.000000 0.150000 0.000000
+		jointPPos 0.000000 -0.120000 0.000000
+	/Joint
+
+
+
+
+	hingeJoint
+		jointAxes -1.000000 0.00000 0.000000
+		dxlID -1
+		mappingInfo -1 -1
+		name rb8_rb9
+		parent rb7
+		child rb11
+		jointCPos 0.000000 0.150000 0.000000
+		jointPPos 0.000000 -0.120000 0.000000
+	/Joint
+
+
+
+
+	hingeJoint
+		jointAxes 1.000000 0.00000 0.000000
+		dxlID -1
+		mappingInfo -1 -1
+		name rb11_rb12
+		parent rb8
+		child rb12
+		jointCPos 0.000000 0.150000 0.000000
+		jointPPos 0.000000 -0.120000 0.000000
+	/Joint
+
+
+
+
