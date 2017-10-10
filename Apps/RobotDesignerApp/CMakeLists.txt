@@ -23,3 +23,12 @@ add_custom_command(
                 ${CMAKE_SOURCE_DIR}/data
                 ${CMAKE_CURRENT_BINARY_DIR}/../data
 )
+
+if(WIN32)
+	add_custom_command(
+	        TARGET ${PROJECT_NAME} POST_BUILD
+	        COMMAND ${CMAKE_COMMAND} -E copy
+	                ${FREETYPE_DLLS}
+	                ${CMAKE_CURRENT_BINARY_DIR}
+	)
+endif()

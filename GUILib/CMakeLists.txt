@@ -31,9 +31,14 @@ include_directories(${NANOGUI_EXTRA_INCS})
 if(NOT DEFINED ENV{FREETYPE_DIR})
 	set(ENV{FREETYPE_DIR} ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/freetype)
 	message(STATUS "No environment variable 'FREETYPE_DIR' found. Using '" $ENV{FREETYPE_DIR} "'.")
+	# set(ENV{PATH} $ENV{PATH} ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/freetype/bin)
+	set(CMAKE_MSVCIDE_RUN_PATH ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/freetype/bin)
 endif()
 find_package(Freetype REQUIRED)
 include_directories(${FREETYPE_INCLUDE_DIRS})
+if(WIN32)
+	set(FREETYPE_DLLS $ENV{FREETYPE_DIR}/bin/freetype6.dll $ENV{FREETYPE_DIR}/bin/zlib1.dll PARENT_SCOPE)
+endif()
 
 # OpenGL
 find_package(OpenGL REQUIRED)
@@ -58,4 +63,5 @@ target_include_directories(
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/include
 		ext/nanogui/include
 		${NANOGUI_EXTRA_INCS}
+		${FREETYPE_INCLUDE_DIRS}
 )
