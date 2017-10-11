@@ -9,6 +9,9 @@
 #undef max
 #endif // WIN32
 
+#pragma warning( disable : 4996)
+#pragma warning( disable : 4006)
+
 #include <nanogui/opengl.h>
 
 #include <gl/GLU.h>
