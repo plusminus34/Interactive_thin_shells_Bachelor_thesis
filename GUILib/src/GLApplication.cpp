@@ -64,10 +64,6 @@ void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
 	}
 	setWindowTitle("Simulation And Control Playground");
 	glfwSetWindowPos(glfwWindow, x, y);
-#if defined(_WIN32) || defined(__linux__)
-	float mPixelRatio = menuScreen->pixelRatio();
-	glfwSetWindowSize(glfwWindow, w / mPixelRatio, h / mPixelRatio);
-#endif
 
 	/* Make the window's context current */
 	glfwMakeContextCurrent(glfwWindow);
@@ -156,6 +152,11 @@ void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
 
 
 	setupMainMenu();
+
+#if defined(_WIN32) || defined(__linux__)
+	float mPixelRatio = menuScreen->pixelRatio();
+	glfwSetWindowSize(glfwWindow, w / mPixelRatio, h / mPixelRatio);
+#endif
 
 	int width, height;
 	glfwGetFramebufferSize(glfwWindow, &width, &height);
