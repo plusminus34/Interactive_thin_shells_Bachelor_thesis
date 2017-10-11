@@ -84,9 +84,7 @@ RobotDesignerApp::RobotDesignerApp(){
 void RobotDesignerApp::setupWindows() {
 	int w, h;
 
-	// TODO: get_pixel_ratio is not exposed by nanogui. find different solution
-	//int offset = (int)(mainMenu->window()->width() * nanogui::get_pixel_ratio(glfwWindow));
-	int offset = (int)(mainMenu->window()->width() * 1.f);
+	int offset = (int)(mainMenu->window()->width() * menuScreen->pixelRatio());
 
 	w = (GLApplication::getMainWindowWidth()) - offset;
 	h = GLApplication::getMainWindowHeight();

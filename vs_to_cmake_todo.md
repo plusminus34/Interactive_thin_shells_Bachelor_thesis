@@ -1,7 +1,7 @@
 # vs to cmake todo
 
 badly needed:
-- [ ] pixel ratio 
+- [x] pixel ratio 
 - [x] undef min/max
 - [ ] ignore warning
 - [ ] put Cmake and dependcy folder on top

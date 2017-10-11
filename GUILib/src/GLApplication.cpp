@@ -65,9 +65,7 @@ void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
 	setWindowTitle("Simulation And Control Playground");
 	glfwSetWindowPos(glfwWindow, x, y);
 #if defined(_WIN32) || defined(__linux__)
-	// TODO: nanogui doesn't expose get_pixel_ratio. Find a way around it.
-	//float mPixelRatio = nanogui::get_pixel_ratio(glfwWindow);
-	float mPixelRatio = 1.f;
+	float mPixelRatio = menuScreen->pixelRatio();
 	glfwSetWindowSize(glfwWindow, w / mPixelRatio, h / mPixelRatio);
 #endif
 
