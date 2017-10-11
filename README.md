@@ -7,7 +7,7 @@ If you are on Windows, you can skip everything below and do the following:
 1. Install CMake: https://cmake.org/download/
 2. Run `easyFirstSetup.cmd` (e.g. by double clicking the script)
 
-## Compilation
+## The Do-It-Yourself way (unfinished guide)
 
 The build system of SCP uses CMake and git submodules (where possible). 
 

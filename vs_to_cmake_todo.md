@@ -4,8 +4,8 @@ badly needed:
 - [x] pixel ratio 
 - [x] undef min/max
 - [ ] ignore warning
-- [ ] put Cmake and dependcy folder on top
-- [ ] put it on gitlab.INF.ethz.ch
+- [x] put Cmake and dependcy folder on top
+- [x] put it on gitlab.INF.ethz.ch
 
 nice to have:
 - [ ] ODE: 
