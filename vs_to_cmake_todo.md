@@ -1,6 +1,11 @@
 # vs to cmake todo
 
 badly needed:
+- [ ] pixel ratio 
+- [x] undef min/max
+- [ ] ignore warning
+- [ ] put Cmake and dependcy folder on top
+- [ ] put it on gitlab.INF.ethz.ch
 
 nice to have:
 - [ ] ODE: 
@@ -27,6 +32,7 @@ done:
   --> create a git repo for our fork of nanogui!
 - [x] data folder needs to be at build/Apps/data
   either:
-  1. copy this with cmake! <-- did this
+  1. copy this with cmake! 
   2. use add_definitions(-DSCP_ROOT_DIR=${CMAKE_CURRENT_SOURCE_DIR}) as in here: https://stackoverflow.com/questions/9017573/define-preprocessor-macro-through-cmake
   --> Maybe better to change working directory: https://msdn.microsoft.com/en-us/library/bf7fwze1(v=vs.80).aspx
+  <-- did this

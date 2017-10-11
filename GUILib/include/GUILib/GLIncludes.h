@@ -5,6 +5,8 @@
 
 #ifdef WIN32
 #include <Windows.h>
+#undef min
+#undef max
 #endif // WIN32
 
 #include <nanogui/opengl.h>
