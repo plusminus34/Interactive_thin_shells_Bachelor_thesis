@@ -22,7 +22,7 @@ set(NANOGUI_INSTALL       OFF CACHE BOOL " " FORCE)
 # add nanogui subirectory
 add_subdirectory(ext/nanogui)
 # For reliability of parallel build, make the NanoGUI targets dependencies
-set_property(TARGET glfw glfw_objects nanogui nanogui-obj PROPERTY FOLDER "dependencies")
+set_property(TARGET glfw glfw_objects nanogui nanogui-obj PROPERTY FOLDER "_dependencies")
 add_definitions(${NANOGUI_EXTRA_DEFS})
 include_directories(ext/nanogui/include)
 include_directories(${NANOGUI_EXTRA_INCS})
