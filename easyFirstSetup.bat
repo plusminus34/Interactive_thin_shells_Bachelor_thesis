@@ -24,7 +24,7 @@ SET CURRENTDIR="%cd%"
 
 : Let's clone all dependencies:
 cd ..
-git clone https://gitlab.ethz.ch/moritzge/libs/
+git clone https://gitlab.inf.ethz.ch/moritzge/libs/
 IF ERRORLEVEL 1 (
     ECHO Could not clone libs.
     pause
