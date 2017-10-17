@@ -2,8 +2,8 @@
 
 #pragma warning( disable : 4996)
 
-#include <Eigen/dense>
-#include <Eigen/sparse>
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 typedef Eigen::AngleAxisd AngleAxisd;
 typedef Eigen::VectorXd dVector;

@@ -6,6 +6,10 @@
  |  method will return the time, in seconds but expressed as a double, since the timer was reset.                                                                   |
  *==================================================================================================================================================================*/
 
+#ifndef WIN32
+    #include <sys/time.h>
+#endif
+
 class Timer{
 private:
 #ifdef WIN32
