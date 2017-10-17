@@ -9,8 +9,8 @@
 #include <nanogui/formhelper.h>
 #include <nanogui/slider.h>
 
-#include <OptimizationLib/ObjectiveFunction.h>
-#include <RBSimLib/HingeJoint.h>
+//#include <OptimizationLib/ObjectiveFunction.h>
+//#include <RBSimLib/HingeJoint.h>
 
 using namespace std;
 using nanogui::Screen;
@@ -22,33 +22,33 @@ using nanogui::MatrixXu;
 using nanogui::MatrixXf;
 using nanogui::Label;
 
-class TestFunction : public ObjectiveFunction {
-public:
-	TestFunction() {}
-	~TestFunction() {}
+//class TestFunction : public ObjectiveFunction {
+//public:
+//	TestFunction() {}
+//	~TestFunction() {}
 
-	double alpha = 0.05;
+//	double alpha = 0.05;
 
-	double computeValue(const dVector& m) {
-		//Test case 1: Rosenbrock function
-		double c1 = 1 - m[0];
-		double c2 = m[1] - 0.5 * m[0] * m[0];
-		return alpha * (c1 * c1 + 10 * c2 * c2);
-	}
-};
+//	double computeValue(const dVector& m) {
+//		//Test case 1: Rosenbrock function
+//		double c1 = 1 - m[0];
+//		double c2 = m[1] - 0.5 * m[0] * m[0];
+//		return alpha * (c1 * c1 + 10 * c2 * c2);
+//	}
+//};
 
 int main() {
 
-	// quick test of optimization lib
-	TestFunction testFunc;
-	dVector m(2);
-	m[0] = 1;
-	m[1] = 2;
-	double v = testFunc.computeValue(m);
-	std::cout << "value of test function = " << v << std::endl;
+//	// quick test of optimization lib
+//	TestFunction testFunc;
+//	dVector m(2);
+//	m[0] = 1;
+//	m[1] = 2;
+//	double v = testFunc.computeValue(m);
+//	std::cout << "value of test function = " << v << std::endl;
 
-	// quick test of RBSimLib
-	HingeJoint joint;
+//	// quick test of RBSimLib
+//	HingeJoint joint;
 
     nanogui::init();
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <MathLib/mathLib.h>
+#include <MathLib/MathLib.h>
 #include <Utils/Utils.h>
 #include <MathLib/P3D.h>
 #include <MathLib/V3D.h>
@@ -202,7 +202,7 @@ public:
 	/**
 		This method adds the indices of the vertices of the polygon p to indexList.
 	*/
-	int addPoly(GLIndexedPoly &p){
+    int addPoly(const GLIndexedPoly &p){
 		if (p.indexes.size()!=this->polyVertexCount)
 			return -1;
 		for (uint i=0;i<p.indexes.size();i++)
@@ -226,7 +226,7 @@ private:
 	/**
 		This method adds a new polygon to the category that has the same vertex count. If none exists then one is created.
 	*/
-	int addPoly(GLIndexedPoly &p){
+    int addPoly(const GLIndexedPoly &p){
 		for (uint i=0;i<categories.size();i++){
 			if (categories[i]->polyVertexCount == p.indexes.size())
 				return categories[i]->addPoly(p);
@@ -401,9 +401,11 @@ public:
 		This is the method that adds new polygons to the mesh. The polygons have to be populated by the class that reads in the
 		mesh from a file.
 	*/
-	void addPoly(GLIndexedPoly &p, bool duplicateVertices = false);
+    void addPoly(const GLIndexedPoly &p);
 
-	/**
+    void addPoly(const GLIndexedPoly &p, bool duplicateVertices);
+
+    /**
 		returns true if the vertex is already indexed by any mesh poly, false otherwise
 	*/
 	bool vertexIsInUse(int vIndex);
