@@ -90,6 +90,13 @@ public:
 
 	void warmStartMOPT(bool initializeMotionPlan);
 	void loadToSim(bool initializeMOPT = true);
+
+
+
+	ParameterizedRobotDesign* prd;
+	void test_dmdp_Jacobian();
+	void compute_dmdp_Jacobian(dVector& m, DynamicArray<double>& p, MatrixNxM& dmdp);
+	void testOptimizeDesign();
 };
 
 

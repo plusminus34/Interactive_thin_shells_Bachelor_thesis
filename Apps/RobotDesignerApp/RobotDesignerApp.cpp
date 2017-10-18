@@ -6,6 +6,13 @@
 #include <MathLib/MathLib.h>
 #include <ControlLib/SimpleLimb.h>
 
+//integrate the function that computes the jacobian dm/dp, this also means the robot parameterization part...
+//clean a bit all the managers, objectives and the manner in which the different types of MOPT modes are selected...
+//perhaps make the non-mesh version of the renderer prettier... it will allow us to test the code before (or even if it wont happen that) the visual designer part is integrated.
+//do grfv1 and grfv2 share the same warmstart method? It would be most convenient if they did...
+
+//everything will happen via rbs files. The visual designer outputs an rbs, then it knows how to sync back changes with the rbs, and that's all...
+
 //make a Cassie model and simulation, especially once limb collision are enabled. A little cassie-like robot could also be a good target for Siggraph, maybe...
 //make a base robot design window class that does nothing, only loads rbs and returns it
 //have a bool display design window, such that when it ain't, it shows full screen robot
@@ -214,6 +221,9 @@ void RobotDesignerApp::loadFile(const char* fName) {
 
 	if (fNameExt.compare("rbs") == 0 ){ 
 		robot = simWindow->loadRobot(fName);
+
+		//todo: just a test for now
+		prd = new TestParameterizedRobotDesign(robot);
 		delete initialRobotState;
 		initialRobotState = new ReducedRobotState(robot);
 		return;
@@ -345,4 +355,125 @@ bool RobotDesignerApp::processCommandLine(const std::string& cmdLine) {
 	if (GLApplication::processCommandLine(cmdLine)) return true;
 	return false;
 }
+
+void RobotDesignerApp::compute_dmdp_Jacobian(dVector& m, DynamicArray<double>& p, MatrixNxM& dmdp) {
+//evaluates dm/dp at (m,p). It is assumed that m corresponds to a minimum of the energy (i.e. m = arg min (E(m(p)))
+// Let g = \partial E / \partial m
+// partial g / partial p + partial g / partial m * dm/dp = dg/dp = 0
+// dm/dp = -partial g / partial m ^ -1 * partial g / partial p
+
+	SparseMatrix dgdm;
+	dVector dgdpi, dmdpi;
+	dVector g_m, g_p;
+
+	resize(dgdm, m.size(), m.size());
+	resize(dmdp, m.size(), p.size());
+	resize(dgdpi, m.size());
+
+	DynamicArray<MTriplet> triplets;
+	moptWindow->locomotionManager->locomotionEngine->energyFunction->addHessianEntriesTo(triplets, m);
+	dgdm.setFromTriplets(triplets.begin(), triplets.end());
+
+	Eigen::SimplicialLDLT<SparseMatrix, Eigen::Lower> solver;
+	//	Eigen::SparseLU<SparseMatrix> solver;
+	solver.compute(dgdm);
+
+	double dp = 0.001;
+	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
+	for (uint i = 0; i < p.size(); i++) {
+		resize(g_m, m.size());
+		resize(g_p, m.size());
+
+		double pVal = p[i];
+		p[i] = pVal + dp;
+		prd->setParameters(p);
+		moptWindow->locomotionManager->locomotionEngine->energyFunction->addGradientTo(g_p, m);
+		p[i] = pVal - dp;
+		prd->setParameters(p);
+		moptWindow->locomotionManager->locomotionEngine->energyFunction->addGradientTo(g_m, m);
+		p[i] = pVal;
+		prd->setParameters(p);
+
+		dgdpi = (g_p - g_m) / (2 * dp);
+
+		dmdp.col(i) = solver.solve(dgdpi) * -1;
+	}
+
+}
+
+void RobotDesignerApp::test_dmdp_Jacobian() {
+	dVector m; moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
+
+	//dm/dp, the analytic version. 
+	MatrixNxM dmdp;	compute_dmdp_Jacobian(m, p, dmdp);
+
+	//Now estimate this jacobian with finite differences...
+	MatrixNxM dmdp_FD;
+	dVector m_initial, m_m, m_p;
+	resize(dmdp_FD, m.size(), p.size());
+	double dp = 0.001;
+	moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_initial);
+	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
+	for (uint i = 0; i < p.size(); i++) {
+		resize(m_m, m.size());
+		resize(m_p, m.size());
+
+		double pVal = p[i];
+		p[i] = pVal + dp;
+		prd->setParameters(p);
+		//now we must solve this thing a loooot...
+
+		moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
+		for (int j = 0; j < 300; j++)
+			moptWindow->runMOPTStep();
+
+		moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_m);
+		p[i] = pVal - dp;
+		prd->setParameters(p);
+		moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
+		for (int j = 0; j < 300; j++)
+			moptWindow->runMOPTStep();
+		moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_p);
+
+		moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
+		p[i] = pVal;
+		prd->setParameters(p);
+
+		dmdp_FD.col(i) = (m_p - m_m) / (2 * dp);
+	}
+
+	print("../out/dmdp.m", dmdp);
+	print("../out/dmdp_FD.m", dmdp_FD);
+}
+
+void RobotDesignerApp::testOptimizeDesign() {
+	dVector m; moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
+	MatrixNxM dmdp; compute_dmdp_Jacobian(m, p, dmdp);
+
+	//If we have some objective O, expressed as a function of m, then dO/dp = dO/dm * dm/dp
+	dVector dOdm;
+	dVector dOdp;
+	resize(dOdm, m.size());
+	resize(dOdp, p.size());
+
+	moptWindow->locomotionManager->locomotionEngine->energyFunction->objectives[11]->addGradientTo(dOdm, m);
+
+	dOdp = dmdp.transpose() * dOdm;
+
+	Logger::consolePrint("dOdp[0]: %lf\n", dOdp[0]);
+
+	double len = dOdp.norm();
+	if (len > 0.01)
+		dOdp = dOdp / len * 0.01;
+
+	Logger::consolePrint("p[0] before: %lf\n", p[0]);
+
+	for (uint i = 0; i < p.size(); i++)
+		p[i] -= dOdp[i];
+	Logger::consolePrint("p[0] after: %lf\n", p[0]);
+	prd->setParameters(p);
+}
+
 
