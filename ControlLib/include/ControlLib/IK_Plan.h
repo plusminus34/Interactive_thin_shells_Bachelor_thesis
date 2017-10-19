@@ -3,7 +3,7 @@
 #include <MathLib/MathLib.h>
 #include <MathLib/P3D.h>
 #include <MathLib/V3D.h>
-#include <MathLib/mathLib.h>
+#include <MathLib/MathLib.h>
 #include <MathLib/Trajectory.h>
 #include <ControlLib/Robot.h>
 #include <ControlLib/GeneralizedCoordinatesRobotRepresentation.h>

@@ -22,26 +22,28 @@ else()
 endif()
 
 # F2CLIBS
-find_library(F2CLIBS_I77
-  NAMES 
-    libI77
-  HINTS 
-    /usr/local/libs/
-    ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/F2CLIBS/ReleaseI77
-)
-find_library(F2CLIBS_F77
-  NAMES 
-    libF77
-  HINTS 
-    /usr/local/libs/
-    ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/F2CLIBS/ReleaseF77
-)
-set(F2CLIBS_LIBRARIES ${F2CLIBS_I77} ${F2CLIBS_F77})
-if(F2CLIBS_LIBRARIES)
-  message(STATUS "Found F2CLIBS libraries:" ${F2CLIBS_LIBRARIES})
-else()
-  message(FATAL_ERROR "Could not find F2CLIBS libraries.")
-endif()
+# find_library(F2CLIBS_I77
+#   NAMES 
+#     libI77
+#   HINTS 
+#     /usr/lib/
+#     /usr/lib/x86_64-linux-gnu/
+#     /usr/local/libs/
+#     ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/F2CLIBS/ReleaseI77
+# )
+# find_library(F2CLIBS_F77
+#   NAMES 
+#     libF77
+#   HINTS 
+#     /usr/local/libs/
+#     ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/F2CLIBS/ReleaseF77
+# )
+# set(F2CLIBS_LIBRARIES ${F2CLIBS_I77} ${F2CLIBS_F77})
+# if(F2CLIBS_LIBRARIES)
+#   message(STATUS "Found F2CLIBS libraries:" ${F2CLIBS_LIBRARIES})
+# else()
+#   message(FATAL_ERROR "Could not find F2CLIBS libraries.")
+# endif()
 
 # CLAPACK
 find_library(CLAPACK_LIBRARIES
@@ -89,7 +91,7 @@ endif()
 
 # TRY TO FIND THE LIBRARIES
 set(OOQP_LIBS_LIST
-  ooqpgensparse ooqpsparse ooqpgondzio ooqpbase MA27
+  ooqpgensparse ooqpsparse ooqpgondzio ooqpbase ma27
 )
 
 set(OOQP_FOUND_LIBS TRUE)
@@ -101,7 +103,9 @@ foreach(LIB ${OOQP_LIBS_LIST})
 
   find_library(OOQP_LIB_${LIB}
     NAMES ${LIB}
-    HINTS /usr/local/libs/ ${PROJECT_SOURCE_DIR}/../../libs/thirdPartyCode/OOQP/lib/
+    HINTS 
+      /usr/local/libs/ 
+      ${PROJECT_SOURCE_DIR}/../../libs/thirdPartyCode/OOQP/lib/
   )
   if(OOQP_LIB_${LIB})
     set(OOQP_LIBRARIES ${OOQP_LIBRARIES} ${OOQP_LIB_${LIB}})

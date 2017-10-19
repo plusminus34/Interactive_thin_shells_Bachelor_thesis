@@ -20,7 +20,8 @@ else (ODE_INCLUDE_DIRS AND ODE_LIBRARIES)
 
     # Find include dir
     find_path(ODE_INCLUDE_DIRS ode/ode.h
-        HINTS 
+        HINTS
+	        /usr/local/include/
             ${PC_ODE_INCLUDEDIR}
             ${PROJECT_SOURCE_DIR}/../../libs/thirdPartyCode/ode-0.13/include
         PATHS 
@@ -29,7 +30,7 @@ else (ODE_INCLUDE_DIRS AND ODE_LIBRARIES)
 
     set(ODE_LIBS_LIST 
         ode 
-        ode_static_release
+        # ode_static_release
     )
 
     foreach(LIB ${ODE_LIBS_LIST})
@@ -38,6 +39,7 @@ else (ODE_INCLUDE_DIRS AND ODE_LIBRARIES)
             NAMES ${LIB}
             HINTS 
                 ${PC_ODE_LIBDIR}
+				/usr/local/lib/
                 ${PROJECT_SOURCE_DIR}/../../libs
                 ${PROJECT_SOURCE_DIR}/../../libs/thirdPartyCode/ode-0.13/lib/ReleaseDLL
         )

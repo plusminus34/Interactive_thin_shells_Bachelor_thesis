@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Eigen/dense>
-#include <Eigen/sparse>
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include <Eigen/Core>
 #include <Eigen/SparseCore>
 

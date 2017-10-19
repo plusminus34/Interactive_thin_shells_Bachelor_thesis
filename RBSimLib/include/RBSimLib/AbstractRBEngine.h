@@ -3,9 +3,9 @@
 
 #include <MathLib/MathLib.h>
 #include <Utils/Utils.h>
-#include <RBSimLib\RigidBody.h>
-#include <RBSimLib\Joint.h>
-#include <RBSimLib\ContactForce.h>
+#include <RBSimLib/RigidBody.h>
+#include <RBSimLib/Joint.h>
+#include <RBSimLib/ContactForce.h>
 #include <Utils/Utils.h>
 
 /*--------------------------------------------------------------------------------------------------------------------------------------------*

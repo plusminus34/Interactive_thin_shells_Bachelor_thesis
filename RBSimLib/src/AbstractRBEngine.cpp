@@ -3,12 +3,12 @@
 #include <GUILib/GLUtils.h>
 #include <GUILib/GLContentManager.h>
 
-#include <RBSimLib\AbstractRBEngine.h>
-#include <RBSimLib\RBUtils.h>
-#include <RBSimLib\BallAndSocketJoint.h>
-#include <RBSimLib\HingeJoint.h>
-#include <RBSimLib\UniversalJoint.h>
-#include <RBSimLib\FixedJoint.h>
+#include <RBSimLib/AbstractRBEngine.h>
+#include <RBSimLib/RBUtils.h>
+#include <RBSimLib/BallAndSocketJoint.h>
+#include <RBSimLib/HingeJoint.h>
+#include <RBSimLib/UniversalJoint.h>
+#include <RBSimLib/FixedJoint.h>
 
 AbstractRBEngine::AbstractRBEngine(void){
 }
