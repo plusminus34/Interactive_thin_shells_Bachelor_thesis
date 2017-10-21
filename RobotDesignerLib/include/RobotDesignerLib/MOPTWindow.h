@@ -41,7 +41,6 @@ public:
 	enum OPT_OPTIONS {
 		GRF_OPT = 0,
 		GRF_OPT_V2,
-		GRF_OPT_V3,
 		IP_OPT,
 		IP_OPT_V2
 	};
