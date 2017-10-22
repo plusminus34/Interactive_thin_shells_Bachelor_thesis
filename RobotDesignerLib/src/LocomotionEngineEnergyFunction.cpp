@@ -1,36 +1,5 @@
 #include <RobotDesignerLib/LocomotionEngineEnergyFunction.h>
 
-#include <RobotDesignerLib/MPO_SmoothCOMTrajectories.h>
-#include <RobotDesignerLib/MPO_DynamicStabilityObjective.h>
-#include <RobotDesignerLib/MPO_SmoothStanceLegMotionObjective.h>
-#include <RobotDesignerLib/MPO_StanceLegMotionRegularizer.h>
-#include <RobotDesignerLib/MPO_COMTravelObjective.h>
-#include <RobotDesignerLib/MPO_FeetSlidingObjective.h>
-#include <RobotDesignerLib/MPO_FeetPathSmoothnessObjective.h>
-#include <RobotDesignerLib/MPO_BarycentricWeightsRegularizerObjective.h>
-#include <RobotDesignerLib/MPO_RobotStateRegularizer.h>
-#include <RobotDesignerLib/MPO_RobotCOMObjective.h>
-#include <RobotDesignerLib/MPO_RobotEndEffectorsObjective.h>
-#include <RobotDesignerLib/MPO_PeriodicRobotStateTrajectoriesObjective.h>
-#include <RobotDesignerLib/MPO_RobotTurningObjective.h>
-#include <RobotDesignerLib/MPO_SmoothRobotMotionTrajectories.h>
-#include <RobotDesignerLib/MPO_ForceAccelObjective.h>
-#include <RobotDesignerLib/MPO_TorqueAngularAccelObjective.h>
-#include <RobotDesignerLib/MPO_RobotCOMOrientationsObjective.h>
-#include <RobotDesignerLib/MPO_COMTurningObjective.h>
-#include <RobotDesignerLib/MPO_GRFSoftConstraints.h>
-#include <RobotDesignerLib/MPO_NonLimbMotionRegularizer.h>
-#include <RobotDesignerLib/MPO_NonLimbSmoothMotionObjective.h>
-#include <RobotDesignerLib/MPO_RobotStateTransitionRegularizer.h>
-#include <RobotDesignerLib/MPO_PseudoLimbLengthConstraint.h>
-#include <RobotDesignerLib/MPO_PseudoPeriodicEECOMPoseConstraint.h>
-#include <RobotDesignerLib/MPO_EEPoseOffsetConstraintToInitial.h>
-#include <RobotDesignerLib/MPO_COMOrientationFluctuationRegularizer.h>
-
-//TODO: should change IP - based mopt to use additional dofs of body rotation, and then have
-//the objective that matches those to robot state, just the way com dofs are matched to robot's com...
-
-
 LocomotionEngine_EnergyFunction::LocomotionEngine_EnergyFunction(LocomotionEngineMotionPlan* mp){
 	theMotionPlan = mp;
 	regularizer = 1;
@@ -43,58 +12,46 @@ LocomotionEngine_EnergyFunction::~LocomotionEngine_EnergyFunction(void){
 		delete objectives[i];
 }
 
-void LocomotionEngine_EnergyFunction::testIndividualGradient(dVector& params)
-{
-	vector<double> origWeights;
-	for (auto obj : objectives)
-	{
+void LocomotionEngine_EnergyFunction::testIndividualGradient(dVector& params){
+	DynamicArray<double> origWeights;
+	for (auto obj : objectives){
 		origWeights.push_back(obj->weight);
 		obj->weight = 0;
 	}
 
-	for (int i = 0; i < (int)objectives.size(); i++)
-	{
+	for (int i = 0; i < (int)objectives.size(); i++){
 		if (i > 0)
 			objectives[i - 1]->weight = 0;
 		objectives[i]->weight = origWeights[i];
-
-		if (objectives[i]->description != "GRF bound constraints") continue;
 
 		Logger::logPrint("\n----------- Testing objective %s -------------\n", objectives[i]->description.c_str());
 		Logger::print("\n----------- Testing objective %s -------------\n", objectives[i]->description.c_str());
 		testGradientWithFD(params);
 	}
 
-	for (int i = 0; i < (int)objectives.size(); i++)
-	{
+	for (int i = 0; i < (int)objectives.size(); i++){
 		objectives[i]->weight = origWeights[i];
 	}
 }
 
-void LocomotionEngine_EnergyFunction::testIndividualHessian(dVector& params)
-{
-	vector<double> origWeights;
-	for (auto obj : objectives)
-	{
+void LocomotionEngine_EnergyFunction::testIndividualHessian(dVector& params){
+	DynamicArray<double> origWeights;
+	for (auto obj : objectives){
 		origWeights.push_back(obj->weight);
 		obj->weight = 0;
 	}
 
-	for (int i = 0; i < (int)objectives.size(); i++)
-	{
+	for (int i = 0; i < (int)objectives.size(); i++){
 		if (i > 0)
 			objectives[i - 1]->weight = 0;
 		objectives[i]->weight = origWeights[i];
-
-		if (objectives[i]->description != "GRF bound constraints") continue;
 
 		Logger::print("\n----------- Testing objective %s -------------\n", objectives[i]->description.c_str());
 		Logger::logPrint("\n----------- Testing objective %s -------------\n", objectives[i]->description.c_str());
 		testHessianWithFD(params);
 	}
 
-	for (int i = 0; i < (int)objectives.size(); i++)
-	{
+	for (int i = 0; i < (int)objectives.size(); i++){
 		objectives[i]->weight = origWeights[i];
 	}
 }
@@ -175,11 +132,6 @@ void LocomotionEngine_EnergyFunction::setCurrentBestSolution(const dVector& p){
 			double w = objectives[i]->weight;
 			double v = objectives[i]->computeValue(p);
 			Logger::logPrint("%s: %lf (weight: %lf)\n", objectives[i]->description.c_str(), v, w);
-
-			if (objectives[i]->description == "torque angular acceleration objective")
-			{
-				static_cast<MPO_TorqueAngularAccelObjective*>(objectives[i])->updateDummyMatrices();
-			}
 		}
 	}
 }

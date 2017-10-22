@@ -44,7 +44,6 @@ int LocomotionEngine_Constraints::getEqualityConstraintCount() {
 		}
 	}
 
-
 	//if we want a periodic motion, add appropriate constraints for all the joint angles...
 	if (theMotionPlan->wrapAroundBoundaryIndex > -1){
 		periodicBoundaryConstraintsIndex = nEqConstraints;

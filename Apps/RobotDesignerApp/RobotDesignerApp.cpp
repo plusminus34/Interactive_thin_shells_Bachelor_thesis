@@ -6,11 +6,20 @@
 #include <MathLib/MathLib.h>
 #include <ControlLib/SimpleLimb.h>
 
+//make a bunch of robot templates:
+//cassie
+//three legged robot
+//a strider robot
+//a dog robot
+
 //clean a bit all the managers, objectives and the manner in which the different types of MOPT modes are selected...
 //perhaps make the non-mesh version of the renderer prettier... it will allow us to test the code before (or even if it wont happen that) the visual designer part is integrated.
 //everything needs to happen via rbs files. The visual designer will output an rbs file which gets loaded the normal way, then it knows how to sync back changes with the rbs, and that's all...
 //the constraint system should be much more modular, with each type of MOPT adding its own constraints to a global list
+//will need to add the option to save/load ffps, mopt, rbs/robotdesigner files, etc
 
+
+//try a flying trot gait for the robot. Try also to match the new robot gait capabilities (Laikago) maybe with a slightly more conservative gait (some overlap in stance for all 4) as well as shorter gait duration overall
 //make a Cassie model and simulation, especially once limb collision are enabled. A little cassie-like robot could also be a good target for Siggraph, maybe...
 //make a base robot design window class that does nothing, only loads rbs and returns it
 //have a bool display design window, such that when it ain't, it shows full screen robot
