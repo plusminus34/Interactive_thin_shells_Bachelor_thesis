@@ -6,7 +6,9 @@
 #include <RBSimLib/ODERBEngine.h>
 #include <ControlLib/GeneralizedCoordinatesRobotRepresentation.h>
 
-RBSimApp::RBSimApp() {
+RBSimApp::RBSimApp(bool maximizeWindows)
+    : GLApplication(maximizeWindows)
+{
 	setWindowTitle("Test Application for RBSim");
 
 	drawCDPs = false;

@@ -25,7 +25,7 @@ private:
 
 public:
 	// constructor
-	RBSimApp();
+    RBSimApp(bool maximizeWindows = true);
 	// destructor
 	virtual ~RBSimApp(void);
 	// Run the App tasks

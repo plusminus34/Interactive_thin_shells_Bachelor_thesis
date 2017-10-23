@@ -6,19 +6,9 @@
 #include <GUILib/GLTexture.h>
 #include <GUILib/GLShaderMaterial.h>
 
-void moveWindowToPrimaryMonitor(GLFWwindow *window) {
-    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
-    int x, y, w, h, refreshRate;
-    glfwGetWindowPos(window, &x, &y);
-    glfwGetWindowSize(window, &w, &h);
-    refreshRate = 60;
-    glfwSetWindowMonitor(window, primaryMonitor, x, y, w, h, refreshRate);
-}
-
-
 GLApplication* glAppInstance = NULL;
 
-GLApplication::GLApplication(int x, int y, int w, int h){
+GLApplication::GLApplication(int x, int y, int w, int h, bool maximizeWindows){
 	GLApplication::setGLAppInstance(this);
 
 	if (!glfwInit()) {
@@ -27,10 +17,10 @@ GLApplication::GLApplication(int x, int y, int w, int h){
 		exit(0);
 	}
 
-	init(x, y, w, h, false);
+    init(x, y, w, h, maximizeWindows);
 }
 
-GLApplication::GLApplication() {
+GLApplication::GLApplication(bool maximizeWindows) {
 	GLApplication::setGLAppInstance(this);
 
 #ifdef WIN32
@@ -39,7 +29,6 @@ GLApplication::GLApplication() {
 	GetCurrentDirectory(MAX_PATH, pwd);
 	std::cout << "Working directory: " << pwd << std::endl;
 #endif // WIN32
-
 
 	if (!glfwInit()) {
 		// An error occured
@@ -54,7 +43,7 @@ GLApplication::GLApplication() {
     int borderRight = 4;
     int borderBottom = 60;
 
-    init(borderLeft, borderTop, (mode->width - borderLeft - borderRight), (mode->height - borderTop - borderBottom), false);
+    init(borderLeft, borderTop, (mode->width - borderLeft - borderRight), (mode->height - borderTop - borderBottom), maximizeWindows);
 }
 
 void GLFW_error(int error, const char* description)
@@ -62,16 +51,14 @@ void GLFW_error(int error, const char* description)
     fputs(description, stderr);
 }
 
-void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
-//    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-//    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-//    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_FALSE);
-//    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+void GLApplication::init(int x, int y, int w, int h, bool maximizeWindows) {
 
-//    glfwWindowHint(GLFW_SAMPLES, 4);
-
-    w = 800; h = 800;
-    x = 600; y = 0;
+    // Ignore window position and size if maximizeWindow is requested
+    if(maximizeWindows)
+    {
+        x = 600; y = 0;
+        w = 800; h = 800;
+    }
 
     glfwSetErrorCallback(GLFW_error);
 

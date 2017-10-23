@@ -64,7 +64,7 @@ protected:
 	
 	// Draw information regarding the frame rate and performance
 	void drawFPS(double timeSinceLastUpdate, double percentageOfTimeSpentProcessing);
-	void init(int x, int y, int w, int h, bool maximizeWindow);
+    void init(int x, int y, int w, int h, bool maximizeWindows);
 
 protected:
 	bool slowMo = false;
@@ -77,8 +77,8 @@ protected:
 
 public:
 	// constructors
-	GLApplication(int x, int y, int w, int h);
-	GLApplication();
+    GLApplication(int x, int y, int w, int h, bool maximizeWindows = false);
+    GLApplication(bool maximizeWindows = false);
 
 	// destructor
 	virtual ~GLApplication(void);
