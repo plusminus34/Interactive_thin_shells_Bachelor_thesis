@@ -21,12 +21,11 @@ LocomotionEngineManagerIP::LocomotionEngineManagerIP(Robot* robot, FootFallPatte
 	//for boundary conditions, make sure initial and final conditions match
 	motionPlan->setPeriodicBoundaryConditionsToTimeSample(0);
 
-	locomotionEngine = new LocomotionEngine(motionPlan);
+	createSolverComponents();
 }
 
 LocomotionEngineManagerIP::~LocomotionEngineManagerIP(){
 	delete motionPlan;
-	delete locomotionEngine;
 }
 
 /*****************************************************************************************/
@@ -44,7 +43,7 @@ LocomotionEngineManagerIPv1::~LocomotionEngineManagerIPv1() {
 }
 
 void LocomotionEngineManagerIPv1::setupObjectives() {
-	LocomotionEngine_EnergyFunction* ef = locomotionEngine->energyFunction;
+	LocomotionEngine_EnergyFunction* ef = energyFunction;
 	for (uint i = 0; i<ef->objectives.size(); i++)
 		delete ef->objectives[i];
 	ef->objectives.clear();
@@ -118,7 +117,7 @@ LocomotionEngineManagerIPv2::~LocomotionEngineManagerIPv2() {
 }
 
 void LocomotionEngineManagerIPv2::setupObjectives() {
-	LocomotionEngine_EnergyFunction* ef = locomotionEngine->energyFunction;
+	LocomotionEngine_EnergyFunction* ef = energyFunction;
 	for (uint i = 0; i<ef->objectives.size(); i++)
 		delete ef->objectives[i];
 	ef->objectives.clear();

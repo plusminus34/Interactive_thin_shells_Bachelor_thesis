@@ -12,11 +12,11 @@
 LocomotionEngineManagerGRF::LocomotionEngineManagerGRF() {
 }
 
-LocomotionEngineManagerGRF::LocomotionEngineManagerGRF(Robot* robot, FootFallPattern* footFallPattern, int nSamplePoints) {
+LocomotionEngineManagerGRF::LocomotionEngineManagerGRF(Robot* robot, FootFallPattern* ffp, int nSamplePoints) {
 	if (footFallPattern)
 	{
-		this->footFallPattern = footFallPattern;
-		origFootFallPattern = *footFallPattern;
+		this->footFallPattern = ffp;
+		origFootFallPattern = *ffp;
 	}
 	else {
 		this->footFallPattern = &origFootFallPattern;
@@ -31,12 +31,11 @@ LocomotionEngineManagerGRF::LocomotionEngineManagerGRF(Robot* robot, FootFallPat
 
 	motionPlan->frictionCoeff = -1;
 
-	locomotionEngine = new LocomotionEngine(motionPlan);
+	createSolverComponents();
 }
 
 LocomotionEngineManagerGRF::~LocomotionEngineManagerGRF(){
 	delete motionPlan;
-	delete locomotionEngine;
 }
 
 void LocomotionEngineManagerGRF::warmStartMOpt() {
@@ -49,7 +48,7 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 	ObjectiveFunction* robotEEObj = NULL;
 	ObjectiveFunction* robotCOMObj = NULL;
 	ObjectiveFunction* smoothCOMMotionObj = NULL;
-	for (auto obj : locomotionEngine->energyFunction->objectives)
+	for (auto obj : energyFunction->objectives)
 	{
 		if (obj->description == "robot EE objective")
 			robotEEObj = obj;
@@ -98,7 +97,7 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 #endif
 	}
 
-	locomotionEngine->energyFunction->objectives.push_back(new MPO_COMTrajectoryObjective(motionPlan, "intermediate periodic COM trajectory plan", 10000.0, motionPlan->nSamplePoints - 1, 0));
+	energyFunction->objectives.push_back(new MPO_COMTrajectoryObjective(motionPlan, "intermediate periodic COM trajectory plan", 10000.0, motionPlan->nSamplePoints - 1, 0));
 	motionPlan->syncMotionPlanWithFootFallPattern(*footFallPattern);
 	double fLimit = 0;
 	for (int iT = 0; iT < motionPlan->nSamplePoints; iT++)
@@ -149,7 +148,7 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 			motionPlan->endEffectorTrajectories[iEE].tangentGRFBoundValues[iT] = 1000.0;
 		}
 
-	locomotionEngine->energyFunction->regularizer = 0.001;
+	energyFunction->regularizer = 0.001;
 	double lastVal = 0;
 	for (int i = 0; i < 200; i++) {
 		double val = runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
@@ -188,13 +187,13 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 	exit(0);
 #endif
 
-	locomotionEngine->energyFunction->objectives.pop_back();
+	energyFunction->objectives.pop_back();
 	robotEEObj->weight = robotEEWeight;
 	robotCOMObj->weight = robotCOMWeight;
 	smoothCOMMotionObj->weight = smoothCOMMotionWeight;
 
 
-	locomotionEngine->energyFunction->regularizer = 0.5;
+	energyFunction->regularizer = 0.5;
 
 	//	return;
 
@@ -257,12 +256,12 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 LocomotionEngineManagerGRFv1::LocomotionEngineManagerGRFv1() : LocomotionEngineManagerGRF(){
 }
 
-LocomotionEngineManagerGRFv1::LocomotionEngineManagerGRFv1(Robot* robot, FootFallPattern* footFallPattern, int nSamplePoints) : LocomotionEngineManagerGRF(robot, footFallPattern, nSamplePoints) {
+LocomotionEngineManagerGRFv1::LocomotionEngineManagerGRFv1(Robot* robot, FootFallPattern* ffp, int nSamplePoints) : LocomotionEngineManagerGRF(robot, ffp, nSamplePoints) {
 	setupObjectives();
 }
 
 void LocomotionEngineManagerGRFv1::setupObjectives() {
-	LocomotionEngine_EnergyFunction* ef = locomotionEngine->energyFunction;
+	LocomotionEngine_EnergyFunction* ef = energyFunction;
 	for (uint i = 0; i < ef->objectives.size(); i++)
 		delete ef->objectives[i];
 	ef->objectives.clear();
@@ -301,13 +300,13 @@ LocomotionEngineManagerGRFv1::~LocomotionEngineManagerGRFv1(){
 LocomotionEngineManagerGRFv2::LocomotionEngineManagerGRFv2() : LocomotionEngineManagerGRF() {
 }
 
-LocomotionEngineManagerGRFv2::LocomotionEngineManagerGRFv2(Robot* robot, FootFallPattern* ffp, int nSamplePoints) : LocomotionEngineManagerGRF(robot, footFallPattern, nSamplePoints) {
+LocomotionEngineManagerGRFv2::LocomotionEngineManagerGRFv2(Robot* robot, FootFallPattern* ffp, int nSamplePoints) : LocomotionEngineManagerGRF(robot, ffp, nSamplePoints) {
 	setupObjectives();
-	locomotionEngine->useObjectivesOnly = true;
+	useObjectivesOnly = true;
 }
 
 void LocomotionEngineManagerGRFv2::setupObjectives() {
-	LocomotionEngine_EnergyFunction* ef = locomotionEngine->energyFunction;
+	LocomotionEngine_EnergyFunction* ef = energyFunction;
 
 	for (uint i = 0; i < ef->objectives.size(); i++)
 		delete ef->objectives[i];

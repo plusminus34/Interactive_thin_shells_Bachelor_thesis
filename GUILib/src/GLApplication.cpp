@@ -150,12 +150,11 @@ void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
 	material->readFromFile("../data/shaders/radialGradient/radialGradient.mat");
 	GLContentManager::addShaderMaterial(material->getMaterialName().c_str(), material);
 
-
 	setupMainMenu();
 
 #if defined(_WIN32) || defined(__linux__)
 	float mPixelRatio = menuScreen->pixelRatio();
-	glfwSetWindowSize(glfwWindow, w / mPixelRatio, h / mPixelRatio);
+	glfwSetWindowSize(glfwWindow, (int)(w / mPixelRatio), (int)(h / mPixelRatio));
 #endif
 
 	int width, height;

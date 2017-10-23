@@ -15,7 +15,8 @@
 //probably need to work a bit on body shape/body characteristics
 
 
-
+//no longer remember why this is in place: tangentGRFBoundValues instead of a coulomb-friction-like model... just for warmstarting? Or to avoid coupling in the hessian?
+//fix also the footfall pattern window... it's a bit broken now...
 //clean a bit all the managers, objectives and the manner in which the different types of MOPT modes are selected...
 //perhaps make the non-mesh version of the renderer prettier... it will allow us to test the code before (or even if it wont happen that) the visual designer part is integrated.
 //everything needs to happen via rbs files. The visual designer will output an rbs file which gets loaded the normal way, then it knows how to sync back changes with the rbs, and that's all...
@@ -262,10 +263,11 @@ void RobotDesignerApp::loadToSim(bool initializeMOPT){
 /* ------ load an initial motion plan for the robot ------*/
 
 //now, start MOPT...
+	Logger::consolePrint("MoptWindow loading robot...\n");
 	moptWindow->loadRobot(robot, initialRobotState);
+	Logger::consolePrint("..... successful.\n Warmstarting...\n");
 	warmStartMOPT(initializeMOPT);
 	Logger::consolePrint("Warmstart successful...\n");
-
 	Logger::consolePrint("The robot has %d legs, weighs %lfkgs and is %lfm tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
 }
 
@@ -382,7 +384,7 @@ void RobotDesignerApp::compute_dmdp_Jacobian(dVector& m, DynamicArray<double>& p
 	resize(dgdpi, m.size());
 
 	DynamicArray<MTriplet> triplets;
-	moptWindow->locomotionManager->locomotionEngine->energyFunction->addHessianEntriesTo(triplets, m);
+	moptWindow->locomotionManager->energyFunction->addHessianEntriesTo(triplets, m);
 	dgdm.setFromTriplets(triplets.begin(), triplets.end());
 
 	Eigen::SimplicialLDLT<SparseMatrix, Eigen::Lower> solver;
@@ -398,10 +400,10 @@ void RobotDesignerApp::compute_dmdp_Jacobian(dVector& m, DynamicArray<double>& p
 		double pVal = p[i];
 		p[i] = pVal + dp;
 		prd->setParameters(p);
-		moptWindow->locomotionManager->locomotionEngine->energyFunction->addGradientTo(g_p, m);
+		moptWindow->locomotionManager->energyFunction->addGradientTo(g_p, m);
 		p[i] = pVal - dp;
 		prd->setParameters(p);
-		moptWindow->locomotionManager->locomotionEngine->energyFunction->addGradientTo(g_m, m);
+		moptWindow->locomotionManager->energyFunction->addGradientTo(g_m, m);
 		p[i] = pVal;
 		prd->setParameters(p);
 
@@ -469,7 +471,7 @@ void RobotDesignerApp::testOptimizeDesign() {
 	resize(dOdm, m.size());
 	resize(dOdp, p.size());
 
-	moptWindow->locomotionManager->locomotionEngine->energyFunction->objectives[11]->addGradientTo(dOdm, m);
+	moptWindow->locomotionManager->energyFunction->objectives[11]->addGradientTo(dOdm, m);
 
 	dOdp = dmdp.transpose() * dOdm;
 
