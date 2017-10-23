@@ -20,18 +20,10 @@ public:
 	//this method gets called whenever a new best solution to the objective function is found
 	virtual void setCurrentBestSolution(const dVector& p);
 
-	void setupIPSubObjectives();
-	void setupIPv2SubObjectives();
-	void setupGRFSubObjectives();
-	void setupGRFv2SubObjectives();
-	void setupGRFv3SubObjectives();
-	void setupTransitionSubObjectives();
-
 	void testIndividualGradient(dVector& params);
 	void testIndividualHessian(dVector& params);
 
 	bool printDebugInfo;
-
 
 public:
 	double regularizer;
@@ -42,6 +34,7 @@ private:
 	dVector m_p0;
 	dVector tmpVec;
 
+public:
 	//the energy function operates on a motion plan...
 	LocomotionEngineMotionPlan* theMotionPlan;
 };

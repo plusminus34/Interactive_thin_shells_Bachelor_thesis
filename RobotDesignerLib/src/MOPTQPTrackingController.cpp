@@ -13,6 +13,7 @@ using namespace std;
 // TODO: revisit strategy for early or late contacts
 // TODO: adapt height of swing legs based on terrain
 // TODO: make a robot like this also: http://www.agilityrobotics.com/. 3 dof hip, 1 dof to change leg length, linkage system otherwise...
+// TODO: there are potentially still issues due to conflicting goals: if falling, need to take a longer step in the direction of the fall. This can be achieving by moving the body in that direction too, but that makes the robot fall faster! This is why we need to decouple what the body is doing from what swing limbs are doing, which is now implemented through "swingLimbEndEffectors/QPC_SwingLimbJointAccelerationsObjective" targets, which get mapped directly to joint acceleration targets, and not operational space targets.
 
 
 /**

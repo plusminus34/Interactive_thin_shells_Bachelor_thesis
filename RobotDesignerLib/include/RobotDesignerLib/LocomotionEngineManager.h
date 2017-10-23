@@ -4,6 +4,34 @@
 #include <RobotDesignerLib/LocomotionEngine.h>
 #include <RobotDesignerLib/FootFallPatternViewer.h>
 
+#include <RobotDesignerLib/MPO_PeriodicRobotStateTrajectoriesObjective.h>
+#include <RobotDesignerLib/MPO_SmoothCOMTrajectories.h>
+#include <RobotDesignerLib/MPO_DynamicStabilityObjective.h>
+#include <RobotDesignerLib/MPO_SmoothStanceLegMotionObjective.h>
+#include <RobotDesignerLib/MPO_StanceLegMotionRegularizer.h>
+#include <RobotDesignerLib/MPO_COMTravelObjective.h>
+#include <RobotDesignerLib/MPO_FeetSlidingObjective.h>
+#include <RobotDesignerLib/MPO_FeetPathSmoothnessObjective.h>
+#include <RobotDesignerLib/MPO_BarycentricWeightsRegularizerObjective.h>
+#include <RobotDesignerLib/MPO_RobotStateRegularizer.h>
+#include <RobotDesignerLib/MPO_RobotCOMObjective.h>
+#include <RobotDesignerLib/MPO_RobotEndEffectorsObjective.h>
+#include <RobotDesignerLib/MPO_PeriodicRobotStateTrajectoriesObjective.h>
+#include <RobotDesignerLib/MPO_RobotTurningObjective.h>
+#include <RobotDesignerLib/MPO_SmoothRobotMotionTrajectories.h>
+#include <RobotDesignerLib/MPO_ForceAccelObjective.h>
+#include <RobotDesignerLib/MPO_TorqueAngularAccelObjective.h>
+#include <RobotDesignerLib/MPO_RobotCOMOrientationsObjective.h>
+#include <RobotDesignerLib/MPO_COMTurningObjective.h>
+#include <RobotDesignerLib/MPO_GRFSoftConstraints.h>
+#include <RobotDesignerLib/MPO_NonLimbMotionRegularizer.h>
+#include <RobotDesignerLib/MPO_NonLimbSmoothMotionObjective.h>
+#include <RobotDesignerLib/MPO_RobotStateTransitionRegularizer.h>
+#include <RobotDesignerLib/MPO_PseudoLimbLengthConstraint.h>
+#include <RobotDesignerLib/MPO_PseudoPeriodicEECOMPoseConstraint.h>
+#include <RobotDesignerLib/MPO_EEPoseOffsetConstraintToInitial.h>
+#include <RobotDesignerLib/MPO_COMOrientationFluctuationRegularizer.h>
+
 #define OPT_END_EFFECTORS 0x0001
 #define OPT_COM_POSITIONS 0x0002
 #define OPT_COM_ORIENTATIONS 0x0004
@@ -29,7 +57,8 @@ public:
 	virtual ~LocomotionEngineManager() = 0;
 
 	virtual void warmStartMOpt() = 0;
-	virtual void warmStartMOptGRF();
+	virtual void setupObjectives() = 0;
+
 	virtual double runMOPTStep();
 
 	double runMOPTStep(int optimizationFlags) {

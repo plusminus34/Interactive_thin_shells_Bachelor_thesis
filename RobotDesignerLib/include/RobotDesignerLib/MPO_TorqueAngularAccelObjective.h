@@ -15,8 +15,6 @@ public:
 	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
 	virtual void addGradientTo(dVector& grad, const dVector& p);
 
-	void updateDummyMatrices();
-
 private:
 	bool checkAngleAxisSingularity(Matrix3x3& R);
 

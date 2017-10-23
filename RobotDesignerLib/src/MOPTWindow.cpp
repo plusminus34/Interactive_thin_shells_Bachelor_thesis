@@ -51,7 +51,7 @@ void MOPTWindow::addMenuItems() {
 	}
 
 	glApp->mainMenu->addVariable("check derivatives", moptParams.checkDerivatives);
-	glApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "GRFv3", "IPv1", "IPv2" });
+	glApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "IPv1", "IPv2" });
 
 /*
 	//this is the slider for the phase...
@@ -145,13 +145,11 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	switch (optimizeOption)
 	{
 	case GRF_OPT:
-		locomotionManager = new LocomotionEngineManagerGRF(robot, &footFallPattern, nPoints + 1); break;
+		locomotionManager = new LocomotionEngineManagerGRFv1(robot, &footFallPattern, nPoints + 1); break;
 	case GRF_OPT_V2:
 		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nPoints + 1); break;
-	case GRF_OPT_V3:
-		locomotionManager = new LocomotionEngineManagerGRFv3(robot, &footFallPattern, nPoints + 1); break;
 	case IP_OPT:
-		locomotionManager = new LocomotionEngineManagerIP(robot, &footFallPattern, nPoints + 1); break;
+		locomotionManager = new LocomotionEngineManagerIPv1(robot, &footFallPattern, nPoints + 1); break;
 	case IP_OPT_V2:
 		locomotionManager = new LocomotionEngineManagerIPv2(robot, &footFallPattern, nPoints + 1); break;
 	default:
