@@ -57,7 +57,7 @@ int main() {
      * To the window add a label and a slider widget.
      */
 
-    Screen app{{1024 / 2, 768 / 2}, "NanoGUI Test"};
+    Screen app{{1024 / 2, 768 / 2}, "NanoGUI Test", true, true, 8, 8, 24, 8, 0, 3, 3};
 
     Window window{&app, ""};
     window.setPosition({15, 15});

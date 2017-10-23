@@ -39,31 +39,42 @@ GLApplication::GLApplication() {
 
 	const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
-	int borderLeft = 4;
-	int borderTop = 42;
-	int borderRight = 4;
-	int borderBottom = 60;
+    int borderLeft = 4;
+    int borderTop = 42;
+    int borderRight = 4;
+    int borderBottom = 60;
 
-	init(borderLeft, borderTop, (mode->width - borderLeft - borderRight), (mode->height - borderTop - borderBottom), true);
+    init(borderLeft, borderTop, (mode->width - borderLeft - borderRight), (mode->height - borderTop - borderBottom), false);
+}
+
+void GLFW_error(int error, const char* description)
+{
+    fputs(description, stderr);
 }
 
 void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
-//	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-//	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-//	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-//	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+//    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+//    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+//    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_FALSE);
+//    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
 
-	glfwWindowHint(GLFW_SAMPLES, 4);
+//    glfwWindowHint(GLFW_SAMPLES, 4);
 
-	/* Create a windowed mode window and its OpenGL context */
-	glfwWindow = glfwCreateWindow(w, h, "", NULL, NULL);
+    w = 800; h = 800;
+    x = 600; y = 0;
+
+    glfwSetErrorCallback(GLFW_error);
+
+    /* Create a windowed mode window and its OpenGL context */
+    glfwWindow = glfwCreateWindow(w, h, "", NULL, NULL);
+
 	if (!glfwWindow) {
 		Logger::print("Could not initialize GLFW window\n");
 		glfwTerminate();
-		exit(0);
-	}
-	setWindowTitle("Simulation And Control Playground");
-	glfwSetWindowPos(glfwWindow, x, y);
+        exit(0);
+    }
+    setWindowTitle("Simulation And Control Playground");
+    glfwSetWindowPos(glfwWindow, x, y);
 
 	/* Make the window's context current */
 	glfwMakeContextCurrent(glfwWindow);
@@ -150,12 +161,11 @@ void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
 	material->readFromFile("../data/shaders/radialGradient/radialGradient.mat");
 	GLContentManager::addShaderMaterial(material->getMaterialName().c_str(), material);
 
-
-	setupMainMenu();
+    setupMainMenu();
 
 #if defined(_WIN32) || defined(__linux__)
-	float mPixelRatio = menuScreen->pixelRatio();
-	glfwSetWindowSize(glfwWindow, w / mPixelRatio, h / mPixelRatio);
+    float mPixelRatio = menuScreen->pixelRatio();
+    glfwSetWindowSize(glfwWindow, w / mPixelRatio, h / mPixelRatio);
 #endif
 
 	int width, height;
@@ -171,13 +181,16 @@ void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
 
 	camera = new GLTrackingCamera();
 
-
+    glfwSetWindowPos(glfwWindow, 600, 0);
+    glfwSetWindowPos(menuScreen->glfwWindow(), 0, 0);
 }
 
 void GLApplication::setupMainMenu() {
-	// Create a nanogui screen and pass the glfw pointer to initialize
-	menuScreen = new nanogui::Screen();
-	menuScreen->initialize(glfwWindow, true);
+
+    // Let's make nano gui!
+    nanogui::init();
+
+    menuScreen = new nanogui::Screen({600, 800}, "NanoGUI Test", true, false, 8, 8, 24, 8, 0, 3, 3);
 
 	mainMenu = new nanogui::FormHelper(menuScreen);
 
@@ -343,15 +356,14 @@ GLApplication::~GLApplication(void){
 
 void GLApplication::runMainLoop() {
 	// Main loop (repeated while window is not closed and [ESC] is not pressed)
-	while (!glfwWindowShouldClose(glfwWindow)){
+    while (!glfwWindowShouldClose(glfwWindow) && !glfwWindowShouldClose(menuScreen->glfwWindow())){
 		double timeSpentProcessing = 0;
 		fpsTimer.restart();
 		if (appIsRunning) process();
 		timeSpentProcessing = fpsTimer.timeEllapsed();
 
-		draw();
-		mainMenu->refresh();
-		menuScreen->drawWidgets();
+        glfwMakeContextCurrent(glfwWindow);
+        draw();
 
 		//wait until the required ammount of time has passed (respect the desired FPS requirement)
 		if (waitForFrameRate)
@@ -360,12 +372,25 @@ void GLApplication::runMainLoop() {
 		if (showFPS)
 			drawFPS(fpsTimer.timeEllapsed(), timeSpentProcessing / fpsTimer.timeEllapsed());
 
-
 		/* Swap front and back buffers */
 		glfwSwapBuffers(glfwWindow);
 
+        // draw the nanogui
+        if(menuScreen)
+        {
+            glfwMakeContextCurrent(menuScreen->glfwWindow());
+
+            glClearColor(0,0,255,1);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+            mainMenu->refresh();
+            menuScreen->drawWidgets();
+
+            glfwSwapBuffers(menuScreen->glfwWindow());
+        }
+
 		/* Poll for and process events */
-		glfwPollEvents();
+        glfwPollEvents();
 	}
 }
 
@@ -557,43 +582,43 @@ void GLApplication::draw(){
 
 	glEnable(GL_DEPTH_TEST); //Enable depth testing
 
-	if (camera){
-		if (followCameraTarget)
-			camera->followTarget(getCameraTarget());
-		camera->applyCameraTransformations();
-	}else
-		gluLookAt(-1, 0, 3, 0, 0, 0, 0, 1, 0);
+    if (camera){
+        if (followCameraTarget)
+            camera->followTarget(getCameraTarget());
+        camera->applyCameraTransformations();
+    }else
+        gluLookAt(-1, 0, 3, 0, 0, 0, 0, 1, 0);
 
-	setupLights();
+    setupLights();
 
-	if (showDesignEnvironmentBox) {
-		glColor4d(1, 1, 1, 1);
-		glDisable(GL_LIGHTING);
-		drawDesignEnvironmentBox(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
-	}
+    if (showDesignEnvironmentBox) {
+        glColor4d(1, 1, 1, 1);
+        glDisable(GL_LIGHTING);
+        drawDesignEnvironmentBox(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
+    }
 
-	if (showGroundPlane){
-		glColor4d(1,1,1,1);
-		glDisable(GL_LIGHTING);
-		drawGround(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
-	}
+    if (showGroundPlane){
+        glColor4d(1,1,1,1);
+        glDisable(GL_LIGHTING);
+        drawGround(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
+    }
 
-	drawScene();
+    drawScene();
 
-	if (showMenus) {
-		//update the orientation of the camera orientation visualized in the menu...
-		if (camera) {
-			//transformation goes from world to camera to openGL coordinate system
-			Quaternion glRelativeCamRot = camera->getRotationToOpenGLCoordinateSystem() * camera->getCameraRotation().getComplexConjugate();
+    if (showMenus) {
+        //update the orientation of the camera orientation visualized in the menu...
+        if (camera) {
+            //transformation goes from world to camera to openGL coordinate system
+            Quaternion glRelativeCamRot = camera->getRotationToOpenGLCoordinateSystem() * camera->getCameraRotation().getComplexConjugate();
 
-			cameraRot[0] = (float)glRelativeCamRot.v[0];
-			cameraRot[1] = (float)glRelativeCamRot.v[1];
-			cameraRot[2] = (float)glRelativeCamRot.v[2];
-			cameraRot[3] = (float)glRelativeCamRot.s;
-		}
-	}
+            cameraRot[0] = (float)glRelativeCamRot.v[0];
+            cameraRot[1] = (float)glRelativeCamRot.v[1];
+            cameraRot[2] = (float)glRelativeCamRot.v[2];
+            cameraRot[3] = (float)glRelativeCamRot.s;
+        }
+    }
 
-	drawAuxiliarySceneInfo();
+    drawAuxiliarySceneInfo();
 
 	if (showConsole) consoleWindow->draw();
 

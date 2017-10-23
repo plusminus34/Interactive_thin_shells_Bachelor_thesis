@@ -138,7 +138,8 @@ int main(void)
     // Let's make nano gui!
     nanogui::init();
 
-    nanogui::Screen *app = new nanogui::Screen({200, 400}, "NanoGUI Test", true, false, 8, 8, 24, 8, 0, 3, 3);
+    nanogui::Screen *app = new nanogui::Screen({200, 200}, "NanoGUI Test", true, false, 8, 8, 24, 8, 0, 3, 3);
+
 
     nanogui::FormHelper *mainMenu = new nanogui::FormHelper(app);
     mainMenu->addWindow(Eigen::Vector2i(0, 0), "Main Menu");
@@ -150,6 +151,11 @@ int main(void)
 
     app->drawAll();
     app->setVisible(true);
+
+//    app->setPosition(Eigen::Vector2i(100,100));
+
+    glfwSetWindowPos(app->glfwWindow(), 0, 0);
+    glfwSetWindowPos(windowGL2, 600, 0);
 
     while (!glfwWindowShouldClose(app->glfwWindow()) && !glfwWindowShouldClose(windowGL2))
     {

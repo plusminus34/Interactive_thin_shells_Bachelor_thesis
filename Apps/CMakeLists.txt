@@ -13,7 +13,9 @@ endif()
 
 add_subdirectory(NanoGuiTestApp)
 add_subdirectory(NanoGuiGL2App)
+add_subdirectory(GLApplicationExampleApp)
 add_subdirectory(NanoGUIExampleApp)
+
 add_subdirectory(OptimizationDemoApp)
 add_subdirectory(FireworksApp)
 add_subdirectory(ShaderTestApp)

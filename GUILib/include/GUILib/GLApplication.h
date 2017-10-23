@@ -23,11 +23,12 @@ public:
 public:
 	// Pointer to glfw window
 	GLFWwindow* glfwWindow;
+//    GLFWwindow* glfwWindowNano;
 
 	bool appIsRunning = false;
 	bool waitForFrameRate = true;
 
-	nanogui::Screen *menuScreen = nullptr;
+    nanogui::Screen *menuScreen = nullptr;
 	nanogui::FormHelper *mainMenu = nullptr;
 	nanogui::Button* playButton = nullptr;
 
