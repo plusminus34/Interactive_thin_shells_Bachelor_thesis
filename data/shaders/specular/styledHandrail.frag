@@ -33,28 +33,28 @@ void main()
 	// Key light
 	{
 		vec3 l = gl_LightSource[0].position.xyz - position;
-		float falloff = 1 - clamp((length(l) - keyLightFalloff.x) / (keyLightFalloff.y - keyLightFalloff.x), 0, 1);
+		float falloff = 1 - clamp((length(l) - keyLightFalloff.x) / (keyLightFalloff.y - keyLightFalloff.x), 0., 1.);
 		
 		l = normalize(l);
 		float ndl = dot(n,l);
 		
 		vec3 r = normalize(2*ndl*n - l);
-		float ndr = pow(clamp(dot(r,v), 0, 1), glossiness);
+		float ndr = pow(clamp(dot(r,v), 0., 1.), glossiness);
 		
-		c += falloff*clamp(ndl,0,1)*keyLightDiffuseColor*diffuseColor + falloff*specularStrength*ndr*keyLightSpecularColor;
+		c += falloff*clamp(ndl, 0., 1.)*keyLightDiffuseColor*diffuseColor + falloff*specularStrength*ndr*keyLightSpecularColor;
 	}
 	// Fill light
 	{
 		vec3 l = gl_LightSource[1].position.xyz - position;
-		float falloff = 1 - clamp((length(l) - fillLightFalloff.x) / (fillLightFalloff.y - fillLightFalloff.x), 0, 1);
+		float falloff = 1 - clamp((length(l) - fillLightFalloff.x) / (fillLightFalloff.y - fillLightFalloff.x), 0., 1.);
 		
 		l = normalize(l);
 		float ndl = dot(n,l);
 		
 		vec3 r = normalize(2*ndl*n - l);
-		float ndr = pow(clamp(dot(r,v), 0, 1), glossiness);
+		float ndr = pow(clamp(dot(r,v), 0., 1.), glossiness);
 		
-		c += falloff*clamp(ndl,0,1)*fillLightDiffuseColor*diffuseColor + falloff*specularStrength*ndr*fillLightSpecularColor;
+		c += falloff*clamp(ndl, 0., 1.)*fillLightDiffuseColor*diffuseColor + falloff*specularStrength*ndr*fillLightSpecularColor;
 	}
 	
 	// Additive matcap
