@@ -6,6 +6,16 @@
 #include <GUILib/GLTexture.h>
 #include <GUILib/GLShaderMaterial.h>
 
+void moveWindowToPrimaryMonitor(GLFWwindow *window) {
+    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+    int x, y, w, h, refreshRate;
+    glfwGetWindowPos(window, &x, &y);
+    glfwGetWindowSize(window, &w, &h);
+    refreshRate = 60;
+    glfwSetWindowMonitor(window, primaryMonitor, x, y, w, h, refreshRate);
+}
+
+
 GLApplication* glAppInstance = NULL;
 
 GLApplication::GLApplication(int x, int y, int w, int h){
@@ -181,7 +191,14 @@ void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
 
 	camera = new GLTrackingCamera();
 
-    glfwSetWindowPos(glfwWindow, 600, 0);
+    // Set nano gui window width and let glfwWindow fill out rest of monitor space
+    int menuScreenWidth = 400;
+    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    int monitor_width = mode->width;
+    int monitor_height = mode->height;
+    glfwSetWindowSize(glfwWindow, monitor_width-menuScreenWidth, monitor_height);
+    glfwSetWindowSize(menuScreen->glfwWindow(), menuScreenWidth, monitor_height);
+    glfwSetWindowPos(glfwWindow, menuScreenWidth, 0);
     glfwSetWindowPos(menuScreen->glfwWindow(), 0, 0);
 }
 
@@ -190,7 +207,7 @@ void GLApplication::setupMainMenu() {
     // Let's make nano gui!
     nanogui::init();
 
-    menuScreen = new nanogui::Screen({600, 800}, "NanoGUI Test", true, false, 8, 8, 24, 8, 0, 3, 3);
+    menuScreen = new nanogui::Screen({400, 800}, "NanoGUI Test", true, false, 8, 8, 24, 8, 0, 3, 3);
 
 	mainMenu = new nanogui::FormHelper(menuScreen);
 
