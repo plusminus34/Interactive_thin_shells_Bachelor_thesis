@@ -179,14 +179,20 @@ void GLApplication::init(int x, int y, int w, int h, bool maximizeWindows) {
 	camera = new GLTrackingCamera();
 
     // Set nano gui window width and let glfwWindow fill out rest of monitor space
-    int menuScreenWidth = 400;
-    const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    int monitor_width = mode->width;
-    int monitor_height = mode->height;
-    glfwSetWindowSize(glfwWindow, monitor_width-menuScreenWidth, monitor_height);
-    glfwSetWindowSize(menuScreen->glfwWindow(), menuScreenWidth, monitor_height);
-    glfwSetWindowPos(glfwWindow, menuScreenWidth, 0);
-    glfwSetWindowPos(menuScreen->glfwWindow(), 0, 0);
+    if(maximizeWindows)
+    {
+        int menuScreenWidth = 400; // width of the nano gui menu
+        GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
+        int primaryMonitorX, primaryMonitorY;
+        glfwGetMonitorPos(primaryMonitor, &primaryMonitorX, &primaryMonitorY);
+        const GLFWvidmode * mode = glfwGetVideoMode(primaryMonitor);
+        int monitor_width = mode->width;
+        int monitor_height = mode->height;
+        glfwSetWindowSize(glfwWindow, monitor_width-menuScreenWidth, monitor_height);
+        glfwSetWindowSize(menuScreen->glfwWindow(), menuScreenWidth, monitor_height);
+        glfwSetWindowPos(glfwWindow, primaryMonitorX + menuScreenWidth, 0);
+        glfwSetWindowPos(menuScreen->glfwWindow(), primaryMonitorX, 0);
+    }
 }
 
 void GLApplication::setupMainMenu() {
