@@ -11,6 +11,10 @@
 //three legged robot
 //a strider robot
 //a dog robot
+//hexa-like robot
+//probably need to work a bit on body shape/body characteristics
+
+
 
 //clean a bit all the managers, objectives and the manner in which the different types of MOPT modes are selected...
 //perhaps make the non-mesh version of the renderer prettier... it will allow us to test the code before (or even if it wont happen that) the visual designer part is integrated.
