@@ -397,7 +397,7 @@ void GLApplication::runMainLoop() {
         {
             glfwMakeContextCurrent(menuScreen->glfwWindow());
 
-            glClearColor(0,0,255,1);
+            glClearColor(0.3, 0.3, 0.3, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             mainMenu->refresh();
