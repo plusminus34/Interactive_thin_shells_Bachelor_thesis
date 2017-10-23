@@ -45,21 +45,22 @@ endif()
 #   message(FATAL_ERROR "Could not find F2CLIBS libraries.")
 # endif()
 
-# CLAPACK
-find_library(CLAPACK_LIBRARIES
-  NAMES 
-    clapack
-  HINTS 
-    /usr/local/libs/ 
-    ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/Release
-)
-if(CLAPACK_LIBRARIES)
-  message(STATUS "Found CLAPACK libraries:" ${CLAPACK_LIBRARIES})
-else()
-  message(FATAL_ERROR "Could not find CLAPACK libraries.")
-endif()
+# # CLAPACK
+# find_library(CLAPACK_LIBRARIES
+#   NAMES 
+#     clapack
+#   HINTS 
+#     /usr/local/lib/
+#     /usr/lib/
+#     ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/Release
+# )
+# if(CLAPACK_LIBRARIES)
+#   message(STATUS "Found CLAPACK libraries:" ${CLAPACK_LIBRARIES})
+# else()
+#   message(FATAL_ERROR "Could not find CLAPACK libraries.")
+# endif()
 
-set(OOQP_LIBRARIES ${BLAS_LIBRARIES} ${F2CLIBS_LIBRARIES} ${CLAPACK_LIBRARIES})
+set(OOQP_LIBRARIES ${BLAS_LIBRARIES} ${F2CLIBS_LIBRARIES}) #${CLAPACK_LIBRARIES})
 
 # find_package(BLAS REQUIRED)
 ################################
