@@ -6,6 +6,8 @@
 #include <GUILib/GLTexture.h>
 #include <GUILib/GLShaderMaterial.h>
 
+#include <nanogui/screen.h>
+
 GLApplication* glAppInstance = NULL;
 
 GLApplication::GLApplication(int x, int y, int w, int h){
@@ -66,7 +68,7 @@ void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
 	glfwSetWindowPos(glfwWindow, x, y);
 
 #if defined(_WIN32) || defined(__linux__)
-	float mPixelRatio = 2;// nanogui::get_pixel_ratio(glfwWindow);
+	float mPixelRatio = nanogui::get_pixel_ratio(glfwWindow);
 	glfwSetWindowSize(glfwWindow, (int)(w / mPixelRatio), (int)(h / mPixelRatio));
 #endif
 
