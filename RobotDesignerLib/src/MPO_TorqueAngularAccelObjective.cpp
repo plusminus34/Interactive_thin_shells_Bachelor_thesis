@@ -164,7 +164,7 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 		tmpAngleAxis2 = Q;
 
 		double scale = theMotionPlan->totalInertia / (h * h);
-		V3D angularAccel = tmpAngleAxis1.axis() * tmpAngleAxis1.angle() - tmpAngleAxis2.axis() * tmpAngleAxis2.angle();
+        V3D angularAccel = (V3D)(tmpAngleAxis1.axis() * tmpAngleAxis1.angle() - tmpAngleAxis2.axis() * tmpAngleAxis2.angle());
 		angularAccel *= scale;
 
 		V3D torque(0, 0, 0);
@@ -267,7 +267,7 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 
 				if (theMotionPlan->feetPositionsParamsStartIndex > -1)
 				{
-					V3D tmp = dTdE * (torque - angularAccel);
+                    V3D tmp = (V3D)(dTdE * (torque - angularAccel));
 					grad.segment<2>(theMotionPlan->feetPositionsParamsStartIndex +
 						2 * (j * theMotionPlan->endEffectorTrajectories.size() + i))
 						+= weight * Vector2d(tmp[0], tmp[2]);
@@ -328,7 +328,7 @@ void MPO_TorqueAngularAccelObjective::addHessianEntriesTo(DynamicArray<MTriplet>
 		tmpAngleAxis2 = Q;
 
 		double scale = theMotionPlan->totalInertia / (h * h);
-		V3D angularAccel = tmpAngleAxis1.axis() * tmpAngleAxis1.angle() - tmpAngleAxis2.axis() * tmpAngleAxis2.angle();
+        V3D angularAccel = (V3D)(tmpAngleAxis1.axis() * tmpAngleAxis1.angle() - tmpAngleAxis2.axis() * tmpAngleAxis2.angle());
 		angularAccel *= scale;
 
 		V3D torque(0, 0, 0);

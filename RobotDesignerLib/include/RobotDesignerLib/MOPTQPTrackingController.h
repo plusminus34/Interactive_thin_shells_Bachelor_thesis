@@ -4,6 +4,7 @@
 #include <OptimizationLib/FunctionConstraints.h>
 #include <MathLib/Matrix.h>
 #include <ControlLib/QPControlEngine.h>
+#include "LocomotionEngineMotionPlan.h"
 
 class MOPTQPTrackingController {
 private:

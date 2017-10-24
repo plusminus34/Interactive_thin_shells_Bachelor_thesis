@@ -1,8 +1,8 @@
 #pragma once
-#include <MathLib\V3D.h>
+#include <MathLib/V3D.h>
 #include <vector>
 
-#include <MathLib/mathLib.h>
+#include <MathLib/MathLib.h>
 #include <MathLib/Quaternion.h>
 
 #include <ControlLib/Robot.h>

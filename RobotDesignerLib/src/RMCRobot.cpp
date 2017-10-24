@@ -2,7 +2,7 @@
 #include <RBSimLib/HingeJoint.h>
 #include <ControlLib/Robot.h>
 #include <RBSimLib/ODERBEngine.h>
-#include <MathLib/MeshBoolean.h>
+//#include <MathLib/MeshBoolean.h>
 #include <GUILib/GLContentManager.h>
 #include <RobotDesignerLib/LivingMotor.h>
 #include <RobotDesignerLib/LivingConnector.h>
@@ -699,92 +699,93 @@ ReducedRobotState RMCRobot::saveToRBSFile(const char* fName, Robot* templateRobo
 
 	if (mergeMeshes)
 	{
-		set<string> motorMeshFiles = {
-			"../data/robotDesigner/motorMeshes/XM-430.obj"
-		};
+        throw std::runtime_error("This functionality is not available.");
+//		set<string> motorMeshFiles = {
+//			"../data/robotDesigner/motorMeshes/XM-430.obj"
+//		};
 
-		set<string> junkMeshFiles = {
-			"../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj"
-		};
+//		set<string> junkMeshFiles = {
+//			"../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj"
+//		};
 
-		for (auto& rb : tmpRBs)
-		{
-			vector<GLMesh*> motorMeshes;
-			vector<Transformation> motorTrans;
-			vector<GLMesh*> motorCarveMeshes;
-			vector<string> motorDescritions;
-			GLMesh* rbMesh = NULL;
-			for (int i = 0; i < (int)rb.meshes.size(); i++)
-			{
-				if (motorMeshFiles.count(rb.meshes[i]->path)) {
-					motorMeshes.push_back(rb.meshes[i]);
-					motorTrans.push_back(rb.meshTransformations[i]);
-					motorCarveMeshes.push_back(NULL);
-					motorDescritions.push_back("motor");
+//		for (auto& rb : tmpRBs)
+//		{
+//			vector<GLMesh*> motorMeshes;
+//			vector<Transformation> motorTrans;
+//			vector<GLMesh*> motorCarveMeshes;
+//			vector<string> motorDescritions;
+//			GLMesh* rbMesh = NULL;
+//			for (int i = 0; i < (int)rb.meshes.size(); i++)
+//			{
+//				if (motorMeshFiles.count(rb.meshes[i]->path)) {
+//					motorMeshes.push_back(rb.meshes[i]);
+//					motorTrans.push_back(rb.meshTransformations[i]);
+//					motorCarveMeshes.push_back(NULL);
+//					motorDescritions.push_back("motor");
 
-					motorMeshes.push_back(rb.meshes[i]);
-					motorTrans.push_back(rb.meshTransformations[i]);
-					motorCarveMeshes.push_back(NULL);
-					motorDescritions.push_back(rb.meshDescriptions[i]);
-				}
-				else {
-					if (junkMeshFiles.count(rb.meshes[i]->path)) continue;
+//					motorMeshes.push_back(rb.meshes[i]);
+//					motorTrans.push_back(rb.meshTransformations[i]);
+//					motorCarveMeshes.push_back(NULL);
+//					motorDescritions.push_back(rb.meshDescriptions[i]);
+//				}
+//				else {
+//					if (junkMeshFiles.count(rb.meshes[i]->path)) continue;
 
-					if (rb.meshDescriptions[i] != "carving")
-					{
-						GLMesh* tMesh = rb.meshes[i]->clone();
-						tMesh->transform(rb.meshTransformations[i]);
-						tMesh->scale(1.0001, tMesh->getCenterOfMass());
-						if (rbMesh)
-						{
-							meshBooleanIntrusive(rbMesh, tMesh, "Union");
-							delete tMesh;
-						}
-						else {
-							rbMesh = tMesh;
-						}
-					}
+//					if (rb.meshDescriptions[i] != "carving")
+//					{
+//						GLMesh* tMesh = rb.meshes[i]->clone();
+//						tMesh->transform(rb.meshTransformations[i]);
+//						tMesh->scale(1.0001, tMesh->getCenterOfMass());
+//						if (rbMesh)
+//						{
+//							meshBooleanIntrusive(rbMesh, tMesh, "Union");
+//							delete tMesh;
+//						}
+//						else {
+//							rbMesh = tMesh;
+//						}
+//					}
 
-					if (rb.meshDescriptions[i] != "skeleton") {
-						motorMeshes.push_back(rb.meshes[i]);
-						motorTrans.push_back(rb.meshTransformations[i]);
-						motorCarveMeshes.push_back(NULL);
-						motorDescritions.push_back(rb.meshDescriptions[i]);
-					}
-				}
-			}
+//					if (rb.meshDescriptions[i] != "skeleton") {
+//						motorMeshes.push_back(rb.meshes[i]);
+//						motorTrans.push_back(rb.meshTransformations[i]);
+//						motorCarveMeshes.push_back(NULL);
+//						motorDescritions.push_back(rb.meshDescriptions[i]);
+//					}
+//				}
+//			}
 
-			if (forFabrication)
-			{
-				for (int i = 0; i < (int)rb.meshes.size(); i++)
-				{
-					if (!rbMesh || motorMeshFiles.count(rb.meshes[i]->path)) continue;					
-					if (junkMeshFiles.count(rb.meshes[i]->path)) continue;
+//			if (forFabrication)
+//			{
+//				for (int i = 0; i < (int)rb.meshes.size(); i++)
+//				{
+//					if (!rbMesh || motorMeshFiles.count(rb.meshes[i]->path)) continue;
+//					if (junkMeshFiles.count(rb.meshes[i]->path)) continue;
 
-					if (rb.meshDescriptions[i] == "carving")
-					{
-						GLMesh* tMesh = rb.meshes[i]->clone();
-						tMesh->transform(rb.meshTransformations[i]);
-						meshBooleanIntrusive(rbMesh, tMesh, "Minus");
-						delete tMesh;
-					}
-				}
-			}
+//					if (rb.meshDescriptions[i] == "carving")
+//					{
+//						GLMesh* tMesh = rb.meshes[i]->clone();
+//						tMesh->transform(rb.meshTransformations[i]);
+//						meshBooleanIntrusive(rbMesh, tMesh, "Minus");
+//						delete tMesh;
+//					}
+//				}
+//			}
 
-			if (!rbMesh) continue;
+//			if (!rbMesh) continue;
 
-			rbMesh->path = "../out/" + rb.name + "_merge.obj";
-			rbMesh->writeTriangulatedMeshToObj(rbMesh->path.c_str());
-			GLContentManager::addMeshFileMapping(rbMesh, rbMesh->path.c_str());
-			rb.meshes = motorMeshes;
-			rb.meshTransformations = motorTrans;
-			rb.carveMeshes = motorCarveMeshes;
-			rb.meshDescriptions = motorDescritions;
-			rb.meshes.push_back(rbMesh);
-			rb.meshTransformations.push_back(Transformation());
-			rb.carveMeshes.push_back(NULL);
-			rb.meshDescriptions.push_back("skeleton");
-		}
+//			rbMesh->path = "../out/" + rb.name + "_merge.obj";
+//			rbMesh->writeTriangulatedMeshToObj(rbMesh->path.c_str());
+//			GLContentManager::addMeshFileMapping(rbMesh, rbMesh->path.c_str());
+//			rb.meshes = motorMeshes;
+//			rb.meshTransformations = motorTrans;
+//			rb.carveMeshes = motorCarveMeshes;
+//			rb.meshDescriptions = motorDescritions;
+//			rb.meshes.push_back(rbMesh);
+//			rb.meshTransformations.push_back(Transformation());
+//			rb.carveMeshes.push_back(NULL);
+//			rb.meshDescriptions.push_back("skeleton");
+//		}
 	}
 	else {
 		// not merging meshes

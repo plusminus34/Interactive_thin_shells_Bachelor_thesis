@@ -12,6 +12,7 @@ find_library(BLAS_LIBRARIES
   NAMES 
     blas
   HINTS 
+    /usr/lib/x86_64-linux-gnu/
     /usr/local/libs/ 
     ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/BLAS/Release
 )
@@ -21,46 +22,56 @@ else()
   message(FATAL_ERROR "Could not find BLAS libraries.")
 endif()
 
+# Dependent packages, BLAS and HSL
+# set(OOQP_LIBRARIES)
+# find_package(BLAS REQUIRED)
+# if(BLAS_FOUND)
+#   message("BLAS FOUND")
+# else()
+#   message(STATUS "OOQP requires BLAS")
+# endif()
+
 # F2CLIBS
-# find_library(F2CLIBS_I77
-#   NAMES 
-#     libI77
-#   HINTS 
-#     /usr/lib/
-#     /usr/lib/x86_64-linux-gnu/
-#     /usr/local/libs/
-#     ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/F2CLIBS/ReleaseI77
-# )
-# find_library(F2CLIBS_F77
-#   NAMES 
-#     libF77
-#   HINTS 
-#     /usr/local/libs/
-#     ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/F2CLIBS/ReleaseF77
-# )
-# set(F2CLIBS_LIBRARIES ${F2CLIBS_I77} ${F2CLIBS_F77})
-# if(F2CLIBS_LIBRARIES)
-#   message(STATUS "Found F2CLIBS libraries:" ${F2CLIBS_LIBRARIES})
-# else()
-#   message(FATAL_ERROR "Could not find F2CLIBS libraries.")
-# endif()
+find_library(F2CLIBS_I77
+  NAMES
+    I77
+  HINTS
+    /usr/local/lib/
+    /usr/lib/
+    /usr/lib/x86_64-linux-gnu/
+    ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/F2CLIBS/ReleaseI77
+)
+find_library(F2CLIBS_F77
+  NAMES
+    F77
+  HINTS
+    /usr/local/lib/
+    ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/F2CLIBS/ReleaseF77
+)
+set(F2CLIBS_LIBRARIES ${F2CLIBS_I77} ${F2CLIBS_F77})
+if(F2CLIBS_LIBRARIES)
+  message(STATUS "Found F2CLIBS libraries:" ${F2CLIBS_LIBRARIES})
+else()
+  message(FATAL_ERROR "Could not find F2CLIBS libraries.:" ${F2CLIBS_LIBRARIES})
+endif()
 
-# # CLAPACK
-# find_library(CLAPACK_LIBRARIES
-#   NAMES 
-#     clapack
-#   HINTS 
-#     /usr/local/lib/
-#     /usr/lib/
-#     ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/Release
-# )
-# if(CLAPACK_LIBRARIES)
-#   message(STATUS "Found CLAPACK libraries:" ${CLAPACK_LIBRARIES})
-# else()
-#   message(FATAL_ERROR "Could not find CLAPACK libraries.")
-# endif()
+# CLAPACK
+find_library(CLAPACK_LIBRARIES
+  NAMES 
+    lapack
+  HINTS 
+    /usr/lib/x86_64-linux-gnu/
+    /usr/local/lib/
+    /usr/lib/
+    ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/Release
+)
+if(CLAPACK_LIBRARIES)
+  message(STATUS "Found CLAPACK libraries:" ${CLAPACK_LIBRARIES})
+else()
+  message(FATAL_ERROR "Could not find CLAPACK libraries.")
+endif()
 
-set(OOQP_LIBRARIES ${BLAS_LIBRARIES} ${F2CLIBS_LIBRARIES}) #${CLAPACK_LIBRARIES})
+set(OOQP_LIBRARIES ${BLAS_LIBRARIES} ${F2CLIBS_LIBRARIES} ${CLAPACK_LIBRARIES})
 
 # find_package(BLAS REQUIRED)
 ################################
@@ -115,6 +126,12 @@ foreach(LIB ${OOQP_LIBS_LIST})
     set(OOQP_FOUND_LIBS FALSE)
   endif()
 endforeach()
+
+# TODO: this is not very clean, use find package
+if (UNIX)
+  set(OOQP_LIBRARIES ${OOQP_LIBRARIES} gfortran blas)
+endif (UNIX)
+
 
 # print OOQP_LIBRARIES
 if(OOQP_FOUND_LIBS)

@@ -1,6 +1,6 @@
 #include <RobotDesignerLib/LivingMotor.h>
 #include <GUILib/GLApplication.h>
-#include <MathLib/MeshBoolean.h>
+//#include <MathLib/MeshBoolean.h>
 
 
 LivingMotor::LivingMotor(LivingHornBracket* lbh)
@@ -162,11 +162,14 @@ void LivingMotor::exportMeshes(const char* dirName, int index, bool mergeMeshes)
 	string bracketFileName = dirName + string("LivingBracketMesh") + to_string(index) + string(".obj");
 	if (mergeMeshes)
 	{
-		GLMesh* resMesh = bracket->bridgeMesh->clone();
-		meshBooleanIntrusive(resMesh, bracket->leftSideMesh, "Union");
-		meshBooleanIntrusive(resMesh, bracket->rightSideMesh, "Union");
-		bracket->outputMesh = resMesh;
-	}
+            // This was disabled because MeshBoolean.exe is for Windows only
+            // If this is needed, we can re-enable it.
+            throw std::runtime_error("This functionality is not available.");
+//            GLMesh* resMesh = bracket->bridgeMesh->clone();
+//            meshBooleanIntrusive(resMesh, bracket->leftSideMesh, "Union");
+//            meshBooleanIntrusive(resMesh, bracket->rightSideMesh, "Union");
+//            bracket->outputMesh = resMesh;
+        }
 	else {
 		bracket->outputMesh = bracket->bracketMesh->clone();
 	}
