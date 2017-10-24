@@ -38,12 +38,9 @@ void RMCPin::draw(const V3D& color)
 	glPushMatrix();
 	Transformation trans(rmc->state.orientation.getRotationMatrix(), rmc->state.position);
 	trans *=  transformation;
+	applyGLMatrixTransform(trans);
 
-	// TODO: put applyGLMatrixTransform outside of MatLib
-	//trans.applyGLMatrixTransform();
-
-	if (showCoordinate)
-	{
+	if (showCoordinate){
 		glColor3d(1.0, 1.0, 0.0);
 		drawArrow(P3D(), P3D(0.01, 0, 0), 0.001, 12);
 		glColor3d(0.0, 1.0, 1.0);

@@ -1617,7 +1617,7 @@ void ModularDesignWindow::exportMeshes()
 
 void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot, bool mergeMeshes, bool forFabrication)
 {
-	Logger::consolePrint("Save picked RMCRobot to RBS file '%s'", fName);
+	Logger::consolePrint("Save picked RMCRobot to RBS file '%s'\n", fName);
 	RMCRobot* robot = new RMCRobot(new RMC(), transformationMap);
 	robot->root->rbProperties.mass = 0;
 	robot->root->rbProperties.MOI_local.setZero();
@@ -1625,6 +1625,7 @@ void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot,
 	robot->root->meshes.push_back(bodyMesh);
 	FILE* fp = fopen(bodyMesh->path.c_str(), "w+");
 	bodyMesh->renderToObjFile(fp, 0, Quaternion(), P3D());
+	fclose(fp);
 
 	GLContentManager::addMeshFileMapping(bodyMesh->clone(), bodyMesh->path.c_str());
 
@@ -1675,7 +1676,7 @@ void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot,
 	}
 
 	startRobotState = robot->saveToRBSFile(fName, templateRobot, freezeRobotRoot, mergeMeshes, forFabrication);
-	
+
 	delete robot;
 }
 
@@ -1895,13 +1896,15 @@ void ModularDesignWindow::loadRBSRobot(const char* fName)
 	robot = new Robot(rbEngine->rbs[0]);
 }
 
+
 void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot)
 {
 	bool incompatible = false;
+	V3D transVec = V3D();
 
 	for (auto joint : tRobot->jointList)
 	{
-		P3D wjPos = joint->getWorldPosition();
+		P3D wjPos = joint->getWorldPosition() + transVec;
 		MappingInfo& mappingInfo = joint->mappingInfo;
 		if (mappingInfo.index1 >= 0 && mappingInfo.index1 < (int)rmcRobots.size())
 		{
@@ -1938,7 +1941,7 @@ void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot)
 				RMC* rmc = rmcRobot->getRMC(mappingInfo.index2);
 				if (rmc->type == EE_RMC)
 				{
-					rmc->state.position = EEPos + rmc->state.orientation.rotate(-rmc->rbProperties.endEffectorPoints[0].coords);
+					rmc->state.position = EEPos + rmc->state.orientation.rotate(-rmc->rbProperties.endEffectorPoints[0].coords) + transVec;
 				}
 				else {
 					incompatible = true;

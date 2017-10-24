@@ -13,6 +13,7 @@
 #include <GUILib/GLShader.h>
 #include <GUILib/GLShaderMaterial.h>
 
+
 /**
 	This method will take a screenshot of the current scene and it will save it to a file with the given name
 */
@@ -36,6 +37,21 @@ void saveScreenShot(char* fileName, int x, int y, int width, int height){
 
 	delete img;
 }
+
+void applyGLMatrixTransform(const Transformation& T){
+	Matrix4x4 transMat;
+	transMat.setIdentity();
+	transMat.topLeftCorner(3, 3) = T.R;
+	transMat.topRightCorner(3, 1) = T.T;
+
+	GLdouble m[16];
+	for (int i = 0; i < 16; i++) {
+		m[i] = transMat(i % 4, i / 4);
+	}
+
+	glMultMatrixd(m);
+}
+
 
 void drawCircle(double cx, double cy, double r, int num_segments) {
 	glBegin(GL_LINE_LOOP);

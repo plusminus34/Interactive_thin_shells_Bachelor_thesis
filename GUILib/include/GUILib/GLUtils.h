@@ -7,6 +7,7 @@
 #include <MathLib/P3D.h>
 #include <MathLib/V3D.h>
 #include <MathLib/Quaternion.h>
+#include <MathLib/Transformation.h>
 #include "GLTexture.h"
 
 // this method will take a screenshot of the current scene and it will save it to a file with the given name
@@ -80,3 +81,4 @@ void drawGround(GLTexture* texture);
 
 void gl_Vertex3d(const P3D& p);
 
+void applyGLMatrixTransform(const Transformation& T);
