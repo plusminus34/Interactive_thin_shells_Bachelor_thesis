@@ -31,19 +31,29 @@ endif()
 #   message(STATUS "OOQP requires BLAS")
 # endif()
 
-# F2CLIBS
+# I77
+set(I77_LIB I77)
+if(WIN32)
+  set(I77_LIB lib${I77_LIB})
+endif()
 find_library(F2CLIBS_I77
   NAMES
-    I77
+    ${I77_LIB}
   HINTS
     /usr/local/lib/
     /usr/lib/
     /usr/lib/x86_64-linux-gnu/
     ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/F2CLIBS/ReleaseI77
 )
+
+# I77
+set(F77_LIB F77)
+if(WIN32)
+  set(F77_LIB lib${F77_LIB})
+endif()
 find_library(F2CLIBS_F77
   NAMES
-    F77
+    ${F77_LIB}
   HINTS
     /usr/local/lib/
     ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/F2CLIBS/ReleaseF77
@@ -56,9 +66,13 @@ else()
 endif()
 
 # CLAPACK
+set(CLAPCK_LIB lapack)
+if(WIN32)
+  set(CLAPCK_LIB c${CLAPCK_LIB})
+endif()
 find_library(CLAPACK_LIBRARIES
   NAMES 
-    lapack
+    ${CLAPCK_LIB}
   HINTS 
     /usr/lib/x86_64-linux-gnu/
     /usr/local/lib/
