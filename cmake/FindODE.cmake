@@ -28,11 +28,11 @@ else (ODE_INCLUDE_DIRS AND ODE_LIBRARIES)
             $ENV{OGRE_HOME}/include # ODE is shipped with the OGRE SDK
     )
 
-    set(ODE_LIBS_LIST 
-        ode 
-        # ode_static_release
-    )
-
+    set(ODE_LIBS_LIST ode)
+    if(WIN32)
+        set(ODE_LIBS_LIST ${ODE_LIBS_LIST} ode_static_release)
+    endif()
+    
     foreach(LIB ${ODE_LIBS_LIST})
       
         find_library(ODE_LIB_${LIB} 
