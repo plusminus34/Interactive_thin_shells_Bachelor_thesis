@@ -24,14 +24,26 @@ SET CURRENTDIR="%cd%"
 
 : Let's clone all dependencies:
 cd ..
-git clone https://gitlab.inf.ethz.ch/moritzge/libs/
-IF ERRORLEVEL 1 (
-    ECHO Could not clone libs.
-    pause
-    EXIT /B
+IF NOT EXISTS libs (
+    git clone https://gitlab.inf.ethz.ch/moritzge/libs/
+    IF ERRORLEVEL 1 (
+        ECHO Could not clone libs.
+        pause
+        EXIT /B
+    ) ELSE (
+        ECHO Libs cloned.
+    ) 
 ) ELSE (
-    ECHO Libs cloned.
-) 
+    cd libs
+    git pull
+    IF ERRORLEVEL 1 (
+        ECHO Could not pull libs.
+        pause
+        EXIT /B
+    ) ELSE (
+        ECHO Libs pulled.
+    ) 
+)
 
 : Update all submodules
 cd %CURRENTDIR%
@@ -46,6 +58,9 @@ IF ERRORLEVEL 1 (
 
 : Create build folder and run cmake
 cd %CURRENTDIR%
+IF EXISTS build (
+    rd /s /q build
+)
 mkdir build
 cd build
 IF ERRORLEVEL 1 (

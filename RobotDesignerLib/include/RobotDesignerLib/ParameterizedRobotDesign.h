@@ -35,10 +35,8 @@ public:
 	ParameterizedRobotDesign(Robot* robot);
 	~ParameterizedRobotDesign();
 
-	virtual void getCurrentSetOfParameters(DynamicArray<double>& params);
-	virtual void setParameters(const DynamicArray<double>& params);
-
-
+	virtual void getCurrentSetOfParameters(DynamicArray<double>& params) = 0;
+	virtual void setParameters(const DynamicArray<double>& params) = 0;
 };
 
 
@@ -111,8 +109,6 @@ public:
 		robot->getJoint(9)->cJPos.y() = initialMorphology[9].cJPos.y() + params[12];
 		robot->getJoint(10)->cJPos.y() = initialMorphology[10].cJPos.y() + params[13];
 		robot->getJoint(11)->cJPos.y() = initialMorphology[11].cJPos.y() + params[13];
-
-
 	}
 };
 
