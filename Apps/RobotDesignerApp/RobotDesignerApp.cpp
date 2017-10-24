@@ -80,11 +80,11 @@ RobotDesignerApp::RobotDesignerApp(){
 
 	bgColor[0] = bgColor[1] = bgColor[2] = 0.75;
 
-	loadFile("../data/robotsAndMotionplans/spotMini/robot2.rbs");
-	loadFile("../data/robotsAndMotionplans/spotMini/robot.rs");
+    loadFile("../data/robotsAndMotionPlans/spotMini/robot2.rbs");
+    loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
 //	loadToSim();
 	loadToSim(false);
-	loadFile("../data/robotsAndMotionplans/spotMini/trot.p");
+    loadFile("../data/robotsAndMotionPlans/spotMini/trot.p");
 
 
 
