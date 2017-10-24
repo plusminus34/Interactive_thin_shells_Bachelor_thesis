@@ -256,7 +256,6 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		}
 		return;
 	}
-
 }
 
 void RobotDesignerApp::loadToSim(bool initializeMOPT){

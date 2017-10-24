@@ -65,6 +65,11 @@ void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
 	setWindowTitle("Simulation And Control Playground");
 	glfwSetWindowPos(glfwWindow, x, y);
 
+#if defined(_WIN32) || defined(__linux__)
+	float mPixelRatio = 2;// nanogui::get_pixel_ratio(glfwWindow);
+	glfwSetWindowSize(glfwWindow, (int)(w / mPixelRatio), (int)(h / mPixelRatio));
+#endif
+
 	/* Make the window's context current */
 	glfwMakeContextCurrent(glfwWindow);
 
@@ -151,11 +156,6 @@ void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
 	GLContentManager::addShaderMaterial(material->getMaterialName().c_str(), material);
 
 	setupMainMenu();
-
-#if defined(_WIN32) || defined(__linux__)
-	float mPixelRatio = menuScreen->pixelRatio();
-	glfwSetWindowSize(glfwWindow, (int)(w / mPixelRatio), (int)(h / mPixelRatio));
-#endif
 
 	int width, height;
 	glfwGetFramebufferSize(glfwWindow, &width, &height);

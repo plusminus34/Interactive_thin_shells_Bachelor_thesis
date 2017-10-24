@@ -129,8 +129,11 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 			}
 		}
 
+		Logger::logPrint("----> iter : %d, fLimit*factor=%lf\n", i, fLimit*factor);
+
 		//now that the limits have been set on the upper bounds of the GRFs of the swing feet, run a mopt...
 		runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
+
 #ifdef DEBUG_WARMSTART
 		Logger::consolePrint("WARM START after iteration %d GRF limit: %lf (%lf)...\n", i, fLimit * factor + -motionPlan->verticalGRFLowerBoundVal * (1 - factor), factor);
 		if (i % 10 == 0)
