@@ -1,4 +1,5 @@
 @echo off
+setlocal EnableDelayedExpansion
 
 : Check if git command is available
 where /q git
@@ -24,7 +25,7 @@ SET CURRENTDIR="%cd%"
 
 : Let's clone all dependencies:
 cd ..
-IF NOT EXISTS libs (
+IF NOT EXIST libs (
     git clone https://gitlab.inf.ethz.ch/moritzge/libs/
     IF ERRORLEVEL 1 (
         ECHO Could not clone libs.
@@ -58,7 +59,7 @@ IF ERRORLEVEL 1 (
 
 : Create build folder and run cmake
 cd %CURRENTDIR%
-IF EXISTS build (
+IF EXIST build (
     rd /s /q build
 )
 mkdir build

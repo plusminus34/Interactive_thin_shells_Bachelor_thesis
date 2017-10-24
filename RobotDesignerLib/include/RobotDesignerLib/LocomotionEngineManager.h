@@ -32,6 +32,12 @@
 #include <RobotDesignerLib/MPO_EEPoseOffsetConstraintToInitial.h>
 #include <RobotDesignerLib/MPO_COMOrientationFluctuationRegularizer.h>
 
+#include <RobotDesignerLib/LocomotionEngineEnergyFunction.h>
+#include <RobotDesignerLib/LocomotionEngineConstraints.h>
+#include <OptimizationLib/ConstrainedObjectiveFunction.h>
+#include <OptimizationLib/SQPFunctionMinimizer.h>
+#include <OptimizationLib/NewtonFunctionMinimizer.h>
+
 #define OPT_END_EFFECTORS 0x0001
 #define OPT_COM_POSITIONS 0x0002
 #define OPT_COM_ORIENTATIONS 0x0004
@@ -40,6 +46,10 @@
 #define OPT_BARYCENTRIC_WEIGHTS 0x0020
 
 class LocomotionEngineManager{
+protected:
+	void createSolverComponents();
+	double optimizeMoptionPlan(int maxIterations = 1);
+
 public:
 
 	bool useBFGS = false;
@@ -48,9 +58,13 @@ public:
 	bool locked = false; // once locked, cannot do further optimization
 
 	LocomotionEngineMotionPlan *motionPlan = NULL;
-	LocomotionEngine *locomotionEngine = NULL;
 	FootFallPattern* footFallPattern = NULL;
 	FootFallPattern origFootFallPattern;
+
+	LocomotionEngine_EnergyFunction* energyFunction;
+	LocomotionEngine_Constraints* constraints;
+	ConstrainedObjectiveFunction* constrainedObjectiveFunction;
+	bool useObjectivesOnly = false;
 
 public:
 	LocomotionEngineManager();
