@@ -13,14 +13,7 @@ LocomotionEngineManagerGRF::LocomotionEngineManagerGRF() {
 }
 
 LocomotionEngineManagerGRF::LocomotionEngineManagerGRF(Robot* robot, FootFallPattern* ffp, int nSamplePoints) {
-	if (footFallPattern)
-	{
-		this->footFallPattern = ffp;
-		origFootFallPattern = *ffp;
-	}
-	else {
-		this->footFallPattern = &origFootFallPattern;
-	}
+	this->footFallPattern = ffp;
 
 	motionPlan = new LocomotionEngineMotionPlan(robot, nSamplePoints);
 
@@ -116,7 +109,8 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 #endif
 
 	int nSteps = 101;
-	for (int i = 0; i < nSteps; i++) {
+
+	for (int i = 2; i < nSteps; i++) {
 		//the factor will go from 1 down to 0 as it is making progress in the warmstart process...
 		double factor = 1 - (double)i / (nSteps - 1.0);
 		for (int iT = 0; iT < motionPlan->nSamplePoints; iT++) {
@@ -128,8 +122,6 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 				}
 			}
 		}
-
-		Logger::logPrint("----> iter : %d, fLimit*factor=%lf\n", i, fLimit*factor);
 
 		//now that the limits have been set on the upper bounds of the GRFs of the swing feet, run a mopt...
 		runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);

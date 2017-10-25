@@ -14,7 +14,6 @@
 //hexa-like robot
 //probably need to work a bit on body shape/body characteristics
 
-
 //no longer remember why this is in place: tangentGRFBoundValues instead of a coulomb-friction-like model... just for warmstarting? Or to avoid coupling in the hessian?
 //fix also the footfall pattern window... it's a bit broken now...
 //clean a bit all the managers, objectives and the manner in which the different types of MOPT modes are selected...
@@ -22,7 +21,8 @@
 //everything needs to happen via rbs files. The visual designer will output an rbs file which gets loaded the normal way, then it knows how to sync back changes with the rbs, and that's all...
 //the constraint system should be much more modular, with each type of MOPT adding its own constraints to a global list
 //will need to add the option to save/load ffps, mopt, rbs/robotdesigner files, etc
-
+//the wheel type model can also play a key role in removing the assumption of point feet. Can we model a human-like foot rolling? The COP can travel around during walking, and this can be modeled by having a wheel-like foot. Can this then, in conjunction with a MOPT QP tracker lead to natural toe-off motions?
+//wheels can be locked to the feet (then you ask that the whole orientation of the foot matches that of the upper leg), or they can be moving independently, passive (GRF straight up only) or active...
 
 //try a flying trot gait for the robot. Try also to match the new robot gait capabilities (Laikago) maybe with a slightly more conservative gait (some overlap in stance for all 4) as well as shorter gait duration overall
 //make a Cassie model and simulation, especially once limb collision are enabled. A little cassie-like robot could also be a good target for Siggraph, maybe...

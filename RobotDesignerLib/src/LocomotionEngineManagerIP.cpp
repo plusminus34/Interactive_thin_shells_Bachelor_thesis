@@ -3,14 +3,8 @@
 LocomotionEngineManagerIP::LocomotionEngineManagerIP(){
 }
 
-LocomotionEngineManagerIP::LocomotionEngineManagerIP(Robot* robot, FootFallPattern* footFallPattern, int nSamplePoints){
-	if (footFallPattern){
-		this->footFallPattern = footFallPattern;
-		origFootFallPattern = *footFallPattern;
-	}
-	else {
-		this->footFallPattern = &origFootFallPattern;
-	}
+LocomotionEngineManagerIP::LocomotionEngineManagerIP(Robot* robot, FootFallPattern* ffp, int nSamplePoints){
+	this->footFallPattern = ffp;
 
 	motionPlan = new LocomotionEngineMotionPlan(robot, nSamplePoints);
 

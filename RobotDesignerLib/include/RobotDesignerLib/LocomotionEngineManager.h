@@ -59,7 +59,6 @@ public:
 
 	LocomotionEngineMotionPlan *motionPlan = NULL;
 	FootFallPattern* footFallPattern = NULL;
-	FootFallPattern origFootFallPattern;
 
 	LocomotionEngine_EnergyFunction* energyFunction;
 	LocomotionEngine_Constraints* constraints;
