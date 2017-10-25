@@ -27,8 +27,7 @@ else (ODE_INCLUDE_DIRS AND ODE_LIBRARIES)
             $ENV{OGRE_HOME}/include # ODE is shipped with the OGRE SDK
     )
 
-    set(ODE_LIBS_LIST 
-        ode 
+    set(ODE_LIBS_LIST  
         ode_static_release
     )
 
