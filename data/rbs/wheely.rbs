@@ -99,6 +99,7 @@ hingeJoint
 	child wheel3
 	jointPPos -0.08 0 -0.06
 	jointCPos 0 0 0
+	controlMode 3
 /Joint
 
 hingeJoint
@@ -110,4 +111,5 @@ hingeJoint
 	child wheel4
 	jointPPos -0.08 0 0.06
 	jointCPos 0 0 0
+	controlMode 3
 /Joint

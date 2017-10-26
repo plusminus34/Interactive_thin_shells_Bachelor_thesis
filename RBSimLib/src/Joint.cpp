@@ -148,6 +148,9 @@ void Joint::loadFromFile(FILE* f, AbstractRBEngine* rbEngine){
 			case RB_PPOS:
 				sscanf(line, "%lf %lf %lf",&pJPos[0], &pJPos[1], &pJPos[2]);
 				break;
+			case RB_JOINT_CONTROL_MODE:
+				sscanf(line, "%d", &controlMode);
+				break;
 			case RB_JOINT_END:
 				//we now have to link together the child and parent bodies
 				if (child == NULL)

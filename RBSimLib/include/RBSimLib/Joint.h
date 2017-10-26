@@ -46,7 +46,7 @@ public:
 	//unique index of the joint
 	int jIndex = -1;
 	//depending on the joint mode, control inputs will be computed and applied differently...
-	int controlMode = PASSIVE;
+	JOINT_MODE controlMode = PASSIVE;
 
 	MappingInfo mappingInfo;
 

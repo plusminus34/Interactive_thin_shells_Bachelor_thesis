@@ -29,6 +29,7 @@ KeyWord RBkeywords[] = {
 	{ "weldedJoint", RB_WELDED_JOINT},
 	{ "jointLimits", RB_JOINT_LIMITS},
 	{ "jointAxes", RB_JOINT_ROT_AXES},
+	{ "controlMode", RB_JOINT_CONTROL_MODE},
 	{ "/Joint", RB_JOINT_END},
 	{ "endEffector", RB_END_EFFECTOR},
 	{ "bodyPointFeature", RB_BODY_POINT_FEATURE},
