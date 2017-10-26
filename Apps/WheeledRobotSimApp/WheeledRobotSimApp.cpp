@@ -1,12 +1,12 @@
 #include <GUILib/GLUtils.h>
-#include "RBSimApp.h"
+#include "WheeledRobotSimApp.h"
 #include <GUILib/GLMesh.h>
 #include <GUILib/GLContentManager.h>
 #include <MathLib/MathLib.h>
 #include <RBSimLib/ODERBEngine.h>
 #include <ControlLib/GeneralizedCoordinatesRobotRepresentation.h>
 
-RBSimApp::RBSimApp(bool maximizeWindows)
+WheeledRobotSimApp::WheeledRobotSimApp(bool maximizeWindows)
     : GLApplication(maximizeWindows)
 {
 	setWindowTitle("Test Application for RBSim");
@@ -52,12 +52,12 @@ RBSimApp::RBSimApp(bool maximizeWindows)
 	simTimeStep = 1 / 100.0;
 }
 
-RBSimApp::~RBSimApp(void){
+WheeledRobotSimApp::~WheeledRobotSimApp(void){
 }
 
 
 //triggered when mouse moves
-bool RBSimApp::onMouseMoveEvent(double xPos, double yPos) {
+bool WheeledRobotSimApp::onMouseMoveEvent(double xPos, double yPos) {
 	if (tWidget.onMouseMoveEvent(xPos, yPos) == true) return true;
 	if (GLApplication::onMouseMoveEvent(xPos, yPos) == true) return true;
 
@@ -65,7 +65,7 @@ bool RBSimApp::onMouseMoveEvent(double xPos, double yPos) {
 }
 
 //triggered when mouse buttons are pressed
-bool RBSimApp::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
+bool WheeledRobotSimApp::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
 	if (tWidget.onMouseButtonEvent(button, action, mods, xPos, yPos) == true) return true;
 
 	if (GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
@@ -78,25 +78,36 @@ bool RBSimApp::onMouseButtonEvent(int button, int action, int mods, double xPos,
 }
 
 //triggered when using the mouse wheel
-bool RBSimApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
+bool WheeledRobotSimApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	if (GLApplication::onMouseWheelScrollEvent(xOffset, yOffset)) return true;
 
 	return false;
 }
 
-bool RBSimApp::onKeyEvent(int key, int action, int mods) {
+bool WheeledRobotSimApp::onKeyEvent(int key, int action, int mods) {
 	if (GLApplication::onKeyEvent(key, action, mods)) return true;
+
+    if (key == GLFW_KEY_UP && action == GLFW_PRESS)
+    {
+        for(Joint* j : rbEngine->joints)
+            addAngularVelocityTo(j, 1);
+    }
+    else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
+    {
+        for(Joint* j : rbEngine->joints)
+            addAngularVelocityTo(j, -1);
+    }
 
 	return false;
 }
 
-bool RBSimApp::onCharacterPressedEvent(int key, int mods) {
+bool WheeledRobotSimApp::onCharacterPressedEvent(int key, int mods) {
 	if (GLApplication::onCharacterPressedEvent(key, mods)) return true;
 
 	return false;
 }
 
-void RBSimApp::loadFile(const char* fName) {
+void WheeledRobotSimApp::loadFile(const char* fName) {
 	if (strcmp(lastLoadedFile.c_str(), fName) != 0)
 		lastLoadedFile = string("") + fName;
 	Logger::consolePrint("Loading file \'%s\'...\n", fName);
@@ -129,12 +140,12 @@ void RBSimApp::loadFile(const char* fName) {
 
 }
 
-void RBSimApp::saveFile(const char* fName) {
+void WheeledRobotSimApp::saveFile(const char* fName) {
 	Logger::consolePrint("SAVE FILE: Do not know what to do with file \'%s\'\n", fName);
 }
 
 // Run the App tasks
-void RBSimApp::process() {
+void WheeledRobotSimApp::process() {
 	//do the work here...
 	double simulationTime = 0;
 	double maxRunningTime = 1.0 / desiredFrameRate;
@@ -151,7 +162,7 @@ void RBSimApp::process() {
 #include <fstream>
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
-void RBSimApp::drawScene() {
+void WheeledRobotSimApp::drawScene() {
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
 	glColor3d(1,1,1);
@@ -176,18 +187,28 @@ void RBSimApp::drawScene() {
 }
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
-void RBSimApp::drawAuxiliarySceneInfo() {
+void WheeledRobotSimApp::drawAuxiliarySceneInfo() {
 
 }
 
 // Restart the application.
-void RBSimApp::restart() {
+void WheeledRobotSimApp::restart() {
 	loadFile(lastLoadedFile.c_str());
 }
 
-bool RBSimApp::processCommandLine(const std::string& cmdLine) {
+bool WheeledRobotSimApp::processCommandLine(const std::string& cmdLine) {
 
 	if (GLApplication::processCommandLine(cmdLine)) return true;
 
 	return false;
+}
+
+void WheeledRobotSimApp::addAngularVelocityTo(Joint *j, double d)
+{
+    HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
+    if(hingeJoint != nullptr && j->controlMode == JOINT_MODE::VELOCITY_MODE)
+    {
+        V3D axis = hingeJoint->rotationAxis.unit();
+        j->desiredRelativeAngVelocity += axis*d;
+    }
 }

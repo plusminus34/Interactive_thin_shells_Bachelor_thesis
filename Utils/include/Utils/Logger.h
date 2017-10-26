@@ -17,7 +17,7 @@
 		pBuffer = new char[length + 1];									\
 		memset(pBuffer, 0, length + 1);									\
 		va_start(args, fmt);											\
-		result = vsnprintf_s(pBuffer, length, _TRUNCATE, fmt, args);	\
+        result = std::vsnprintf(pBuffer, length, fmt, args);	        \
 		va_end(args);													\
 		if (result >= length)											\
 			result = -1;												\

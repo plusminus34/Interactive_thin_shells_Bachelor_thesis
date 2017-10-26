@@ -42,15 +42,15 @@ void main()
 		
 		vec3 r = normalize(2.0*ndl*n - l);
 		
-		float ndr = pow(clamp(dot(r,v), 0, 1), g*specPowerFactor);
+		float ndr = pow(clamp(dot(r,v), 0., 1.), g*specPowerFactor);
 		
-		c += clamp(ndl,0,1)*diffuseColor*diffuse + s*ndr*specularColor;
+		c += clamp(ndl, 0., 1.)*diffuseColor*diffuse + s*ndr*specularColor;
 	}
 	
 	vec3 matcapVal = texture2D(matcapSampler, 0.5*n.xy + 0.5).rgb;
 	vec3 matcapShinyVal = texture2D(matcapSamplerShiny, 0.5*n.xy + 0.5).rgb;
 	
-	float sm = clamp((s - matcapDarkerGray) / (matcapLighterGray - matcapDarkerGray), 0, 1);
+	float sm = clamp((s - matcapDarkerGray) / (matcapLighterGray - matcapDarkerGray), 0., 1.);
 	c += specularMatcapColor * ((1.0-sm)*matcapVal + sm*matcapShinyVal);
 	
 	gl_FragColor = vec4(c,1);

@@ -124,7 +124,7 @@ private:
 	/**
 	Create an ODE motor (control purposes) for the specified joint
 	*/
-	int ODERBEngine::getODEMotorForJoint(Joint* j);
+    int getODEMotorForJoint(Joint* j);
 
 	/**
 	This method is used to set up an ode universal joint, based on the information in the universal joint passed in as a parameter

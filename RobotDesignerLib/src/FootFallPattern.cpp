@@ -1,5 +1,5 @@
 #include <RobotDesignerLib/FootFallPattern.h>
-#include <MathLib/mathLib.h>
+#include <MathLib/MathLib.h>
 
 FootFallPattern::FootFallPattern(void){
 	strideSamplePoints = 12;

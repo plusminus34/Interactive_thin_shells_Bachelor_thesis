@@ -19,7 +19,7 @@ public:
 		theQPCPlan->robotRepresentation->getQDot(qDot);
 
 		// NOTE: Now is calculating 0.5 * || J * qDotDot + JDot * qDot + J * qDot(current velocity) / dt || ^ 2
-		V3D err = (endEffector->J * theQPCPlan->a + endEffector->Jdot * qDot) - endEffector->targetEEAcceleration;
+        V3D err = (V3D)(endEffector->J * theQPCPlan->a + endEffector->Jdot * qDot) - endEffector->targetEEAcceleration;
 
 		return 0.5 * err.length2() * weight;
 	}
@@ -34,7 +34,7 @@ public:
 		gradient.resize(theQPCPlan->robotRepresentation->getDimensionCount());
 		gradient.setZero();
 		// Compute current acceleration
-		V3D err = (endEffector->J * theQPCPlan->a + endEffector->Jdot * qDot) - endEffector->targetEEAcceleration;
+        V3D err = (V3D)(endEffector->J * theQPCPlan->a + endEffector->Jdot * qDot) - endEffector->targetEEAcceleration;
 		// J transpose
 		gradient += endEffector->J.transpose() * err;
 

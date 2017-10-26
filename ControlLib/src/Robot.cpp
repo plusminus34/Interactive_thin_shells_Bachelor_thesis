@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <ControlLib/SimpleLimb.h>
 
-#include <RBSimLib\HingeJoint.h>
-#include <RBSimLib\UniversalJoint.h>
-#include <RBSimLib\BallAndSocketJoint.h>
+#include <RBSimLib/HingeJoint.h>
+#include <RBSimLib/UniversalJoint.h>
+#include <RBSimLib/BallAndSocketJoint.h>
 
 /**
 	the constructor

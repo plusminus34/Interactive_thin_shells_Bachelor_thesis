@@ -3,7 +3,7 @@
 #include <MathLib/MathLib.h>
 #include <MathLib/P3D.h>
 #include <MathLib/V3D.h>
-#include <MathLib/mathLib.h>
+#include <MathLib/MathLib.h>
 #include <MathLib/Trajectory.h>
 #include <ControlLib/Robot.h>
 #include <ControlLib/GeneralizedCoordinatesRobotRepresentation.h>
@@ -408,7 +408,7 @@ public:
 		contactEndEffectors.back().updateJacobians(robotRepresentation);
 		contactEndEffectors.back().targetPosition = rb->getWorldCoordinates(localCoordsEE);
 		//we want the contact end effectors to not move... so the target acceleration that we set up here should do just that...
-		V3D tmp = (contactEndEffectors.back().J * qDot) / dt * -1;
+        V3D tmp = (V3D)(contactEndEffectors.back().J * qDot) / dt * -1;
 		contactEndEffectors.back().inContact = grounded;
 		if (!grounded){
 			tmp += Globals::worldUp * Globals::g;

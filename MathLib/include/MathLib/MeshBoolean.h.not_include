@@ -2,7 +2,7 @@
 
 #include <GUILib/GLMesh.h>
 #include <GUILib/OBJReader.h>
-#include <process.h> 
+//#include <process.h>
 #include <string>
 
 using namespace std;
@@ -27,7 +27,7 @@ inline GLMesh* meshBooleanCork(GLMesh* mesh_A, GLMesh* mesh_B, const char* boole
 	else if (strcmp(boolean_type, "Resolve") == 0)
 		cork_boolean_type = "-resolve";
 
-	int res = spawnl(P_WAIT, "../MeshUtilsPrograms/MeshBooleanCork.exe", "MeshBooleanCork.exe",
+    int res = _spawnl(P_WAIT, "../MeshUtilsPrograms/MeshBooleanCork.exe", "MeshBooleanCork.exe",
 		cork_boolean_type.c_str(), "../out/tmpMeshA.off", "../out/tmpMeshB.off", "../out/BooleanRes.off", NULL);
 
 	if (res != 0) {

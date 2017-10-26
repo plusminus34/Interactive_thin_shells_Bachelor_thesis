@@ -5,7 +5,7 @@
 #include <GUILib/GLMesh.h>
 #include <GUILib/GLUtils.h>
 #include <vector>
-#include <MathLib/mathLib.h>
+#include <MathLib/MathLib.h>
 #include <MathLib/Quaternion.h>
 #include <MathLib/Segment.h>
 #include <MathLib/boundingBox.h>

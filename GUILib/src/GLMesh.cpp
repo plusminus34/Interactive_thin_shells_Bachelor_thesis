@@ -274,7 +274,8 @@ void GLMesh::addCube(const P3D &baseCorner, const P3D &topCorner)
 	addVertex(P3D(topCorner[0], topCorner[1], topCorner[2]));
 	addVertex(P3D(topCorner[0], baseCorner[1], topCorner[2]));
 
-	addPoly(GLIndexedTriangle(startVIndex, startVIndex + 2, startVIndex + 1));
+    GLIndexedTriangle tr(startVIndex, startVIndex + 2, startVIndex + 1);
+    addPoly(tr);
 	addPoly(GLIndexedTriangle(startVIndex, startVIndex + 3, startVIndex + 2));
 
 	addPoly(GLIndexedTriangle(startVIndex + 4, startVIndex + 5, startVIndex + 6));
@@ -343,18 +344,9 @@ bool GLMesh::vertexIsInUse(int vIndex){
 	This is the method that adds new polygons to the mesh. The polygons have to be populated by the class that reads in the
 	mesh from a file.
 */
-void GLMesh::addPoly(GLIndexedPoly &p, bool duplicateVertices){
-	if (duplicateVertices){
-		//todo: should probably check to see if this vertex is used first...
-		for (uint i=0;i<p.indexes.size();i++){
-			if (vertexIsInUse(p.indexes[i])){
-				addVertex(getVertex(p.indexes[i]));
-				p.indexes[i] = getVertexCount()-1;
-			}
-		}
-	}
+void GLMesh::addPoly(const GLIndexedPoly &p){
 
-	//now we must add the neighbour's info to each vertex in this poly
+    //now we must add the neighbour's info to each vertex in this poly
 	for (uint i=0;i<p.indexes.size();i++){
 		if (sharedVertices[p.indexes[i]] == NULL)
 			sharedVertices[p.indexes[i]] = new SharedVertexInfo();
@@ -384,7 +376,23 @@ void GLMesh::addPoly(GLIndexedPoly &p, bool duplicateVertices){
 		{
 			triangles.push_back(GLIndexedTriangle(p.indexes[0], p.indexes[i], p.indexes[i+1]));
 		}
-	}
+    }
+}
+
+void GLMesh::addPoly(const GLIndexedPoly &p, bool duplicateVertices)
+{
+    GLIndexedPoly pNew = p;
+    if (duplicateVertices){
+        //todo: should probably check to see if this vertex is used first...
+        for (uint i=0;i<p.indexes.size();i++){
+            if (vertexIsInUse(p.indexes[i])){
+                addVertex(getVertex(p.indexes[i]));
+                pNew.indexes[i] = getVertexCount()-1;
+            }
+        }
+    }
+
+    addPoly(pNew);
 }
 
 void GLMesh::addSphere(const P3D &center, double radius, int resolution){

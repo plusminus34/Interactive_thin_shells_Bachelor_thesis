@@ -37,7 +37,7 @@ void TranslateWidget::draw(){
 		glPushMatrix();
 
 		//to keep the size of the arrows roughly the same on screen, mess around with the scale...
-		P3D &camPos = getRayFromScreenCoords(0, 0).origin;
+        P3D camPos = getRayFromScreenCoords(0, 0).origin;
 		double z = V3D(camPos, pos).length();
 		scale = 50 * z / 1000;
 

@@ -26,6 +26,7 @@ add_subdirectory(ext/nanogui)
 set_property(TARGET glfw glfw_objects nanogui nanogui-obj PROPERTY FOLDER "_dependencies")
 add_definitions(${NANOGUI_EXTRA_DEFS})
 include_directories(ext/nanogui/include)
+include_directories(ext/nanogui/ext/glad/include)
 include_directories(${NANOGUI_EXTRA_INCS})
 
 # Freetype

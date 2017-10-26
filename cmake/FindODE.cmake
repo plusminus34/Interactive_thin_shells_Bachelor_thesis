@@ -20,23 +20,26 @@ else (ODE_INCLUDE_DIRS AND ODE_LIBRARIES)
 
     # Find include dir
     find_path(ODE_INCLUDE_DIRS ode/ode.h
-        HINTS 
+        HINTS
+	        /usr/local/include/
             ${PC_ODE_INCLUDEDIR}
             ${PROJECT_SOURCE_DIR}/../../libs/thirdPartyCode/ode-0.13/include
         PATHS 
             $ENV{OGRE_HOME}/include # ODE is shipped with the OGRE SDK
     )
 
-    set(ODE_LIBS_LIST  
-        ode_static_release
-    )
-
+    set(ODE_LIBS_LIST ode)
+    if(WIN32)
+        set(ODE_LIBS_LIST ${ODE_LIBS_LIST} ode_static_release)
+    endif()
+    
     foreach(LIB ${ODE_LIBS_LIST})
       
         find_library(ODE_LIB_${LIB} 
             NAMES ${LIB}
             HINTS 
                 ${PC_ODE_LIBDIR}
+				/usr/local/lib/
                 ${PROJECT_SOURCE_DIR}/../../libs
                 ${PROJECT_SOURCE_DIR}/../../libs/thirdPartyCode/ode-0.13/lib/ReleaseDLL
         )
