@@ -1,4 +1,5 @@
 #include <RobotDesignerLib/LocomotionEngineEnergyFunction.h>
+#include <RobotDesignerLib/MPO_TorqueAngularAccelObjective.h>
 
 LocomotionEngine_EnergyFunction::LocomotionEngine_EnergyFunction(LocomotionEngineMotionPlan* mp){
 	theMotionPlan = mp;
@@ -119,6 +120,14 @@ void LocomotionEngine_EnergyFunction::addGradientTo(dVector& grad, const dVector
 void LocomotionEngine_EnergyFunction::setCurrentBestSolution(const dVector& p){
 	updateRegularizingSolutionTo(p);
 	theMotionPlan->setMPParametersFromList(p);
+
+	//TODO: not very nice to have this here... should maybe be an updateInternalState kind of callback...
+	for (uint i = 0; i<objectives.size(); i++) {
+		MPO_TorqueAngularAccelObjective* tmpObj = dynamic_cast<MPO_TorqueAngularAccelObjective*>(objectives[i]);
+		if (tmpObj)
+			tmpObj->updateDummyMatrices();
+	}
+
 
 	if (printDebugInfo){
 		Logger::consolePrint("-------------------------------\n");

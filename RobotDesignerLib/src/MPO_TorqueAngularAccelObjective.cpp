@@ -8,6 +8,49 @@ MPO_TorqueAngularAccelObjective::MPO_TorqueAngularAccelObjective(LocomotionEngin
 
 	dummyR.resize(theMotionPlan->nSamplePoints, Matrix3x3::Identity());
 	dummyQ.resize(theMotionPlan->nSamplePoints, Matrix3x3::Identity());
+	updateDummyMatrices();
+}
+
+void MPO_TorqueAngularAccelObjective::updateDummyMatrices(){
+	Matrix3x3 dummy = AngleAxisd(DUMMY_ANGLE, Vector3d(0, 1, 0)).toRotationMatrix();
+
+	V3D axis[3];
+	for (int i = 0; i < 3; i++) {
+		axis[i] = theMotionPlan->COMTrajectory.getAxis(i);
+	}
+
+	int end = theMotionPlan->nSamplePoints;
+
+	for (int j = 0; j < end; j++) {
+		int jmm, jm, jp, jpp;
+
+		dummyR[j].setIdentity();
+		dummyQ[j].setIdentity();
+
+		theMotionPlan->getAccelerationTimeIndicesFor(j, jmm, jm, jp, jpp);
+		if (jmm == -1 || jm == -1 || jp == -1 || jpp == -1) continue;
+
+		Matrix3x3 R1, R2, R3, R4;
+		R1.setIdentity(); R2.setIdentity(); R3.setIdentity(); R4.setIdentity();
+		V3D eulerAngles_jpp = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jpp);
+		V3D eulerAngles_jp = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jp);
+		V3D eulerAngles_jmm = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jmm);
+		V3D eulerAngles_jm = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jm);
+
+		for (int i = 0; i < 3; i++){
+			R1 *= getRotationQuaternion(eulerAngles_jp[i], axis[i]).getRotationMatrix();
+			R2 *= getRotationQuaternion(eulerAngles_jpp[i], axis[i]).getRotationMatrix();
+			R3 *= getRotationQuaternion(eulerAngles_jmm[i], axis[i]).getRotationMatrix();
+			R4 *= getRotationQuaternion(eulerAngles_jm[i], axis[i]).getRotationMatrix();
+		}
+
+		Matrix3x3 R = R2 * R1.transpose();
+		Matrix3x3 Q = R4 * R3.transpose();
+		if (checkAngleAxisSingularity(R))
+			dummyR[j] = dummy;
+		if (checkAngleAxisSingularity(Q))
+			dummyQ[j] = dummy;
+	}
 }
 
 double MPO_TorqueAngularAccelObjective::computeValue(const dVector& p) {
@@ -73,13 +116,15 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
+	updateDummyMatrices();
+
 	double h = theMotionPlan->motionPlanDuration / (theMotionPlan->nSamplePoints - 1);
 
 	V3D axis[3];
 	Matrix3x3 crossMat[3];
 	for (int i = 0; i < 3; i++)
 	{
-		axis[i] = axis[i] = theMotionPlan->COMTrajectory.getAxis(i);
+		axis[i] = theMotionPlan->COMTrajectory.getAxis(i);
 		crossMat[i] = getCrossProductMatrix(axis[i]);
 	}
 

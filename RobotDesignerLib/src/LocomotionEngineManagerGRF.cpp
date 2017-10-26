@@ -32,22 +32,6 @@ LocomotionEngineManagerGRF::~LocomotionEngineManagerGRF(){
 }
 
 void LocomotionEngineManagerGRF::warmStartMOpt() {
-	for (int i = 0; i < 1; i++) {
-		//		runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_END_EFFECTORS | OPT_COM_ORIENTATIONS | OPT_ROBOT_STATES);
-		motionPlan->optimizeEndEffectorPositions = motionPlan->optimizeCOMPositions = motionPlan->optimizeCOMOrientations = motionPlan->optimizeRobotStates = motionPlan->optimizeContactForces = false;
-		motionPlan->optimizeCOMOrientations = true;
-		dVector params;
-		dVector gradient;
-		motionPlan->writeMPParametersToList(params);
-		energyFunction->testIndividualGradient(params);
-		energyFunction->testGradientWithFD(params);
-		energyFunction->addGradientTo(gradient, params);
-
-		Logger::consolePrint("energy function gradient norm: %lf\n", gradient.norm());
-	}
-
-
-
 
 	FootFallPattern originalFootFallPattern = *footFallPattern;
 	double desSwingHeight = motionPlan->swingFootHeight;
@@ -241,7 +225,7 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 
 	//	return;
 
-	for (int i = 0; i < 1; i++) {
+	for (int i = 0; i < 5; i++) {
 		motionPlan->desDistanceToTravel.x() = desSpeedX * ((double)i / 4.0);
 		motionPlan->desDistanceToTravel.z() = desSpeedZ * ((double)i / 4.0);
 		motionPlan->desTurningAngle = desTurningAngle * ((double)i / 4.0);

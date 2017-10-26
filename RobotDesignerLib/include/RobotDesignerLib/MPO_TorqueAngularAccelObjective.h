@@ -29,6 +29,11 @@ private:
 	//the energy function operates on a motion plan...
 	LocomotionEngineMotionPlan* theMotionPlan;
 
+
+	//matrices used to work around (near)singular configurations...
 	vector<Matrix3x3> dummyR;
 	vector<Matrix3x3> dummyQ;
+public:
+	void updateDummyMatrices();
+
 };
