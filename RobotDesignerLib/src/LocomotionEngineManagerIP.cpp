@@ -94,6 +94,17 @@ void LocomotionEngineManagerIPv1::warmStartMOpt() {
 	motionPlan->optimizeEndEffectorPositions = true;
 	for (int i = 0; i < 5; i++)
 		runMOPTStep();
+
+	setDefaultOptimizationFlags();
+}
+
+void LocomotionEngineManagerIPv1::setDefaultOptimizationFlags() {
+	motionPlan->optimizeEndEffectorPositions = true;
+	motionPlan->optimizeCOMPositions = true;
+	motionPlan->optimizeCOMOrientations = false;
+	motionPlan->optimizeRobotStates = true;
+	motionPlan->optimizeContactForces = false;
+	motionPlan->optimizeBarycentricWeights = true;
 }
 
 /***************************************************************************************/
@@ -170,4 +181,15 @@ void LocomotionEngineManagerIPv2::warmStartMOpt(){
 	motionPlan->optimizeEndEffectorPositions = true;
 	for (int i = 0; i < 5; i++)
 		runMOPTStep();
+
+	setDefaultOptimizationFlags();
+}
+
+void LocomotionEngineManagerIPv2::setDefaultOptimizationFlags() {
+	motionPlan->optimizeEndEffectorPositions = true;
+	motionPlan->optimizeCOMPositions = true;
+	motionPlan->optimizeCOMOrientations = true;
+	motionPlan->optimizeRobotStates = true;
+	motionPlan->optimizeContactForces = false;
+	motionPlan->optimizeBarycentricWeights = true;
 }

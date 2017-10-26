@@ -10,6 +10,9 @@ public:
 	~LocomotionEngineManagerGRF();
 
 	void warmStartMOpt();
+
+	void setDefaultOptimizationFlags();
+
 };
 
 /*************************************************************************************************************/

@@ -74,6 +74,8 @@ public:
 
 	virtual double runMOPTStep();
 
+	virtual void setDefaultOptimizationFlags() = 0;
+
 	double runMOPTStep(int optimizationFlags) {
 		motionPlan->optimizeEndEffectorPositions = (optimizationFlags & OPT_END_EFFECTORS) != 0;
 		motionPlan->optimizeCOMPositions = (optimizationFlags & OPT_COM_POSITIONS) != 0;

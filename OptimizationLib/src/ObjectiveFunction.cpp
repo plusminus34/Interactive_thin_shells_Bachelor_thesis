@@ -74,8 +74,9 @@ void ObjectiveFunction::testGradientWithFD(const dVector& p){
 
 	addEstimatedGradientTo(FDGradient, p);
 	addGradientTo(analyticGradient, p);
+
     Logger::logPrint("Objective Function: testing gradients...\n");
-	Logger::print("Objective Function: testing gradients...\n");
+	Logger::print("Objective Function: testing gradients...norms: analytic: %lf, FD: %lf\n", analyticGradient.norm(), FDGradient.norm());
 	for (int i=0;i<p.size();i++){
 		double err = FDGradient[i] - analyticGradient[i];
 		if (fabs(err) > 0.0001 && 2 * fabs(err) / (fabs(FDGradient[i]) + fabs(analyticGradient[i])) > 0.001) {

@@ -23,6 +23,7 @@ public:
 
 	void setupObjectives();
 	void warmStartMOpt();
+	void setDefaultOptimizationFlags();
 };
 
 /***************************************************************************************/
@@ -38,5 +39,7 @@ public:
 
 	void setupObjectives();
 	void warmStartMOpt();
+
+	void setDefaultOptimizationFlags();
 };
 

@@ -32,6 +32,23 @@ LocomotionEngineManagerGRF::~LocomotionEngineManagerGRF(){
 }
 
 void LocomotionEngineManagerGRF::warmStartMOpt() {
+	for (int i = 0; i < 1; i++) {
+		//		runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_END_EFFECTORS | OPT_COM_ORIENTATIONS | OPT_ROBOT_STATES);
+		motionPlan->optimizeEndEffectorPositions = motionPlan->optimizeCOMPositions = motionPlan->optimizeCOMOrientations = motionPlan->optimizeRobotStates = motionPlan->optimizeContactForces = false;
+		motionPlan->optimizeCOMOrientations = true;
+		dVector params;
+		dVector gradient;
+		motionPlan->writeMPParametersToList(params);
+		energyFunction->testIndividualGradient(params);
+		energyFunction->testGradientWithFD(params);
+		energyFunction->addGradientTo(gradient, params);
+
+		Logger::consolePrint("energy function gradient norm: %lf\n", gradient.norm());
+	}
+
+
+
+
 	FootFallPattern originalFootFallPattern = *footFallPattern;
 	double desSwingHeight = motionPlan->swingFootHeight;
 	double desSpeedX = motionPlan->desDistanceToTravel.x();
@@ -110,7 +127,7 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 
 	int nSteps = 101;
 
-	for (int i = 2; i < nSteps; i++) {
+	for (int i = 0; i < nSteps; i++) {
 		//the factor will go from 1 down to 0 as it is making progress in the warmstart process...
 		double factor = 1 - (double)i / (nSteps - 1.0);
 		for (int iT = 0; iT < motionPlan->nSamplePoints; iT++) {
@@ -224,7 +241,7 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 
 	//	return;
 
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < 1; i++) {
 		motionPlan->desDistanceToTravel.x() = desSpeedX * ((double)i / 4.0);
 		motionPlan->desDistanceToTravel.z() = desSpeedZ * ((double)i / 4.0);
 		motionPlan->desTurningAngle = desTurningAngle * ((double)i / 4.0);
@@ -237,12 +254,23 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 #endif
 	}
 
-	motionPlan->optimizeEndEffectorPositions = motionPlan->optimizeCOMPositions = motionPlan->optimizeCOMOrientations = motionPlan->optimizeRobotStates = motionPlan->optimizeContactForces = true;
+	setDefaultOptimizationFlags();
+
 	motionPlan->swingFootHeight = desSwingHeight;
 	motionPlan->desDistanceToTravel.x() = desSpeedX;
 	motionPlan->desDistanceToTravel.z() = desSpeedZ;
 	motionPlan->desTurningAngle = desTurningAngle;
 }
+
+void LocomotionEngineManagerGRF::setDefaultOptimizationFlags() {
+	motionPlan->optimizeEndEffectorPositions = true;
+	motionPlan->optimizeCOMPositions = true;
+	motionPlan->optimizeCOMOrientations = true;
+	motionPlan->optimizeRobotStates = true;
+	motionPlan->optimizeContactForces = true;
+	motionPlan->optimizeBarycentricWeights = false;
+}
+
 
 
 /*************************************************************************************************************/

@@ -163,12 +163,7 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 
 	syncMOPTWindowParameters();
 
-	//TODO: this is only correct for GRFV2... each locomotion manager needs to have its own backup plan...
-	locomotionManager->motionPlan->optimizeEndEffectorPositions =
-	locomotionManager->motionPlan->optimizeCOMPositions =
-	locomotionManager->motionPlan->optimizeCOMOrientations =
-	locomotionManager->motionPlan->optimizeRobotStates =
-	locomotionManager->motionPlan->optimizeContactForces = true;
+	locomotionManager->setDefaultOptimizationFlags();
 
 	return locomotionManager;
 }
