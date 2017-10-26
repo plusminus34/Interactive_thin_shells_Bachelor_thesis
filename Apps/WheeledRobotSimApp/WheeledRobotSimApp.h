@@ -23,6 +23,8 @@ private:
 
 	std::string lastLoadedFile;
 
+	double allWheelsAngle;
+
 public:
 	// constructor
     WheeledRobotSimApp(bool maximizeWindows = true);
@@ -55,10 +57,6 @@ public:
 	
 	virtual void saveFile(const char* fName);
 	virtual void loadFile(const char* fName);
-
-private:
-    static void addAngularVelocityTo(Joint *j, double d);
-
 };
 
 

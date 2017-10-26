@@ -5,13 +5,16 @@
 #include <MathLib/MathLib.h>
 #include <RBSimLib/ODERBEngine.h>
 #include <ControlLib/GeneralizedCoordinatesRobotRepresentation.h>
+//#include <math.h>
+
+#include <nanogui/slider.h>
 
 WheeledRobotSimApp::WheeledRobotSimApp(bool maximizeWindows)
-    : GLApplication(maximizeWindows)
+	: GLApplication(maximizeWindows)
 {
 	setWindowTitle("Test Application for RBSim");
 
-	drawCDPs = false;
+	drawCDPs = true;
 	drawSkeletonView = true;
 	showGroundPlane = true;
 
@@ -24,30 +27,43 @@ WheeledRobotSimApp::WheeledRobotSimApp(bool maximizeWindows)
 	mainMenu->addVariable("Draw Joints", drawJoints);
 	mainMenu->addVariable("Draw ContactForces", drawContactForces);
 
-	menuScreen->performLayout();
+	mainMenu->window()->setSize(Eigen::Vector2i(400, 800));
 
+	{
+		nanogui::Label *groupWheel = mainMenu->addGroup("Wheel Control");
+		nanogui::Slider *slider = new nanogui::Slider(mainMenu->window());
+		slider->setValue(0.5f);
+		slider->setCallback([=](double value) { allWheelsAngle = value; });
+		slider->setRange(std::pair<double,double>(-M_PI, M_PI));
+		mainMenu->addWidget("All wheels angle", slider);
+	}
+
+	menuScreen->performLayout();
 
 	worldOracle = new WorldOracle(Globals::worldUp, Globals::groundPlane);
 
-//	loadFile("../data/rbs/trex.rbs");
-//	loadFile("../data/rbs/trex.rs");
+//	loadFile("../data/rbs/wheely.rbs");
+	loadFile("../data/rbs/legged_wheely.rbs");
 
-    drawCDPs = true;
+	// Set angular velocity axis from hing joint axis
+	for(Joint* j : rbEngine->joints)
+	{
+		HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
+		if(hingeJoint != nullptr)
+		{
+			V3D rotAxis = hingeJoint->rotationAxis.unit();
 
-    loadFile("../data/rbs/wheely.rbs");
-//    loadFile("../data/robotsAndMotionPlans/crab/robot.rbs");
-
-//    loadFile("../data/robotsAndMotionPlans/starlETH/robot.rbs");
-
-//	loadFile("../data/rbs/starlETH.rbs");
-//	loadFile("../data/rbs/dinoV1.rbs");
-//	loadFile("../data/rbs/trex2.rbs");
-//  loadFile("../data/rbs/YunfeiSKEL003.rbs");
-//  loadFile("../data/rbs/chain.rbs");
- //   loadFile("../data/rbs/sample2.rbs");
-//	loadFile("../data/rbs/test.rbs");
-
-//	loadFile("../data/rbs/tmp.rbs");
+			if(j->controlMode == JOINT_MODE::VELOCITY_MODE)
+			{
+				j->desiredRelativeAngVelocityAxis = rotAxis;
+				j->desiredRelativeAngVelocity = 0;
+			}
+			else if(j->controlMode == JOINT_MODE::POSITION_MODE)
+			{
+				j->desiredRelativeOrientation = getRotationQuaternion(0, rotAxis);
+			}
+		}
+	}
 
 	simTimeStep = 1 / 100.0;
 }
@@ -83,15 +99,16 @@ bool WheeledRobotSimApp::onMouseWheelScrollEvent(double xOffset, double yOffset)
 bool WheeledRobotSimApp::onKeyEvent(int key, int action, int mods) {
 	if (GLApplication::onKeyEvent(key, action, mods)) return true;
 
+	// Velocity control
 	if (key == GLFW_KEY_UP)
 	{
 		for(Joint* j : rbEngine->joints)
-			addAngularVelocityTo(j, 1);
+			j->desiredRelativeAngVelocity += 1.0;
 	}
 	else if (key == GLFW_KEY_DOWN)
 	{
 		for(Joint* j : rbEngine->joints)
-			addAngularVelocityTo(j, -1);
+			j->desiredRelativeAngVelocity -= 1.0;
 	}
 	else if (key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
@@ -128,8 +145,8 @@ void WheeledRobotSimApp::loadFile(const char* fName) {
 
 		rbEngine->loadRBsFromFile(fName);
 
-        // create the ground plane rigid body
-        worldOracle->writeRBSFile("../out/tmpRB.rbs");
+		// create the ground plane rigid body
+		worldOracle->writeRBSFile("../out/tmpRB.rbs");
 		rbEngine->loadRBsFromFile("../out/tmpRB.rbs");
 
 		return;
@@ -152,6 +169,26 @@ void WheeledRobotSimApp::saveFile(const char* fName) {
 
 // Run the App tasks
 void WheeledRobotSimApp::process() {
+
+	for(Joint* j : rbEngine->joints)
+	{
+		HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
+		if(hingeJoint != nullptr)
+		{
+			V3D rotAxis = hingeJoint->rotationAxis.unit();
+
+			if(j->controlMode == JOINT_MODE::VELOCITY_MODE)
+			{
+//				j->desiredRelativeAngVelocityAxis = rotAxis;
+//				j->desiredRelativeAngVelocity = 0;
+			}
+			else if(j->controlMode == JOINT_MODE::POSITION_MODE)
+			{
+				j->desiredRelativeOrientation = getRotationQuaternion(allWheelsAngle, rotAxis);
+			}
+		}
+	}
+
 	//do the work here...
 	double simulationTime = 0;
 	double maxRunningTime = 1.0 / desiredFrameRate;
@@ -159,7 +196,6 @@ void WheeledRobotSimApp::process() {
 	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
 	while (simulationTime / maxRunningTime < animationSpeedupFactor)
 	{
-
 		simulationTime += simTimeStep;
 		rbEngine->step(simTimeStep);
 	}
@@ -207,14 +243,4 @@ bool WheeledRobotSimApp::processCommandLine(const std::string& cmdLine) {
 	if (GLApplication::processCommandLine(cmdLine)) return true;
 
 	return false;
-}
-
-void WheeledRobotSimApp::addAngularVelocityTo(Joint *j, double d)
-{
-	HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
-	if(hingeJoint != nullptr && j->controlMode == JOINT_MODE::VELOCITY_MODE)
-	{
-		j->desiredRelativeAngVelocityAxis = hingeJoint->rotationAxis.unit();
-		j->desiredRelativeAngVelocity += d;
-	}
 }
