@@ -1,0 +1,221 @@
+RigidBody
+	name body
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position 0 0.5 0
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Box -0.1 -0. -0.06 0.1 0.05 0.06
+/End
+
+RigidBody
+	name wheel1
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position 0.08 0.5 0.06
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Capsule 0 0 0.01 0 0 -0.01 0.02
+/End
+
+RigidBody
+	name wheel2
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position 0.08 0.5 -0.06
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Capsule 0 0 0.01 0 0 -0.01 0.02
+/End
+
+RigidBody
+	name wheel3
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position -0.08 0.5 -0.06
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Capsule 0 0 0.01 0 0 -0.01 0.02
+/End
+
+RigidBody
+	name wheel4
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position -0.08 0.5 0.06
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Capsule 0 0 0.01 0 0 -0.01 0.02
+/End
+
+RigidBody
+	name leg1
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position 0.08 0.5 0.06
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Box -0.01 -0. -0.01 0.01 0.1 0.01
+/End
+
+RigidBody
+	name leg2
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position 0.08 0.5 -0.06
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Box -0.01 -0. -0.01 0.01 0.1 0.01
+/End
+
+RigidBody
+	name leg3
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position -0.08 0.5 -0.06
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Box -0.01 -0. -0.01 0.01 0.1 0.01
+/End
+
+RigidBody
+	name leg4
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position -0.08 0.5 0.06
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Box -0.01 -0. -0.01 0.01 0.1 0.01
+/End
+
+hingeJoint
+	jointAxes 0 0 1
+	dxlID -1
+	mappingInfo 0 2
+	name body_leg1
+	parent body
+	child leg1
+	jointPPos 0.08 0 0.06
+	jointCPos 0 0.1 0
+	controlMode 2
+/Joint
+
+hingeJoint
+	jointAxes 0 0 1
+	dxlID -1
+	mappingInfo 0 2
+	name leg1_wheel1
+	parent leg1
+	child wheel1
+	jointPPos 0 0 0
+	jointCPos 0 0 0
+	controlMode 3
+/Joint
+
+hingeJoint
+	jointAxes 0 0 1
+	dxlID -1
+	mappingInfo 0 2
+	name body_leg2
+	parent body
+	child leg2
+	jointPPos 0.08 0 -0.06
+	jointCPos 0 0.1 0
+	controlMode 2
+/Joint
+
+hingeJoint
+	jointAxes 0 0 1
+	dxlID -1
+	mappingInfo 0 2
+	name leg2_wheel2
+	parent leg2
+	child wheel2
+	jointPPos 0 0 0
+	jointCPos 0 0 0
+	controlMode 3
+/Joint
+
+hingeJoint
+	jointAxes 0 0 1
+	dxlID -1
+	mappingInfo 0 2
+	name body_leg3
+	parent body
+	child leg3
+	jointPPos -0.08 0 -0.06
+	jointCPos 0 0.1 0
+	controlMode 2
+/Joint
+
+hingeJoint
+	jointAxes 0 0 1
+	dxlID -1
+	mappingInfo 0 2
+	name leg3_wheel3
+	parent leg3
+	child wheel3
+	jointPPos 0 0 0
+	jointCPos 0 0 0
+	controlMode 3
+/Joint
+
+hingeJoint
+	jointAxes 0 0 1
+	dxlID -1
+	mappingInfo 0 2
+	name body_leg4
+	parent body
+	child leg4
+	jointPPos -0.08 0 0.06
+	jointCPos 0 0.1 0
+	controlMode 2
+/Joint
+
+hingeJoint
+	jointAxes 0 0 1
+	dxlID -1
+	mappingInfo 0 2
+	name leg4_wheel4
+	parent leg4
+	child wheel4
+	jointPPos 0 0 0
+	jointCPos 0 0 0
+	controlMode 3
+/Joint
