@@ -38,8 +38,10 @@ public:
 	V3D desiredJointTorque;
 	//target relative orientation
 	Quaternion desiredRelativeOrientation;
-	//target relative angular velocity
-	V3D desiredRelativeAngVelocity;
+	//target relative angular velocity axis, unit length expected
+	V3D desiredRelativeAngVelocityAxis;
+	//target relative angular velocity (around axis)
+	double desiredRelativeAngVelocity;
 
 	//the name of the joint
 	std::string name;

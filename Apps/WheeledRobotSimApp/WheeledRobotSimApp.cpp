@@ -70,10 +70,6 @@ bool WheeledRobotSimApp::onMouseButtonEvent(int button, int action, int mods, do
 
 	if (GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
 
-//	if (mods & GLFW_MOD_SHIFT) {
-//		return true;
-//	}
-
 	return false;
 }
 
@@ -87,16 +83,26 @@ bool WheeledRobotSimApp::onMouseWheelScrollEvent(double xOffset, double yOffset)
 bool WheeledRobotSimApp::onKeyEvent(int key, int action, int mods) {
 	if (GLApplication::onKeyEvent(key, action, mods)) return true;
 
-    if (key == GLFW_KEY_UP && action == GLFW_PRESS)
-    {
-        for(Joint* j : rbEngine->joints)
-            addAngularVelocityTo(j, 1);
-    }
-    else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
-    {
-        for(Joint* j : rbEngine->joints)
-            addAngularVelocityTo(j, -1);
-    }
+	if (key == GLFW_KEY_UP)
+	{
+		for(Joint* j : rbEngine->joints)
+			addAngularVelocityTo(j, 1);
+	}
+	else if (key == GLFW_KEY_DOWN)
+	{
+		for(Joint* j : rbEngine->joints)
+			addAngularVelocityTo(j, -1);
+	}
+	else if (key == GLFW_KEY_R && action == GLFW_PRESS)
+	{
+		for(Joint* j : rbEngine->joints)
+			j->desiredRelativeAngVelocity *= -1;
+	}
+	else if (key == GLFW_KEY_B && action == GLFW_PRESS)
+	{
+		for(Joint* j : rbEngine->joints)
+			j->desiredRelativeAngVelocity = 0;
+	}
 
 	return false;
 }
@@ -205,10 +211,10 @@ bool WheeledRobotSimApp::processCommandLine(const std::string& cmdLine) {
 
 void WheeledRobotSimApp::addAngularVelocityTo(Joint *j, double d)
 {
-    HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
-    if(hingeJoint != nullptr && j->controlMode == JOINT_MODE::VELOCITY_MODE)
-    {
-        V3D axis = hingeJoint->rotationAxis.unit();
-        j->desiredRelativeAngVelocity += axis*d;
-    }
+	HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
+	if(hingeJoint != nullptr && j->controlMode == JOINT_MODE::VELOCITY_MODE)
+	{
+		j->desiredRelativeAngVelocityAxis = hingeJoint->rotationAxis.unit();
+		j->desiredRelativeAngVelocity += d;
+	}
 }
