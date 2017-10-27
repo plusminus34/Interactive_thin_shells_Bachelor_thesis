@@ -14,7 +14,7 @@
 
 #include <nanogui/opengl.h>
 
-#include <gl/GLU.h>
+#include <GL/glu.h>
 
 //#include <glad/glad.h>
 //#define GLFW_INCLUDE_GLU

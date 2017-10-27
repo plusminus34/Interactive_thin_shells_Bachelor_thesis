@@ -9,7 +9,6 @@
 #include <MathLib/ConvexHull3D.h>
 #include <RobotDesignerLib/ModuleDisplayWindow.h>
 #include <iostream>
-#include <windows.h>
 #include <RobotDesignerLib/LivingMotor.h>
 #include <RobotDesignerLib/LivingConnector.h>
 #include <RobotDesignerLib/LivingSphereEE.h>
@@ -135,6 +134,8 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 	if (windowArray->onMouseMoveEvent(xPos, yPos) == true) return true;
 	preDraw();
 
+    PressedModifier mod = getPressedModifier(glApp->glfwWindow);
+
 	for (uint i = 0; i < rmcRobots.size(); i++)
 		rmcRobots[i]->highlightedRMC = NULL;
 	hightlightedRobot = NULL;
@@ -155,8 +156,9 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 			if (isSelectedRMCMovable() && selectedRobot->selectedRMC != selectedRobot->root){
 				P3D pos = selectedRobot->selectedRMC->state.position = rWidget->pos = tWidget->pos;
 				propagatePosToMirrorRMC(selectedRobot->selectedRMC);
-				if (GetAsyncKeyState(VK_LMENU) < 0)
-				{
+//				if (GetAsyncKeyState(VK_LMENU) < 0)
+                if(mod == PressedModifier::LEFT_ALT)
+                {
 					updateParentConnector(selectedRobot->selectedRMC);
 					if (rmcMirrorMap.count(selectedRobot->selectedRMC))
 						updateParentConnector(rmcMirrorMap[selectedRobot->selectedRMC]);
@@ -191,7 +193,8 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 	if (rWidget->onMouseMoveEvent(xPos, yPos) == true && dragging) {
 		if (selectedRobot) {
 			Quaternion q = rWidget->getOrientation();
-			if (GetAsyncKeyState(VK_LCONTROL) < 0)
+//			if (GetAsyncKeyState(VK_LCONTROL) < 0)
+            if(mod == PressedModifier::LEFT_CTRL)
 			{
 				V3D axis = q.v; axis.toUnit();
 				double rotAngle = q.getRotationAngle(axis);
@@ -213,7 +216,8 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 			{
 				Quaternion tQ = selectedRobot->selectedRMC->state.orientation = q * selectedRobot->selectedRMC->state.orientation;
 				propagateOrientToMirrorRMC(selectedRobot->selectedRMC);
-				if (GetAsyncKeyState(VK_LMENU) < 0)
+//				if (GetAsyncKeyState(VK_LMENU) < 0)
+                if(mod == PressedModifier::LEFT_ALT)
 				{
 					updateParentConnector(selectedRobot->selectedRMC);
 					if (rmcMirrorMap.count(selectedRobot->selectedRMC))
@@ -1839,6 +1843,8 @@ void ModularDesignWindow::unloadParametersForLivingBracket()
 
 void ModularDesignWindow::updateLivingBracket()
 {
+    PressedModifier mod = getPressedModifier(glApp->glfwWindow);
+
 	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_MOTOR)
 	{
 		if (rmcMirrorMap.count(selectedRobot->selectedRMC))
@@ -1854,7 +1860,8 @@ void ModularDesignWindow::updateLivingBracket()
 			selectedRobot->selectedRMC->state.orientation = motorRotQ * motorStartOrient;
 			propagateOrientToMirrorRMC(selectedRobot->selectedRMC);
 			
-			if (GetAsyncKeyState(VK_LMENU) < 0)
+//			if (GetAsyncKeyState(VK_LMENU) < 0)
+            if(mod == PressedModifier::LEFT_ALT)
 			{
 				updateParentConnector(selectedRobot->selectedRMC);
 				if (rmcMirrorMap.count(selectedRobot->selectedRMC))
@@ -2139,5 +2146,17 @@ void ModularDesignWindow::propagatePosToMirrorFp(RBFeaturePoint* fp)
 		RBFeaturePoint* mirrorFp = bodyFpMirrorMap[fp];
 		mirrorFp->coords = pos;
 		mirrorFp->featureSize = fp->featureSize;
-	}
+    }
+}
+
+ModularDesignWindow::PressedModifier ModularDesignWindow::getPressedModifier(GLFWwindow *window)
+{
+    int key;
+    if(glfwGetKey(window, key))
+    {
+        if(key == GLFW_KEY_LEFT_ALT) return PressedModifier::LEFT_ALT;
+        else if(key == GLFW_KEY_RIGHT_ALT) return PressedModifier::RIGHT_ALT;
+        else if(key == GLFW_KEY_LEFT_CONTROL) return PressedModifier::LEFT_CTRL;
+    }
+    return PressedModifier::NONE;
 }

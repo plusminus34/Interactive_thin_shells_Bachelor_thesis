@@ -12,6 +12,7 @@ find_library(BLAS_LIBRARIES
   NAMES 
     blas
   HINTS 
+    /usr/lib/x86_64-linux-gnu/
     /usr/local/libs/ 
     ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/BLAS/Release
 )
@@ -21,34 +22,61 @@ else()
   message(FATAL_ERROR "Could not find BLAS libraries.")
 endif()
 
-# F2CLIBS
+# Dependent packages, BLAS and HSL
+# set(OOQP_LIBRARIES)
+# find_package(BLAS REQUIRED)
+# if(BLAS_FOUND)
+#   message("BLAS FOUND")
+# else()
+#   message(STATUS "OOQP requires BLAS")
+# endif()
+
+# I77
+set(I77_LIB I77)
+if(WIN32)
+  set(I77_LIB lib${I77_LIB})
+endif()
 find_library(F2CLIBS_I77
-  NAMES 
-    libI77
-  HINTS 
-    /usr/local/libs/
+  NAMES
+    ${I77_LIB}
+  HINTS
+    /usr/local/lib/
+    /usr/lib/
+    /usr/lib/x86_64-linux-gnu/
     ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/F2CLIBS/ReleaseI77
 )
+
+# I77
+set(F77_LIB F77)
+if(WIN32)
+  set(F77_LIB lib${F77_LIB})
+endif()
 find_library(F2CLIBS_F77
-  NAMES 
-    libF77
-  HINTS 
-    /usr/local/libs/
+  NAMES
+    ${F77_LIB}
+  HINTS
+    /usr/local/lib/
     ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/F2CLIBS/ReleaseF77
 )
 set(F2CLIBS_LIBRARIES ${F2CLIBS_I77} ${F2CLIBS_F77})
 if(F2CLIBS_LIBRARIES)
   message(STATUS "Found F2CLIBS libraries:" ${F2CLIBS_LIBRARIES})
 else()
-  message(FATAL_ERROR "Could not find F2CLIBS libraries.")
+  message(FATAL_ERROR "Could not find F2CLIBS libraries.:" ${F2CLIBS_LIBRARIES})
 endif()
 
 # CLAPACK
+set(CLAPCK_LIB lapack)
+if(WIN32)
+  set(CLAPCK_LIB c${CLAPCK_LIB})
+endif()
 find_library(CLAPACK_LIBRARIES
   NAMES 
-    clapack
+    ${CLAPCK_LIB}
   HINTS 
-    /usr/local/libs/ 
+    /usr/lib/x86_64-linux-gnu/
+    /usr/local/lib/
+    /usr/lib/
     ${CMAKE_SOURCE_DIR}/../libs/thirdPartyCode/CLAPACK/Release
 )
 if(CLAPACK_LIBRARIES)
@@ -89,7 +117,7 @@ endif()
 
 # TRY TO FIND THE LIBRARIES
 set(OOQP_LIBS_LIST
-  ooqpgensparse ooqpsparse ooqpgondzio ooqpbase MA27
+  ooqpgensparse ooqpsparse ooqpgondzio ooqpbase ma27
 )
 
 set(OOQP_FOUND_LIBS TRUE)
@@ -101,7 +129,9 @@ foreach(LIB ${OOQP_LIBS_LIST})
 
   find_library(OOQP_LIB_${LIB}
     NAMES ${LIB}
-    HINTS /usr/local/libs/ ${PROJECT_SOURCE_DIR}/../../libs/thirdPartyCode/OOQP/lib/
+    HINTS 
+      /usr/local/libs/ 
+      ${PROJECT_SOURCE_DIR}/../../libs/thirdPartyCode/OOQP/lib/
   )
   if(OOQP_LIB_${LIB})
     set(OOQP_LIBRARIES ${OOQP_LIBRARIES} ${OOQP_LIB_${LIB}})
@@ -110,6 +140,12 @@ foreach(LIB ${OOQP_LIBS_LIST})
     set(OOQP_FOUND_LIBS FALSE)
   endif()
 endforeach()
+
+# TODO: this is not very clean, use find package
+if (UNIX)
+  set(OOQP_LIBRARIES ${OOQP_LIBRARIES} gfortran blas)
+endif (UNIX)
+
 
 # print OOQP_LIBRARIES
 if(OOQP_FOUND_LIBS)

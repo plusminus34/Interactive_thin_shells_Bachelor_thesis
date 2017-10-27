@@ -1,0 +1,115 @@
+RigidBody
+	name body
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position 0 0.5 0
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Box -0.1 -0. -0.06 0.1 0.05 0.06
+/End
+
+RigidBody
+	name wheel1
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position 0.08 0.5 0.06
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Capsule 0 0 0.01 0 0 -0.01 0.02
+/End
+
+RigidBody
+	name wheel2
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position 0.08 0.5 -0.06
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Capsule 0 0 0.01 0 0 -0.01 0.02
+/End
+
+RigidBody
+	name wheel3
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position -0.08 0.5 -0.06
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Capsule 0 0 0.01 0 0 -0.01 0.02
+/End
+
+RigidBody
+	name wheel4
+	mass 0.368000
+	moi 0.000577 0.000965 0.000477 -0.000000 0.000000 0.000000
+	position -0.08 0.5 0.06
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	CDP Capsule 0 0 0.01 0 0 -0.01 0.02
+/End
+
+hingeJoint
+	jointAxes 0 0 1
+	dxlID -1
+	mappingInfo 0 2
+	name body_wheel1
+	parent body
+	child wheel1
+	jointPPos 0.08 0 0.06
+	jointCPos 0 0 0
+/Joint
+
+hingeJoint
+	jointAxes 0 0 1
+	dxlID -1
+	mappingInfo 0 2
+	name body_wheel2
+	parent body
+	child wheel2
+	jointPPos 0.08 0 -0.06
+	jointCPos 0 0 0
+/Joint
+
+hingeJoint
+	jointAxes 0 0 1
+	dxlID -1
+	mappingInfo 0 2
+	name body_wheel3
+	parent body
+	child wheel3
+	jointPPos -0.08 0 -0.06
+	jointCPos 0 0 0
+	controlMode 3
+/Joint
+
+hingeJoint
+	jointAxes 0 0 1
+	dxlID -1
+	mappingInfo 0 2
+	name body_wheel4
+	parent body
+	child wheel4
+	jointPPos -0.08 0 0.06
+	jointCPos 0 0 0
+	controlMode 3
+/Joint

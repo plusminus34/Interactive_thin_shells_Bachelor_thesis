@@ -11,7 +11,7 @@
 /**
  * Test App for RB Simulations
  */
-class RBSimApp : public GLApplication {
+class WheeledRobotSimApp : public GLApplication {
 private:
 	TranslateWidget tWidget;
 	AbstractRBEngine* rbEngine = NULL;
@@ -23,11 +23,15 @@ private:
 
 	std::string lastLoadedFile;
 
+	std::map<std::string, double> wheelAngles;
+
+	nanogui::Label* wheelControlLabel;
+
 public:
 	// constructor
-    RBSimApp(bool maximizeWindows = true);
+    WheeledRobotSimApp(bool maximizeWindows = true);
 	// destructor
-	virtual ~RBSimApp(void);
+    virtual ~WheeledRobotSimApp(void);
 	// Run the App tasks
 	virtual void process();
 	// Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
@@ -56,7 +60,9 @@ public:
 	virtual void saveFile(const char* fName);
 	virtual void loadFile(const char* fName);
 
+private:
+	inline void addSliderTextVariable(const std::string &name, double *var, const std::pair<double,double> &range, nanogui::Widget *widget, std::string units = "", int precision = 2);
+
+	template<class T>
+	static std::string toString(T value, int precision = 2);
 };
-
-
-

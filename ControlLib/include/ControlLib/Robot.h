@@ -3,7 +3,7 @@
 #include <RBSimLib/RigidBody.h>
 #include <RBSimLib/Joint.h>
 #include <Utils/Utils.h>
-#include <ControlLib\BodyFrame.h>
+#include <ControlLib/BodyFrame.h>
 
 class ReducedRobotState;
 

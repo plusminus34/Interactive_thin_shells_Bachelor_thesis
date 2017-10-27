@@ -16,7 +16,7 @@ struct PinInfo
 	P3D center;
 	V3D normal;
 
-	PinInfo(const Transformation& _trans, const string& _name, vector<P3D>& _featurePoints, P3D& _center, V3D& _normal)
+    PinInfo(const Transformation& _trans, const string& _name, const vector<P3D>& _featurePoints, const P3D& _center, const V3D& _normal)
 		: trans(_trans), name(_name), featurePoints(_featurePoints), center(_center), normal(_normal) {}
 
 };

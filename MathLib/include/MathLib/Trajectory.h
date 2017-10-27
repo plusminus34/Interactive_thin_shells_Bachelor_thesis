@@ -5,7 +5,7 @@
 
 #include "Utils/Utils.h"
 #include <MathLib/V3D.h>
-#include "mathLib.h"
+#include "MathLib.h"
 
 /*==============================================================================================================================================*
 	This class is used to represent generic trajectories. The class parameter T can be anything that provides basic operation such as addition 
@@ -145,7 +145,8 @@ public:
 	*/
 	double length()
 	{
-		double t1 = tValues[size - 1];
+        int size = tValues.size();
+        double t1 = tValues[size - 1];
 		double t0 = tValues[0];
 
 		double numSteps = 10;

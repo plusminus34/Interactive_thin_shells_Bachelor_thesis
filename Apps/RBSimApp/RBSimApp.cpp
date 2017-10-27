@@ -6,7 +6,9 @@
 #include <RBSimLib/ODERBEngine.h>
 #include <ControlLib/GeneralizedCoordinatesRobotRepresentation.h>
 
-RBSimApp::RBSimApp() {
+RBSimApp::RBSimApp(bool maximizeWindows)
+    : GLApplication(maximizeWindows)
+{
 	setWindowTitle("Test Application for RBSim");
 
 	drawCDPs = false;
@@ -30,7 +32,12 @@ RBSimApp::RBSimApp() {
 //	loadFile("../data/rbs/trex.rbs");
 //	loadFile("../data/rbs/trex.rs");
 
-	loadFile("../data/rbs/bip/bip.rbs");
+    drawCDPs = true;
+
+    loadFile("../data/rbs/wheely.rbs");
+//    loadFile("../data/robotsAndMotionPlans/crab/robot.rbs");
+
+//    loadFile("../data/robotsAndMotionPlans/starlETH/robot.rbs");
 
 //	loadFile("../data/rbs/starlETH.rbs");
 //	loadFile("../data/rbs/dinoV1.rbs");
@@ -103,7 +110,9 @@ void RBSimApp::loadFile(const char* fName) {
 		rbEngine = new ODERBEngine();
 
 		rbEngine->loadRBsFromFile(fName);
-		worldOracle->writeRBSFile("../out/tmpRB.rbs");
+
+        // create the ground plane rigid body
+        worldOracle->writeRBSFile("../out/tmpRB.rbs");
 		rbEngine->loadRBsFromFile("../out/tmpRB.rbs");
 
 		return;

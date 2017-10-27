@@ -3,7 +3,7 @@
 
 int main(void){
 
-	RBSimApp app;
+    RBSimApp app(true);
 	app.runMainLoop();
 
 	return 0;

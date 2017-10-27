@@ -8,9 +8,13 @@
 
 #include <nanogui/screen.h>
 
+#ifdef __linux__
+#define GUI_TWO_WINDOWS
+#endif
+
 GLApplication* glAppInstance = NULL;
 
-GLApplication::GLApplication(int x, int y, int w, int h){
+GLApplication::GLApplication(int x, int y, int w, int h, bool maximizeWindows){
 	GLApplication::setGLAppInstance(this);
 
 	if (!glfwInit()) {
@@ -19,10 +23,10 @@ GLApplication::GLApplication(int x, int y, int w, int h){
 		exit(0);
 	}
 
-	init(x, y, w, h, false);
+    init(x, y, w, h, maximizeWindows);
 }
 
-GLApplication::GLApplication() {
+GLApplication::GLApplication(bool maximizeWindows) {
 	GLApplication::setGLAppInstance(this);
 
 #ifdef WIN32
@@ -32,7 +36,6 @@ GLApplication::GLApplication() {
 	std::cout << "Working directory: " << pwd << std::endl;
 #endif // WIN32
 
-
 	if (!glfwInit()) {
 		// An error occured
 		Logger::print("GLFW initialization failed\n");
@@ -41,21 +44,31 @@ GLApplication::GLApplication() {
 
 	const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
-	int borderLeft = 4;
-	int borderTop = 42;
-	int borderRight = 4;
-	int borderBottom = 60;
+    int borderLeft = 4;
+    int borderTop = 42;
+    int borderRight = 4;
+    int borderBottom = 60;
 
-	init(borderLeft, borderTop, (mode->width - borderLeft - borderRight), (mode->height - borderTop - borderBottom), true);
+    init(borderLeft, borderTop, (mode->width - borderLeft - borderRight), (mode->height - borderTop - borderBottom), maximizeWindows);
 }
 
-void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
-//	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-//	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-//	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-//	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+void GLFW_error(int error, const char* description)
+{
+    fputs(description, stderr);
+}
 
-	glfwWindowHint(GLFW_SAMPLES, 4);
+void GLApplication::init(int x, int y, int w, int h, bool maximizeWindows) {
+
+#ifdef GUI_TWO_WINDOWS
+	// Ignore window position and size if maximizeWindow is requested
+	if(maximizeWindows)
+	{
+		x = 600; y = 0;
+		w = 800; h = 800;
+	}
+#endif
+
+	glfwSetErrorCallback(GLFW_error);
 
 	/* Create a windowed mode window and its OpenGL context */
 	glfwWindow = glfwCreateWindow(w, h, "", NULL, NULL);
@@ -172,13 +185,36 @@ void GLApplication::init(int x, int y, int w, int h, bool maximizeWindow) {
 
 	camera = new GLTrackingCamera();
 
-
+#ifdef GUI_TWO_WINDOWS
+	// Set nano gui window width and let glfwWindow fill out rest of monitor space
+	if(maximizeWindows)
+	{
+		int menuScreenWidth = 400; // width of the nano gui menu
+		GLFWmonitor *primaryMonitor = glfwGetPrimaryMonitor();
+		int primaryMonitorX, primaryMonitorY;
+		glfwGetMonitorPos(primaryMonitor, &primaryMonitorX, &primaryMonitorY);
+		const GLFWvidmode * mode = glfwGetVideoMode(primaryMonitor);
+		int monitor_width = mode->width;
+		int monitor_height = mode->height;
+		glfwSetWindowSize(glfwWindow, monitor_width-menuScreenWidth, monitor_height);
+		glfwSetWindowSize(menuScreen->glfwWindow(), menuScreenWidth, monitor_height);
+		glfwSetWindowPos(glfwWindow, primaryMonitorX + menuScreenWidth, 0);
+		glfwSetWindowPos(menuScreen->glfwWindow(), primaryMonitorX, 0);
+	}
+#endif
 }
 
 void GLApplication::setupMainMenu() {
+
+#ifdef GUI_TWO_WINDOWS
+	// Let's make a new nano gui window
+	nanogui::init();
+	menuScreen = new nanogui::Screen({400, 800}, "NanoGUI Test", true, false, 8, 8, 24, 8, 0, 3, 3);
+#else
 	// Create a nanogui screen and pass the glfw pointer to initialize
 	menuScreen = new nanogui::Screen();
 	menuScreen->initialize(glfwWindow, true);
+#endif // GUI_TWO_WINDOWS
 
 	mainMenu = new nanogui::FormHelper(menuScreen);
 
@@ -344,15 +380,24 @@ GLApplication::~GLApplication(void){
 
 void GLApplication::runMainLoop() {
 	// Main loop (repeated while window is not closed and [ESC] is not pressed)
+#ifdef GUI_TWO_WINDOWS
+	while (!glfwWindowShouldClose(glfwWindow) && !glfwWindowShouldClose(menuScreen->glfwWindow())){
+#else
 	while (!glfwWindowShouldClose(glfwWindow)){
+#endif
 		double timeSpentProcessing = 0;
 		fpsTimer.restart();
 		if (appIsRunning) process();
 		timeSpentProcessing = fpsTimer.timeEllapsed();
 
+#ifdef GUI_TWO_WINDOWS
+		glfwMakeContextCurrent(glfwWindow);
+#endif
 		draw();
+#ifndef GUI_TWO_WINDOWS
 		mainMenu->refresh();
 		menuScreen->drawWidgets();
+#endif
 
 		//wait until the required ammount of time has passed (respect the desired FPS requirement)
 		if (waitForFrameRate)
@@ -361,9 +406,24 @@ void GLApplication::runMainLoop() {
 		if (showFPS)
 			drawFPS(fpsTimer.timeEllapsed(), timeSpentProcessing / fpsTimer.timeEllapsed());
 
-
 		/* Swap front and back buffers */
 		glfwSwapBuffers(glfwWindow);
+
+#ifdef GUI_TWO_WINDOWS
+		// draw the nanogui
+		if(menuScreen)
+		{
+			glfwMakeContextCurrent(menuScreen->glfwWindow());
+
+			glClearColor(0.3, 0.3, 0.3, 1);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+			mainMenu->refresh();
+			menuScreen->drawWidgets();
+
+			glfwSwapBuffers(menuScreen->glfwWindow());
+		}
+#endif
 
 		/* Poll for and process events */
 		glfwPollEvents();

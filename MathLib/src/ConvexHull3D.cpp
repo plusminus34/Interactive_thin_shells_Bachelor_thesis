@@ -155,7 +155,7 @@ void ConvexHull3D::planarConvexHullFromSetOfPoints(const DynamicArray<P3D>& poin
 	//now, based on the ordering, get the structure that will define the support polygon
 	convexHullBoundaryVertices.clear();
 	for (uint i = 0; i < ordering.size(); i++)
-		convexHullBoundaryVertices.push_back(struct ConvexHull2D_Vertex(points[ordering[i]], ordering[i]));
+        convexHullBoundaryVertices.push_back(ConvexHull2D_Vertex(points[ordering[i]], ordering[i]));
 
 	//and done...
 }

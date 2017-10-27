@@ -34,9 +34,9 @@ void main()
 		
 		vec3 r = normalize(2.0*ndl*n - l);
 		
-		float ndr = pow(clamp(dot(r,v), 0, 1), g*specPowerFactor);
+		float ndr = pow(clamp(dot(r,v), 0., 1.), g*specPowerFactor);
 		
-		c += clamp(ndl,0,1)*diffuseColor*diffuse + s*ndr*specularColor;
+		c += clamp(ndl, 0., 1.)*diffuseColor*diffuse + s*ndr*specularColor;
 	}
 	
 	gl_FragColor = vec4(c,1);

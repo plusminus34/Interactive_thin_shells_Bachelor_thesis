@@ -38,15 +38,17 @@ public:
 	V3D desiredJointTorque;
 	//target relative orientation
 	Quaternion desiredRelativeOrientation;
-	//target relative angular velocity
-	V3D desiredRelativeAngVelocity;
+	//target relative angular velocity axis, unit length expected
+	V3D desiredRelativeAngVelocityAxis;
+	//target relative angular velocity (around axis)
+	double desiredRelativeAngVelocity;
 
 	//the name of the joint
 	std::string name;
 	//unique index of the joint
 	int jIndex = -1;
 	//depending on the joint mode, control inputs will be computed and applied differently...
-	int controlMode = PASSIVE;
+	JOINT_MODE controlMode = PASSIVE;
 
 	MappingInfo mappingInfo;
 

@@ -176,6 +176,14 @@ public:
 	void pickBodyFeaturePts(Ray& ray);
 	void makeSelectedFpSymmtry();
 	void propagatePosToMirrorFp(RBFeaturePoint* fp);
+
+private:
+    // get pressed down modifiers
+    enum PressedModifier {
+        NONE, LEFT_ALT, RIGHT_ALT, LEFT_CTRL
+    };
+    static PressedModifier getPressedModifier(GLFWwindow *window);
+
 };
 
 

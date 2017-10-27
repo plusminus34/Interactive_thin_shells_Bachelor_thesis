@@ -48,7 +48,7 @@ public:
 	P3D operator + (const V3D &v) const;
 
 	//return *this - p
-	V3D P3D::operator - (const P3D &p) const;
+    V3D operator - (const P3D &p) const;
 
 	//*this += v
 	P3D& operator += (const V3D &v);
