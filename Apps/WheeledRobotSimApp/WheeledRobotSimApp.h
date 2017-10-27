@@ -57,7 +57,10 @@ public:
 	
 	virtual void saveFile(const char* fName);
 	virtual void loadFile(const char* fName);
+
+private:
+	inline void addSliderTextVariable(const std::string &name, double *var, const std::pair<double,double> &range, nanogui::Widget *widget, std::string units = "", int precision = 2);
+
+	template<class T>
+	static std::string toString(T value, int precision = 2);
 };
-
-
-

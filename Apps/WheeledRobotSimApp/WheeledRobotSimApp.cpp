@@ -7,6 +7,8 @@
 #include <ControlLib/GeneralizedCoordinatesRobotRepresentation.h>
 //#include <math.h>
 
+#include <iomanip>
+
 #include <nanogui/slider.h>
 
 WheeledRobotSimApp::WheeledRobotSimApp(bool maximizeWindows)
@@ -30,12 +32,7 @@ WheeledRobotSimApp::WheeledRobotSimApp(bool maximizeWindows)
 	mainMenu->window()->setSize(Eigen::Vector2i(400, 800));
 
 	{
-		nanogui::Label *groupWheel = mainMenu->addGroup("Wheel Control");
-		nanogui::Slider *slider = new nanogui::Slider(mainMenu->window());
-		slider->setValue(0.5f);
-		slider->setCallback([=](double value) { allWheelsAngle = value; });
-		slider->setRange(std::pair<double,double>(-M_PI, M_PI));
-		mainMenu->addWidget("All wheels angle", slider);
+		addSliderTextVariable("All wheel angle", &allWheelsAngle, std::pair<double,double>(-90, 90), mainMenu->window(), "°", 1);
 	}
 
 	menuScreen->performLayout();
@@ -44,26 +41,6 @@ WheeledRobotSimApp::WheeledRobotSimApp(bool maximizeWindows)
 
 //	loadFile("../data/rbs/wheely.rbs");
 	loadFile("../data/rbs/legged_wheely.rbs");
-
-	// Set angular velocity axis from hing joint axis
-	for(Joint* j : rbEngine->joints)
-	{
-		HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
-		if(hingeJoint != nullptr)
-		{
-			V3D rotAxis = hingeJoint->rotationAxis.unit();
-
-			if(j->controlMode == JOINT_MODE::VELOCITY_MODE)
-			{
-				j->desiredRelativeAngVelocityAxis = rotAxis;
-				j->desiredRelativeAngVelocity = 0;
-			}
-			else if(j->controlMode == JOINT_MODE::POSITION_MODE)
-			{
-				j->desiredRelativeOrientation = getRotationQuaternion(0, rotAxis);
-			}
-		}
-	}
 
 	simTimeStep = 1 / 100.0;
 }
@@ -145,6 +122,26 @@ void WheeledRobotSimApp::loadFile(const char* fName) {
 
 		rbEngine->loadRBsFromFile(fName);
 
+		// Set angular position/velocity axis from hinge joint axis
+		for(Joint* j : rbEngine->joints)
+		{
+			HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
+			if(hingeJoint != nullptr)
+			{
+				V3D rotAxis = hingeJoint->rotationAxis.unit();
+
+				if(j->controlMode == JOINT_MODE::VELOCITY_MODE)
+				{
+					j->desiredRelativeAngVelocityAxis = rotAxis;
+					j->desiredRelativeAngVelocity = 0;
+				}
+				else if(j->controlMode == JOINT_MODE::POSITION_MODE)
+				{
+					j->desiredRelativeOrientation = getRotationQuaternion(0, rotAxis);
+				}
+			}
+		}
+
 		// create the ground plane rigid body
 		worldOracle->writeRBSFile("../out/tmpRB.rbs");
 		rbEngine->loadRBsFromFile("../out/tmpRB.rbs");
@@ -161,6 +158,31 @@ void WheeledRobotSimApp::loadFile(const char* fName) {
 		return;
 	}
 
+}
+
+void WheeledRobotSimApp::addSliderTextVariable(const std::string &name, double *var, const std::pair<double,double> &range, nanogui::Widget *widget, std::string units, int precision)
+{
+	nanogui::Widget *panel = new nanogui::Widget(widget);
+	panel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 20));
+
+	nanogui::Slider *slider = new nanogui::Slider(panel);
+	slider->setValue(*var);
+	slider->setRange(range);
+	slider->setFixedWidth(140);
+
+	nanogui::TextBox *textBox = new nanogui::TextBox(panel);
+	textBox->setFixedSize(Eigen::Vector2i(60, 25));
+	textBox->setValue(toString(*var, precision));
+	textBox->setUnits(units);
+	slider->setCallback([var, textBox, precision](double value) {
+		*var = value;
+		textBox->setValue(toString(value, precision));
+	});
+	textBox->setFixedSize(Eigen::Vector2i(60,25));
+	textBox->setFontSize(20);
+	textBox->setAlignment(nanogui::TextBox::Alignment::Right);
+
+	mainMenu->addWidget(name, panel);
 }
 
 void WheeledRobotSimApp::saveFile(const char* fName) {
@@ -184,7 +206,7 @@ void WheeledRobotSimApp::process() {
 			}
 			else if(j->controlMode == JOINT_MODE::POSITION_MODE)
 			{
-				j->desiredRelativeOrientation = getRotationQuaternion(allWheelsAngle, rotAxis);
+				j->desiredRelativeOrientation = getRotationQuaternion(allWheelsAngle/180*M_PI, rotAxis);
 			}
 		}
 	}
@@ -243,4 +265,12 @@ bool WheeledRobotSimApp::processCommandLine(const std::string& cmdLine) {
 	if (GLApplication::processCommandLine(cmdLine)) return true;
 
 	return false;
+}
+
+template<class T>
+std::string WheeledRobotSimApp::toString(T value, int precision)
+{
+	std::stringstream stream;
+	stream << fixed << std::setprecision(precision) << value;
+	return stream.str();
 }
