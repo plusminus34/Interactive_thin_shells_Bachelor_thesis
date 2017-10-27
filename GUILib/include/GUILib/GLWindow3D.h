@@ -20,7 +20,6 @@ protected:
 
 	// sets up the window for drawing
 	virtual void preDraw();
-	virtual void drawBorders();
 
 	virtual void setupLights();
 

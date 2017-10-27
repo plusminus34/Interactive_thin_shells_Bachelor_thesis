@@ -7,21 +7,18 @@
 	Default constructor
 */
 GLWindow2D::GLWindow2D( int posX, int posY, int sizeX, int sizeY ) : GLWindow(posX, posY, sizeX, sizeY) {
-	minX = 0;
-	maxX = (double)viewportWidth / MAX(viewportWidth, viewportHeight);
-	minY = 0;
-	maxY = (double)viewportHeight / MAX(viewportWidth, viewportHeight);
 }
 
 GLWindow2D::GLWindow2D() : GLWindow(){
-	minX = 0;
-	maxX = (double)viewportWidth / MAX(viewportWidth, viewportHeight);
-	minY = 0;
-	maxY = (double)viewportHeight / MAX(viewportWidth, viewportHeight);
 }
 
 // sets up the window for drawing
 void GLWindow2D::preDraw() {
+	double minX = 0;
+	double maxX = 1;
+	double minY = 0;
+	double maxY = 1;
+
 	glPushAttrib(GL_ENABLE_BIT | GL_TRANSFORM_BIT | GL_VIEWPORT_BIT | GL_SCISSOR_BIT | GL_POINT_BIT | GL_LINE_BIT | GL_TRANSFORM_BIT);
 
 	glDisable(GL_LIGHTING);
@@ -32,7 +29,7 @@ void GLWindow2D::preDraw() {
 	glPointSize(1);
 	glLineWidth(1);
 
-	glViewport(viewportX, viewportY, viewportWidth,viewportHeight);
+	glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
 	glScissor(viewportX, viewportY, viewportWidth, viewportHeight);
 	glEnable(GL_SCISSOR_TEST);
 
@@ -74,30 +71,7 @@ void GLWindow2D::preDraw() {
 
 	// Draw a bit of a border as a visual indication that the window is or is not active...
 	if (isActive() || isSelected()) {
-		glColor3d(1 - bgColorR, 1 - bgColorG, 1 - bgColorB);
-
-		double s = MIN(maxX, maxY) * 0.02;
-		glBegin(GL_LINES);
-			glVertex2d(s, 5*s);
-			glVertex2d(s, s);
-			glVertex2d(s, s);
-			glVertex2d(5*s, s);
-
-			glVertex2d(s, maxY-5*s);
-			glVertex2d(s, maxY-s);
-			glVertex2d(s, maxY-s);
-			glVertex2d(5*s, maxY-s);
-
-			glVertex2d(maxX - s, 5*s);
-			glVertex2d(maxX - s, s);
-			glVertex2d(maxX - s, s);
-			glVertex2d(maxX - 5*s, s);
-
-			glVertex2d(maxX - s, maxY - 5 * s);
-			glVertex2d(maxX - s, maxY - s);
-			glVertex2d(maxX - s, maxY - s);
-			glVertex2d(maxX - 5*s, maxY - s);
-		glEnd();
+		drawBorders(1);
 	}
 
 }

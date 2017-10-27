@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <Utils/Logger.h>
+#include <GUILib/GLApplication.h>
 
 // TODO: find where min and max where defined!
 #undef min
@@ -19,7 +20,7 @@ FootFallPatternViewer::FootFallPatternViewer(int posX, int posY, int sizeX, int 
 
 	labelsStart = 0.05;
 	boxStart = labelsStart + 0.15;
-	boxLength = (maxX - 0.05 - boxStart);
+	boxLength = 0.75;
 
 	selectedLimbIndex = -1;
 	selectedColIndex = -1;
@@ -32,32 +33,26 @@ FootFallPatternViewer::FootFallPatternViewer(int posX, int posY, int sizeX, int 
 FootFallPatternViewer::~FootFallPatternViewer(void){
 }
 
-
 void FootFallPatternViewer::draw(){
 	if (ffp == NULL)
 		return;
 	preDraw();
 
-
 	int numFeet = (int)ffp->stepPatterns.size();
 	int numSections = numFeet;
 	
-	double boxWidth = (maxY - 0.1) / numSections;
+	double boxWidth = (0.8) / numSections;
 
 	glColor3d(0.0,0.0,0.0);
 
 	//now draw the labels...
 	for (uint i=0;i<ffp->stepPatterns.size();i++){
 		FreeTypeFont* font = GLContentManager::getFont("../data/fonts/arial.ttf 14");
-		//we want to get the last line to end at the bottom of the console window, so figure out where the first one should start then...
-		double startHeight = font->getLineHeight() * (Logger::consoleOutput.size() + 1.5);
-
 		glColor3d(1 - bgColorR, 1 - bgColorG, 1 - bgColorB);
-
-		font->print(labelsStart*viewportWidth, (0.05 + i*boxWidth + boxWidth / 3.0)*viewportWidth, ffp->stepPatterns[i].limb->name);
+		font->print(labelsStart*viewportWidth, (0.1 + i*boxWidth + boxWidth / 3.0)*viewportHeight, ffp->stepPatterns[i].limb->name);
 	}
 
-	//finally, draw all the regions where the legs are supposed to be in swing mode
+	//draw all the regions where the legs are supposed to be in swing mode
 	int start = 0;
 	int end = ffp->strideSamplePoints;
 	for (int j=start;j<end;j++){
@@ -70,7 +65,6 @@ void FootFallPatternViewer::draw(){
 
 		for (uint k=0;k<ffp->stepPatterns.size(); k++){
 			if (ffp->isInSwing(ffp->stepPatterns[k].limb, j)){
-
 				glBegin(GL_QUADS);
 					if (k == selectedLimbIndex)
 						if (ffp->isStart(ffp->stepPatterns[k].limb, j) && j == selectedColIndex)
@@ -80,8 +74,8 @@ void FootFallPatternViewer::draw(){
 					else
 						glColor3d(238/255.0,59/255.0,59/255.0);
 
-					glVertex3d(boxStart + intervalStart*boxLength, 0.05 + (k+1)*boxWidth, 0);
-					glVertex3d(boxStart + intervalStart*boxLength, 0.05 + k*boxWidth, 0);
+					glVertex3d(boxStart + intervalStart*boxLength, 0.1 + (k+1)*boxWidth, 0);
+					glVertex3d(boxStart + intervalStart*boxLength, 0.1 + k*boxWidth, 0);
 					
 					if (k == selectedLimbIndex)
 						if (ffp->isEnd(ffp->stepPatterns[k].limb, j) && j == selectedColIndex)
@@ -91,8 +85,8 @@ void FootFallPatternViewer::draw(){
 					else
 						glColor3d(238/255.0,59/255.0,59/255.0);
 
-					glVertex3d(boxStart + intervalEnd*boxLength, 0.05 + k*boxWidth, 0);
-					glVertex3d(boxStart + intervalEnd*boxLength, 0.05 + (k+1)*boxWidth, 0);
+					glVertex3d(boxStart + intervalEnd*boxLength, 0.1 + k*boxWidth, 0);
+					glVertex3d(boxStart + intervalEnd*boxLength, 0.1 + (k+1)*boxWidth, 0);
 					
 				glEnd();
 			}else{
@@ -101,8 +95,8 @@ void FootFallPatternViewer::draw(){
 				else 
 					glColor3d(0.0,0.0,0.0);
 				glBegin(GL_LINES);
-					glVertex3d(boxStart + intervalStart*boxLength, 0.05 + k*boxWidth, 0);
-					glVertex3d(boxStart + intervalStart*boxLength, 0.05 + (k+1)*boxWidth, 0);
+					glVertex3d(boxStart + intervalStart*boxLength, 0.1 + k*boxWidth, 0);
+					glVertex3d(boxStart + intervalStart*boxLength, 0.1 + (k+1)*boxWidth, 0);
 				glEnd();
 			}
 		}
@@ -115,8 +109,8 @@ void FootFallPatternViewer::draw(){
 	glColor3d(0.7, 0.7, 0.7);
 	glBegin(GL_LINES);
 	for (int i=0;i<=1;i++){
-		glVertex2d(boxStart + i*boxLength, 0.05);
-		glVertex2d(boxStart + i*boxLength, 0.95);		
+		glVertex2d(boxStart + i*boxLength, 0.1);
+		glVertex2d(boxStart + i*boxLength, 0.9);		
 	}
 	glEnd();
 
@@ -124,8 +118,8 @@ void FootFallPatternViewer::draw(){
 	//draw the horizontal lines that delineate the different legs used...
 	glBegin(GL_LINES);
 	for (int i=0;i<=numSections;i++){
-		glVertex2d(labelsStart, 0.05 + i*boxWidth);
-		glVertex2d(boxStart + 1 * boxLength, 0.05 + i*boxWidth);
+		glVertex2d(labelsStart, 0.1 + i*boxWidth);
+		glVertex2d(boxStart + 1 * boxLength, 0.1 + i*boxWidth);
 	}
 	glEnd();
 
@@ -137,30 +131,26 @@ void FootFallPatternViewer::draw(){
 	glColor3d(0, 0, 0.8);
 	glLineWidth(2.0);
 	glBegin(GL_LINES);
-		glVertex2d(boxStart + cursorPosition*boxLength, 0.05);
-		glVertex2d(boxStart + cursorPosition*boxLength, 0.95);
+		glVertex2d(boxStart + cursorPosition*boxLength, 0.1);
+		glVertex2d(boxStart + cursorPosition*boxLength, 0.9);
 	glEnd();
 	glLineWidth(1.0);
 
 	glBegin(GL_TRIANGLES);
-		glVertex2d(boxStart + cursorPosition*boxLength, 0.05);
-		glVertex2d(boxStart + cursorPosition*boxLength-0.05, 0.0);
-		glVertex2d(boxStart + cursorPosition*boxLength+0.05, 0.0);
+		glVertex2d(boxStart + cursorPosition*boxLength, 0.1);
+		glVertex2d(boxStart + cursorPosition*boxLength-0.025, 0.0);
+		glVertex2d(boxStart + cursorPosition*boxLength+0.025, 0.0);
 
-		glVertex2d(boxStart + cursorPosition*boxLength, 0.95);
-		glVertex2d(boxStart + cursorPosition*boxLength-0.05, 1);
-		glVertex2d(boxStart + cursorPosition*boxLength+0.05, 1);
+		glVertex2d(boxStart + cursorPosition*boxLength, 0.9);
+		glVertex2d(boxStart + cursorPosition*boxLength-0.025, 1);
+		glVertex2d(boxStart + cursorPosition*boxLength+0.025, 1);
 	glEnd();
 
 	//AND DONE!
 
-
-
-
 	// Restore attributes
 	postDraw();
 }
-
 
 //-need to look at why the plan is so conservative - feet can be on the ground, but they are not considered in stance yet - why ?
 
@@ -173,11 +163,11 @@ bool FootFallPatternViewer::onMouseButtonEvent(int button, int action, int mods,
 	double x = this->getRelativeXFromViewportX(getViewportXFromWindowX(xPos));
 	double y = this->getRelativeYFromViewportY(getViewportYFromWindowY(yPos));
 
-	if (x < boxStart || x > boxStart + boxLength || y < 0.05 || y > 0.95)
+	if (x < boxStart || x > boxStart + boxLength || y < 0.1 || y > 0.9)
 		return true;
 
 	x = mapTo01Range(x, boxStart, boxStart + boxLength);
-	y = mapTo01Range(y, 0.05, 0.95);
+	y = mapTo01Range(y, 0.1, 0.9);
 
 	int start = 0;
 	int end = ffp->strideSamplePoints;
@@ -190,9 +180,6 @@ bool FootFallPatternViewer::onMouseButtonEvent(int button, int action, int mods,
 	selectedLimbIndex = -1;
 	if (ffp->isInSwing(ffp->stepPatterns[row].limb, start + col))
 		selectedLimbIndex = row;
-	if (cursorMovable && GlobalMouseState::lButtonPressed && selectedLimbIndex < 0) {
-		cursorPosition = std::min(col, ffp->strideSamplePoints - 2) / (double)ffp->strideSamplePoints;
-	}
 
 	return true;
 }
@@ -211,15 +198,25 @@ bool FootFallPatternViewer::onMouseMoveEvent(double xPos, double yPos) {
 	double x = this->getRelativeXFromViewportX(getViewportXFromWindowX(xPos));
 	double y = this->getRelativeYFromViewportY(getViewportYFromWindowY(yPos));
 
-	if (x < boxStart || x > boxStart + boxLength || y < 0.05 || y > 0.95) {
+	if (cursorMovable && GlobalMouseState::lButtonPressed && selectedLimbIndex < 0) {
+		cursorPosition = mapTo01Range(x, boxStart, boxStart + boxLength);
+		int shiftDown = glfwGetKey(GLApplication::getGLAppInstance()->glfwWindow, GLFW_KEY_LEFT_SHIFT);
+		if (shiftDown)
+			cursorPosition = (int)(cursorPosition * (double)ffp->strideSamplePoints) / (double)ffp->strideSamplePoints;
+
+		//Logger::consolePrint("cursorPosition: %lf\n", cursorPosition);
+	}
+
+	if (x < boxStart || x > boxStart + boxLength || y < 0.1 || y > 0.9) {
 		if (GlobalMouseState::lButtonPressed == false && GlobalMouseState::rButtonPressed == false) {
 			selectedLimbIndex = -1;
 			selectedColIndex = -1;
 		}
 		return true;
 	}
+
 	x = mapTo01Range(x, boxStart, boxStart + boxLength);
-	y = mapTo01Range(y, 0.05, 0.95);
+	y = mapTo01Range(y, 0.1, 0.9);
 
 	int start = 0;
 	int end = ffp->strideSamplePoints;
@@ -276,9 +273,7 @@ bool FootFallPatternViewer::onMouseMoveEvent(double xPos, double yPos) {
 		oldCol = col;
 	}
 
-	if (cursorMovable && GlobalMouseState::lButtonPressed && selectedLimbIndex < 0) {
-		cursorPosition = std::min(col, ffp->strideSamplePoints - 2) / (double) ffp->strideSamplePoints;
-	}
+
 
 	return true;
 }

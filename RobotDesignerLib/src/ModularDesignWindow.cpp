@@ -2151,7 +2151,7 @@ void ModularDesignWindow::propagatePosToMirrorFp(RBFeaturePoint* fp)
 
 ModularDesignWindow::PressedModifier ModularDesignWindow::getPressedModifier(GLFWwindow *window)
 {
-    int key;
+    int key = 0;
     if(glfwGetKey(window, key))
     {
         if(key == GLFW_KEY_LEFT_ALT) return PressedModifier::LEFT_ALT;
