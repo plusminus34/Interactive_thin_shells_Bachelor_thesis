@@ -31,9 +31,7 @@ WheeledRobotSimApp::WheeledRobotSimApp(bool maximizeWindows)
 
 	mainMenu->window()->setSize(Eigen::Vector2i(400, 800));
 
-	{
-		addSliderTextVariable("All wheel angle", &allWheelsAngle, std::pair<double,double>(-90, 90), mainMenu->window(), "°", 1);
-	}
+	wheelControlLabel = mainMenu->addGroup("Leg Control");
 
 	menuScreen->performLayout();
 
@@ -41,6 +39,7 @@ WheeledRobotSimApp::WheeledRobotSimApp(bool maximizeWindows)
 
 //	loadFile("../data/rbs/wheely.rbs");
 	loadFile("../data/rbs/legged_wheely.rbs");
+
 
 	simTimeStep = 1 / 100.0;
 }
@@ -142,6 +141,32 @@ void WheeledRobotSimApp::loadFile(const char* fName) {
 			}
 		}
 
+		{
+			// remove all UI sliders
+			for (int i = 0; i < wheelControlLabel->childCount(); ++i) {
+				wheelControlLabel->removeChild(i);
+			}
+
+			// create wheel angles and sliders
+			wheelAngles.clear();
+			for (Joint* j : rbEngine->joints) {
+				HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
+				if(hingeJoint != nullptr)
+				{
+					if(j->controlMode == JOINT_MODE::POSITION_MODE)
+					{
+						if(wheelAngles.find(j->name) != wheelAngles.end())
+							throw std::runtime_error("non-unique joint name: " + j->name);
+
+						wheelAngles[j->name] = 0;
+						addSliderTextVariable(j->name, &wheelAngles[j->name], std::pair<double,double>(-90, 90), mainMenu->window(), "°", 1);
+					}
+				}
+			}
+
+			menuScreen->performLayout();
+		}
+
 		// create the ground plane rigid body
 		worldOracle->writeRBSFile("../out/tmpRB.rbs");
 		rbEngine->loadRBsFromFile("../out/tmpRB.rbs");
@@ -206,7 +231,7 @@ void WheeledRobotSimApp::process() {
 			}
 			else if(j->controlMode == JOINT_MODE::POSITION_MODE)
 			{
-				j->desiredRelativeOrientation = getRotationQuaternion(allWheelsAngle/180*M_PI, rotAxis);
+				j->desiredRelativeOrientation = getRotationQuaternion(wheelAngles[j->name]/180*M_PI, rotAxis);
 			}
 		}
 	}

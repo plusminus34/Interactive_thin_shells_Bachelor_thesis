@@ -23,7 +23,9 @@ private:
 
 	std::string lastLoadedFile;
 
-	double allWheelsAngle;
+	std::map<std::string, double> wheelAngles;
+
+	nanogui::Label* wheelControlLabel;
 
 public:
 	// constructor
