@@ -97,7 +97,7 @@ void BodyFrame::updateStateInformation(){
 	bodyState.orientation.s = 0;
 	bodyState.orientation.v.setZero();
 
-	//todo: we're using linear interpolation for the quaternions. Not ideal, but probably will do the trick. Revisit at some point nevertheless.
+	//todo: we're using linear interpolation for the quaternions. Not at all ideal...
 	for (uint i=0; i<bodyLinks.size();i++){
 		double w = bodyLinks[i]->rbProperties.mass/totalMass;
 		bodyState.position += V3D(bodyLinks[i]->state.position) * w;

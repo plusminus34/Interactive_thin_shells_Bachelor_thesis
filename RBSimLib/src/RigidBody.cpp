@@ -184,9 +184,7 @@ void RigidBody::draw(int flags, V3D color, double alpha) {
 			if (i < meshTransformations.size())
 			{
 				glPushMatrix();
-				// TODO: create a function 'applyGLMatrixTransform'
-				// should not be a method of a MathLib class
-				//meshTransformations[i].applyGLMatrixTransform();
+				applyGLMatrixTransform(meshTransformations[i]);
 				meshes[i]->drawMesh();
 				glPopMatrix();
 			}
