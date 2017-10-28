@@ -16,6 +16,8 @@
 //hexa-like robot
 //probably need to work a bit on body shape/body characteristics
 
+//can we go all the way to creating 3d printable geometry?
+
 //tangentGRFBoundValues is useful for warmstarting to incrementally bound tangential forces. But need to implement proper friction, methinks...
 //perhaps make the non-mesh version of the renderer prettier... it will allow us to test the code before (or even if it wont happen that) the visual designer part is integrated.
 //everything needs to happen via rbs files. The visual designer will output an rbs file which gets loaded the normal way, then it knows how to sync back changes with the rbs, and that's all...
