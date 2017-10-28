@@ -16,6 +16,13 @@ SimWindow::SimWindow(int x, int y, int w, int h, GLApplication* glApp) : GLWindo
 	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -1.5;
 }
 
+void SimWindow::addMenuItems() {
+	glApp->mainMenu->addVariable("draw meshes", drawMeshes);
+	glApp->mainMenu->addVariable("draw MOIs", drawMOIs);
+	glApp->mainMenu->addVariable("draw CDPs", drawCDPs);
+	glApp->mainMenu->addVariable("draw skeleton", drawSkeletonView);
+	glApp->mainMenu->addVariable("draw joints", drawJoints);
+}
 
 SimWindow::~SimWindow(){
 	clear();
@@ -101,11 +108,13 @@ void SimWindow::drawScene() {
 	if (drawJoints) flags |= SHOW_JOINTS;
 
 	glEnable(GL_LIGHTING);
-	rbEngine->drawRBs(flags);
+	if (rbEngine)
+		rbEngine->drawRBs(flags);
 	glDisable(GL_LIGHTING);
 
 	glColor3d(1.0, 0.7, 0.7);
-	drawArrow(robot->root->getCMPosition(), robot->root->getCMPosition() + perturbationForce, 0.01, 12);
+	if (robot)
+		drawArrow(robot->root->getCMPosition(), robot->root->getCMPosition() + perturbationForce, 0.01, 12);
 }
 
 

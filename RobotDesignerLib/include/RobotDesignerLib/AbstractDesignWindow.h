@@ -3,15 +3,8 @@
 #include <RBSimLib/AbstractRBEngine.h>
 #include <ControlLib/Robot.h>
 
-enum DesignWindowType {
-	ROBOT_DESIGN,
-	MODULAR_DESIGN
-};
-
-class AbstractDesignWindow : public GLWindow3D
-{
+class AbstractDesignWindow : public GLWindow3D{
 public:
-	DesignWindowType type;
 	bool freezeRobotRoot = false;
 
 public:

@@ -123,7 +123,6 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.checkDerivatives = locomotionManager->checkDerivatives;
 }
 
-
 void MOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->motionPlan->swingFootHeight = moptParams.swingFootHeight;
 	locomotionManager->motionPlan->desDistanceToTravel.x() = moptParams.desTravelDistX;

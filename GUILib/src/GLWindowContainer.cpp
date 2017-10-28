@@ -41,6 +41,19 @@ GLWindowContainer::~GLWindowContainer(void) {
 	subWindows.clear();
 }
 
+void GLWindowContainer::setViewportParameters(int posX, int posY, int sizeX, int sizeY) {
+	GLWindow::setViewportParameters(posX, posY, sizeX, sizeY);
+	updateSubWindowViewports();
+}
+
+void GLWindowContainer::updateSubWindowViewports() {
+	width = this->viewportWidth / nCols;
+	height = this->viewportHeight / nRows;
+
+	for (uint i = 0; i < subWindows.size();i++)
+		subWindows[i]->setViewportParameters(viewportX + ((int)i % nCols) * width, viewportY + ((int)i / nCols) * height, width, height);
+}
+
 void GLWindowContainer::addSubWindow(GLWindow* subWindow) {
 	subWindow->setViewportParameters(viewportX + ((int)subWindows.size() % nCols) * width, viewportY + ((int)subWindows.size() / nCols) * height, width, height);
 	subWindows.push_back(subWindow);

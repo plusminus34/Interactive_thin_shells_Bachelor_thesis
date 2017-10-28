@@ -21,9 +21,10 @@ using namespace std;
  * Test App
  */
 class ModularDesignWindow : public AbstractDesignWindow {
+	friend class RobotDesignerApp;
 private:
 	GLApplication* glApp;
-	GLWindowContainer* windowArray = NULL;
+	GLWindowContainer* componentLibrary = NULL;
 	TranslateWidget* tWidget = NULL;
 	RotateWidget* rWidget = NULL;
 	Timer timer;
@@ -34,9 +35,6 @@ private:
 
 	bool dragging = false;
 	bool snappable = false;
-
-	bool showMOIBox = false;
-	bool drawBullet = true;
 
 	bool showWidgets = false;
 
@@ -81,17 +79,6 @@ public:
 
 	ReducedRobotState startRobotState;
 	
-	// weights of different costs
-	double heuristicWeight = 1;
-	double pathCostWeight = 1;
-	double connectorCostWeight = 0.01;
-	//either use lineCost or use meshCost 
-	double aestheticCostWeight = 0;
-	bool useMeshCost = false;
-	//double meshCostWeight = 0.9;
-	//double lineCostWeight = 0.5;
-	double motorOrientationWt = 0;
-
 	string robotMeshDir = "../out/";
 	string configFileName;
 public:

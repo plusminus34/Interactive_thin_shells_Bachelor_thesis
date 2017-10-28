@@ -19,6 +19,7 @@ public:
 
 	bool drawMeshes = true, drawMOIs = false, drawCDPs = false, drawSkeletonView = false, drawJoints = false, drawContactForces = true, drawOrientation = true;
 
+	void addMenuItems();
 
 	AbstractRBEngine* rbEngine = NULL;
 	WorldOracle* worldOracle = NULL;

@@ -44,13 +44,12 @@ TIP 3: Hold CTRL to change the orientation of motors discretely.
 using namespace std;
 
 ModularDesignWindow::ModularDesignWindow(int x, int y, int w, int h, GLApplication* glApp, const char* libraryDefinitionFileName) : AbstractDesignWindow(x, y, w, h), startRobotState(13){
-	type = MODULAR_DESIGN;
 	this->glApp = glApp;
 	((GLTrackingCamera*)camera)->camDistance = -0.5;
 	((GLTrackingCamera*)camera)->rotAboutRightAxis = 0.3;
 	((GLTrackingCamera*)camera)->rotAboutUpAxis = 0.3;
 
-	windowArray = new GLWindowContainer(3, 5, x, (int)(h * 3.0 / 4), (int)(w), (int)(h /4.0));
+	componentLibrary = new GLWindowContainer(3, 5, x, (int)(h * 3.0 / 4), (int)(w), (int)(h /4.0));
 
 	tWidget = new TranslateWidget(AXIS_X | AXIS_Y | AXIS_Z);
 	//	rWidget = new RotateWidgetV1();
@@ -58,32 +57,12 @@ ModularDesignWindow::ModularDesignWindow(int x, int y, int w, int h, GLApplicati
 	tWidget->visible = rWidget->visible = false;
 
 	loadConfig(libraryDefinitionFileName);
-	//loadConfig("../data/modularRobot/configXM-430_search.cfg");
-	//loadConfig("../data/modularRobot/configXM-430_newOriginalComponents.cfg");
 
-/*
-	if (glApp)
-	{
-		TwAddSeparator(glApp->mainMenuBar, "sep", "");
-		TwAddVarRW(glApp->mainMenuBar, "ShowBodyFeature", TW_TYPE_BOOLCPP, &showBodyFeature, "");
-		//TwAddVarRW(glApp->mainMenuBar, "ShowPinCoordiante", TW_TYPE_BOOLCPP, &RMCPin::showCoordinate, "");
-		TwAddVarRW(glApp->mainMenuBar, "ShowMOIBox", TW_TYPE_BOOLCPP, &showMOIBox, "");
-		TwAddVarRW(glApp->mainMenuBar, "DrawBullet", TW_TYPE_BOOLCPP, &drawBullet, "");
-		TwAddVarRW(glApp->mainMenuBar, "ShowSDF", TW_TYPE_BOOLCPP, &showSDF, "");
-		TwAddVarRW(glApp->mainMenuBar, "SDFStepSize", TW_TYPE_DOUBLE, &SDFStepSize, "");
-		TwAddSeparator(glApp->mainMenuBar, "sep", "");
-		TwAddVarRW(glApp->mainMenuBar, "Use meshCost", TW_TYPE_BOOLCPP, &useMeshCost, "");
-		TwAddVarRW(glApp->mainMenuBar, "AestheticCost Wt.", TW_TYPE_DOUBLE, &aestheticCostWeight, "");
-		TwAddVarRW(glApp->mainMenuBar, "ConnectorCost Wt.", TW_TYPE_DOUBLE, &connectorCostWeight, "");
-		TwAddVarRW(glApp->mainMenuBar, "PathCost Wt.", TW_TYPE_DOUBLE, &pathCostWeight, "");
-		TwAddVarRW(glApp->mainMenuBar, "ReachGoal Wt.", TW_TYPE_DOUBLE, &heuristicWeight, "");
-		TwAddVarRW(glApp->mainMenuBar, "Orientation Wt.", TW_TYPE_DOUBLE, &motorOrientationWt, "");
-	}
-*/
+	//	TwAddVarRW(glApp->mainMenuBar, "ShowBodyFeature", TW_TYPE_BOOLCPP, &showBodyFeature, "");
 
-	for (uint i = 0; i < rmcWarehouse.size(); i++)
-	{
-		windowArray->addSubWindow(new ModuleDisplayWindow(rmcWarehouse[i]));
+	Logger::consolePrint("Library contains %d modular components...\n", rmcWarehouse.size());
+	for (uint i = 0; i < rmcWarehouse.size(); i++){
+		componentLibrary->addSubWindow(new ModuleDisplayWindow(rmcWarehouse[i]));
 	}
 
 	string bodyTexture = "../data/textures/matcap/whitefluff2.bmp";
@@ -109,7 +88,7 @@ ModularDesignWindow::~ModularDesignWindow(void){
 	delete robot;
 	delete rbEngine;
 	delete windowSelectedRobot;
-	delete windowArray;
+	delete componentLibrary;
 	delete rWidget;
 	delete tWidget;
 	delete sphereMesh;
@@ -131,7 +110,7 @@ bool ModularDesignWindow::process() {
 
 //triggered when mouse moves
 bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
-	if (windowArray->onMouseMoveEvent(xPos, yPos) == true) return true;
+	if (componentLibrary->onMouseMoveEvent(xPos, yPos) == true) return true;
 	preDraw();
 
     PressedModifier mod = getPressedModifier(glApp->glfwWindow);
@@ -350,7 +329,7 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 	postDraw();
 
 	// new RMCRobot initialization
-	if (windowArray->onMouseButtonEvent(button, action, mods, xPos, yPos)) {
+	if (componentLibrary->onMouseButtonEvent(button, action, mods, xPos, yPos)) {
 		if (action == 1){
 
 			if (selectedRobot && selectedRobot->selectedRMC){
@@ -361,9 +340,9 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 			}
 
 			int selectedRMC = -1;
-			for (uint i = 0; i < windowArray->subWindows.size(); i++)
+			for (uint i = 0; i < componentLibrary->subWindows.size(); i++)
 			{
-				if (windowArray->subWindows[i]->isSelected()) {
+				if (componentLibrary->subWindows[i]->isSelected()) {
 					selectedRMC = i;
 					break;
 				}
@@ -627,7 +606,7 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 
 //triggered when using the mouse wheel
 bool ModularDesignWindow::onMouseWheelScrollEvent(double xOffset, double yOffset) {
-	if (windowArray->onMouseWheelScrollEvent(xOffset, yOffset)) return true;
+	if (componentLibrary->onMouseWheelScrollEvent(xOffset, yOffset)) return true;
 
 	if (pickedGuidingMesh)	{
 		guidingMeshScale *= (1 + yOffset * 0.05);
@@ -647,7 +626,7 @@ bool ModularDesignWindow::onMouseWheelScrollEvent(double xOffset, double yOffset
 }
 
 bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
-	if (windowArray->onKeyEvent(key, action, mods)) return true;
+	if (componentLibrary->onKeyEvent(key, action, mods)) return true;
 
 	// switch to the next joint transformation
 	if (key == GLFW_KEY_F && action == GLFW_PRESS)
@@ -1000,8 +979,8 @@ void ModularDesignWindow::drawRMCRobot()
 		else
 			rmcRobots[i]->draw(SHOW_MESH, Vector4d(0, 0, 0, 0), Vector4d(1, 0.5, 0, 1));
 
-		if (showMOIBox)
-			rmcRobots[i]->draw(SHOW_MOI_BOX);
+//		if (showMOIBox)
+//			rmcRobots[i]->draw(SHOW_MOI_BOX);
 	}
 
 }
@@ -1142,7 +1121,7 @@ void ModularDesignWindow::drawAuxiliarySceneInfo() {
 	postDraw();
 
 	glClear(GL_DEPTH_BUFFER_BIT);
-	windowArray->draw();
+	componentLibrary->draw();
 	
 }
 
