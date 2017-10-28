@@ -25,11 +25,6 @@ key 'D': delete the subtree from the selected RMC
 
 key 'S': save the whole design to ../out/tmpModularDesign.dsn
 key 'R': load design from ../out/tmpModularDesign.dsn
-	
-key 'T': create search tree and set selected RMC as root
-key 'Y': set search tree target RMC
-key 'G': exit search tree mode
-key 'B': build selected search tree path solution
 
 // Fabrication
 key 'J': output fabricatable rigidbody meshes in ../out/. File format: $(rbName)_merged.obj
@@ -782,8 +777,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		createBodyMesh3D();
 	}
 
-	if (key == GLFW_KEY_X && action == GLFW_PRESS)
-	{
+	if (key == GLFW_KEY_X && action == GLFW_PRESS){
 		showWidgets = !showWidgets;
 		if (showWidgets && selectedRobot && selectedRobot->selectedRMC)
 		{
@@ -2128,14 +2122,10 @@ void ModularDesignWindow::propagatePosToMirrorFp(RBFeaturePoint* fp)
     }
 }
 
-ModularDesignWindow::PressedModifier ModularDesignWindow::getPressedModifier(GLFWwindow *window)
-{
-    int key = 0;
-    if(glfwGetKey(window, key))
-    {
-        if(key == GLFW_KEY_LEFT_ALT) return PressedModifier::LEFT_ALT;
-        else if(key == GLFW_KEY_RIGHT_ALT) return PressedModifier::RIGHT_ALT;
-        else if(key == GLFW_KEY_LEFT_CONTROL) return PressedModifier::LEFT_CTRL;
-    }
+ModularDesignWindow::PressedModifier ModularDesignWindow::getPressedModifier(GLFWwindow *window){
+	if (glfwGetKey(window, GLFW_KEY_LEFT_ALT)) return PressedModifier::LEFT_ALT;
+	if (glfwGetKey(window, GLFW_KEY_RIGHT_ALT)) return PressedModifier::RIGHT_ALT;
+	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL)) return PressedModifier::LEFT_CTRL;
+
     return PressedModifier::NONE;
 }

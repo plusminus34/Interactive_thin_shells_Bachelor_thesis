@@ -6,7 +6,7 @@
 #include <MathLib/MathLib.h>
 #include <ControlLib/SimpleLimb.h>
 
-//#define START_WITH_VISUAL_DESIGNER
+#define START_WITH_VISUAL_DESIGNER
 
 //make a bunch of robot templates:
 //cassie
@@ -174,6 +174,10 @@ bool RobotDesignerApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 }
 
 bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
+	if (viewOptions == SIM_AND_DESIGN && designWindow) {
+		designWindow->onKeyEvent(key, action, mods);
+	}
+
 	if (viewOptions == SIM_AND_MOPT){
 		if (moptWindow->locomotionManager && moptWindow->locomotionManager->motionPlan) {
 			if (key == GLFW_KEY_UP && action == GLFW_PRESS)
