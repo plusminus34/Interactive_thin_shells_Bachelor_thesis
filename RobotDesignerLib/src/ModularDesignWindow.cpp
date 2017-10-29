@@ -33,6 +33,9 @@ key 'J': output fabricatable rigidbody meshes in ../out/. File format: $(rbName)
 TIP 1: Select one RMC, click on another RMC while holding SHIFT to make them symmetric.
 TIP 2: Hold ALT while changing the position and orientation of motors to keep child components rigidly attached.
 TIP 3: Hold CTRL to change the orientation of motors discretely.
+TIP 4: When selecting body plates, use CTRL to create only 1, or otherwise a symmetric pair will be generated.
+TIP 5: With a motor selected, F1/F2 change its angle value, while F3 resets it to zero. This does not change the assembly configuration!
+
 
 */
 
@@ -44,7 +47,7 @@ ModularDesignWindow::ModularDesignWindow(int x, int y, int w, int h, GLApplicati
 	((GLTrackingCamera*)camera)->rotAboutRightAxis = 0.3;
 	((GLTrackingCamera*)camera)->rotAboutUpAxis = 0.3;
 
-	componentLibrary = new GLWindowContainer(3, 5, x, (int)(h * 3.0 / 4), (int)(w), (int)(h /4.0));
+	componentLibrary = new GLWindowContainer(3, 3, x, (int)(h * 3.0 / 4), (int)(w), (int)(h /4.0));
 
 	tWidget = new TranslateWidget(AXIS_X | AXIS_Y | AXIS_Z);
 	//	rWidget = new RotateWidgetV1();
@@ -80,8 +83,6 @@ ModularDesignWindow::~ModularDesignWindow(void){
 	
 	delete guidingMesh;
 	delete bodyMesh;
-	delete robot;
-	delete rbEngine;
 	delete windowSelectedRobot;
 	delete componentLibrary;
 	delete rWidget;
@@ -908,24 +909,27 @@ void ModularDesignWindow::loadFile(const char* fName) {
 	fileName.assign(fName);
 	std::string fNameExt = fileName.substr(fileName.find_last_of('.') + 1);
 
-	if (fNameExt == "rbs")
-	{
+	if (fNameExt == "rbs"){
 		// throwError("can't load .rbs file for modular design!");
-		loadRBSRobot(fName);
+
+		AbstractRBEngine* rbEngine = new ODERBEngine();
+		rbEngine->loadRBsFromFile(fName);
+
+		Robot* robot = new Robot(rbEngine->rbs[0]);
 		matchDesignWithRobot(robot);
+
+		delete robot;
+		delete rbEngine;
 	}
-	else if (fNameExt == "dsn")
-	{
+	else if (fNameExt == "dsn"){
 		loadDesignFromFile(fName);
 	}
-	else if (fNameExt == "mrb") 
-	{
+	else if (fNameExt == "mrb") {
 		RMCRobot* newRobot = new RMCRobot(transformationMap);
 		newRobot->loadFromFile("../out/tmpRMCRobot.mrb", rmcNameMap);
 		rmcRobots.push_back(newRobot);
 	}
-	else if (fNameExt == "obj")
-	{
+	else if (fNameExt == "obj"){
 		guidingMesh = GLContentManager::getGLMesh(fName);
 		guidingMesh->getMaterial().setColor(0.8, 0.8, 1.0, 0.4);
 		pickedGuidingMesh = false;
@@ -1592,8 +1596,7 @@ void ModularDesignWindow::exportMeshes()
 	delete robot;
 }
 
-void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot, bool mergeMeshes, bool forFabrication)
-{
+void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot, bool mergeMeshes, bool forFabrication){
 	Logger::consolePrint("Save picked RMCRobot to RBS file '%s'\n", fName);
 	RMCRobot* robot = new RMCRobot(new RMC(), transformationMap);
 	robot->root->rbProperties.mass = 0;
@@ -1861,19 +1864,8 @@ void ModularDesignWindow::updateLivingBracket()
 	}
 }
 
-bool ModularDesignWindow::isSelectedRMCMovable()
-{
+bool ModularDesignWindow::isSelectedRMCMovable(){
 	return selectedRobot->selectedRMC->isMovable();
-}
-
-void ModularDesignWindow::loadRBSRobot(const char* fName)
-{
-	delete robot;
-
-	rbEngine = new ODERBEngine();
-	rbEngine->loadRBsFromFile(fName);
-
-	robot = new Robot(rbEngine->rbs[0]);
 }
 
 
@@ -1956,25 +1948,33 @@ void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot)
 	createBodyMesh3D();
 }
 
-void ModularDesignWindow::transferMeshes(Robot* tRobot, bool mergeMeshes)
-{
+void ModularDesignWindow::transferMeshes(Robot* tRobot, bool mergeMeshes){
 	// adjust design
 	matchDesignWithRobot(tRobot);
 
 	saveToRBSFile("../out/tmpRobot.rbs", tRobot, mergeMeshes);
-	loadRBSRobot("../out/tmpRobot.rbs");
+
+	AbstractRBEngine* rbEngine = new ODERBEngine();
+	rbEngine->loadRBsFromFile("../out/tmpRobot.rbs");
+
+	Robot* robot = new Robot(rbEngine->rbs[0]);
+	matchDesignWithRobot(robot);
 
 	// transfer meshes
-	for (int i = 0; i < robot->getRigidBodyCount(); i++)
-	{
+	for (int i = 0; i < robot->getRigidBodyCount(); i++){
 		RigidBody* rb = robot->getRigidBody(i);
 		RigidBody* t_rb = tRobot->getRigidBody(i);
 
+		//TODO: hmmm, who creates and deletes all these meshes?!?
 		t_rb->meshes = rb->meshes;
 		t_rb->meshTransformations = rb->meshTransformations;
 		t_rb->carveMeshes = rb->carveMeshes;
 		t_rb->meshDescriptions = rb->meshDescriptions;
 	}
+
+	delete robot;
+	delete rbEngine;
+
 }
 
 void ModularDesignWindow::buildRMCMirrorMap()

@@ -17,11 +17,33 @@ SimWindow::SimWindow(int x, int y, int w, int h, GLApplication* glApp) : GLWindo
 }
 
 void SimWindow::addMenuItems() {
-	glApp->mainMenu->addVariable("draw meshes", drawMeshes);
-	glApp->mainMenu->addVariable("draw MOIs", drawMOIs);
-	glApp->mainMenu->addVariable("draw CDPs", drawCDPs);
-	glApp->mainMenu->addVariable("draw skeleton", drawSkeletonView);
-	glApp->mainMenu->addVariable("draw joints", drawJoints);
+	nanogui::Widget *tools = new nanogui::Widget(glApp->mainMenu->window());
+	glApp->mainMenu->addWidget("", tools);
+	tools->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+
+	nanogui::Button* button;
+
+	button = new nanogui::Button(tools, "Meshes");
+	button->setFlags(nanogui::Button::ToggleButton);
+	button->setPushed(drawMeshes);
+	button->setChangeCallback([this, button](bool val) {  drawMeshes = val; });
+	button->setTooltip("Draw meshes");
+
+	button = new nanogui::Button(tools, "MOIs");
+	button->setFlags(nanogui::Button::ToggleButton);
+	button->setChangeCallback([this, button](bool val) {  drawMOIs = val; });
+	button->setTooltip("Draw moments of intertia");
+
+	button = new nanogui::Button(tools, "CDPs");
+	button->setFlags(nanogui::Button::ToggleButton);
+	button->setChangeCallback([this, button](bool val) {  drawCDPs = val; });
+	button->setTooltip("Draw collision detection primitives");
+
+	button = new nanogui::Button(tools, "Skel");
+	button->setFlags(nanogui::Button::ToggleButton);
+	button->setChangeCallback([this, button](bool val) {  drawSkeletonView = drawJoints = val; });
+	button->setTooltip("Draw skeleton and joints");
 }
 
 SimWindow::~SimWindow(){

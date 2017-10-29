@@ -97,7 +97,7 @@ public:
 
 	void warmStartMOPT(bool initializeMotionPlan);
 	void loadToSim(bool initializeMOPT = true);
-
+	void createRobotFromCurrentDesign();
 
 
 	ParameterizedRobotDesign* prd;

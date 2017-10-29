@@ -8,6 +8,8 @@
 
 #define START_WITH_VISUAL_DESIGNER
 
+//need a proper save/load routine: design, an entire robot, motion plan...
+
 //make a bunch of robot templates:
 //cassie
 //three legged robot
@@ -44,9 +46,9 @@ RobotDesignerApp::RobotDesignerApp(){
 
 	mainMenu->addGroup("RobotDesigner Options");
 	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
-	mainMenu->addVariable("View Mode", viewOptions, true)->setItems({ "Sim Only", "Sim and Mopt", "Sim and Design"});
+	mainMenu->addVariable("View Mode", viewOptions, true)->setItems({ "Sim Only", "MOPT", "Design"});
 	mainMenu->addButton("Warmstart MOPT", [this]() { warmStartMOPT(true); });
-	mainMenu->addButton("Load Robot Design", [this]() { warmStartMOPT(true); });
+	mainMenu->addButton("Load Robot Design", [this]() { createRobotFromCurrentDesign(); });
 
 	mainMenu->addGroup("MOPT Options");
 	moptWindow->addMenuItems();
@@ -77,8 +79,6 @@ RobotDesignerApp::RobotDesignerApp(){
 	drawCDPs = false;
 	drawSkeletonView = false;
 	showGroundPlane = false;
-
-	TwAddButton(mainMenuBar, "LoadRobotToSim", LoadRobotToSim, this, " label='Load To Simulation' group='Sim' key='l' ");
 
 	TwAddVarRW(mainMenuBar, "do debug", TW_TYPE_BOOLCPP, &doDebug, " label='doDebug' group='Viz2'");
 
@@ -247,6 +247,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 
 		//todo: just a test for now
 		prd = new TestParameterizedRobotDesign(robot);
+
 		delete initialRobotState;
 		initialRobotState = new ReducedRobotState(robot);
 		return;
@@ -267,6 +268,26 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		}
 		return;
 	}
+
+	if (fNameExt.compare("dsn") == 0 && designWindow) {
+		Logger::consolePrint("Load robot state from '%s'\n", fName);
+		designWindow->loadFile(fName);
+		return;
+	}
+
+}
+
+void RobotDesignerApp::createRobotFromCurrentDesign() {
+	if (designWindow) {
+		designWindow->saveFile("../out/tmpRobot.rbs");
+		loadFile("../out/tmpRobot.rbs");
+		ReducedRobotState tmpRobotState = designWindow->getStartState(robot);
+		tmpRobotState.writeToFile("../out/tmpRobot.rs", robot);
+//		loadFile("../out/tmpRobot.rs");
+	}
+
+	if (robot)
+		loadToSim(false);
 }
 
 void RobotDesignerApp::loadToSim(bool initializeMOPT){

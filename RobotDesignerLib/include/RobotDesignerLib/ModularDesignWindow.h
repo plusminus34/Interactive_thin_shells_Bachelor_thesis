@@ -56,11 +56,6 @@ public:
 	RMCRobot* hightlightedRobot = NULL;
 	RMCRobot* windowSelectedRobot = NULL;
 
-	// rbs robot
-	Robot* robot = NULL;
-	AbstractRBEngine* rbEngine = NULL;
-
-
 	GLMesh* bodyMesh = NULL;
 	vector<RBFeaturePoint> bodyFeaturePts;
 	RBFeaturePoint* highlightedFP = NULL;
@@ -150,7 +145,6 @@ public:
 	void updateLivingBracket();
 	bool isSelectedRMCMovable();
 
-	void loadRBSRobot(const char* fName);
 	void matchDesignWithRobot(Robot* tRobot);
 	void transferMeshes(Robot* tRobot, bool mergeMeshes = false);
 
