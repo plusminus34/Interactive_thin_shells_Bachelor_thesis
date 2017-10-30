@@ -111,6 +111,8 @@ double MPO_GRFSoftBoundConstraints::computeValue(const dVector& s) {
 			retVal += sucVerticalUpperBound.computeValue(-fVertical) * c;
 
 			SoftUnilateralConstraint sucVerticalTangentLowerBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].tangentGRFBoundValues[j], 10, theMotionPlan->GRFEpsilon);
+
+			// TODO: this is not any different from the lower bound. shouldn't it be '+' instead of '-' ?
 			SoftUnilateralConstraint sucVerticalTangentUpperBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].tangentGRFBoundValues[j], 10, theMotionPlan->GRFEpsilon);
 
 			retVal += sucVerticalTangentLowerBound.computeValue(theMotionPlan->endEffectorTrajectories[i].contactForce[j](0)) * c;

@@ -1,6 +1,6 @@
 #include <RobotDesignerLib/LocomotionEngineManagerGRF.h>
 
-
+#include <RobotDesignerLib/MPO_VelocitySoftConstraints.h>
 
 //#define DEBUG_WARMSTART
 //#define CHECK_DERIVATIVES_AFTER_WARMSTART
@@ -296,6 +296,8 @@ void LocomotionEngineManagerGRFv1::setupObjectives() {
 	ef->objectives.push_back(new MPO_RobotStateRegularizer(ef->theMotionPlan, "robot body orientation regularizer objective (YAW)", 1, 3, 3));
 	ef->objectives.push_back(new MPO_SmoothRobotMotionTrajectories(ef->theMotionPlan, "robot smooth joint angle trajectories", 0.001, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
 	ef->objectives.push_back(new MPO_SmoothRobotMotionTrajectories(ef->theMotionPlan, "robot smooth body orientation trajectories", 1, 3, 5));
+
+	ef->objectives.push_back(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 0.001, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
 }
 
 LocomotionEngineManagerGRFv1::~LocomotionEngineManagerGRFv1(){
@@ -362,6 +364,9 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->objectives.push_back(new MPO_NonLimbSmoothMotionObjective(ef->theMotionPlan, "robot smooth joint angles objective (non-limb)", 0.01));
 
 	ef->objectives.push_back(new MPO_SmoothCOMTrajectories(ef->theMotionPlan, "smoothCOM", 50));
+
+	ef->objectives.push_back(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 0.001, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
+
 }
 
 LocomotionEngineManagerGRFv2::~LocomotionEngineManagerGRFv2(){
