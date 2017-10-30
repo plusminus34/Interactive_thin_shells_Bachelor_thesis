@@ -290,12 +290,11 @@ P3D LocomotionEngineMotionPlan::getCOP(int tIndex) {
 	return x;
 }
 
-void LocomotionEngineMotionPlan::getVelocityTimeIndicesFor(int tIndex, int &tm, int &tp, bool wrapAround)
-{
-	tp = tIndex, tm = tIndex-1;
+void LocomotionEngineMotionPlan::getVelocityTimeIndicesFor(int tIndex, int &tm, int &tp, bool wrapAround){
+	tp = tIndex; tm = tIndex-1;
 	if (tm < 0){
 		if (wrapAroundBoundaryIndex==0 && wrapAround)
-			tm = nSamplePoints-1;
+			tm = nSamplePoints-2;
 		else
 			tm = -1;
 	}

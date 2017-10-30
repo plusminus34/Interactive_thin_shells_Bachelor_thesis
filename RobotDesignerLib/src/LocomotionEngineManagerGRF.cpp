@@ -279,6 +279,7 @@ void LocomotionEngineManagerGRFv1::setupObjectives() {
 	ef->objectives.push_back(new MPO_RobotCOMObjective(ef->theMotionPlan, "robot COM objective", 10000.0));
 	ef->objectives.push_back(new MPO_RobotEndEffectorsObjective(ef->theMotionPlan, "robot EE objective", 10000.0));
 	ef->objectives.push_back(new MPO_RobotCOMOrientationsObjective(ef->theMotionPlan, "robot COM orientations objective", 10000.0));
+	ef->objectives.push_back(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
 
 	//functional objectives
 	ef->objectives.push_back(new MPO_COMTravelObjective(ef->theMotionPlan, "COM Travel objective", 50.0));
@@ -296,8 +297,6 @@ void LocomotionEngineManagerGRFv1::setupObjectives() {
 	ef->objectives.push_back(new MPO_RobotStateRegularizer(ef->theMotionPlan, "robot body orientation regularizer objective (YAW)", 1, 3, 3));
 	ef->objectives.push_back(new MPO_SmoothRobotMotionTrajectories(ef->theMotionPlan, "robot smooth joint angle trajectories", 0.001, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
 	ef->objectives.push_back(new MPO_SmoothRobotMotionTrajectories(ef->theMotionPlan, "robot smooth body orientation trajectories", 1, 3, 5));
-
-	ef->objectives.push_back(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 0.001, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
 }
 
 LocomotionEngineManagerGRFv1::~LocomotionEngineManagerGRFv1(){
@@ -333,6 +332,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	//dynamics constraints
 	ef->objectives.push_back(new MPO_ForceAccelObjective(ef->theMotionPlan, "force acceleration objective", 10000.0));
 	ef->objectives.push_back(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 10000.0));
+	ef->objectives.push_back(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
 
 	//constraints ensuring feet don't slide...
 	ef->objectives.push_back(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0));
@@ -364,9 +364,6 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->objectives.push_back(new MPO_NonLimbSmoothMotionObjective(ef->theMotionPlan, "robot smooth joint angles objective (non-limb)", 0.01));
 
 	ef->objectives.push_back(new MPO_SmoothCOMTrajectories(ef->theMotionPlan, "smoothCOM", 50));
-
-	ef->objectives.push_back(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 0.001, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
-
 }
 
 LocomotionEngineManagerGRFv2::~LocomotionEngineManagerGRFv2(){
