@@ -8,7 +8,6 @@
 class GLWindow2D : public GLWindow {
 protected:
 	//relative coordinates normalized to 0..1, with a square aspect ratio (i.e. largest dimension goes to 1, smaller dimension is relative to larger one)
-	double minX, minY, maxX, maxY;
 	double bgColorR = 1, bgColorG = 1, bgColorB = 1, bgColorA = 0.5;
 
 	bool dragging = false;

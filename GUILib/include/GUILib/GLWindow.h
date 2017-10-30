@@ -27,6 +27,8 @@ protected:
 	double getViewportXFromRelativeX(double relX);
 	double getViewportYFromRelativeY(double relY);
 
+	virtual void drawBorders(int lineThickness = 8);
+
 public:
 	/**
 		Default constructor

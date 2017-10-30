@@ -37,7 +37,7 @@ public:
 	RMCRobot(RMC* _root, map<string, vector<Transformation>>& _transformationMap);
 	~RMCRobot();
 
-	void fixJointConstraints(bool ignoreMotorAngle = false);
+	void fixJointConstraints();
 	void fixPlateStateByMotor();
 
 	void draw(int flags, const Vector4d& root_color = Vector4d(0, 0, 0, 0), const Vector4d& highlight_color = Vector4d(0, 0, 0, 0), const Vector4d& color = Vector4d(0, 0, 0, 0));
@@ -73,12 +73,15 @@ public:
 	void saveToFile(const char* fName);
 	void saveToFile(FILE* fp);
 
+	void resetAllMotorAngles();
+	void restoreAllMotorAngles();
+
 	// save to .rbs file
-	ReducedRobotState saveToRBSFile(const char* fName, Robot* templateRobot = NULL, bool freezeRoot = false, bool mergeMeshes = false, bool forFabrication = false);
+	void saveToRBSFile(const char* fName, Robot* templateRobot = NULL, bool freezeRoot = false, bool mergeMeshes = false, bool forFabrication = false);
 	void getRMCToRBIndexMap(RMC* node, int curIndex, int& RBIndex, map<RMC*, int>& RBIndexMap);
 
-	// get mesh vertice for rigid bodies
-	void getMeshVerticesForRBs(Robot* templateRobot, map<RigidBody*, vector<P3D>>& rbVertices);
+	//it is assumed that the robot was created from this design and follows all the same naming convention
+	ReducedRobotState getReducedRobotState(Robot* r);
 
 	// load from file, rmcNameMap is for cloning RMC from the rmcWarehouse
 	void loadFromFile(const char* fName, map<string, RMC*>& rmcNameMap);

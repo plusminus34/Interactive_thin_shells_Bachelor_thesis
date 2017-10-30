@@ -16,6 +16,35 @@ SimWindow::SimWindow(int x, int y, int w, int h, GLApplication* glApp) : GLWindo
 	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -1.5;
 }
 
+void SimWindow::addMenuItems() {
+	nanogui::Widget *tools = new nanogui::Widget(glApp->mainMenu->window());
+	glApp->mainMenu->addWidget("", tools);
+	tools->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+
+	nanogui::Button* button;
+
+	button = new nanogui::Button(tools, "Meshes");
+	button->setFlags(nanogui::Button::ToggleButton);
+	button->setPushed(drawMeshes);
+	button->setChangeCallback([this, button](bool val) {  drawMeshes = val; });
+	button->setTooltip("Draw meshes");
+
+	button = new nanogui::Button(tools, "MOIs");
+	button->setFlags(nanogui::Button::ToggleButton);
+	button->setChangeCallback([this, button](bool val) {  drawMOIs = val; });
+	button->setTooltip("Draw moments of intertia");
+
+	button = new nanogui::Button(tools, "CDPs");
+	button->setFlags(nanogui::Button::ToggleButton);
+	button->setChangeCallback([this, button](bool val) {  drawCDPs = val; });
+	button->setTooltip("Draw collision detection primitives");
+
+	button = new nanogui::Button(tools, "Skel");
+	button->setFlags(nanogui::Button::ToggleButton);
+	button->setChangeCallback([this, button](bool val) {  drawSkeletonView = drawJoints = val; });
+	button->setTooltip("Draw skeleton and joints");
+}
 
 SimWindow::~SimWindow(){
 	clear();
@@ -101,11 +130,13 @@ void SimWindow::drawScene() {
 	if (drawJoints) flags |= SHOW_JOINTS;
 
 	glEnable(GL_LIGHTING);
-	rbEngine->drawRBs(flags);
+	if (rbEngine)
+		rbEngine->drawRBs(flags);
 	glDisable(GL_LIGHTING);
 
 	glColor3d(1.0, 0.7, 0.7);
-	drawArrow(robot->root->getCMPosition(), robot->root->getCMPosition() + perturbationForce, 0.01, 12);
+	if (robot)
+		drawArrow(robot->root->getCMPosition(), robot->root->getCMPosition() + perturbationForce, 0.01, 12);
 }
 
 

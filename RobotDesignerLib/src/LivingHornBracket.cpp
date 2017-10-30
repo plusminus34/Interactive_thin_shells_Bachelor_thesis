@@ -35,52 +35,6 @@ void LivingHornBracket::draw() {
 	glColor3d(1, 1, 1);
 	glDisable(GL_LIGHTING);
 
-	//DynamicArray<P3D> bracketFace, bracketBridge, bracketConnector;
-	//generatePointLists(bracketFace, bracketBridge, bracketConnector);
-
-	//glColor3d(0, 0, 0);
-	////draw the bracket outline
-	//glBegin(GL_LINE_STRIP);
-	//for (uint i = 0; i < bracketFace.size();i++)
-	//	glVertex3d(bracketFace[i].x(), bracketFace[i].y(), hornOffset);
-	//glVertex3d(bracketFace[0].x(), bracketFace[0].y(), hornOffset);
-	//glEnd();
-
-	//glLineWidth(3);
-	//glColor3d(1, 0, 0);
-	//glBegin(GL_LINES);
-	//for (uint i = 0; i < bracketConnector.size(); i++)
-	//	glVertex3d(bracketConnector[i].x(), bracketConnector[i].y(), hornOffset);
-	//glEnd();
-	//glColor3d(0, 0, 0);
-	//glLineWidth(1);
-
-	//glBegin(GL_LINES);
-	//glVertex3d(0, 0, hornOffset + 0.002);
-	//glVertex3d(0, motor->hornRadius * 0.5, hornOffset + 0.002);
-	//glEnd();
-
-	//glLineWidth(10);
-	//glColor3d(0, 0, 0);
-	//glBegin(GL_LINE_STRIP);
-	//for (uint i = 0; i < bracketBridge.size(); i++)
-	//	glVertex3d(bracketBridge[i].x(), bracketBridge[i].y(), hornOffset);
-	//glEnd();
-	//glLineWidth(1);
-
-	//glEnable(GL_LIGHTING);
-
-	//V3D pinDir = pinOrientation.rotate(V3D(0, 1, 0));
-	//drawArrow(pinPosition, pinPosition + pinDir * 0.002, 0.0005, 36);
-
-	/*glPointSize(10);
-	glBegin(GL_POINTS);
-	for (auto& p : featurePoints)
-	{
-		glVertex3d(p[0], p[1], p[2]);
-	}
-	glEnd();*/
-
 	glEnable(GL_LIGHTING);
 	bracketMesh->drawMesh();
 }

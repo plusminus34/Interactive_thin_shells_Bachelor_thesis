@@ -24,8 +24,8 @@
  */
 class RobotDesignerApp : public GLApplication {
 public:
+	ModularDesignWindow *designWindow = NULL;
 	MOPTWindow* moptWindow = NULL;
-	bool drawMOPTWindow = true;
 
 	SimWindow* simWindow = NULL;
 
@@ -48,6 +48,13 @@ public:
 		PHYSICS_SIMULATION_WITH_TORQUE_CONTROL
 	};
 	RD_RUN_OPTIONS runOption = MOTION_PLAN_OPTIMIZATION;
+
+	enum RD_VIEW_OPTIONS {
+		SIM_WINDOW_ONLY = 0,
+		SIM_AND_MOPT,
+		SIM_AND_DESIGN
+	};
+	RD_VIEW_OPTIONS viewOptions = SIM_AND_DESIGN;
 
 	bool doDebug = false;
 
@@ -90,7 +97,7 @@ public:
 
 	void warmStartMOPT(bool initializeMotionPlan);
 	void loadToSim(bool initializeMOPT = true);
-
+	void createRobotFromCurrentDesign();
 
 
 	ParameterizedRobotDesign* prd;

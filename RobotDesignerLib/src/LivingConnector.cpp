@@ -149,6 +149,8 @@ void LivingConnector::updateMeshAndPinByDefault()
 void LivingConnector::updateMeshAndPinImplicit()
 {
 
+	//Logger::consolePrint("living connector is updating its mesh...\n");
+
 	// ******************* generate connector mesh *******************
 	vector<P3D> featurePoints;
 
@@ -162,7 +164,7 @@ void LivingConnector::updateMeshAndPinImplicit()
 		}
 	}
 	connectorMesh->clear();
-	// Logger::print("size: %d\n", featurePoints.size());
+	//Logger::consolePrint("size: %d\n", featurePoints.size());
 	ConvexHull3D::computeConvexHullFromSetOfPoints(featurePoints, connectorMesh, true);
 
 	// ******************* update pin transformation *******************

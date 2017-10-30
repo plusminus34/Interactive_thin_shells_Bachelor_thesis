@@ -25,11 +25,6 @@ key 'D': delete the subtree from the selected RMC
 
 key 'S': save the whole design to ../out/tmpModularDesign.dsn
 key 'R': load design from ../out/tmpModularDesign.dsn
-	
-key 'T': create search tree and set selected RMC as root
-key 'Y': set search tree target RMC
-key 'G': exit search tree mode
-key 'B': build selected search tree path solution
 
 // Fabrication
 key 'J': output fabricatable rigidbody meshes in ../out/. File format: $(rbName)_merged.obj
@@ -38,19 +33,21 @@ key 'J': output fabricatable rigidbody meshes in ../out/. File format: $(rbName)
 TIP 1: Select one RMC, click on another RMC while holding SHIFT to make them symmetric.
 TIP 2: Hold ALT while changing the position and orientation of motors to keep child components rigidly attached.
 TIP 3: Hold CTRL to change the orientation of motors discretely.
+TIP 4: When selecting body plates, use CTRL to create only 1, or otherwise a symmetric pair will be generated.
+TIP 5: With a motor selected, F1/F2 change its angle value, while F3 resets it to zero. This does not change the assembly configuration!
+
 
 */
 
 using namespace std;
 
-ModularDesignWindow::ModularDesignWindow(int x, int y, int w, int h, GLApplication* glApp, const char* libraryDefinitionFileName) : AbstractDesignWindow(x, y, w, h), startRobotState(13){
-	type = MODULAR_DESIGN;
+ModularDesignWindow::ModularDesignWindow(int x, int y, int w, int h, GLApplication* glApp, const char* libraryDefinitionFileName) : AbstractDesignWindow(x, y, w, h){
 	this->glApp = glApp;
 	((GLTrackingCamera*)camera)->camDistance = -0.5;
 	((GLTrackingCamera*)camera)->rotAboutRightAxis = 0.3;
 	((GLTrackingCamera*)camera)->rotAboutUpAxis = 0.3;
 
-	windowArray = new GLWindowContainer(3, 5, x, (int)(h * 3.0 / 4), (int)(w), (int)(h /4.0));
+	componentLibrary = new GLWindowContainer(3, 3, x, (int)(h * 3.0 / 4), (int)(w), (int)(h /4.0));
 
 	tWidget = new TranslateWidget(AXIS_X | AXIS_Y | AXIS_Z);
 	//	rWidget = new RotateWidgetV1();
@@ -58,32 +55,12 @@ ModularDesignWindow::ModularDesignWindow(int x, int y, int w, int h, GLApplicati
 	tWidget->visible = rWidget->visible = false;
 
 	loadConfig(libraryDefinitionFileName);
-	//loadConfig("../data/modularRobot/configXM-430_search.cfg");
-	//loadConfig("../data/modularRobot/configXM-430_newOriginalComponents.cfg");
 
-/*
-	if (glApp)
-	{
-		TwAddSeparator(glApp->mainMenuBar, "sep", "");
-		TwAddVarRW(glApp->mainMenuBar, "ShowBodyFeature", TW_TYPE_BOOLCPP, &showBodyFeature, "");
-		//TwAddVarRW(glApp->mainMenuBar, "ShowPinCoordiante", TW_TYPE_BOOLCPP, &RMCPin::showCoordinate, "");
-		TwAddVarRW(glApp->mainMenuBar, "ShowMOIBox", TW_TYPE_BOOLCPP, &showMOIBox, "");
-		TwAddVarRW(glApp->mainMenuBar, "DrawBullet", TW_TYPE_BOOLCPP, &drawBullet, "");
-		TwAddVarRW(glApp->mainMenuBar, "ShowSDF", TW_TYPE_BOOLCPP, &showSDF, "");
-		TwAddVarRW(glApp->mainMenuBar, "SDFStepSize", TW_TYPE_DOUBLE, &SDFStepSize, "");
-		TwAddSeparator(glApp->mainMenuBar, "sep", "");
-		TwAddVarRW(glApp->mainMenuBar, "Use meshCost", TW_TYPE_BOOLCPP, &useMeshCost, "");
-		TwAddVarRW(glApp->mainMenuBar, "AestheticCost Wt.", TW_TYPE_DOUBLE, &aestheticCostWeight, "");
-		TwAddVarRW(glApp->mainMenuBar, "ConnectorCost Wt.", TW_TYPE_DOUBLE, &connectorCostWeight, "");
-		TwAddVarRW(glApp->mainMenuBar, "PathCost Wt.", TW_TYPE_DOUBLE, &pathCostWeight, "");
-		TwAddVarRW(glApp->mainMenuBar, "ReachGoal Wt.", TW_TYPE_DOUBLE, &heuristicWeight, "");
-		TwAddVarRW(glApp->mainMenuBar, "Orientation Wt.", TW_TYPE_DOUBLE, &motorOrientationWt, "");
-	}
-*/
+	//	TwAddVarRW(glApp->mainMenuBar, "ShowBodyFeature", TW_TYPE_BOOLCPP, &showBodyFeature, "");
 
-	for (uint i = 0; i < rmcWarehouse.size(); i++)
-	{
-		windowArray->addSubWindow(new ModuleDisplayWindow(rmcWarehouse[i]));
+	Logger::consolePrint("Library contains %d modular components...\n", rmcWarehouse.size());
+	for (uint i = 0; i < rmcWarehouse.size(); i++){
+		componentLibrary->addSubWindow(new ModuleDisplayWindow(rmcWarehouse[i]));
 	}
 
 	string bodyTexture = "../data/textures/matcap/whitefluff2.bmp";
@@ -106,10 +83,8 @@ ModularDesignWindow::~ModularDesignWindow(void){
 	
 	delete guidingMesh;
 	delete bodyMesh;
-	delete robot;
-	delete rbEngine;
 	delete windowSelectedRobot;
-	delete windowArray;
+	delete componentLibrary;
 	delete rWidget;
 	delete tWidget;
 	delete sphereMesh;
@@ -131,7 +106,7 @@ bool ModularDesignWindow::process() {
 
 //triggered when mouse moves
 bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
-	if (windowArray->onMouseMoveEvent(xPos, yPos) == true) return true;
+	if (componentLibrary->onMouseMoveEvent(xPos, yPos) == true) return true;
 	preDraw();
 
     PressedModifier mod = getPressedModifier(glApp->glfwWindow);
@@ -350,7 +325,7 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 	postDraw();
 
 	// new RMCRobot initialization
-	if (windowArray->onMouseButtonEvent(button, action, mods, xPos, yPos)) {
+	if (componentLibrary->onMouseButtonEvent(button, action, mods, xPos, yPos)) {
 		if (action == 1){
 
 			if (selectedRobot && selectedRobot->selectedRMC){
@@ -361,9 +336,9 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 			}
 
 			int selectedRMC = -1;
-			for (uint i = 0; i < windowArray->subWindows.size(); i++)
+			for (uint i = 0; i < componentLibrary->subWindows.size(); i++)
 			{
-				if (windowArray->subWindows[i]->isSelected()) {
+				if (componentLibrary->subWindows[i]->isSelected()) {
 					selectedRMC = i;
 					break;
 				}
@@ -627,7 +602,7 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 
 //triggered when using the mouse wheel
 bool ModularDesignWindow::onMouseWheelScrollEvent(double xOffset, double yOffset) {
-	if (windowArray->onMouseWheelScrollEvent(xOffset, yOffset)) return true;
+	if (componentLibrary->onMouseWheelScrollEvent(xOffset, yOffset)) return true;
 
 	if (pickedGuidingMesh)	{
 		guidingMeshScale *= (1 + yOffset * 0.05);
@@ -647,7 +622,7 @@ bool ModularDesignWindow::onMouseWheelScrollEvent(double xOffset, double yOffset
 }
 
 bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
-	if (windowArray->onKeyEvent(key, action, mods)) return true;
+	if (componentLibrary->onKeyEvent(key, action, mods)) return true;
 
 	// switch to the next joint transformation
 	if (key == GLFW_KEY_F && action == GLFW_PRESS)
@@ -803,8 +778,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		createBodyMesh3D();
 	}
 
-	if (key == GLFW_KEY_X && action == GLFW_PRESS)
-	{
+	if (key == GLFW_KEY_X && action == GLFW_PRESS){
 		showWidgets = !showWidgets;
 		if (showWidgets && selectedRobot && selectedRobot->selectedRMC)
 		{
@@ -890,7 +864,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		if (selectedRobot && selectedRobot->selectedRMC && (selectedRobot->selectedRMC->type == MOTOR_RMC
 			|| selectedRobot->selectedRMC->type == LIVING_MOTOR))
 		{
-			selectedRobot->selectedRMC->motorAngle = 0.0;		
+			selectedRobot->selectedRMC->motorAngle = 0.0;
 			selectedRobot->selectedRMC->update();
 
 			// ******************* handle mirror RMC *******************
@@ -904,6 +878,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 			for (auto robot : rmcRobots)
 				robot->fixJointConstraints();
 		}
+
 	}
 
 	if (key == GLFW_KEY_F4 && (action == GLFW_REPEAT || action == GLFW_PRESS))
@@ -935,24 +910,27 @@ void ModularDesignWindow::loadFile(const char* fName) {
 	fileName.assign(fName);
 	std::string fNameExt = fileName.substr(fileName.find_last_of('.') + 1);
 
-	if (fNameExt == "rbs")
-	{
+	if (fNameExt == "rbs"){
 		// throwError("can't load .rbs file for modular design!");
-		loadRBSRobot(fName);
+
+		AbstractRBEngine* rbEngine = new ODERBEngine();
+		rbEngine->loadRBsFromFile(fName);
+
+		Robot* robot = new Robot(rbEngine->rbs[0]);
 		matchDesignWithRobot(robot);
+
+		delete robot;
+		delete rbEngine;
 	}
-	else if (fNameExt == "dsn")
-	{
+	else if (fNameExt == "dsn"){
 		loadDesignFromFile(fName);
 	}
-	else if (fNameExt == "mrb") 
-	{
+	else if (fNameExt == "mrb") {
 		RMCRobot* newRobot = new RMCRobot(transformationMap);
 		newRobot->loadFromFile("../out/tmpRMCRobot.mrb", rmcNameMap);
 		rmcRobots.push_back(newRobot);
 	}
-	else if (fNameExt == "obj")
-	{
+	else if (fNameExt == "obj"){
 		guidingMesh = GLContentManager::getGLMesh(fName);
 		guidingMesh->getMaterial().setColor(0.8, 0.8, 1.0, 0.4);
 		pickedGuidingMesh = false;
@@ -1000,8 +978,8 @@ void ModularDesignWindow::drawRMCRobot()
 		else
 			rmcRobots[i]->draw(SHOW_MESH, Vector4d(0, 0, 0, 0), Vector4d(1, 0.5, 0, 1));
 
-		if (showMOIBox)
-			rmcRobots[i]->draw(SHOW_MOI_BOX);
+//		if (showMOIBox)
+//			rmcRobots[i]->draw(SHOW_MOI_BOX);
 	}
 
 }
@@ -1142,7 +1120,7 @@ void ModularDesignWindow::drawAuxiliarySceneInfo() {
 	postDraw();
 
 	glClear(GL_DEPTH_BUFFER_BIT);
-	windowArray->draw();
+	componentLibrary->draw();
 	
 }
 
@@ -1619,9 +1597,16 @@ void ModularDesignWindow::exportMeshes()
 	delete robot;
 }
 
-void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot, bool mergeMeshes, bool forFabrication)
-{
+
+/**
+	Saves an rbs file. No motor rotations will be baked in...
+*/
+void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot, bool mergeMeshes, bool forFabrication){
 	Logger::consolePrint("Save picked RMCRobot to RBS file '%s'\n", fName);
+
+	for (auto tmpBot : rmcRobots)
+		tmpBot->resetAllMotorAngles();
+
 	RMCRobot* robot = new RMCRobot(new RMC(), transformationMap);
 	robot->root->rbProperties.mass = 0;
 	robot->root->rbProperties.MOI_local.setZero();
@@ -1654,13 +1639,12 @@ void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot,
 			robot->connectRMCRobotDirectly(rmcRobots[i]->clone(), robot->getRoot());
 		}
 	}
-	robot->fixJointConstraints(true);
+	robot->fixJointConstraints();
 
 	int motorID = 0;
 	int connectorID = 0;
 	int eeID = 0;
-	for (int i = 0; i < robot->getJointCount(); i++)
-	{
+	for (int i = 0; i < robot->getJointCount(); i++){
 		RMC* rmc = robot->getJoint(i)->getChild();
 		if (rmc->type == LIVING_MOTOR)
 		{
@@ -1679,30 +1663,37 @@ void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot,
 		}
 	}
 
-	startRobotState = robot->saveToRBSFile(fName, templateRobot, freezeRobotRoot, mergeMeshes, forFabrication);
+	robot->saveToRBSFile(fName, templateRobot, freezeRobotRoot, mergeMeshes, forFabrication);
+	for (auto tmpBot : rmcRobots)
+		tmpBot->restoreAllMotorAngles();
 
 	delete robot;
 }
 
-void ModularDesignWindow::getMeshVerticesForRBs(Robot* templateRobot, map<RigidBody*, vector<P3D>>& rbVertices)
-{
-	matchDesignWithRobot(templateRobot);
-
+void ModularDesignWindow::saveRSFile(const char* fName, Robot* rbRobot){
 	RMCRobot* robot = new RMCRobot(new RMC(), transformationMap);
 
-	for (uint i = 0; i < rmcRobots.size(); i++)
-	{
-		if (rmcRobots[i]->getRoot()->type == PLATE_RMC)
-		{
-			robot->connectRMCRobotDirectly(rmcRobots[i]->clone(), robot->getRoot());
+	for (uint i = 0; i < rmcRobots.size(); i++){
+		RMCRobot* rmcRobot = rmcRobots[i];
+		for (int j = 0; j < rmcRobot->getRMCCount(); j++){
+			RMC* rmc = rmcRobot->getRMC(j);
+			if (rmc->type == MOTOR_RMC || rmc->type == LIVING_MOTOR || rmc->type == EE_RMC){
+				rmc->mappingInfo.index1 = i;
+				rmc->mappingInfo.index2 = j;
+			}
 		}
+		if (rmcRobots[i]->getRoot()->type == PLATE_RMC)
+			robot->connectRMCRobotDirectly(rmcRobots[i]->clone(), robot->getRoot());
 	}
-	robot->fixJointConstraints(true);
 
-	robot->getMeshVerticesForRBs(templateRobot, rbVertices);
+	robot->fixJointConstraints();
+
+	ReducedRobotState tmpState = robot->getReducedRobotState(rbRobot);
+	tmpState.writeToFile(fName);
 
 	delete robot;
 }
+
 
 void ModularDesignWindow::removeRMCRobot(RMCRobot* robot)
 {
@@ -1802,10 +1793,6 @@ void ModularDesignWindow::createBodyMesh3D()
 	bodyMesh->computeNormals();
 }
 
-ReducedRobotState ModularDesignWindow::getStartState(Robot* robot)
-{
-	return startRobotState;
-}
 
 void ModularDesignWindow::loadParametersForLivingBracket()
 {
@@ -1888,19 +1875,8 @@ void ModularDesignWindow::updateLivingBracket()
 	}
 }
 
-bool ModularDesignWindow::isSelectedRMCMovable()
-{
+bool ModularDesignWindow::isSelectedRMCMovable(){
 	return selectedRobot->selectedRMC->isMovable();
-}
-
-void ModularDesignWindow::loadRBSRobot(const char* fName)
-{
-	delete robot;
-
-	rbEngine = new ODERBEngine();
-	rbEngine->loadRBsFromFile(fName);
-
-	robot = new Robot(rbEngine->rbs[0]);
 }
 
 
@@ -1983,25 +1959,33 @@ void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot)
 	createBodyMesh3D();
 }
 
-void ModularDesignWindow::transferMeshes(Robot* tRobot, bool mergeMeshes)
-{
+void ModularDesignWindow::transferMeshes(Robot* tRobot, bool mergeMeshes){
 	// adjust design
 	matchDesignWithRobot(tRobot);
 
 	saveToRBSFile("../out/tmpRobot.rbs", tRobot, mergeMeshes);
-	loadRBSRobot("../out/tmpRobot.rbs");
+
+	AbstractRBEngine* rbEngine = new ODERBEngine();
+	rbEngine->loadRBsFromFile("../out/tmpRobot.rbs");
+
+	Robot* robot = new Robot(rbEngine->rbs[0]);
+	matchDesignWithRobot(robot);
 
 	// transfer meshes
-	for (int i = 0; i < robot->getRigidBodyCount(); i++)
-	{
+	for (int i = 0; i < robot->getRigidBodyCount(); i++){
 		RigidBody* rb = robot->getRigidBody(i);
 		RigidBody* t_rb = tRobot->getRigidBody(i);
 
+		//TODO: hmmm, who creates and deletes all these meshes?!?
 		t_rb->meshes = rb->meshes;
 		t_rb->meshTransformations = rb->meshTransformations;
 		t_rb->carveMeshes = rb->carveMeshes;
 		t_rb->meshDescriptions = rb->meshDescriptions;
 	}
+
+	delete robot;
+	delete rbEngine;
+
 }
 
 void ModularDesignWindow::buildRMCMirrorMap()
@@ -2149,14 +2133,10 @@ void ModularDesignWindow::propagatePosToMirrorFp(RBFeaturePoint* fp)
     }
 }
 
-ModularDesignWindow::PressedModifier ModularDesignWindow::getPressedModifier(GLFWwindow *window)
-{
-    int key;
-    if(glfwGetKey(window, key))
-    {
-        if(key == GLFW_KEY_LEFT_ALT) return PressedModifier::LEFT_ALT;
-        else if(key == GLFW_KEY_RIGHT_ALT) return PressedModifier::RIGHT_ALT;
-        else if(key == GLFW_KEY_LEFT_CONTROL) return PressedModifier::LEFT_CTRL;
-    }
+ModularDesignWindow::PressedModifier ModularDesignWindow::getPressedModifier(GLFWwindow *window){
+	if (glfwGetKey(window, GLFW_KEY_LEFT_ALT)) return PressedModifier::LEFT_ALT;
+	if (glfwGetKey(window, GLFW_KEY_RIGHT_ALT)) return PressedModifier::RIGHT_ALT;
+	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL)) return PressedModifier::LEFT_CTRL;
+
     return PressedModifier::NONE;
 }

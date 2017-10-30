@@ -14,6 +14,7 @@ protected:
 public:
 	int nRows, nCols;
 
+	//width and height of each subwindow...
 	int width;
 	int height;
 	
@@ -30,6 +31,7 @@ public:
 	virtual void draw();
 
 	void addSubWindow(GLWindow* subWindow);
+	void updateSubWindowViewports();
 
 	//triggered when mouse buttons are pressed
 	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
@@ -41,5 +43,7 @@ public:
 	virtual bool onKeyEvent(int key, int action, int mods);
 	//this one gets triggered on UNICODE characters only...
 	virtual bool onCharacterPressedEvent(int key, int mods);
+
+	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
 };
 

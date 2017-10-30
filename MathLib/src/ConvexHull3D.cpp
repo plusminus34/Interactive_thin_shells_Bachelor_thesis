@@ -1,92 +1,82 @@
 #include "../include/MathLib/ConvexHull3D.h"
-#define MAXN 1010
+#include "../../GUILib/include/GUILib/GLMesh.h"
+#include "../../BulletCollision/BulletCollision/LinearMath/btConvexHullComputer.h"
 
-// TODO: re-add bullet!
-//#include "../BulletCollision/LinearMath/btConvexHullComputer.h"
+void ConvexHull3D::computeConvexHullFromSetOfPoints(const DynamicArray<P3D> &originalPoints, DynamicArray<P3D> &convexHullPoints, DynamicArray<ConvexHull_Face> &convexHullFaces) {
+	DynamicArray<double> rawData;
+	for (uint i = 0; i < originalPoints.size(); i++) {
+		rawData.push_back(originalPoints[i][0]);
+		rawData.push_back(originalPoints[i][1]);
+		rawData.push_back(originalPoints[i][2]);
+	}
 
-void ConvexHull3D::computeConvexHullFromSetOfPoints(const DynamicArray<P3D> &originalPoints, DynamicArray<P3D> &convexHullPoints, DynamicArray<ConvexHull_Face> &convexHullFaces){
+	btConvexHullComputer convexHullComputer;
+	convexHullComputer.compute(rawData.data(), 3 * sizeof(double), originalPoints.size(), 0, 0);
 
-	// TODO: re-add bullet!
+	//read off the vertices in the convex hull
+	for (int i = 0; i < convexHullComputer.vertices.size(); i++) {
+		P3D p(convexHullComputer.vertices[i].x(), convexHullComputer.vertices[i].y(), convexHullComputer.vertices[i].z());
+		convexHullPoints.push_back(p);
+	}
 
-	//DynamicArray<double> rawData;
-	//for (uint i = 0; i < originalPoints.size(); i++) {
-	//	rawData.push_back(originalPoints[i][0]);
-	//	rawData.push_back(originalPoints[i][1]);
-	//	rawData.push_back(originalPoints[i][2]);
-	//}
-
-	//btConvexHullComputer convexHullComputer;
-	//convexHullComputer.compute(rawData.data(), 3 * sizeof(double), originalPoints.size(), 0, 0);
-
-	////read off the vertices in the convex hull
-	//for (int i = 0; i < convexHullComputer.vertices.size(); i++) {
-	//	P3D p(convexHullComputer.vertices[i].x(), convexHullComputer.vertices[i].y(), convexHullComputer.vertices[i].z());
-	//	convexHullPoints.push_back(p);
-	//}
-
-	////and now read off the faces...
-	//for (int i = 0; i < convexHullComputer.faces.size();i++) {
-	//	const btConvexHullComputer::Edge *curEdge = &convexHullComputer.edges[convexHullComputer.faces[i]];
-	//	const btConvexHullComputer::Edge *startEdge = curEdge;
-	//	convexHullFaces.push_back(ConvexHull_Face());
-	//	assert(curEdge->getSourceVertex() < (int)convexHullPoints.size());
-	//	convexHullFaces[i].vIndices.push_back(curEdge->getSourceVertex());
-	//	while (curEdge->getNextEdgeOfFace() != startEdge) {
-	//		curEdge = curEdge->getNextEdgeOfFace();
-	//		assert(curEdge->getSourceVertex() < (int)convexHullPoints.size());
-	//		convexHullFaces[i].vIndices.push_back(curEdge->getSourceVertex());
-	//	}
-	//}
+	//and now read off the faces...
+	for (int i = 0; i < convexHullComputer.faces.size(); i++) {
+		const btConvexHullComputer::Edge *curEdge = &convexHullComputer.edges[convexHullComputer.faces[i]];
+		const btConvexHullComputer::Edge *startEdge = curEdge;
+		convexHullFaces.push_back(ConvexHull_Face());
+		assert(curEdge->getSourceVertex() < (int)convexHullPoints.size());
+		convexHullFaces[i].vIndices.push_back(curEdge->getSourceVertex());
+		while (curEdge->getNextEdgeOfFace() != startEdge) {
+			curEdge = curEdge->getNextEdgeOfFace();
+			assert(curEdge->getSourceVertex() < (int)convexHullPoints.size());
+			convexHullFaces[i].vIndices.push_back(curEdge->getSourceVertex());
+		}
+	}
 
 	//all done...
 }
 
-class GLMesh;
 void ConvexHull3D::computeConvexHullForMesh(GLMesh* meshInput, GLMesh *convexHullMesh, bool duplicateVertices) {
-	// TODO: put outside of MatLib
-	
-	//DynamicArray<P3D> pointList;
-	//for (int i = 0; i < meshInput->getVertexCount(); i++)
-	//	pointList.push_back(meshInput->getVertex(i));
+	DynamicArray<P3D> pointList;
+	for (int i = 0; i < meshInput->getVertexCount(); i++)
+		pointList.push_back(meshInput->getVertex(i));
 
-	//computeConvexHullFromSetOfPoints(pointList, convexHullMesh, duplicateVertices);
+	computeConvexHullFromSetOfPoints(pointList, convexHullMesh, duplicateVertices);
 }
 
 void ConvexHull3D::computeConvexHullFromSetOfPoints(const DynamicArray<P3D>& pointList, GLMesh* convexHullMesh, bool duplicateVertices) {
-	// TODO: put outside of MatLib
+	int zeroIndex = convexHullMesh->getVertexCount();
 
-	//	int zeroIndex = convexHullMesh->getVertexCount();
-	//
-	//	DynamicArray<P3D> CHVertices;
-	//	DynamicArray<ConvexHull_Face> CHFaces;
-	//
-	//	ConvexHull3D::computeConvexHullFromSetOfPoints(pointList, CHVertices, CHFaces);
-	//
-	////	P3D midPoint;
-	////	for (uint i = 0; i<pointList.size(); i++)
-	////		midPoint += pointList[i] / pointList.size();
-	//
-	//	for (uint i = 0; i < CHVertices.size(); i++)
-	//		convexHullMesh->addVertex(CHVertices[i]);
-	//
-	//	for (uint i = 0; i < CHFaces.size(); i++) {
-	//		GLIndexedPoly poly;
-	//		for (uint j = 0; j < CHFaces[i].vIndices.size(); j++)
-	//			poly.addVertexIndex(CHFaces[i].vIndices[j] + zeroIndex);
-	//
-	//		convexHullMesh->addPoly(poly, duplicateVertices);
-	//
-	////		P3D p1 = pointList[CHFaces[i].vIndices[0]];
-	////		P3D p2 = pointList[CHFaces[i].vIndices[1]];
-	////		P3D p3 = pointList[CHFaces[i].vIndices[2]];
-	//
-	////		V3D n = V3D(p1, p2).cross(V3D(p1, p3));
-	////		if (V3D(midPoint, p1).dot(n) > 0)
-	////			convexHullMesh->addPoly(GLIndexedTriangle(faces[i].I[0] + zeroIndex, faces[i].I[1] + zeroIndex, faces[i].I[2] + zeroIndex), duplicateVertices);
-	////		else
-	////			convexHullMesh->addPoly(GLIndexedTriangle(faces[i].I[0] + zeroIndex, faces[i].I[2] + zeroIndex, faces[i].I[1] + zeroIndex), duplicateVertices);
-	//	}
-	//	convexHullMesh->computeNormals();
+	DynamicArray<P3D> CHVertices;
+	DynamicArray<ConvexHull_Face> CHFaces;
+
+	ConvexHull3D::computeConvexHullFromSetOfPoints(pointList, CHVertices, CHFaces);
+
+	//	P3D midPoint;
+	//	for (uint i = 0; i<pointList.size(); i++)
+	//		midPoint += pointList[i] / pointList.size();
+
+	for (uint i = 0; i < CHVertices.size(); i++)
+		convexHullMesh->addVertex(CHVertices[i]);
+
+	for (uint i = 0; i < CHFaces.size(); i++) {
+		GLIndexedPoly poly;
+		for (uint j = 0; j < CHFaces[i].vIndices.size(); j++)
+			poly.addVertexIndex(CHFaces[i].vIndices[j] + zeroIndex);
+
+		convexHullMesh->addPoly(poly, duplicateVertices);
+
+		//		P3D p1 = pointList[CHFaces[i].vIndices[0]];
+		//		P3D p2 = pointList[CHFaces[i].vIndices[1]];
+		//		P3D p3 = pointList[CHFaces[i].vIndices[2]];
+
+		//		V3D n = V3D(p1, p2).cross(V3D(p1, p3));
+		//		if (V3D(midPoint, p1).dot(n) > 0)
+		//			convexHullMesh->addPoly(GLIndexedTriangle(faces[i].I[0] + zeroIndex, faces[i].I[1] + zeroIndex, faces[i].I[2] + zeroIndex), duplicateVertices);
+		//		else
+		//			convexHullMesh->addPoly(GLIndexedTriangle(faces[i].I[0] + zeroIndex, faces[i].I[2] + zeroIndex, faces[i].I[1] + zeroIndex), duplicateVertices);
+	}
+	convexHullMesh->computeNormals();
 }
 
 
@@ -155,7 +145,7 @@ void ConvexHull3D::planarConvexHullFromSetOfPoints(const DynamicArray<P3D>& poin
 	//now, based on the ordering, get the structure that will define the support polygon
 	convexHullBoundaryVertices.clear();
 	for (uint i = 0; i < ordering.size(); i++)
-        convexHullBoundaryVertices.push_back(ConvexHull2D_Vertex(points[ordering[i]], ordering[i]));
+		convexHullBoundaryVertices.push_back(struct ConvexHull2D_Vertex(points[ordering[i]], ordering[i]));
 
 	//and done...
 }

@@ -6,6 +6,10 @@
 #include <MathLib/MathLib.h>
 #include <ControlLib/SimpleLimb.h>
 
+#define START_WITH_VISUAL_DESIGNER
+
+//need a proper save/load routine: design, an entire robot, motion plan...
+
 //make a bunch of robot templates:
 //cassie
 //three legged robot
@@ -14,9 +18,9 @@
 //hexa-like robot
 //probably need to work a bit on body shape/body characteristics
 
-//no longer remember why this is in place: tangentGRFBoundValues instead of a coulomb-friction-like model... just for warmstarting? Or to avoid coupling in the hessian?
-//fix also the footfall pattern window... it's a bit broken now...
-//clean a bit all the managers, objectives and the manner in which the different types of MOPT modes are selected...
+//can we go all the way to creating 3d printable geometry?
+
+//tangentGRFBoundValues is useful for warmstarting to incrementally bound tangential forces. But need to implement proper friction, methinks...
 //perhaps make the non-mesh version of the renderer prettier... it will allow us to test the code before (or even if it wont happen that) the visual designer part is integrated.
 //everything needs to happen via rbs files. The visual designer will output an rbs file which gets loaded the normal way, then it knows how to sync back changes with the rbs, and that's all...
 //the constraint system should be much more modular, with each type of MOPT adding its own constraints to a global list
@@ -37,56 +41,57 @@ RobotDesignerApp::RobotDesignerApp(){
 	bgColor[0] = bgColor[1] = bgColor[2] = 1;
 	setWindowTitle("RobotDesigner");
 
+	showGroundPlane = false;
+
 	moptWindow = new MOPTWindow(0, 0, 100, 100, this);
 	simWindow = new SimWindow(0, 0, 100, 100, this);
-	setupWindows();
 
 	mainMenu->addGroup("RobotDesigner Options");
-	mainMenu->addVariable("Execution Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
-	mainMenu->addVariable("Show MOPT Window", drawMOPTWindow);
-	moptWindow->addMenuItems();
-	mainMenu->addButton("Warmstart MOTP", [this]() { warmStartMOPT(true); });
+	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
+	mainMenu->addVariable("View Mode", viewOptions, true)->setItems({ "Sim Only", "MOPT", "Design"});
+//	mainMenu->addButton("Warmstart MOPT", [this]() { warmStartMOPT(true); });
+//	mainMenu->addButton("Load Robot Design", [this]() { createRobotFromCurrentDesign(); });
 
 	mainMenu->addButton("Compute Jacobian", [this]() { test_dmdp_Jacobian(); });
 
+	nanogui::Widget *tools = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", tools);
+	tools->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+
+	nanogui::Button* button;
+
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_SAVE);
+	button->setCallback([this]() { if (designWindow) designWindow->saveFile("../out/tmpModularRobotDesign.dsn"); });
+	button->setTooltip("Quick Save");
+
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_DOWNLOAD);
+	button->setCallback([this]() { if (designWindow) designWindow->loadDesignFromFile("../out/tmpModularRobotDesign.dsn"); });
+	button->setTooltip("Quick Load");
+
+	button = new nanogui::Button(tools, "ToSim");
+	button->setCallback([this]() { createRobotFromCurrentDesign(); });
+	button->setTooltip("Load Robot Design To Sim");
+
+	button = new nanogui::Button(tools, "GoMOPT");
+	button->setCallback([this]() { warmStartMOPT(true); });
+	button->setTooltip("Warmstart MOPT");
+
+	mainMenu->addGroup("MOPT Options");
+	moptWindow->addMenuItems();
+
+	mainMenu->addGroup("Sim Options");
+	simWindow->addMenuItems();
+
 	showGroundPlane = false;
-
-/*
-	TwAddSeparator(mainMenuBar, "sep2", "");
-
-	drawCDPs = false;
-	drawSkeletonView = false;
-	showGroundPlane = false;
-
-	TwAddButton(mainMenuBar, "LoadRobotToSim", LoadRobotToSim, this, " label='Load To Simulation' group='Sim' key='l' ");
-	TwAddButton(mainMenuBar, "WarmstartMOPT", RestartMOPT, this, " label='WarmStart MOPT' group='Sim' key='w' ");
-
-	TwAddVarRW(mainMenuBar, "RunOptions", TwDefineEnumFromString("RunOptions", "..."), &runOption, "group='Sim'");
-	DynamicArray<std::string> runOptionList;
-	runOptionList.push_back("\\Motion Optimization");
-	runOptionList.push_back("\\Motion Plan Animation");
-	runOptionList.push_back("\\Simulation-PositionControl");
-	runOptionList.push_back("\\Simulation-TorqueControl");
-	generateMenuEnumFromFileList("MainMenuBar/RunOptions", runOptionList);
-
-	TwAddVarRW(mainMenuBar, "do debug", TW_TYPE_BOOLCPP, &doDebug, " label='doDebug' group='Viz2'");
-	TwAddVarRW(mainMenuBar, "drawMotionPlan", TW_TYPE_BOOLCPP, &drawMotionPlan, " label='drawMotionPlan' group='Viz2'");
-	TwAddVarRW(mainMenuBar, "DrawMeshes", TW_TYPE_BOOLCPP, &drawMeshes, " label='drawMeshes' group='Viz2'");
-	TwAddVarRW(mainMenuBar, "DrawMOIs", TW_TYPE_BOOLCPP, &drawMOIs, " label='drawMOIs' group='Viz2'");
-	TwAddVarRW(mainMenuBar, "DrawCDPs", TW_TYPE_BOOLCPP, &drawCDPs, " label='drawCDPs' group='Viz2'");
-	TwAddVarRW(mainMenuBar, "DrawSkeletonView", TW_TYPE_BOOLCPP, &drawSkeletonView, " label='drawSkeleton' group='Viz2'");
-	TwAddVarRW(mainMenuBar, "DrawJoints", TW_TYPE_BOOLCPP, &drawJoints, " label='drawJoints' group='Viz2'");
-	TwAddVarRW(mainMenuBar, "drawContactForces", TW_TYPE_BOOLCPP, &drawContactForces, " label='drawContactForces' group='Viz2'");
-	TwAddVarRW(mainMenuBar, "drawOrientation", TW_TYPE_BOOLCPP, &drawOrientation, " label='drawOrientation' group='Viz2'");
-
-	TwAddSeparator(mainMenuBar, "sep3", "");
-
-	TwAddSeparator(mainMenuBar, "sep4", "");
-*/
-
-
 	bgColor[0] = bgColor[1] = bgColor[2] = 0.75;
 
+#ifdef START_WITH_VISUAL_DESIGNER
+	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
+	
+#else
     loadFile("../data/robotsAndMotionPlans/spotMini/robot2.rbs");
     loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
 //	loadToSim();
@@ -94,11 +99,27 @@ RobotDesignerApp::RobotDesignerApp(){
     loadFile("../data/robotsAndMotionPlans/spotMini/trot.p");
 
 	mainMenu->addGroup("Design Parameters");
-
 	addDesignParameterSliders();
+
+#endif
+
 
 	menuScreen->performLayout();
 	setupWindows();
+
+	/*
+	TwAddSeparator(mainMenuBar, "sep2", "");
+
+	drawCDPs = false;
+	drawSkeletonView = false;
+	showGroundPlane = false;
+
+	TwAddVarRW(mainMenuBar, "do debug", TW_TYPE_BOOLCPP, &doDebug, " label='doDebug' group='Viz2'");
+
+	TwAddSeparator(mainMenuBar, "sep3", "");
+
+	TwAddSeparator(mainMenuBar, "sep4", "");
+	*/
 
 
 	followCameraTarget = true;
@@ -112,20 +133,24 @@ void RobotDesignerApp::setupWindows() {
 	w = (GLApplication::getMainWindowWidth()) - offset;
 	h = GLApplication::getMainWindowHeight();
 
-	if (drawMOPTWindow){
+	if (viewOptions == SIM_AND_MOPT){
 		moptWindow->setViewportParameters(offset, 0, w / 2, h);
 		moptWindow->ffpViewer->setViewportParameters(offset, 0, w/2, h/4);
 
 		consoleWindow->setViewportParameters(offset + w / 2, 0, w / 2, 280);
 		simWindow->setViewportParameters(offset + w / 2, 0, w / 2, h);
 	}
-	else {
+	else if (viewOptions == SIM_AND_DESIGN && designWindow){
+		designWindow->setViewportParameters(offset, 0, w / 2, h);
+		designWindow->componentLibrary->setViewportParameters(offset, (int)(h * 3.0 / 4), w / 2, h / 4);
+
+		consoleWindow->setViewportParameters(offset + w / 2, 0, w / 2, 280);
+		simWindow->setViewportParameters(offset + w / 2, 0, w / 2, h);
+	} else {
 		consoleWindow->setViewportParameters(offset, 0, w, 280);
 		simWindow->setViewportParameters(offset, 0, w, h);
 	}
-
 }
-
 
 RobotDesignerApp::~RobotDesignerApp(void){
 }
@@ -135,9 +160,13 @@ bool RobotDesignerApp::onMouseMoveEvent(double xPos, double yPos) {
 	if (simWindow->isActive() || simWindow->mouseIsWithinWindow(xPos, yPos))
 		if (simWindow->onMouseMoveEvent(xPos, yPos)) return true;
 
-	if (drawMOPTWindow)
+	if (viewOptions == SIM_AND_MOPT)
 		if (moptWindow->isActive() || moptWindow->mouseIsWithinWindow(xPos, yPos))
 			if (moptWindow->onMouseMoveEvent(xPos, yPos)) return true;
+
+	if (viewOptions == SIM_AND_DESIGN && designWindow)
+		if (designWindow->isActive() || designWindow->mouseIsWithinWindow(xPos, yPos))
+			if (designWindow->onMouseMoveEvent(xPos, yPos)) return true;
 
 	if (GLApplication::onMouseMoveEvent(xPos, yPos)) return true;
 
@@ -149,9 +178,13 @@ bool RobotDesignerApp::onMouseButtonEvent(int button, int action, int mods, doub
 	if (simWindow->isActive() || simWindow->mouseIsWithinWindow(xPos, yPos))
 		if (simWindow->onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
 
-	if (drawMOPTWindow)
+	if (viewOptions == SIM_AND_MOPT)
 		if (moptWindow->isActive() || moptWindow->mouseIsWithinWindow(xPos, yPos))
 			if (moptWindow->onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
+
+	if (viewOptions == SIM_AND_DESIGN && designWindow)
+		if (designWindow->isActive() || designWindow->mouseIsWithinWindow(xPos, yPos))
+			if (designWindow->onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
 
 	if (GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
 
@@ -163,9 +196,13 @@ bool RobotDesignerApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	if (simWindow->mouseIsWithinWindow(GlobalMouseState::lastMouseX, GlobalMouseState::lastMouseY))
 		if (simWindow->onMouseWheelScrollEvent(xOffset, yOffset)) return true;
 
-	if (drawMOPTWindow)
+	if (viewOptions == SIM_AND_MOPT)
 		if (moptWindow->mouseIsWithinWindow(GlobalMouseState::lastMouseX, GlobalMouseState::lastMouseY))
 			if (moptWindow->onMouseWheelScrollEvent(xOffset, yOffset)) return true;
+
+	if (viewOptions == SIM_AND_DESIGN && designWindow)
+		if (designWindow->isActive() || designWindow->mouseIsWithinWindow(GlobalMouseState::lastMouseX, GlobalMouseState::lastMouseY))
+			if (designWindow->onMouseWheelScrollEvent(xOffset, yOffset)) return true;
 
 	if (GLApplication::onMouseWheelScrollEvent(xOffset, yOffset)) return true;
 
@@ -173,7 +210,11 @@ bool RobotDesignerApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 }
 
 bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
-	if (drawMOPTWindow) {
+	if (viewOptions == SIM_AND_DESIGN && designWindow) {
+		designWindow->onKeyEvent(key, action, mods);
+	}
+
+	if (viewOptions == SIM_AND_MOPT){
 		if (moptWindow->locomotionManager && moptWindow->locomotionManager->motionPlan) {
 			if (key == GLFW_KEY_UP && action == GLFW_PRESS)
 				moptWindow->moptParams.desTravelDistZ += 0.1;
@@ -240,6 +281,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 
 		//todo: just a test for now
 		prd = new TestParameterizedRobotDesign(robot);
+
 		delete initialRobotState;
 		initialRobotState = new ReducedRobotState(robot);
 		return;
@@ -260,6 +302,25 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		}
 		return;
 	}
+
+	if (fNameExt.compare("dsn") == 0 && designWindow) {
+		Logger::consolePrint("Load robot state from '%s'\n", fName);
+		designWindow->loadFile(fName);
+		return;
+	}
+
+}
+
+void RobotDesignerApp::createRobotFromCurrentDesign() {
+	if (designWindow) {
+		designWindow->saveToRBSFile("../out/tmpRobot.rbs");
+		loadFile("../out/tmpRobot.rbs");
+		designWindow->saveRSFile("../out/tmpRobot.rs", robot);
+		loadFile("../out/tmpRobot.rs");
+	}
+
+	if (robot)
+		loadToSim(false);
 }
 
 void RobotDesignerApp::loadToSim(bool initializeMOPT){
@@ -347,10 +408,15 @@ void RobotDesignerApp::drawScene() {
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
 void RobotDesignerApp::drawAuxiliarySceneInfo() {
-	if (drawMOPTWindow && moptWindow) {
+	if (viewOptions == SIM_AND_MOPT && moptWindow) {
 		moptWindow->setAnimationParams(moptWindow->ffpViewer->cursorPosition, 0);
 		moptWindow->draw();
 		moptWindow->drawAuxiliarySceneInfo();
+	}
+
+	if (viewOptions == SIM_AND_DESIGN && designWindow) {
+		designWindow->draw();
+		designWindow->drawAuxiliarySceneInfo();
 	}
 
 	if (simWindow) {

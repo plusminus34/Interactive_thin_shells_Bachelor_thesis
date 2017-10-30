@@ -224,7 +224,7 @@ void GLApplication::setupMainMenu() {
 	mainMenu->addVariable("Show Console", showConsole);
 	mainMenu->addVariable("Show FPS", showFPS);
 	mainMenu->addVariable("Show Ground Plane", showGroundPlane);
-	mainMenu->addVariable("Show Design Environment", showDesignEnvironmentBox);
+	mainMenu->addVariable("Show Env Box", showDesignEnvironmentBox);
 
 	mainMenu->addGroup("Playback Controls                          ");
 

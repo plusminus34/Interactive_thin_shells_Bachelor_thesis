@@ -21,9 +21,10 @@ using namespace std;
  * Test App
  */
 class ModularDesignWindow : public AbstractDesignWindow {
+	friend class RobotDesignerApp;
 private:
 	GLApplication* glApp;
-	GLWindowContainer* windowArray = NULL;
+	GLWindowContainer* componentLibrary = NULL;
 	TranslateWidget* tWidget = NULL;
 	RotateWidget* rWidget = NULL;
 	Timer timer;
@@ -34,9 +35,6 @@ private:
 
 	bool dragging = false;
 	bool snappable = false;
-
-	bool showMOIBox = false;
-	bool drawBullet = true;
 
 	bool showWidgets = false;
 
@@ -58,11 +56,6 @@ public:
 	RMCRobot* hightlightedRobot = NULL;
 	RMCRobot* windowSelectedRobot = NULL;
 
-	// rbs robot
-	Robot* robot = NULL;
-	AbstractRBEngine* rbEngine = NULL;
-
-
 	GLMesh* bodyMesh = NULL;
 	vector<RBFeaturePoint> bodyFeaturePts;
 	RBFeaturePoint* highlightedFP = NULL;
@@ -78,20 +71,7 @@ public:
 	P3D guidingMeshPos;
 	Quaternion guidingMeshRot;
 	double guidingMeshScale = 1.0;
-
-	ReducedRobotState startRobotState;
 	
-	// weights of different costs
-	double heuristicWeight = 1;
-	double pathCostWeight = 1;
-	double connectorCostWeight = 0.01;
-	//either use lineCost or use meshCost 
-	double aestheticCostWeight = 0;
-	bool useMeshCost = false;
-	//double meshCostWeight = 0.9;
-	//double lineCostWeight = 0.5;
-	double motorOrientationWt = 0;
-
 	string robotMeshDir = "../out/";
 	string configFileName;
 public:
@@ -141,7 +121,8 @@ public:
 	void loadDesignFromFile(const char* fName);
 
 	void saveToRBSFile(const char* fName, Robot* templateRobot = NULL, bool mergeMeshes = false, bool forFabrication = false);
-	void getMeshVerticesForRBs(Robot* templateRobot, map<RigidBody*, vector<P3D>>& rbVertices);
+	void saveRSFile(const char* fName, Robot* robot);
+
 
 	void exportMeshes();
 
@@ -155,15 +136,12 @@ public:
 
 	bool process();
 
-	ReducedRobotState getStartState(Robot* robot);
-
 	void loadParametersForLivingBracket();
 	void unloadParametersForLivingBracket();
 
 	void updateLivingBracket();
 	bool isSelectedRMCMovable();
 
-	void loadRBSRobot(const char* fName);
 	void matchDesignWithRobot(Robot* tRobot);
 	void transferMeshes(Robot* tRobot, bool mergeMeshes = false);
 

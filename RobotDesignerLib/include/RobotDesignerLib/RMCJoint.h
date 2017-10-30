@@ -32,7 +32,7 @@ public:
 	virtual ~RMCJoint(void);
 
 	// parent controls child
-	void fixRMCConstraint(bool ignoreMotorAngle = false);
+	void fixRMCConstraint();
 
 	// child controls parent
 	void fixRMCConstraintInverse();

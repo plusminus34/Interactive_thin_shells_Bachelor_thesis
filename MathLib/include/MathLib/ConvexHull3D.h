@@ -9,7 +9,6 @@
 #include <cassert>
 #include "P3D.h"
 #include "V3D.h"
-//#include <GUILib/GLMesh.h>
 
 using namespace std;
 
@@ -37,6 +36,4 @@ public:
 	static void computeConvexHullFromSetOfPoints(const DynamicArray<P3D> &originalPoints, DynamicArray<P3D> &convexHullPoints, DynamicArray<ConvexHull_Face> &convexHullFaces);
 
 	static void planarConvexHullFromSetOfPoints(const DynamicArray<P3D>& points, const V3D& n, DynamicArray<ConvexHull2D_Vertex> &vertices, bool duplicateVertices = false);
-private:
-	static ConvexHull_Face make_face(int i, int j, int k, int inside_i, const DynamicArray<P3D> &points);
 };

@@ -37,7 +37,7 @@ RMCJoint::~RMCJoint(void){
 /**
 	Projects the orientation of the child onto the constraint manifold that satisfies the type of joint this is
 */
-void RMCJoint::fixRMCConstraint(bool ignoreMotorAngle) {
+void RMCJoint::fixRMCConstraint() {
 	if (curTransIndex >= (int)transformations.size()) return;
 
 	Transformation trans;
@@ -45,18 +45,14 @@ void RMCJoint::fixRMCConstraint(bool ignoreMotorAngle) {
 		Transformation parentTrans = parentPin->transformation;
 		Transformation childTrans = childPin->transformation;
 
-		if (!ignoreMotorAngle)
-		{
-			if (getParent()->type == MOTOR_RMC && parentPin->type == HORN_PIN)
-			{
-				RMC* parentRMC = getParent();
-				parentTrans *= Transformation(getRotationQuaternion(RAD(parentRMC->motorAngle), parentRMC->motorAxis).getRotationMatrix());
-			}
-			if (getChild()->type == MOTOR_RMC && childPin->type == HORN_PIN)
-			{
-				RMC* childRMC = getChild();
-				childTrans *= Transformation(getRotationQuaternion(RAD(childRMC->motorAngle), childRMC->motorAxis).getRotationMatrix());
-			}
+		if (getParent()->type == MOTOR_RMC && parentPin->type == HORN_PIN){
+			RMC* parentRMC = getParent();
+			parentTrans *= Transformation(getRotationQuaternion(RAD(parentRMC->motorAngle), parentRMC->motorAxis).getRotationMatrix());
+		}
+
+		if (getChild()->type == MOTOR_RMC && childPin->type == HORN_PIN){
+			RMC* childRMC = getChild();
+			childTrans *= Transformation(getRotationQuaternion(RAD(childRMC->motorAngle), childRMC->motorAxis).getRotationMatrix());
 		}
 
 		trans = parentTrans * transformations[curTransIndex] * childTrans.inverse();
