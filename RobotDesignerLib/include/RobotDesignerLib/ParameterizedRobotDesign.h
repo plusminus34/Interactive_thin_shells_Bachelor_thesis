@@ -55,12 +55,26 @@ public:
 	void getCurrentSetOfParameters(DynamicArray<double>& params) {
 		params = currentParams;
 	}
-
+	void getCurrentSetOfParameters(dVector& params) {
+		params = Eigen::Map<dVector>(currentParams.data(),currentParams.size());
+	}
 	void setParameters(const DynamicArray<double>& params) {
 		currentParams = params;
 
 		//offset the positions of the hip joints, symetrically...
 
+		updatePositions(params);
+	}
+
+	void setParameters(const dVector& params) {
+		assert(currentParams.size() == params.size());
+		dVector::Map(&currentParams[0], params.size()) = params;
+		//offset the positions of the hip joints, symetrically...
+		updatePositions(currentParams);
+	}
+
+	void updatePositions(const DynamicArray<double>& params)
+	{
 		robot->getJoint(0)->pJPos.x() = initialMorphology[0].pJPos.x() + params[0];
 		robot->getJoint(1)->pJPos.x() = initialMorphology[1].pJPos.x() - params[0];
 		robot->getJoint(2)->pJPos.x() = initialMorphology[2].pJPos.x() + params[0];

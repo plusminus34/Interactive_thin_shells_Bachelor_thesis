@@ -47,7 +47,7 @@ RobotDesignerApp::RobotDesignerApp(){
 	moptWindow->addMenuItems();
 	mainMenu->addButton("Warmstart MOTP", [this]() { warmStartMOPT(true); });
 
-	mainMenu->addButton("Compute Jacobian", [this]() { test_dmdp_Jacobian(); });
+	mainMenu->addButton("Compute Jacobian", [this]() { compute_dmdp_Jacobian(); });
 
 	showGroundPlane = false;
 
@@ -94,6 +94,10 @@ RobotDesignerApp::RobotDesignerApp(){
     loadFile("../data/robotsAndMotionPlans/spotMini/trot.p");
 
 	mainMenu->addGroup("Design Parameters");
+
+	mainMenu->addVariable("Update params wrt J", updateParamsBasedOnJacobian);
+	mainMenu->addVariable("Use SVD", useSVD);
+
 
 	addDesignParameterSliders();
 
@@ -372,19 +376,31 @@ bool RobotDesignerApp::processCommandLine(const std::string& cmdLine) {
 	return false;
 }
 
-void RobotDesignerApp::compute_dmdp_Jacobian(dVector& m, DynamicArray<double>& p, MatrixNxM& dmdp) {
+void RobotDesignerApp::compute_dmdp_Jacobian()
+{
 //evaluates dm/dp at (m,p). It is assumed that m corresponds to a minimum of the energy (i.e. m = arg min (E(m(p)))
 // Let g = \partial E / \partial m
 // partial g / partial p + partial g / partial m * dm/dp = dg/dp = 0
 // dm/dp = -partial g / partial m ^ -1 * partial g / partial p
 
+	igl::matlab::mlinit(&matlabengine);
+	igl::matlab::mleval(&matlabengine, "desktop");
+
+
+	dVector m; moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+	m0 = m;
+	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
+
+
 	SparseMatrix dgdm;
 	dVector dgdpi, dmdpi;
+	MatrixNxM dgdp(m.size(), p.size());
 	dVector g_m, g_p;
 
 	resize(dgdm, m.size(), m.size());
 	resize(dmdp, m.size(), p.size());
 	resize(dgdpi, m.size());
+
 
 	DynamicArray<MTriplet> triplets;
 	moptWindow->locomotionManager->energyFunction->addHessianEntriesTo(triplets, m);
@@ -410,11 +426,11 @@ void RobotDesignerApp::compute_dmdp_Jacobian(dVector& m, DynamicArray<double>& p
 		p[i] = pVal;
 		prd->setParameters(p);
 
-		dgdpi = (g_p - g_m) / (2 * dp);
-
-		dmdp.col(i) = solver.solve(dgdpi) * -1;
+		dgdp.col(i) = (g_p - g_m) / (2 * dp);
 	}
+	dmdp = solver.solve(dgdp) * -1;
 
+	igl::matlab::mlsetmatrix(&matlabengine, "dmdp", dmdp);
 }
 
 void RobotDesignerApp::test_dmdp_Jacobian() {
@@ -422,7 +438,7 @@ void RobotDesignerApp::test_dmdp_Jacobian() {
 	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
 
 	//dm/dp, the analytic version. 
-	MatrixNxM dmdp;	compute_dmdp_Jacobian(m, p, dmdp);
+	compute_dmdp_Jacobian();
 
 	//Now estimate this jacobian with finite differences...
 	MatrixNxM dmdp_FD;
@@ -466,7 +482,7 @@ void RobotDesignerApp::test_dmdp_Jacobian() {
 void RobotDesignerApp::testOptimizeDesign() {
 	dVector m; moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
 	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
-	MatrixNxM dmdp; compute_dmdp_Jacobian(m, p, dmdp);
+	MatrixNxM dmdp; compute_dmdp_Jacobian();
 
 	//If we have some objective O, expressed as a function of m, then dO/dp = dO/dm * dm/dp
 	dVector dOdm;
@@ -521,19 +537,30 @@ void RobotDesignerApp::addDesignParameterSliders()
 		textBox->setFixedHeight(18);
 
 		slider->setCallback([&, i, textBox](float value) {
-			DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
-			p[i] = value;
-			prd->setParameters(p);
+			updateParamsAndMotion(i, value);
 			textBox->setValue(removeTrailingZeros(to_string(value)));
 		});
 		textBox->setCallback([&, i, slider](const std::string &str) {
-			DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
-			p[i] = std::stod(str);
-			prd->setParameters(p);
+			updateParamsAndMotion(i, std::stod(str));
 			slider->setValue(std::stod(str));
 			return true;
 		});
 
 	}
 	mainMenu->addWidget("", panel);
+}
+
+void RobotDesignerApp::updateParamsAndMotion(int paramIndex, double value)
+{
+	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
+	p[paramIndex] = value;
+	prd->setParameters(p);
+	if (updateParamsBasedOnJacobian)
+	{
+
+		dVector m; moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+		m = m0 + dmdp*dVector::Map(p.data(), p.size());
+		moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m);
+	}
+	
 }

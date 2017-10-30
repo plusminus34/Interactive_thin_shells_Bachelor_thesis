@@ -17,6 +17,8 @@
 #include <RobotDesignerLib/MOPTWindow.h>
 #include <RobotDesignerLib/SimWindow.h>
 
+#include <igl/matlab/matlabinterface.h>
+
 
 
 /**
@@ -26,7 +28,7 @@ class RobotDesignerApp : public GLApplication {
 public:
 	MOPTWindow* moptWindow = NULL;
 	bool drawMOPTWindow = true;
-
+	bool updateParamsBasedOnJacobian;
 	SimWindow* simWindow = NULL;
 
 	Robot* robot = NULL;
@@ -95,9 +97,15 @@ public:
 
 	ParameterizedRobotDesign* prd;
 	void test_dmdp_Jacobian();
-	void compute_dmdp_Jacobian(dVector& m, DynamicArray<double>& p, MatrixNxM& dmdp);
+	void compute_dmdp_Jacobian();
 	void testOptimizeDesign();
 	void addDesignParameterSliders();
+
+	void updateParamsAndMotion(int paramIndex, double value);
+	Engine *matlabengine;
+	MatrixNxM dmdp; //The jacobian at a point
+	dVector m0;
+	bool useSVD;
 };
 
 
