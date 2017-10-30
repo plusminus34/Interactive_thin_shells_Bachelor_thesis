@@ -41,6 +41,8 @@ RobotDesignerApp::RobotDesignerApp(){
 	bgColor[0] = bgColor[1] = bgColor[2] = 1;
 	setWindowTitle("RobotDesigner");
 
+	showGroundPlane = false;
+
 	moptWindow = new MOPTWindow(0, 0, 100, 100, this);
 	simWindow = new SimWindow(0, 0, 100, 100, this);
 
@@ -50,6 +52,7 @@ RobotDesignerApp::RobotDesignerApp(){
 //	mainMenu->addButton("Warmstart MOPT", [this]() { warmStartMOPT(true); });
 //	mainMenu->addButton("Load Robot Design", [this]() { createRobotFromCurrentDesign(); });
 
+	mainMenu->addButton("Compute Jacobian", [this]() { test_dmdp_Jacobian(); });
 
 	nanogui::Widget *tools = new nanogui::Widget(mainMenu->window());
 	mainMenu->addWidget("", tools);
@@ -94,7 +97,12 @@ RobotDesignerApp::RobotDesignerApp(){
 //	loadToSim();
 	loadToSim(false);
     loadFile("../data/robotsAndMotionPlans/spotMini/trot.p");
+
+	mainMenu->addGroup("Design Parameters");
+	addDesignParameterSliders();
+
 #endif
+
 
 	menuScreen->performLayout();
 	setupWindows();
@@ -550,4 +558,48 @@ void RobotDesignerApp::testOptimizeDesign() {
 	prd->setParameters(p);
 }
 
+void RobotDesignerApp::addDesignParameterSliders()
+{
+	using namespace nanogui;
+	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
 
+	Widget *panel = new Widget(mainMenu->window());
+	GridLayout *layout =
+		new GridLayout(Orientation::Horizontal, 2,
+			Alignment::Middle, 15, 5);
+	layout->setColAlignment(
+	{ Alignment::Maximum, Alignment::Fill });
+	layout->setSpacing(0, 10);
+	panel->setLayout(layout);
+
+
+	auto removeTrailingZeros = [](string &&s) {return s.erase(s.find_last_not_of('0') + 1, string::npos); };
+	for (int i = 0; i < prd->getNumberOfParameters(); i++)
+	{
+		Slider *slider = new Slider(panel);
+		slider->setValue(p[i]);
+		slider->setRange({-0.1,0.1});
+		slider->setFixedWidth(150);
+		TextBox *textBox = new TextBox(panel);
+		textBox->setValue(removeTrailingZeros(to_string(p[i])));
+		textBox->setFixedWidth(50);
+		textBox->setEditable(true);
+		textBox->setFixedHeight(18);
+
+		slider->setCallback([&, i, textBox](float value) {
+			DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
+			p[i] = value;
+			prd->setParameters(p);
+			textBox->setValue(removeTrailingZeros(to_string(value)));
+		});
+		textBox->setCallback([&, i, slider](const std::string &str) {
+			DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
+			p[i] = std::stod(str);
+			prd->setParameters(p);
+			slider->setValue(std::stod(str));
+			return true;
+		});
+
+	}
+	mainMenu->addWidget("", panel);
+}

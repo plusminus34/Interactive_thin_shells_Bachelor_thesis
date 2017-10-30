@@ -34,7 +34,7 @@ public:
 
 	ParameterizedRobotDesign(Robot* robot);
 	~ParameterizedRobotDesign();
-
+	virtual int getNumberOfParameters() = 0;
 	virtual void getCurrentSetOfParameters(DynamicArray<double>& params) = 0;
 	virtual void setParameters(const DynamicArray<double>& params) = 0;
 };
@@ -51,6 +51,7 @@ public:
 	~TestParameterizedRobotDesign() {
 	}
 
+	int getNumberOfParameters() { return currentParams.size(); }
 	void getCurrentSetOfParameters(DynamicArray<double>& params) {
 		params = currentParams;
 	}
