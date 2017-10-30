@@ -47,8 +47,34 @@ RobotDesignerApp::RobotDesignerApp(){
 	mainMenu->addGroup("RobotDesigner Options");
 	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
 	mainMenu->addVariable("View Mode", viewOptions, true)->setItems({ "Sim Only", "MOPT", "Design"});
-	mainMenu->addButton("Warmstart MOPT", [this]() { warmStartMOPT(true); });
-	mainMenu->addButton("Load Robot Design", [this]() { createRobotFromCurrentDesign(); });
+//	mainMenu->addButton("Warmstart MOPT", [this]() { warmStartMOPT(true); });
+//	mainMenu->addButton("Load Robot Design", [this]() { createRobotFromCurrentDesign(); });
+
+
+	nanogui::Widget *tools = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", tools);
+	tools->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+
+	nanogui::Button* button;
+
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_SAVE);
+	button->setCallback([this]() { if (designWindow) designWindow->saveFile("../out/tmpModularRobotDesign.dsn"); });
+	button->setTooltip("Quick Save");
+
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_DOWNLOAD);
+	button->setCallback([this]() { if (designWindow) designWindow->loadDesignFromFile("../out/tmpModularRobotDesign.dsn"); });
+	button->setTooltip("Quick Load");
+
+	button = new nanogui::Button(tools, "ToSim");
+	button->setCallback([this]() { createRobotFromCurrentDesign(); });
+	button->setTooltip("Load Robot Design To Sim");
+
+	button = new nanogui::Button(tools, "GoMOPT");
+	button->setCallback([this]() { warmStartMOPT(true); });
+	button->setTooltip("Warmstart MOPT");
 
 	mainMenu->addGroup("MOPT Options");
 	moptWindow->addMenuItems();
@@ -279,11 +305,10 @@ void RobotDesignerApp::loadFile(const char* fName) {
 
 void RobotDesignerApp::createRobotFromCurrentDesign() {
 	if (designWindow) {
-		designWindow->saveFile("../out/tmpRobot.rbs");
+		designWindow->saveToRBSFile("../out/tmpRobot.rbs");
 		loadFile("../out/tmpRobot.rbs");
-		ReducedRobotState tmpRobotState = designWindow->getStartState(robot);
-		tmpRobotState.writeToFile("../out/tmpRobot.rs", robot);
-//		loadFile("../out/tmpRobot.rs");
+		designWindow->saveRSFile("../out/tmpRobot.rs", robot);
+		loadFile("../out/tmpRobot.rs");
 	}
 
 	if (robot)

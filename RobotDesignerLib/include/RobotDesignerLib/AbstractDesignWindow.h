@@ -11,9 +11,6 @@ public:
 	AbstractDesignWindow(int x, int y, int w, int h) : GLWindow3D(x, y, w, h) {};
 
 	virtual void onMenuMouseButtonProcessedEvent() {}
-	virtual ReducedRobotState getStartState(Robot* robot) {
-		return ReducedRobotState(robot);
-	}
 
 	virtual void setStartStateFName(const char* startStateFName) {
 	}

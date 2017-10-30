@@ -41,7 +41,7 @@ TIP 5: With a motor selected, F1/F2 change its angle value, while F3 resets it t
 
 using namespace std;
 
-ModularDesignWindow::ModularDesignWindow(int x, int y, int w, int h, GLApplication* glApp, const char* libraryDefinitionFileName) : AbstractDesignWindow(x, y, w, h), startRobotState(13){
+ModularDesignWindow::ModularDesignWindow(int x, int y, int w, int h, GLApplication* glApp, const char* libraryDefinitionFileName) : AbstractDesignWindow(x, y, w, h){
 	this->glApp = glApp;
 	((GLTrackingCamera*)camera)->camDistance = -0.5;
 	((GLTrackingCamera*)camera)->rotAboutRightAxis = 0.3;
@@ -864,7 +864,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		if (selectedRobot && selectedRobot->selectedRMC && (selectedRobot->selectedRMC->type == MOTOR_RMC
 			|| selectedRobot->selectedRMC->type == LIVING_MOTOR))
 		{
-			selectedRobot->selectedRMC->motorAngle = 0.0;		
+			selectedRobot->selectedRMC->motorAngle = 0.0;
 			selectedRobot->selectedRMC->update();
 
 			// ******************* handle mirror RMC *******************
@@ -878,6 +878,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 			for (auto robot : rmcRobots)
 				robot->fixJointConstraints();
 		}
+
 	}
 
 	if (key == GLFW_KEY_F4 && (action == GLFW_REPEAT || action == GLFW_PRESS))
@@ -1596,8 +1597,16 @@ void ModularDesignWindow::exportMeshes()
 	delete robot;
 }
 
+
+/**
+	Saves an rbs file. No motor rotations will be baked in...
+*/
 void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot, bool mergeMeshes, bool forFabrication){
 	Logger::consolePrint("Save picked RMCRobot to RBS file '%s'\n", fName);
+
+	for (auto tmpBot : rmcRobots)
+		tmpBot->resetAllMotorAngles();
+
 	RMCRobot* robot = new RMCRobot(new RMC(), transformationMap);
 	robot->root->rbProperties.mass = 0;
 	robot->root->rbProperties.MOI_local.setZero();
@@ -1630,13 +1639,12 @@ void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot,
 			robot->connectRMCRobotDirectly(rmcRobots[i]->clone(), robot->getRoot());
 		}
 	}
-	robot->fixJointConstraints(true);
+	robot->fixJointConstraints();
 
 	int motorID = 0;
 	int connectorID = 0;
 	int eeID = 0;
-	for (int i = 0; i < robot->getJointCount(); i++)
-	{
+	for (int i = 0; i < robot->getJointCount(); i++){
 		RMC* rmc = robot->getJoint(i)->getChild();
 		if (rmc->type == LIVING_MOTOR)
 		{
@@ -1655,30 +1663,37 @@ void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot,
 		}
 	}
 
-	startRobotState = robot->saveToRBSFile(fName, templateRobot, freezeRobotRoot, mergeMeshes, forFabrication);
+	robot->saveToRBSFile(fName, templateRobot, freezeRobotRoot, mergeMeshes, forFabrication);
+	for (auto tmpBot : rmcRobots)
+		tmpBot->restoreAllMotorAngles();
 
 	delete robot;
 }
 
-void ModularDesignWindow::getMeshVerticesForRBs(Robot* templateRobot, map<RigidBody*, vector<P3D>>& rbVertices)
-{
-	matchDesignWithRobot(templateRobot);
-
+void ModularDesignWindow::saveRSFile(const char* fName, Robot* rbRobot){
 	RMCRobot* robot = new RMCRobot(new RMC(), transformationMap);
 
-	for (uint i = 0; i < rmcRobots.size(); i++)
-	{
-		if (rmcRobots[i]->getRoot()->type == PLATE_RMC)
-		{
-			robot->connectRMCRobotDirectly(rmcRobots[i]->clone(), robot->getRoot());
+	for (uint i = 0; i < rmcRobots.size(); i++){
+		RMCRobot* rmcRobot = rmcRobots[i];
+		for (int j = 0; j < rmcRobot->getRMCCount(); j++){
+			RMC* rmc = rmcRobot->getRMC(j);
+			if (rmc->type == MOTOR_RMC || rmc->type == LIVING_MOTOR || rmc->type == EE_RMC){
+				rmc->mappingInfo.index1 = i;
+				rmc->mappingInfo.index2 = j;
+			}
 		}
+		if (rmcRobots[i]->getRoot()->type == PLATE_RMC)
+			robot->connectRMCRobotDirectly(rmcRobots[i]->clone(), robot->getRoot());
 	}
-	robot->fixJointConstraints(true);
 
-	robot->getMeshVerticesForRBs(templateRobot, rbVertices);
+	robot->fixJointConstraints();
+
+	ReducedRobotState tmpState = robot->getReducedRobotState(rbRobot);
+	tmpState.writeToFile(fName);
 
 	delete robot;
 }
+
 
 void ModularDesignWindow::removeRMCRobot(RMCRobot* robot)
 {
@@ -1778,10 +1793,6 @@ void ModularDesignWindow::createBodyMesh3D()
 	bodyMesh->computeNormals();
 }
 
-ReducedRobotState ModularDesignWindow::getStartState(Robot* robot)
-{
-	return startRobotState;
-}
 
 void ModularDesignWindow::loadParametersForLivingBracket()
 {

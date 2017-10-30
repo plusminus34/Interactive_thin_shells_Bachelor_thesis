@@ -21,10 +21,6 @@ public:
 		return V3D(tv[0], tv[1], tv[2]);
 	}
 
-	// TODO: put this somewhere else
-	// apply this transformation to current openGL matrix.
-	//void applyGLMatrixTransform();
-
 	Transformation inverse() {
 		Transformation trans;
 		trans.R = R.inverse();

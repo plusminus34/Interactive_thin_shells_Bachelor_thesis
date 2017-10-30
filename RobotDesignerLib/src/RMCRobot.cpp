@@ -37,14 +37,11 @@ RMCRobot::~RMCRobot()
 	}
 }
 
-void RMCRobot::fixJointConstraints(bool ignoreMotorAngle)
-{
+void RMCRobot::fixJointConstraints(){
 	for (size_t j = 0; j < jointList.size(); j++) {
-		//and now set the linear position and velocity
-		jointList[j]->fixRMCConstraint(ignoreMotorAngle);
+		jointList[j]->fixRMCConstraint();
 	}
 }
-
 
 void RMCRobot::fixPlateStateByMotor()
 {
@@ -399,6 +396,38 @@ void RMCRobot::saveToFile(FILE* fp)
 	fprintf(fp, "EndRMCRobot\n\n\n");
 }
 
+void RMCRobot::restoreAllMotorAngles() {
+	vector<RMC*> RMCVec;
+
+	RMCVec.push_back(root);
+	for (uint i = 0; i < jointList.size(); i++)
+		RMCVec.push_back(jointList[i]->getChild());
+
+	for (uint i = 0; i < RMCVec.size(); i++) {
+		RMC* rmc = RMCVec[i];
+		rmc->motorAngle = rmc->backupMotorAngle;
+		rmc->update();
+		fixJointConstraints();
+	}
+}
+
+void RMCRobot::resetAllMotorAngles() {
+	vector<RMC*> RMCVec;
+
+	RMCVec.push_back(root);
+	for (uint i = 0; i < jointList.size(); i++)
+		RMCVec.push_back(jointList[i]->getChild());
+
+	for (uint i = 0; i < RMCVec.size(); i++) {
+		RMC* rmc = RMCVec[i];
+		rmc->backupMotorAngle = rmc->motorAngle;
+		rmc->motorAngle = 0;
+		rmc->update();
+		fixJointConstraints();
+	}
+}
+
+
 void RMCRobot::loadFromFile(const char* fName, map<string, RMC*>& rmcNameMap)
 {
 	FILE* fp = fopen(fName, "r");
@@ -529,14 +558,12 @@ void RMCRobot::loadFromFile(FILE* fp, map<string, RMC*>& rmcNameMap)
 }
 
 
-ReducedRobotState RMCRobot::saveToRBSFile(const char* fName, Robot* templateRobot, bool freezeRoot, bool mergeMeshes, bool forFabrication){
-	
+void RMCRobot::saveToRBSFile(const char* fName, Robot* templateRobot, bool freezeRoot, bool mergeMeshes, bool forFabrication){
 	FILE* fp = fopen(fName, "w+");
 	
 	int RBIndex = 1;
 	map<RMC*, int> RBIndexMap;
 	getRMCToRBIndexMap(root, 0, RBIndex, RBIndexMap);
-
 
 	vector<RigidBody> tmpRBs(RBIndex);
 	for (uint i = 0; i < tmpRBs.size(); i++){
@@ -908,6 +935,49 @@ ReducedRobotState RMCRobot::saveToRBSFile(const char* fName, Robot* templateRobo
 	}
 
 	//tmpState.writeToFile("../out/tmpState.txt");
+}
+
+//it is assumed that the robot was created from this design and follows all the same naming convention
+ReducedRobotState RMCRobot::getReducedRobotState(Robot* r) {
+	ReducedRobotState tmpState(r);
+	tmpState.setPosition(r->root->state.position);
+	tmpState.setOrientation(r->root->state.orientation);
+
+	int RBIndex = 1;
+	map<RMC*, int> RBIndexMap;
+	getRMCToRBIndexMap(root, 0, RBIndex, RBIndexMap);
+
+	vector<RigidBody> tmpRBs(RBIndex);
+	for (uint i = 0; i < tmpRBs.size(); i++) {
+		tmpRBs[i].name = "rb" + to_string(i);
+	}
+
+	map<string, double> jointMotorAngleMap;
+	for (uint i = 0; i < jointList.size(); i++){
+		RMCJoint* joint = jointList[i];
+		RMC* parentRMC = jointList[i]->getParent();
+		RMC* childRMC = jointList[i]->getChild();
+		RigidBody* parentRB = &tmpRBs[RBIndexMap[parentRMC]];
+		RigidBody* childRB = &tmpRBs[RBIndexMap[childRMC]];
+		string jointName = parentRB->name + "_" + childRB->name;
+
+		if (joint->parentPin && joint->parentPin->type == HORN_PIN)
+			jointMotorAngleMap[jointName] = RAD(parentRMC->motorAngle);
+		else if (joint->childPin && joint->childPin->type == HORN_PIN)
+			jointMotorAngleMap[jointName] = RAD(-childRMC->motorAngle);
+		else
+			continue;
+	}
+
+	for (int i = 0; i < r->getJointCount(); i++){
+		string jointName = r->getJoint(i)->name;
+		HingeJoint* j = dynamic_cast<HingeJoint*> (r->getJoint(i));
+		if (!j) continue;
+
+		if (jointMotorAngleMap.count(jointName))
+			tmpState.setJointRelativeOrientation(getRotationQuaternion(jointMotorAngleMap[jointName], j->rotationAxis), i);
+	}
+
 	return tmpState;
 }
 
@@ -930,113 +1000,6 @@ void RMCRobot::getRMCToRBIndexMap(RMC* node, int curIndex, int& RBIndex, map<RMC
 		}
 		
 		getRMCToRBIndexMap(rmc, curIndex, RBIndex, RBIndexMap);
-	}
-}
-
-void RMCRobot::getMeshVerticesForRBs(Robot* templateRobot, map<RigidBody*, vector<P3D>>& rbVertices)
-{
-	rbVertices.clear();
-
-	int RBIndex = 1;
-	map<RMC*, int> RBIndexMap;
-	getRMCToRBIndexMap(root, 0, RBIndex, RBIndexMap);
-
-	vector<RigidBody> tmpRBs(RBIndex);
-	for (uint i = 0; i < tmpRBs.size(); i++)
-	{
-		RigidBody& tmpRB = tmpRBs[i];
-		tmpRB.name = "rb" + to_string(i);
-
-		RigidBody* rb = templateRobot->getRBByName((tmpRB.name).c_str());
-		tmpRB.state.position = rb->state.position;
-		tmpRB.state.orientation = rb->state.orientation;
-	}
-
-	for (auto itr = RBIndexMap.begin(); itr != RBIndexMap.end(); itr++)
-	{
-		RMC* rmc = itr->first;
-		RigidBody& rb = tmpRBs[itr->second];
-
-		if (rmc->type == LIVING_MOTOR)
-		{
-			LivingMotor* livingRMC = dynamic_cast<LivingMotor*>(rmc);
-			RMC* bracketConnectedRMC = NULL;
-			string jointName;
-			bool isParent = true;
-			for (auto& pin : rmc->pins)
-			{
-				if (pin.livingType == LIVING_HORN_PIN && !pin.idle)
-				{
-					if (pin.joint->getParent() == rmc) {
-						bracketConnectedRMC = pin.joint->getChild();
-					}
-					else {
-						bracketConnectedRMC = pin.joint->getParent();
-						isParent = false;
-					}
-				}
-			}
-			if (bracketConnectedRMC)
-			{
-				RigidBody& bracketConnectedRB = tmpRBs[RBIndexMap[bracketConnectedRMC]];
-				bracketConnectedRB.meshes.push_back(livingRMC->bracket->bracketMesh);
-				Transformation trans;
-				trans.R = rmc->state.orientation.getRotationMatrix();
-				trans.T = rmc->state.position - bracketConnectedRB.state.position;
-				bracketConnectedRB.meshTransformations.push_back(trans);
-			}
-
-			{
-				Transformation trans;
-				trans.R = rmc->state.orientation.getRotationMatrix();
-				trans.T = rmc->state.position - rb.state.position;
-
-				GLMesh* bbMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430-BB.obj");
-				rb.meshes.push_back(bbMesh);
-				rb.meshTransformations.push_back(trans);
-
-				rb.meshes.push_back(livingRMC->motor->bodyBracketMesh);
-				rb.meshTransformations.push_back(trans);
-			}
-		}
-
-		if (rmc->type == LIVING_CONNECTOR)
-		{
-			LivingConnector* livingConnector = dynamic_cast<LivingConnector*>(rmc);
-			rb.meshes.push_back(livingConnector->connectorMesh);
-			Transformation trans;
-			trans.R = rmc->state.orientation.getRotationMatrix();
-			trans.T = rmc->state.position - rb.state.position;
-			rb.meshTransformations.push_back(trans);
-		}
-
-		if (!rmc->meshes.empty()) {
-			rb.meshes.push_back(rmc->meshes[0]);
-			Transformation trans;
-			trans.R = rmc->state.orientation.getRotationMatrix();
-			trans.T = rmc->state.position - rb.state.position;
-			rb.meshTransformations.push_back(trans);
-		}
-	}
-
-	for (uint i = 0; i < tmpRBs.size(); i++)
-	{
-		RigidBody& tmpRB = tmpRBs[i];
-		tmpRB.name = "rb" + to_string(i);
-		RigidBody* rb = templateRobot->getRBByName((tmpRB.name).c_str());
-		auto& vertices = rbVertices[rb] = vector<P3D>();
-
-		for (uint j = 0; j < tmpRB.meshes.size(); j++)
-		{
-			GLMesh* mesh = tmpRB.meshes[j];
-			Transformation& trans = tmpRB.meshTransformations[j];
-
-			for (int k = 0; k < mesh->getVertexCount(); k++)
-			{
-				P3D v = mesh->getVertex(k);
-				vertices.push_back(trans.transform(v));
-			}
-		}
 	}
 }
 

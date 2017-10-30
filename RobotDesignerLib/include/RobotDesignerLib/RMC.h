@@ -35,6 +35,7 @@ public:
 	RMCType type = BRACKET_RMC;
 	V3D motorAxis;
 	double motorAngle = 0;
+	double backupMotorAngle = 0;
 
 	GLMesh* carveMesh = NULL;
 	GLMesh* carveMeshEx = NULL;

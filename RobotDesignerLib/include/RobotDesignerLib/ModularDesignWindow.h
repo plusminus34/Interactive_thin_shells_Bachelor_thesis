@@ -71,8 +71,6 @@ public:
 	P3D guidingMeshPos;
 	Quaternion guidingMeshRot;
 	double guidingMeshScale = 1.0;
-
-	ReducedRobotState startRobotState;
 	
 	string robotMeshDir = "../out/";
 	string configFileName;
@@ -123,7 +121,8 @@ public:
 	void loadDesignFromFile(const char* fName);
 
 	void saveToRBSFile(const char* fName, Robot* templateRobot = NULL, bool mergeMeshes = false, bool forFabrication = false);
-	void getMeshVerticesForRBs(Robot* templateRobot, map<RigidBody*, vector<P3D>>& rbVertices);
+	void saveRSFile(const char* fName, Robot* robot);
+
 
 	void exportMeshes();
 
@@ -136,8 +135,6 @@ public:
 	void createBodyMesh3D();
 
 	bool process();
-
-	ReducedRobotState getStartState(Robot* robot);
 
 	void loadParametersForLivingBracket();
 	void unloadParametersForLivingBracket();
