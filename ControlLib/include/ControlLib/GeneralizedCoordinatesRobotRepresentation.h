@@ -30,13 +30,6 @@ private:
 	//for every q, keep track of the joint that it corresponds to...
 	DynamicArray<int> jointIndexForQ;
 
-//PARAMETERS THAT DEFINE THE KINEMATICS OF THE ROBOT
-
-	//these are the axes for each one of the generalized coordinates dimension, expressed in local coordinates
-//	DynamicArray<V3D> qAxes;
-	//this array holds the length of each segment (link in kinematic tree)...
-//	DynamicArray<V3D> qOffsetFromParent;
-
 //PARAMETERS THAT DEFINE THE STATE OF THE ROBOT - NEED TO BE UPDATED EVERY TIME THE STATE OF THE ROBOT CHANGES
 
 	//generalized coordinates - pos and velocities
@@ -50,9 +43,6 @@ public:
 	//sets up the whole structure of the robot
 	void setupGeneralizedCoordinatesStructure();
 
-	//sets up all the rotation/translation axes for each q, as well as offsets from each DOF to its parent
-//	void setupDOFAxes();
-
 	//returns the local coord vector from the parent of q(qIndex) to q(qIndex)
 	V3D getOffsetFromParentToQ(int qIndex);
 
@@ -63,7 +53,6 @@ public:
 	void updateWorldOrientations();
 	Quaternion getWorldRotationForQ(int qIndex);
 	V3D getWorldCoordsAxisForQ(int qIndex);
-
 
 	//returns the local position of the point that rb pivots about (i.e. location of the parent joint), in coordinate frame of rb
 	P3D getPivotPointLocalPosition(RigidBody* rb);

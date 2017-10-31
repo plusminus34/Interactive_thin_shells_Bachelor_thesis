@@ -105,6 +105,8 @@ public:
 	void compute_dmdp_Jacobian(dVector& m, DynamicArray<double>& p, MatrixNxM& dmdp);
 	void testOptimizeDesign();
 	void addDesignParameterSliders();
+
+	void resyncRBS();
 };
 
 

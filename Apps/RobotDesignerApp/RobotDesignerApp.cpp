@@ -6,7 +6,9 @@
 #include <MathLib/MathLib.h>
 #include <ControlLib/SimpleLimb.h>
 
-#define START_WITH_VISUAL_DESIGNER
+
+
+//#define START_WITH_VISUAL_DESIGNER
 
 //need a proper save/load routine: design, an entire robot, motion plan...
 
@@ -558,6 +560,29 @@ void RobotDesignerApp::testOptimizeDesign() {
 	prd->setParameters(p);
 }
 
+void RobotDesignerApp::resyncRBS() {
+	if (!robot)
+		return;
+
+	robot->fixJointConstraints();
+
+	/*
+
+	if (designWindow)
+		designWindow->...;
+	test this - does it work by default, or must we first set motor angles to zero then reset?!?
+
+	do a "proper" parameterization with symmetry based on the initial design... body dimension as well as all limb lengths and end effectors...
+
+	when rbs gets modified:
+	- sync with design window...
+	- sync with motion plan (including end effectors... what else gets set when the motion plan is first created?!?)...
+	- sync with ODE engine (joint positions/axes, CDPs)...
+	*/
+
+
+}
+
 void RobotDesignerApp::addDesignParameterSliders()
 {
 	using namespace nanogui;
@@ -590,12 +615,14 @@ void RobotDesignerApp::addDesignParameterSliders()
 			DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
 			p[i] = value;
 			prd->setParameters(p);
+			resyncRBS();
 			textBox->setValue(removeTrailingZeros(to_string(value)));
 		});
 		textBox->setCallback([&, i, slider](const std::string &str) {
 			DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
 			p[i] = std::stod(str);
 			prd->setParameters(p);
+			resyncRBS();
 			slider->setValue(std::stod(str));
 			return true;
 		});
