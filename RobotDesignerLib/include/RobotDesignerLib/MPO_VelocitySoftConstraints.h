@@ -6,6 +6,8 @@
 #include <RobotDesignerLib/LocomotionEngineMotionPlan.h>
 #include <OptimizationLib/SoftUnilateralConstraint.h>
 
+#include <memory>
+
 class MPO_VelocitySoftBoundConstraints : public ObjectiveFunction {
 public:
 	MPO_VelocitySoftBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int startQIndex, int endQIndex);
@@ -19,6 +21,9 @@ public:
 private:
 	//the energy function operates on a motion plan...
 	LocomotionEngineMotionPlan* theMotionPlan;
+
+	std::shared_ptr<SoftUnilateralConstraint> constraintLowerBound;
+	std::shared_ptr<SoftUnilateralConstraint> constraintUpperBound;
 
 	int startQIndex, endQIndex;
 };

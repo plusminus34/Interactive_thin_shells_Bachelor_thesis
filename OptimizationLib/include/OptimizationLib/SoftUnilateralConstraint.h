@@ -13,13 +13,18 @@
 		- stiffness controls the rate at which f(x) increases if x < l
 */
 class SoftUnilateralConstraint {
-private:
+protected:
 	double a1, b1, c1, a2, b2, c2, d2, epsilon;
-	double lowerLimit = 0;
+	double limit = 0;
 public:
+
 	SoftUnilateralConstraint(double l, double stiffness, double epsilon);
 
+	SoftUnilateralConstraint();
+
 	virtual ~SoftUnilateralConstraint();
+
+	void setLimit(double l);
 
 	//comptue f(x)
 	double computeValue(double x);
@@ -29,6 +34,13 @@ public:
 
 	//compute ddf/dxdx
 	double computeSecondDerivative(double x);
+};
+
+class SoftUnilateralUpperConstraint : public SoftUnilateralConstraint {
+public:
+	SoftUnilateralUpperConstraint(double l, double stiffness, double epsilon);
+
+	virtual ~SoftUnilateralUpperConstraint();
 };
 
 /*!
