@@ -23,6 +23,8 @@ void NewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *function
 	if (printOutput)
 		Logger::logPrint("Time to write out hessian entries: %lf\n", timerN.timeEllapsed());
 
+// 	print("..\\out\\hes.m", H);
+
 	timerN.restart();
 	resize(gradient, p.size());
 	function->addGradientTo(gradient, pi);

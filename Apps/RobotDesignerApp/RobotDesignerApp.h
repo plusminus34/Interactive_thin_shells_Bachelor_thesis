@@ -1,5 +1,9 @@
 #pragma once
-
+#ifdef USE_MATLAB
+	#define RUN_IN_MATLAB(x) x
+#else
+	RUN_IN_MATLAB(x)
+#endif
 #include <GUILib/GLApplication.h>
 #include <string>
 #include <map>
@@ -28,7 +32,7 @@ class RobotDesignerApp : public GLApplication {
 public:
 	MOPTWindow* moptWindow = NULL;
 	bool drawMOPTWindow = true;
-	bool updateParamsBasedOnJacobian;
+	bool updateMotionBasedOnJacobian;
 	SimWindow* simWindow = NULL;
 
 	Robot* robot = NULL;
@@ -106,6 +110,9 @@ public:
 	MatrixNxM dmdp; //The jacobian at a point
 	dVector m0;
 	bool useSVD;
+	MatrixNxM dmdp_V;
+	dVector p0;
+	dVector slidervalues;
 };
 
 

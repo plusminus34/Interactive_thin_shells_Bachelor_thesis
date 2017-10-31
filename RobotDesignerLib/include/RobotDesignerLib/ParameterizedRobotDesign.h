@@ -37,6 +37,21 @@ public:
 	virtual int getNumberOfParameters() = 0;
 	virtual void getCurrentSetOfParameters(DynamicArray<double>& params) = 0;
 	virtual void setParameters(const DynamicArray<double>& params) = 0;
+	
+	void getCurrentSetOfParameters(dVector& params) {
+		DynamicArray<double> tempparams;
+		getCurrentSetOfParameters(tempparams);
+		params = Eigen::Map<dVector>(tempparams.data(), tempparams.size());
+	}
+	void setParameters(const dVector& params) {
+		assert(currentParams.size() == params.size());
+
+		DynamicArray<double> tempparams(params.size());
+
+		dVector::Map(&tempparams[0], tempparams.size()) = params;
+		//offset the positions of the hip joints, symetrically...
+		setParameters(tempparams);
+	}
 };
 
 
@@ -55,9 +70,7 @@ public:
 	void getCurrentSetOfParameters(DynamicArray<double>& params) {
 		params = currentParams;
 	}
-	void getCurrentSetOfParameters(dVector& params) {
-		params = Eigen::Map<dVector>(currentParams.data(),currentParams.size());
-	}
+
 	void setParameters(const DynamicArray<double>& params) {
 		currentParams = params;
 
@@ -66,12 +79,6 @@ public:
 		updatePositions(params);
 	}
 
-	void setParameters(const dVector& params) {
-		assert(currentParams.size() == params.size());
-		dVector::Map(&currentParams[0], params.size()) = params;
-		//offset the positions of the hip joints, symetrically...
-		updatePositions(currentParams);
-	}
 
 	void updatePositions(const DynamicArray<double>& params)
 	{

@@ -91,11 +91,11 @@ RobotDesignerApp::RobotDesignerApp(){
     loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
 //	loadToSim();
 	loadToSim(false);
-    loadFile("../data/robotsAndMotionPlans/spotMini/trot.p");
+    loadFile("../data/robotsAndMotionPlans/spotMini/trot3.p");
 
 	mainMenu->addGroup("Design Parameters");
 
-	mainMenu->addVariable("Update params wrt J", updateParamsBasedOnJacobian);
+	mainMenu->addVariable("Update params wrt J", updateMotionBasedOnJacobian);
 	mainMenu->addVariable("Use SVD", useSVD);
 
 
@@ -104,7 +104,8 @@ RobotDesignerApp::RobotDesignerApp(){
 	menuScreen->performLayout();
 	setupWindows();
 
-
+	slidervalues.resize(prd->getNumberOfParameters());
+	slidervalues.setZero();
 	followCameraTarget = true;
 }
 
@@ -389,8 +390,9 @@ void RobotDesignerApp::compute_dmdp_Jacobian()
 
 	dVector m; moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
 	m0 = m;
+	
 	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
-
+	p0 = Eigen::Map<dVector>(p.data(),p.size());
 
 	SparseMatrix dgdm;
 	dVector dgdpi, dmdpi;
@@ -429,8 +431,13 @@ void RobotDesignerApp::compute_dmdp_Jacobian()
 		dgdp.col(i) = (g_p - g_m) / (2 * dp);
 	}
 	dmdp = solver.solve(dgdp) * -1;
-
-	igl::matlab::mlsetmatrix(&matlabengine, "dmdp", dmdp);
+	Eigen::JacobiSVD<MatrixNxM> svd(dmdp, Eigen::ComputeThinU | Eigen::ComputeThinV);
+	dmdp_V = svd.matrixV();
+	
+	RUN_IN_MATLAB(
+		igl::matlab::mlsetmatrix(&matlabengine, "dmdp", dmdp);
+		igl::matlab::mlsetmatrix(&matlabengine, "dmdp_V", dmdp_V);
+	)
 }
 
 void RobotDesignerApp::test_dmdp_Jacobian() {
@@ -552,15 +559,24 @@ void RobotDesignerApp::addDesignParameterSliders()
 
 void RobotDesignerApp::updateParamsAndMotion(int paramIndex, double value)
 {
-	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
-	p[paramIndex] = value;
-	prd->setParameters(p);
-	if (updateParamsBasedOnJacobian)
+	slidervalues(paramIndex) = value;
+	dVector p;	
+	if (!useSVD)
 	{
+		prd->getCurrentSetOfParameters(p);
+		p(paramIndex) = value;
+	}
+	else
+	{
+		p = p0 + dmdp_V*slidervalues;
+	}
 
+	prd->setParameters(p);
+
+	if (updateMotionBasedOnJacobian)
+	{
 		dVector m; moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
-		m = m0 + dmdp*dVector::Map(p.data(), p.size());
+		m = m0 + dmdp*dVector::Map(p.data(),p.size());
 		moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m);
 	}
-	
 }
