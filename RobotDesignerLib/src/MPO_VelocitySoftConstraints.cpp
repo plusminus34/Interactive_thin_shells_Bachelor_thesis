@@ -36,9 +36,7 @@ double MPO_VelocitySoftBoundConstraints::computeValue(const dVector& s) {
 			if (jm == -1 || jp == -1) continue;
 
 			double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
-			dt = 1.0;
 
-			//we want the COM to be as close as possible to the weighted position of the grounded feet (sum_i c_i*w_i*p_i=com_p)
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
 				retVal += constraintLowerBound->computeValue(velocity);
@@ -70,9 +68,7 @@ void MPO_VelocitySoftBoundConstraints::addGradientTo(dVector& grad, const dVecto
 			if (jm == -1 || jp == -1) continue;
 
 			double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
-			dt = 1.0;
 
-			//we want the COM to be as close as possible to the weighted position of the grounded feet (sum_i c_i*w_i*p_i=com_p)
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
 
@@ -110,9 +106,7 @@ void MPO_VelocitySoftBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet
 			if (jm == -1 || jp == -1) continue;
 
 			double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
-			dt = 1.0;
 
-			//we want the COM to be as close as possible to the weighted position of the grounded feet (sum_i c_i*w_i*p_i=com_p)
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
 
