@@ -23,6 +23,7 @@ public:
 	virtual ~SoftUnilateralConstraint();
 
 	void setLimit(double l);
+	void setEpsilon(double eps);
 
 	//comptue f(x)
 	double computeValue(double x);
@@ -44,6 +45,7 @@ public:
 	virtual ~SoftUnilateralUpperConstraint();
 
 	void setLimit(double l);
+	void setEpsilon(double eps);
 
 	//comptue f(x)
 	double computeValue(double x);

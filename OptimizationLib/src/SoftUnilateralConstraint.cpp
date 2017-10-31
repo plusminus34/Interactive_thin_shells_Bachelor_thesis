@@ -21,6 +21,11 @@ void SoftUnilateralConstraint::setLimit(double l)
 	limit = l;
 }
 
+void SoftUnilateralConstraint::setEpsilon(double eps)
+{
+	epsilon = eps;
+}
+
 // returns 1/2 C'C, where C is the current set of equality constraint values
 double SoftUnilateralConstraint::computeValue(double x) {
 	x = x - limit;
@@ -70,6 +75,11 @@ SoftUnilateralUpperConstraint::~SoftUnilateralUpperConstraint()
 void SoftUnilateralUpperConstraint::setLimit(double l)
 {
 	limit = l;
+}
+
+void SoftUnilateralUpperConstraint::setEpsilon(double eps)
+{
+	epsilon = eps;
 }
 
 // returns 1/2 C'C, where C is the current set of equality constraint values

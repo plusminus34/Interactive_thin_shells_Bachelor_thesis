@@ -56,6 +56,7 @@ public:
 	bool printDebugInfo = true;
 	bool checkDerivatives = false;
 	bool locked = false; // once locked, cannot do further optimization
+	bool writeVelocityProfileToFile = false;
 
 	LocomotionEngineMotionPlan *motionPlan = NULL;
 	FootFallPattern* footFallPattern = NULL;

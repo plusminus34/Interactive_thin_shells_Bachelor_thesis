@@ -22,6 +22,8 @@ double MPO_VelocitySoftBoundConstraints::computeValue(const dVector& s) {
 
 		constraintLowerBound->setLimit(-theMotionPlan->jointVelocityLimit);
 		constraintUpperBound->setLimit(theMotionPlan->jointVelocityLimit);
+		constraintLowerBound->setEpsilon(theMotionPlan->jointVelocityEpsilon);
+		constraintUpperBound->setEpsilon(theMotionPlan->jointVelocityEpsilon);
 
 		double retVal = 0;
 
@@ -56,6 +58,8 @@ void MPO_VelocitySoftBoundConstraints::addGradientTo(dVector& grad, const dVecto
 
 		constraintLowerBound->setLimit(-theMotionPlan->jointVelocityLimit);
 		constraintUpperBound->setLimit(theMotionPlan->jointVelocityLimit);
+		constraintLowerBound->setEpsilon(theMotionPlan->jointVelocityEpsilon);
+		constraintUpperBound->setEpsilon(theMotionPlan->jointVelocityEpsilon);
 
 		int nSamplePoints = theMotionPlan->nSamplePoints;
 		if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1; //don't double count... the last robot pose is already the same as the first one, which means that COM and feet locations are in correct locations relative to each other, so no need to ask for that again explicitely...
@@ -94,6 +98,8 @@ void MPO_VelocitySoftBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet
 
 		constraintLowerBound->setLimit(-theMotionPlan->jointVelocityLimit);
 		constraintUpperBound->setLimit(theMotionPlan->jointVelocityLimit);
+		constraintLowerBound->setEpsilon(theMotionPlan->jointVelocityEpsilon);
+		constraintUpperBound->setEpsilon(theMotionPlan->jointVelocityEpsilon);
 
 		int nSamplePoints = theMotionPlan->nSamplePoints;
 		if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1; //don't double count... the last robot pose is already the same as the first one, which means that COM and feet locations are in correct locations relative to each other, so no need to ask for that again explicitely...
