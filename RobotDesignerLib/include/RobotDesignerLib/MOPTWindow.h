@@ -19,6 +19,7 @@ struct MOPTParams {
 	double desTravelDistX = 0;
 	double desTravelDistZ = 0;
 	double desTurningAngle = 0;
+	double jointVelocityLimit = 0;
 	double motionPlanDuration = 0.8;
 	bool checkDerivatives = false;
 };

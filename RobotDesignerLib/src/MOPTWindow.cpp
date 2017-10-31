@@ -49,6 +49,10 @@ void MOPTWindow::addMenuItems() {
 		auto tmpVar = glApp->mainMenu->addVariable("gait duration", moptParams.motionPlanDuration);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("joint velocity limit", moptParams.jointVelocityLimit);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
 
 	glApp->mainMenu->addVariable("check derivatives", moptParams.checkDerivatives);
 	glApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "IPv1", "IPv2" });
@@ -119,6 +123,7 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.desTravelDistX = locomotionManager->motionPlan->desDistanceToTravel.x();
 	moptParams.desTravelDistZ = locomotionManager->motionPlan->desDistanceToTravel.z();
 	moptParams.desTurningAngle = locomotionManager->motionPlan->desTurningAngle;
+	moptParams.jointVelocityLimit = locomotionManager->motionPlan->jointVelocityLimit;
 	moptParams.motionPlanDuration = locomotionManager->motionPlan->motionPlanDuration;
 	moptParams.checkDerivatives = locomotionManager->checkDerivatives;
 }
@@ -128,6 +133,7 @@ void MOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->motionPlan->desDistanceToTravel.x() = moptParams.desTravelDistX;
 	locomotionManager->motionPlan->desDistanceToTravel.z() = moptParams.desTravelDistZ;
 	locomotionManager->motionPlan->desTurningAngle = moptParams.desTurningAngle;
+	locomotionManager->motionPlan->jointVelocityLimit = moptParams.jointVelocityLimit;
 	locomotionManager->motionPlan->motionPlanDuration = moptParams.motionPlanDuration;
 	locomotionManager->checkDerivatives = moptParams.checkDerivatives;
 }
