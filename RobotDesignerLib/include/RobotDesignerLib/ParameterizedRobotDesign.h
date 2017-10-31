@@ -37,6 +37,21 @@ public:
 	virtual int getNumberOfParameters() = 0;
 	virtual void getCurrentSetOfParameters(DynamicArray<double>& params) = 0;
 	virtual void setParameters(const DynamicArray<double>& params) = 0;
+	
+	void getCurrentSetOfParameters(dVector& params) {
+		DynamicArray<double> tempparams;
+		getCurrentSetOfParameters(tempparams);
+		params = Eigen::Map<dVector>(tempparams.data(), tempparams.size());
+	}
+	void setParameters(const dVector& params) {
+		assert(currentParams.size() == params.size());
+
+		DynamicArray<double> tempparams(params.size());
+
+		dVector::Map(&tempparams[0], tempparams.size()) = params;
+		//offset the positions of the hip joints, symetrically...
+		setParameters(tempparams);
+	}
 };
 
 
@@ -61,6 +76,12 @@ public:
 
 		//offset the positions of the hip joints, symetrically...
 
+		updatePositions(params);
+	}
+
+
+	void updatePositions(const DynamicArray<double>& params)
+	{
 		robot->getJoint(0)->pJPos.x() = initialMorphology[0].pJPos.x() + params[0];
 		robot->getJoint(1)->pJPos.x() = initialMorphology[1].pJPos.x() - params[0];
 		robot->getJoint(2)->pJPos.x() = initialMorphology[2].pJPos.x() + params[0];
