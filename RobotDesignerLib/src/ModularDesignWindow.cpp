@@ -935,8 +935,6 @@ void ModularDesignWindow::loadFile(const char* fName) {
 		guidingMesh->getMaterial().setColor(0.8, 0.8, 1.0, 0.4);
 		pickedGuidingMesh = false;
 	}
-
-	
 }
 
 void ModularDesignWindow::saveFile(const char* fName) {
@@ -1878,7 +1876,6 @@ void ModularDesignWindow::updateLivingBracket()
 bool ModularDesignWindow::isSelectedRMCMovable(){
 	return selectedRobot->selectedRMC->isMovable();
 }
-
 
 void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot)
 {

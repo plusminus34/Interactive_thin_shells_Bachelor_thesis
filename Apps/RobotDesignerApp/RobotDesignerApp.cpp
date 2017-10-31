@@ -6,8 +6,6 @@
 #include <MathLib/MathLib.h>
 #include <ControlLib/SimpleLimb.h>
 
-
-
 //#define START_WITH_VISUAL_DESIGNER
 
 //need a proper save/load routine: design, an entire robot, motion plan...
@@ -566,10 +564,11 @@ void RobotDesignerApp::resyncRBS() {
 
 	robot->fixJointConstraints();
 
+	if (designWindow)
+		designWindow->matchDesignWithRobot(robot);
+
 	/*
 
-	if (designWindow)
-		designWindow->...;
 	test this - does it work by default, or must we first set motor angles to zero then reset?!?
 
 	do a "proper" parameterization with symmetry based on the initial design... body dimension as well as all limb lengths and end effectors...
