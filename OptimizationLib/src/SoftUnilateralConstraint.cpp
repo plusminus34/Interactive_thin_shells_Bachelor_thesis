@@ -13,11 +13,6 @@ SoftUnilateralConstraint::SoftUnilateralConstraint(double l, double stiffness, d
 	d2 = c1;
 }
 
-SoftUnilateralConstraint::SoftUnilateralConstraint()
-{
-
-}
-
 SoftUnilateralConstraint::~SoftUnilateralConstraint() {
 }
 
@@ -70,6 +65,39 @@ SoftUnilateralUpperConstraint::SoftUnilateralUpperConstraint(double l, double st
 SoftUnilateralUpperConstraint::~SoftUnilateralUpperConstraint()
 {
 
+}
+
+void SoftUnilateralUpperConstraint::setLimit(double l)
+{
+	limit = l;
+}
+
+// returns 1/2 C'C, where C is the current set of equality constraint values
+double SoftUnilateralUpperConstraint::computeValue(double x) {
+	x = x - limit;
+	if (x > 0)
+		return 0.5 * a1 * x * x + b1 * x + c1;
+	if (x > -epsilon)
+		return 1.0 / 3 * a2 * x * x * x + 0.5 * b2 * x * x + c2 * x + d2;
+	return 0;
+}
+
+double SoftUnilateralUpperConstraint::computeDerivative(double x) {
+	x = x - limit;
+	if (x > 0)
+		return a1 * x + b1;
+	if (x > -epsilon)
+		return a2 * x * x + b2 * x + c2;
+	return 0;
+}
+
+double SoftUnilateralUpperConstraint::computeSecondDerivative(double x) {
+	x = x - limit;
+	if (x > 0)
+		return a1;
+	if (x > -epsilon)
+		return 2 * a2 * x + b2;
+	return 0;
 }
 
 SmoothBarrierConstraint::SmoothBarrierConstraint(double epsilon) {

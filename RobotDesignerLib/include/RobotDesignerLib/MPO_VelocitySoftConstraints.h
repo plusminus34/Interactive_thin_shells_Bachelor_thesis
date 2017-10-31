@@ -23,7 +23,7 @@ private:
 	LocomotionEngineMotionPlan* theMotionPlan;
 
 	std::shared_ptr<SoftUnilateralConstraint> constraintLowerBound;
-	std::shared_ptr<SoftUnilateralConstraint> constraintUpperBound;
+	std::shared_ptr<SoftUnilateralUpperConstraint> constraintUpperBound;
 
 	int startQIndex, endQIndex;
 };
