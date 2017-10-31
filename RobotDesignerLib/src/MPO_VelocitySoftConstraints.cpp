@@ -8,6 +8,9 @@ MPO_VelocitySoftBoundConstraints::MPO_VelocitySoftBoundConstraints(LocomotionEng
 	this->weight = weight;
 	this->startQIndex = startQIndex;
 	this->endQIndex = endQIndex;
+
+	constraintLowerBound = std::shared_ptr<SoftUnilateralConstraint>(new SoftUnilateralConstraint(-theMotionPlan->jointVelocityLimit, 10, theMotionPlan->jointVelocityEpsilon));
+	constraintUpperBound = std::shared_ptr<SoftUnilateralUpperConstraint>(new SoftUnilateralUpperConstraint(theMotionPlan->jointVelocityLimit, 10, theMotionPlan->jointVelocityEpsilon));
 }
 
 MPO_VelocitySoftBoundConstraints::~MPO_VelocitySoftBoundConstraints(void) {
@@ -17,8 +20,8 @@ double MPO_VelocitySoftBoundConstraints::computeValue(const dVector& s) {
 
 	if (theMotionPlan->robotStatesParamsStartIndex >= 0){
 
-		SoftUnilateralConstraint constraintLowerBound(-theMotionPlan->jointVelocityLimit, 10, theMotionPlan->jointVelocityEpsilon);
-		SoftUnilateralConstraint constraintUpperBound(-theMotionPlan->jointVelocityLimit, 10, theMotionPlan->jointVelocityEpsilon);
+		constraintLowerBound->setLimit(-theMotionPlan->jointVelocityLimit);
+		constraintUpperBound->setLimit(theMotionPlan->jointVelocityLimit);
 
 		double retVal = 0;
 
@@ -38,8 +41,8 @@ double MPO_VelocitySoftBoundConstraints::computeValue(const dVector& s) {
 			//we want the COM to be as close as possible to the weighted position of the grounded feet (sum_i c_i*w_i*p_i=com_p)
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
-				retVal += constraintLowerBound.computeValue(velocity);
-				retVal += constraintUpperBound.computeValue(-velocity);
+				retVal += constraintLowerBound->computeValue(velocity);
+				retVal += constraintUpperBound->computeValue(velocity);
 			}
 		}
 
@@ -53,8 +56,8 @@ void MPO_VelocitySoftBoundConstraints::addGradientTo(dVector& grad, const dVecto
 
 	if (theMotionPlan->robotStatesParamsStartIndex >= 0){
 
-		SoftUnilateralConstraint constraintLowerBound(-theMotionPlan->jointVelocityLimit, 10, theMotionPlan->jointVelocityEpsilon);
-		SoftUnilateralConstraint constraintUpperBound(-theMotionPlan->jointVelocityLimit, 10, theMotionPlan->jointVelocityEpsilon);
+		constraintLowerBound->setLimit(-theMotionPlan->jointVelocityLimit);
+		constraintUpperBound->setLimit(theMotionPlan->jointVelocityLimit);
 
 		int nSamplePoints = theMotionPlan->nSamplePoints;
 		if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1; //don't double count... the last robot pose is already the same as the first one, which means that COM and feet locations are in correct locations relative to each other, so no need to ask for that again explicitely...
@@ -75,15 +78,15 @@ void MPO_VelocitySoftBoundConstraints::addGradientTo(dVector& grad, const dVecto
 
 				// lower bound gradient
 				grad[theMotionPlan->robotStatesParamsStartIndex + theMotionPlan->robotStateTrajectory.nStateDim * jm + i]
-						-= weight * constraintLowerBound.computeDerivative(velocity) / dt;
+						-= weight * constraintLowerBound->computeDerivative(velocity) / dt;
 				grad[theMotionPlan->robotStatesParamsStartIndex + theMotionPlan->robotStateTrajectory.nStateDim * jp + i]
-						+= weight * constraintLowerBound.computeDerivative(velocity) / dt;
+						+= weight * constraintLowerBound->computeDerivative(velocity) / dt;
 
 				// upper bound gradient
 				grad[theMotionPlan->robotStatesParamsStartIndex + theMotionPlan->robotStateTrajectory.nStateDim * jm + i]
-						+= weight * constraintUpperBound.computeDerivative(-velocity) / dt;
+						-= weight * constraintUpperBound->computeDerivative(velocity) / dt;
 				grad[theMotionPlan->robotStatesParamsStartIndex + theMotionPlan->robotStateTrajectory.nStateDim * jp + i]
-						-= weight * constraintUpperBound.computeDerivative(-velocity) / dt;
+						+= weight * constraintUpperBound->computeDerivative(velocity) / dt;
 			}
 		}
 	}
@@ -93,8 +96,8 @@ void MPO_VelocitySoftBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet
 
 	if (theMotionPlan->robotStatesParamsStartIndex >= 0){
 
-		SoftUnilateralConstraint constraintLowerBound(-theMotionPlan->jointVelocityLimit, 10, theMotionPlan->jointVelocityEpsilon);
-		SoftUnilateralConstraint constraintUpperBound(-theMotionPlan->jointVelocityLimit, 10, theMotionPlan->jointVelocityEpsilon);
+		constraintLowerBound->setLimit(-theMotionPlan->jointVelocityLimit);
+		constraintUpperBound->setLimit(theMotionPlan->jointVelocityLimit);
 
 		int nSamplePoints = theMotionPlan->nSamplePoints;
 		if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1; //don't double count... the last robot pose is already the same as the first one, which means that COM and feet locations are in correct locations relative to each other, so no need to ask for that again explicitely...
@@ -121,19 +124,19 @@ void MPO_VelocitySoftBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet
 								hessianEntries,
 								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
 								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								weight * constraintLowerBound.computeSecondDerivative(velocity) / (dt*dt));
+								weight * constraintLowerBound->computeSecondDerivative(velocity) / (dt*dt));
 					// d_jp_jp
 					addMTripletToList_reflectUpperElements(
 								hessianEntries,
 								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
 								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								weight * constraintLowerBound.computeSecondDerivative(velocity) / (dt*dt));
+								weight * constraintLowerBound->computeSecondDerivative(velocity) / (dt*dt));
 					// d_jm_jp
 					addMTripletToList_reflectUpperElements(
 								hessianEntries,
 								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
 								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								- weight * constraintLowerBound.computeSecondDerivative(velocity) / (dt*dt));
+								- weight * constraintLowerBound->computeSecondDerivative(velocity) / (dt*dt));
 
 					// upper bound hessian
 					// d_jm_jm
@@ -141,19 +144,19 @@ void MPO_VelocitySoftBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet
 								hessianEntries,
 								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
 								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								weight * constraintUpperBound.computeSecondDerivative(-velocity) / (dt*dt));
+								weight * constraintUpperBound->computeSecondDerivative(velocity) / (dt*dt));
 					// d_jp_jp
 					addMTripletToList_reflectUpperElements(
 								hessianEntries,
 								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
 								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								weight * constraintUpperBound.computeSecondDerivative(-velocity) / (dt*dt));
+								weight * constraintUpperBound->computeSecondDerivative(velocity) / (dt*dt));
 					// d_jm_jp
 					addMTripletToList_reflectUpperElements(
 								hessianEntries,
 								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
 								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								- weight * constraintUpperBound.computeSecondDerivative(-velocity) / (dt*dt));
+								- weight * constraintUpperBound->computeSecondDerivative(velocity) / (dt*dt));
 				}
 			}
 		}

@@ -15,11 +15,35 @@
 class SoftUnilateralConstraint {
 private:
 	double a1, b1, c1, a2, b2, c2, d2, epsilon;
-	double lowerLimit = 0;
+	double limit = 0;
 public:
+
 	SoftUnilateralConstraint(double l, double stiffness, double epsilon);
 
 	virtual ~SoftUnilateralConstraint();
+
+	void setLimit(double l);
+
+	//comptue f(x)
+	double computeValue(double x);
+
+	//compute df/dx
+	double computeDerivative(double x);
+
+	//compute ddf/dxdx
+	double computeSecondDerivative(double x);
+};
+
+class SoftUnilateralUpperConstraint {
+private:
+	double a1, b1, c1, a2, b2, c2, d2, epsilon;
+	double limit = 0;
+public:
+	SoftUnilateralUpperConstraint(double l, double stiffness, double epsilon);
+
+	virtual ~SoftUnilateralUpperConstraint();
+
+	void setLimit(double l);
 
 	//comptue f(x)
 	double computeValue(double x);
