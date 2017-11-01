@@ -33,7 +33,6 @@ public:
 	ModularDesignWindow *designWindow = NULL;
 	MOPTWindow* moptWindow = NULL;
 	bool drawMOPTWindow = true;
-	bool updateMotionBasedOnJacobian;
 	SimWindow* simWindow = NULL;
 
 	Robot* robot = NULL;
@@ -115,13 +114,18 @@ public:
 
 	void resyncRBS();
 	void updateParamsAndMotion(int paramIndex, double value);
+
 	Engine *matlabengine;
+
+
 	MatrixNxM dmdp; //The jacobian at a point
 	dVector m0;
-	bool useSVD;
+	bool useSVD = false;
 	MatrixNxM dmdp_V;
 	dVector p0;
 	dVector slidervalues;
+	bool updateMotionBasedOnJacobian = false;
+
 };
 
 

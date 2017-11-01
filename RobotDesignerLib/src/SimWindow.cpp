@@ -32,17 +32,20 @@ void SimWindow::addMenuItems() {
 
 	button = new nanogui::Button(tools, "MOIs");
 	button->setFlags(nanogui::Button::ToggleButton);
+	button->setPushed(drawMOIs);
 	button->setChangeCallback([this, button](bool val) {  drawMOIs = val; });
 	button->setTooltip("Draw moments of intertia");
 
 	button = new nanogui::Button(tools, "CDPs");
 	button->setFlags(nanogui::Button::ToggleButton);
+	button->setPushed(drawCDPs);
 	button->setChangeCallback([this, button](bool val) {  drawCDPs = val; });
 	button->setTooltip("Draw collision detection primitives");
 
 	button = new nanogui::Button(tools, "Skel");
 	button->setFlags(nanogui::Button::ToggleButton);
-	button->setChangeCallback([this, button](bool val) {  drawSkeletonView = drawJoints = val; });
+	button->setPushed(drawSkeletonView);
+	button->setChangeCallback([this, button](bool val) {  drawSkeletonView = val; });
 	button->setTooltip("Draw skeleton and joints");
 }
 
@@ -127,7 +130,7 @@ void SimWindow::drawScene() {
 	if (drawSkeletonView) flags |= SHOW_BODY_FRAME | SHOW_ABSTRACT_VIEW;
 	if (drawMOIs) flags |= SHOW_MOI_BOX;
 	if (drawCDPs) flags |= SHOW_CD_PRIMITIVES;
-	if (drawJoints) flags |= SHOW_JOINTS;
+	if (drawSkeletonView) flags |= SHOW_JOINTS;
 
 	glEnable(GL_LIGHTING);
 	if (rbEngine)

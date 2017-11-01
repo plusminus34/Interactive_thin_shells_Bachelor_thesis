@@ -910,19 +910,7 @@ void ModularDesignWindow::loadFile(const char* fName) {
 	fileName.assign(fName);
 	std::string fNameExt = fileName.substr(fileName.find_last_of('.') + 1);
 
-	if (fNameExt == "rbs"){
-		// throwError("can't load .rbs file for modular design!");
-
-		AbstractRBEngine* rbEngine = new ODERBEngine();
-		rbEngine->loadRBsFromFile(fName);
-
-		Robot* robot = new Robot(rbEngine->rbs[0]);
-		matchDesignWithRobot(robot);
-
-		delete robot;
-		delete rbEngine;
-	}
-	else if (fNameExt == "dsn"){
+	if (fNameExt == "dsn"){
 		loadDesignFromFile(fName);
 	}
 	else if (fNameExt == "mrb") {
@@ -1602,9 +1590,6 @@ void ModularDesignWindow::exportMeshes()
 void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot, bool mergeMeshes, bool forFabrication){
 	Logger::consolePrint("Save picked RMCRobot to RBS file '%s'\n", fName);
 
-	for (auto tmpBot : rmcRobots)
-		tmpBot->resetAllMotorAngles();
-
 	RMCRobot* robot = new RMCRobot(new RMC(), transformationMap);
 	robot->root->rbProperties.mass = 0;
 	robot->root->rbProperties.MOI_local.setZero();
@@ -1639,58 +1624,15 @@ void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot,
 	}
 	robot->fixJointConstraints();
 
-	int motorID = 0;
-	int connectorID = 0;
-	int eeID = 0;
-	for (int i = 0; i < robot->getJointCount(); i++){
-		RMC* rmc = robot->getJoint(i)->getChild();
-		if (rmc->type == LIVING_MOTOR)
-		{
-			dynamic_cast<LivingMotor*>(rmc)->exportMeshes(robotMeshDir.c_str(), motorID, mergeMeshes);
-			motorID++;
-		}
-		else if (rmc->type == LIVING_CONNECTOR)
-		{
-			dynamic_cast<LivingConnector*>(rmc)->exportMeshes(robotMeshDir.c_str(), connectorID);
-			connectorID++;
-		}
-		else if (rmc->type == LIVING_EE)
-		{
-			dynamic_cast<LivingSphereEE*>(rmc)->exportMeshes(robotMeshDir.c_str(), eeID);
-			eeID++;
-		}
-	}
+	robot->saveToRBSFile(fName, robotMeshDir, templateRobot, freezeRobotRoot, mergeMeshes, forFabrication);
 
-	robot->saveToRBSFile(fName, templateRobot, freezeRobotRoot, mergeMeshes, forFabrication);
-	for (auto tmpBot : rmcRobots)
-		tmpBot->restoreAllMotorAngles();
+	//saverbs should also save an rs file, right after having restored the joint angles... I think it's cleaner that way...
+//	ReducedRobotState tmpState = robot->getReducedRobotState(rbRobot);
+//	tmpState.writeToFile(fName);
 
 	delete robot;
 }
 
-void ModularDesignWindow::saveRSFile(const char* fName, Robot* rbRobot){
-	RMCRobot* robot = new RMCRobot(new RMC(), transformationMap);
-
-	for (uint i = 0; i < rmcRobots.size(); i++){
-		RMCRobot* rmcRobot = rmcRobots[i];
-		for (int j = 0; j < rmcRobot->getRMCCount(); j++){
-			RMC* rmc = rmcRobot->getRMC(j);
-			if (rmc->type == MOTOR_RMC || rmc->type == LIVING_MOTOR || rmc->type == EE_RMC){
-				rmc->mappingInfo.index1 = i;
-				rmc->mappingInfo.index2 = j;
-			}
-		}
-		if (rmcRobots[i]->getRoot()->type == PLATE_RMC)
-			robot->connectRMCRobotDirectly(rmcRobots[i]->clone(), robot->getRoot());
-	}
-
-	robot->fixJointConstraints();
-
-	ReducedRobotState tmpState = robot->getReducedRobotState(rbRobot);
-	tmpState.writeToFile(fName);
-
-	delete robot;
-}
 
 
 void ModularDesignWindow::removeRMCRobot(RMCRobot* robot)
@@ -1826,8 +1768,7 @@ void ModularDesignWindow::unloadParametersForLivingBracket()
 	}
 }
 
-void ModularDesignWindow::updateLivingBracket()
-{
+void ModularDesignWindow::updateLivingBracket(){
     PressedModifier mod = getPressedModifier(glApp->glfwWindow);
 
 	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_MOTOR)
@@ -1877,17 +1818,16 @@ bool ModularDesignWindow::isSelectedRMCMovable(){
 	return selectedRobot->selectedRMC->isMovable();
 }
 
-void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot)
-{
+void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot, ReducedRobotState* initialRobotState){
 	bool incompatible = false;
-	V3D transVec = V3D();
 
-	for (auto joint : tRobot->jointList)
-	{
-		P3D wjPos = joint->getWorldPosition() + transVec;
+	ReducedRobotState currentRobotState(tRobot);
+	tRobot->setState(initialRobotState);
+
+	for (auto joint : tRobot->jointList){
+		P3D wjPos = joint->getWorldPosition();
 		MappingInfo& mappingInfo = joint->mappingInfo;
-		if (mappingInfo.index1 >= 0 && mappingInfo.index1 < (int)rmcRobots.size())
-		{
+		if (mappingInfo.index1 >= 0 && mappingInfo.index1 < (int)rmcRobots.size()){
 			RMCRobot* rmcRobot = rmcRobots[mappingInfo.index1];
 			if (mappingInfo.index2 >= 0 && mappingInfo.index2 < rmcRobot->getRMCCount())
 			{
@@ -1905,8 +1845,7 @@ void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot)
 		}
 	}
 
-	for (int i = 0; i < tRobot->getRigidBodyCount(); i++)
-	{
+	for (int i = 0; i < tRobot->getRigidBodyCount(); i++){
 		RigidBody* rb = tRobot->getRigidBody(i);
 		MappingInfo& mappingInfo = rb->mappingInfo;
 		if (rb->rbProperties.endEffectorPoints.empty()) continue;
@@ -1919,9 +1858,8 @@ void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot)
 			if (mappingInfo.index2 >= 0 && mappingInfo.index2 < rmcRobot->getRMCCount())
 			{
 				RMC* rmc = rmcRobot->getRMC(mappingInfo.index2);
-				if (rmc->type == EE_RMC)
-				{
-					rmc->state.position = EEPos + rmc->state.orientation.rotate(-rmc->rbProperties.endEffectorPoints[0].coords) + transVec;
+				if (rmc->type == EE_RMC){
+					rmc->state.position = EEPos + rmc->state.orientation.rotate(-rmc->rbProperties.endEffectorPoints[0].coords);
 				}
 				else {
 					incompatible = true;
@@ -1939,8 +1877,8 @@ void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot)
 		}
 	}
 
-	if (incompatible)
-	{
+	if (incompatible){
+		tRobot->setState(&currentRobotState);
 		Logger::consolePrint("This .rbs is not compatible with current design!");
 		return;
 	}
@@ -1954,19 +1892,33 @@ void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot)
 	updateLivingBracket();
 
 	createBodyMesh3D();
+
+	tRobot->setState(&currentRobotState);
 }
 
-void ModularDesignWindow::transferMeshes(Robot* tRobot, bool mergeMeshes){
-	// adjust design
-	matchDesignWithRobot(tRobot);
 
+
+
+void ModularDesignWindow::transferMeshes(Robot* tRobot, ReducedRobotState* initialRobotState, bool mergeMeshes){
+	// adjust design
+	matchDesignWithRobot(tRobot, initialRobotState);
+
+	for (auto tmpBot : rmcRobots)
+		tmpBot->resetAllMotorAngles();
+
+	//TODO: there must be a more direct way than saving the file to disk and reloading...
+
+	for (auto tmpBot : rmcRobots)
+		tmpBot->restoreAllMotorAngles();
+
+/*
 	saveToRBSFile("../out/tmpRobot.rbs", tRobot, mergeMeshes);
 
 	AbstractRBEngine* rbEngine = new ODERBEngine();
 	rbEngine->loadRBsFromFile("../out/tmpRobot.rbs");
 
 	Robot* robot = new Robot(rbEngine->rbs[0]);
-	matchDesignWithRobot(robot);
+	matchDesignWithRobot(robot, initialRobotState);
 
 	// transfer meshes
 	for (int i = 0; i < robot->getRigidBodyCount(); i++){
@@ -1982,7 +1934,7 @@ void ModularDesignWindow::transferMeshes(Robot* tRobot, bool mergeMeshes){
 
 	delete robot;
 	delete rbEngine;
-
+*/
 }
 
 void ModularDesignWindow::buildRMCMirrorMap()

@@ -28,6 +28,9 @@ public:
 	//joint limits 
 	double minAngle = 0, maxAngle = 0;
 
+	//keep a 'default' angle... useful for applications that create a robot and its state at the same time
+	double defaultAngle = 0;
+
 	DXL_Properites dynamixelProperties;
 public:
 	HingeJoint();

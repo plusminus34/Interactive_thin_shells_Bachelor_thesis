@@ -121,8 +121,6 @@ public:
 	void loadDesignFromFile(const char* fName);
 
 	void saveToRBSFile(const char* fName, Robot* templateRobot = NULL, bool mergeMeshes = false, bool forFabrication = false);
-	void saveRSFile(const char* fName, Robot* robot);
-
 
 	void exportMeshes();
 
@@ -142,8 +140,8 @@ public:
 	void updateLivingBracket();
 	bool isSelectedRMCMovable();
 
-	void matchDesignWithRobot(Robot* tRobot);
-	void transferMeshes(Robot* tRobot, bool mergeMeshes = false);
+	void matchDesignWithRobot(Robot* tRobot, ReducedRobotState* initialRobotState);
+	void transferMeshes(Robot* tRobot, ReducedRobotState* initialRobotState, bool mergeMeshes = false);
 
 	void buildRMCMirrorMap();
 	void makeSelectedRMCSymmtry();

@@ -6,7 +6,7 @@
 #include <MathLib/MathLib.h>
 #include <ControlLib/SimpleLimb.h>
 
-//#define START_WITH_VISUAL_DESIGNER
+#define START_WITH_VISUAL_DESIGNER
 
 //need a proper save/load routine: design, an entire robot, motion plan...
 
@@ -19,6 +19,8 @@
 //probably need to work a bit on body shape/body characteristics
 
 //can we go all the way to creating 3d printable geometry?
+
+//can we update the nanogui extensions easily?!?
 
 //tangentGRFBoundValues is useful for warmstarting to incrementally bound tangential forces. But need to implement proper friction, methinks...
 //perhaps make the non-mesh version of the renderer prettier... it will allow us to test the code before (or even if it wont happen that) the visual designer part is integrated.
@@ -49,8 +51,6 @@ RobotDesignerApp::RobotDesignerApp(){
 	mainMenu->addGroup("RobotDesigner Options");
 	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
 	mainMenu->addVariable("View Mode", viewOptions, true)->setItems({ "Sim Only", "MOPT", "Design"});
-//	mainMenu->addButton("Warmstart MOPT", [this]() { warmStartMOPT(true); });
-//	mainMenu->addButton("Load Robot Design", [this]() { createRobotFromCurrentDesign(); });
 
 	mainMenu->addButton("Compute Jacobian", [this]() { compute_dmdp_Jacobian(); });
 
@@ -104,8 +104,6 @@ RobotDesignerApp::RobotDesignerApp(){
 	mainMenu->addVariable("Update params wrt J", updateMotionBasedOnJacobian);
 	mainMenu->addVariable("Use SVD", useSVD);
 
-	addDesignParameterSliders();
-
 	menuScreen->performLayout();
 	setupWindows();
 
@@ -123,10 +121,6 @@ RobotDesignerApp::RobotDesignerApp(){
 	TwAddSeparator(mainMenuBar, "sep4", "");
 	*/
 	followCameraTarget = true;
-
-	slidervalues.resize(prd->getNumberOfParameters());
-	slidervalues.setZero();
-
 }
 
 void RobotDesignerApp::setupWindows() {
@@ -284,7 +278,11 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		robot = simWindow->loadRobot(fName);
 
 		//todo: just a test for now
-		prd = new TestParameterizedRobotDesign(robot);
+		prd = new SymmetricParameterizedRobotDesign(robot);
+		addDesignParameterSliders();
+		menuScreen->performLayout();
+		slidervalues.resize(prd->getNumberOfParameters());
+		slidervalues.setZero();
 
 		delete initialRobotState;
 		initialRobotState = new ReducedRobotState(robot);
@@ -319,8 +317,10 @@ void RobotDesignerApp::createRobotFromCurrentDesign() {
 	if (designWindow) {
 		designWindow->saveToRBSFile("../out/tmpRobot.rbs");
 		loadFile("../out/tmpRobot.rbs");
-		designWindow->saveRSFile("../out/tmpRobot.rs", robot);
-		loadFile("../out/tmpRobot.rs");
+		delete initialRobotState;
+		initialRobotState = new ReducedRobotState(robot);
+		robot->populateState(initialRobotState, true);
+		robot->setState(initialRobotState);
 	}
 
 	if (robot)
@@ -351,7 +351,6 @@ void RobotDesignerApp::saveFile(const char* fName) {
 void RobotDesignerApp::runMOPTStep() {
 	double energyVal = moptWindow->runMOPTStep();
 }
-
 
 P3D RobotDesignerApp::getCameraTarget() {
 	if (runOption != MOTION_PLAN_OPTIMIZATION)
@@ -587,7 +586,7 @@ void RobotDesignerApp::resyncRBS() {
 	robot->fixJointConstraints();
 
 	if (designWindow)
-		designWindow->matchDesignWithRobot(robot);
+		designWindow->matchDesignWithRobot(robot, initialRobotState);
 
 	/*
 
@@ -623,7 +622,7 @@ void RobotDesignerApp::addDesignParameterSliders()
 	for (int i = 0; i < prd->getNumberOfParameters(); i++)
 	{
 		Slider *slider = new Slider(panel);
-		slider->setValue(p[i]);
+		slider->setValue((float)p[i]);
 		slider->setRange({-0.1,0.1});
 		slider->setFixedWidth(150);
 		TextBox *textBox = new TextBox(panel);
@@ -638,7 +637,7 @@ void RobotDesignerApp::addDesignParameterSliders()
 		});
 		textBox->setCallback([&, i, slider](const std::string &str) {
 			updateParamsAndMotion(i, std::stod(str));
-			slider->setValue(std::stod(str));
+			slider->setValue((float)std::stod(str));
 			return true;
 		});
 
