@@ -52,8 +52,6 @@ RobotDesignerApp::RobotDesignerApp(){
 	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
 	mainMenu->addVariable("View Mode", viewOptions, true)->setItems({ "Sim Only", "MOPT", "Design"});
 
-	mainMenu->addButton("Compute Jacobian", [this]() { compute_dmdp_Jacobian(); });
-
 	nanogui::Widget *tools = new nanogui::Widget(mainMenu->window());
 	mainMenu->addWidget("", tools);
 	tools->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
@@ -99,10 +97,7 @@ RobotDesignerApp::RobotDesignerApp(){
     loadFile("../data/robotsAndMotionPlans/spotMini/trot3.p");
 #endif
 
-	mainMenu->addGroup("Design Parameters");
 
-	mainMenu->addVariable("Update params wrt J", updateMotionBasedOnJacobian);
-	mainMenu->addVariable("Use SVD", useSVD);
 
 	menuScreen->performLayout();
 	setupWindows();
@@ -279,7 +274,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 
 		//todo: just a test for now
 		prd = new SymmetricParameterizedRobotDesign(robot);
-		addDesignParameterSliders();
+		CreateParametersDesignWindow();
 		menuScreen->performLayout();
 		slidervalues.resize(prd->getNumberOfParameters());
 		slidervalues.setZero();
@@ -337,6 +332,8 @@ void RobotDesignerApp::loadToSim(bool initializeMOPT){
 	warmStartMOPT(initializeMOPT);
 	Logger::consolePrint("Warmstart successful...\n");
 	Logger::consolePrint("The robot has %d legs, weighs %lfkgs and is %lfm tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
+
+//	CreateParametersDesignWindow();
 }
 
 void RobotDesignerApp::warmStartMOPT(bool initializeMotionPlan) {
@@ -448,9 +445,10 @@ void RobotDesignerApp::compute_dmdp_Jacobian()
 // partial g / partial p + partial g / partial m * dm/dp = dg/dp = 0
 // dm/dp = -partial g / partial m ^ -1 * partial g / partial p
 
+#ifdef USE_MATLAB
 	igl::matlab::mlinit(&matlabengine);
 	igl::matlab::mleval(&matlabengine, "desktop");
-
+#endif
 
 	dVector m; moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
 	m0 = m;
@@ -498,10 +496,12 @@ void RobotDesignerApp::compute_dmdp_Jacobian()
 	Eigen::JacobiSVD<MatrixNxM> svd(dmdp, Eigen::ComputeThinU | Eigen::ComputeThinV);
 	dmdp_V = svd.matrixV();
 	
+#ifdef USE_MATLAB
 	RUN_IN_MATLAB(
 		igl::matlab::mlsetmatrix(&matlabengine, "dmdp", dmdp);
 		igl::matlab::mlsetmatrix(&matlabengine, "dmdp_V", dmdp_V);
 	)
+#endif
 }
 
 void RobotDesignerApp::test_dmdp_Jacobian() {
@@ -603,8 +603,14 @@ void RobotDesignerApp::resyncRBS() {
 
 }
 
-void RobotDesignerApp::addDesignParameterSliders()
+void RobotDesignerApp::CreateParametersDesignWindow()
 {
+	mainMenu->addWindow(Eigen::Vector2i(10, 10),"Design Parameters");
+	mainMenu->addButton("Compute Jacobian", [this]() { compute_dmdp_Jacobian(); });
+
+	mainMenu->addVariable("Update params wrt J", updateMotionBasedOnJacobian);
+	mainMenu->addVariable("Use SVD", useSVD);
+
 	using namespace nanogui;
 	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
 
@@ -643,6 +649,9 @@ void RobotDesignerApp::addDesignParameterSliders()
 
 	}
 	mainMenu->addWidget("", panel);
+	menuScreen->performLayout();
+	slidervalues.resize(prd->getNumberOfParameters());
+	slidervalues.setZero();
 }
 
 void RobotDesignerApp::updateParamsAndMotion(int paramIndex, double value)
