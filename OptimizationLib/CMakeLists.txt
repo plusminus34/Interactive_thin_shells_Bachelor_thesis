@@ -17,25 +17,33 @@ add_library(${PROJECT_NAME} STATIC ${sources})
 find_package(OOQP REQUIRED)
 include_directories(${OOQP_INCLUDE_DIRS})
 
-#GTest
-# enable_testing()
-# find_package(GTest REQUIRED)
-# include_directories(${GTEST_INCLUDE_DIRS})
-
 include_directories("${CMAKE_SOURCE_DIR}/thirdparty")
 
 target_link_libraries(
 	${PROJECT_NAME}
-	PUBLIC
-		MathLib
-		# ${GTEST_BOTH_LIBRARIES}
-		${OOQP_LIBRARIES}
-	PRIVATE
+	    MathLib
+	    ${OOQP_LIBRARIES}
 )
 
 target_include_directories(
 	${PROJECT_NAME} 
 	PUBLIC
-		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/include
-		${CMAKE_SOURCE_DIR}/thirdparty
+	    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/include
+	    ${CMAKE_SOURCE_DIR}/thirdparty
 )
+
+# Tests
+enable_testing()
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS})
+
+file(GLOB test_sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.h
+    )
+add_executable(${PROJECT_NAME}_test ${test_sources})
+target_link_libraries(${PROJECT_NAME}_test
+    ${PROJECT_NAME}
+    ${GTEST_BOTH_LIBRARIES}
+    -lpthread) # need pthread for google test. TODO: does this link on Windows?
+add_test(${PROJECT_NAME}_test ${PROJECT_NAME}_test)
