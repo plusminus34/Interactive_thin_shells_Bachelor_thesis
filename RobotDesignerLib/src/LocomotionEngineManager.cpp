@@ -62,11 +62,12 @@ double LocomotionEngineManager::runMOPTStep() {
 	energyFunction->printDebugInfo = printDebugInfo;
 
 	double energyVal = optimizeMoptionPlan();
-
-	motionPlan->writeParamsToFile("..//out//MPParams.p");
+	writeParamsToFile = printDebugInfo;
+	if(writeParamsToFile)
+		motionPlan->writeParamsToFile("..//out//MPParams.p");
 
 	if (printDebugInfo)
-		Logger::consolePrint("total time ellapsed: %lfs\n", timer.timeEllapsed());
+		Logger::consolePrint("total time elapsed: %lfs\n", timer.timeEllapsed());
 
 	if(writeVelocityProfileToFile)
 	{

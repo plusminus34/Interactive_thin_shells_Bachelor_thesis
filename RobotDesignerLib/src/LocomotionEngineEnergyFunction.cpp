@@ -1,5 +1,8 @@
 #include <RobotDesignerLib/LocomotionEngineEnergyFunction.h>
 #include <RobotDesignerLib/MPO_TorqueAngularAccelObjective.h>
+#include <omp.h>
+#include <stdio.h>
+#include <iostream>
 
 LocomotionEngine_EnergyFunction::LocomotionEngine_EnergyFunction(LocomotionEngineMotionPlan* mp){
 	theMotionPlan = mp;
@@ -94,9 +97,33 @@ void LocomotionEngine_EnergyFunction::addHessianEntriesTo(DynamicArray<MTriplet>
 			hessianEntries.push_back(MTriplet(i, i, regularizer));
 	}
 
+
 	//and now the contributions of the individual objectives
-	for (uint i = 0; i < objectives.size(); i++)
-		objectives[i]->addHessianEntriesTo(hessianEntries, p);
+
+	// Sequential version
+	// 	for (uint i = 0; i < objectives.size(); i++)
+	// 		objectives[i]->addHessianEntriesTo(hessianEntries, p);
+
+	// Parallel version
+	#pragma omp parallel num_threads(2)
+	{
+		std::vector<MTriplet> hessianEntries_private;
+		#pragma omp for schedule(dynamic) nowait //fill vec_private in parallel
+		for (int i = 0; i < objectives.size(); i++)
+		{ 
+			objectives[i]->addHessianEntriesTo(hessianEntries_private, p);
+		}
+		#pragma omp critical
+		hessianEntries.insert(hessianEntries.end(), hessianEntries_private.begin(), hessianEntries_private.end());
+	}
+
+	/////////////////////////////////////////////
+	//  Switch to this when openmp 4.0 support appears
+	// 	#pragma omp declare reduction (merge : std::vector<int> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
+	// 	#pragma omp parallel for reduction(merge: vec)
+	// 	for (int i = 0; i < objectives.size(); i++) 
+	// 		objectives[i]->addHessianEntriesTo(hessianEntries, p);
+	///////////////////////////////////////////
 }
 
 void LocomotionEngine_EnergyFunction::addGradientTo(dVector& grad, const dVector& p){

@@ -34,12 +34,12 @@ public:
 
 	MOPTParams moptParams;
 
-	Robot* robot = NULL;
+	Robot* robot = nullptr;
 	ReducedRobotState startState = ReducedRobotState(13);
 
 	FootFallPattern footFallPattern;
-	FootFallPatternViewer* ffpViewer = NULL;
-	LocomotionEngineManager* locomotionManager = NULL;
+	FootFallPatternViewer* ffpViewer = nullptr;
+	LocomotionEngineManager* locomotionManager = nullptr;
 
 	enum OPT_OPTIONS {
 		GRF_OPT = 0,
@@ -50,7 +50,7 @@ public:
 	OPT_OPTIONS optimizeOption = GRF_OPT_V2;
 
 	int nPoints;
-
+	bool printDebugInfo;
 	void addMenuItems();
 
 public:
