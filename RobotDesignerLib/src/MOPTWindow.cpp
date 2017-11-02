@@ -62,8 +62,10 @@ void MOPTWindow::addMenuItems() {
 	}
 
 	glApp->mainMenu->addVariable("check derivatives", moptParams.checkDerivatives);
+	glApp->mainMenu->addVariable<bool>("Log data",
+		[this](bool val) {if (locomotionManager) locomotionManager->printDebugInfo = val; },
+		[this] { if (locomotionManager) return locomotionManager->printDebugInfo; else return false; });
 	glApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "IPv1", "IPv2" });
-
 /*
 	//this is the slider for the phase...
 	new nanogui::Label(glApp->mainMenu->window(), "Slider and text box", "sans-bold");
