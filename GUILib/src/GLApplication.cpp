@@ -240,19 +240,19 @@ void GLApplication::setupMainMenu() {
 
 	button = new nanogui::Button(tools, "");
 	button->setFlags(nanogui::Button::ToggleButton);
-	button->setIcon(ENTYPO_ICON_PLAY);
+	button->setIcon(ENTYPO_ICON_CONTROLLER_PLAY);
 	button->setChangeCallback([this, button](bool val) {  appIsRunning = val; });
 	button->setTooltip("Play/Pause");
 	playButton = button;
 
 	button = new nanogui::Button(tools, "");
 	button->setCallback([this]() { process(); });
-	button->setIcon(ENTYPO_ICON_TO_END);
+	button->setIcon(ENTYPO_ICON_CONTROLLER_NEXT);
 	button->setTooltip("step");
 
 	button = new nanogui::Button(tools, "");
 	button->setFlags(nanogui::Button::ToggleButton);
-	button->setIcon(ENTYPO_ICON_HOURGLASS);
+	button->setIcon(ENTYPO_ICON_HOUR_GLASS);
 	button->setChangeCallback([this, button](bool val) {  slowMo = val; });
 	button->setTooltip("Slow Motion");
 

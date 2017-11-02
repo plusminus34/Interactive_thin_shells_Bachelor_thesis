@@ -61,6 +61,11 @@ bool HingeJoint::processInputLine(char* line) {
 		sscanf(line, "%d %d", &mappingInfo.index1, &mappingInfo.index2);
 		return true;
 		break;
+	case RB_DEFAULT_ANGLE:
+		sscanf(line, "%lf", &defaultAngle);
+		return true;
+		break;
+
 	default:
 		return false;
 	}
@@ -85,7 +90,9 @@ void HingeJoint::writeToFile(FILE* fp) {
 	if (dynamixelProperties.flipMotorAxis) {
 		fprintf(fp, "\t\t%s\n", getRBString(RB_DXL_FLIPAXISDIR));
 	}
+
 	fprintf(fp, "\t\t%s %d\n", getRBString(RB_DXL_ID), dynamixelProperties.dxl_id);
+	fprintf(fp, "\t\t%s %lf\n", getRBString(RB_DEFAULT_ANGLE), defaultAngle);
 	fprintf(fp, "\t\t%s %d %d\n", getRBString(RB_MAPPING_INFO), mappingInfo.index1, mappingInfo.index2);
 	writeCommonAttributesToFile(fp);
 }

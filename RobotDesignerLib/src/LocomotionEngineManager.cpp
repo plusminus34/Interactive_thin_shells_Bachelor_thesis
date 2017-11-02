@@ -62,11 +62,34 @@ double LocomotionEngineManager::runMOPTStep() {
 	energyFunction->printDebugInfo = printDebugInfo;
 
 	double energyVal = optimizeMoptionPlan();
-
-	motionPlan->writeParamsToFile("..//out//MPParams.p");
+	writeParamsToFile = printDebugInfo;
+	if(writeParamsToFile)
+		motionPlan->writeParamsToFile("..//out//MPParams.p");
 
 	if (printDebugInfo)
-		Logger::consolePrint("total time ellapsed: %lfs\n", timer.timeEllapsed());
+		Logger::consolePrint("total time elapsed: %lfs\n", timer.timeEllapsed());
+
+	if(writeVelocityProfileToFile)
+	{
+		std::vector<LocomotionEngineMotionPlan::JointVelocity> velProfile;
+		std::string error;
+		if(!motionPlan->getJointAngleVelocityProfile(velProfile, error))
+		{
+			Logger::consolePrint("Could not compute velocity profile: %s\n", error);
+		}
+		else
+		{
+			std::ofstream file ("../out/jointAngleVelocityProfile.txt");
+			file << "time\tqIndex\tjoint angular velocity" << std::endl;
+
+			for (const auto &v : velProfile) {
+				file << v.t << "\t" << v.qIndex << "\t" << v.velocity << std::endl;
+			}
+
+			file.close();
+		}
+	}
+
 
 	return energyVal;
 }

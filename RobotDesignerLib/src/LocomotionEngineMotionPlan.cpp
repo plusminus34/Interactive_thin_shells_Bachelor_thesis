@@ -236,31 +236,6 @@ void LocomotionEngineMotionPlan::updateRobotRepresentation(){
 		endEffectorTrajectories[i].endEffectorLocalCoords = endEffectorTrajectories[i].theLimb->getLastLimbSegment()->rbProperties.getEndEffectorPoint(endEffectorTrajectories[i].CPIndex);
 }
 
-void LocomotionEngineMotionPlan::getAccelerationTimeIndicesFor(int tIndex, int& tmm, int& tm, int& tp, int& tpp, bool wrapAround){
-	tp = tIndex, tpp = tIndex+1, tm = tIndex, tmm=tIndex-1;
-	if (tm == 0){
-		if (wrapAroundBoundaryIndex==0 && wrapAround){
-			tm = nSamplePoints-1;
-			tmm = nSamplePoints-2;
-		}
-		else{
-			tm = -1;
-			tmm = -1;
-		}
-	}
-
-	if (tp == nSamplePoints-1){
-		if (wrapAroundBoundaryIndex >= 0 && wrapAround){
-			tp = wrapAroundBoundaryIndex;
-			tpp = wrapAroundBoundaryIndex+1;
-		}
-		else{
-			tp = -1;
-			tpp = -1;
-		}
-	}
-}
-
 /*
 void LocomotionEngineMotionPlan::writeRobotMotionAnglesToFile(const char* fName)
 {
@@ -315,7 +290,82 @@ P3D LocomotionEngineMotionPlan::getCOP(int tIndex) {
 	return x;
 }
 
+void LocomotionEngineMotionPlan::getVelocityTimeIndicesFor(int tIndex, int &tm, int &tp, bool wrapAround) const {
+	tp = tIndex; tm = tIndex-1;
+	if (tm < 0){
+		if (wrapAroundBoundaryIndex==0 && wrapAround)
+			tm = nSamplePoints-2;
+		else
+			tm = -1;
+	}
 
+	if (tp == nSamplePoints-1){
+		if (wrapAroundBoundaryIndex >= 0 && wrapAround){
+			tp = wrapAroundBoundaryIndex;
+		}
+		else{
+			tp = -1;
+		}
+	}
+}
+
+void LocomotionEngineMotionPlan::getAccelerationTimeIndicesFor(int tIndex, int& tmm, int& tm, int& tp, int& tpp, bool wrapAround){
+	tp = tIndex, tpp = tIndex+1, tm = tIndex, tmm=tIndex-1;
+	if (tm == 0){
+		if (wrapAroundBoundaryIndex==0 && wrapAround){
+			tm = nSamplePoints-1;
+			tmm = nSamplePoints-2;
+		}
+		else{
+			tm = -1;
+			tmm = -1;
+		}
+	}
+
+	if (tp == nSamplePoints-1){
+		if (wrapAroundBoundaryIndex >= 0 && wrapAround){
+			tp = wrapAroundBoundaryIndex;
+			tpp = wrapAroundBoundaryIndex+1;
+		}
+		else{
+			tp = -1;
+			tpp = -1;
+		}
+	}
+}
+
+bool LocomotionEngineMotionPlan::getJointAngleVelocityProfile(std::vector<JointVelocity> &velocityProfile, std::string &error) const
+{
+	if (robotStatesParamsStartIndex < 0)
+	{
+		error = "robotStatesParamsStartIndex < 0";
+		return false;
+	}
+
+	int startQIndex = 6;
+	int endQIndex = robotRepresentation->getDimensionCount() - 1;
+
+	int nTimeSteps = nSamplePoints;
+	if (wrapAroundBoundaryIndex >= 0) nTimeSteps--;
+
+	for (int j=0; j<nTimeSteps; j++){
+
+		int jm, jp;
+
+		getVelocityTimeIndicesFor(j, jm, jp);
+		if (jm == -1 || jp == -1) continue;
+
+		double dt = motionPlanDuration / nSamplePoints;
+		double t = (double)j*dt;
+
+		for (int i=startQIndex; i<=endQIndex; i++){
+			double velocity = (robotStateTrajectory.qArray[jp][i] - robotStateTrajectory.qArray[jm][i]) / dt;
+			velocityProfile.push_back(JointVelocity(t, i, velocity));
+		}
+	}
+
+	return true;
+}
 
 //TODO: redo motion plan animation to update state in terms of deltas, rather than the animation cycle thing?
 void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bool drawRobot, bool drawSkeleton, bool drawPlanDetails, bool drawContactForces, bool drawOrientation){

@@ -19,6 +19,9 @@ struct MOPTParams {
 	double desTravelDistX = 0;
 	double desTravelDistZ = 0;
 	double desTurningAngle = 0;
+	double jointVelocityLimit = 10;
+	double jointVelocityEpsilon = 0.4;
+	bool writeJointVelocityProfile = false;
 	double motionPlanDuration = 0.8;
 	bool checkDerivatives = false;
 };
@@ -31,12 +34,12 @@ public:
 
 	MOPTParams moptParams;
 
-	Robot* robot = NULL;
+	Robot* robot = nullptr;
 	ReducedRobotState startState = ReducedRobotState(13);
 
 	FootFallPattern footFallPattern;
-	FootFallPatternViewer* ffpViewer = NULL;
-	LocomotionEngineManager* locomotionManager = NULL;
+	FootFallPatternViewer* ffpViewer = nullptr;
+	LocomotionEngineManager* locomotionManager = nullptr;
 
 	enum OPT_OPTIONS {
 		GRF_OPT = 0,
@@ -47,7 +50,7 @@ public:
 	OPT_OPTIONS optimizeOption = GRF_OPT_V2;
 
 	int nPoints;
-
+	bool printDebugInfo;
 	void addMenuItems();
 
 public:

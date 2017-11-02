@@ -51,91 +51,6 @@ Robot::~Robot(void){
 }
 
 
-
-/**
-	This method works only for hinge joints
-	It returns the relative angle, instead of a quaternion, 
-	Uses the joint axis to recover the angle.
-*/
-double Robot::getJointRelativeAngle(ReducedRobotState* _pState, int _jIndex) const
-{
-	Quaternion qI = _pState->getJointRelativeOrientation(_jIndex);
-
-	V3D qAxis;
-	double angle = 0;
-	qI.getAxisAngle(qAxis, angle);
-
-	///< Could pre-compute the hinge axis...
-	V3D hingeAxis = getJointAxis(_jIndex);
-
-	if ((qAxis - hingeAxis).length() > 0.1)
-		angle = angle*-1;
-
-	return angle;
-}
-
-
-/**
-	For hinge joint only...
-*/
-
-V3D Robot::getJointAxis(const int _j) const
-{
-	///< Could pre-compute the hinge axis...
-	HingeJoint* pHinge = (HingeJoint*)getJoint(_j);
-	assert(pHinge != NULL);
-	if (pHinge)
-		return pHinge->rotationAxis;
-	else
-		return V3D(0);
-}
-
-void Robot::getJointRelativeAngles(ReducedRobotState* _pState, int jIndex, DynamicArray<double>& angles) {
-	angles.clear();
-
-	// retrieve the joint and then figure out what type it is in order to correctly retrieve the joint angle
-	Joint* joint = getJoint(jIndex);
-
-	// one rotation axis for the hinge joint
-	HingeJoint* hingeJoint = dynamic_cast<HingeJoint*>(joint);
-	if (hingeJoint) {
-		Quaternion qRel = _pState->getJointRelativeOrientation(hingeJoint->jIndex);
-		V3D axis = hingeJoint->rotationAxis;
-		double angle1;
-		computeRotationAngleFromQuaternion(qRel, axis, angle1);
-		angles.push_back(angle1);
-	}
-
-	// two rotation axes for the universal joint
-	UniversalJoint* universalJoint = dynamic_cast<UniversalJoint*>(joint);
-	if (universalJoint) {
-		Quaternion qAnkle = _pState->getJointRelativeOrientation(universalJoint->jIndex);
-		V3D axis1 = universalJoint->rotAxisChild;
-		V3D axis2 = universalJoint->rotAxisParent;
-		double angle1;
-		double angle2;
-		computeEulerAnglesFromQuaternion(qAnkle, axis2, axis1, angle2, angle1);
-		angles.push_back(angle1);
-		angles.push_back(angle2);
-	}
-
-	// three rotation axes for the ball and socket joint
-	BallAndSocketJoint* ballAndSocketJoint = dynamic_cast<BallAndSocketJoint*>(joint);
-	if (ballAndSocketJoint) {
-		Quaternion qHip = _pState->getJointRelativeOrientation(ballAndSocketJoint->jIndex);
-		V3D axis1 = V3D(1, 0, 0);
-		V3D axis2 = V3D(0, 1, 0);
-		V3D axis3 = V3D(0, 0, 1);
-		double angle1;
-		double angle2;
-		double angle3;
-		computeEulerAnglesFromQuaternion(qHip, axis3, axis2, axis1, angle3, angle2, angle1);
-		angles.push_back(angle1);
-		angles.push_back(angle2);
-		angles.push_back(angle3);
-	}
-}
-
 double Robot::getApproxBodyFrameHeight() {
 	P3D comPos;
 	double totalMass = 0;
@@ -183,55 +98,10 @@ void Robot::getRelativeAngularVelocityForJoint(int i, V3D* wRel){
 }
 
 
-
-struct TraverseBodies
-{
-	int m_numBodies;
-	int m_index;
-
-	TraverseBodies() :m_index(0), m_numBodies(-1) {}
-
-	RigidBody* getNextBody(Robot* robot)
-	{
-		m_numBodies = robot->getJointCount() + 1;///< assuming num joints + 1 for root...
-
-		RigidBody* pBody = NULL;
-		if (m_index == 0)
-			pBody = robot->getRoot();
-		else if (m_index<m_numBodies)
-			pBody = robot->getJoint(m_index - 1)->child;
-
-		m_index++;
-
-		return pBody;
-	}
-};
-
-/**
-Creates a linear list of rigid bodies contained in the robot.
-Note: consider the ordering of rigid bodies.
-*/
-DynamicArray<RigidBody*> Robot::getBodies()
-{
-	DynamicArray<RigidBody*> bodies;
-
-	TraverseBodies bodyTraversal;
-	RigidBody* body = bodyTraversal.getNextBody(this);
-	
-	while (body != NULL)
-	{
-		bodies.push_back(body);
-
-		body = bodyTraversal.getNextBody(this);		
-	}
-
-	return bodies;
-}
-
 /**
 	uses the state of the robot to populate the input
 */
-void Robot::populateState(ReducedRobotState* state) {
+void Robot::populateState(ReducedRobotState* state, bool useDefaultAngles) {
 	//we'll push the root's state information - ugly code....
 	state->setPosition(root->state.position);
 	state->setOrientation(root->state.orientation);
@@ -245,10 +115,19 @@ void Robot::populateState(ReducedRobotState* state) {
 	V3D wRel;
 
 	for (uint i=0;i<jointList.size();i++){
-		getRelativeOrientationForJoint(i, &qRel);
-		state->setJointRelativeOrientation(qRel, i);
-		getRelativeAngularVelocityForJoint(i, &wRel);
-		state->setJointRelativeAngVelocity(wRel, i);
+		if (!useDefaultAngles){
+			getRelativeOrientationForJoint(i, &qRel);
+			state->setJointRelativeOrientation(qRel, i);
+			getRelativeAngularVelocityForJoint(i, &wRel);
+			state->setJointRelativeAngVelocity(wRel, i);
+		}
+		else {
+			state->setJointRelativeOrientation(Quaternion(), i);
+			state->setJointRelativeAngVelocity(V3D(), i);
+			HingeJoint* hj = dynamic_cast<HingeJoint*>(jointList[i]);
+			if (hj)
+				state->setJointRelativeOrientation(getRotationQuaternion(hj->defaultAngle, hj->rotationAxis), i);
+		}
 	}
 }
 

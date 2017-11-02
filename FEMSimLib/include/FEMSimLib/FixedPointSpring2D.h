@@ -2,7 +2,7 @@
 
 #include <FEMSimLib/SimMeshElement.h>
 #include <FEMSimLib/Node.h>
-#include <MathLib/mathLib.h>
+#include <MathLib/MathLib.h>
 #include <MathLib/Matrix.h>
 
 //zero rest length spring connected to a target position (could be the mouse, or something else...)

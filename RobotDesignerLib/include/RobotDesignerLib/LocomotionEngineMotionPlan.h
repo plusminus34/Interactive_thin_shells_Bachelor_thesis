@@ -334,8 +334,12 @@ public:
 	P3D defaultCOMPosition;
 	double minBaricentricWeight = 0.15;
 	double verticalGRFLowerBoundVal = 0;
-	double GRFEpsilon = 0.4;
+	double GRFEpsilon = 0.4;				// for SoftUnilateralConstraint
 	double pseudoLimbEpsilon = 0.1;
+
+	// Parameters for motor velocity constraint
+	double jointVelocityLimit = 0;
+	double jointVelocityEpsilon = 0.4;		// for SoftUnilateralConstraint
 
 protected:
 	
@@ -851,7 +855,17 @@ public:
 
 
 	P3D getCOP(int tIndex);
+
+	void getVelocityTimeIndicesFor(int tIndex, int& tm, int& tp, bool wrapAround = true) const;
+
 	void getAccelerationTimeIndicesFor(int tIndex, int& tmm, int& tm, int& tp, int& tpp, bool wrapAround = true);
 
+	struct JointVelocity {
+		JointVelocity() {}
+		JointVelocity(double t, int qIndex, double velocity)
+			: t(t), qIndex(qIndex), velocity(velocity){}
+		double t; int qIndex; double velocity;
+	};
+	bool getJointAngleVelocityProfile(std::vector<JointVelocity> &velocityProfile, std::string &error) const;
 };
 

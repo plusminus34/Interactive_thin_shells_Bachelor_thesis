@@ -39,7 +39,8 @@ KeyWord RBkeywords[] = {
 	{ "meshTransformation", RB_MESH_TRANSFORMATION },
 	{ "carveMesh", RB_CARVE_MESH_NAME},
 	{ "mappingInfo", RB_MAPPING_INFO},
-	{ "meshDescription", RB_MESH_DESCRIPTION}
+	{ "meshDescription", RB_MESH_DESCRIPTION},
+	{ "defaultAngle", RB_DEFAULT_ANGLE }
 };
 
 // determine the type of a line that was used in the input file for a rigid body

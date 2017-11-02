@@ -49,10 +49,23 @@ void MOPTWindow::addMenuItems() {
 		auto tmpVar = glApp->mainMenu->addVariable("gait duration", moptParams.motionPlanDuration);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("joint velocity limit", moptParams.jointVelocityLimit);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("joint velocity epsilon", moptParams.jointVelocityEpsilon);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
+	}
+	{
+		glApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
+	}
 
 	glApp->mainMenu->addVariable("check derivatives", moptParams.checkDerivatives);
+	glApp->mainMenu->addVariable<bool>("Log data",
+		[this](bool val) {if (locomotionManager) locomotionManager->printDebugInfo = val; },
+		[this] { if (locomotionManager) return locomotionManager->printDebugInfo; else return false; });
 	glApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "IPv1", "IPv2" });
-
 /*
 	//this is the slider for the phase...
 	new nanogui::Label(glApp->mainMenu->window(), "Slider and text box", "sans-bold");
@@ -119,6 +132,9 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.desTravelDistX = locomotionManager->motionPlan->desDistanceToTravel.x();
 	moptParams.desTravelDistZ = locomotionManager->motionPlan->desDistanceToTravel.z();
 	moptParams.desTurningAngle = locomotionManager->motionPlan->desTurningAngle;
+	moptParams.jointVelocityLimit = locomotionManager->motionPlan->jointVelocityLimit;
+	moptParams.jointVelocityEpsilon = locomotionManager->motionPlan->jointVelocityEpsilon;
+	moptParams.writeJointVelocityProfile = locomotionManager->writeVelocityProfileToFile;
 	moptParams.motionPlanDuration = locomotionManager->motionPlan->motionPlanDuration;
 	moptParams.checkDerivatives = locomotionManager->checkDerivatives;
 }
@@ -128,6 +144,9 @@ void MOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->motionPlan->desDistanceToTravel.x() = moptParams.desTravelDistX;
 	locomotionManager->motionPlan->desDistanceToTravel.z() = moptParams.desTravelDistZ;
 	locomotionManager->motionPlan->desTurningAngle = moptParams.desTurningAngle;
+	locomotionManager->motionPlan->jointVelocityLimit = moptParams.jointVelocityLimit;
+	locomotionManager->motionPlan->jointVelocityEpsilon = moptParams.jointVelocityEpsilon;
+	locomotionManager->writeVelocityProfileToFile = moptParams.writeJointVelocityProfile;
 	locomotionManager->motionPlan->motionPlanDuration = moptParams.motionPlanDuration;
 	locomotionManager->checkDerivatives = moptParams.checkDerivatives;
 }

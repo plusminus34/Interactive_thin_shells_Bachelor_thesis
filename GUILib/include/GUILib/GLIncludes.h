@@ -12,6 +12,11 @@
 #pragma warning( disable : 4996)
 #pragma warning( disable : 4006)
 
+// Make sure nanogui uses glad
+// (actually, this define is added by the nanogui CMakelists.txt, but this doesn't seem to work...)
+#ifndef NANOGUI_GLAD
+	#define NANOGUI_GLAD
+#endif // NANOUI_GLAD
 #include <nanogui/opengl.h>
 
 #include <GL/glu.h>

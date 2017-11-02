@@ -18,6 +18,15 @@
 #include <RobotDesignerLib/SimWindow.h>
 
 
+#ifdef USE_MATLAB
+	#define RUN_IN_MATLAB(x) x
+	#include <igl/matlab/matlabinterface.h>
+#else
+//	RUN_IN_MATLAB(x)
+#endif
+
+
+
 
 /**
  * Robot Design and Simulation interface
@@ -26,7 +35,7 @@ class RobotDesignerApp : public GLApplication {
 public:
 	ModularDesignWindow *designWindow = NULL;
 	MOPTWindow* moptWindow = NULL;
-
+	bool drawMOPTWindow = true;
 	SimWindow* simWindow = NULL;
 
 	Robot* robot = NULL;
@@ -102,9 +111,25 @@ public:
 
 	ParameterizedRobotDesign* prd;
 	void test_dmdp_Jacobian();
-	void compute_dmdp_Jacobian(dVector& m, DynamicArray<double>& p, MatrixNxM& dmdp);
+	void compute_dmdp_Jacobian();
 	void testOptimizeDesign();
-	void addDesignParameterSliders();
+	void CreateParametersDesignWindow();
+
+	void resyncRBS();
+	void updateParamsAndMotion(int paramIndex, double value);
+
+#ifdef USE_MATLAB
+	Engine *matlabengine;
+#endif
+
+	MatrixNxM dmdp; //The jacobian at a point
+	dVector m0;
+	bool useSVD = false;
+	MatrixNxM dmdp_V;
+	dVector p0;
+	dVector slidervalues;
+	bool updateMotionBasedOnJacobian = false;
+
 };
 
 

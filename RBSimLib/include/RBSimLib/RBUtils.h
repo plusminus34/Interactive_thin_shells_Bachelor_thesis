@@ -39,7 +39,8 @@ enum RB_KEYWORDS{
  RB_MESH_TRANSFORMATION,
  RB_CARVE_MESH_NAME,
  RB_MAPPING_INFO,
- RB_MESH_DESCRIPTION
+ RB_MESH_DESCRIPTION,
+ RB_DEFAULT_ANGLE
 };
 
 // determine the type of a line that was used in the input file for a rigid body

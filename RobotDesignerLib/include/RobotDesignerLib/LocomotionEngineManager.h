@@ -56,6 +56,7 @@ public:
 	bool printDebugInfo = true;
 	bool checkDerivatives = false;
 	bool locked = false; // once locked, cannot do further optimization
+	bool writeVelocityProfileToFile = false;
 
 	LocomotionEngineMotionPlan *motionPlan = NULL;
 	FootFallPattern* footFallPattern = NULL;
@@ -64,7 +65,7 @@ public:
 	LocomotionEngine_Constraints* constraints;
 	ConstrainedObjectiveFunction* constrainedObjectiveFunction;
 	bool useObjectivesOnly = false;
-
+	bool writeParamsToFile = true;
 public:
 	LocomotionEngineManager();
 	virtual ~LocomotionEngineManager() = 0;
