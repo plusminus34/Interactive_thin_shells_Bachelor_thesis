@@ -2,7 +2,7 @@
 
 #include <FEMSimLib/SimMeshElement.h>
 #include <FEMSimLib/Node.h>
-#include <MathLib/mathLib.h>
+#include <MathLib/MathLib.h>
 #include <MathLib/Matrix.h>
 
 enum MaterialModel3D { MM_LINEAR_ISOTROPIC, MM_STVK, MM_NEO_HOOKEAN };

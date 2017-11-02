@@ -55,7 +55,7 @@ public:
 		checkDerivatives = flag;
 	}
 
-	Node* SimulationMesh::getNodeIntersectedBy(const Ray& ray);
+	Node* getNodeIntersectedBy(const Ray& ray);
 
 	virtual void readMeshFromFile(const char* fName) = 0;
 	

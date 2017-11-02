@@ -77,12 +77,12 @@ public:
 struct ModifiableParam {
 	int index;
 	double xModifier;
-	struct ModifiableParam(int index, double zModifier) {
+	ModifiableParam(int index, double zModifier) {
 		this->index = index;
 		this->xModifier = zModifier;
 	}
 
-	struct ModifiableParam() {
+	ModifiableParam() {
 		this->index = -1;
 		this->xModifier = 0;
 	}

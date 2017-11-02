@@ -1,6 +1,6 @@
 #pragma once
 
-#include <MathLib/mathLib.h>
+#include <MathLib/MathLib.h>
 #include <MathLib/P3D.h>
 #include <MathLib/V3D.h>
 
