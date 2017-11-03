@@ -17,7 +17,6 @@
 #include <RobotDesignerLib/MOPTWindow.h>
 #include <RobotDesignerLib/SimWindow.h>
 
-
 #ifdef USE_MATLAB
 	#define RUN_IN_MATLAB(x) x
 	#include <igl/matlab/matlabinterface.h>
@@ -26,7 +25,7 @@
 #endif
 
 
-
+class IntelligentRobotEditingWindow;
 
 /**
  * Robot Design and Simulation interface
@@ -35,8 +34,14 @@ class RobotDesignerApp : public GLApplication {
 public:
 	ModularDesignWindow *designWindow = NULL;
 	MOPTWindow* moptWindow = NULL;
-	bool drawMOPTWindow = true;
 	SimWindow* simWindow = NULL;
+	IntelligentRobotEditingWindow* iEditWindow = NULL;
+
+	bool isSimWindowShown();
+	bool isMOPTWindowShown();
+	bool isIEditWindowShown();
+	bool isDesignWindowShown();
+
 
 	Robot* robot = NULL;
 	ReducedRobotState* initialRobotState = NULL;
@@ -61,7 +66,8 @@ public:
 	enum RD_VIEW_OPTIONS {
 		SIM_WINDOW_ONLY = 0,
 		SIM_AND_MOPT,
-		SIM_AND_DESIGN
+		SIM_AND_DESIGN,
+		MOPT_AND_IEDIT
 	};
 	RD_VIEW_OPTIONS viewOptions = SIM_AND_DESIGN;
 
