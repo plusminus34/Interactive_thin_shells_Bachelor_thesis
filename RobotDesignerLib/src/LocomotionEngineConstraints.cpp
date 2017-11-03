@@ -40,7 +40,7 @@ int LocomotionEngine_Constraints::getEqualityConstraintCount() {
 		for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
 			//this constraint is between the end effector positions at time j and j+1
 			if (theMotionPlan->endEffectorTrajectories[i].contactFlag[j] > 0)
-				nEqConstraints += 2;
+				nEqConstraints += 3;
 		}
 	}
 
@@ -144,6 +144,10 @@ void LocomotionEngine_Constraints::addFootSlidingConstraints(int constraintStart
 			if (theMotionPlan->endEffectorTrajectories[i].contactFlag[j] > 0){
 				V3D eeOffset = V3D(theMotionPlan->endEffectorTrajectories[i].EEPos[j], theMotionPlan->endEffectorTrajectories[i].EEPos[j + 1]);
 				eqConstraintVals[cIndex + constraintStartIndex] = eeOffset[0];
+				b[cIndex + constraintStartIndex] = 0.0;
+				cIndex++;
+
+				eqConstraintVals[cIndex + constraintStartIndex] = eeOffset[1];
 				b[cIndex + constraintStartIndex] = 0.0;
 				cIndex++;
 

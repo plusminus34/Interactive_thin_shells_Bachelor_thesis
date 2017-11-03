@@ -199,7 +199,7 @@ void LocomotionEngineMotionPlan::syncMotionPlanWithFootFallPattern(FootFallPatte
 
 			if (ffp.isInSwing(limb, j)){
 				endEffectorTrajectories[i].contactFlag[j] = 0;
-				endEffectorTrajectories[i].EEPos[j][1] = yPositions[i][j];
+//				endEffectorTrajectories[i].EEPos[j][1] = yPositions[i][j];
 			}
 
 			if (ffp.isInStance(limb, j)){

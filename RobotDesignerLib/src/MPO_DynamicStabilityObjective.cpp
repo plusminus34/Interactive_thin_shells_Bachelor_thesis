@@ -37,7 +37,7 @@ V3D MPO_DynamicStabilityObjective::getErrorVector(int j){
 	P3D zmp = x + xDotDot * (theMotionPlan->desCOMHeight / (fabs(Globals::g))) * -1;
 
 	V3D err = V3D(zmp, targetValue);
-	err[1] = 0;
+//	err[1] = 0;
 
 	return err;
 }
@@ -88,8 +88,8 @@ void MPO_DynamicStabilityObjective::addGradientTo(dVector& grad, const dVector& 
 			}
 
 			if (theMotionPlan->feetPositionsParamsStartIndex >= 0){
-				grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0] += err[0] * w * c * weight;
-				grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1] += err[2] * w * c * weight;
+				for (int k = 0; k < 3; ++k)
+					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k] += err[k] * w * c * weight;
 			}
 		}
 
@@ -130,36 +130,55 @@ void MPO_DynamicStabilityObjective::addHessianEntriesTo(DynamicArray<MTriplet>& 
 			V3D footPosi(theMotionPlan->endEffectorTrajectories[i].EEPos[j]);
 
 			if (theMotionPlan->feetPositionsParamsStartIndex >= 0 && theMotionPlan->COMPositionsParamsStartIndex >= 0){
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0, theMotionPlan->COMPositionsParamsStartIndex + 3 * j + 0, -wi*ci, weight);
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1, theMotionPlan->COMPositionsParamsStartIndex + 3 * j + 2, -wi*ci, weight);
 
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0, theMotionPlan->COMPositionsParamsStartIndex + 3 * jpp + 0, wi*ci*s, weight);
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1, theMotionPlan->COMPositionsParamsStartIndex + 3 * jpp + 2, wi*ci*s, weight);
-
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0, theMotionPlan->COMPositionsParamsStartIndex + 3 * jp + 0, -wi*ci*s, weight);
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1, theMotionPlan->COMPositionsParamsStartIndex + 3 * jp + 2, -wi*ci*s, weight);
-
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0, theMotionPlan->COMPositionsParamsStartIndex + 3 * jm + 0, -wi*ci*s, weight);
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1, theMotionPlan->COMPositionsParamsStartIndex + 3 * jm + 2, -wi*ci*s, weight);
-
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0, theMotionPlan->COMPositionsParamsStartIndex + 3 * jmm + 0, wi*ci*s, weight);
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1, theMotionPlan->COMPositionsParamsStartIndex + 3 * jmm + 2, wi*ci*s, weight);
+				for (int k = 0; k < 3; ++k) {
+					ADD_HES_ELEMENT(hessianEntries,
+									theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k,
+									theMotionPlan->COMPositionsParamsStartIndex + 3 * j + k,
+									-wi*ci,
+									weight);
+					ADD_HES_ELEMENT(hessianEntries,
+									theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k,
+									theMotionPlan->COMPositionsParamsStartIndex + 3 * jpp + k,
+									wi*ci*s,
+									weight);
+					ADD_HES_ELEMENT(hessianEntries,
+									theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k,
+									theMotionPlan->COMPositionsParamsStartIndex + 3 * jp + k,
+									-wi*ci*s,
+									weight);
+					ADD_HES_ELEMENT(hessianEntries,
+									theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k,
+									theMotionPlan->COMPositionsParamsStartIndex + 3 * jm + k,
+									-wi*ci*s,
+									weight);
+					ADD_HES_ELEMENT(hessianEntries,
+									theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k,
+									theMotionPlan->COMPositionsParamsStartIndex + 3 * jmm + k,
+									wi*ci*s,
+									weight);
+				}
 			}
 
 			if (theMotionPlan->barycentricWeightsParamsStartIndex >= 0 && theMotionPlan->COMPositionsParamsStartIndex >= 0){
 				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * j + 0, -footPosi[0]*ci, weight);
+				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * j + 1, -footPosi[1]*ci, weight);
 				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * j + 2, -footPosi[2]*ci, weight);
 
 				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * jpp + 0, footPosi[0]*ci*s, weight);
+				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * jpp + 1, footPosi[1]*ci*s, weight);
 				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * jpp + 2, footPosi[2]*ci*s, weight);
 
 				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * jp + 0, -footPosi[0]*ci*s, weight);
+				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * jp + 1, -footPosi[1]*ci*s, weight);
 				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * jp + 2, -footPosi[2]*ci*s, weight);
 
 				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * jm + 0, -footPosi[0]*ci*s, weight);
+				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * jm + 1, -footPosi[1]*ci*s, weight);
 				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * jm + 2, -footPosi[2]*ci*s, weight);
 
 				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * jmm + 0, footPosi[0]*ci*s, weight);
+				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * jmm + 1, footPosi[1]*ci*s, weight);
 				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + i, theMotionPlan->COMPositionsParamsStartIndex + 3 * jmm + 2, footPosi[2]*ci*s, weight);
 			}
 
@@ -176,19 +195,56 @@ void MPO_DynamicStabilityObjective::addHessianEntriesTo(DynamicArray<MTriplet>& 
 
 				if (theMotionPlan->feetPositionsParamsStartIndex >= 0){
 					if (i>=k){
-						ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + k * 2 + 0, wi*wk*ci*ck, weight);
-						ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + k * 2 + 1, wi*wk*ci*ck, weight);
+						ADD_HES_ELEMENT(hessianEntries,
+										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 0,
+										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + k * 3 + 0,
+										wi*wk*ci*ck,
+										weight);
+						ADD_HES_ELEMENT(hessianEntries,
+										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1,
+										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + k * 3 + 1,
+										wi*wk*ci*ck,
+										weight);
+						ADD_HES_ELEMENT(hessianEntries,
+										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 2,
+										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + k * 3 + 2,
+										wi*wk*ci*ck,
+										weight);
 					}
 				}
 
 				if (theMotionPlan->feetPositionsParamsStartIndex >= 0 && theMotionPlan->barycentricWeightsParamsStartIndex >= 0){
 					if (i == k){
-						ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + k, err[0]*ci+wi*ci*ck*footPosk[0], weight);
-						ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + k, err[2]*ci+wi*ci*ck*footPosk[2], weight);
+						ADD_HES_ELEMENT(hessianEntries,
+										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 0,
+										theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + k,
+										err[0]*ci+wi*ci*ck*footPosk[0],
+										weight);
+						ADD_HES_ELEMENT(hessianEntries,
+										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1,
+										theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + k,
+										err[1]*ci+wi*ci*ck*footPosk[1], weight);
+						ADD_HES_ELEMENT(hessianEntries,
+										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 2,
+										theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + k,
+										err[2]*ci+wi*ci*ck*footPosk[2], weight);
 					}
 					else{
-						ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + k, wi*ci*ck*footPosk[0], weight);
-						ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1, theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + k, wi*ci*ck*footPosk[2], weight);
+						ADD_HES_ELEMENT(hessianEntries,
+										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 0,
+										theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + k,
+										wi*ci*ck*footPosk[0],
+										weight);
+						ADD_HES_ELEMENT(hessianEntries,
+										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1,
+										theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + k,
+										wi*ci*ck*footPosk[1],
+										weight);
+						ADD_HES_ELEMENT(hessianEntries,
+										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 2,
+										theMotionPlan->barycentricWeightsParamsStartIndex + j * nLimbs + k,
+										wi*ci*ck*footPosk[2],
+										weight);
 					}
 				}
 			}

@@ -1,6 +1,8 @@
 #include <RobotDesignerLib/LocomotionEngineManager.h>
 #include <RobotDesignerLib/MPO_PeriodicRobotStateTrajectoriesObjective.h>
 
+#include <OptimizationLib/GradientDescentFunctionMinimizer.h>
+
 LocomotionEngineManager::LocomotionEngineManager(){
 }
 
@@ -32,6 +34,7 @@ double LocomotionEngineManager::optimizeMoptionPlan(int maxIterations) {
 
 	if (useObjectivesOnly) {
 		NewtonFunctionMinimizer minimizer(maxIterations);
+//		GradientDescentFunctionMinimizer minimizer;
 		minimizer.maxLineSearchIterations = 12;
 		minimizer.printOutput = energyFunction->printDebugInfo;
 		minimizer.minimize(energyFunction, params, val);

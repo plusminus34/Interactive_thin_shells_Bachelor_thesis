@@ -76,8 +76,9 @@ void MPO_PseudoLimbLengthConstraint::addGradientTo(dVector& grad, const dVector&
 				}
 
 				if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
-					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0] += -dConstraintdD*pseudoLimb[0];
-					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1] += -dConstraintdD*pseudoLimb[2];
+					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 0] += -dConstraintdD*pseudoLimb[0];
+					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1] += -dConstraintdD*pseudoLimb[1];
+					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 2] += -dConstraintdD*pseudoLimb[2];
 
 				}
 				
@@ -121,13 +122,10 @@ void MPO_PseudoLimbLengthConstraint::addHessianEntriesTo(DynamicArray<MTriplet>&
 				pseudoLimb.toUnit();
 				Matrix3x3 ddT = pseudoLimb.outerProductWith(pseudoLimb);
 				
-				
 				// dd Obj ddxcom
 				Matrix3x3 dsame			= ddConstraintdDdD*ddT + dConstraintdD / pseudoLimb_length*(I - ddT);
 				Matrix3x3 ddifferent	= -dsame;
 				
-
-
 				for (uint s = 0; s < 3; s++) {
 					for (uint t = 0; t < 3; t++) {
 						if (theMotionPlan->COMPositionsParamsStartIndex >= 0)
@@ -135,47 +133,32 @@ void MPO_PseudoLimbLengthConstraint::addHessianEntriesTo(DynamicArray<MTriplet>&
 								theMotionPlan->COMPositionsParamsStartIndex + 3 * j + s,
 								theMotionPlan->COMPositionsParamsStartIndex + 3 * j + t,
 								dsame(s, t), weight);
-						
-						if (s != 2 && t != 2) {
-							if (theMotionPlan->feetPositionsParamsStartIndex >= 0){
-								uint ss = (s == 1) ? 2 : s;
-								uint tt = (t == 1) ? 2 : t;
-								
-								ADD_HES_ELEMENT(hessianEntries,
-									theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + s,
-									theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + t,
-									dsame(ss, tt), weight);
-							}
+
+						if (theMotionPlan->feetPositionsParamsStartIndex >= 0){
+							ADD_HES_ELEMENT(hessianEntries,
+								theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + s,
+								theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + t,
+								dsame(s, t), weight);
 						}
 					}
 				}
 
-
-				
 
 				for (uint s = 0; s < 3; s++) {
-					for (uint t = 0; t < 2; t++) {
+					for (uint t = 0; t < 3; t++) {
 						if (theMotionPlan->feetPositionsParamsStartIndex >= 0 && theMotionPlan->COMPositionsParamsStartIndex >= 0){
-							uint tt = (t == 1) ? 2 : t;
-							
 							ADD_HES_ELEMENT(hessianEntries,
 								theMotionPlan->COMPositionsParamsStartIndex + 3 * j + s,
-								theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + t,
-								ddifferent(s, tt), weight);
+								theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + t,
+								ddifferent(s, t), weight);
 
 							ADD_HES_ELEMENT(hessianEntries,
-								theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + t,
+								theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + t,
 								theMotionPlan->COMPositionsParamsStartIndex + 3 * j + s,
-								ddifferent(tt,s), weight);
+								ddifferent(t, s), weight);
 						}
 					}
 				}
-
-				
-
-
-				
-
 
 				/*double fVertical = theMotionPlan->endEffectorTrajectories[i].contactForce[j](1);
 				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];

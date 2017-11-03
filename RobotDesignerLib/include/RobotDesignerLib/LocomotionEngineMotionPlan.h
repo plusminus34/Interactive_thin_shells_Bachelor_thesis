@@ -410,7 +410,7 @@ public:
 
 		if (optimizeEndEffectorPositions){
 			feetPositionsParamsStartIndex = paramCount;
-			paramCount += nSamplePoints * endEffectorTrajectories.size() * 2;
+			paramCount += nSamplePoints * endEffectorTrajectories.size() * 3;
 		}
 
 		if (optimizeBarycentricWeights){
@@ -457,7 +457,7 @@ public:
 		if (optimizeEndEffectorPositions){
 			for (int j=0; j<nSamplePoints;j++)
 				for (uint i=0;i<endEffectorTrajectories.size();i++)
-					for (int k=0;k<2;k++){
+					for (int k=0; k<3; k++){
 						minLimits.push_back(0);
 					}
 		}
@@ -514,7 +514,7 @@ public:
 		if (optimizeEndEffectorPositions){
 			for (int j=0; j<nSamplePoints;j++)
 				for (uint i=0;i<endEffectorTrajectories.size();i++)
-					for (int k=0;k<2;k++){
+					for (int k=0; k<3; k++){
 						maxLimits.push_back(0);
 					}
 		}
@@ -572,6 +572,7 @@ public:
 			for (int j=0; j<nSamplePoints;j++)
 				for (uint i=0;i<endEffectorTrajectories.size();i++){
 					params.push_back(endEffectorTrajectories[i].EEPos[j][0]);
+					params.push_back(endEffectorTrajectories[i].EEPos[j][1]);
 					params.push_back(endEffectorTrajectories[i].EEPos[j][2]);
 				}
 		}
@@ -620,6 +621,7 @@ public:
 			for (int j=0; j<nSamplePoints;j++){
 				for (uint i=0;i<endEffectorTrajectories.size();i++){
 					endEffectorTrajectories[i].EEPos[j][0] = p[pIndex++];
+					endEffectorTrajectories[i].EEPos[j][1] = p[pIndex++];
 					endEffectorTrajectories[i].EEPos[j][2] = p[pIndex++];
 				}
 			}
