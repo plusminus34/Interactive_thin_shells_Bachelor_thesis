@@ -28,8 +28,8 @@ class EEParameters {
 public:
 	P3D initialCoords;
 
-	EEParameters(RBEndEffector* rb) {
-		initialCoords = rb->coords;
+	EEParameters(RBEndEffector* ree) {
+		initialCoords = ree->coords;
 	}
 
 	EEParameters() {
@@ -44,6 +44,7 @@ Given a set of parameters, instances of this class will output new robot morphol
 class ParameterizedRobotDesign {
 public:
 	Robot* robot;
+	ReducedRobotState defaultRobotState;
 
 	//the morphology of the design is given by the parameterization of each joint (e.g. position in child and parent coords, rotation axis, etc).
 	//we will store the initial morphology here
@@ -52,25 +53,29 @@ public:
 	map<RBEndEffector*, EEParameters> initialEEMorphology;
 
 	ParameterizedRobotDesign(Robot* robot);
-	~ParameterizedRobotDesign();
+	virtual ~ParameterizedRobotDesign();
 	virtual int getNumberOfParameters() = 0;
 	virtual void getCurrentSetOfParameters(DynamicArray<double>& params) = 0;
 	virtual void setParameters(const DynamicArray<double>& params) = 0;
-	
-	void getCurrentSetOfParameters(dVector& params) {
+
+	void updateMorphology();
+
+	virtual void getCurrentSetOfParameters(dVector& params) {
 		DynamicArray<double> tempparams;
 		getCurrentSetOfParameters(tempparams);
 		params = Eigen::Map<dVector>(tempparams.data(), tempparams.size());
 	}
-	void setParameters(const dVector& params) {
+
+	virtual void setParameters(const dVector& params) {
 		assert(currentParams.size() == params.size());
 
 		DynamicArray<double> tempparams(params.size());
 
 		dVector::Map(&tempparams[0], tempparams.size()) = params;
-		//offset the positions of the hip joints, symetrically...
+
 		setParameters(tempparams);
 	}
+	
 };
 
 
@@ -106,13 +111,14 @@ private:
 
 	//we will use the two maps below both to figure out how to interpret the parameters (e.g. which parameters mean what) as well as to know, for a selected bone or joint, where to write parameters that might be input in an indirect way via a GUI
 
+public:
 	//tells you where in the parameter list can we find the params for each joint (translational offsets per joint)
 	map<Joint*, ModifiableParam> jointParamMap;
-	//tells you where in the parameter list can we find the params for each bone (1 param/scale/length per joint)
-	map<RigidBody*, int> boneParamMap;
 	//tells you where in the parameter list can we find the params that control the end effector placements (translational offsets)
 	map<RigidBody*, ModifiableParam> eeParamMap;
 
+	using ParameterizedRobotDesign::getCurrentSetOfParameters;
+	using ParameterizedRobotDesign::setParameters;
 
 
 public:
@@ -193,33 +199,20 @@ public:
 				jointParamMap[robot->jointList[i]].xModifier = 1;
 		}
 
-/*
-		//now, do the same for the bodies, except we only have one parameter per bone (root not whistanding)
-		for (int i = 1; i < robot->getRigidBodyCount(); i++) {
-			if (boneMirrorMap.count(robot->getRigidBody(i))) {
-				RigidBody* mirrorBone = boneMirrorMap[robot->getRigidBody(i)];
-				//if we've already pushed a parameter for this bone's mirror, then make sure we're using the same index
-				if (boneParamMap.count(mirrorBone))
-					boneParamMap[robot->getRigidBody(i)] = boneParamMap[mirrorBone];
-			}
-			if (!boneParamMap.count(robot->getRigidBody(i))){
-				//create a new set of parameters for this joint specifically, and point to it...
-				boneParamMap[robot->getRigidBody(i)] = currentParams.size();
-				currentParams.push_back(1);		
-			}
-		}
-*/
 		//and so... all done...
 	}
 
 	int getNumberOfParameters() { return currentParams.size(); }
 
-	void getCurrentSetOfParameters(DynamicArray<double>& params) {
+	virtual void getCurrentSetOfParameters(DynamicArray<double>& params) {
 		params = currentParams;
 	}
 
-	void setParameters(const DynamicArray<double>& params) {
+	virtual void setParameters(const DynamicArray<double>& params) {
 		currentParams = params;
+
+		ReducedRobotState rs(robot);
+		robot->setState(&defaultRobotState);
 
 		// go through each joint and apply its offset as specified in the param list...
 		for (int i = 0; i < robot->getRigidBodyCount(); i++) {
@@ -243,10 +236,10 @@ public:
 			V3D jointOffset1(params[pIndex + 0] * jointParamMap[robot->jointList[i]].xModifier, params[pIndex + 1], params[pIndex + 2]);
 			V3D jointOffset2(params[pIndex + 3] * jointParamMap[robot->jointList[i]].xModifier, params[pIndex + 4], params[pIndex + 5]);
 
-			robot->jointList[i]->pJPos = initialJointMorphology[robot->jointList[i]].pJPos + jointOffset1 + robot->jointList[i]->parent->getLocalCoordinates(jointOffset2);
-			robot->jointList[i]->cJPos = initialJointMorphology[robot->jointList[i]].cJPos + robot->jointList[i]->child->getLocalCoordinates(jointOffset2);
+			robot->jointList[i]->pJPos = initialJointMorphology[robot->jointList[i]].pJPos + jointOffset1;
+			robot->jointList[i]->cJPos = initialJointMorphology[robot->jointList[i]].cJPos + jointOffset2;
 		}
-
+		robot->setState(&rs);
 	}
 
 };

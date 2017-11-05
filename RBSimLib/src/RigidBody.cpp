@@ -125,8 +125,10 @@ void RigidBody::draw(int flags, V3D color, double alpha) {
 		P3D firstFeature = (rbProperties.bodyPointFeatures.size() > 0) ? (rbProperties.bodyPointFeatures.begin()->coords) : P3D();
 		P3D lastFeature = (rbProperties.bodyPointFeatures.size() > 0) ? ((rbProperties.bodyPointFeatures.end() - 1)->coords) : P3D();
 
-		glColor3d(1, selected ? 0.5 : 1, selected ? 0.5 : 1);
-		glColor3d(color[0], color[1], color[2]);
+		if (flags & HIGHLIGHT_SELECTED)
+			glColor3d(1, selected ? 0.5 : 1, selected ? 0.5 : 1);
+		else
+			glColor3d(color[0], color[1], color[2]);
 		for (uint i = 0; i < pJoints.size(); i++)
 			drawCylinder(pJoints[i]->cJPos, firstFeature, abstractViewCylinderRadius, 16);
 
@@ -135,13 +137,17 @@ void RigidBody::draw(int flags, V3D color, double alpha) {
 			drawSphere(rbProperties.bodyPointFeatures[i].coords, abstractViewCylinderRadius * 1.2, 16);
 		}
 
-		glColor3d(1, selected ? 0.5 : 1, selected ? 0.5 : 1);
-		glColor3d(color[0], color[1], color[2]);
+		if (flags & HIGHLIGHT_SELECTED)
+			glColor3d(1, selected ? 0.5 : 1, selected ? 0.5 : 1);
+		else
+			glColor3d(color[0], color[1], color[2]);
 		for (uint i = 0; i < cJoints.size(); i++)
 			drawCylinder(lastFeature, cJoints[i]->pJPos, abstractViewCylinderRadius, 16);
 
-		glColor3d(color[0], color[1], color[2]);
-		glColor3d(1, selected ? 0.5 : 1, selected ? 0.5 : 1);
+		if (flags & HIGHLIGHT_SELECTED)
+			glColor3d(1, selected ? 0.5 : 1, selected ? 0.5 : 1);
+		else
+			glColor3d(color[0], color[1], color[2]);
 		for (uint i = 0; i < rbProperties.endEffectorPoints.size(); i++)
 			drawCylinder(lastFeature, rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius, 16);
 

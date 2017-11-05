@@ -37,10 +37,10 @@ public:
 	SimWindow* simWindow = NULL;
 	IntelligentRobotEditingWindow* iEditWindow = NULL;
 
-	bool isSimWindowShown();
-	bool isMOPTWindowShown();
-	bool isIEditWindowShown();
-	bool isDesignWindowShown();
+	bool shouldShowSimWindow();
+	bool shouldShowMOPTWindow();
+	bool shouldShowIEditWindow();
+	bool shouldShowDesignWindow();
 
 
 	Robot* robot = NULL;
@@ -69,7 +69,7 @@ public:
 		SIM_AND_DESIGN,
 		MOPT_AND_IEDIT
 	};
-	RD_VIEW_OPTIONS viewOptions = SIM_AND_DESIGN;
+	RD_VIEW_OPTIONS viewOptions = MOPT_AND_IEDIT;// SIM_AND_DESIGN;
 
 	bool doDebug = false;
 
@@ -115,7 +115,7 @@ public:
 	void createRobotFromCurrentDesign();
 
 
-	ParameterizedRobotDesign* prd;
+	SymmetricParameterizedRobotDesign* prd = NULL;
 	void test_dmdp_Jacobian();
 	void compute_dmdp_Jacobian();
 	void testOptimizeDesign();

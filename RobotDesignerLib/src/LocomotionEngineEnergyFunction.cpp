@@ -109,7 +109,7 @@ void LocomotionEngine_EnergyFunction::addHessianEntriesTo(DynamicArray<MTriplet>
 	{
 		std::vector<MTriplet> hessianEntries_private;
 		#pragma omp for schedule(dynamic) nowait //fill vec_private in parallel
-		for (int i = 0; i < objectives.size(); i++)
+		for (uint i = 0; i < objectives.size(); i++)
 		{ 
 			objectives[i]->addHessianEntriesTo(hessianEntries_private, p);
 		}

@@ -157,34 +157,34 @@ void RobotDesignerApp::setupWindows() {
 RobotDesignerApp::~RobotDesignerApp(void){
 }
 
-bool RobotDesignerApp::isSimWindowShown() {
+bool RobotDesignerApp::shouldShowSimWindow() {
 	return viewOptions != MOPT_AND_IEDIT && simWindow;
 }
 
-bool RobotDesignerApp::isMOPTWindowShown() {
-	return (viewOptions == SIM_AND_MOPT || viewOptions != MOPT_AND_IEDIT) && moptWindow;
+bool RobotDesignerApp::shouldShowMOPTWindow() {
+	return (viewOptions == SIM_AND_MOPT || viewOptions == MOPT_AND_IEDIT) && moptWindow;
 }
 
-bool RobotDesignerApp::isIEditWindowShown() {
+bool RobotDesignerApp::shouldShowIEditWindow() {
 	return (viewOptions == MOPT_AND_IEDIT) && iEditWindow;
 }
 
-bool RobotDesignerApp::isDesignWindowShown() {
+bool RobotDesignerApp::shouldShowDesignWindow() {
 	return (viewOptions == SIM_AND_DESIGN) && designWindow;
 }
 
 //triggered when mouse moves
 bool RobotDesignerApp::onMouseMoveEvent(double xPos, double yPos) {
-	if (isSimWindowShown() && (simWindow->isActive() || simWindow->mouseIsWithinWindow(xPos, yPos)))
+	if (shouldShowSimWindow() && (simWindow->isActive() || simWindow->mouseIsWithinWindow(xPos, yPos)))
 		if (simWindow->onMouseMoveEvent(xPos, yPos)) return true;
 
-	if (isMOPTWindowShown() && (moptWindow->isActive() || moptWindow->mouseIsWithinWindow(xPos, yPos)))
+	if (shouldShowMOPTWindow() && (moptWindow->isActive() || moptWindow->mouseIsWithinWindow(xPos, yPos)))
 		if (moptWindow->onMouseMoveEvent(xPos, yPos)) return true;
 
-	if (isDesignWindowShown() && (designWindow->isActive() || designWindow->mouseIsWithinWindow(xPos, yPos)))
+	if (shouldShowDesignWindow() && (designWindow->isActive() || designWindow->mouseIsWithinWindow(xPos, yPos)))
 		if (designWindow->onMouseMoveEvent(xPos, yPos)) return true;
 
-	if (isIEditWindowShown() && (iEditWindow->isActive() || iEditWindow->mouseIsWithinWindow(xPos, yPos)))
+	if (shouldShowIEditWindow() && (iEditWindow->isActive() || iEditWindow->mouseIsWithinWindow(xPos, yPos)))
 		if (iEditWindow->onMouseMoveEvent(xPos, yPos)) return true;
 
 	if (GLApplication::onMouseMoveEvent(xPos, yPos)) return true;
@@ -194,16 +194,16 @@ bool RobotDesignerApp::onMouseMoveEvent(double xPos, double yPos) {
 
 //triggered when mouse buttons are pressed
 bool RobotDesignerApp::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
-	if (isSimWindowShown() && (simWindow->isActive() || simWindow->mouseIsWithinWindow(xPos, yPos)))
+	if (shouldShowSimWindow() && (simWindow->isActive() || simWindow->mouseIsWithinWindow(xPos, yPos)))
 		if (simWindow->onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
 
-	if (isMOPTWindowShown() && (moptWindow->isActive() || moptWindow->mouseIsWithinWindow(xPos, yPos)))
+	if (shouldShowMOPTWindow() && (moptWindow->isActive() || moptWindow->mouseIsWithinWindow(xPos, yPos)))
 		if (moptWindow->onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
 
-	if (isDesignWindowShown() && (designWindow->isActive() || designWindow->mouseIsWithinWindow(xPos, yPos)))
+	if (shouldShowDesignWindow() && (designWindow->isActive() || designWindow->mouseIsWithinWindow(xPos, yPos)))
 		if (designWindow->onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
 
-	if (isIEditWindowShown() && (iEditWindow->isActive() || iEditWindow->mouseIsWithinWindow(xPos, yPos)))
+	if (shouldShowIEditWindow() && (iEditWindow->isActive() || iEditWindow->mouseIsWithinWindow(xPos, yPos)))
 		if (iEditWindow->onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
 
 	if (GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
@@ -213,16 +213,16 @@ bool RobotDesignerApp::onMouseButtonEvent(int button, int action, int mods, doub
 
 //triggered when using the mouse wheel
 bool RobotDesignerApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
-	if (isSimWindowShown() && (simWindow->isActive() || simWindow->mouseIsWithinWindow(GlobalMouseState::lastMouseX, GlobalMouseState::lastMouseY)))
+	if (shouldShowSimWindow() && (simWindow->isActive() || simWindow->mouseIsWithinWindow(GlobalMouseState::lastMouseX, GlobalMouseState::lastMouseY)))
 		if (simWindow->onMouseWheelScrollEvent(xOffset, yOffset)) return true;
 
-	if (isMOPTWindowShown() && (moptWindow->isActive() || moptWindow->mouseIsWithinWindow(GlobalMouseState::lastMouseX, GlobalMouseState::lastMouseY)))
+	if (shouldShowMOPTWindow() && (moptWindow->isActive() || moptWindow->mouseIsWithinWindow(GlobalMouseState::lastMouseX, GlobalMouseState::lastMouseY)))
 		if (moptWindow->onMouseWheelScrollEvent(xOffset, yOffset)) return true;
 
-	if (isDesignWindowShown() && (designWindow->isActive() || designWindow->mouseIsWithinWindow(GlobalMouseState::lastMouseX, GlobalMouseState::lastMouseY)))
+	if (shouldShowDesignWindow() && (designWindow->isActive() || designWindow->mouseIsWithinWindow(GlobalMouseState::lastMouseX, GlobalMouseState::lastMouseY)))
 		if (designWindow->onMouseWheelScrollEvent(xOffset, yOffset)) return true;
 
-	if (isIEditWindowShown() && (iEditWindow->isActive() || iEditWindow->mouseIsWithinWindow(GlobalMouseState::lastMouseX, GlobalMouseState::lastMouseY)))
+	if (shouldShowIEditWindow() && (iEditWindow->isActive() || iEditWindow->mouseIsWithinWindow(GlobalMouseState::lastMouseX, GlobalMouseState::lastMouseY)))
 		if (iEditWindow->onMouseWheelScrollEvent(xOffset, yOffset)) return true;
 
 	if (GLApplication::onMouseWheelScrollEvent(xOffset, yOffset)) return true;
@@ -290,6 +290,8 @@ void RobotDesignerApp::loadFile(const char* fName) {
 			robot->loadReducedStateFromFile(fName);
 			delete initialRobotState;
 			initialRobotState = new ReducedRobotState(robot);
+			if (prd)
+				prd->updateMorphology();
 		}
 		return;
 	}
@@ -297,7 +299,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 	if (fNameExt.compare("rbs") == 0 ){ 
 		robot = simWindow->loadRobot(fName);
 
-		//todo: just a test for now
+		delete prd;
 		prd = new SymmetricParameterizedRobotDesign(robot);
 //		CreateParametersDesignWindow();
 //		menuScreen->performLayout();
@@ -341,6 +343,8 @@ void RobotDesignerApp::createRobotFromCurrentDesign() {
 		initialRobotState = new ReducedRobotState(robot);
 		robot->populateState(initialRobotState, true);
 		robot->setState(initialRobotState);
+		if (prd)
+			prd->updateMorphology();
 	}
 
 	if (robot)
@@ -433,18 +437,18 @@ void RobotDesignerApp::drawScene() {
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
 void RobotDesignerApp::drawAuxiliarySceneInfo() {
-	if (isMOPTWindowShown()) {
+	if (shouldShowMOPTWindow()) {
 		moptWindow->setAnimationParams(moptWindow->ffpViewer->cursorPosition, 0);
 		moptWindow->draw();
 		moptWindow->drawAuxiliarySceneInfo();
 	}
 
-	if (isDesignWindowShown()) {
+	if (shouldShowDesignWindow()) {
 		designWindow->draw();
 		designWindow->drawAuxiliarySceneInfo();
 	}
 
-	if (isSimWindowShown()) {
+	if (shouldShowSimWindow()) {
 		if (followCameraTarget)
 			simWindow->getCamera()->followTarget(getCameraTarget());
 
@@ -452,9 +456,9 @@ void RobotDesignerApp::drawAuxiliarySceneInfo() {
 		simWindow->drawAuxiliarySceneInfo();
 	}
 
-	if (isIEditWindowShown()) {
-		designWindow->draw();
-		designWindow->drawAuxiliarySceneInfo();
+	if (shouldShowIEditWindow()) {
+		iEditWindow->draw();
+		iEditWindow->drawAuxiliarySceneInfo();
 	}
 }
 
@@ -684,24 +688,20 @@ void RobotDesignerApp::CreateParametersDesignWindow()
 	slidervalues.setZero();
 }
 
-void RobotDesignerApp::updateParamsAndMotion(int paramIndex, double value)
-{
+void RobotDesignerApp::updateParamsAndMotion(int paramIndex, double value){
 	slidervalues(paramIndex) = value;
-	dVector p;	
-	if (!useSVD)
-	{
+	dVector p;
+	if (!useSVD){
 		prd->getCurrentSetOfParameters(p);
 		p(paramIndex) = value;
 	}
-	else
-	{
+	else{
 		p = p0 + dmdp_V*slidervalues;
 	}
 
 	prd->setParameters(p);
 	resyncRBS();
-	if (updateMotionBasedOnJacobian)
-	{
+	if (updateMotionBasedOnJacobian){
 		dVector m; moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
 		m = m0 + dmdp*dVector::Map(p.data(),p.size());
 		moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m);
