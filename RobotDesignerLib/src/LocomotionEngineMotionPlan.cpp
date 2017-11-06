@@ -158,29 +158,25 @@ void LocomotionEngineMotionPlan::syncFootFallPatternWithMotionPlan(FootFallPatte
 }
 
 void LocomotionEngineMotionPlan::syncMotionPlanWithFootFallPattern(FootFallPattern& ffp){
-	std::vector<std::vector<double> > yPositions;
+
 	for (uint i=0;i<endEffectorTrajectories.size();i++){
-		yPositions.push_back(std::vector<double>());
+		DynamicArray<double> &targetEEPosY = endEffectorTrajectories[i].targetEEPosY;
 		GenericLimb* limb = endEffectorTrajectories[i].theLimb;
 
+		targetEEPosY.resize(nSamplePoints);
 		for (int j=0;j<nSamplePoints;j++){
-			yPositions.back().push_back(0);
-
 			if (ffp.isInSwing(limb, j)){
 				if (!ffp.isStart(limb, j) || ffp.isAlwaysInSwing(limb)){
 					double swingPhase = ffp.getSwingPhaseForTimeIndex(limb, j);
 					double heightRatio = 1 - fabs(0.5 - swingPhase) / 0.5;
 //					Logger::consolePrint("swing phase: %lf height: %lf\n", swingPhase, heightRatio);
 //					heightRatio = 1.0;
-					yPositions.back().back() = swingFootHeight * heightRatio;
+					targetEEPosY[j] = swingFootHeight * heightRatio;
 				}
 			}
 		}
 	}
-	syncMotionPlanWithFootFallPattern(ffp,yPositions);
-}
 
-void LocomotionEngineMotionPlan::syncMotionPlanWithFootFallPattern(FootFallPattern& ffp, const std::vector<std::vector<double> > &yPositions){
 	for (int j=0;j<nSamplePoints;j++){
 		int nStanceLimbs = 0;
 		double sumWeights = 0;
@@ -195,7 +191,7 @@ void LocomotionEngineMotionPlan::syncMotionPlanWithFootFallPattern(FootFallPatte
 		for (uint i=0;i<endEffectorTrajectories.size();i++){
 			GenericLimb* limb = endEffectorTrajectories[i].theLimb;
 			endEffectorTrajectories[i].contactFlag[j] = 1;
-			endEffectorTrajectories[i].EEPos[j][1] = 0;
+//			endEffectorTrajectories[i].EEPos[j][1] = 0;
 
 			if (ffp.isInSwing(limb, j)){
 				endEffectorTrajectories[i].contactFlag[j] = 0;

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-//#include <MathLib/AutoDiff.h>
+#include <MathLib/AutoDiff.h>
 #include <Eigen/Eigen>
 #include <unsupported/Eigen/AutoDiff>
 
@@ -48,6 +48,18 @@
 //	std::cout << "f =  " << f << std::endl;
 ////	std::cout << "f' = " << f.deriv() << std::endl;
 //}
+
+TEST(AutoDiffTest, AutoDiffTest) {
+	typedef AutoDiffT<double, double> ScalarDiff;
+	typedef AutoDiffT<ScalarDiff, ScalarDiff> ScalarDiffDiff;
+
+	ScalarDiffDiff x(ScalarDiff(3, 1), ScalarDiff(1, 0));
+
+	ScalarDiffDiff f = (ScalarDiffDiff)4*x*x;
+
+	EXPECT_EQ(f.deriv().value(), 2*4*x.value().value());
+	EXPECT_EQ(f.deriv().deriv(), 2*4);
+}
 
 // adapted from Eigen AutoDiff example
 TEST(AutoDiffTest, EigenAutoDiffScalarTest) {

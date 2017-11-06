@@ -25,6 +25,8 @@ public:
 	RigidBody* endEffectorRB;
 	P3D endEffectorLocalCoords;
 
+	DynamicArray<double> targetEEPosY;
+
 	//this is the limb the end effector trajectory belongs to
 	GenericLimb* theLimb;
 	//and this is the index of the end effector contact point that it represents

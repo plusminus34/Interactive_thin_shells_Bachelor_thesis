@@ -29,13 +29,11 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& s){
 			if (j>0){
 				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j-1];
 				V3D eeOffset = V3D(theMotionPlan->endEffectorTrajectories[i].EEPos[j], theMotionPlan->endEffectorTrajectories[i].EEPos[j-1]);
-//				eeOffset[1] = 0;
 				retVal += 0.5 * eeOffset.length2() * c;
 			}
 			if (j<theMotionPlan->nSamplePoints-1){
 				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];// *theMotionPlan->endEffectorTrajectories[i].contactFlag[j + 1];
 				V3D eeOffset = V3D(theMotionPlan->endEffectorTrajectories[i].EEPos[j], theMotionPlan->endEffectorTrajectories[i].EEPos[j+1]);
-//				eeOffset[1] = 0;
 				retVal += 0.5 * eeOffset.length2() * c;				
 			}
 		}
@@ -63,35 +61,21 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 					double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j - 1];
 
 					V3D eeOffset = V3D(theMotionPlan->endEffectorTrajectories[i].EEPos[j], theMotionPlan->endEffectorTrajectories[i].EEPos[j-1]);
-//					eeOffset[1] = 0;
 
 					for (int k = 0; k < 3; ++k) {
 						grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k] -= eeOffset[k] * c * weight;
 						grad[theMotionPlan->feetPositionsParamsStartIndex + (j-1) * nLimbs * 3 + i * 3 + k] += eeOffset[k] * c * weight;
 					}
-
-//					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1] -= eeOffset[1] * c * weight;
-//					grad[theMotionPlan->feetPositionsParamsStartIndex + (j-1) * nLimbs * 2 + i * 2 + 1] += eeOffset[1] * c * weight;
-
-//					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1] -= eeOffset[2] * c * weight;
-//					grad[theMotionPlan->feetPositionsParamsStartIndex + (j-1) * nLimbs * 2 + i * 2 + 1] += eeOffset[2] * c * weight;
-
 				}
 				if (j<theMotionPlan->nSamplePoints-1){
 					double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];// *theMotionPlan->endEffectorTrajectories[i].contactFlag[j + 1];
 					V3D eeOffset = V3D(theMotionPlan->endEffectorTrajectories[i].EEPos[j], theMotionPlan->endEffectorTrajectories[i].EEPos[j+1]);
-//					eeOffset[1] = 0;
 
 					for (int k = 0; k < 3; ++k) {
 						grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k] -= eeOffset[k] * c * weight;
 						grad[theMotionPlan->feetPositionsParamsStartIndex + (j+1) * nLimbs * 3 + i * 3 + k] += eeOffset[k] * c * weight;
 					}
 
-//					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0] -= eeOffset[0] * c * weight;
-//					grad[theMotionPlan->feetPositionsParamsStartIndex + (j+1) * nLimbs * 2 + i * 2 + 0] += eeOffset[0] * c * weight;
-
-//					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1] -= eeOffset[2] * c * weight;
-//					grad[theMotionPlan->feetPositionsParamsStartIndex + (j+1) * nLimbs * 2 + i * 2 + 1] += eeOffset[2] * c * weight;
 				}
 			}
 		}

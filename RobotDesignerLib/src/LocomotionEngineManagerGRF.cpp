@@ -1,6 +1,7 @@
 #include <RobotDesignerLib/LocomotionEngineManagerGRF.h>
 
 #include <RobotDesignerLib/MPO_VelocitySoftConstraints.h>
+#include <RobotDesignerLib/MPO_EEPosSwingObjective.h>
 
 //#define DEBUG_WARMSTART
 //#define CHECK_DERIVATIVES_AFTER_WARMSTART
@@ -336,6 +337,9 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 	//constraints ensuring feet don't slide...
 	ef->objectives.push_back(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0));
+
+	// constraint ensuring the y component of the EE position follows the swing motion
+	ef->objectives.push_back(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0));
 
 	//periodic boundary constraints...
 	if (ef->theMotionPlan->wrapAroundBoundaryIndex >= 0) {

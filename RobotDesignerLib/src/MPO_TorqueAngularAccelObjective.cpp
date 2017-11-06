@@ -447,25 +447,25 @@ void MPO_TorqueAngularAccelObjective::AngleAxisTorqueCrossHessianHelper(DynamicA
 
 				for (int i = 0; i < 3; i++)
 					for (int j = 0; j < 3; j++)
-						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjp + j, H(3 * i, j), weight);
+						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjp + j, H(i, j), weight);
 
 				H = -dTdE * scale * dw2.transpose();
 
 				for (int i = 0; i < 3; i++)
 					for (int j = 0; j < 3; j++)
-						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjpp + j, H(3 * i, j), weight);
+						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjpp + j, H(i, j), weight);
 
 				H = dTdE * scale * dw3.transpose();
 
 				for (int i = 0; i < 3; i++)
 					for (int j = 0; j < 3; j++)
-						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjmm + j, H(3 * i, j), weight);
+						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjmm + j, H(i, j), weight);
 
 				H = dTdE * scale * dw4.transpose();
 
 				for (int i = 0; i < 3; i++)
 					for (int j = 0; j < 3; j++)
-						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjm + j, H(3 * i, j), weight);
+						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjm + j, H(i, j), weight);
 			}
 
 		}
@@ -532,7 +532,7 @@ void MPO_TorqueAngularAccelObjective::TorqueInnerHessianHelper(DynamicArray<MTri
 
 							for (int i = 0; i < 3; i++)
 								for (int j = 0; j < 3; j++)
-									ADD_HES_ELEMENT(hessianEntries, t_startIndexE + i, startIndexF + j, H(i * 3, j), weight);
+									ADD_HES_ELEMENT(hessianEntries, t_startIndexE + i, startIndexF + j, H(i, j), weight);
 						}
 
 
@@ -571,7 +571,7 @@ void MPO_TorqueAngularAccelObjective::TorqueInnerHessianHelper(DynamicArray<MTri
 
 							for (int i = 0; i < 3; i++)
 								for (int j = 0; j < 3; j++)
-									ADD_HES_ELEMENT(hessianEntries, t_startIndexE + i, startIndexC + j, H(i * 3, j), weight);
+									ADD_HES_ELEMENT(hessianEntries, t_startIndexE + i, startIndexC + j, H(i, j), weight);
 						}
 
 					}
@@ -584,8 +584,8 @@ void MPO_TorqueAngularAccelObjective::TorqueInnerHessianHelper(DynamicArray<MTri
 							H = t_dTdE * dTdE.transpose();
 
 							for (int p = 0; p < 3; p++)
-								for (int j = 0; j <= (i == k ? p : 1); j++) // MGSTUCK: what's happening here? `j <= ... ` correct?
-									ADD_HES_ELEMENT(hessianEntries, t_startIndexE + p, startIndexE + j, H(p * 3, j * 3), weight);
+								for (int j = 0; j < (i == k ? p+1 : 3); j++) // MGSTUCK: what's happening here? `j <= ... ` correct?
+									ADD_HES_ELEMENT(hessianEntries, t_startIndexE + p, startIndexE + j, H(p, j), weight);
 						}
 					}
 				}
