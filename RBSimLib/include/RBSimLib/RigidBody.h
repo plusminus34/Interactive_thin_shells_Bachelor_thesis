@@ -18,6 +18,7 @@ class ArticulatedFigure;
 #define SHOW_JOINTS						0x0010
 #define SHOW_MATERIALS					0x0020
 #define SHOW_ABSTRACT_VIEW				0x0040
+#define HIGHLIGHT_SELECTED				0x0080
 
 struct MappingInfo {
 	int index1 = -1;
@@ -63,7 +64,7 @@ public:
 
 	bool inContact = false;
 
-	double abstractViewCylinderRadius = 0.005;
+	double abstractViewCylinderRadius = 0.01;
 
 public:
 	/**

@@ -178,7 +178,7 @@ void IKApp::drawScene() {
 	glColor3d(1, 1, 1);
 	glDisable(GL_LIGHTING);
 
-	int flags = SHOW_ABSTRACT_VIEW;
+	int flags = SHOW_ABSTRACT_VIEW | HIGHLIGHT_SELECTED;
 	if (showMesh)
 		flags |= SHOW_MESH;
 	if (showMOI){

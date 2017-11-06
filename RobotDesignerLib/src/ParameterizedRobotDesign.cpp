@@ -1,8 +1,17 @@
 #include <RobotDesignerLib/ParameterizedRobotDesign.h>
 #include <GUILib/GLContentManager.h>
 
-ParameterizedRobotDesign::ParameterizedRobotDesign(Robot* robot) {
+ParameterizedRobotDesign::ParameterizedRobotDesign(Robot* robot) : defaultRobotState(robot) {
 	this->robot = robot;
+
+	updateMorphology();
+}
+
+void ParameterizedRobotDesign::updateMorphology() {
+	defaultRobotState = ReducedRobotState(robot);
+
+	initialJointMorphology.clear();
+	initialEEMorphology.clear();
 
 	for (int i = 0; i < robot->getJointCount(); i++)
 		initialJointMorphology[robot->getJoint(i)] = JointParameters(robot->getJoint(i));
@@ -12,6 +21,7 @@ ParameterizedRobotDesign::ParameterizedRobotDesign(Robot* robot) {
 			initialEEMorphology[&robot->getRigidBody(i)->rbProperties.endEffectorPoints[j]] = EEParameters(&robot->getRigidBody(i)->rbProperties.endEffectorPoints[j]);
 
 }
+
 
 ParameterizedRobotDesign::~ParameterizedRobotDesign() {
 }
