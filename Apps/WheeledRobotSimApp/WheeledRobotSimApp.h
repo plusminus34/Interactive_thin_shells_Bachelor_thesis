@@ -72,7 +72,7 @@ private:
 	// Updates the wheel parameters (speed, angle) in the rigid body simulation
 	void updateRBSimParams();
 
-	void updateUI(int precision = 2);
+	void updateUI();
 
 	static SliderText addSliderTextVariable(const std::string &name, double *var, const std::pair<double,double> &range, nanogui::Widget *panel, std::string units = "", int precision = 2);
 

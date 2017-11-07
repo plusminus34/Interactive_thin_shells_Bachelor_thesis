@@ -309,15 +309,15 @@ void WheeledRobotSimApp::updateRBSimParams()
 	}
 }
 
-void WheeledRobotSimApp::updateUI(int precision)
+void WheeledRobotSimApp::updateUI()
 {
 	for (auto &w : wheelAngleWidgets) {
 		w.second.slider->setValue(wheelAngles[w.first]);
-		w.second.textBox->setValue(toString(wheelAngles[w.first], precision));
+		w.second.textBox->setValue(toString(wheelAngles[w.first], 0));
 	}
 	for (auto &w : wheelSpeedWidgets) {
 		w.second.slider->setValue(wheelSpeeds[w.first]);
-		w.second.textBox->setValue(toString(wheelSpeeds[w.first], precision));
+		w.second.textBox->setValue(toString(wheelSpeeds[w.first], 0));
 	}
 }
 
