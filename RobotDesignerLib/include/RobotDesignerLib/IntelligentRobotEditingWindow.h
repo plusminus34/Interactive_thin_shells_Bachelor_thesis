@@ -17,8 +17,10 @@ public:
 	void testOptimizeDesign();
 	void showMenu();
 	void hideMenu();
+	void syncSliders();
 	void CreateParametersDesignWindow();
-	void updateParamsAndMotion(int paramIndex, double value);
+	void updateParamsUsingSliders(int paramIndex, double value);
+	void updateParamsAndMotion(dVector p);
 	virtual void drawAuxiliarySceneInfo();
 	virtual void setupLights();
 
@@ -30,12 +32,15 @@ public:
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
 private:
-	bool updateMotionBasedOnJacobian;
+	bool updateMotionBasedOnJacobian = false;
+	bool useSVD = false;
+	bool updateJacobiancontinuously = false;
 	MatrixNxM dmdp; //The jacobian at a point
 	dVector m0;
-	bool useSVD = false;
 	MatrixNxM dmdp_V;
 	dVector p0;
 	dVector slidervalues;
+	std::vector<nanogui::Slider*> sliders;
+	std::vector<nanogui::TextBox*> textboxes;
 };
 
