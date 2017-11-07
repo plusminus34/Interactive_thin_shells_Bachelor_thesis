@@ -8,9 +8,9 @@
 
 #include <nanogui/screen.h>
 
-#ifdef __linux__
-#define GUI_TWO_WINDOWS
-#endif
+//#ifdef __linux__
+//#define GUI_TWO_WINDOWS
+//#endif
 
 GLApplication* glAppInstance = NULL;
 
@@ -638,6 +638,8 @@ void GLApplication::draw(){
 		glDisable(GL_LIGHTING);
 		drawGround(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
 	}
+
+	glEnable(GL_COLOR_MATERIAL);
 
 	drawScene();
 
