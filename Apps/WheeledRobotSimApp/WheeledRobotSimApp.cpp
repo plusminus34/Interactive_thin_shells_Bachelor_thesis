@@ -31,8 +31,6 @@ WheeledRobotSimApp::WheeledRobotSimApp(bool maximizeWindows)
 
 	mainMenu->window()->setSize(Eigen::Vector2i(400, 800));
 
-	wheelControlLabel = mainMenu->addGroup("Leg Control");
-
 	menuScreen->performLayout();
 
 	worldOracle = new WorldOracle(Globals::worldUp, Globals::groundPlane);
@@ -121,34 +119,13 @@ void WheeledRobotSimApp::loadFile(const char* fName) {
 
 		rbEngine->loadRBsFromFile(fName);
 
-		// Set angular position/velocity axis from hinge joint axis
-		for(Joint* j : rbEngine->joints)
+		// Create wheel parameters ...
 		{
-			HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
-			if(hingeJoint != nullptr)
-			{
-				V3D rotAxis = hingeJoint->rotationAxis.unit();
-
-				if(j->controlMode == JOINT_MODE::VELOCITY_MODE)
-				{
-					j->desiredRelativeAngVelocityAxis = rotAxis;
-					j->desiredRelativeAngVelocity = 0;
-				}
-				else if(j->controlMode == JOINT_MODE::POSITION_MODE)
-				{
-					j->desiredRelativeOrientation = getRotationQuaternion(0, rotAxis);
-				}
-			}
-		}
-
-		{
-			// remove all UI sliders
-			for (int i = 0; i < wheelControlLabel->childCount(); ++i) {
-				wheelControlLabel->removeChild(i);
-			}
-
-			// create wheel angles and sliders
+			// create wheel parameters
+			std::map<std::string, double> wheelAnglesOld = wheelAngles;
 			wheelAngles.clear();
+			std::map<std::string, double> wheelSpeedsOld = wheelSpeeds;
+			wheelSpeeds.clear();
 			for (Joint* j : rbEngine->joints) {
 				HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
 				if(hingeJoint != nullptr)
@@ -158,13 +135,70 @@ void WheeledRobotSimApp::loadFile(const char* fName) {
 						if(wheelAngles.find(j->name) != wheelAngles.end())
 							throw std::runtime_error("non-unique joint name: " + j->name);
 
-						wheelAngles[j->name] = 0;
-						addSliderTextVariable(j->name, &wheelAngles[j->name], std::pair<double,double>(-90, 90), mainMenu->window(), "°", 1);
+						wheelAngles[j->name] = wheelAnglesOld[j->name];
+					}
+					else if(j->controlMode == JOINT_MODE::VELOCITY_MODE)
+					{
+						if(wheelSpeeds.find(j->name) != wheelSpeeds.end())
+							throw std::runtime_error("non-unique joint name: " + j->name);
+
+						wheelSpeeds[j->name] = wheelSpeedsOld[j->name];
 					}
 				}
 			}
+		}
+
+		// ... and wheel control UI
+		{
+			if(wheelControlWindow && menuScreen)
+				menuScreen->removeChild(wheelControlWindow);
+
+			wheelControlWindow = new nanogui::Window(menuScreen, "Wheel Control");
+			wheelControlWindow->setPosition(Eigen::Vector2i(0, mainMenu->window()->size()(1) + 10));
+			wheelControlWindow->setWidth(mainMenu->window()->width());
+
+			nanogui::GroupLayout *groupLayout = new nanogui::GroupLayout();
+			wheelControlWindow->setLayout(groupLayout);
+
+			wheelAngleWidgets.clear();
+			new nanogui::Label(wheelControlWindow, "Leg Control");
+			for (auto &p : wheelAngles) {
+				wheelAngleWidgets[p.first] = addSliderTextVariable(p.first, &p.second, std::pair<double,double>(-90, 90), wheelControlWindow, "°", 1);
+			}
+
+			nanogui::Button *button = new nanogui::Button(wheelControlWindow, "Reset Angles");
+			button->setCallback([this](){
+				for (auto &p : wheelAngles)
+					p.second = 0;
+				updateUI();
+			});
+
+			wheelSpeedWidgets.clear();
+			new nanogui::Label(wheelControlWindow, "Wheel Speed Control");
+			for (auto &p : wheelSpeeds) {
+				wheelSpeedWidgets[p.first] = addSliderTextVariable(p.first, &p.second, std::pair<double,double>(-360, 360), wheelControlWindow, "°/s", 1);
+			}
+
+			button = new nanogui::Button(wheelControlWindow, "Reset Speeds");
+			button->setCallback([this](){
+				for (auto &p : wheelSpeeds)
+					p.second = 0;
+				updateUI();
+			});
 
 			menuScreen->performLayout();
+		}
+
+		// Set wheel axis
+		for(Joint* j : rbEngine->joints)
+		{
+			HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
+			if(hingeJoint != nullptr)
+			{
+				V3D rotAxis = hingeJoint->rotationAxis.unit();
+				if(j->controlMode == JOINT_MODE::VELOCITY_MODE)
+					j->desiredRelativeAngVelocityAxis = rotAxis;
+			}
 		}
 
 		// create the ground plane rigid body
@@ -185,31 +219,6 @@ void WheeledRobotSimApp::loadFile(const char* fName) {
 
 }
 
-void WheeledRobotSimApp::addSliderTextVariable(const std::string &name, double *var, const std::pair<double,double> &range, nanogui::Widget *widget, std::string units, int precision)
-{
-	nanogui::Widget *panel = new nanogui::Widget(widget);
-	panel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 20));
-
-	nanogui::Slider *slider = new nanogui::Slider(panel);
-	slider->setValue(*var);
-	slider->setRange(range);
-	slider->setFixedWidth(140);
-
-	nanogui::TextBox *textBox = new nanogui::TextBox(panel);
-	textBox->setFixedSize(Eigen::Vector2i(60, 25));
-	textBox->setValue(toString(*var, precision));
-	textBox->setUnits(units);
-	slider->setCallback([var, textBox, precision](double value) {
-		*var = value;
-		textBox->setValue(toString(value, precision));
-	});
-	textBox->setFixedSize(Eigen::Vector2i(60,25));
-	textBox->setFontSize(20);
-	textBox->setAlignment(nanogui::TextBox::Alignment::Right);
-
-	mainMenu->addWidget(name, panel);
-}
-
 void WheeledRobotSimApp::saveFile(const char* fName) {
 	Logger::consolePrint("SAVE FILE: Do not know what to do with file \'%s\'\n", fName);
 }
@@ -217,24 +226,7 @@ void WheeledRobotSimApp::saveFile(const char* fName) {
 // Run the App tasks
 void WheeledRobotSimApp::process() {
 
-	for(Joint* j : rbEngine->joints)
-	{
-		HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
-		if(hingeJoint != nullptr)
-		{
-			V3D rotAxis = hingeJoint->rotationAxis.unit();
-
-			if(j->controlMode == JOINT_MODE::VELOCITY_MODE)
-			{
-//				j->desiredRelativeAngVelocityAxis = rotAxis;
-//				j->desiredRelativeAngVelocity = 0;
-			}
-			else if(j->controlMode == JOINT_MODE::POSITION_MODE)
-			{
-				j->desiredRelativeOrientation = getRotationQuaternion(wheelAngles[j->name]/180*M_PI, rotAxis);
-			}
-		}
-	}
+	updateRBSimParams();
 
 	//do the work here...
 	double simulationTime = 0;
@@ -290,6 +282,77 @@ bool WheeledRobotSimApp::processCommandLine(const std::string& cmdLine) {
 	if (GLApplication::processCommandLine(cmdLine)) return true;
 
 	return false;
+}
+
+void WheeledRobotSimApp::updateRBSimParams()
+{
+	for(Joint* j : rbEngine->joints)
+	{
+		HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
+		if(hingeJoint != nullptr)
+		{
+			V3D rotAxis = hingeJoint->rotationAxis.unit();
+
+			if(j->controlMode == JOINT_MODE::VELOCITY_MODE)
+			{
+				j->desiredRelativeAngVelocity = wheelSpeeds[j->name]/180*M_PI;
+			}
+			else if(j->controlMode == JOINT_MODE::POSITION_MODE)
+			{
+				j->desiredRelativeOrientation = getRotationQuaternion(wheelAngles[j->name]/180*M_PI, rotAxis);
+			}
+		}
+	}
+}
+
+void WheeledRobotSimApp::updateUI(int precision)
+{
+	for (auto &w : wheelAngleWidgets) {
+		w.second.slider->setValue(wheelAngles[w.first]);
+		w.second.textBox->setValue(toString(wheelAngles[w.first], precision));
+	}
+	for (auto &w : wheelSpeedWidgets) {
+		w.second.slider->setValue(wheelSpeeds[w.first]);
+		w.second.textBox->setValue(toString(wheelSpeeds[w.first], precision));
+	}
+}
+
+WheeledRobotSimApp::SliderText WheeledRobotSimApp::addSliderTextVariable(const std::string &name, double *var, const std::pair<double,double> &range, nanogui::Widget *widget, std::string units, int precision)
+{
+	nanogui::Widget *panel = new nanogui::Widget(widget);
+	panel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 20));
+
+	new nanogui::Label(panel, name);
+
+	nanogui::Slider *slider = new nanogui::Slider(panel);
+	slider->setValue(*var);
+	slider->setRange(range);
+	slider->setFixedWidth(140);
+
+	nanogui::TextBox *textBox = new nanogui::TextBox(panel);
+	textBox->setFixedSize(Eigen::Vector2i(80, 25));
+	textBox->setValue(toString(*var, precision));
+	textBox->setUnits(units);
+	textBox->setEditable(true);
+	textBox->setFontSize(20);
+	textBox->setAlignment(nanogui::TextBox::Alignment::Right);
+
+	slider->setCallback([var, textBox, precision](double value) {
+		*var = value;
+		textBox->setValue(toString(value, precision));
+	});
+
+	textBox->setCallback([var, slider, precision](const std::string &str) {
+		double value = std::atof(str.c_str());
+		*var = value;
+		slider->setValue(value);
+		return true;
+	});
+
+	SliderText st;
+	st.slider = slider;
+	st.textBox = textBox;
+	return st;
 }
 
 template<class T>
