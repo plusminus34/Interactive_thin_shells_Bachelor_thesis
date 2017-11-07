@@ -57,8 +57,8 @@ double LocomotionEngineManager::runMOPTStep() {
 		dVector params;
 		motionPlan->writeMPParametersToList(params);
 
-		energyFunction->testGradientWithFD(params);
-		energyFunction->testHessianWithFD(params);
+//		energyFunction->testGradientWithFD(params);
+//		energyFunction->testHessianWithFD(params);
 		energyFunction->testIndividualGradient(params);
 		energyFunction->testIndividualHessian(params);
 	}

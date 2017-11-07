@@ -70,6 +70,7 @@ void LocomotionEngineManagerIPv1::warmStartMOpt() {
 	double desSwingHeight = motionPlan->swingFootHeight;
 
 	motionPlan->optimizeEndEffectorPositions = false;
+	motionPlan->optimizeWheels = false;
 	motionPlan->optimizeCOMPositions = false;
 	motionPlan->optimizeCOMOrientations = false;
 	motionPlan->optimizeRobotStates = false;
@@ -91,6 +92,7 @@ void LocomotionEngineManagerIPv1::warmStartMOpt() {
 	for (int i = 0; i < 5; i++)
 		runMOPTStep();
 
+	motionPlan->optimizeWheels = true;
 	motionPlan->optimizeEndEffectorPositions = true;
 	for (int i = 0; i < 5; i++)
 		runMOPTStep();
@@ -100,6 +102,7 @@ void LocomotionEngineManagerIPv1::warmStartMOpt() {
 
 void LocomotionEngineManagerIPv1::setDefaultOptimizationFlags() {
 	motionPlan->optimizeEndEffectorPositions = true;
+	motionPlan->optimizeWheels = true;
 	motionPlan->optimizeCOMPositions = true;
 	motionPlan->optimizeCOMOrientations = false;
 	motionPlan->optimizeRobotStates = true;
@@ -156,6 +159,7 @@ void LocomotionEngineManagerIPv2::warmStartMOpt(){
 	double desSwingHeight = motionPlan->swingFootHeight;
 
 	motionPlan->optimizeEndEffectorPositions = false;
+	motionPlan->optimizeWheels = false;
 	motionPlan->optimizeCOMPositions = false;
 	motionPlan->optimizeCOMOrientations = false;
 	motionPlan->optimizeRobotStates = false;
@@ -179,6 +183,7 @@ void LocomotionEngineManagerIPv2::warmStartMOpt(){
 		runMOPTStep();
 
 	motionPlan->optimizeEndEffectorPositions = true;
+	motionPlan->optimizeWheels = true;
 	for (int i = 0; i < 5; i++)
 		runMOPTStep();
 
@@ -187,6 +192,7 @@ void LocomotionEngineManagerIPv2::warmStartMOpt(){
 
 void LocomotionEngineManagerIPv2::setDefaultOptimizationFlags() {
 	motionPlan->optimizeEndEffectorPositions = true;
+	motionPlan->optimizeWheels = true;
 	motionPlan->optimizeCOMPositions = true;
 	motionPlan->optimizeCOMOrientations = true;
 	motionPlan->optimizeRobotStates = true;

@@ -11,6 +11,7 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	wrapAroundBoundaryIndex = -1;
 	optimizeCOMPositions = true;
 	optimizeEndEffectorPositions = false;
+	optimizeWheels = false;
 	optimizeBarycentricWeights = true;
 	optimizeRobotStates = true;
 	optimizeContactForces = true;

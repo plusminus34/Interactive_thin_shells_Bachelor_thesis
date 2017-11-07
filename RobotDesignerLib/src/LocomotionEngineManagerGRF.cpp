@@ -231,7 +231,7 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 		motionPlan->desDistanceToTravel.z() = desSpeedZ * ((double)i / 4.0);
 		motionPlan->desTurningAngle = desTurningAngle * ((double)i / 4.0);
 
-		runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_END_EFFECTORS | OPT_COM_ORIENTATIONS | OPT_ROBOT_STATES);
+		runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_END_EFFECTORS | OPT_WHEELS | OPT_COM_ORIENTATIONS | OPT_ROBOT_STATES);
 #ifdef DEBUG_WARMSTART
 		Logger::consolePrint("WARM START, alltogether optimizer step %d...\n", i);
 		if (tmpWSIndex <= wsLimit++)
@@ -249,6 +249,7 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 
 void LocomotionEngineManagerGRF::setDefaultOptimizationFlags() {
 	motionPlan->optimizeEndEffectorPositions = true;
+	motionPlan->optimizeWheels = true;
 	motionPlan->optimizeCOMPositions = true;
 	motionPlan->optimizeCOMOrientations = true;
 	motionPlan->optimizeRobotStates = true;
