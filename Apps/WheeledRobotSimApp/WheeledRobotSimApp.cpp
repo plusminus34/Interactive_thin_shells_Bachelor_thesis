@@ -76,23 +76,27 @@ bool WheeledRobotSimApp::onKeyEvent(int key, int action, int mods) {
 	// Velocity control
 	if (key == GLFW_KEY_UP)
 	{
-		for(Joint* j : rbEngine->joints)
-			j->desiredRelativeAngVelocity += 1.0;
+		for(auto &w : wheelSpeeds)
+			w.second += 5.0;
+		updateUI();
 	}
 	else if (key == GLFW_KEY_DOWN)
 	{
-		for(Joint* j : rbEngine->joints)
-			j->desiredRelativeAngVelocity -= 1.0;
+		for(auto &w : wheelSpeeds)
+			w.second -= 5.0;
+		updateUI();
 	}
 	else if (key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
-		for(Joint* j : rbEngine->joints)
-			j->desiredRelativeAngVelocity *= -1;
+		for(auto &w : wheelSpeeds)
+			w.second *= -1.0;
+		updateUI();
 	}
 	else if (key == GLFW_KEY_B && action == GLFW_PRESS)
 	{
-		for(Joint* j : rbEngine->joints)
-			j->desiredRelativeAngVelocity = 0;
+		for(auto &w : wheelSpeeds)
+			w.second = 0;
+		updateUI();
 	}
 
 	return false;
