@@ -21,10 +21,6 @@ IntelligentRobotEditingWindow::IntelligentRobotEditingWindow(int x, int y, int w
 	dynamic_cast<GLTrackingCamera*>(this->camera)->setCameraTarget(P3D(0, -0.25, 0));
 }
 
-void IntelligentRobotEditingWindow::addMenuItems() {
-
-}
-
 IntelligentRobotEditingWindow::~IntelligentRobotEditingWindow(){
 
 }
@@ -183,46 +179,231 @@ void IntelligentRobotEditingWindow::setViewportParameters(int posX, int posY, in
 	GLWindow3D::setViewportParameters(posX, posY, sizeX, sizeY);
 }
 
-void IntelligentRobotEditingWindow::drawScene() {
-	glColor3d(1, 1, 1);
-	glDisable(GL_LIGHTING);
-	drawDesignEnvironmentBox(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
-	glEnable(GL_LIGHTING);
+void IntelligentRobotEditingWindow::compute_dmdp_Jacobian()
+{
+	//evaluates dm/dp at (m,p). It is assumed that m corresponds to a minimum of the energy (i.e. m = arg min (E(m(p)))
+	// Let g = \partial E / \partial m
+	// partial g / partial p + partial g / partial m * dm/dp = dg/dp = 0
+	// dm/dp = -partial g / partial m ^ -1 * partial g / partial p
 
-	if (!rdApp->robot)
-		return;
+#ifdef USE_MATLAB
+	igl::matlab::mlinit(&matlabengine);
+	igl::matlab::mleval(&matlabengine, "desktop");
+#endif
 
-	int flags = SHOW_ABSTRACT_VIEW | SHOW_BODY_FRAME | SHOW_JOINTS | HIGHLIGHT_SELECTED;
+	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+	m0 = m;
 
-	ReducedRobotState rs(rdApp->robot);
-	rdApp->robot->setState(&rdApp->prd->defaultRobotState);
+	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
+	p0 = Eigen::Map<dVector>(p.data(), p.size());
 
-	glEnable(GL_LIGHTING);
-	if (rdApp->simWindow->rbEngine)
-		rdApp->simWindow->rbEngine->drawRBs(flags);
+	SparseMatrix dgdm;
+	dVector dgdpi, dmdpi;
+	MatrixNxM dgdp(m.size(), p.size());
+	dVector g_m, g_p;
 
-//	for (int i = 0; i < rdApp->robot->getJointCount(); i++)
-//		drawSphere(rdApp->prd->initialJointMorphology[rdApp->robot->getJoint(i)].worldCoords, 0.015);
+	resize(dgdm, m.size(), m.size());
+	resize(dmdp, m.size(), p.size());
+	resize(dgdpi, m.size());
 
-	if (highlightedRigidBody && highlightedRigidBody->pJoints.size() == 1 && (highlightedRigidBody->cJoints.size() > 0 || highlightedRigidBody->rbProperties.endEffectorPoints.size() > 0)){
-		P3D p1 = highlightedRigidBody->pJoints[0]->getWorldPosition();
-		P3D p2;
-		if (highlightedRigidBody->cJoints.size() == 1)
-			p2 = highlightedRigidBody->cJoints[0]->getWorldPosition();
-		else {
-			for (auto& eeItr : highlightedRigidBody->rbProperties.endEffectorPoints){
-				p2 += highlightedRigidBody->getWorldCoordinates(eeItr.coords);
-			}
-			p2 /= highlightedRigidBody->rbProperties.endEffectorPoints.size();
-		}
 
-		drawSphere(p1, 0.015);
-		drawSphere(p2, 0.015);
+	DynamicArray<MTriplet> triplets;
+	rdApp->moptWindow->locomotionManager->energyFunction->addHessianEntriesTo(triplets, m);
+	dgdm.setFromTriplets(triplets.begin(), triplets.end());
 
+	Eigen::SimplicialLDLT<SparseMatrix, Eigen::Lower> solver;
+	//	Eigen::SparseLU<SparseMatrix> solver;
+	solver.compute(dgdm);
+
+	double dp = 0.001;
+	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
+	for (uint i = 0; i < p.size(); i++) {
+		resize(g_m, m.size());
+		resize(g_p, m.size());
+
+		double pVal = p[i];
+		p[i] = pVal + dp;
+		rdApp->prd->setParameters(p);
+		rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_p, m);
+		p[i] = pVal - dp;
+		rdApp->prd->setParameters(p);
+		rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_m, m);
+		p[i] = pVal;
+		rdApp->prd->setParameters(p);
+
+		dgdp.col(i) = (g_p - g_m) / (2 * dp);
+	}
+	dmdp = solver.solve(dgdp) * -1;
+	Eigen::JacobiSVD<MatrixNxM> svd(dmdp, Eigen::ComputeThinU | Eigen::ComputeThinV);
+	dmdp_V = svd.matrixV();
+
+#ifdef USE_MATLAB
+	RUN_IN_MATLAB(
+		igl::matlab::mlsetmatrix(&matlabengine, "dmdp", dmdp);
+	igl::matlab::mlsetmatrix(&matlabengine, "dmdp_V", dmdp_V);
+	)
+#endif
+}
+
+void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
+	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
+
+	//dm/dp, the analytic version. 
+	compute_dmdp_Jacobian();
+
+	//Now estimate this jacobian with finite differences...
+	MatrixNxM dmdp_FD;
+	dVector m_initial, m_m, m_p;
+	resize(dmdp_FD, m.size(), p.size());
+	double dp = 0.001;
+	rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_initial);
+	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
+	for (uint i = 0; i < p.size(); i++) {
+		resize(m_m, m.size());
+		resize(m_p, m.size());
+
+		double pVal = p[i];
+		p[i] = pVal + dp;
+		rdApp->prd->setParameters(p);
+		//now we must solve this thing a loooot...
+
+		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
+		for (int j = 0; j < 300; j++)
+			rdApp->moptWindow->runMOPTStep();
+
+		rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_m);
+		p[i] = pVal - dp;
+		rdApp->prd->setParameters(p);
+		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
+		for (int j = 0; j < 300; j++)
+			rdApp->moptWindow->runMOPTStep();
+		rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_p);
+
+		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
+		p[i] = pVal;
+		rdApp->prd->setParameters(p);
+
+		dmdp_FD.col(i) = (m_p - m_m) / (2 * dp);
 	}
 
+	print("../out/dmdp.m", dmdp);
+	print("../out/dmdp_FD.m", dmdp_FD);
+}
 
-	rdApp->robot->setState(&rs);
+void IntelligentRobotEditingWindow::testOptimizeDesign() {
+	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
+	MatrixNxM dmdp; compute_dmdp_Jacobian();
+
+	//If we have some objective O, expressed as a function of m, then dO/dp = dO/dm * dm/dp
+	dVector dOdm;
+	dVector dOdp;
+	resize(dOdm, m.size());
+	resize(dOdp, p.size());
+
+	rdApp->moptWindow->locomotionManager->energyFunction->objectives[11]->addGradientTo(dOdm, m);
+
+	dOdp = dmdp.transpose() * dOdm;
+
+	Logger::consolePrint("dOdp[0]: %lf\n", dOdp[0]);
+
+	double len = dOdp.norm();
+	if (len > 0.01)
+		dOdp = dOdp / len * 0.01;
+
+	Logger::consolePrint("p[0] before: %lf\n", p[0]);
+
+	for (uint i = 0; i < p.size(); i++)
+		p[i] -= dOdp[i];
+	Logger::consolePrint("p[0] after: %lf\n", p[0]);
+	rdApp->prd->setParameters(p);
+}
+
+void IntelligentRobotEditingWindow::showMenu()
+{
+	if (!menu)
+		CreateParametersDesignWindow();
+	menu->setVisible(true);
+}
+
+void IntelligentRobotEditingWindow::hideMenu()
+{
+	if (menu)
+		menu->setVisible(false);
+}
+
+void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
+{
+	if (menu)
+		menu->dispose();
+
+	menu = rdApp->mainMenu->addWindow(Eigen::Vector2i(viewportX , viewportY), "Design Parameters");
+	rdApp->mainMenu->addButton("Compute Jacobian", [this]() { compute_dmdp_Jacobian(); });
+
+	rdApp->mainMenu->addVariable("Update params wrt J", updateMotionBasedOnJacobian);
+	rdApp->mainMenu->addVariable("Use SVD", useSVD);
+
+	using namespace nanogui;
+	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
+
+	Widget *panel = new Widget(rdApp->mainMenu->window());
+	GridLayout *layout =
+		new GridLayout(Orientation::Horizontal, 2,
+			Alignment::Middle, 15, 5);
+	layout->setColAlignment(
+	{ Alignment::Maximum, Alignment::Fill });
+	layout->setSpacing(0, 10);
+	panel->setLayout(layout);
+
+
+	auto removeTrailingZeros = [](string &&s) {return s.erase(s.find_last_not_of('0') + 1, string::npos); };
+	for (int i = 0; i < rdApp->prd->getNumberOfParameters(); i++)
+	{
+		Slider *slider = new Slider(panel);
+		slider->setValue((float)p[i]);
+		slider->setRange({ -0.1,0.1 });
+		slider->setFixedWidth(150);
+		TextBox *textBox = new TextBox(panel);
+		textBox->setValue(removeTrailingZeros(to_string(p[i])));
+		textBox->setFixedWidth(50);
+		textBox->setEditable(true);
+		textBox->setFixedHeight(18);
+
+		slider->setCallback([&, i, textBox](float value) {
+			updateParamsAndMotion(i, value);
+			textBox->setValue(removeTrailingZeros(to_string(value)));
+		});
+		textBox->setCallback([&, i, slider](const std::string &str) {
+			updateParamsAndMotion(i, std::stod(str));
+			slider->setValue((float)std::stod(str));
+			return true;
+		});
+
+	}
+	rdApp->mainMenu->addWidget("", panel);
+	rdApp->menuScreen->performLayout();
+	slidervalues.resize(rdApp->prd->getNumberOfParameters());
+	slidervalues.setZero();
+}
+
+void IntelligentRobotEditingWindow::updateParamsAndMotion(int paramIndex, double value) {
+	slidervalues(paramIndex) = value;
+	dVector p;
+	if (!useSVD) {
+		rdApp->prd->getCurrentSetOfParameters(p);
+		p(paramIndex) = value;
+	}
+	else {
+		p = p0 + dmdp_V*slidervalues;
+	}
+
+	rdApp->prd->setParameters(p);
+	if (updateMotionBasedOnJacobian) {
+		dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+		m = m0 + dmdp*dVector::Map(p.data(), p.size());
+		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m);
+	}
 }
 
 void IntelligentRobotEditingWindow::setupLights() {
@@ -272,3 +453,44 @@ void IntelligentRobotEditingWindow::setupLights() {
 	glEnable(GL_LIGHT4);
 }
 
+void IntelligentRobotEditingWindow::drawScene() {
+	glColor3d(1, 1, 1);
+	glDisable(GL_LIGHTING);
+	drawDesignEnvironmentBox(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
+	glEnable(GL_LIGHTING);
+
+	if (!rdApp->robot)
+		return;
+
+	int flags = SHOW_ABSTRACT_VIEW | SHOW_BODY_FRAME | SHOW_JOINTS | HIGHLIGHT_SELECTED;
+
+	ReducedRobotState rs(rdApp->robot);
+	rdApp->robot->setState(&rdApp->prd->defaultRobotState);
+
+	glEnable(GL_LIGHTING);
+	if (rdApp->simWindow->rbEngine)
+		rdApp->simWindow->rbEngine->drawRBs(flags);
+
+	//	for (int i = 0; i < rdApp->robot->getJointCount(); i++)
+	//		drawSphere(rdApp->prd->initialJointMorphology[rdApp->robot->getJoint(i)].worldCoords, 0.015);
+
+	if (highlightedRigidBody && highlightedRigidBody->pJoints.size() == 1 && (highlightedRigidBody->cJoints.size() > 0 || highlightedRigidBody->rbProperties.endEffectorPoints.size() > 0)) {
+		P3D p1 = highlightedRigidBody->pJoints[0]->getWorldPosition();
+		P3D p2;
+		if (highlightedRigidBody->cJoints.size() == 1)
+			p2 = highlightedRigidBody->cJoints[0]->getWorldPosition();
+		else {
+			for (auto& eeItr : highlightedRigidBody->rbProperties.endEffectorPoints) {
+				p2 += highlightedRigidBody->getWorldCoordinates(eeItr.coords);
+			}
+			p2 /= highlightedRigidBody->rbProperties.endEffectorPoints.size();
+		}
+
+		drawSphere(p1, 0.015);
+		drawSphere(p2, 0.015);
+
+	}
+
+
+	rdApp->robot->setState(&rs);
+}
