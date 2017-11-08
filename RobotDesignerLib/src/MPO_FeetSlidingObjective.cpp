@@ -30,13 +30,15 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 
 			double speed = p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)];
 
+			Vector3d axisRot = rotateVec(wheelAxis, wheelAxisAlpha, Vector3d(0, 1, 0));
+
 			if (j>0){
 				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j-1];
 
 				int iEEjm1 = theMotionPlan->feetPositionsParamsStartIndex + (j-1) * nLimbs * 3 + i * 3;
 				Eigen::Vector3d eePosjm1(p[iEEjm1 + 0], p[iEEjm1 + 1], p[iEEjm1 + 2]);
 
-				retVal += computeEnergy(eePosj, eePosjm1, dt, wheelRadiusV, wheelRadius, wheelAxis, speed, c, weight);
+				retVal += computeEnergy(eePosj, eePosjm1, dt, wheelRadiusV, wheelRadius, axisRot, speed, c, weight);
 
 			}
 			if (j<theMotionPlan->nSamplePoints-1){
@@ -45,7 +47,7 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 				int iEEjp1 = theMotionPlan->feetPositionsParamsStartIndex + (j+1) * nLimbs * 3 + i * 3;
 				Eigen::Vector3d eePosjp1(p[iEEjp1 + 0], p[iEEjp1 + 1], p[iEEjp1 + 2]);
 
-				retVal += computeEnergy(eePosjp1, eePosj, dt, wheelRadiusV, wheelRadius, wheelAxis, speed, c, weight);
+				retVal += computeEnergy(eePosjp1, eePosj, dt, wheelRadiusV, wheelRadius, axisRot, speed, c, weight);
 			}
 		}
 	}
@@ -77,6 +79,7 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 			for (int k = 0; k < 3; ++k)
 				wheelAxisAD(k) = wheelAxis[k];
 			ScalarDiff speed(p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)], 0);
+			Vector3T<ScalarDiff> axisRot = rotateVec(wheelAxisAD, (ScalarDiff)wheelAxisAlpha, Vector3T<ScalarDiff>(0, 1, 0));
 
 			// Wheel radius
 			Vector3T<ScalarDiff> wheelRadiusAD;
@@ -102,7 +105,7 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 					else if(k < 7)
 						speed.deriv() = 1.0;
 
-					ScalarDiff energy = computeEnergy(eePosj, eePosjm1, dt, wheelRadiusAD, r, wheelAxisAD, speed, c, weight);
+					ScalarDiff energy = computeEnergy(eePosj, eePosjm1, dt, wheelRadiusAD, r, axisRot, speed, c, weight);
 
 					if(k < 3)
 						grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k] += energy.deriv();
@@ -136,7 +139,7 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 					else if(k < 7)
 						speed.deriv() = 1.0;
 
-					ScalarDiff energy = computeEnergy(eePosjp1, eePosj, dt, wheelRadiusAD, r, wheelAxisAD, speed, c, weight);
+					ScalarDiff energy = computeEnergy(eePosjp1, eePosj, dt, wheelRadiusAD, r, axisRot, speed, c, weight);
 
 					if(k < 3)
 						grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k] += energy.deriv();
@@ -182,6 +185,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 			for (int k = 0; k < 3; ++k)
 				wheelAxisAD(k) = wheelAxis[k];
 			ScalarDiffDiff speed(p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)], 0);
+			Vector3T<ScalarDiffDiff> axisRot = rotateVec(wheelAxisAD, (ScalarDiffDiff)wheelAxisAlpha, Vector3T<ScalarDiffDiff>(0, 1, 0));
 
 			// Wheel radius
 			Vector3T<ScalarDiffDiff> wheelRadiusAD;
@@ -230,7 +234,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 						else if(l < 7)
 							global_l = theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i);
 
-						ScalarDiffDiff energy = computeEnergy(eePosj, eePosjm1, dt, wheelRadiusAD, r, wheelAxisAD, speed, c, weight);
+						ScalarDiffDiff energy = computeEnergy(eePosj, eePosjm1, dt, wheelRadiusAD, r, axisRot, speed, c, weight);
 
 						ADD_HES_ELEMENT(hessianEntries,
 										global_k,
@@ -295,7 +299,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 						else if(l < 7)
 							global_l = theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i);
 
-						ScalarDiffDiff energy = computeEnergy(eePosjp1, eePosj, dt, wheelRadiusAD, r, wheelAxisAD, speed, c, weight);
+						ScalarDiffDiff energy = computeEnergy(eePosjp1, eePosj, dt, wheelRadiusAD, r, axisRot, speed, c, weight);
 
 						ADD_HES_ELEMENT(hessianEntries,
 										global_k,
