@@ -31,6 +31,7 @@ public:
 	nanogui::Window * menu = nullptr;
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
+	void resetParams();
 private:
 	bool updateMotionBasedOnJacobian = false;
 	bool useSVD = false;
@@ -38,6 +39,7 @@ private:
 	MatrixNxM dmdp; //The jacobian at a point
 	dVector m0;
 	MatrixNxM dmdp_V;
+	MatrixNxM dgdp;
 	dVector p0;
 	dVector slidervalues;
 	std::vector<nanogui::Slider*> sliders;

@@ -178,6 +178,14 @@ void IntelligentRobotEditingWindow::setViewportParameters(int posX, int posY, in
 	GLWindow3D::setViewportParameters(posX, posY, sizeX, sizeY);
 }
 
+void IntelligentRobotEditingWindow::resetParams()
+{
+	dVector p;	rdApp->prd->getCurrentSetOfParameters(p);
+	p.setZero();
+	rdApp->prd->setParameters(p);
+	syncSliders();
+}
+
 void IntelligentRobotEditingWindow::compute_dmdp_Jacobian()
 {
 	//evaluates dm/dp at (m,p). It is assumed that m corresponds to a minimum of the energy (i.e. m = arg min (E(m(p)))
@@ -205,17 +213,18 @@ void IntelligentRobotEditingWindow::compute_dmdp_Jacobian()
 	resize(dmdp, m.size(), p.size());
 	resize(dgdpi, m.size());
 
-
+	Timer timerN; timerN.restart();
 	DynamicArray<MTriplet> triplets;
 	rdApp->moptWindow->locomotionManager->energyFunction->addHessianEntriesTo(triplets, m);
 	dgdm.setFromTriplets(triplets.begin(), triplets.end());
-
+	
 	Eigen::SimplicialLDLT<SparseMatrix, Eigen::Lower> solver;
 	//	Eigen::SparseLU<SparseMatrix> solver;
 	solver.compute(dgdm);
-
+	Logger::consolePrint("Time to construct dgdm: %lf\n", timerN.timeEllapsed());
 	double dp = 0.001;
 	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
+	timerN.restart();
 	for (uint i = 0; i < p.size(); i++) {
 		resize(g_m, m.size());
 		resize(g_p, m.size());
@@ -232,10 +241,16 @@ void IntelligentRobotEditingWindow::compute_dmdp_Jacobian()
 
 		dgdp.col(i) = (g_p - g_m) / (2 * dp);
 	}
+	Logger::consolePrint("Time to construct dgdp: %lf\n", timerN.timeEllapsed());
+	timerN.restart();
 	dmdp = solver.solve(dgdp) * -1;
-	Eigen::JacobiSVD<MatrixNxM> svd(dmdp, Eigen::ComputeThinU | Eigen::ComputeThinV);
-	dmdp_V = svd.matrixV();
+	Logger::consolePrint("Time to solve for J: %lf\n", timerN.timeEllapsed());
 
+	if (useSVD)
+	{
+		Eigen::JacobiSVD<MatrixNxM> svd(dmdp, Eigen::ComputeThinU | Eigen::ComputeThinV);
+		dmdp_V = svd.matrixV();
+	}
 #ifdef USE_MATLAB
 	RUN_IN_MATLAB(
 		igl::matlab::mlsetmatrix(&matlabengine, "dmdp", dmdp);
@@ -349,6 +364,7 @@ void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
 		menu->dispose();
 
 	menu = rdApp->mainMenu->addWindow(Eigen::Vector2i(viewportX , viewportY), "Design Parameters");
+	rdApp->mainMenu->addButton("Reset Params", [this]() { resetParams(); });
 	rdApp->mainMenu->addButton("Compute Jacobian", [this]() { compute_dmdp_Jacobian(); });
 
 	rdApp->mainMenu->addVariable("Update Jacobian continuously", updateJacobiancontinuously);
@@ -416,7 +432,11 @@ void IntelligentRobotEditingWindow::updateParamsUsingSliders(int paramIndex, dou
 void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 {
 	if (updateJacobiancontinuously)
+	{
+		Timer timerN; timerN.restart();
 		compute_dmdp_Jacobian();
+		Logger::consolePrint("Total time to compute J: %lf\n", timerN.timeEllapsed());
+	}
 	rdApp->prd->setParameters(p);
 	if (updateMotionBasedOnJacobian) {
 		dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
