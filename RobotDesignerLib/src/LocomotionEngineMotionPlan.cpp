@@ -741,3 +741,8 @@ void LocomotionEngineMotionPlan::drawMotionPlan2(double f, int animationCycle, b
 		robot->setState(&oldState);
 	}
 }
+
+int LocomotionEngineMotionPlan::getWheelAxisAlphaIndex(int i) const
+{
+	return wheelParamsStartIndex + nSamplePoints*endEffectorTrajectories.size()*nWheelParams + i;
+}

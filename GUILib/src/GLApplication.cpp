@@ -639,6 +639,7 @@ void GLApplication::draw(){
 		drawGround(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
 	}
 
+	glEnable(GL_COLOR_MATERIAL);
 	drawScene();
 
 	if (showMenus) {

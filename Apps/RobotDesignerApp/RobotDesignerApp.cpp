@@ -583,6 +583,11 @@ void RobotDesignerApp::resyncRBS() {
 
 }
 
+void RobotDesignerApp::addWheelParameterUI()
+{
+
+}
+
 void RobotDesignerApp::addDesignParameterSliders()
 {
 	using namespace nanogui;

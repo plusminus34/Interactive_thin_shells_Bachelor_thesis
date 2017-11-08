@@ -22,7 +22,7 @@ public:
 	DynamicArray<double> tangentGRFBoundValues;
 	DynamicArray<double> wheelSpeed;
 	double wheelRadius = 0.1;
-	double wheelAxisAlpha = M_PI*0.25;
+	double wheelAxisAlpha = 0;
 
 	V3D targetOffsetFromCOM;
 	RigidBody* endEffectorRB;
@@ -361,6 +361,7 @@ public:
 	bool enforceGRFConstraints;
 
 	const static int nWheelParams = 1; // wheel speed
+	const static int nWheelParamsEE = 1; // wheel speed
 
 	//TODO: optimize contact flags too?!?
 
@@ -394,6 +395,10 @@ public:
 	double totalMass;
 	double totalInertia;
 	double frictionCoeff = -1.0;     // when frictionCoeff < 0, friction cone constraints are disabled.
+
+public:
+	int getWheelAxisAlphaIndex(int i) const;
+
 public:
 	DynamicArray<LocomotionEngine_EndEffectorTrajectory> endEffectorTrajectories;
 	LocomotionEngine_COMTrajectory COMTrajectory;
@@ -427,6 +432,7 @@ public:
 			// per end effector wheel params: speed
 			wheelParamsStartIndex = paramCount;
 			paramCount += nSamplePoints * endEffectorTrajectories.size() * nWheelParams;
+			paramCount += endEffectorTrajectories.size() * nWheelParamsEE;
 		}
 
 		if (optimizeBarycentricWeights){
@@ -484,6 +490,8 @@ public:
 					for (int k=0; k<nWheelParams; k++){
 						minLimits.push_back(0);
 					}
+			for (uint i=0;i<endEffectorTrajectories.size();i++)
+				minLimits.push_back(0);
 		}
 
 		if (optimizeBarycentricWeights){
@@ -536,11 +544,14 @@ public:
 		}
 
 		if (optimizeEndEffectorPositions){
-			for (int j=0; j<nSamplePoints;j++)
-				for (uint i=0;i<endEffectorTrajectories.size();i++)
+			for (uint i=0;i<endEffectorTrajectories.size();i++)
+			{
+				for (int j=0; j<nSamplePoints;j++)
 					for (int k=0; k<3; k++){
 						maxLimits.push_back(0);
 					}
+				maxLimits.push_back(0);
+			}
 		}
 
 		if (optimizeWheels){
@@ -549,6 +560,8 @@ public:
 					for (int k=0; k<nWheelParams; k++){
 						maxLimits.push_back(0);
 					}
+			for (uint i=0;i<endEffectorTrajectories.size();i++)
+				maxLimits.push_back(0);
 		}
 
 		if (optimizeBarycentricWeights){
@@ -610,10 +623,12 @@ public:
 		}
 
 		if (optimizeWheels){
-			for (int j=0; j<nSamplePoints;j++)
-				for (uint i=0;i<endEffectorTrajectories.size();i++){
+			for (int j=0; j<nSamplePoints; j++)
+				for (uint i=0; i<endEffectorTrajectories.size(); i++){
 					params.push_back(endEffectorTrajectories[i].wheelSpeed[j]);
 				}
+			for (uint i=0; i<endEffectorTrajectories.size(); i++)
+				params.push_back(endEffectorTrajectories[i].wheelAxisAlpha);
 		}
 
 		if (optimizeBarycentricWeights){
@@ -672,6 +687,8 @@ public:
 					endEffectorTrajectories[i].wheelSpeed[j] = p[pIndex++];
 				}
 			}
+			for (uint i=0;i<endEffectorTrajectories.size();i++)
+				endEffectorTrajectories[i].wheelAxisAlpha = p[pIndex++];
 		}
 
 		if (optimizeBarycentricWeights){

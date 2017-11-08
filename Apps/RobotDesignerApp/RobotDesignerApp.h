@@ -107,6 +107,9 @@ public:
 	void addDesignParameterSliders();
 
 	void resyncRBS();
+
+private:
+	void addWheelParameterUI();
 };
 
 
