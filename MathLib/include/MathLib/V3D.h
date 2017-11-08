@@ -144,25 +144,29 @@ using Vector3T = Eigen::Matrix<T, 3, 1>;
 template<class T>
 Vector3T<T> rotateVec(const Vector3T<T> &v, T alpha, const Vector3T<T> &axis)
 {
-	assert(IS_EQUAL(axis.length2(), 1));
+	assert(IS_EQUAL(axis.squaredNorm(), 1));
 	T xP = axis(0);
 	T yP = axis(1);
 	T zP = axis(2);
 	T cosa = cos(alpha);
 	T sina = sin(alpha);
 
-	T s[3][3] = {	{ 0,			-zP,		yP },
-	{ zP,			0,			-xP },
-	{ -yP,			xP,			0 } };
-	T UUT[3][3] = {{ xP*xP,		xP*yP,		xP*zP },
-	{ yP*xP,		yP*yP,		yP*zP },
-	{ zP*xP,		zP*yP,		zP*zP } };
+	T s[3][3] = {
+		{ 0,			-zP,		yP  },
+		{ zP,			0,			-xP },
+		{ -yP,			xP,			0   }
+	};
+	T UUT[3][3] = {
+		{ xP*xP,		xP*yP,		xP*zP },
+		{ yP*xP,		yP*yP,		yP*zP },
+		{ zP*xP,		zP*yP,		zP*zP }
+	};
 	T I[3][3] = { { 1,0,0 },{ 0,1,0 },{ 0,0,1 } };
 	T R[3][3] = { { 0,0,0 },{ 0,0,0 },{ 0,0,0 } };
 
 	for (int i = 0;i<3;i++)
 		for (int j = 0;j<3;j++)
-		R[i][j] = UUT[i][j] + cosa*(I[i][j] - UUT[i][j]) + sina*s[i][j];
+			R[i][j] = UUT[i][j] + cosa*(I[i][j] - UUT[i][j]) + sina*s[i][j];
 
 	//now that we finally have the transformation matrix set up, we can rotate the vector
 	Vector3T<T> result;
