@@ -34,14 +34,13 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 				Eigen::Vector3d eePosjm1(p[iEEjm1 + 0], p[iEEjm1 + 1], p[iEEjm1 + 2]);
 
 				// Angular velocity vector
-				Eigen::Vector3d omega(0, 0, 1);
-				omega *= p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)];
+				double speed = p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)];
+				Eigen::Vector3d omega = wheelAxis * speed;
 
 				// Wheel radius
-				Eigen::Vector3d radius(0, -1, 0);
-				radius *= wheelRadius;
+				Eigen::Vector3d r = wheelRadius * wheelRadiusV;
 
-				Eigen::Vector3d constraint = computeConstraint(eePosj, eePosjm1, dt, omega, radius);
+				Eigen::Vector3d constraint = computeConstraint(eePosj, eePosjm1, dt, omega, r);
 
 				retVal += 0.5 * constraint.squaredNorm() * c;
 			}
@@ -55,14 +54,13 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 				Eigen::Vector3d eePosjp1(p[iEEjp1 + 0], p[iEEjp1 + 1], p[iEEjp1 + 2]);
 
 				// Angular velocity vector
-				Eigen::Vector3d omega(0, 0, 1);
-				omega *= p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)];
+				double speed = p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)];
+				Eigen::Vector3d omega = wheelAxis * speed;
 
 				// Wheel radius
-				Eigen::Vector3d radius(0, -1, 0);
-				radius *= wheelRadius;
+				Eigen::Vector3d r = wheelRadius * wheelRadiusV;
 
-				Eigen::Vector3d constraint = computeConstraint(eePosjp1, eePosj, dt, omega, radius);
+				Eigen::Vector3d constraint = computeConstraint(eePosjp1, eePosj, dt, omega, r);
 
 				retVal += 0.5 * constraint.squaredNorm() * c;
 			}
@@ -98,11 +96,15 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 					eePosjm1(k) = p[iEEjm1 + k];
 
 				// Angular velocity vector
-				Vector3T<ScalarDiff> omega; omega(0) = 0; omega(1) = 0; omega(2) = 1;
+				Vector3T<ScalarDiff> wheelAxisAD;
+				for (int k = 0; k < 3; ++k)
+					wheelAxisAD(k) = wheelAxis[k];
 				ScalarDiff speed(p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)], 0);
 
 				// Wheel radius
-				Vector3T<ScalarDiff> radius; radius(0) = 0; radius(1) = -1; radius(2) = 0;
+				Vector3T<ScalarDiff> wheelRadiusAD;
+				for (int k = 0; k < 3; ++k)
+					wheelRadiusAD(k) = wheelRadiusV[k];
 				ScalarDiff r(wheelRadius, 0);
 
 				// derive by eePosj, eePosjm1 and speed
@@ -114,9 +116,9 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 					else if(k < 7)
 						speed.deriv() = 1.0;
 
-					Vector3T<ScalarDiff> rr = radius*r;
-					Vector3T<ScalarDiff> ss = omega*speed;
-					Vector3T<ScalarDiff> constraint = computeConstraint(eePosj, eePosjm1, dt, ss, rr);
+					Vector3T<ScalarDiff> rr = wheelRadiusAD*r;
+					Vector3T<ScalarDiff> omega = wheelAxisAD*speed;
+					Vector3T<ScalarDiff> constraint = computeConstraint(eePosj, eePosjm1, dt, omega, rr);
 					ScalarDiff energy = 0.5 * constraint.squaredNorm() * c * weight;
 
 					if(k < 3)
@@ -148,11 +150,15 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 					eePosjp1(k) = p[iEEjp1 + k];
 
 				// Angular velocity vector
-				Vector3T<ScalarDiff> omega; omega(0) = 0; omega(1) = 0; omega(2) = 1;
+				Vector3T<ScalarDiff> wheelAxisAD;
+				for (int k = 0; k < 3; ++k)
+					wheelAxisAD(k) = wheelAxis[k];
 				ScalarDiff speed(p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)], 0);
 
 				// Wheel radius
-				Vector3T<ScalarDiff> radius; radius(0) = 0; radius(1) = -1; radius(2) = 0;
+				Vector3T<ScalarDiff> wheelRadiusAD;
+				for (int k = 0; k < 3; ++k)
+					wheelRadiusAD(k) = wheelRadiusV[k];
 				ScalarDiff r(wheelRadius, 0);
 
 				// derive by eePosj, eePosjm1 and speed
@@ -164,9 +170,9 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 					else if(k < 7)
 						speed.deriv() = 1.0;
 
-					Vector3T<ScalarDiff> rr = radius*r;
-					Vector3T<ScalarDiff> ss = omega*speed;
-					Vector3T<ScalarDiff> constraint = computeConstraint(eePosjp1, eePosj, dt, ss, rr);
+					Vector3T<ScalarDiff> rr = wheelRadiusAD*r;
+					Vector3T<ScalarDiff> omega = wheelAxisAD*speed;
+					Vector3T<ScalarDiff> constraint = computeConstraint(eePosjp1, eePosj, dt, omega, rr);
 					ScalarDiff energy = 0.5 * constraint.squaredNorm() * c * weight;
 
 					if(k < 3)
@@ -188,65 +194,189 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 	}
 }
 
-#if 0
 void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
-	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
-	//	theMotionPlan->setMPParametersFromList(p);
+	if (theMotionPlan->feetPositionsParamsStartIndex < 0 || theMotionPlan->wheelParamsStartIndex < 0)
+		return;
+
+	typedef AutoDiffT<double, double> ScalarDiff;
+	typedef AutoDiffT<ScalarDiff, ScalarDiff> ScalarDiffDiff;
 
 	//and now compute the gradient with respect c and eePos
-	int nLimbs = theMotionPlan->endEffectorTrajectories.size();
+	const double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
+	const int nLimbs = theMotionPlan->endEffectorTrajectories.size();
+
 	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
 		for (int i=0;i<nLimbs;i++){
-			if (theMotionPlan->feetPositionsParamsStartIndex >= 0){
-//				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
-				//at the boundaries we cannot count foot sliding on "either side", so make up for it...
-//				c *= (j==0 || j==theMotionPlan->nSamplePoints-1)?2.0:1.0;
-				if (j>0){
-					double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j - 1];
+			if (j>0){
+				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j-1];
 
-					for (int k = 0; k < 3; ++k) {
-						ADD_HES_ELEMENT(hessianEntries,
-										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k,
-										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k,
-										c,
-										weight);
-						ADD_HES_ELEMENT(hessianEntries,
-										theMotionPlan->feetPositionsParamsStartIndex + (j-1) * nLimbs * 3 + i * 3 + k,
-										theMotionPlan->feetPositionsParamsStartIndex + (j-1) * nLimbs * 3 + i * 3 + k,
-										c,
-										weight);
-						ADD_HES_ELEMENT(hessianEntries,
-										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k,
-										theMotionPlan->feetPositionsParamsStartIndex + (j-1) * nLimbs * 3 + i * 3 + k,
-										-c,
-										weight);
+				int iEEj = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
+				int iEEjm1 = theMotionPlan->feetPositionsParamsStartIndex + (j-1) * nLimbs * 3 + i * 3;
 
+				Vector3T<ScalarDiffDiff> eePosj;
+				for (int k = 0; k < 3; ++k)
+					eePosj(k) = p[iEEj + k];
+				Vector3T<ScalarDiffDiff> eePosjm1;
+				for (int k = 0; k < 3; ++k)
+					eePosjm1(k) = p[iEEjm1 + k];
+
+				// Angular velocity vector
+				Vector3T<ScalarDiffDiff> wheelAxisAD;
+				for (int k = 0; k < 3; ++k)
+					wheelAxisAD(k) = wheelAxis[k];
+				ScalarDiffDiff speed(p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)], 0);
+
+				// Wheel radius
+				Vector3T<ScalarDiffDiff> wheelRadiusAD;
+				for (int k = 0; k < 3; ++k)
+					wheelRadiusAD(k) = wheelRadiusV[k];
+				ScalarDiffDiff r(wheelRadius, 0);
+
+				// derive by eePosj, eePosjm1 and speed
+				for (int k = 0; k < 7; ++k) {
+					if(k < 3)
+						eePosj(k).deriv().value() = 1.0;
+					else if(k < 6)
+						eePosjm1(k-3).deriv().value() = 1.0;
+					else if(k < 7)
+						speed.deriv().value() = 1.0;
+
+					int global_k;
+					if(k < 3)
+						global_k = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k;
+					else if(k < 6)
+						global_k = theMotionPlan->feetPositionsParamsStartIndex + (j-1) * nLimbs * 3 + i * 3 + k-3;
+					else if(k < 7)
+						global_k = theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i);
+
+					for (int l = 0; l <= k; ++l) {
+						if(l < 3)
+							eePosj(l).value().deriv() = 1.0;
+						else if(l < 6)
+							eePosjm1(l-3).value().deriv() = 1.0;
+						else if(l < 7)
+							speed.value().deriv() = 1.0;
+
+						int global_l;
+						if(l < 3)
+							global_l = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + l;
+						else if(l < 6)
+							global_l = theMotionPlan->feetPositionsParamsStartIndex + (j-1) * nLimbs * 3 + i * 3 + l-3;
+						else if(l < 7)
+							global_l = theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i);
+
+						Vector3T<ScalarDiffDiff> rr = wheelRadiusAD*r;
+						Vector3T<ScalarDiffDiff> omega = wheelAxisAD*speed;
+						Vector3T<ScalarDiffDiff> constraint = computeConstraint(eePosj, eePosjm1, dt, omega, rr);
+						ScalarDiffDiff energy = (ScalarDiffDiff)0.5 * constraint.squaredNorm() * c * weight;
+
+						ADD_HES_ELEMENT(hessianEntries,
+										global_k,
+										global_l,
+										energy.deriv().deriv(),
+										1.0);
+
+						if(l < 3)
+							eePosj(l).value().deriv() = 0.0;
+						else if(l < 6)
+							eePosjm1(l-3).value().deriv() = 0.0;
+						else if(l < 7)
+							speed.value().deriv() = 0.0;
 					}
+
+					if(k < 3)
+						eePosj(k).deriv().value() = 0.0;
+					else if(k < 6)
+						eePosjm1(k-3).deriv().value() = 0.0;
+					else if(k < 7)
+						speed.deriv().value() = 0.0;
 				}
-				if (j<theMotionPlan->nSamplePoints-1){
-					double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];// *theMotionPlan->endEffectorTrajectories[i].contactFlag[j + 1];
+			}
+			if (j<theMotionPlan->nSamplePoints-1){
+				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
 
-					for (int k = 0; k < 3; ++k) {
-						ADD_HES_ELEMENT(hessianEntries,
-										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k,
-										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k,
-										c,
-										weight);
-						ADD_HES_ELEMENT(hessianEntries,
-										theMotionPlan->feetPositionsParamsStartIndex + (j+1) * nLimbs * 3 + i * 3 + k,
-										theMotionPlan->feetPositionsParamsStartIndex + (j+1) * nLimbs * 3 + i * 3 + k,
-										c,
-										weight);
-						ADD_HES_ELEMENT(hessianEntries,
-										theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k,
-										theMotionPlan->feetPositionsParamsStartIndex + (j+1) * nLimbs * 3 + i * 3 + k,
-										-c,
-										weight);
+				int iEEj = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
+				int iEEjp1 = theMotionPlan->feetPositionsParamsStartIndex + (j+1) * nLimbs * 3 + i * 3;
 
+				Vector3T<ScalarDiffDiff> eePosj;
+				for (int k = 0; k < 3; ++k)
+					eePosj(k) = p[iEEj + k];
+				Vector3T<ScalarDiffDiff> eePosjp1;
+				for (int k = 0; k < 3; ++k)
+					eePosjp1(k) = p[iEEjp1 + k];
+
+				// Angular velocity vector
+				Vector3T<ScalarDiffDiff> wheelAxisAD;
+				for (int k = 0; k < 3; ++k)
+					wheelAxisAD(k) = wheelAxis[k];
+				ScalarDiffDiff speed(p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)], 0);
+
+				// Wheel radius
+				Vector3T<ScalarDiffDiff> wheelRadiusAD;
+				for (int k = 0; k < 3; ++k)
+					wheelRadiusAD(k) = wheelRadiusV[k];
+				ScalarDiffDiff r(wheelRadius, 0);
+
+				// derive by eePosj, eePosjp1 and speed
+				for (int k = 0; k < 7; ++k) {
+					if(k < 3)
+						eePosj(k).deriv().value() = 1.0;
+					else if(k < 6)
+						eePosjp1(k-3).deriv().value() = 1.0;
+					else if(k < 7)
+						speed.deriv().value() = 1.0;
+
+					int global_k;
+					if(k < 3)
+						global_k = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k;
+					else if(k < 6)
+						global_k = theMotionPlan->feetPositionsParamsStartIndex + (j+1) * nLimbs * 3 + i * 3 + k-3;
+					else if(k < 7)
+						global_k = theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i);
+
+					for (int l = 0; l <= k; ++l) {
+						if(l < 3)
+							eePosj(l).value().deriv() = 1.0;
+						else if(l < 6)
+							eePosjp1(l-3).value().deriv() = 1.0;
+						else if(l < 7)
+							speed.value().deriv() = 1.0;
+
+						int global_l;
+						if(l < 3)
+							global_l = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + l;
+						else if(l < 6)
+							global_l = theMotionPlan->feetPositionsParamsStartIndex + (j+1) * nLimbs * 3 + i * 3 + l-3;
+						else if(l < 7)
+							global_l = theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i);
+
+						Vector3T<ScalarDiffDiff> rr = wheelRadiusAD*r;
+						Vector3T<ScalarDiffDiff> omega = wheelAxisAD*speed;
+						Vector3T<ScalarDiffDiff> constraint = computeConstraint(eePosjp1, eePosj, dt, omega, rr);
+						ScalarDiffDiff energy = (ScalarDiffDiff)0.5 * constraint.squaredNorm() * c * weight;
+
+						ADD_HES_ELEMENT(hessianEntries,
+										global_k,
+										global_l,
+										energy.deriv().deriv(),
+										1.0);
+
+						if(l < 3)
+							eePosj(l).value().deriv() = 0.0;
+						else if(l < 6)
+							eePosjp1(l-3).value().deriv() = 0.0;
+						else if(l < 7)
+							speed.value().deriv() = 0.0;
 					}
+
+					if(k < 3)
+						eePosj(k).deriv().value() = 0.0;
+					else if(k < 6)
+						eePosjp1(k-3).deriv().value() = 0.0;
+					else if(k < 7)
+						speed.deriv().value() = 0.0;
 				}
 			}
 		}
 	}
 }
-#endif
