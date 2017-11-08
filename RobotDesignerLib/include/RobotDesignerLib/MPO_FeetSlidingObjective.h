@@ -20,8 +20,16 @@ private:
 	using Vector3T = Eigen::Matrix<T, 3, 1>;
 
 	template<class T>
-	static Vector3T<T> computeConstraint(const Vector3T<T> &eePosjp1, const Vector3T<T> &eePosj, double h, const Vector3T<T> &omega, const Vector3T<T> &radius) {
-		return (eePosjp1 - eePosj)/(T)h + omega.cross(radius);
+	static Vector3T<T> computeConstraint(const Vector3T<T> &eePosjp1, const Vector3T<T> &eePosj, double dt, const Vector3T<T> &omega, const Vector3T<T> &radius) {
+		return (eePosjp1 - eePosj)/(T)dt + omega.cross(radius);
+	}
+
+	template<class T>
+	static T computeEnergy(const Vector3T<T> &eePosjp1, const Vector3T<T> &eePosj, double dt, const Vector3T<T> &wheelRadiusV, const T &wheelRadius, const Vector3T<T> &wheelAxis, const T &speed, double c, double weight) {
+		Vector3T<T> rr = wheelRadiusV*wheelRadius;
+		Vector3T<T> omega = wheelAxis*speed;
+		Vector3T<T> constraint = computeConstraint(eePosjp1, eePosj, dt, omega, rr);
+		return (T)0.5 * constraint.squaredNorm() * c * weight;
 	}
 
 private:
