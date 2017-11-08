@@ -5,6 +5,19 @@
 #include <Eigen/Eigen>
 #include <unsupported/Eigen/AutoDiff>
 
+#include <MathLib/V3D.h>
+
+TEST(MathLibTest, rotateVec_test) {
+	Vector3d a(1, 0, 0);
+	Vector3d axis(0, 0, 1);
+
+	// rotate a around axis by alpha
+	double alpha = 90. / 180.*M_PI;
+	Vector3d b = rotateVec(a, alpha, axis);
+
+	EXPECT_NEAR((b-Vector3d(0, 1, 0)).squaredNorm(), 0, 1e-8);
+}
+
 // Using our own AutoDiff:
 //TEST(AutoDiffTest, ScalarTest) {
 
