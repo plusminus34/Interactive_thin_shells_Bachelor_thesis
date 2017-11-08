@@ -28,7 +28,7 @@ RigidBody::~RigidBody(void){
 /**
 	This method returns the coordinates of the point that is passed in as a parameter(expressed in local coordinates), in world coordinates.
 */
-P3D RigidBody::getWorldCoordinates(const P3D& localPoint){
+P3D RigidBody::getWorldCoordinates(const P3D& localPoint) const {
 	return this->state.getWorldCoordinates(localPoint);
 }
 

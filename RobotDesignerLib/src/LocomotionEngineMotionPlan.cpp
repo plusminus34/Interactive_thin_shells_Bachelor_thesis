@@ -552,6 +552,18 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 		//-------------------------------------
 
 		robot->setState(&oldState);	
+
+		// draw wheels at end effectors
+		{
+			glColor4d(0.6, 0.6, 0.6, 0.8);
+			double width = 0.02;
+			for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
+				double alpha = endEffectorTrajectories[i].wheelAxisAlpha;
+				double radius = endEffectorTrajectories[i].wheelRadius;
+				V3D axis = rotateVec(Vector3d(1, 0, 0), alpha, Vector3d(0, 1, 0));
+				drawCylinder(endEffectorTrajectories[i].getEEPositionAt(f) - axis*0.5*width, axis*width, radius, 24);
+			}
+		}
 	}
 
 	glEnable(GL_LIGHTING);

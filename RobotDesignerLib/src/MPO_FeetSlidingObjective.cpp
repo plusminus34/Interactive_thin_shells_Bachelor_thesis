@@ -29,6 +29,8 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 			Eigen::Vector3d eePosj(p[iEEj + 0], p[iEEj + 1], p[iEEj + 2]);
 
 			double speed = p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)];
+			double wheelRadius = theMotionPlan->endEffectorTrajectories[i].wheelRadius;
+			double wheelAxisAlpha = theMotionPlan->endEffectorTrajectories[i].wheelAxisAlpha;
 
 			Vector3d axisRot = rotateVec(wheelAxis, wheelAxisAlpha, Vector3d(0, 1, 0));
 
@@ -74,18 +76,20 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 			for (int k = 0; k < 3; ++k)
 				eePosj(k) = p[iEEj + k];
 
+
 			// Angular velocity vector and speed
+			ScalarDiff wheelAxisAlpha = theMotionPlan->endEffectorTrajectories[i].wheelAxisAlpha;
 			Vector3T<ScalarDiff> wheelAxisAD;
 			for (int k = 0; k < 3; ++k)
 				wheelAxisAD(k) = wheelAxis[k];
 			ScalarDiff speed(p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)], 0);
-			Vector3T<ScalarDiff> axisRot = rotateVec(wheelAxisAD, (ScalarDiff)wheelAxisAlpha, Vector3T<ScalarDiff>(0, 1, 0));
+			Vector3T<ScalarDiff> axisRot = rotateVec(wheelAxisAD, wheelAxisAlpha, Vector3T<ScalarDiff>(0, 1, 0));
 
 			// Wheel radius
 			Vector3T<ScalarDiff> wheelRadiusAD;
 			for (int k = 0; k < 3; ++k)
 				wheelRadiusAD(k) = wheelRadiusV[k];
-			ScalarDiff r(wheelRadius, 0);
+			ScalarDiff r = theMotionPlan->endEffectorTrajectories[i].wheelRadius;
 
 			if (j>0){
 				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j-1];
@@ -181,17 +185,18 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 				eePosj(k) = p[iEEj + k];
 
 			// Angular velocity vector
+			ScalarDiffDiff wheelAxisAlpha = theMotionPlan->endEffectorTrajectories[i].wheelAxisAlpha;
 			Vector3T<ScalarDiffDiff> wheelAxisAD;
 			for (int k = 0; k < 3; ++k)
 				wheelAxisAD(k) = wheelAxis[k];
 			ScalarDiffDiff speed(p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)], 0);
-			Vector3T<ScalarDiffDiff> axisRot = rotateVec(wheelAxisAD, (ScalarDiffDiff)wheelAxisAlpha, Vector3T<ScalarDiffDiff>(0, 1, 0));
+			Vector3T<ScalarDiffDiff> axisRot = rotateVec(wheelAxisAD, wheelAxisAlpha, Vector3T<ScalarDiffDiff>(0, 1, 0));
 
 			// Wheel radius
 			Vector3T<ScalarDiffDiff> wheelRadiusAD;
 			for (int k = 0; k < 3; ++k)
 				wheelRadiusAD(k) = wheelRadiusV[k];
-			ScalarDiffDiff r(wheelRadius, 0);
+			ScalarDiffDiff r = theMotionPlan->endEffectorTrajectories[i].wheelRadius;
 
 			if (j>0){
 				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j-1];

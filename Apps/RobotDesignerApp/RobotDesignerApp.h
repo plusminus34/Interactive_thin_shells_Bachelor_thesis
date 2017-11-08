@@ -54,7 +54,7 @@ public:
 		SIM_AND_MOPT,
 		SIM_AND_DESIGN
 	};
-	RD_VIEW_OPTIONS viewOptions = SIM_AND_DESIGN;
+	RD_VIEW_OPTIONS viewOptions = SIM_AND_MOPT;
 
 	bool doDebug = false;
 

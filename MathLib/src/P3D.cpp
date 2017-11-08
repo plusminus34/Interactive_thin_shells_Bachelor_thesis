@@ -142,6 +142,11 @@ V3D P3D::operator - (const P3D &p) const{
 	return V3D(this->at(0) - p.at(0), this->at(1) - p.at(1), this->at(2) - p.at(2));
 }
 
+P3D P3D::operator -(const V3D &p) const
+{
+	return P3D(this->at(0) - p.at(0), this->at(1) - p.at(1), this->at(2) - p.at(2));
+}
+
 double P3D::getComponentAlong(const V3D& other) {
 	return at(0) * other.at(0) + at(1) * other.at(1) + at(2) * other.at(2);
 }

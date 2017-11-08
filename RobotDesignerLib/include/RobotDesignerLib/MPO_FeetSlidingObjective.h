@@ -36,9 +36,7 @@ private:
 	//the energy function operates on a motion plan...
 	LocomotionEngineMotionPlan* theMotionPlan;
 
-	double wheelRadius = 1.0;
 	Eigen::Vector3d wheelRadiusV = Eigen::Vector3d(0, -1, 0);
 	Eigen::Vector3d wheelAxis = Eigen::Vector3d(1, 0, 0);
-	double wheelAxisAlpha = M_PI*0.25; // rotation around y axis
 };
 

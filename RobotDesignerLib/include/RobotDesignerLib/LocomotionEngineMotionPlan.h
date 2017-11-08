@@ -21,6 +21,8 @@ public:
 	DynamicArray<double> verticalGRFUpperBoundValues;
 	DynamicArray<double> tangentGRFBoundValues;
 	DynamicArray<double> wheelSpeed;
+	double wheelRadius = 0.1;
+	double wheelAxisAlpha = M_PI*0.25;
 
 	V3D targetOffsetFromCOM;
 	RigidBody* endEffectorRB;
