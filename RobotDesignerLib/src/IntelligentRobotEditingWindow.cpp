@@ -144,9 +144,14 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 		postDraw();
 
 		if (tWidget->visible) {
-			if (tWidget->onMouseMoveEvent(xPos, yPos) == true) {
+			preDraw();
+			bool clickProcessed = false;
+			if ((clickProcessed = tWidget->onMouseMoveEvent(xPos, yPos)) == true) {
 //				selectedFP->coords = tWidget->pos;
 			}
+			postDraw();
+			if (clickProcessed)
+				return true;
 		}
 		else {
 			ReducedRobotState rs(robot);
@@ -174,6 +179,7 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 					robot->getRigidBody(i)->rbProperties.endEffectorPoints[j].selected = false;
 
 			highlightedEE = NULL;
+			highlightedEEParent = NULL;
 			double tMinEE = DBL_MAX;
 
 			for (int i = 0; i < robot->getRigidBodyCount(); i++)
@@ -184,6 +190,7 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 					if (dist < robot->getRigidBody(i)->abstractViewCylinderRadius * 1.2 && tVal < tMinEE) {
 						tMinEE = tVal;
 						highlightedEE = &robot->getRigidBody(i)->rbProperties.endEffectorPoints[j];
+						highlightedEEParent = robot->getRigidBody(i);
 					}
 				}
 
@@ -214,12 +221,10 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 				}
 
 			if (highlightedEE && highlightedRigidBody)
-				for (uint j = 0; j < highlightedRigidBody->rbProperties.endEffectorPoints.size(); j++)
-					if (&highlightedRigidBody->rbProperties.endEffectorPoints[j] == highlightedEE) {
-						highlightedRigidBody = NULL;
-						tMinB = DBL_MAX;
-						break;
-					}
+				if (highlightedEEParent == highlightedRigidBody) {
+					highlightedRigidBody = NULL;
+					tMinB = DBL_MAX;
+				}
 
 			if (highlightedJoint && (tMinJ > tMinB || tMinJ > tMinEE))
 				highlightedJoint = NULL;
@@ -250,16 +255,34 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 }
 
 bool IntelligentRobotEditingWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos){
-	int shiftDown = glfwGetKey(this->rdApp->glfwWindow, GLFW_KEY_LEFT_SHIFT);
-	if (GlobalMouseState::lButtonPressed && shiftDown == GLFW_PRESS) {
+	int ctrlDown = glfwGetKey(this->rdApp->glfwWindow, GLFW_KEY_LEFT_CONTROL);
+	if (((GlobalMouseState::lButtonPressed && ctrlDown == GLFW_PRESS) || (GlobalMouseState::rButtonPressed)) && tWidget->visible) {
+		tWidget->visible = false;
+		highlightedEE = NULL;
+		highlightedJoint = NULL;
+		highlightedRigidBody = NULL;
 		return true;
 	}
 
-	tWidget->visible = false;
+	if (GlobalMouseState::lButtonPressed) {
+		tWidget->visible = false;
 
-	//if a joint or EE is selected, turn tWidget on and sync it ...
+		ReducedRobotState rs(rdApp->robot);
+		rdApp->robot->setState(&rdApp->prd->defaultRobotState);
 
 
+		//if a joint or EE is selected, turn tWidget on and sync it ...
+		if (highlightedEE) {
+			tWidget->visible = true;
+			tWidget->pos = highlightedEEParent->getWorldCoordinates(highlightedEE->coords);
+		}
+
+		if (highlightedJoint) {
+			tWidget->visible = true;
+			tWidget->pos = highlightedJoint->getWorldPosition();
+		}
+		rdApp->robot->setState(&rs);
+	}
 
 	return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
 }
@@ -277,10 +300,16 @@ void IntelligentRobotEditingWindow::drawScene() {
 	if (!rdApp->robot)
 		return;
 
+	tWidget->draw();
+
 	int flags = SHOW_ABSTRACT_VIEW | SHOW_BODY_FRAME | SHOW_JOINTS | HIGHLIGHT_SELECTED;
+
+
 
 	ReducedRobotState rs(rdApp->robot);
 	rdApp->robot->setState(&rdApp->prd->defaultRobotState);
+
+
 
 	glEnable(GL_LIGHTING);
 	if (rdApp->simWindow->rbEngine)

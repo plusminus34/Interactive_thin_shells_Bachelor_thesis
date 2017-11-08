@@ -9,6 +9,7 @@ public:
 	RigidBody* highlightedRigidBody = NULL;
 	Joint* highlightedJoint = NULL;
 	RBEndEffector* highlightedEE = NULL;
+	RigidBody* highlightedEEParent = NULL;
 
 	TranslateWidget* tWidget = NULL;
 
