@@ -19,6 +19,10 @@ IntelligentRobotEditingWindow::IntelligentRobotEditingWindow(int x, int y, int w
 	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -1.5;
 
 	dynamic_cast<GLTrackingCamera*>(this->camera)->setCameraTarget(P3D(0, -0.25, 0));
+
+	tWidget = new TranslateWidget(AXIS_X | AXIS_Y | AXIS_Z);
+	tWidget->visible = false;
+
 }
 
 void IntelligentRobotEditingWindow::addMenuItems() {
@@ -26,7 +30,7 @@ void IntelligentRobotEditingWindow::addMenuItems() {
 }
 
 IntelligentRobotEditingWindow::~IntelligentRobotEditingWindow(){
-
+	delete tWidget;
 }
 
 void IntelligentRobotEditingWindow::drawAuxiliarySceneInfo(){
@@ -135,38 +139,113 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 
 bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 	if (Robot* robot = rdApp->robot) {
-
-		ReducedRobotState rs(robot);
-		robot->setState(&rdApp->prd->defaultRobotState);
-
 		preDraw();
 		Ray ray = getRayFromScreenCoords(xPos, yPos);
 		postDraw();
 
-		for (int i = 0; i < robot->getRigidBodyCount(); i++)
-			robot->getRigidBody(i)->selected = false;
-
-		highlightedRigidBody = NULL;
-		P3D pLocal;
-		double tMin = DBL_MAX;
-		for (int i = 0; i < robot->getRigidBodyCount(); i++){
-			if (robot->getRigidBody(i)->getRayIntersectionPointTo(ray, &pLocal)) {
-				double tVal = ray.getRayParameterFor(robot->getRigidBody(i)->getWorldCoordinates(pLocal));
-
-				if (tVal < tMin) {
-					tMin = tVal;
-					highlightedRigidBody = robot->getRigidBody(i);
-				}
+		if (tWidget->visible) {
+			if (tWidget->onMouseMoveEvent(xPos, yPos) == true) {
+//				selectedFP->coords = tWidget->pos;
 			}
 		}
+		else {
+			ReducedRobotState rs(robot);
+			robot->setState(&rdApp->prd->defaultRobotState);
 
-		robot->setState(&rs);
+			//check if any of the joints are highlighted...
+			for (int i = 0; i < robot->getJointCount(); i++)
+				robot->getJoint(i)->selected = false;
 
-		if (highlightedRigidBody) {
-			highlightedRigidBody->selected = true;
-//			Logger::consolePrint("highlighted rb %s, positioned at %lf %lf %lf\n", highlightedRigidBody->name.c_str(), highlightedRigidBody->getCMPosition().x(), highlightedRigidBody->getCMPosition().y(), highlightedRigidBody->getCMPosition().z());
+			highlightedJoint = NULL;
+			double tMinJ = DBL_MAX;
+
+			for (int i = 0; i < robot->getJointCount(); i++) {
+				P3D p;
+				double dist = ray.getDistanceToPoint(robot->getJoint(i)->getWorldPosition(), &p);
+				double tVal = ray.getRayParameterFor(p);
+				if (dist < robot->getJoint(i)->parent->abstractViewCylinderRadius * 1.2 && tVal < tMinJ) {
+					tMinJ = tVal;
+					highlightedJoint = robot->getJoint(i);
+				}
+			}
+
+			for (int i = 0; i < robot->getRigidBodyCount(); i++)
+				for (uint j = 0; j < robot->getRigidBody(i)->rbProperties.endEffectorPoints.size(); j++)
+					robot->getRigidBody(i)->rbProperties.endEffectorPoints[j].selected = false;
+
+			highlightedEE = NULL;
+			double tMinEE = DBL_MAX;
+
+			for (int i = 0; i < robot->getRigidBodyCount(); i++)
+				for (uint j = 0; j < robot->getRigidBody(i)->rbProperties.endEffectorPoints.size(); j++) {
+					P3D p;
+					double dist = ray.getDistanceToPoint(robot->getRigidBody(i)->getWorldCoordinates(robot->getRigidBody(i)->rbProperties.endEffectorPoints[j].coords), &p);
+					double tVal = ray.getRayParameterFor(p);
+					if (dist < robot->getRigidBody(i)->abstractViewCylinderRadius * 1.2 && tVal < tMinEE) {
+						tMinEE = tVal;
+						highlightedEE = &robot->getRigidBody(i)->rbProperties.endEffectorPoints[j];
+					}
+				}
+
+
+
+			for (int i = 0; i < robot->getRigidBodyCount(); i++)
+				robot->getRigidBody(i)->selected = false;
+
+			highlightedRigidBody = NULL;
+
+			P3D pLocal;
+			double tMinB = DBL_MAX;
+			for (int i = 0; i < robot->getRigidBodyCount(); i++) {
+				if (robot->getRigidBody(i)->getRayIntersectionPointTo(ray, &pLocal)) {
+					double tVal = ray.getRayParameterFor(robot->getRigidBody(i)->getWorldCoordinates(pLocal));
+
+					if (tVal < tMinB) {
+						tMinB = tVal;
+						highlightedRigidBody = robot->getRigidBody(i);
+					}
+				}
+			}
+
+			if (highlightedJoint && highlightedRigidBody)
+				if (highlightedJoint->parent == highlightedRigidBody || highlightedJoint->child == highlightedRigidBody) {
+					highlightedRigidBody = NULL;
+					tMinB = DBL_MAX;
+				}
+
+			if (highlightedEE && highlightedRigidBody)
+				for (uint j = 0; j < highlightedRigidBody->rbProperties.endEffectorPoints.size(); j++)
+					if (&highlightedRigidBody->rbProperties.endEffectorPoints[j] == highlightedEE) {
+						highlightedRigidBody = NULL;
+						tMinB = DBL_MAX;
+						break;
+					}
+
+			if (highlightedJoint && (tMinJ > tMinB || tMinJ > tMinEE))
+				highlightedJoint = NULL;
+
+			if (highlightedEE && (tMinEE > tMinB || tMinEE > tMinJ))
+				highlightedEE = NULL;
+
+			if (highlightedRigidBody && (tMinB > tMinEE || tMinB > tMinJ))
+				highlightedRigidBody = NULL;
+
+			if (highlightedJoint)
+				highlightedJoint->selected = true;
+
+			if (highlightedEE)
+				highlightedEE->selected = true;
+
+			if (highlightedRigidBody)
+				highlightedRigidBody->selected = true;
+
+			robot->setState(&rs);
+
 		}
+
 	}
+
+
 	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 }
 
@@ -175,6 +254,12 @@ bool IntelligentRobotEditingWindow::onMouseButtonEvent(int button, int action, i
 	if (GlobalMouseState::lButtonPressed && shiftDown == GLFW_PRESS) {
 		return true;
 	}
+
+	tWidget->visible = false;
+
+	//if a joint or EE is selected, turn tWidget on and sync it ...
+
+
 
 	return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
 }
@@ -201,8 +286,9 @@ void IntelligentRobotEditingWindow::drawScene() {
 	if (rdApp->simWindow->rbEngine)
 		rdApp->simWindow->rbEngine->drawRBs(flags);
 
-//	for (int i = 0; i < rdApp->robot->getJointCount(); i++)
-//		drawSphere(rdApp->prd->initialJointMorphology[rdApp->robot->getJoint(i)].worldCoords, 0.015);
+/*
+	for (int i = 0; i < rdApp->robot->getJointCount(); i++)
+		drawSphere(rdApp->prd->initialJointMorphology[rdApp->robot->getJoint(i)].worldCoords, 0.015);
 
 	if (highlightedRigidBody && highlightedRigidBody->pJoints.size() == 1 && (highlightedRigidBody->cJoints.size() > 0 || highlightedRigidBody->rbProperties.endEffectorPoints.size() > 0)){
 		P3D p1 = highlightedRigidBody->pJoints[0]->getWorldPosition();
@@ -220,7 +306,7 @@ void IntelligentRobotEditingWindow::drawScene() {
 		drawSphere(p2, 0.015);
 
 	}
-
+*/
 
 	rdApp->robot->setState(&rs);
 }

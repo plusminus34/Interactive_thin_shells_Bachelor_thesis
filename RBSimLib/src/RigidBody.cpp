@@ -151,13 +151,27 @@ void RigidBody::draw(int flags, V3D color, double alpha) {
 		for (uint i = 0; i < rbProperties.endEffectorPoints.size(); i++)
 			drawCylinder(lastFeature, rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius, 16);
 
-		glColor3d(0, 0, 1);
-		for (uint i = 0; i < cJoints.size(); i++)
-			drawSphere(cJoints[i]->pJPos, abstractViewCylinderRadius*1.2, 16);
+		for (uint i = 0; i < cJoints.size(); i++) {
+			if (flags & HIGHLIGHT_SELECTED && cJoints[i]->selected){
+				glColor3d(1, 0, 0);
+				drawSphere(cJoints[i]->pJPos, abstractViewCylinderRadius*1.4, 16);
+			}
+			else{
+				glColor3d(0, 0, 1);
+				drawSphere(cJoints[i]->pJPos, abstractViewCylinderRadius*1.2, 16);
+			}
+		}
 
-		glColor3d(1, 0, 0);
+		
 		for (uint i = 0; i < rbProperties.endEffectorPoints.size(); i++)
-			drawSphere(rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius*1.2, 16);
+			if (flags & HIGHLIGHT_SELECTED && rbProperties.endEffectorPoints[i].selected) {
+				glColor3d(1, 0, 0);
+				drawSphere(rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius*1.4, 16);
+			}
+			else {
+				glColor3d(0, 0.5, 1);
+				drawSphere(rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius*1.2, 16);
+			}
 	}
 
 	if (flags & SHOW_MOI_BOX) {

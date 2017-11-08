@@ -8,6 +8,7 @@ class RBFeaturePoint {
 public:
 	P3D coords;
 	double featureSize = 0.01;
+	bool selected = false;
 	RBFeaturePoint(const P3D& p, double fSize = 0.01) {
 		coords = p;
 		featureSize = fSize;

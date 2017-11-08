@@ -27,6 +27,8 @@ public:
 	//this is the location of the joint on the child - expressed in the child's local coordinates 
 	P3D cJPos;
 
+	bool selected = false;
+
 	//maximum torque (magnitude) that can be applied at this joint
 	double maxTorque = 1e5;
 	//maximum speed (magnitude) for this joint, in rad/s

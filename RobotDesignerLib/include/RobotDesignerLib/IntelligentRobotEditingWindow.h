@@ -7,6 +7,10 @@ public:
 	RobotDesignerApp* rdApp;
 
 	RigidBody* highlightedRigidBody = NULL;
+	Joint* highlightedJoint = NULL;
+	RBEndEffector* highlightedEE = NULL;
+
+	TranslateWidget* tWidget = NULL;
 
 	void addMenuItems();
 
