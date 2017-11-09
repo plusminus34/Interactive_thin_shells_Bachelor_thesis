@@ -421,7 +421,7 @@ public:
 
 	void updateParameterStartIndices(){
 		paramCount = 0;
-		COMPositionsParamsStartIndex = COMOrientationsParamsStartIndex = feetPositionsParamsStartIndex = barycentricWeightsParamsStartIndex = robotStatesParamsStartIndex = contactForcesParamsStartIndex = -1;
+		COMPositionsParamsStartIndex = COMOrientationsParamsStartIndex = feetPositionsParamsStartIndex = wheelParamsStartIndex = barycentricWeightsParamsStartIndex = robotStatesParamsStartIndex = contactForcesParamsStartIndex = -1;
 
 		if (optimizeCOMPositions){
 			COMPositionsParamsStartIndex = paramCount;

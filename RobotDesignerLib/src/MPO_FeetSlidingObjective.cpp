@@ -118,7 +118,6 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 					else if(k < 8)
 						grad[theMotionPlan->getWheelAxisAlphaIndex(i, j)] += energy.deriv();
 
-
 					if(k < 3)
 						eePosj(k).deriv() = 0.0;
 					else if(k < 6)
@@ -243,7 +242,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 						else if(l < 7)
 							speed.value().deriv() = 1.0;
 						else if(l < 8)
-							wheelAxisAlpha.deriv().value() = 1.0;
+							wheelAxisAlpha.value().deriv() = 1.0;
 
 						int global_l;
 						if(l < 3)
@@ -270,7 +269,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 						else if(l < 7)
 							speed.value().deriv() = 0.0;
 						else if(l < 8)
-							wheelAxisAlpha.deriv().value() = 0.0;
+							wheelAxisAlpha.value().deriv() = 0.0;
 					}
 
 					if(k < 3)
@@ -320,7 +319,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 						else if(l < 7)
 							speed.value().deriv() = 1.0;
 						else if(l < 8)
-							wheelAxisAlpha.deriv().value() = 1.0;
+							wheelAxisAlpha.value().deriv() = 1.0;
 
 						int global_l;
 						if(l < 3)
@@ -347,7 +346,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 						else if(l < 7)
 							speed.value().deriv() = 0.0;
 						else if(l < 8)
-							wheelAxisAlpha.deriv().value() = 0.0;
+							wheelAxisAlpha.value().deriv() = 0.0;
 					}
 
 					if(k < 3)
