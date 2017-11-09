@@ -147,7 +147,52 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 			preDraw();
 			bool clickProcessed = false;
 			if ((clickProcessed = tWidget->onMouseMoveEvent(xPos, yPos)) == true) {
-//				selectedFP->coords = tWidget->pos;
+				ReducedRobotState rs(robot);
+				robot->setState(&rdApp->prd->defaultRobotState);
+
+				P3D pOriginal;
+				int pStartIndex = -1;
+				if (highlightedEE){
+					pOriginal = highlightedEEParent->getWorldCoordinates(highlightedEE->coords);
+					pStartIndex = rdApp->prd->eeParamMap[highlightedEEParent].index;
+				}
+				else {
+					pOriginal = highlightedJoint->getWorldPosition();
+					pStartIndex = rdApp->prd->jointParamMap[highlightedJoint].index;
+				}
+
+				V3D offset(pOriginal, tWidget->pos);
+
+				DynamicArray<double> currentDesignParameters;
+				rdApp->prd->getCurrentSetOfParameters(currentDesignParameters);
+
+
+				if (highlightedEE) {
+					offset = highlightedEEParent->getLocalCoordinates(offset);
+					for (int i = 0; i < 3; i++)
+						currentDesignParameters[pStartIndex + i] += offset[i];
+				}
+				else {
+					if (glfwGetKey(this->rdApp->glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
+						offset = highlightedJoint->parent->getLocalCoordinates(offset);
+						for (int i = 0; i < 3; i++)
+							currentDesignParameters[pStartIndex + i] += offset[i];
+					}
+					else {
+						V3D offsetP = highlightedJoint->parent->getLocalCoordinates(offset);
+						for (int i = 0; i < 3; i++)
+							currentDesignParameters[pStartIndex + i] += offsetP[i];
+						V3D offsetC = highlightedJoint->child->getLocalCoordinates(offset);
+						for (int i = 0; i < 3; i++)
+							currentDesignParameters[pStartIndex + 3 + i] += offsetC[i];
+
+					}
+
+				}
+
+				robot->setState(&rs);
+				rdApp->prd->setParameters(currentDesignParameters);
+
 			}
 			postDraw();
 			if (clickProcessed)
