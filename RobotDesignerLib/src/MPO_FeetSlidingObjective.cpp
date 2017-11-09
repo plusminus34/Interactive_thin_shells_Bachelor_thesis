@@ -30,7 +30,7 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 
 			double speed = p[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)];
 			double wheelRadius = theMotionPlan->endEffectorTrajectories[i].wheelRadius;
-			double wheelAxisAlpha = p[theMotionPlan->getWheelAxisAlphaIndex(i)];
+			double wheelAxisAlpha = p[theMotionPlan->getWheelAxisAlphaIndex(i, j)];
 
 			if (j>0){
 				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j-1];
@@ -75,7 +75,7 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 				eePosj(k) = p[iEEj + k];
 
 			// Angular velocity vector and speed
-			ScalarDiff wheelAxisAlpha = p[theMotionPlan->getWheelAxisAlphaIndex(i)];
+			ScalarDiff wheelAxisAlpha = p[theMotionPlan->getWheelAxisAlphaIndex(i, j)];
 			Vector3T<ScalarDiff> wheelAxisAD;
 			for (int k = 0; k < 3; ++k)
 				wheelAxisAD(k) = wheelAxis[k];
@@ -116,7 +116,7 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 					else if(k < 7)
 						grad[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)] += energy.deriv();
 					else if(k < 8)
-						grad[theMotionPlan->getWheelAxisAlphaIndex(i)] += energy.deriv();
+						grad[theMotionPlan->getWheelAxisAlphaIndex(i, j)] += energy.deriv();
 
 
 					if(k < 3)
@@ -157,7 +157,7 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 					else if(k < 7)
 						grad[theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i)] += energy.deriv();
 					else if(k < 8)
-						grad[theMotionPlan->getWheelAxisAlphaIndex(i)] += energy.deriv();
+						grad[theMotionPlan->getWheelAxisAlphaIndex(i, j)] += energy.deriv();
 
 					if(k < 3)
 						eePosj(k).deriv() = 0.0;
@@ -194,7 +194,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 				eePosj(k) = p[iEEj + k];
 
 			// Angular velocity vector
-			ScalarDiffDiff wheelAxisAlpha = p[theMotionPlan->getWheelAxisAlphaIndex(i)];
+			ScalarDiffDiff wheelAxisAlpha = p[theMotionPlan->getWheelAxisAlphaIndex(i, j)];
 			Vector3T<ScalarDiffDiff> wheelAxisAD;
 			for (int k = 0; k < 3; ++k)
 				wheelAxisAD(k) = wheelAxis[k];
@@ -233,7 +233,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 					else if(k < 7)
 						global_k = theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i);
 					else if(k < 8)
-						global_k = theMotionPlan->getWheelAxisAlphaIndex(i);
+						global_k = theMotionPlan->getWheelAxisAlphaIndex(i, j);
 
 					for (int l = 0; l <= k; ++l) {
 						if(l < 3)
@@ -253,7 +253,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 						else if(l < 7)
 							global_l = theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i);
 						else if(l < 8)
-							global_l = theMotionPlan->getWheelAxisAlphaIndex(i);
+							global_l = theMotionPlan->getWheelAxisAlphaIndex(i, j);
 
 						ScalarDiffDiff energy = computeEnergy(eePosj, eePosjm1, dt, wheelRadiusAD, r, wheelAxisAD, wheelAxisAlpha, speed, c, weight);
 
@@ -310,7 +310,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 					else if(k < 7)
 						global_k = theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i);
 					else if(k < 8)
-						global_k = theMotionPlan->getWheelAxisAlphaIndex(i);
+						global_k = theMotionPlan->getWheelAxisAlphaIndex(i, j);
 
 					for (int l = 0; l <= k; ++l) {
 						if(l < 3)
@@ -330,7 +330,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 						else if(l < 7)
 							global_l = theMotionPlan->wheelParamsStartIndex + theMotionPlan->nWheelParams*(j*nLimbs + i);
 						else if(l < 8)
-							global_l = theMotionPlan->getWheelAxisAlphaIndex(i);
+							global_l = theMotionPlan->getWheelAxisAlphaIndex(i, j);
 
 						ScalarDiffDiff energy = computeEnergy(eePosjp1, eePosj, dt, wheelRadiusAD, r, wheelAxisAD, wheelAxisAlpha, speed, c, weight);
 

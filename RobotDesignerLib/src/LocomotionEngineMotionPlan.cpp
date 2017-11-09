@@ -558,7 +558,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 			glColor4d(0.6, 0.6, 0.6, 0.8);
 			double width = 0.02;
 			for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
-				double alpha = endEffectorTrajectories[i].wheelAxisAlpha;
+				double alpha = endEffectorTrajectories[i].getWheelAxisAlphaAt(f);
 				double radius = endEffectorTrajectories[i].wheelRadius;
 				V3D axis = rotateVec(Vector3d(1, 0, 0), alpha, Vector3d(0, 1, 0));
 				drawCylinder(endEffectorTrajectories[i].getEEPositionAt(f) - axis*0.5*width, axis*width, radius, 24);
@@ -742,7 +742,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan2(double f, int animationCycle, b
 	}
 }
 
-int LocomotionEngineMotionPlan::getWheelAxisAlphaIndex(int i) const
+int LocomotionEngineMotionPlan::getWheelAxisAlphaIndex(int i, int j) const
 {
-	return wheelParamsStartIndex + nSamplePoints*endEffectorTrajectories.size()*nWheelParams + i;
+	return wheelParamsStartIndex + (nSamplePoints+j)*endEffectorTrajectories.size()*nWheelParams + i;
 }
