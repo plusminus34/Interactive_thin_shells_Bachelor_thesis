@@ -122,7 +122,7 @@ void MOPTWindow::loadRobot(Robot* robot, ReducedRobotState* startState)
 	for (int j = 0; j < nLegs; j++)
 		footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nPoints / nLegs, iMax + j*nPoints / nLegs);
 
-	footFallPattern.loadFromFile("..\\out\\tmpFFP.ffp");
+	footFallPattern.loadFromFile("../out/tmpFFP.ffp");
 }
 
 void MOPTWindow::syncMOPTWindowParameters() {
@@ -152,7 +152,7 @@ void MOPTWindow::syncMotionPlanParameters(){
 LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	delete locomotionManager;
 
-	footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+	footFallPattern.writeToFile("../out/tmpFFP.ffp");
 
 	/* ----------- Reset the state of the robot ------------ */
 	robot->setState(&startState);

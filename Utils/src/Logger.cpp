@@ -8,7 +8,7 @@
 std::vector<std::string> Logger::consoleOutput;
 int Logger::maxConsoleLineCount = 10;
 
-std::string Logger::ms_strLogPath = std::string("..\\out");
+std::string Logger::ms_strLogPath = std::string("../out");
 
 std::string Logger::ms_strLogFileName = Logger::ms_strLogPath + std::string("\\log.txt");
 std::string Logger::ms_strConsoleFileName = Logger::ms_strLogPath + std::string("\\console.txt");

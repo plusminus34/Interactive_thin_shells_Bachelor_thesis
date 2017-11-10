@@ -291,7 +291,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 
 	if (fNameExt.compare("ffp") == 0) {
 		moptWindow->footFallPattern.loadFromFile(fName);
-		moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+		moptWindow->footFallPattern.writeToFile("../out/tmpFFP.ffp");
 		return;
 	}
 
@@ -299,7 +299,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		if (moptWindow->locomotionManager && moptWindow->locomotionManager->motionPlan){
 			moptWindow->locomotionManager->motionPlan->readParamsFromFile(fName);
 			moptWindow->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
-			moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+			moptWindow->footFallPattern.writeToFile("../out/tmpFFP.ffp");
 			moptWindow->syncMOPTWindowParameters();
 		}
 		return;
