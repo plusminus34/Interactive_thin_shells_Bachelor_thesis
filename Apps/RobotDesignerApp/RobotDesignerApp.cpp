@@ -9,7 +9,6 @@
 
 
 
-//#define START_WITH_VISUAL_DESIGNER
 
 //need a proper save/load routine: design, an entire robot, motion plan...
 

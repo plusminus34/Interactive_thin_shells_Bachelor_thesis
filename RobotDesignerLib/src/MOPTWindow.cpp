@@ -60,6 +60,7 @@ void MOPTWindow::addMenuItems() {
 	{
 		glApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
 	}
+// 	glApp->mainMenu->addVariable("Show weights and energy values", showWeightsAndEnergyValues)
 
 	glApp->mainMenu->addVariable("check derivatives", moptParams.checkDerivatives);
 	glApp->mainMenu->addVariable<bool>("Log data",

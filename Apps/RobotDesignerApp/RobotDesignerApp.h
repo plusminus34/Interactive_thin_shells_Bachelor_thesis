@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <GUILib/GLApplication.h>
 #include <string>
 #include <map>
@@ -23,6 +24,10 @@
 #else
 //	RUN_IN_MATLAB(x)
 #endif
+
+
+
+#define START_WITH_VISUAL_DESIGNER
 
 
 class IntelligentRobotEditingWindow;
@@ -69,8 +74,11 @@ public:
 		SIM_AND_DESIGN,
 		MOPT_AND_IEDIT
 	};
+#ifdef START_WITH_VISUAL_DESIGNER
+	RD_VIEW_OPTIONS viewOptions = SIM_AND_DESIGN;
+#else //  START_WITH_VISUAL_DESIGNER
 	RD_VIEW_OPTIONS viewOptions = MOPT_AND_IEDIT;// SIM_AND_DESIGN;
-
+#endif
 	bool doDebug = false;
 
 public:

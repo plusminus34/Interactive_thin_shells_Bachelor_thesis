@@ -206,7 +206,7 @@ void IntelligentRobotEditingWindow::compute_dmdp_Jacobian()
 
 	SparseMatrix dgdm;
 	dVector dgdpi, dmdpi;
-	MatrixNxM dgdp(m.size(), p.size());
+	dgdp.resize(m.size(), p.size());
 	dVector g_m, g_p;
 
 	resize(dgdm, m.size(), m.size());
@@ -225,21 +225,28 @@ void IntelligentRobotEditingWindow::compute_dmdp_Jacobian()
 	double dp = 0.001;
 	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
 	timerN.restart();
-	for (uint i = 0; i < p.size(); i++) {
-		resize(g_m, m.size());
-		resize(g_p, m.size());
+	if (compute_dgdp_With_FD)
+	{
+		for (uint i = 0; i < p.size(); i++) {
+			resize(g_m, m.size());
+			resize(g_p, m.size());
 
-		double pVal = p[i];
-		p[i] = pVal + dp;
-		rdApp->prd->setParameters(p);
-		rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_p, m);
-		p[i] = pVal - dp;
-		rdApp->prd->setParameters(p);
-		rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_m, m);
-		p[i] = pVal;
-		rdApp->prd->setParameters(p);
+			double pVal = p[i];
+			p[i] = pVal + dp;
+			rdApp->prd->setParameters(p);
+			rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_p, m);
+			p[i] = pVal - dp;
+			rdApp->prd->setParameters(p);
+			rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_m, m);
+			p[i] = pVal;
+			rdApp->prd->setParameters(p);
 
-		dgdp.col(i) = (g_p - g_m) / (2 * dp);
+			dgdp.col(i) = (g_p - g_m) / (2 * dp);
+		}
+	}
+	else
+	{
+
 	}
 	Logger::consolePrint("Time to construct dgdp: %lf\n", timerN.timeEllapsed());
 	timerN.restart();

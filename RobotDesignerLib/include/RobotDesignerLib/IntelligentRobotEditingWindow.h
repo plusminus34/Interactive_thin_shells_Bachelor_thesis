@@ -44,5 +44,6 @@ private:
 	dVector slidervalues;
 	std::vector<nanogui::Slider*> sliders;
 	std::vector<nanogui::TextBox*> textboxes;
+	bool compute_dgdp_With_FD = true;
 };
 
