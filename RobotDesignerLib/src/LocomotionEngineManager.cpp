@@ -97,7 +97,7 @@ double LocomotionEngineManager::runMOPTStep() {
 	int i = 0;
 	for (const auto &ee : motionPlan->endEffectorTrajectories) {
 		int j = 0;
-		for (double s : ee.wheelAxisAlpha) {
+		for (double s : ee.wheelSpeed) {
 			std::cout << i << ", " << j << ": " << s << std::endl;
 			j++;
 		}

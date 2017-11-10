@@ -1,0 +1,187 @@
+RigidBody
+	name rb0
+	mass 9.300000
+	moi 0.201500 0.205666 0.019666 0.000000 0.000000 0.000000
+	position 0.000000 -0.016846 0.000000
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotsAndMotionPlans/spotMini/meshes/BodyMesh.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	meshTransformation 0.707107 0.000000 0.000000 0.707107 -0.062000 -0.002054 -0.250000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.000000 0.016846 -0.000000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.050000 0.016846 -0.250000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.050000 0.016846 -0.250000
+	meshTransformation 0.707107 0.000000 0.000000 -0.707107 0.062000 -0.002054 -0.250000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.050000 0.016846 0.250000
+	meshTransformation 0.707107 0.000000 0.000000 -0.707107 0.062000 -0.002054 0.250000
+	meshTransformation 0.707107 0.000000 0.000000 0.707107 -0.062000 -0.002054 0.250000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.050000 0.016846 0.250000
+	mappingInfo -1 -1
+	CDP Box -0.087000 -0.027054 -0.275000 0.087000 0.022946 0.275000
+/End
+
+
+RigidBody
+	name rb1
+	mass 0.154428
+	moi 0.000050 0.000058 0.000060 0.0 0.000000 0.000000
+	position -0.098706 -0.031725 -0.250001
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotsAndMotionPlans/spotMini/meshes/LivingConnectorMesh0.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotsAndMotionPlans/spotMini/meshes/LivingMotorMesh0.obj
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	meshTransformation 1.000000 0.000000 0.000000 -0.000000 0.011294 0.008275 -0.000001
+	meshTransformation -0.000000 0.707107 -0.000000 -0.707107 -0.011294 -0.008275 0.000001
+	meshTransformation 0.707107 0.000000 0.000000 0.707107 0.036706 0.012825 0.000001
+	endEffector -0.000000 -0.129569 0.000000 0.010000
+	mappingInfo -1 -1
+	CDP Sphere -0.000000 -0.129569 0.000000 0.010000
+/End
+
+RigidBody
+	name rb4
+	mass 0.154428
+	moi 0.000050 0.000058 0.000060 0.0 0.000000 0.000000
+	position 0.098706 -0.031725 -0.250001
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotsAndMotionPlans/spotMini/meshes/LivingMotorMesh3.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotsAndMotionPlans/spotMini/meshes/LivingConnectorMesh3.obj
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	meshTransformation 0.707107 0.000000 0.000000 -0.707107 -0.036706 0.012825 0.000001
+	meshTransformation -0.000000 0.707107 0.000000 0.707107 0.011294 -0.008275 0.000001
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.011294 0.008275 -0.000001
+	mappingInfo -1 -1
+	endEffector 0.000000 -0.129569 0.000000 0.010000
+	CDP Sphere 0.000000 -0.129569 0.000000 0.010000
+/End
+
+RigidBody
+	name rb7
+	mass 0.154428
+	moi 0.000050 0.000058 0.000060 0.0 0.000000 0.000000
+	position -0.098706 -0.031725 0.250001
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotsAndMotionPlans/spotMini/meshes/LivingConnectorMesh6.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotsAndMotionPlans/spotMini/meshes/LivingMotorMesh6.obj
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	meshTransformation 1.000000 0.000000 0.000000 -0.000000 0.011294 0.008275 0.000001
+	meshTransformation -0.000000 0.707107 -0.000000 -0.707107 -0.011294 -0.008275 -0.000001
+	meshTransformation 0.707107 0.000000 0.000000 0.707107 0.036706 0.012825 -0.000001
+	mappingInfo -1 -1
+	endEffector -0.000000 -0.129569 0.000000 0.010000
+	CDP Sphere -0.000000 -0.129569 0.000000 0.010000
+/End
+
+RigidBody
+	name rb10
+	mass 0.154428
+	moi 0.000050 0.000058 0.000060 0.0 0.000000 0.000000
+	position 0.098706 -0.031725 0.250001
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotsAndMotionPlans/spotMini/meshes/LivingConnectorMesh9.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotsAndMotionPlans/spotMini/meshes/LivingMotorMesh9.obj
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.011294 0.008275 0.000001
+	meshTransformation -0.000000 0.707107 0.000000 0.707107 0.011294 -0.008275 -0.000001
+	meshTransformation 0.707107 0.000000 0.000000 -0.707107 -0.036706 0.012825 -0.000001
+	mappingInfo -1 -1
+	endEffector 0.000000 -0.129569 0.000000 0.010000
+	CDP Sphere 0.000000 -0.129569 0.000000 0.010000
+/End
+
+	hingeJoint
+		jointAxes 0.000000 1.000000 0.000000
+		dxlID -1
+		mappingInfo 0 1
+		name rb0_rb1
+		parent rb0
+		child rb1
+		jointCPos 0.036706 0.012825 0.00000
+		jointPPos -0.062000 0 -0.250000
+	/Joint
+
+	hingeJoint
+		jointAxes 0.000000 1.000000 0.000000
+		dxlID -1
+		mappingInfo 1 1
+		name rb0_rb4
+		parent rb0
+		child rb4
+		jointCPos -0.036706 0.012825 0.00000
+		jointPPos 0.062000 0 -0.250000
+	/Joint
+	
+	hingeJoint
+		jointAxes 0.000000 1.000000 0.000000
+		dxlID -1
+		mappingInfo 2 1
+		name rb0_rb7
+		parent rb0
+		child rb7
+		jointCPos 0.036706 0.012825 -0.00000
+		jointPPos -0.062000 0 0.250000
+	/Joint	
+	
+	hingeJoint
+		jointAxes 0.000000 1.000000 0.000000
+		dxlID -1
+		mappingInfo 3 1
+		name rb0_rb10
+		parent rb0
+		child rb10
+		jointCPos -0.036706 0.012825 -0.00000
+		jointPPos 0.062000 0 0.250000
+	/Joint	
+	

@@ -117,10 +117,13 @@ void MOPTWindow::loadRobot(Robot* robot, ReducedRobotState* startState)
 	// ******************* footfall patern *******************
 	footFallPattern = FootFallPattern();
 
-	int iMin = 0, iMax = nPoints / nLegs - 1;
-	footFallPattern.strideSamplePoints = nPoints;
-	for (int j = 0; j < nLegs; j++)
-		footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nPoints / nLegs, iMax + j*nPoints / nLegs);
+	bool createDefaultFFP = false;
+	if (createDefaultFFP){
+		int iMin = 0, iMax = nPoints / nLegs - 1;
+		footFallPattern.strideSamplePoints = nPoints;
+		for (int j = 0; j < nLegs; j++)
+			footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nPoints / nLegs, iMax + j*nPoints / nLegs);
+	}
 
 	footFallPattern.loadFromFile("../out/tmpFFP.ffp");
 }

@@ -281,7 +281,7 @@ void LocomotionEngineManagerGRFv1::setupObjectives() {
 	ef->objectives.push_back(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 10000.0));
 	ef->objectives.push_back(new MPO_RobotCOMObjective(ef->theMotionPlan, "robot COM objective", 10000.0));
 	ef->objectives.push_back(new MPO_RobotEndEffectorsObjective(ef->theMotionPlan, "robot EE objective", 10000.0));
-	ef->objectives.push_back(new MPO_RobotWheelAxisObjective(ef->theMotionPlan, "robot wheel axis objective", 1.0));
+//	ef->objectives.push_back(new MPO_RobotWheelAxisObjective(ef->theMotionPlan, "robot wheel axis objective", 10000.0));
 	ef->objectives.push_back(new MPO_RobotCOMOrientationsObjective(ef->theMotionPlan, "robot COM orientations objective", 10000.0));
 	ef->objectives.push_back(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
 
@@ -330,7 +330,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 	//consistancy constraints (between robot states and other auxiliary variables)
 	ef->objectives.push_back(new MPO_RobotEndEffectorsObjective(ef->theMotionPlan, "robot EE objective", 10000.0));
-	ef->objectives.push_back(new MPO_RobotWheelAxisObjective(ef->theMotionPlan, "robot wheel axis objective", 1.0));
+//	ef->objectives.push_back(new MPO_RobotWheelAxisObjective(ef->theMotionPlan, "robot wheel axis objective", 10000.0));
 	ef->objectives.push_back(new MPO_RobotCOMObjective(ef->theMotionPlan, "robot COM objective", 10000.0));
 	ef->objectives.push_back(new MPO_RobotCOMOrientationsObjective(ef->theMotionPlan, "robot COM orientations objective", 10000.0));
 
@@ -343,7 +343,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->objectives.push_back(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0));
 
 	// constraint ensuring the y component of the EE position follows the swing motion
-	ef->objectives.push_back(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0));
+//	ef->objectives.push_back(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0));
 
 	//periodic boundary constraints...
 	if (ef->theMotionPlan->wrapAroundBoundaryIndex >= 0) {

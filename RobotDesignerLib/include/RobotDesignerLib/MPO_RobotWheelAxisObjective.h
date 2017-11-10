@@ -13,9 +13,7 @@ public:
 	virtual double computeValue(const dVector& p);
 
 	virtual void addGradientTo(dVector& grad, const dVector& p);
-#if 1
 	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
-#endif
 
 private:
 	//the energy function operates on a motion plan...

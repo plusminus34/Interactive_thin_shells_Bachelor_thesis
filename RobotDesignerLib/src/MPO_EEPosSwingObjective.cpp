@@ -21,7 +21,8 @@ double MPO_EEPosSwingObjective::computeValue(const dVector& p){
 		for (uint i=0;i<theMotionPlan->endEffectorTrajectories.size();i++){
 			const DynamicArray<double> &targetEEPosY = theMotionPlan->endEffectorTrajectories[i].targetEEPosY;
 			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j-1];
-			double eePosY = p[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1];
+			double eePosY = theMotionPlan->endEffectorTrajectories[i].EEPos[j](1);
+			// p[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1];
 
 			retVal += computeEnergy(eePosY, targetEEPosY[j], c);
 		}

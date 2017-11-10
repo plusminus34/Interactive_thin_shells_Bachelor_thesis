@@ -94,11 +94,12 @@ RobotDesignerApp::RobotDesignerApp(){
 	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
 	
 #else
-    loadFile("../data/robotsAndMotionPlans/spotMini/robot2.rbs");
+	loadFile("../data/robotsAndMotionPlans/spotMini/robotCar.rbs");
     loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
 //	loadToSim();
 	loadToSim(false);
-    loadFile("../data/robotsAndMotionPlans/spotMini/trot.p");
+//    loadFile("../data/robotsAndMotionPlans/spotMini/trot.p");
+//	loadFile("../data/robotsAndMotionPlans/spotMini/stand.p");
 
 	mainMenu->addGroup("Design Parameters");
 	addDesignParameterSliders();
