@@ -127,8 +127,8 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 			}
 
 			rdApp->robot->setState(&rs);
-			rdApp->prd->setParameters(currentDesignParameters);
-
+			updateParamsAndMotion(currentDesignParameters);
+			syncSliders();
 		}
 
 		return true;
@@ -191,8 +191,8 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 				}
 
 				robot->setState(&rs);
-				rdApp->prd->setParameters(currentDesignParameters);
-
+				updateParamsAndMotion(currentDesignParameters);
+				syncSliders();
 			}
 			postDraw();
 			if (clickProcessed)
@@ -612,6 +612,8 @@ void IntelligentRobotEditingWindow::drawScene() {
 
 	if (!rdApp->robot)
 		return;
+
+	tWidget->draw();
 
 	int flags = SHOW_ABSTRACT_VIEW | SHOW_BODY_FRAME | SHOW_JOINTS | HIGHLIGHT_SELECTED;
 
