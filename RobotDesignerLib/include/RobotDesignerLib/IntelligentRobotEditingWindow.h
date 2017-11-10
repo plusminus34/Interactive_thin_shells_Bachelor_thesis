@@ -7,6 +7,14 @@ public:
 	RobotDesignerApp* rdApp;
 
 	RigidBody* highlightedRigidBody = NULL;
+	Joint* highlightedJoint = NULL;
+	RBEndEffector* highlightedEE = NULL;
+	RigidBody* highlightedEEParent = NULL;
+
+	TranslateWidget* tWidget = NULL;
+
+	void addMenuItems();
+
 public:
 	IntelligentRobotEditingWindow(int x, int y, int w, int h, RobotDesignerApp* rdApp);
 	~IntelligentRobotEditingWindow();

@@ -149,8 +149,8 @@ void RobotDesignerApp::setupWindows() {
 		moptWindow->setViewportParameters(offset, 0, w / 2, h);
 		moptWindow->ffpViewer->setViewportParameters(offset, 0, w / 2, h / 4);
 
-		consoleWindow->setViewportParameters(offset + w / 2, 0, w / 2-offset, 280);
-		iEditWindow->setViewportParameters(offset + w / 2, 0, w / 2- offset, h);
+		consoleWindow->setViewportParameters(offset + w / 2, 0, w / 2, 280);
+		iEditWindow->setViewportParameters(offset + w / 2, 0, w / 2, h);
 		iEditWindow->showMenu();
 	}
 	else {
