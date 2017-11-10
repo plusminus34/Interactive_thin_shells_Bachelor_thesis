@@ -127,7 +127,7 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 			}
 
 			rdApp->robot->setState(&rs);
-			updateParamsAndMotion(currentDesignParameters);
+			updateParamsAndMotion(Eigen::Map<dVector>(currentDesignParameters.data(), currentDesignParameters.size()));
 			syncSliders();
 		}
 
@@ -191,7 +191,7 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 				}
 
 				robot->setState(&rs);
-				updateParamsAndMotion(currentDesignParameters);
+				updateParamsAndMotion(Eigen::Map<dVector>(currentDesignParameters.data(), currentDesignParameters.size()));
 				syncSliders();
 			}
 			postDraw();
