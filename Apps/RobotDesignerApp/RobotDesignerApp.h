@@ -116,13 +116,6 @@ public:
 
 
 	SymmetricParameterizedRobotDesign* prd = NULL;
-	void test_dmdp_Jacobian();
-	void compute_dmdp_Jacobian();
-	void testOptimizeDesign();
-	void CreateParametersDesignWindow();
-
-	void resyncRBS();
-	void updateParamsAndMotion(int paramIndex, double value);
 
 #ifdef USE_MATLAB
 	Engine *matlabengine;
