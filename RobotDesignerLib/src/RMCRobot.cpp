@@ -370,12 +370,20 @@ void RMCRobot::saveToFile(FILE* fp)
 				livingRMC->motor->rotAngleMin, livingRMC->bracket->bracketInitialAngle, livingRMC->bracket->bracketConnectorAngle);
 			fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf", q[0], q[1], q[2], q[3], pos[0], pos[1], pos[2]);
 		}
-		else if (rmc->type == LIVING_EE)
+		else if (rmc->type == LIVING_SPHERE_EE)
 		{
 			LivingSphereEE* livingRMC = dynamic_cast<LivingSphereEE*>(rmc);
 
 			fprintf(fp, "LivingSphereEE %s ", rmc->getName().c_str());
 			fprintf(fp, "%lf ", livingRMC->sphereRadius);
+			fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf", q[0], q[1], q[2], q[3], pos[0], pos[1], pos[2]);
+		}
+		else if (rmc->type == LIVING_WHEEL_EE)
+		{
+			LivingWheelEE* livingRMC = dynamic_cast<LivingWheelEE*>(rmc);
+
+			fprintf(fp, "LivingWheelEE %s ", rmc->getName().c_str());
+			fprintf(fp, "%lf ", livingRMC->radius);
 			fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf", q[0], q[1], q[2], q[3], pos[0], pos[1], pos[2]);
 		}
 		else {
@@ -510,6 +518,24 @@ void RMCRobot::loadFromFile(FILE* fp, map<string, RMC*>& rmcNameMap)
 			posMap[livingRMC] = pos;
 			qMap[livingRMC] = q;
 		}
+		else if (strcmp(keyword, "LivingWheelEE") == 0)
+		{
+			char name[50];
+			sscanf(line + strlen(keyword), "%s", name);
+			LivingWheelEE* livingRMC = dynamic_cast<LivingWheelEE*>(rmcNameMap[name])->clone();
+			tmpRmcs.push_back(livingRMC);
+			if (!root)
+				root = livingRMC;
+
+			P3D pos;
+			Quaternion q;
+
+			int num = sscanf(line + strlen(keyword) + strlen(name) + 1, "%lf %lf %lf %lf %lf %lf %lf %lf", &livingRMC->radius, &q[0], &q[1], &q[2], &q[3], &pos[0], &pos[1], &pos[2]);
+			livingRMC->update();
+
+			posMap[livingRMC] = pos;
+			qMap[livingRMC] = q;
+		}
 		else if (strcmp(keyword, "RMCJoint") == 0)
 		{
 			int parentId, childId;
@@ -592,9 +618,14 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 			dynamic_cast<LivingConnector*>(rmc)->exportMeshes(robotMeshDir.c_str(), connectorID);
 			connectorID++;
 		}
-		else if (rmc->type == LIVING_EE)
+		else if (rmc->type == LIVING_SPHERE_EE)
 		{
 			dynamic_cast<LivingSphereEE*>(rmc)->exportMeshes(robotMeshDir.c_str(), eeID);
+			eeID++;
+		}
+		else if (rmc->type == LIVING_WHEEL_EE)
+		{
+			dynamic_cast<LivingWheelEE*>(rmc)->exportMeshes(robotMeshDir.c_str(), eeID);
 			eeID++;
 		}
 	}
@@ -741,10 +772,22 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 			rb.meshDescriptions.push_back("skeleton");
 		}
 
-		if (rmc->type == LIVING_EE)
+		if (rmc->type == LIVING_SPHERE_EE)
 		{
 			LivingSphereEE* sphereEE = dynamic_cast<LivingSphereEE*>(rmc);
 			rb.meshes.push_back(sphereEE->eeMesh);
+			rb.carveMeshes.push_back(NULL);
+			Transformation trans;
+			trans.R = rmc->state.orientation.getRotationMatrix();
+			trans.T = rmc->state.position - rb.state.position;
+			rb.meshTransformations.push_back(trans);
+			rb.meshDescriptions.push_back("skeleton");
+		}
+
+		if (rmc->type == LIVING_WHEEL_EE)
+		{
+			LivingWheelEE* wheelEE = dynamic_cast<LivingWheelEE*>(rmc);
+			rb.meshes.push_back(wheelEE->wheelMesh);
 			rb.carveMeshes.push_back(NULL);
 			Transformation trans;
 			trans.R = rmc->state.orientation.getRotationMatrix();
@@ -1032,10 +1075,11 @@ void RMCRobot::updateAllLivingMotor()
 	for (int i = 0; i < getJointCount(); i++)
 	{
 		RMC* rmc = getJoint(i)->getChild();
-		if (rmc->type == LIVING_EE)
+		if (rmc->type == LIVING_SPHERE_EE || rmc->type == LIVING_WHEEL_EE)
 		{
 			rmc->update();
 		}
+
 	}
 
 	for (int i = 0; i < getJointCount(); i++)

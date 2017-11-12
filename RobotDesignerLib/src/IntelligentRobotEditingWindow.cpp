@@ -500,8 +500,9 @@ void IntelligentRobotEditingWindow::testOptimizeDesign() {
 	rdApp->prd->setParameters(p);
 }
 
-void IntelligentRobotEditingWindow::showMenu()
-{
+void IntelligentRobotEditingWindow::showMenu(){
+	if (!rdApp->robot)
+		return;
 	if (!menu)
 		CreateParametersDesignWindow();
 	menu->setVisible(true);

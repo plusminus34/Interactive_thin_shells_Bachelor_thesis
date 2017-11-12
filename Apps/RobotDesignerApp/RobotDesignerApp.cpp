@@ -7,7 +7,16 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
+#define START_WITH_VISUAL_DESIGNER
 
+
+//want:
+// passive wheels, active wheels
+// point feet, ball feet (equivalent to an end effector wheel whose orientation is frozen to the foot)!!
+
+//add some wheels to the designer
+//add body volume via shape features stuffs
+//add other accents, like eyes and antennas
 
 
 //need a proper save/load routine: design, an entire robot, motion plan...
