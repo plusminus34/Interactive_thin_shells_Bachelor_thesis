@@ -20,9 +20,9 @@ public:
 	~IntelligentRobotEditingWindow();
 
 	virtual void drawScene();
-	void compute_dmdp_Jacobian();
+	void updateJacobian();
 	void test_dmdp_Jacobian();
-	void testOptimizeDesign();
+	void DoDesignParametersOptimizationStep();
 	void showMenu();
 	void hideMenu();
 	void syncSliders();
@@ -53,5 +53,7 @@ private:
 	std::vector<nanogui::Slider*> sliders;
 	std::vector<nanogui::TextBox*> textboxes;
 	bool compute_dgdp_With_FD = true;
+	int optimizeEnergyNum = 11;
+	double stepSize = 0.01;
 };
 

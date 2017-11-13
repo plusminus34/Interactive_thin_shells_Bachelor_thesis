@@ -45,10 +45,13 @@ void MOPTWindow::addMenuItems() {
 		auto tmpVar = glApp->mainMenu->addVariable("des speed X", moptParams.desTravelDistX);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
+
+	glApp->mainMenu->addVariable("curr speed X", COMSpeed(0))->setEditable(false);
 	{
 		auto tmpVar = glApp->mainMenu->addVariable("des Speed Z", moptParams.desTravelDistZ);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
+	glApp->mainMenu->addVariable("curr speed Z", COMSpeed(2))->setEditable(false);
 	{
 		auto tmpVar = glApp->mainMenu->addVariable("des turning angle", moptParams.desTurningAngle);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
@@ -228,9 +231,17 @@ void MOPTWindow::drawScene() {
 
 	if (locomotionManager){
 		locomotionManager->drawMotionPlan(moptParams.phase, moptParams.gaitCycle, moptParams.drawRobotPose, moptParams.drawPlanDetails, moptParams.drawContactForces, moptParams.drawOrientation);
+
+		int startIndex = locomotionManager->motionPlan->wrapAroundBoundaryIndex;
+		if (startIndex < 0)  startIndex = 0;
+		COMSpeed = locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(locomotionManager->motionPlan->nSamplePoints - 1) - 
+			       locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(startIndex);
+			
 	}
 	if (showWeightsAndEnergyValues)
 		updateSliders();
+
+
 }
 
 void MOPTWindow::drawAuxiliarySceneInfo(){
