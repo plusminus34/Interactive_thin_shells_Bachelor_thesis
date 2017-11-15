@@ -89,5 +89,6 @@ private:
 	std::vector<nanogui::FloatBox<double>*> energyTextboxes;
 	std::vector<nanogui::FloatBox<double>*> weightTextboxes;
 	void updateSliders();
+	V3D COMSpeed;
 };
 

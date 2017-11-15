@@ -336,7 +336,6 @@ void IntelligentRobotEditingWindow::setViewportParameters(int posX, int posY, in
 	GLWindow3D::setViewportParameters(posX, posY, sizeX, sizeY);
 }
 
-
 void IntelligentRobotEditingWindow::resetParams()
 {
 	dVector p;	rdApp->prd->getCurrentSetOfParameters(p);
@@ -345,7 +344,7 @@ void IntelligentRobotEditingWindow::resetParams()
 	syncSliders();
 }
 
-void IntelligentRobotEditingWindow::compute_dmdp_Jacobian()
+void IntelligentRobotEditingWindow::updateJacobian()
 {
 	//evaluates dm/dp at (m,p). It is assumed that m corresponds to a minimum of the energy (i.e. m = arg min (E(m(p)))
 	// Let g = \partial E / \partial m
@@ -430,7 +429,7 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
 
 	//dm/dp, the analytic version. 
-	compute_dmdp_Jacobian();
+	updateJacobian();
 
 	//Now estimate this jacobian with finite differences...
 	MatrixNxM dmdp_FD;
@@ -471,33 +470,20 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 	print("../out/dmdp_FD.m", dmdp_FD);
 }
 
-void IntelligentRobotEditingWindow::testOptimizeDesign() {
-	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
-	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
-	MatrixNxM dmdp; compute_dmdp_Jacobian();
+void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep() {
+	updateJacobian();
 
 	//If we have some objective O, expressed as a function of m, then dO/dp = dO/dm * dm/dp
 	dVector dOdm;
 	dVector dOdp;
-	resize(dOdm, m.size());
-	resize(dOdp, p.size());
+	resize(dOdm, m0.size());
+	resize(dOdp, p0.size());
 
-	rdApp->moptWindow->locomotionManager->energyFunction->objectives[11]->addGradientTo(dOdm, m);
-
+	rdApp->moptWindow->locomotionManager->energyFunction->objectives[optimizeEnergyNum]->addGradientTo(dOdm, m0);
+	
 	dOdp = dmdp.transpose() * dOdm;
 
-	Logger::consolePrint("dOdp[0]: %lf\n", dOdp[0]);
-
-	double len = dOdp.norm();
-	if (len > 0.01)
-		dOdp = dOdp / len * 0.01;
-
-	Logger::consolePrint("p[0] before: %lf\n", p[0]);
-
-	for (uint i = 0; i < p.size(); i++)
-		p[i] -= dOdp[i];
-	Logger::consolePrint("p[0] after: %lf\n", p[0]);
-	rdApp->prd->setParameters(p);
+	updateParamsAndMotion(p0-stepSize*dOdp);
 }
 
 void IntelligentRobotEditingWindow::showMenu(){
@@ -532,11 +518,15 @@ void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
 
 	menu = rdApp->mainMenu->addWindow(Eigen::Vector2i(viewportX, viewportY), "Design Parameters");
 	rdApp->mainMenu->addButton("Reset Params", [this]() { resetParams(); });
-	rdApp->mainMenu->addButton("Compute Jacobian", [this]() { compute_dmdp_Jacobian(); });
+	rdApp->mainMenu->addButton("Compute Jacobian", [this]() { updateJacobian(); });
 
 	rdApp->mainMenu->addVariable("Update Jacobian continuously", updateJacobiancontinuously);
 	rdApp->mainMenu->addVariable("Use Jacobian", updateMotionBasedOnJacobian);
 	rdApp->mainMenu->addVariable("Use SVD", useSVD);
+
+	rdApp->mainMenu->addButton("Do Optimization step", [this]() { DoDesignParametersOptimizationStep(); });
+	rdApp->mainMenu->addVariable("Optimize Energy num", optimizeEnergyNum);
+	rdApp->mainMenu->addVariable("Step Size", stepSize);
 
 	using namespace nanogui;
 	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
@@ -601,7 +591,7 @@ void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 	if (updateJacobiancontinuously)
 	{
 		Timer timerN; timerN.restart();
-		compute_dmdp_Jacobian();
+		updateJacobian();
 		Logger::consolePrint("Total time to compute J: %lf\n", timerN.timeEllapsed());
 	}
 	rdApp->prd->setParameters(p);
