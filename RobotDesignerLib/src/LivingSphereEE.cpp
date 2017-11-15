@@ -170,7 +170,7 @@ LivingWheelEE::LivingWheelEE()
 		pins.push_back(pin);
 	}
 
-	originalWheelMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/wheel.obj");
+	originalWheelMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/wheel2.obj");
 
 	update();
 }
@@ -274,6 +274,7 @@ void LivingWheelEE::update(){
 	for (int i = 0; i < wheelMesh->getVertexCount() * 3; i++) {
 		wheelMesh->getVertexArray()[i] *= radius;
 	}
+	wheelMesh->calBoundingBox();
 
 	// update pins
 	auto& pin = pins[0];

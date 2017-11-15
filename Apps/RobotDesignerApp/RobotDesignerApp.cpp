@@ -9,6 +9,21 @@
 
 #define START_WITH_VISUAL_DESIGNER
 
+/*
+should take a look at convergence rates
+- how often is a step size of 1 taken?
+- what happens to convergence tail (value is of course not the same) as different objectives are turned off?
+- would GD do better at that point towards the end? Should the line search try to increase too?
+- is it the global regularizer that is causing problems?
+- or is it the high weights of the soft constraints?
+
+*/
+
+//create a few first designs that have wheels
+//write out a flag in the rbs file, to indicate that the end effector is a wheel and that it has some radius (and later, that it is passive or active), also, its rotation axis in the local coordinate frame of the parent RB
+//have the method that draws rigid bodies change the way the wheel EE mesh is visualized and make it look like it is spinning...
+
+//need to think of rigid bodies that are not part of the state of the robot, but they have equivalents in ODE: wheels and linkages are examples of this...
 
 //want:
 // passive wheels, active wheels

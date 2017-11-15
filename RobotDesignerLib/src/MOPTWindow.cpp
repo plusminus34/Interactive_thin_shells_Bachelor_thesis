@@ -341,7 +341,7 @@ void MOPTWindow::updateSliders()
 	for (int i = 0; i < NE; i++)
 	{
 		double value = locomotionManager->energyFunction->objectives[i]->computeValue(params);
-		energySliders[i]->setValue(value);
+		energySliders[i]->setValue((float)value);
 		energyTextboxes[i]->TextBox::setValue(double2string(value));
 	}
 }
