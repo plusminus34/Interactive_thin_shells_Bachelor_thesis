@@ -72,7 +72,7 @@ public:
 	}
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
-	P3D getEEPositionAt(double t){
+	P3D getEEPositionAt(double t) const {
 		//very slow method, but easy to implement...
 		Trajectory3D traj;
 		for (uint i = 0;i<EEPos.size();i++)
@@ -81,7 +81,7 @@ public:
 	}
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
-	double getWheelAxisAlphaAt(double t){
+	double getWheelAxisAlphaAt(double t) const {
 		//very slow method, but easy to implement...
 		Trajectory1D traj;
 		for (uint i = 0; i<wheelAxisAlpha.size(); i++)
@@ -935,6 +935,8 @@ public:
 
 
 	P3D getCOP(int tIndex);
+
+	P3D getCenterOfRotationAt(double t, Eigen::VectorXd &error) const;
 
 	void getVelocityTimeIndicesFor(int tIndex, int& tm, int& tp, bool wrapAround = true) const;
 
