@@ -16,12 +16,12 @@ double MPO_RobotWheelAxisObjective::computeValue(const dVector& p){
 	//	theMotionPlan->setMPParametersFromList(p);
 
 	double retVal = 0;
-	int nLimbs = theMotionPlan->endEffectorTrajectories.size();
+	int nEEs = theMotionPlan->endEffectorTrajectories.size();
 	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
 		dVector q_t;
 		theMotionPlan->robotStateTrajectory.getQAtTimeIndex(j, q_t);
 		theMotionPlan->robotRepresentation->setQ(q_t);
-		for (int i=0;i<nLimbs;i++){
+		for (int i=0;i<nEEs;i++){
 			P3D pO = theMotionPlan->robotRepresentation->getWorldCoordinatesFor(
 						theMotionPlan->endEffectorTrajectories[i].endEffectorLocalCoords,
 						theMotionPlan->endEffectorTrajectories[i].endEffectorRB
