@@ -32,6 +32,9 @@ public:
 	bool initialized = false;
 	GLApplication* glApp;
 
+	nanogui::Graph* energyGraph;
+	std::vector<float> energyGraphValues;
+
 	MOPTParams moptParams;
 
 	Robot* robot = NULL;

@@ -64,6 +64,19 @@ void MOPTWindow::addMenuItems() {
 	glApp->mainMenu->addVariable("check derivatives", moptParams.checkDerivatives);
 	glApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "IPv1", "IPv2" });
 
+
+
+	{
+		using namespace nanogui;
+
+		Window *window = new Window(glApp->menuScreen, "Wheel Control");
+		window->setPosition(Eigen::Vector2i(300, 0));
+		window->setWidth(300);
+		window->setLayout(new GroupLayout());
+
+		energyGraph = window->add<Graph>("Energy function");
+	}
+
 /*
 	//this is the slider for the phase...
 	new nanogui::Label(glApp->mainMenu->window(), "Slider and text box", "sans-bold");
@@ -191,6 +204,16 @@ double MOPTWindow::runMOPTStep(){
 	syncMotionPlanParameters();
 
 	double energyVal = locomotionManager->runMOPTStep();
+
+	// plot energy value
+	{
+		energyGraphValues.push_back(energyVal);
+		int start = std::max(0, (int)energyGraphValues.size()-100);
+		int size = std::min(100, (int)energyGraphValues.size());
+		Eigen::Map<Eigen::VectorXf> values(&energyGraphValues[start], size);
+		energyGraph->setValues(values);
+	}
+
 
 	return energyVal;
 }
