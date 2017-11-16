@@ -39,5 +39,13 @@ private:
 
 	Eigen::Vector3d wheelRadiusV = Eigen::Vector3d(0, -1, 0);
 	Eigen::Vector3d wheelAxis = Eigen::Vector3d(1, 0, 0);
+
+	template<class T>
+	struct DOF {
+		T* v;
+		int i;
+	};
+
+	static const int numDOFs = 9;
 };
 
