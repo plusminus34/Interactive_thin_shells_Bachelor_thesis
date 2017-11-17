@@ -17,7 +17,7 @@ public:
 
 	Robot* robot = NULL;
 
-	bool drawMeshes = true, drawMOIs = false, drawCDPs = false, drawSkeletonView = false, drawJoints = false, drawContactForces = true, drawOrientation = true;
+	bool drawMeshes = false, drawMOIs = false, drawCDPs = false, drawSkeletonView = true, drawContactForces = true, drawOrientation = true;
 
 	void addMenuItems();
 

@@ -142,7 +142,7 @@ double Ray::getDistanceToPlane(const Plane& plane, P3D *closestPtOnRay) const {
 	if (closestPtOnRay)
 		*closestPtOnRay = origin + direction * t;
 
-	return 0;
+	return t;
 }
 
 double Ray::getDistanceToTriangle(const P3D &p1, const P3D &p2, const P3D &p3) const

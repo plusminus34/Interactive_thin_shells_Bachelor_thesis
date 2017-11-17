@@ -66,7 +66,7 @@ public:
 	LocomotionEngine_Constraints* constraints;
 	ConstrainedObjectiveFunction* constrainedObjectiveFunction;
 	bool useObjectivesOnly = false;
-
+	bool writeParamsToFile = true;
 public:
 	LocomotionEngineManager();
 	virtual ~LocomotionEngineManager() = 0;

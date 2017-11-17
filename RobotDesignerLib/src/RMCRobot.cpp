@@ -370,12 +370,20 @@ void RMCRobot::saveToFile(FILE* fp)
 				livingRMC->motor->rotAngleMin, livingRMC->bracket->bracketInitialAngle, livingRMC->bracket->bracketConnectorAngle);
 			fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf", q[0], q[1], q[2], q[3], pos[0], pos[1], pos[2]);
 		}
-		else if (rmc->type == LIVING_EE)
+		else if (rmc->type == LIVING_SPHERE_EE)
 		{
 			LivingSphereEE* livingRMC = dynamic_cast<LivingSphereEE*>(rmc);
 
 			fprintf(fp, "LivingSphereEE %s ", rmc->getName().c_str());
 			fprintf(fp, "%lf ", livingRMC->sphereRadius);
+			fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf", q[0], q[1], q[2], q[3], pos[0], pos[1], pos[2]);
+		}
+		else if (rmc->type == LIVING_WHEEL_EE)
+		{
+			LivingWheelEE* livingRMC = dynamic_cast<LivingWheelEE*>(rmc);
+
+			fprintf(fp, "LivingWheelEE %s ", rmc->getName().c_str());
+			fprintf(fp, "%lf ", livingRMC->radius);
 			fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf", q[0], q[1], q[2], q[3], pos[0], pos[1], pos[2]);
 		}
 		else {
@@ -510,6 +518,24 @@ void RMCRobot::loadFromFile(FILE* fp, map<string, RMC*>& rmcNameMap)
 			posMap[livingRMC] = pos;
 			qMap[livingRMC] = q;
 		}
+		else if (strcmp(keyword, "LivingWheelEE") == 0)
+		{
+			char name[50];
+			sscanf(line + strlen(keyword), "%s", name);
+			LivingWheelEE* livingRMC = dynamic_cast<LivingWheelEE*>(rmcNameMap[name])->clone();
+			tmpRmcs.push_back(livingRMC);
+			if (!root)
+				root = livingRMC;
+
+			P3D pos;
+			Quaternion q;
+
+			int num = sscanf(line + strlen(keyword) + strlen(name) + 1, "%lf %lf %lf %lf %lf %lf %lf %lf", &livingRMC->radius, &q[0], &q[1], &q[2], &q[3], &pos[0], &pos[1], &pos[2]);
+			livingRMC->update();
+
+			posMap[livingRMC] = pos;
+			qMap[livingRMC] = q;
+		}
 		else if (strcmp(keyword, "RMCJoint") == 0)
 		{
 			int parentId, childId;
@@ -558,7 +584,52 @@ void RMCRobot::loadFromFile(FILE* fp, map<string, RMC*>& rmcNameMap)
 }
 
 
-void RMCRobot::saveToRBSFile(const char* fName, Robot* templateRobot, bool freezeRoot, bool mergeMeshes, bool forFabrication){
+void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robot* templateRobot, bool freezeRoot, bool mergeMeshes, bool forFabrication){
+	map<RMC*, double> jointMotorAngleMap;
+	for (uint i = 0; i < jointList.size(); i++){
+		RMCJoint* joint = jointList[i];
+		RMC* parentRMC = jointList[i]->getParent();
+		RMC* childRMC = jointList[i]->getChild();
+
+		if (joint->parentPin && joint->parentPin->type == HORN_PIN) {
+			jointMotorAngleMap[parentRMC] = RAD(parentRMC->motorAngle);
+		}
+		else if (joint->childPin && joint->childPin->type == HORN_PIN) {
+			jointMotorAngleMap[childRMC] = RAD(-childRMC->motorAngle);
+		}
+		else
+			continue;
+	}
+
+	resetAllMotorAngles();
+
+	int motorID = 0;
+	int connectorID = 0;
+	int eeID = 0;
+	for (int i = 0; i < getJointCount(); i++) {
+		RMC* rmc = getJoint(i)->getChild();
+		if (rmc->type == LIVING_MOTOR)
+		{
+			dynamic_cast<LivingMotor*>(rmc)->exportMeshes(robotMeshDir.c_str(), motorID, mergeMeshes);
+			motorID++;
+		}
+		else if (rmc->type == LIVING_CONNECTOR)
+		{
+			dynamic_cast<LivingConnector*>(rmc)->exportMeshes(robotMeshDir.c_str(), connectorID);
+			connectorID++;
+		}
+		else if (rmc->type == LIVING_SPHERE_EE)
+		{
+			dynamic_cast<LivingSphereEE*>(rmc)->exportMeshes(robotMeshDir.c_str(), eeID);
+			eeID++;
+		}
+		else if (rmc->type == LIVING_WHEEL_EE)
+		{
+			dynamic_cast<LivingWheelEE*>(rmc)->exportMeshes(robotMeshDir.c_str(), eeID);
+			eeID++;
+		}
+	}
+
 	FILE* fp = fopen(fName, "w+");
 	
 	int RBIndex = 1;
@@ -612,8 +683,23 @@ void RMCRobot::saveToRBSFile(const char* fName, Robot* templateRobot, bool freez
 		{
 			P3D endEffectorPos = rb.getLocalCoordinates(rmc->getWorldCoordinates(rmc->rbProperties.endEffectorPoints[i].coords));
 			rb.rbProperties.endEffectorPoints.push_back(endEffectorPos);
-//			rb.cdps.push_back(new SphereCDP(endEffectorPos + V3D(0, 1, 0) * 0.01, 0.01));
-			rb.cdps.push_back(new SphereCDP(endEffectorPos + V3D(0, 1, 0) * 0.00, 0.01));	
+
+			if (LivingWheelEE* wheelEE = dynamic_cast <LivingWheelEE*>(rmc)) {
+				rb.rbProperties.endEffectorPoints.back().setMode(EE_ACTIVE_WHEEL);
+				rb.rbProperties.endEffectorPoints.back().featureSize = wheelEE->radius;
+				rb.rbProperties.endEffectorPoints.back().localCoordsWheelAxis = rb.getLocalCoordinates(rmc->getWorldCoordinates(V3D(0, -1, 0)));
+				rb.cdps.push_back(new SphereCDP(endEffectorPos, wheelEE->radius));
+			}
+			else if (LivingSphereEE* sphereEE = dynamic_cast <LivingSphereEE*>(rmc)) {
+				rb.rbProperties.endEffectorPoints.back().setMode(EE_WELDED_WHEEL);
+				rb.rbProperties.endEffectorPoints.back().featureSize = sphereEE->sphereRadius;
+				rb.cdps.push_back(new SphereCDP(endEffectorPos , sphereEE->sphereRadius));
+			}
+			else {
+//				rb.cdps.push_back(new SphereCDP(endEffectorPos + V3D(0, 1, 0) * 0.01, 0.01));
+				rb.cdps.push_back(new SphereCDP(endEffectorPos + V3D(0, 1, 0) * 0.00, 0.01));
+			}
+
 		}
 
 		for (uint i = 0; i < rmc->rbProperties.bodyPointFeatures.size(); i++)
@@ -701,10 +787,22 @@ void RMCRobot::saveToRBSFile(const char* fName, Robot* templateRobot, bool freez
 			rb.meshDescriptions.push_back("skeleton");
 		}
 
-		if (rmc->type == LIVING_EE)
+		if (rmc->type == LIVING_SPHERE_EE)
 		{
 			LivingSphereEE* sphereEE = dynamic_cast<LivingSphereEE*>(rmc);
 			rb.meshes.push_back(sphereEE->eeMesh);
+			rb.carveMeshes.push_back(NULL);
+			Transformation trans;
+			trans.R = rmc->state.orientation.getRotationMatrix();
+			trans.T = rmc->state.position - rb.state.position;
+			rb.meshTransformations.push_back(trans);
+			rb.meshDescriptions.push_back("skeleton");
+		}
+
+		if (rmc->type == LIVING_WHEEL_EE)
+		{
+			LivingWheelEE* wheelEE = dynamic_cast<LivingWheelEE*>(rmc);
+			rb.meshes.push_back(wheelEE->wheelMesh);
 			rb.carveMeshes.push_back(NULL);
 			Transformation trans;
 			trans.R = rmc->state.orientation.getRotationMatrix();
@@ -825,7 +923,6 @@ void RMCRobot::saveToRBSFile(const char* fName, Robot* templateRobot, bool freez
 			}
 		}
 	}
-	
 
 	//make a collision primitive for the root as well...
 	bool first = true;
@@ -905,6 +1002,8 @@ void RMCRobot::saveToRBSFile(const char* fName, Robot* templateRobot, bool freez
 		hingeJoint.parent = parentRB;
 		hingeJoint.child = childRB;
 		hingeJoint.mappingInfo = motorRMC->mappingInfo;
+		hingeJoint.defaultAngle = jointMotorAngleMap[motorRMC];
+
 		hingeJoint.writeToFile(fp);
 	}
 
@@ -914,7 +1013,7 @@ void RMCRobot::saveToRBSFile(const char* fName, Robot* templateRobot, bool freez
 	//{
 	//	Logger::print("%s %lf %lf %lf %lf\n", itr->first.c_str(), itr->second[0], itr->second[1], itr->second[2], itr->second[3]);
 	//}
-
+/*
 	ODERBEngine rbEngine;
 	rbEngine.loadRBsFromFile(fName);
 	Robot robot(rbEngine.rbs[0]);
@@ -934,55 +1033,16 @@ void RMCRobot::saveToRBSFile(const char* fName, Robot* templateRobot, bool freez
 			tmpState.setJointRelativeOrientation(jointRelQMap[jointName], i);
 	}
 
-	//tmpState.writeToFile("../out/tmpState.txt");
+	tmpState.writeToFile("../out/tmpState.txt");
+*/
+
+	restoreAllMotorAngles();
+
+	//and now save the corresponding rs file...
+
 }
 
-//it is assumed that the robot was created from this design and follows all the same naming convention
-ReducedRobotState RMCRobot::getReducedRobotState(Robot* r) {
-	ReducedRobotState tmpState(r);
-	tmpState.setPosition(r->root->state.position);
-	tmpState.setOrientation(r->root->state.orientation);
-
-	int RBIndex = 1;
-	map<RMC*, int> RBIndexMap;
-	getRMCToRBIndexMap(root, 0, RBIndex, RBIndexMap);
-
-	vector<RigidBody> tmpRBs(RBIndex);
-	for (uint i = 0; i < tmpRBs.size(); i++) {
-		tmpRBs[i].name = "rb" + to_string(i);
-	}
-
-	map<string, double> jointMotorAngleMap;
-	for (uint i = 0; i < jointList.size(); i++){
-		RMCJoint* joint = jointList[i];
-		RMC* parentRMC = jointList[i]->getParent();
-		RMC* childRMC = jointList[i]->getChild();
-		RigidBody* parentRB = &tmpRBs[RBIndexMap[parentRMC]];
-		RigidBody* childRB = &tmpRBs[RBIndexMap[childRMC]];
-		string jointName = parentRB->name + "_" + childRB->name;
-
-		if (joint->parentPin && joint->parentPin->type == HORN_PIN)
-			jointMotorAngleMap[jointName] = RAD(parentRMC->motorAngle);
-		else if (joint->childPin && joint->childPin->type == HORN_PIN)
-			jointMotorAngleMap[jointName] = RAD(-childRMC->motorAngle);
-		else
-			continue;
-	}
-
-	for (int i = 0; i < r->getJointCount(); i++){
-		string jointName = r->getJoint(i)->name;
-		HingeJoint* j = dynamic_cast<HingeJoint*> (r->getJoint(i));
-		if (!j) continue;
-
-		if (jointMotorAngleMap.count(jointName))
-			tmpState.setJointRelativeOrientation(getRotationQuaternion(jointMotorAngleMap[jointName], j->rotationAxis), i);
-	}
-
-	return tmpState;
-}
-
-void RMCRobot::getRMCToRBIndexMap(RMC* node, int curIndex, int& RBIndex, map<RMC*, int>& RBIndexMap)
-{		
+void RMCRobot::getRMCToRBIndexMap(RMC* node, int curIndex, int& RBIndex, map<RMC*, int>& RBIndexMap){		
 	RBIndexMap[node] = curIndex;
 
 	// TODO
@@ -1030,10 +1090,11 @@ void RMCRobot::updateAllLivingMotor()
 	for (int i = 0; i < getJointCount(); i++)
 	{
 		RMC* rmc = getJoint(i)->getChild();
-		if (rmc->type == LIVING_EE)
+		if (rmc->type == LIVING_SPHERE_EE || rmc->type == LIVING_WHEEL_EE)
 		{
 			rmc->update();
 		}
+
 	}
 
 	for (int i = 0; i < getJointCount(); i++)

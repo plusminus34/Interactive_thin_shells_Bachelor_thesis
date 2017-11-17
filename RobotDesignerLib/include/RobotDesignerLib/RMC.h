@@ -25,7 +25,9 @@ enum RMCType
 	EE_HORN_RMC,
 	LIVING_MOTOR,
 	LIVING_CONNECTOR,
-	LIVING_EE
+	LIVING_SPHERE_EE,
+	LIVING_WHEEL_EE,
+
 };
 
 class RMC : public RigidBody

@@ -236,28 +236,35 @@ V3D GeneralizedCoordinatesRobotRepresentation::getOffsetFromParentToQ(int qIndex
 	//	return qOffsetFromParent[qIndex];
 }
 
-//returns the axis correponding to the indexed generalized coordinate, expressed in local coordinates
+//returns the axis corresponding to the indexed generalized coordinate, expressed in local coordinates
 V3D GeneralizedCoordinatesRobotRepresentation::getQAxis(int qIndex) {
-	//the first three are the translational dofs of the body
-	if (qIndex == 0) return V3D(1, 0, 0);
-	if (qIndex == 1) return V3D(0, 1, 0);
-	if (qIndex == 2) return V3D(0, 0, 1);
+	if (qIndex>=0 || qIndex <6){
+		//the first three are the translational dofs of the body
+		if (qIndex == 0) return V3D(1, 0, 0);
+		if (qIndex == 1) return V3D(0, 1, 0);
+		if (qIndex == 2) return V3D(0, 0, 1);
 
-	//the next three are the rotational dofs of the body, which we align with the current root rotation to stay well away from gimbal locks and all that
-	V3D v1, v2, v3;
-	//we'll be using a yaw/pitch/roll parameterization here
-	v3 = Globals::worldUp;	//yaw
-	v2 = robot->right;		//pitch
-	v1 = robot->forward;	//roll
+		//the next three are the rotational dofs of the body, which we align with the current root rotation to stay well away from gimbal locks and all that
+		//we'll be using a yaw/pitch/roll parameterization here
+ 		//v3 = Globals::worldUp;	//yaw
+ 		//v2 = robot->right;		//pitch
+ 		//v1 = robot->forward;	//roll
 
-	//although we could re-parameterize if ever we get too close to a gimbal lock
-	//	computeEulerAxesFromQuaternion(robot->root->state.orientation, v1, v2, v3);
+		//although we could re-parameterize if ever we get too close to a gimbal lock
+		//	computeEulerAxesFromQuaternion(robot->root->state.orientation, v1, v2, v3);
 
-	if (qIndex == 3) return v3;//y
-	if (qIndex == 4) return v2;//x
-	if (qIndex == 5) return v1;//z
+		if (qIndex == 3) return Globals::worldUp;//y
+		if (qIndex == 4) return robot->right;//x
+		if (qIndex == 5) return robot->forward;//z
+	}
+
 
 	int jIndex = jointIndexForQ[qIndex];
+
+	if (HingeJoint* j = dynamic_cast<HingeJoint*>(robot->jointList[jIndex])) {
+		return j->rotationAxis;
+	}
+
 	if (BallAndSocketJoint* j = dynamic_cast<BallAndSocketJoint*>(robot->jointList[jIndex])) {
 //		Quaternion q;
 //		V3D v1, v2, v3;
@@ -274,9 +281,6 @@ V3D GeneralizedCoordinatesRobotRepresentation::getQAxis(int qIndex) {
 //		qAxes[jointCoordStartIndex[i] + 1] = j->rotAxisChild;
 		Logger::logPrint("Universal joint not yet supported...\n");
 		exit(0);
-	}
-	if (HingeJoint* j = dynamic_cast<HingeJoint*>(robot->jointList[jIndex])) {
-		return j->rotationAxis;
 	}
 
 	Logger::logPrint("Not sure what kind of joint this is...\n");

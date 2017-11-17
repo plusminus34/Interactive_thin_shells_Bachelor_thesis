@@ -37,12 +37,12 @@ public:
 
 	MOPTParams moptParams;
 
-	Robot* robot = NULL;
+	Robot* robot = nullptr;
 	ReducedRobotState startState = ReducedRobotState(13);
 
 	FootFallPattern footFallPattern;
-	FootFallPatternViewer* ffpViewer = NULL;
-	LocomotionEngineManager* locomotionManager = NULL;
+	FootFallPatternViewer* ffpViewer = nullptr;
+	LocomotionEngineManager* locomotionManager = nullptr;
 
 	enum OPT_OPTIONS {
 		GRF_OPT = 0,
@@ -53,7 +53,7 @@ public:
 	OPT_OPTIONS optimizeOption = GRF_OPT_V2;
 
 	int nPoints;
-
+	bool printDebugInfo;
 	void addMenuItems();
 
 public:
@@ -83,5 +83,15 @@ public:
 	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
+private:
+	bool showWeightsAndEnergyValues;
+	void ToggleEnergyMenu();
+	void CreateEnergyMenu();
+	nanogui::Window * energyMenu = nullptr;
+	std::vector<nanogui::Slider*> energySliders;
+	std::vector<nanogui::FloatBox<double>*> energyTextboxes;
+	std::vector<nanogui::FloatBox<double>*> weightTextboxes;
+	void updateSliders();
+	V3D COMSpeed;
 };
 

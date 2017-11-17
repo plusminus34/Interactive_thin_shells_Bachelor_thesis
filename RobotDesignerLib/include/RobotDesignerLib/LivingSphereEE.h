@@ -21,3 +21,24 @@ public:
 	void exportMeshes(const char* dirName, int index);
 };
 
+
+class LivingWheelEE : public RMC
+{
+public:
+	GLMesh* originalWheelMesh = NULL;
+	GLMesh* wheelMesh = NULL;
+
+	double radius = 0.05; // the radius is specified in meters
+
+public:
+	LivingWheelEE();
+	~LivingWheelEE();
+
+	virtual LivingWheelEE* clone();
+	virtual bool pickMesh(Ray& ray, double* closestDist = NULL);
+	virtual void draw(int flags, const Vector4d& color = Vector4d(0, 0, 0, 0));
+	virtual void update();
+
+	void syncSymmParameters(LivingWheelEE* refEE);
+	void exportMeshes(const char* dirName, int index);
+};

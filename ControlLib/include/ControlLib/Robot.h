@@ -61,22 +61,6 @@ public:
 	*/
 	void getRelativeAngularVelocityForJoint(int i, V3D* wRel);
 
-	/*
-		* Maybe make a robot for HingeOnlyRobot.
-	*/
-	/*
-		* For hinge joints only, retrieves the relative angle of the joint using the reduced robot state (not the state of the current robot).
-	*/
-	double	getJointRelativeAngle	(ReducedRobotState* _pState, int _jIndex) const;
-	V3D		getJointAxis			(const int _j) const;
-
-	/**
-	*	Retrieves the relative angles of the joint using the reduced robot states.
-	*	Depending on the number of degrees of freedom the value for angle1, angle2 and angle3 
-	*	is set either to the corresponding angle or NULL if the joint has less degrees of freedom.
-	*/
-	void getJointRelativeAngles(ReducedRobotState* _pState, int jIndex, DynamicArray<double>& angles);
-
 
 	/**
 		Returns a pointer to the ith joint of the virtual robot
@@ -103,12 +87,6 @@ public:
 	}
 
 	/**
-		Creates a linear list of rigid bodies contained in the robot.  
-		Note: consider the ordering of rigid bodies.
-	*/
-	DynamicArray<RigidBody*> getBodies();
-
-	/**
 		this method is used to read the reduced state of the robot from the file
 	*/
 	void loadReducedStateFromFile(const char* fName);
@@ -121,7 +99,7 @@ public:
 	/**
 		uses the state of the robot to populate the input
 	*/
-	void populateState(ReducedRobotState* state);
+	void populateState(ReducedRobotState* state, bool useDefaultAngles = false);
 
 	/**
 		sets the state of the robot using the input
@@ -257,10 +235,9 @@ public:
 		return state.size();
 	}
 
-
-	ReducedRobotState(Robot* robot){
+	ReducedRobotState(Robot* robot, bool useDefaultAngles = false){
 		state = DynamicArray<double>(robot->getReducedStateDimension());
-		robot->populateState(this);
+		robot->populateState(this, useDefaultAngles);
 	}
 
 	ReducedRobotState(ReducedRobotState* start, ReducedRobotState* end, double t);

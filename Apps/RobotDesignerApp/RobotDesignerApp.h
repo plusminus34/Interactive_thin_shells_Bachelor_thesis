@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <GUILib/GLApplication.h>
 #include <string>
 #include <map>
@@ -17,7 +18,19 @@
 #include <RobotDesignerLib/MOPTWindow.h>
 #include <RobotDesignerLib/SimWindow.h>
 
+#ifdef USE_MATLAB
+	#define RUN_IN_MATLAB(x) x
+	#include <igl/matlab/matlabinterface.h>
+#else
+//	RUN_IN_MATLAB(x)
+#endif
 
+
+
+// #define START_WITH_VISUAL_DESIGNER
+
+
+class IntelligentRobotEditingWindow;
 
 /**
  * Robot Design and Simulation interface
@@ -26,8 +39,14 @@ class RobotDesignerApp : public GLApplication {
 public:
 	ModularDesignWindow *designWindow = NULL;
 	MOPTWindow* moptWindow = NULL;
-
 	SimWindow* simWindow = NULL;
+	IntelligentRobotEditingWindow* iEditWindow = NULL;
+
+	bool shouldShowSimWindow();
+	bool shouldShowMOPTWindow();
+	bool shouldShowIEditWindow();
+	bool shouldShowDesignWindow();
+
 
 	Robot* robot = NULL;
 	ReducedRobotState* initialRobotState = NULL;
@@ -52,10 +71,14 @@ public:
 	enum RD_VIEW_OPTIONS {
 		SIM_WINDOW_ONLY = 0,
 		SIM_AND_MOPT,
-		SIM_AND_DESIGN
+		SIM_AND_DESIGN,
+		MOPT_AND_IEDIT
 	};
-	RD_VIEW_OPTIONS viewOptions = SIM_AND_MOPT;
-
+#ifdef START_WITH_VISUAL_DESIGNER
+	RD_VIEW_OPTIONS viewOptions = SIM_AND_DESIGN;
+#else //  START_WITH_VISUAL_DESIGNER
+	RD_VIEW_OPTIONS viewOptions = SIM_AND_DESIGN;// MOPT_AND_IEDIT;// SIM_AND_DESIGN;
+#endif
 	bool doDebug = false;
 
 public:
@@ -100,16 +123,20 @@ public:
 	void createRobotFromCurrentDesign();
 
 
-	ParameterizedRobotDesign* prd;
-	void test_dmdp_Jacobian();
-	void compute_dmdp_Jacobian(dVector& m, DynamicArray<double>& p, MatrixNxM& dmdp);
-	void testOptimizeDesign();
-	void addDesignParameterSliders();
+	SymmetricParameterizedRobotDesign* prd = NULL;
 
-	void resyncRBS();
+#ifdef USE_MATLAB
+	Engine *matlabengine;
+#endif
 
-private:
-	void addWheelParameterUI();
+	MatrixNxM dmdp; //The jacobian at a point
+	dVector m0;
+	bool useSVD = false;
+	MatrixNxM dmdp_V;
+	dVector p0;
+	dVector slidervalues;
+	bool updateMotionBasedOnJacobian = false;
+
 };
 
 

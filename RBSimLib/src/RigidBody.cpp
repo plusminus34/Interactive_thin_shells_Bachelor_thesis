@@ -125,8 +125,10 @@ void RigidBody::draw(int flags, V3D color, double alpha) {
 		P3D firstFeature = (rbProperties.bodyPointFeatures.size() > 0) ? (rbProperties.bodyPointFeatures.begin()->coords) : P3D();
 		P3D lastFeature = (rbProperties.bodyPointFeatures.size() > 0) ? ((rbProperties.bodyPointFeatures.end() - 1)->coords) : P3D();
 
-		glColor3d(1, selected ? 0.5 : 1, selected ? 0.5 : 1);
-		glColor3d(color[0], color[1], color[2]);
+		if (flags & HIGHLIGHT_SELECTED)
+			glColor3d(1, selected ? 0.5 : 1, selected ? 0.5 : 1);
+		else
+			glColor3d(color[0], color[1], color[2]);
 		for (uint i = 0; i < pJoints.size(); i++)
 			drawCylinder(pJoints[i]->cJPos, firstFeature, abstractViewCylinderRadius, 16);
 
@@ -135,23 +137,49 @@ void RigidBody::draw(int flags, V3D color, double alpha) {
 			drawSphere(rbProperties.bodyPointFeatures[i].coords, abstractViewCylinderRadius * 1.2, 16);
 		}
 
-		glColor3d(1, selected ? 0.5 : 1, selected ? 0.5 : 1);
-		glColor3d(color[0], color[1], color[2]);
+		if (flags & HIGHLIGHT_SELECTED)
+			glColor3d(1, selected ? 0.5 : 1, selected ? 0.5 : 1);
+		else
+			glColor3d(color[0], color[1], color[2]);
 		for (uint i = 0; i < cJoints.size(); i++)
 			drawCylinder(lastFeature, cJoints[i]->pJPos, abstractViewCylinderRadius, 16);
 
-		glColor3d(color[0], color[1], color[2]);
-		glColor3d(1, selected ? 0.5 : 1, selected ? 0.5 : 1);
-		for (uint i = 0; i < rbProperties.endEffectorPoints.size(); i++)
+		for (uint i = 0; i < rbProperties.endEffectorPoints.size(); i++){
+			if (flags & HIGHLIGHT_SELECTED)
+				glColor3d(1, selected ? 0.5 : 1, selected ? 0.5 : 1);
+			else
+				glColor3d(color[0], color[1], color[2]);
+
 			drawCylinder(lastFeature, rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius, 16);
 
-		glColor3d(0, 0, 1);
-		for (uint i = 0; i < cJoints.size(); i++)
-			drawSphere(cJoints[i]->pJPos, abstractViewCylinderRadius*1.2, 16);
+			glColor3d(0, 0.5, 1);
+			if (rbProperties.endEffectorPoints[i].isWheel() && !rbProperties.endEffectorPoints[i].isWeldedWheel()) {
+				V3D axis = rbProperties.endEffectorPoints[i].localCoordsWheelAxis;
+				drawArrow(rbProperties.endEffectorPoints[i].coords, rbProperties.endEffectorPoints[i].coords + axis*0.05, 0.0025);
+			}
+		}
 
-		glColor3d(1, 0, 0);
+		for (uint i = 0; i < cJoints.size(); i++) {
+			if (flags & HIGHLIGHT_SELECTED && cJoints[i]->selected){
+				glColor3d(1, 0, 0);
+				drawSphere(cJoints[i]->pJPos, abstractViewCylinderRadius*1.4, 16);
+			}
+			else{
+				glColor3d(0, 0, 1);
+				drawSphere(cJoints[i]->pJPos, abstractViewCylinderRadius*1.2, 16);
+			}
+		}
+
+		
 		for (uint i = 0; i < rbProperties.endEffectorPoints.size(); i++)
-			drawSphere(rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius*1.2, 16);
+			if (flags & HIGHLIGHT_SELECTED && rbProperties.endEffectorPoints[i].selected) {
+				glColor3d(1, 0, 0);
+				drawSphere(rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius*1.4, 16);
+			}
+			else {
+				glColor3d(0, 0.5, 1);
+				drawSphere(rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius*1.2, 16);
+			}
 	}
 
 	if (flags & SHOW_MOI_BOX) {
@@ -298,14 +326,13 @@ void RigidBody::writeToFile(FILE* fp){
 		V3D T = meshTransformations[i].T;
 		fprintf(fp, "\t%s %lf %lf %lf %lf %lf %lf %lf\n", getRBString(RB_MESH_TRANSFORMATION), 
 			q[0], q[1], q[2], q[3], T[0], T[1], T[2]);
-	}
-		
+	}	
 
 	for (uint i = 0;i<rbProperties.bodyPointFeatures.size();i++)
 		fprintf(fp, "\t%s %lf %lf %lf %lf\n", getRBString(RB_BODY_POINT_FEATURE), rbProperties.bodyPointFeatures[i].coords[0], rbProperties.bodyPointFeatures[i].coords[1], rbProperties.bodyPointFeatures[i].coords[2], rbProperties.bodyPointFeatures[i].featureSize);
 
 	for (uint i = 0;i<rbProperties.endEffectorPoints.size();i++)
-		fprintf(fp, "\t%s %lf %lf %lf %lf\n", getRBString(RB_END_EFFECTOR), rbProperties.endEffectorPoints[i].coords[0], rbProperties.endEffectorPoints[i].coords[1], rbProperties.endEffectorPoints[i].coords[2], rbProperties.endEffectorPoints[i].featureSize);
+		fprintf(fp, "\t%s %lf %lf %lf %lf %d %lf %lf %lf\n", getRBString(RB_END_EFFECTOR), rbProperties.endEffectorPoints[i].coords[0], rbProperties.endEffectorPoints[i].coords[1], rbProperties.endEffectorPoints[i].coords[2], rbProperties.endEffectorPoints[i].featureSize, rbProperties.endEffectorPoints[i].eeType, rbProperties.endEffectorPoints[i].localCoordsWheelAxis[0], rbProperties.endEffectorPoints[i].localCoordsWheelAxis[1], rbProperties.endEffectorPoints[i].localCoordsWheelAxis[2]);
 
 	fprintf(fp, "\t%s %d %d\n", getRBString(RB_MAPPING_INFO), mappingInfo.index1, mappingInfo.index2);
 
@@ -440,12 +467,9 @@ void RigidBody::loadFromFile(FILE* fp){
 					throwError("Incorrect rigid body input file - restitution coefficient should be between 0 and 1");
 				break;
 			case RB_END_EFFECTOR:{
-				P3D p;
-				double featureSize = 0.02;
-				sscanf(line, "%lf %lf %lf %lf", &p[0], &p[1], &p[2], &featureSize);
-//				if (sscanf(line, "%lf %lf %lf", &p[0], &p[1], &p[2]) != 3)
-//					throwError("Incorrect rigid body input file - 3 arguments are required to specify a body point feature\n", line);
-					rbProperties.endEffectorPoints.push_back(RBEndEffector(p, featureSize));
+					RBEndEffector tmpEE(P3D(), 0.01);
+					sscanf(line, "%lf %lf %lf %lf %d %lf %lf %lf", &tmpEE.coords[0], &tmpEE.coords[1], &tmpEE.coords[2], &tmpEE.featureSize, &tmpEE.eeType, &tmpEE.localCoordsWheelAxis[0], &tmpEE.localCoordsWheelAxis[1], &tmpEE.localCoordsWheelAxis[2]);
+					rbProperties.endEffectorPoints.push_back(tmpEE);
 				}
 				break;
 			case RB_BODY_POINT_FEATURE: {

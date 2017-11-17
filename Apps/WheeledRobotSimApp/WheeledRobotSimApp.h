@@ -24,8 +24,15 @@ private:
 	std::string lastLoadedFile;
 
 	std::map<std::string, double> wheelAngles;
+	std::map<std::string, double> wheelSpeeds;
 
-	nanogui::Label* wheelControlLabel;
+	nanogui::Window *wheelControlWindow = nullptr;
+	struct SliderText {
+		nanogui::Slider *slider;
+		nanogui::TextBox *textBox;
+	};
+	std::map<std::string, SliderText> wheelAngleWidgets;
+	std::map<std::string, SliderText> wheelSpeedWidgets;
 
 public:
 	// constructor
@@ -61,7 +68,13 @@ public:
 	virtual void loadFile(const char* fName);
 
 private:
-	inline void addSliderTextVariable(const std::string &name, double *var, const std::pair<double,double> &range, nanogui::Widget *widget, std::string units = "", int precision = 2);
+
+	// Updates the wheel parameters (speed, angle) in the rigid body simulation
+	void updateRBSimParams();
+
+	void updateUI();
+
+	static SliderText addSliderTextVariable(const std::string &name, double *var, const std::pair<double,double> &range, nanogui::Widget *panel, std::string units = "", int precision = 2);
 
 	template<class T>
 	static std::string toString(T value, int precision = 2);
