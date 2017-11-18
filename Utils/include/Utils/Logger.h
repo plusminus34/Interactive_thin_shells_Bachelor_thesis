@@ -36,10 +36,13 @@ public:
 
 	static std::string ms_strLogPath;
 	static std::string ms_strLogFileName;
+	static std::string ms_strLog2FileName;
 	static std::string ms_strConsoleFileName;
 
 	static void print(const char *fmt, ...);
 	static void logPrint(const char *fmt, ...);
+	static void log2Print(const char *fmt, ...);
+
 	static void consolePrint(const char*fmt, ...);
 
 	static std::vector<std::string> consoleOutput;

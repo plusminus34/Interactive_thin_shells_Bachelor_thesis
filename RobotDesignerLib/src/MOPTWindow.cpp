@@ -193,6 +193,7 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	syncMOPTWindowParameters();
 
 	locomotionManager->setDefaultOptimizationFlags();
+	locomotionManager->energyFunction->regularizer = 0.0001;
 
 	CreateEnergyMenu();
 

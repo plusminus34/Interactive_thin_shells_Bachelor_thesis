@@ -7,17 +7,17 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-#define START_WITH_VISUAL_DESIGNER
-
 /*
 should take a look at convergence rates
-- how often is a step size of 1 taken?
-- what happens to convergence tail (value is of course not the same) as different objectives are turned off?
-- would GD do better at that point towards the end? Should the line search try to increase too?
-- is it the global regularizer that is causing problems?
-- or is it the high weights of the soft constraints?
+- global regularizer makes a huge difference, it seems.
+	- we may want it to be adaptive (use small value unless system solving fails)
+	- we quite likely want it to be different for different types of params (joint angles vs cartesian dimensions vs ground reaction forces)
+	- should at least at the global regulaizer as a menu parameter such that it can be easily changed
 
+- set up MOPT also for non-periodic motions
+- start and end on a different motion plan? What happens then when the design changes? Impose constraints only on the start and end states (joint angles only)?
 */
+
 
 //create a few first designs that have wheels
 //write out a flag in the rbs file, to indicate that the end effector is a wheel and that it has some radius (and later, that it is passive or active), also, its rotation axis in the local coordinate frame of the parent RB
@@ -405,6 +405,14 @@ void RobotDesignerApp::saveFile(const char* fName) {
 
 void RobotDesignerApp::runMOPTStep() {
 	double energyVal = moptWindow->runMOPTStep();
+
+/*
+	static int count = 0;
+	Logger::log2Print("%lf\n", energyVal);
+	count++;
+	if (count > 400)
+		exit(0);
+*/
 }
 
 P3D RobotDesignerApp::getCameraTarget() {
