@@ -95,7 +95,7 @@ public:
 	/**
 		This method returns the vector that is passed in as a parameter(expressed in local coordinates), in world coordinates.
 	*/
-	V3D getWorldCoordinates(const V3D& localVector);
+	V3D getWorldCoordinates(const V3D& localVector) const;
 
 	inline std::string getName(){
 		return name;

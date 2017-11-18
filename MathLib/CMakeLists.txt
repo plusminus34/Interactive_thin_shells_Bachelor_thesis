@@ -27,6 +27,9 @@ target_include_directories(
 
 # Tests
 enable_testing()
+if(NOT DEFINED GTEST_ROOT)
+	set(GTEST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../libs/gtest-1.7.0" CACHE PATH "Path to googletest")
+endif()
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
