@@ -22,7 +22,10 @@ public:
 	DynamicArray<double> tangentGRFBoundValues;
 	DynamicArray<double> wheelSpeed;
 	double wheelRadius = 0.1;
-	DynamicArray<double> wheelAxisAlpha;
+
+	// wheel axis in world coordinates is a rotation of alpha around y-axis and then rotation of beta around z-axis
+	DynamicArray<double> wheelAxisAlpha;	// rotation around y-axis
+	DynamicArray<double> wheelAxisBeta;		// rotation around z-axis
 
 	V3D targetOffsetFromCOM;
 	RigidBody* endEffectorRB;
@@ -53,6 +56,8 @@ public:
 		EEPos.resize(nPos);
 		wheelSpeed.resize(nPos);
 		wheelAxisAlpha.resize(nPos);
+		wheelAxisBeta.resize(nPos, 0/*M_PI*0.25*/);
+
 		defaultEEPos.resize(nPos);
 		contactFlag.resize(nPos, 0);
 		EEWeights.resize(nPos, 0.05);
@@ -86,6 +91,14 @@ public:
 		Trajectory1D traj;
 		for (uint i = 0; i<wheelAxisAlpha.size(); i++)
 			traj.addKnot((double)i / (wheelAxisAlpha.size() - 1), wheelAxisAlpha[i]);
+		return traj.evaluate_linear(t);
+	}
+
+	double getWheelAxisBetaAt(double t) const {
+		//very slow method, but easy to implement...
+		Trajectory1D traj;
+		for (uint i = 0; i<wheelAxisBeta.size(); i++)
+			traj.addKnot((double)i / (wheelAxisBeta.size() - 1), wheelAxisBeta[i]);
 		return traj.evaluate_linear(t);
 	}
 
@@ -408,6 +421,7 @@ public:
 
 public:
 	int getWheelAxisAlphaIndex(int i, int j) const;
+	int getWheelAxisBetaIndex(int i, int j) const;
 
 public:
 	DynamicArray<LocomotionEngine_EndEffectorTrajectory> endEffectorTrajectories;

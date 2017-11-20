@@ -291,72 +291,43 @@ P3D LocomotionEngineMotionPlan::getCenterOfRotationAt(double t, Eigen::VectorXd 
 {
 	int nWheels = endEffectorTrajectories.size();
 
-	Eigen::MatrixXd A(2*nWheels, 2);
-	Eigen::VectorXd b(2*nWheels);
+	Eigen::MatrixXd A(3*nWheels, 3);
+	Eigen::VectorXd b(3*nWheels);
 
 	int i = 0;
 	for (const auto &ee : endEffectorTrajectories) {
 		double alpha = ee.getWheelAxisAlphaAt(t);
+		double beta = ee.getWheelAxisBetaAt(t);
 		P3D p3 = ee.getEEPositionAt(t);
-		V3D v3 = rotateVec(V3D(1,0,0), alpha, V3D(0,1,0));
+		V3D v2 = rotateVec(V3D(1,0,0), alpha, V3D(0,1,0));
+		V3D v3 = rotateVec(v2, beta, V3D(0,0,1));
 
-		Eigen::Vector2d p(p3(0), p3(2));
-		Eigen::Vector2d v(v3(0), v3(2));
+		Eigen::Vector3d p = p3;
+		Eigen::Vector3d v = v3;
 
-		Matrix2x2 vvt = v*v.transpose();
+		Matrix3x3 vvt = v*v.transpose();
+		Matrix3x3 tmp = Matrix3x3::Identity() - vvt;
 
-		A(2*i+0, 0) = 1 - vvt(0,0);
-		A(2*i+0, 1) = 0 - vvt(0,1);
-		A(2*i+1, 0) = 0 - vvt(1,0);
-		A(2*i+1, 1) = 1 - vvt(1,1);
+		for (int j = 0; j < 3; ++j) {
+			for (int l = 0; l < 3; ++l) {
+				A(3*i+j, l) = tmp(j, l);
+			}
+		}
 
-		Eigen::Vector2d bb = (Matrix2x2::Identity() - vvt)*p;
-		b(2*i+0) = bb(0);
-		b(2*i+1) = bb(1);
+		Eigen::Vector3d bb = tmp*p;
+		for (int j = 0; j < 3; ++j) {
+			b(3*i+j) = bb(j);
+		}
 
 		i++;
 	}
 
-	Eigen::Vector2d centerOfRotation = A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
+	Eigen::Vector3d centerOfRotation = A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
 	error = (A*centerOfRotation - b).transpose();
 
-	P3D centerOfRotation3d(centerOfRotation(0), 0, centerOfRotation(1));
-
-
-//	Eigen::MatrixXd A(nWheels, 2);
-//	Eigen::VectorXd b(nWheels);
-
-//	int i = 0;
-//	for (const auto &ee : endEffectorTrajectories) {
-//		double alpha = ee.getWheelAxisAlphaAt(t);
-//		P3D pos = ee.getEEPositionAt(t);
-
-//		A(i, 0) = 1;
-//		A(i, 1) = std::tan(alpha);
-//		b(i) = pos(2) + pos(0)*tan(alpha);
-//		i++;
-//	}
-
-//	Eigen::Vector2d centerOfRotation = A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
-//	error = (A*centerOfRotation - b).transpose();
-
-//	P3D centerOfRotation3d(centerOfRotation(1), 0, centerOfRotation(0));
-
-//	int ii=0;
-//	for (const auto &ee : endEffectorTrajectories) {
-//		double alpha = ee.getWheelAxisAlphaAt(t);
-//		P3D pos = ee.getEEPositionAt(t);
-
-//		V3D axis = ee.endEffectorRB->getWorldCoordinates(V3D(1,0,0));
-
-//		V3D a = centerOfRotation3d - pos;
-//		a(1) = 0;
-//		double angle = std::acos((a).dot(axis) / (axis.norm() * a.norm()));
-//		std::cout << ii << ": " << alpha / M_PI * 180 - angle / M_PI * 180 << std::endl;
-
-//		ii++;
-//	}
-
+	// TODO: fix operator = overloading of P3D
+	P3D centerOfRotation3d;
+	centerOfRotation3d = centerOfRotation;
 
 	return centerOfRotation3d;
 }
@@ -633,8 +604,10 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 			double width = 0.02;
 			for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
 				double alpha = endEffectorTrajectories[i].getWheelAxisAlphaAt(f);
+				double beta = endEffectorTrajectories[i].getWheelAxisBetaAt(f);
 				double radius = endEffectorTrajectories[i].wheelRadius;
 				V3D axis = rotateVec(Vector3d(1, 0, 0), alpha, Vector3d(0, 1, 0));
+				axis = rotateVec(axis, beta, Vector3d(0, 0, 1));
 				drawCylinder(endEffectorTrajectories[i].getEEPositionAt(f) - axis*0.5*width, axis*width, radius, 24);
 			}
 		}
@@ -664,8 +637,10 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 			glColor4d(0.0, 0.0, 1.0, 0.5);
 			for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
 				P3D wheelCenter = endEffectorTrajectories[i].getEEPositionAt(f);
-				double angle = endEffectorTrajectories[i].getWheelAxisAlphaAt(f);
-				V3D v = rotateVec(V3D(1,0,0), angle, V3D(0,1,0));
+				double alpha = endEffectorTrajectories[i].getWheelAxisAlphaAt(f);
+				V3D v = rotateVec(V3D(1,0,0), alpha, V3D(0,1,0));
+				double beta = endEffectorTrajectories[i].getWheelAxisBetaAt(f);
+				v = rotateVec(v, beta, V3D(0,0,1));
 //				V3D vWorld = endEffectorTrajectories[i].endEffectorRB->getWorldCoordinates(v);
 
 				P3D a = wheelCenter + v*10;
@@ -859,4 +834,11 @@ void LocomotionEngineMotionPlan::drawMotionPlan2(double f, int animationCycle, b
 int LocomotionEngineMotionPlan::getWheelAxisAlphaIndex(int i, int j) const
 {
 	return wheelParamsStartIndex + (nSamplePoints+j)*endEffectorTrajectories.size()*nWheelParams + i;
+}
+
+int LocomotionEngineMotionPlan::getWheelAxisBetaIndex(int i, int j) const
+{
+	throw std::runtime_error("implement getWheelAxisBetaIndex!!");
+	return 0;
+//	return wheelParamsStartIndex + (nSamplePoints+j)*endEffectorTrajectories.size()*nWheelParams + i;
 }
