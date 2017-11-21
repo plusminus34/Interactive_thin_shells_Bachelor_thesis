@@ -42,18 +42,16 @@ void MPO_EEPosSwingObjective::addGradientTo(dVector& grad, const dVector& p) {
 		int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 		for (int j=0; j<theMotionPlan->nSamplePoints; j++){
 			for (int i=0; i<nLimbs; i++){
-				if (theMotionPlan->feetPositionsParamsStartIndex >= 0){
-					const DynamicArray<double> &targetEEPosY = theMotionPlan->endEffectorTrajectories[i].targetEEPosY;
-					double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
-					double eePosY = p[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1];
+				const DynamicArray<double> &targetEEPosY = theMotionPlan->endEffectorTrajectories[i].targetEEPosY;
+				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
+				double eePosY = p[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1];
 
-					ScalarDiff eePosYAd(eePosY, 1.0);
-					ScalarDiff targetEEPosYAd(targetEEPosY[j], 0.0);
-					ScalarDiff cAd(c, 0.0);
+				ScalarDiff eePosYAd(eePosY, 1.0);
+				ScalarDiff targetEEPosYAd(targetEEPosY[j], 0.0);
+				ScalarDiff cAd(c, 0.0);
 
-					ScalarDiff energy = computeEnergy(eePosYAd, targetEEPosYAd, cAd);
-					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1] += energy.deriv() * weight;
-				}
+				ScalarDiff energy = computeEnergy(eePosYAd, targetEEPosYAd, cAd);
+				grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1] += energy.deriv() * weight;
 			}
 		}
 	}

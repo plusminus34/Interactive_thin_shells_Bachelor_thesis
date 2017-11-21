@@ -11,6 +11,7 @@
 #include <RobotDesignerLib/MPO_StanceLegMotionRegularizer.h>
 #include <RobotDesignerLib/MPO_COMTravelObjective.h>
 #include <RobotDesignerLib/MPO_FeetSlidingObjective.h>
+#include <RobotDesignerLib/MPO_WheelGroundObjective.h>
 #include <RobotDesignerLib/MPO_FeetPathSmoothnessObjective.h>
 #include <RobotDesignerLib/MPO_BarycentricWeightsRegularizerObjective.h>
 #include <RobotDesignerLib/MPO_RobotStateRegularizer.h>

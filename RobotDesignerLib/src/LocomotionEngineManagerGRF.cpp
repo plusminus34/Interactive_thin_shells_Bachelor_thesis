@@ -342,6 +342,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	//constraints ensuring feet don't slide...
 
 	ef->objectives.push_back(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0));
+	ef->objectives.push_back(new MPO_WheelGroundObjective(ef->theMotionPlan, "wheel ground objective", 10000.0));
 
 	// constraint ensuring the y component of the EE position follows the swing motion
 //	ef->objectives.push_back(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0));
