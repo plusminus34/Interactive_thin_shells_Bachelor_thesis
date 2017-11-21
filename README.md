@@ -1,47 +1,102 @@
 # Simulation and Control Playground
 
-## The fast and easy way
-If you are on Windows, you can skip everything below and do the following:
+# Table of Contents
+- [Getting Started](#getting-started)
+- [Compilation](#compilation)
+  - [Thirdparty Libraries](#thirdparty-libraries)
 
-0. (It is assumed you have git installed and cloned this repository.)
-1. Install CMake: https://cmake.org/download/
-2. Run `easyFirstSetup.cmd` (e.g. by double clicking the script)
+## Getting Started
+### Windows
+If you are on Windows, you can use the `easyFirstSetup.cmd` script. It gets the required thirdparty dependencies and runs cmake.
 
-## The Do-It-Yourself way (unfinished guide)
+0. (clone this repository)
+1. Install Visual Studio: https://www.visualstudio.com/
+2. Install CMake: https://cmake.org/download/
+3. Run `easyFirstSetup.cmd` (e.g. by double clicking the script)
 
-The build system of SCP uses CMake and git submodules (where possible). 
+Now there is a folder `build` where you can find the Visual Studio solution `SCP.sln`. Open it in Visual Studio and build!
 
-### Prerequisites
+### Mac OS and Linux
+There is no `easyFirstSetup` script for Mac OS or Linux. You will have to obtain and compile the thirdparty libraries yourself, following the guide below.
 
-__CMake__ (https://cmake.org/):
+## Build
+This section describes how to get the thirdparty libraries and set up the build system. The build system of SCP uses CMake and git submodules (where possible). Libraries that are not cloned via git submodules need to be obtained and compiled by the user, as described below.
 
-Install latest release from https://cmake.org/download/
+First make sure you have git and cmake:
 
-__SCP Libs__
-- Windows:
-  clone `https://bitbucket.org/scoros/libs` to the same directory as the SCP repository is in. We will call this `path\to\libs`.
+- CMake: Install latest release (> 3.5) from https://cmake.org/download/
+- Git: Install from https://git-scm.com/downloads or use a 
 
-__ODE__
-- Windows:
-  ODE is part of the libs reposiroy (`https://bitbucket.org/scoros/libs`). Add the location of `ode.dll` to the PATH environment variable:
-  1. Hit the Windows key, type "environment variables", choose "Edit Environment Variables"
-  2. Choose the Path variable, and append the the following path:
-    `path\to\libs\thirdPartyCode\ode-0.13\lib\ReleaseDLL`
-  3. Click `Ok` twice
+### Thirdparty Libraries
 
-__FreeType__ (https://www.freetype.org/):
-- Windows:
-  Install from http://gnuwin32.sourceforge.net/packages/freetype.htm
-  Get the setup and run it (may have to turn off Windows Defender or other Antivirus)
-  Set the environment variable `FREETYPE_DIR` to the install path, e.g. `C:\Program Files (x86)\GnuWin32`
-- Linux/OSX/Windows:
-  Download source from https://www.freetype.org/ and compile.
-  Set the environment variable `FREETYPE_DIR` to the install path
+#### Windows
+> Note: For Windows users, there is a convenience repository that contains all the required precompiled thirdparty libraries: https://bitbucket.org/scoros/libs. You can clone this repository and put it in the same folder as your SCP repository: `folder/scp`, `folder/libs`. The CMake scripts will always first check the `folder/libs` for thirdparty libraries.
 
-More info about the cmake find script can be found [here](https://cmake.org/cmake/help/v3.0/module/FindFreetype.html).
+#### Linux (Mac OS, untested)
+This guide will be for Ubuntu or other debian-based distros.
+
+##### Blas / Lapack
+`sudo apt install libblas3 libblas-dev liblapack3 liblapack-dev`
+
+##### Gfortran
+`sudo apt install gfortran`
+
+##### GTest
+`sudo apt install gtest libtest-dev`
+
+Build the gtest libraries and copy them to `/usr/local/lib/`:
+
+```bash
+cd /usr/src/gtest
+sudo cmake CMakeLists.txt
+sudo make
+# copy or symlink libgtest.a and libgtest_main.a to your /usr/local/lib folder
+sudo cp *.a /usr/local/lib
+```
+##### MA27
+1. Get MA27 from http://www.hsl.rl.ac.uk/download/MA27/1.0.0/a/
+2. Build it:
+```
+./configure
+make 
+sudo make install
+```
+##### OOQP
+1. Get OOQP from http://pages.cs.wisc.edu/~swright/ooqp/download/
+2. Apply OOQP hash patch:
+   1. Get it from https://gitlab.ethz.ch/snippets/24 (click on the download icon, save as `OOQP_hash.patch`)
+   2. Apply patch to OOQP folder: `patch -p0 < OOQP_hash.patch`
+3. Build OOQP:
+
+```
+MA27LIB=/usr/local/lib/libma27.a ./configure
+make
+sudo make install
+```
+
+##### ODE
+1. Get ode-0.13 from https://sourceforge.net/projects/opende/files/ODE/0.13/.
+2. 	Build it:
+ 	CXXFLAGS=-fpermissive ./configure
+   	make
+   	sudo make install
+
+##### FreeType  (https://www.freetype.org/):
+`sudo apt libfreetype6 libfreetype6-dev`
 
 ### Compilation
-1. after cloning to `path/to/scp`, run `git submodule update --init --recursive`
-2. Make a folder `build` in `path/to/scp` (`path/to/scp/build`).
-3. Run `cmake ..` in `path/to/scp/build` to generate build files.
-4. Compile using the build files generated in `path/to/scp/build`.
+1. Clone this repository
+2. Run `git submodule update --init --recursive`
+3. Generate build files. In the cloned folder do:
+```
+mkdir build && cd build
+NANOGUI_USE_GLAD=1 cmake ..
+```
+`NANOGUI_USE_GLAD` makes sure we use glad.
+
+4. Compile
+```
+make
+```
+
+> Notes: If your GPU driver can't create a OpenGL context in compatability mode, run CMake with `SCP_GUI_TWO_WINDOWS=1 cmake ..`
