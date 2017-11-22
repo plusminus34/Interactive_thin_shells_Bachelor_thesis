@@ -15,10 +15,6 @@ MPO_WheelGroundObjective::~MPO_WheelGroundObjective(void){
 
 double MPO_WheelGroundObjective::computeValue(const dVector& p){
 
-	// TODO: for now we assume beta (tilt angle) to be constant
-	if (theMotionPlan->feetPositionsParamsStartIndex < 0/* || theMotionPlan->wheelParamsStartIndex < 0*/)
-		return 0;
-
 	double retVal = 0;
 	const int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 
@@ -29,7 +25,6 @@ double MPO_WheelGroundObjective::computeValue(const dVector& p){
 			double wheelRadius = theMotionPlan->endEffectorTrajectories[i].wheelRadius;
 			double beta = theMotionPlan->endEffectorTrajectories[i].wheelAxisBeta[j];
 			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
-
 
 			retVal += computeEnergy(eePosY, wheelRadius, beta, c, weight);
 		}
@@ -53,14 +48,19 @@ void MPO_WheelGroundObjective::addGradientTo(dVector& grad, const dVector& p) {
 			// Position of foot i at time sample j
 			int iEE = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
 			ScalarDiff eePosY = p[iEE + 1];
-			ScalarDiff beta = theMotionPlan->endEffectorTrajectories[i].wheelAxisBeta[j];
+			ScalarDiff beta = p[theMotionPlan->getWheelAxisBetaIndex(i,j)];
 			ScalarDiff r = theMotionPlan->endEffectorTrajectories[i].wheelRadius;
-			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j-1];
+			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
 
 			DOF<ScalarDiff> dofs[numDOFs];
 			// ePosjY
 			dofs[0].v = &eePosY;
 			dofs[0].i = iEE+1;
+			// beta
+			dofs[1].v = &beta;
+			dofs[1].i = theMotionPlan->getWheelAxisBetaIndex(i, j);
+
+//			std::cout << "wheel beta index = " << theMotionPlan->getWheelAxisBetaIndex(i, j) << std::endl;
 
 			for (int k = 0; k < numDOFs; ++k) {
 				dofs[k].v->deriv() = 1.0;
@@ -88,14 +88,17 @@ void MPO_WheelGroundObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 
 			int iEE = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
 			ScalarDiffDiff eePosY = p[iEE + 1];
-			ScalarDiffDiff beta = theMotionPlan->endEffectorTrajectories[i].wheelAxisBeta[j];
+			ScalarDiffDiff beta = p[theMotionPlan->getWheelAxisBetaIndex(i,j)];
 			ScalarDiffDiff r = theMotionPlan->endEffectorTrajectories[i].wheelRadius;
-			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j-1];
+			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
 
 			DOF<ScalarDiffDiff> dofs[numDOFs];
 			// ePosjY
 			dofs[0].v = &eePosY;
 			dofs[0].i = iEE+1;
+			// beta
+			dofs[1].v = &beta;
+			dofs[1].i = theMotionPlan->getWheelAxisBetaIndex(i, j);
 
 			for (int k = 0; k < numDOFs; ++k) {
 

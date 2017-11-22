@@ -57,6 +57,7 @@ private:
 		int i;
 	};
 
-	static const int numDOFs = 10;
+	// eePosj (3), eePosjm1 (3), speedj, speedjm1, alphaj, alphajm1, betaj, betajm1
+	static const int numDOFs = 12;
 };
 

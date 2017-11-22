@@ -46,7 +46,7 @@ private:
 		int i;
 	};
 
-	// for now only 1 DOF: eePosY
-	static const int numDOFs = 1;
+	// DOFs: eePosY, beta
+	static const int numDOFs = 2;
 };
 

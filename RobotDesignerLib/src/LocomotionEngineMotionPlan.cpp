@@ -368,6 +368,8 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 		}
 	}
 
+//	endEffectorTrajectories[0].wheelAxisBeta = DynamicArray<double>(nSamplingPoints, -M_PI*0.25);
+
 	robotStateTrajectory.robotRepresentation = this->robotRepresentation;
 	robotStateTrajectory.initialize(nSamplingPoints);
 
@@ -531,6 +533,9 @@ void LocomotionEngineMotionPlan::getParameterMinValues(dVector &minV){
 		for (int j=0; j<nSamplePoints;j++)
 			for (uint i=0;i<endEffectorTrajectories.size();i++)
 				minLimits.push_back(0);
+		for (int j=0; j<nSamplePoints;j++)
+			for (uint i=0;i<endEffectorTrajectories.size();i++)
+				minLimits.push_back(0);
 	}
 
 	if (optimizeBarycentricWeights){
@@ -601,6 +606,9 @@ void LocomotionEngineMotionPlan::getParameterMaxValues(dVector &maxV){
 		for (int j=0; j<nSamplePoints;j++)
 			for (uint i=0;i<endEffectorTrajectories.size();i++)
 				maxLimits.push_back(0);
+		for (int j=0; j<nSamplePoints;j++)
+			for (uint i=0;i<endEffectorTrajectories.size();i++)
+				maxLimits.push_back(0);
 	}
 
 	if (optimizeBarycentricWeights){
@@ -663,12 +671,14 @@ void LocomotionEngineMotionPlan::writeMPParametersToList(dVector &p){
 
 	if (optimizeWheels){
 		for (int j=0; j<nSamplePoints; j++)
-			for (uint i=0; i<endEffectorTrajectories.size(); i++){
+			for (uint i=0; i<endEffectorTrajectories.size(); i++)
 				params.push_back(endEffectorTrajectories[i].wheelSpeed[j]);
-			}
 		for (int j=0; j<nSamplePoints; j++)
 			for (uint i=0; i<endEffectorTrajectories.size(); i++)
 				params.push_back(endEffectorTrajectories[i].wheelAxisAlpha[j]);
+		for (int j=0; j<nSamplePoints; j++)
+			for (uint i=0; i<endEffectorTrajectories.size(); i++)
+				params.push_back(endEffectorTrajectories[i].wheelAxisBeta[j]);
 	}
 
 	if (optimizeBarycentricWeights){
@@ -722,14 +732,15 @@ void LocomotionEngineMotionPlan::setMPParametersFromList(const dVector &p){
 	}
 
 	if (optimizeWheels){
-		for (int j=0; j<nSamplePoints;j++){
-			for (uint i=0;i<endEffectorTrajectories.size();i++){
+		for (int j=0; j<nSamplePoints;j++)
+			for (uint i=0;i<endEffectorTrajectories.size();i++)
 				endEffectorTrajectories[i].wheelSpeed[j] = p[pIndex++];
-			}
-		}
 		for (int j=0; j<nSamplePoints;j++)
 			for (uint i=0;i<endEffectorTrajectories.size();i++)
 				endEffectorTrajectories[i].wheelAxisAlpha[j] = p[pIndex++];
+		for (int j=0; j<nSamplePoints;j++)
+			for (uint i=0;i<endEffectorTrajectories.size();i++)
+				endEffectorTrajectories[i].wheelAxisBeta[j] = p[pIndex++];
 	}
 
 	if (optimizeBarycentricWeights){
@@ -992,6 +1003,7 @@ void LocomotionEngineMotionPlan::updateParameterStartIndices(){
 		// per end effector wheel params: speed
 		wheelParamsStartIndex = paramCount;
 		paramCount += nSamplePoints * endEffectorTrajectories.size() * nWheelParams;
+		paramCount += nSamplePoints * endEffectorTrajectories.size() * nWheelParamsEE;
 		paramCount += nSamplePoints * endEffectorTrajectories.size() * nWheelParamsEE;
 	}
 
@@ -1617,7 +1629,5 @@ int LocomotionEngineMotionPlan::getWheelAxisAlphaIndex(int i, int j) const
 
 int LocomotionEngineMotionPlan::getWheelAxisBetaIndex(int i, int j) const
 {
-	throw std::runtime_error("implement getWheelAxisBetaIndex!!");
-	return 0;
-//	return wheelParamsStartIndex + (nSamplePoints+j)*endEffectorTrajectories.size()*nWheelParams + i;
+	return wheelParamsStartIndex + (2*nSamplePoints+j)*endEffectorTrajectories.size()*nWheelParams + i;
 }

@@ -10,7 +10,7 @@ MPO_RobotWheelAxisObjective::MPO_RobotWheelAxisObjective(LocomotionEngineMotionP
 
 MPO_RobotWheelAxisObjective::~MPO_RobotWheelAxisObjective(void){
 }
-#include <iostream>
+
 double MPO_RobotWheelAxisObjective::computeValue(const dVector& p){
 	//assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
@@ -84,10 +84,7 @@ void MPO_RobotWheelAxisObjective::addGradientTo(dVector& grad, const dVector& p)
 
 			//compute the gradient with respect to the wheel axis rotation
 			if (theMotionPlan->wheelParamsStartIndex >= 0){
-
 				grad[theMotionPlan->getWheelAxisAlphaIndex(i, j)] += err.dot(axisDeriv) * weight;
-
-//				std::cout << "wheel axis index: " << theMotionPlan->getWheelAxisAlphaIndex(i, j) << std::endl;
 			}
 
 			//and now compute the gradient with respect to the robot q's
