@@ -360,6 +360,10 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 			endEffectorTrajectories[index].endEffectorRB = this->robot->bFrame->limbs[i]->getLastLimbSegment();
 			endEffectorTrajectories[index].endEffectorLocalCoords = eeLocalCoords;
 
+			const RBProperties &rbProperties = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties;
+			const RBEndEffector &rbEndEffector = rbProperties.endEffectorPoints[j];
+			endEffectorTrajectories[index].wheelRadius = rbEndEffector.featureSize;
+
 			for (int k=0;k<nSamplingPoints;k++){
 				endEffectorTrajectories[index].EEPos[k] = eeWorldCoords;
 				endEffectorTrajectories[index].defaultEEPos[k] = endEffectorTrajectories[index].EEPos[k];
