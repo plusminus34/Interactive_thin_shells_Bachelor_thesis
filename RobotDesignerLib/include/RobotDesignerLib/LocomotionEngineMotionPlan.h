@@ -55,6 +55,15 @@ public:
 
 	double getWheelAxisBetaAt(double t) const;
 
+	template<class T>
+	static Vector3T<T> rotateWheelAxisWith(const Vector3T<T> &axis, T alpha, T beta) {
+		// ... and tilt
+		Vector3T<T> axisRot = rotateVec(axisRot, beta, Vector3T<T>(0, 0, 1));
+		// yaw ...
+		axisRot = rotateVec(axis, alpha, Vector3T<T>(0, 1, 0));
+		return axisRot;
+	}
+
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
 	double getContactFlagAt(double t);
 

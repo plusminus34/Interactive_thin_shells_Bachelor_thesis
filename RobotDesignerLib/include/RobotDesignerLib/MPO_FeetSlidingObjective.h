@@ -31,11 +31,8 @@ private:
 						   const Vector3T<T> &wheelAxis, const T &alphaj, const T &alphajp1, const T &betaj, const T &betajp1,
 						   const T &speedj, const T &speedjp1, double c,
 						   double weight) {
-		// interpolate (average) the wheel axis angle
-		// rotate wheel axis ...
-		Vector3T<T> axisRot = rotateVec(wheelAxis, (alphaj + alphajp1)*0.5, Vector3T<T>(0, 1, 0));
-		// ... and tilt
-		axisRot = rotateVec(axisRot, (betaj + betajp1)*0.5, Vector3T<T>(0, 0, 1));
+
+		Vector3T<T> axisRot = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(wheelAxis, (T)0.5*(alphaj+alphajp1), (T)0.5*(betaj+betajp1));
 
 		Vector3T<T> rr = wheelRadiusV*wheelRadius;
 		// interpolate (average) wheel speed

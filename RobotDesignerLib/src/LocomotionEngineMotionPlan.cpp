@@ -360,9 +360,37 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 			endEffectorTrajectories[index].endEffectorRB = this->robot->bFrame->limbs[i]->getLastLimbSegment();
 			endEffectorTrajectories[index].endEffectorLocalCoords = eeLocalCoords;
 
-			const RBProperties &rbProperties = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties;
-			const RBEndEffector &rbEndEffector = rbProperties.endEffectorPoints[j];
-			endEffectorTrajectories[index].wheelRadius = rbEndEffector.featureSize;
+			// set wheel radius from rb properties
+//			const RBProperties &rbProperties = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties;
+//			const RBEndEffector &rbEndEffector = rbProperties.endEffectorPoints[j];
+//			endEffectorTrajectories[index].wheelRadius = rbEndEffector.featureSize;
+
+//			V3D wheelAxisLocal = rbEndEffector.localCoordsWheelAxis;
+//			RigidBody* rigidBody = this->robot->bFrame->limbs[i]->getLastLimbSegment();
+
+//			V3D wheelAxisWorld = rigidBody->getWorldCoordinates(wheelAxisLocal);
+
+//			V3D wheelAxisWorldA = wheelAxisWorld; wheelAxisWorldA[1] = 0;
+//			double alpha = wheelAxisWorldA.angleWith(V3D(1,0,0));
+//			if(alpha > PI/2) alpha -= PI;
+//			if(alpha < -PI/2) alpha += PI;
+
+
+//			V3D wheelAxisWorldB = wheelAxisWorldB; wheelAxisWorldB[2] = 0;
+//			double beta = wheelAxisWorldB.angleWith(V3D(1,0,0));
+//			if(beta > PI/2) beta -= PI;
+//			if(beta < -PI/2) beta += PI;
+
+//			V3D wheelAxisWorldC = wheelAxisWorldC; wheelAxisWorldC[0] = 0;
+//			double gamma = wheelAxisWorldC.angleWith(V3D(0,1,0));
+//			if(gamma > PI/2) gamma -= PI;
+//			if(gamma < -PI/2) gamma += PI;
+
+//			endEffectorTrajectories[index].wheelAxisAlpha = DynamicArray<double>(nSamplingPoints, alpha);
+//			endEffectorTrajectories[index].wheelAxisBeta = DynamicArray<double>(nSamplingPoints, beta);
+
+//			std::cout << "wheelAxisWorld = " << wheelAxisWorld.transpose() << std::endl;
+//			std::cout << "alpha = " << alpha << "\tbeta = "<< beta << "\gamma = "<< gamma << std::endl;
 
 			for (int k=0;k<nSamplingPoints;k++){
 				endEffectorTrajectories[index].EEPos[k] = eeWorldCoords;
@@ -1094,8 +1122,8 @@ P3D LocomotionEngineMotionPlan::getCenterOfRotationAt(double t, Eigen::VectorXd 
 		double alpha = ee.getWheelAxisAlphaAt(t);
 		double beta = ee.getWheelAxisBetaAt(t);
 		P3D p3 = ee.getEEPositionAt(t);
-		V3D v2 = rotateVec(V3D(1,0,0), alpha, V3D(0,1,0));
-		V3D v3 = rotateVec(v2, beta, V3D(0,0,1));
+
+		V3D v3 = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(V3D(1,0,0), alpha, beta);
 
 		Eigen::Vector3d p = p3;
 		Eigen::Vector3d v = v3;
@@ -1401,8 +1429,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 				double alpha = endEffectorTrajectories[i].getWheelAxisAlphaAt(f);
 				double beta = endEffectorTrajectories[i].getWheelAxisBetaAt(f);
 				double radius = endEffectorTrajectories[i].wheelRadius;
-				V3D axis = rotateVec(Vector3d(1, 0, 0), alpha, Vector3d(0, 1, 0));
-				axis = rotateVec(axis, beta, Vector3d(0, 0, 1));
+				V3D axis = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(Vector3d(1, 0, 0), alpha, beta);
 				drawCylinder(endEffectorTrajectories[i].getEEPositionAt(f) - axis*0.5*width, axis*width, radius, 24);
 			}
 		}
@@ -1433,9 +1460,8 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 			for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
 				P3D wheelCenter = endEffectorTrajectories[i].getEEPositionAt(f);
 				double alpha = endEffectorTrajectories[i].getWheelAxisAlphaAt(f);
-				V3D v = rotateVec(V3D(1,0,0), alpha, V3D(0,1,0));
 				double beta = endEffectorTrajectories[i].getWheelAxisBetaAt(f);
-				v = rotateVec(v, beta, V3D(0,0,1));
+				V3D v = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(V3D(1,0,0), alpha, beta);
 //				V3D vWorld = endEffectorTrajectories[i].endEffectorRB->getWorldCoordinates(v);
 
 				P3D a = wheelCenter + v*10;
