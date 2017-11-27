@@ -58,9 +58,9 @@ public:
 	template<class T>
 	static Vector3T<T> rotateWheelAxisWith(const Vector3T<T> &axis, T alpha, T beta) {
 		// ... and tilt
-		Vector3T<T> axisRot = rotateVec(axisRot, beta, Vector3T<T>(0, 0, 1));
+		Vector3T<T> axisRot = rotateVec(axis, beta, Vector3T<T>(0, 0, 1));
 		// yaw ...
-		axisRot = rotateVec(axis, alpha, Vector3T<T>(0, 1, 0));
+		axisRot = rotateVec(axisRot, alpha, Vector3T<T>(0, 1, 0));
 		return axisRot;
 	}
 

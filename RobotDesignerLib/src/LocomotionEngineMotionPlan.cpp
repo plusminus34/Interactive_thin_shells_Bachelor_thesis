@@ -361,36 +361,31 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 			endEffectorTrajectories[index].endEffectorLocalCoords = eeLocalCoords;
 
 			// set wheel radius from rb properties
-//			const RBProperties &rbProperties = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties;
-//			const RBEndEffector &rbEndEffector = rbProperties.endEffectorPoints[j];
-//			endEffectorTrajectories[index].wheelRadius = rbEndEffector.featureSize;
+			const RBProperties &rbProperties = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties;
+			const RBEndEffector &rbEndEffector = rbProperties.endEffectorPoints[j];
+			endEffectorTrajectories[index].wheelRadius = rbEndEffector.featureSize;
 
-//			V3D wheelAxisLocal = rbEndEffector.localCoordsWheelAxis;
-//			RigidBody* rigidBody = this->robot->bFrame->limbs[i]->getLastLimbSegment();
+			V3D wheelAxisLocal = rbEndEffector.localCoordsWheelAxis;
+			RigidBody* rigidBody = this->robot->bFrame->limbs[i]->getLastLimbSegment();
 
-//			V3D wheelAxisWorld = rigidBody->getWorldCoordinates(wheelAxisLocal);
+			V3D wheelAxisWorld = rigidBody->getWorldCoordinates(wheelAxisLocal);
 
-//			V3D wheelAxisWorldA = wheelAxisWorld; wheelAxisWorldA[1] = 0;
-//			double alpha = wheelAxisWorldA.angleWith(V3D(1,0,0));
-//			if(alpha > PI/2) alpha -= PI;
-//			if(alpha < -PI/2) alpha += PI;
+			V3D wheelAxisWorldA = wheelAxisWorld;
+			wheelAxisWorldA[1] = 0;
+			double alpha = wheelAxisWorldA.angleWith(V3D(1,0,0));
+			std::cout << "alpha = " << alpha << std::endl;
+			if(alpha > PI/2) alpha -= PI;
+			if(alpha < -PI/2) alpha += PI;
 
+			V3D wheelAxisWorldB = wheelAxisWorld;
+			wheelAxisWorldB[2] = 0;
+			double beta = wheelAxisWorldB.angleWith(V3D(1,0,0));
+			std::cout << "beta = " << beta << std::endl;
+			if(beta > PI/2) beta -= PI;
+			if(beta < -PI/2) beta += PI;
 
-//			V3D wheelAxisWorldB = wheelAxisWorldB; wheelAxisWorldB[2] = 0;
-//			double beta = wheelAxisWorldB.angleWith(V3D(1,0,0));
-//			if(beta > PI/2) beta -= PI;
-//			if(beta < -PI/2) beta += PI;
-
-//			V3D wheelAxisWorldC = wheelAxisWorldC; wheelAxisWorldC[0] = 0;
-//			double gamma = wheelAxisWorldC.angleWith(V3D(0,1,0));
-//			if(gamma > PI/2) gamma -= PI;
-//			if(gamma < -PI/2) gamma += PI;
-
-//			endEffectorTrajectories[index].wheelAxisAlpha = DynamicArray<double>(nSamplingPoints, alpha);
-//			endEffectorTrajectories[index].wheelAxisBeta = DynamicArray<double>(nSamplingPoints, beta);
-
-//			std::cout << "wheelAxisWorld = " << wheelAxisWorld.transpose() << std::endl;
-//			std::cout << "alpha = " << alpha << "\tbeta = "<< beta << "\gamma = "<< gamma << std::endl;
+			endEffectorTrajectories[index].wheelAxisAlpha = DynamicArray<double>(nSamplingPoints, alpha);
+			endEffectorTrajectories[index].wheelAxisBeta = DynamicArray<double>(nSamplingPoints, beta);
 
 			for (int k=0;k<nSamplingPoints;k++){
 				endEffectorTrajectories[index].EEPos[k] = eeWorldCoords;
@@ -399,8 +394,6 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 			}
 		}
 	}
-
-//	endEffectorTrajectories[0].wheelAxisBeta = DynamicArray<double>(nSamplingPoints, -M_PI*0.25);
 
 	robotStateTrajectory.robotRepresentation = this->robotRepresentation;
 	robotStateTrajectory.initialize(nSamplingPoints);
@@ -1423,14 +1416,16 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 
 		// draw wheels at end effectors
 		{
-			glColor4d(0.6, 0.6, 0.6, 0.8);
+			glColor4d(0.2, 0.6, 0.8, 0.8);
 			double width = 0.02;
 			for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
 				double alpha = endEffectorTrajectories[i].getWheelAxisAlphaAt(f);
 				double beta = endEffectorTrajectories[i].getWheelAxisBetaAt(f);
 				double radius = endEffectorTrajectories[i].wheelRadius;
 				V3D axis = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(Vector3d(1, 0, 0), alpha, beta);
-				drawCylinder(endEffectorTrajectories[i].getEEPositionAt(f) - axis*0.5*width, axis*width, radius, 24);
+				P3D eePos = endEffectorTrajectories[i].getEEPositionAt(f);
+				drawCylinder(eePos - axis*0.5*width, axis*width, radius, 24);
+				drawArrow(eePos, eePos + axis*0.05, 0.005);
 			}
 		}
 
