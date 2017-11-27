@@ -23,7 +23,7 @@ double MPO_WheelGroundObjective::computeValue(const dVector& p){
 
 			double eePosY = theMotionPlan->endEffectorTrajectories[i].EEPos[j](1);
 			double wheelRadius = theMotionPlan->endEffectorTrajectories[i].wheelRadius;
-			double beta = theMotionPlan->endEffectorTrajectories[i].wheelAxisBeta[j];
+			double beta = theMotionPlan->endEffectorTrajectories[i].wheelTiltAngle[j];
 			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
 
 			retVal += computeEnergy(eePosY, wheelRadius, beta, c, weight);
@@ -59,8 +59,6 @@ void MPO_WheelGroundObjective::addGradientTo(dVector& grad, const dVector& p) {
 			// beta
 			dofs[1].v = &beta;
 			dofs[1].i = theMotionPlan->getWheelAxisBetaIndex(i, j);
-
-//			std::cout << "wheel beta index = " << theMotionPlan->getWheelAxisBetaIndex(i, j) << std::endl;
 
 			for (int k = 0; k < numDOFs; ++k) {
 				dofs[k].v->deriv() = 1.0;

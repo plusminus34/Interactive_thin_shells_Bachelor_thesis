@@ -23,9 +23,11 @@ public:
 	DynamicArray<double> wheelSpeed;
 	double wheelRadius = 0.1;
 
-	// wheel axis in world coordinates is a rotation of alpha around y-axis and then rotation of beta around z-axis
-	DynamicArray<double> wheelAxisAlpha;	// rotation around y-axis
-	DynamicArray<double> wheelAxisBeta;		// rotation around z-axis
+	V3D wheelAxis;						// wheel axis in world coords.
+	V3D wheelYawAxis;					// yaw axis in world coords.
+	V3D wheelTiltAxis;					// tilt axis in world coords.
+	DynamicArray<double> wheelYawAngle;	// rotation around yaw axis
+	DynamicArray<double> wheelTiltAngle;// rotation around tilt axis
 
 	V3D targetOffsetFromCOM;
 	RigidBody* endEffectorRB;
@@ -56,12 +58,22 @@ public:
 	double getWheelAxisBetaAt(double t) const;
 
 	template<class T>
-	static Vector3T<T> rotateWheelAxisWith(const Vector3T<T> &axis, T alpha, T beta) {
-		// ... and tilt
-		Vector3T<T> axisRot = rotateVec(axis, beta, Vector3T<T>(0, 0, 1));
-		// yaw ...
-		axisRot = rotateVec(axisRot, alpha, Vector3T<T>(0, 1, 0));
+	static Vector3T<T> rotateWheelAxisWith(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {
+		// First tilt the axis ...
+		Vector3T<T> axisRot = rotateVec(axis, beta, axisTilt);
+		// ... and then yaw
+		axisRot = rotateVec(axisRot, alpha, axisYaw);
 		return axisRot;
+	}
+
+	template<class T>
+	Vector3T<T> getRotatedWheelAxis(T angleYaw, T angleTilt) const
+	{
+		Vector3T<T> axis(wheelAxis);
+		Vector3T<T> axisYaw(wheelYawAxis);
+		Vector3T<T> axisTilt(wheelTiltAxis);
+
+		return rotateWheelAxisWith(axis, axisYaw, angleYaw, axisTilt, angleTilt);
 	}
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...

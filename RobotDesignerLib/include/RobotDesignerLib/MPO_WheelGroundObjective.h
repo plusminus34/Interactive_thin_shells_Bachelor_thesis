@@ -37,9 +37,6 @@ private:
 	//the energy function operates on a motion plan...
 	LocomotionEngineMotionPlan* theMotionPlan;
 
-	// TODO: For now we assume rho (aka radius, aka vector connecting wheel center and contact with ground) to be (0,-1,0)
-//	Eigen::Vector3d wheelRadiusV = Eigen::Vector3d(0, -1, 0);
-
 	template<class T>
 	struct DOF {
 		T* v;

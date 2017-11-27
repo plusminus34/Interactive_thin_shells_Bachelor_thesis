@@ -18,7 +18,5 @@ public:
 private:
 	//the energy function operates on a motion plan...
 	LocomotionEngineMotionPlan* theMotionPlan;
-
-	Eigen::Vector3d wheelAxis = Eigen::Vector3d(1, 0, 0);
 };
 

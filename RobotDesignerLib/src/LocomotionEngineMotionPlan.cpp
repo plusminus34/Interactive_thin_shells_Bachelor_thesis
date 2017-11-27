@@ -24,8 +24,8 @@ void LocomotionEngine_EndEffectorTrajectory::initialize(int nPos){
 	contactForce.resize(nPos);
 	EEPos.resize(nPos);
 	wheelSpeed.resize(nPos);
-	wheelAxisAlpha.resize(nPos);
-	wheelAxisBeta.resize(nPos, 0/*M_PI*0.25*/);
+	wheelYawAngle.resize(nPos);
+	wheelTiltAngle.resize(nPos, 0/*M_PI*0.25*/);
 
 	defaultEEPos.resize(nPos);
 	contactFlag.resize(nPos, 0);
@@ -56,16 +56,16 @@ P3D LocomotionEngine_EndEffectorTrajectory::getEEPositionAt(double t) const {
 double LocomotionEngine_EndEffectorTrajectory::getWheelAxisAlphaAt(double t) const {
 	//very slow method, but easy to implement...
 	Trajectory1D traj;
-	for (uint i = 0; i<wheelAxisAlpha.size(); i++)
-		traj.addKnot((double)i / (wheelAxisAlpha.size() - 1), wheelAxisAlpha[i]);
+	for (uint i = 0; i<wheelYawAngle.size(); i++)
+		traj.addKnot((double)i / (wheelYawAngle.size() - 1), wheelYawAngle[i]);
 	return traj.evaluate_linear(t);
 }
 
 double LocomotionEngine_EndEffectorTrajectory::getWheelAxisBetaAt(double t) const {
 	//very slow method, but easy to implement...
 	Trajectory1D traj;
-	for (uint i = 0; i<wheelAxisBeta.size(); i++)
-		traj.addKnot((double)i / (wheelAxisBeta.size() - 1), wheelAxisBeta[i]);
+	for (uint i = 0; i<wheelTiltAngle.size(); i++)
+		traj.addKnot((double)i / (wheelTiltAngle.size() - 1), wheelTiltAngle[i]);
 	return traj.evaluate_linear(t);
 }
 
@@ -365,27 +365,21 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 			const RBEndEffector &rbEndEffector = rbProperties.endEffectorPoints[j];
 			endEffectorTrajectories[index].wheelRadius = rbEndEffector.featureSize;
 
+			// set wheel axis
 			V3D wheelAxisLocal = rbEndEffector.localCoordsWheelAxis;
 			RigidBody* rigidBody = this->robot->bFrame->limbs[i]->getLastLimbSegment();
+			V3D wheelAxisWorld = rigidBody->getWorldCoordinates(wheelAxisLocal).normalized();
+			endEffectorTrajectories[index].wheelAxis = wheelAxisWorld;
 
-			V3D wheelAxisWorld = rigidBody->getWorldCoordinates(wheelAxisLocal);
+			// set yaw axis (always going to be y-axis)
+			endEffectorTrajectories[index].wheelYawAxis = V3D(0, 1, 0);
 
-			V3D wheelAxisWorldA = wheelAxisWorld;
-			wheelAxisWorldA[1] = 0;
-			double alpha = wheelAxisWorldA.angleWith(V3D(1,0,0));
-			std::cout << "alpha = " << alpha << std::endl;
-			if(alpha > PI/2) alpha -= PI;
-			if(alpha < -PI/2) alpha += PI;
+			// set tilt axis
+			endEffectorTrajectories[index].wheelTiltAxis = wheelAxisWorld.cross(endEffectorTrajectories[index].wheelYawAxis);
 
-			V3D wheelAxisWorldB = wheelAxisWorld;
-			wheelAxisWorldB[2] = 0;
-			double beta = wheelAxisWorldB.angleWith(V3D(1,0,0));
-			std::cout << "beta = " << beta << std::endl;
-			if(beta > PI/2) beta -= PI;
-			if(beta < -PI/2) beta += PI;
-
-			endEffectorTrajectories[index].wheelAxisAlpha = DynamicArray<double>(nSamplingPoints, alpha);
-			endEffectorTrajectories[index].wheelAxisBeta = DynamicArray<double>(nSamplingPoints, beta);
+			// set wheel angles
+			endEffectorTrajectories[index].wheelYawAngle = DynamicArray<double>(nSamplingPoints, 0);
+			endEffectorTrajectories[index].wheelTiltAngle = DynamicArray<double>(nSamplingPoints, 0);
 
 			for (int k=0;k<nSamplingPoints;k++){
 				endEffectorTrajectories[index].EEPos[k] = eeWorldCoords;
@@ -700,10 +694,10 @@ void LocomotionEngineMotionPlan::writeMPParametersToList(dVector &p){
 				params.push_back(endEffectorTrajectories[i].wheelSpeed[j]);
 		for (int j=0; j<nSamplePoints; j++)
 			for (uint i=0; i<endEffectorTrajectories.size(); i++)
-				params.push_back(endEffectorTrajectories[i].wheelAxisAlpha[j]);
+				params.push_back(endEffectorTrajectories[i].wheelYawAngle[j]);
 		for (int j=0; j<nSamplePoints; j++)
 			for (uint i=0; i<endEffectorTrajectories.size(); i++)
-				params.push_back(endEffectorTrajectories[i].wheelAxisBeta[j]);
+				params.push_back(endEffectorTrajectories[i].wheelTiltAngle[j]);
 	}
 
 	if (optimizeBarycentricWeights){
@@ -762,10 +756,10 @@ void LocomotionEngineMotionPlan::setMPParametersFromList(const dVector &p){
 				endEffectorTrajectories[i].wheelSpeed[j] = p[pIndex++];
 		for (int j=0; j<nSamplePoints;j++)
 			for (uint i=0;i<endEffectorTrajectories.size();i++)
-				endEffectorTrajectories[i].wheelAxisAlpha[j] = p[pIndex++];
+				endEffectorTrajectories[i].wheelYawAngle[j] = p[pIndex++];
 		for (int j=0; j<nSamplePoints;j++)
 			for (uint i=0;i<endEffectorTrajectories.size();i++)
-				endEffectorTrajectories[i].wheelAxisBeta[j] = p[pIndex++];
+				endEffectorTrajectories[i].wheelTiltAngle[j] = p[pIndex++];
 	}
 
 	if (optimizeBarycentricWeights){
@@ -1114,9 +1108,12 @@ P3D LocomotionEngineMotionPlan::getCenterOfRotationAt(double t, Eigen::VectorXd 
 	for (const auto &ee : endEffectorTrajectories) {
 		double alpha = ee.getWheelAxisAlphaAt(t);
 		double beta = ee.getWheelAxisBetaAt(t);
+		V3D wheelAxis = ee.wheelAxis;
+		V3D yawAxis = ee.wheelYawAxis;
+		V3D tiltAxis = ee.wheelTiltAxis;
 		P3D p3 = ee.getEEPositionAt(t);
 
-		V3D v3 = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(V3D(1,0,0), alpha, beta);
+		V3D v3 = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(wheelAxis, yawAxis, alpha, tiltAxis, beta);
 
 		Eigen::Vector3d p = p3;
 		Eigen::Vector3d v = v3;
@@ -1418,12 +1415,12 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 		{
 			glColor4d(0.2, 0.6, 0.8, 0.8);
 			double width = 0.02;
-			for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
-				double alpha = endEffectorTrajectories[i].getWheelAxisAlphaAt(f);
-				double beta = endEffectorTrajectories[i].getWheelAxisBetaAt(f);
-				double radius = endEffectorTrajectories[i].wheelRadius;
-				V3D axis = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(Vector3d(1, 0, 0), alpha, beta);
-				P3D eePos = endEffectorTrajectories[i].getEEPositionAt(f);
+			for (const auto &ee : endEffectorTrajectories) {
+				double alpha = ee.getWheelAxisAlphaAt(f);
+				double beta = ee.getWheelAxisBetaAt(f);
+				double radius = ee.wheelRadius;
+				V3D axis = ee.getRotatedWheelAxis(alpha, beta);
+				P3D eePos = ee.getEEPositionAt(f);
 				drawCylinder(eePos - axis*0.5*width, axis*width, radius, 24);
 				drawArrow(eePos, eePos + axis*0.05, 0.005);
 			}
@@ -1452,11 +1449,11 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 			glEnd();
 
 			glColor4d(0.0, 0.0, 1.0, 0.5);
-			for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
-				P3D wheelCenter = endEffectorTrajectories[i].getEEPositionAt(f);
-				double alpha = endEffectorTrajectories[i].getWheelAxisAlphaAt(f);
-				double beta = endEffectorTrajectories[i].getWheelAxisBetaAt(f);
-				V3D v = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(V3D(1,0,0), alpha, beta);
+			for (const auto &ee : endEffectorTrajectories) {
+				P3D wheelCenter = ee.getEEPositionAt(f);
+				double alpha = ee.getWheelAxisAlphaAt(f);
+				double beta = ee.getWheelAxisBetaAt(f);
+				V3D v = ee.getRotatedWheelAxis(alpha, beta);
 //				V3D vWorld = endEffectorTrajectories[i].endEffectorRB->getWorldCoordinates(v);
 
 				P3D a = wheelCenter + v*10;
