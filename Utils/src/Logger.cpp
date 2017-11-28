@@ -43,6 +43,7 @@ void Logger::print(const char *fmt, ...){
 	Path::create(ms_strLogPath);
 
 	printf(pBuffer);
+	fflush(stdout);
 
 	RELEASE_STRING_FROM_ARGUMENT_LIST(pBuffer);
 }
