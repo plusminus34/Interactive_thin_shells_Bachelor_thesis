@@ -1,4 +1,6 @@
 #include <OptimizationLib/SoftUnilateralConstraint.h>
+#include <OptimizationLib/ObjectiveFunctionAD.h>
+
 #include <gtest/gtest.h>
 #include <iostream>
 
@@ -39,6 +41,67 @@ TEST(OptimizationLibTest, SoftUnilateralConstraint_value) {
 		EXPECT_NEAR(resGrad, 0, 1e-5);
 		EXPECT_NEAR(resHess, 0, 1e-5);
 	}
+}
+
+class ObjADTest : public ObjectiveFunctionAD
+{
+public:
+	ObjADTest() {}
+
+private:
+	template<class T>
+	T computeEnergy(const DOFColl<T> &dofColl) {
+		const T& x = dofColl.scalars.at("x");
+		return x*x;
+	}
+
+	virtual double computeEnergy(const DOFColl<double> &dofColl){
+		return computeEnergy<double>(dofColl);
+	}
+	virtual ScalarDiff computeEnergy(const DOFColl<ScalarDiff> &dofColl){
+		return computeEnergy<ScalarDiff>(dofColl);
+	}
+	virtual ScalarDiffDiff computeEnergy(const DOFColl<ScalarDiffDiff> &dofColl){
+		return computeEnergy<ScalarDiffDiff>(dofColl);
+	}
+
+	template<class T>
+	DOFColl<T> collectDOFs(const dVector &p){
+		DOFColl<T> dofColl;
+		dofColl.addScalar(p, 0, "x");
+		return dofColl;
+	}
+
+	virtual DOFColl<double> collectDOFs(const dVector &p){
+		return collectDOFs<double>(p);
+	}
+	virtual DOFColl<ScalarDiff> collectDOFsD(const dVector &p){
+		return collectDOFs<ScalarDiff>(p);
+	}
+	virtual DOFColl<ScalarDiffDiff> collectDOFsDD(const dVector &p){
+		return collectDOFs<ScalarDiffDiff>(p);
+	}
+};
+
+TEST(OptimizationLibTest, ObjectiveFunctionAD) {
+
+	dVector p(1);
+	p[0] = 3;
+
+	ObjADTest obj;
+
+	double e = obj.computeValue(p);
+	std::cout << "e = " << e << std::endl;
+
+	dVector grad(1);
+	obj.addGradientTo(grad, p);
+	std::cout << "grad = " << grad << std::endl;
+
+	SparseMatrix hessian(1,1);
+	std::vector<MTriplet> hessianEntries;
+	obj.addHessianEntriesTo(hessianEntries, p);
+	hessian.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
+	std::cout << "hess = " << hessian << std::endl;
 }
 
 int main(int argc, char **argv) {
