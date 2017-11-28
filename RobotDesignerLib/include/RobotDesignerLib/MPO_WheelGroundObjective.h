@@ -16,9 +16,6 @@ public:
 	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
 
 private:
-	template <class T>
-	using Vector3T = Eigen::Matrix<T, 3, 1>;
-
 	template<class T>
 	static T computeEnergy(const T &eePosY,
 						   const T &wheelRadius,

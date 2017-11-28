@@ -13,6 +13,29 @@ typedef Eigen::Matrix3d Matrix3x3;
 typedef Eigen::SparseMatrix<double> SparseMatrix;
 typedef Eigen::Triplet<double> MTriplet;
 
+template <class T>
+using Vector3T = Eigen::Matrix<T, 3, 1>;
+template <class T>
+using VectorXT = Eigen::Matrix<T, Eigen::Dynamic, 1>;
+
+template <class T>
+class V3T : public Vector3T<T>
+{
+public:
+	V3T<T>()
+		: Eigen::Matrix<T, 3, 1>()
+	{
+	}
+
+	template<class U>
+	V3T<T>(const Vector3T<U> &other)
+	{
+		this->data()[0] = other(0);
+		this->data()[1] = other(1);
+		this->data()[2] = other(2);
+	}
+};
+
 #ifdef _DEBUG // DEBUG
 typedef Eigen::Matrix<double, 2, 2, Eigen::DontAlign> Matrix2x2;
 typedef Eigen::Matrix<double, 4, 4, Eigen::DontAlign> Matrix4x4;

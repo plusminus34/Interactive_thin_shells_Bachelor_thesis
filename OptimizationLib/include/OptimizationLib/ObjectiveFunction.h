@@ -21,7 +21,7 @@ public:
 	void testGradientWithFD(const dVector& p);
 	void testHessianWithFD(const dVector& p);
 
-	virtual void setWeight(double w) { };
+	virtual void setWeight(double w) { }
 
 	virtual void printObjectiveDetails(const dVector& p) {}
 

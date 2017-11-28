@@ -44,10 +44,10 @@ public:
 	void setupGeneralizedCoordinatesStructure();
 
 	//returns the local coord vector from the parent of q(qIndex) to q(qIndex)
-	V3D getOffsetFromParentToQ(int qIndex);
+	V3D getOffsetFromParentToQ(int qIndex) const;
 
 	//returns the axis correponding to the indexed generalized coordinate, expressed in local coordinates
-	V3D getQAxis(int qIndex);
+	V3D getQAxis(int qIndex) const;
 
 	//updates the world-coords rotation axes. This method should be called whenever the state of the robot changes.
 	void updateWorldOrientations();
@@ -55,7 +55,7 @@ public:
 	V3D getWorldCoordsAxisForQ(int qIndex);
 
 	//returns the local position of the point that rb pivots about (i.e. location of the parent joint), in coordinate frame of rb
-	P3D getPivotPointLocalPosition(RigidBody* rb);
+	P3D getPivotPointLocalPosition(RigidBody* rb) const;
 
 	//projection to/from world coords and generalized coords
 	void projectWorldCoordsValuesIntoGeneralizedSpace(const V3D& linearVal, const V3D& angularVal, const DynamicArray<V3D>& jointVal, dVector& generalizedArray);
@@ -117,6 +117,30 @@ public:
 
 	//returns the world coordinates for point p, which is specified in the local coordinates of rb (relative to its COM). I.e. p(q)
 	P3D getWorldCoordinatesFor(const P3D& p, RigidBody* rb);
+
+	//returns the world coordinates for point p, which is specified in the local coordinates of rb (relative to its COM). I.e. p(q)
+	template<class T>
+	Vector3T<T> getWorldCoordinatesForT(const Vector3T<T>& p, const RigidBody* rb, const VectorXT<T> &q) const
+	{
+		Vector3T<T> offset(p);
+		int qIndex = 5;
+		if (rb->pJoints.size() != 0) {
+			qIndex = jointCoordStartIndex[rb->pJoints[0]->jIndex] + jointCoordsDimSize[rb->pJoints[0]->jIndex] - 1;
+			V3T<T> cJPos = rb->pJoints[0]->cJPos;
+			offset = p - cJPos;
+		}
+
+		//2 here is the index of the first translational DOF of the root
+		while (qIndex > 2) {
+			V3T<T> qAxis = getQAxis(qIndex);
+			V3T<T> offsetRot = rotateVec(offset, q[qIndex], qAxis);
+			V3T<T> offsetFromParent = getOffsetFromParentToQ(qIndex);
+			offset = offsetFromParent + offsetRot;
+			qIndex = qParentIndex[qIndex];
+		}
+
+		return (V3T<T>(getQAxis(0)) * q[0] + V3T<T>(getQAxis(1)) * q[1] + V3T<T>(getQAxis(2)) * q[2] + offset);
+	}
 
 	//returns the velocity (world coordinates) of the point p, which is specified in the local coordinates of rb (relative to its COM). I.e. p(q)
 	V3D getVelocityFor(const P3D& p, RigidBody* rb);

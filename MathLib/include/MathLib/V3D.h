@@ -4,29 +4,9 @@
 #include "Matrix.h"
 #include "AutoDiff.h"
 
+// TODO: move somewhere else
 typedef AutoDiffT<double, double> ScalarDiff;
 typedef AutoDiffT<ScalarDiff, ScalarDiff> ScalarDiffDiff;
-
-template <class T>
-using Vector3T = Eigen::Matrix<T, 3, 1>;
-
-template <class T>
-class V3T : public Eigen::Matrix<T, 3, 1>
-{
-public:
-	V3T<T>()
-		: Eigen::Matrix<T, 3, 1>()
-	{
-	}
-
-	template<class U>
-	V3T<T>(const Vector3T<U> &other)
-	{
-		this->data()[0] = other(0);
-		this->data()[1] = other(1);
-		this->data()[2] = other(2);
-	}
-};
 
 class P3D;
 /**

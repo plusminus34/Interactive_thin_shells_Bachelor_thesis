@@ -16,7 +16,24 @@ public:
 	virtual void addGradientTo(dVector& grad, const dVector& p);
 
 private:
+	template<class T>
+	T computeEnergy(const Vector3T<T> &eePos, const Vector3T<T> &eePosLocal, const VectorXT<T> &q_t, const RigidBody *rb) const {
+		Vector3T<T> robotEEPos = theMotionPlan->robotRepresentation->getWorldCoordinatesForT(eePosLocal, rb, q_t);
+
+		Vector3T<T> err;
+		err = robotEEPos - eePos;
+		T error = (T)0.5 * err.squaredNorm() * (T)weight;
+		return error;
+	}
+
+private:
 	//the energy function operates on a motion plan...
 	LocomotionEngineMotionPlan* theMotionPlan;
+
+	template<class T>
+	struct DOF {
+		T* v;
+		int i;
+	};
 };
 

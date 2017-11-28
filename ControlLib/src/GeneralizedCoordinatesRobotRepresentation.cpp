@@ -226,7 +226,7 @@ V3D GeneralizedCoordinatesRobotRepresentation::getWorldCoordsAxisForQ(int qIndex
 }
 
 //returns the local coord vector from the parent of q(qIndex) to q(qIndex)
-V3D GeneralizedCoordinatesRobotRepresentation::getOffsetFromParentToQ(int qIndex) {
+V3D GeneralizedCoordinatesRobotRepresentation::getOffsetFromParentToQ(int qIndex) const {
 	int qIndexParent = qParentIndex[qIndex];
 	//if they both belong to the same joint, then their locations coincide
 	if (jointIndexForQ[qIndex] == -1 || jointIndexForQ[qIndex] == jointIndexForQ[qIndexParent])
@@ -237,7 +237,7 @@ V3D GeneralizedCoordinatesRobotRepresentation::getOffsetFromParentToQ(int qIndex
 }
 
 //returns the axis corresponding to the indexed generalized coordinate, expressed in local coordinates
-V3D GeneralizedCoordinatesRobotRepresentation::getQAxis(int qIndex) {
+V3D GeneralizedCoordinatesRobotRepresentation::getQAxis(int qIndex) const {
 	if (qIndex>=0 || qIndex <6){
 		//the first three are the translational dofs of the body
 		if (qIndex == 0) return V3D(1, 0, 0);
@@ -289,7 +289,7 @@ V3D GeneralizedCoordinatesRobotRepresentation::getQAxis(int qIndex) {
 
 
 //returns the local position of the point that rb pivots about (i.e. location of the parent joint), in coordinate frame of rb
-P3D GeneralizedCoordinatesRobotRepresentation::getPivotPointLocalPosition(RigidBody* rb) {
+P3D GeneralizedCoordinatesRobotRepresentation::getPivotPointLocalPosition(RigidBody* rb)  const {
 	if (rb->pJoints.size() == 0)
 		return P3D();
 
@@ -445,20 +445,7 @@ void GeneralizedCoordinatesRobotRepresentation::projectWorldCoordsValuesIntoGene
 
 //returns the world coordinates for point p, which is specified in the local coordinates of rb (relative to its COM).
 P3D GeneralizedCoordinatesRobotRepresentation::getWorldCoordinatesFor(const P3D& p, RigidBody* rb) {
-	V3D offset(p);
-	int qIndex = 5;
-	if (rb->pJoints.size() != 0) {
-		qIndex = jointCoordStartIndex[rb->pJoints[0]->jIndex] + jointCoordsDimSize[rb->pJoints[0]->jIndex] - 1;
-		offset = V3D(rb->pJoints[0]->cJPos, p);
-	}
-
-	//2 here is the index of the first translational DOF of the root
-	while (qIndex > 2) {
-		offset = getOffsetFromParentToQ(qIndex) + offset.rotate(q[qIndex], getQAxis(qIndex));
-		qIndex = qParentIndex[qIndex];
-	}
-
-	return P3D() + (getQAxis(0) * q[0] + getQAxis(1) * q[1] + getQAxis(2) * q[2] + offset);
+	return P3D(getWorldCoordinatesForT(p, rb, q));
 }
 
 //returns the velocity (world coordinates) of the point p, which is specified in the local coordinates of rb (relative to its COM). I.e. p(q)
