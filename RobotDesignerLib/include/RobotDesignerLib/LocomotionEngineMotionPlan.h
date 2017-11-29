@@ -227,8 +227,8 @@ public:
 	double frictionCoeff = -1.0;     // when frictionCoeff < 0, friction cone constraints are disabled.
 
 public:
-	int getWheelAxisAlphaIndex(int i, int j) const;
-	int getWheelAxisBetaIndex(int i, int j) const;
+	int getWheelYawAngleIndex(int i, int j) const;
+	int getWheelTiltAngleIndex(int i, int j) const;
 
 public:
 	DynamicArray<LocomotionEngine_EndEffectorTrajectory> endEffectorTrajectories;

@@ -48,7 +48,7 @@ void MPO_WheelGroundObjective::addGradientTo(dVector& grad, const dVector& p) {
 			// Position of foot i at time sample j
 			int iEE = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
 			ScalarDiff eePosY = p[iEE + 1];
-			ScalarDiff beta = p[theMotionPlan->getWheelAxisBetaIndex(i,j)];
+			ScalarDiff beta = p[theMotionPlan->getWheelTiltAngleIndex(i,j)];
 			ScalarDiff r = theMotionPlan->endEffectorTrajectories[i].wheelRadius;
 			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
 
@@ -58,7 +58,7 @@ void MPO_WheelGroundObjective::addGradientTo(dVector& grad, const dVector& p) {
 			dofs[0].i = iEE+1;
 			// beta
 			dofs[1].v = &beta;
-			dofs[1].i = theMotionPlan->getWheelAxisBetaIndex(i, j);
+			dofs[1].i = theMotionPlan->getWheelTiltAngleIndex(i, j);
 
 			for (int k = 0; k < numDOFs; ++k) {
 				dofs[k].v->deriv() = 1.0;
@@ -86,7 +86,7 @@ void MPO_WheelGroundObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 
 			int iEE = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
 			ScalarDiffDiff eePosY = p[iEE + 1];
-			ScalarDiffDiff beta = p[theMotionPlan->getWheelAxisBetaIndex(i,j)];
+			ScalarDiffDiff beta = p[theMotionPlan->getWheelTiltAngleIndex(i,j)];
 			ScalarDiffDiff r = theMotionPlan->endEffectorTrajectories[i].wheelRadius;
 			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
 
@@ -96,7 +96,7 @@ void MPO_WheelGroundObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 			dofs[0].i = iEE+1;
 			// beta
 			dofs[1].v = &beta;
-			dofs[1].i = theMotionPlan->getWheelAxisBetaIndex(i, j);
+			dofs[1].i = theMotionPlan->getWheelTiltAngleIndex(i, j);
 
 			for (int k = 0; k < numDOFs; ++k) {
 

@@ -70,10 +70,10 @@ void MPO_RobotWheelAxisObjective::addGradientTo(dVector& grad, const dVector& p)
 			int index = 0;
 			if (theMotionPlan->wheelParamsStartIndex >= 0){
 				dofs[index].v = &yawAngle;
-				dofs[index].i = theMotionPlan->getWheelAxisAlphaIndex(i, j);
+				dofs[index].i = theMotionPlan->getWheelYawAngleIndex(i, j);
 				index++;
 				dofs[index].v = &tiltAngle;
-				dofs[index].i = theMotionPlan->getWheelAxisBetaIndex(i, j);
+				dofs[index].i = theMotionPlan->getWheelTiltAngleIndex(i, j);
 				index++;
 			}
 			if (theMotionPlan->robotStatesParamsStartIndex >= 0){
@@ -133,10 +133,10 @@ void MPO_RobotWheelAxisObjective::addHessianEntriesTo(DynamicArray<MTriplet>& he
 			int index = 0;
 			if (theMotionPlan->wheelParamsStartIndex >= 0){
 				dofs[index].v = &yawAngle;
-				dofs[index].i = theMotionPlan->getWheelAxisAlphaIndex(i, j);
+				dofs[index].i = theMotionPlan->getWheelYawAngleIndex(i, j);
 				index++;
 				dofs[index].v = &tiltAngle;
-				dofs[index].i = theMotionPlan->getWheelAxisBetaIndex(i, j);
+				dofs[index].i = theMotionPlan->getWheelTiltAngleIndex(i, j);
 				index++;
 			}
 			if (theMotionPlan->robotStatesParamsStartIndex >= 0){

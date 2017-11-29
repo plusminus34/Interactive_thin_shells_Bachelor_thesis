@@ -1644,12 +1644,12 @@ void LocomotionEngineMotionPlan::drawMotionPlan2(double f, int animationCycle, b
 	}
 }
 
-int LocomotionEngineMotionPlan::getWheelAxisAlphaIndex(int i, int j) const
+int LocomotionEngineMotionPlan::getWheelYawAngleIndex(int i, int j) const
 {
 	return wheelParamsStartIndex + (nSamplePoints+j)*endEffectorTrajectories.size()*nWheelParams + i;
 }
 
-int LocomotionEngineMotionPlan::getWheelAxisBetaIndex(int i, int j) const
+int LocomotionEngineMotionPlan::getWheelTiltAngleIndex(int i, int j) const
 {
 	return wheelParamsStartIndex + (2*nSamplePoints+j)*endEffectorTrajectories.size()*nWheelParams + i;
 }
