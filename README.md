@@ -35,6 +35,10 @@ First make sure you have git and cmake:
 #### Linux (Mac OS, untested)
 This guide will be for Ubuntu or other debian-based distros.
 
+#### Graphics
+Depending on your system, you should install the correct OpenGL libraries, e.g.:
+`sudo apt-get install xorg-dev libglu1-mesa-dev`
+
 ##### Blas / Lapack
 `sudo apt install libblas3 libblas-dev liblapack3 liblapack-dev`
 
@@ -42,7 +46,7 @@ This guide will be for Ubuntu or other debian-based distros.
 `sudo apt install gfortran`
 
 ##### GTest
-`sudo apt install gtest libtest-dev`
+`sudo apt install libgtest-dev`
 
 Build the gtest libraries and copy them to `/usr/local/lib/`:
 
@@ -61,6 +65,7 @@ sudo cp *.a /usr/local/lib
 make 
 sudo make install
 ```
+
 ##### OOQP
 1. Get OOQP from http://pages.cs.wisc.edu/~swright/ooqp/download/
 2. Apply OOQP hash patch:
@@ -82,16 +87,18 @@ sudo make install
    	sudo make install
 
 ##### FreeType  (https://www.freetype.org/):
-`sudo apt libfreetype6 libfreetype6-dev`
+`sudo apt install libfreetype6 libfreetype6-dev`
 
 ### Compilation
 1. Clone this repository
 2. Run `git submodule update --init --recursive`
 3. Generate build files. In the cloned folder do:
+
 ```
 mkdir build && cd build
-NANOGUI_USE_GLAD=1 cmake ..
+cmake -DNANOGUI_USE_GLAD=1 ..
 ```
+
 `NANOGUI_USE_GLAD` makes sure we use glad.
 
 4. Compile
