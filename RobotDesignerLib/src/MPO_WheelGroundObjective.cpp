@@ -22,11 +22,9 @@ double MPO_WheelGroundObjective::computeValue(const dVector& p){
 		for (uint i=0; i<nLimbs; i++){
 
 			double eePosY = theMotionPlan->endEffectorTrajectories[i].EEPos[j](1);
-			double wheelRadius = theMotionPlan->endEffectorTrajectories[i].wheelRadius;
-			double beta = theMotionPlan->endEffectorTrajectories[i].wheelTiltAngle[j];
 			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
 
-			retVal += computeEnergy(eePosY, wheelRadius, beta, c, weight);
+			retVal += computeEnergy(eePosY, c, weight);
 		}
 	}
 
@@ -48,21 +46,16 @@ void MPO_WheelGroundObjective::addGradientTo(dVector& grad, const dVector& p) {
 			// Position of foot i at time sample j
 			int iEE = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
 			ScalarDiff eePosY = p[iEE + 1];
-			ScalarDiff beta = p[theMotionPlan->getWheelTiltAngleIndex(i,j)];
-			ScalarDiff r = theMotionPlan->endEffectorTrajectories[i].wheelRadius;
 			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
 
 			DOF<ScalarDiff> dofs[numDOFs];
 			// ePosjY
 			dofs[0].v = &eePosY;
 			dofs[0].i = iEE+1;
-			// beta
-			dofs[1].v = &beta;
-			dofs[1].i = theMotionPlan->getWheelTiltAngleIndex(i, j);
 
 			for (int k = 0; k < numDOFs; ++k) {
 				dofs[k].v->deriv() = 1.0;
-				ScalarDiff energy = computeEnergy(eePosY, r, beta, c, weight);
+				ScalarDiff energy = computeEnergy(eePosY, c, weight);
 				grad[dofs[k].i] += energy.deriv();
 				dofs[k].v->deriv() = 0.0;
 			}
@@ -86,17 +79,12 @@ void MPO_WheelGroundObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 
 			int iEE = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
 			ScalarDiffDiff eePosY = p[iEE + 1];
-			ScalarDiffDiff beta = p[theMotionPlan->getWheelTiltAngleIndex(i,j)];
-			ScalarDiffDiff r = theMotionPlan->endEffectorTrajectories[i].wheelRadius;
 			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
 
 			DOF<ScalarDiffDiff> dofs[numDOFs];
 			// ePosjY
 			dofs[0].v = &eePosY;
 			dofs[0].i = iEE+1;
-			// beta
-			dofs[1].v = &beta;
-			dofs[1].i = theMotionPlan->getWheelTiltAngleIndex(i, j);
 
 			for (int k = 0; k < numDOFs; ++k) {
 
@@ -105,7 +93,7 @@ void MPO_WheelGroundObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 				for (int l = 0; l <= k; ++l) {
 					dofs[l].v->value().deriv() = 1.0;
 
-					ScalarDiffDiff energy = computeEnergy(eePosY, r, beta, c, weight);
+					ScalarDiffDiff energy = computeEnergy(eePosY, c, weight);
 
 					ADD_HES_ELEMENT(hessianEntries,
 									dofs[k].i,

@@ -18,13 +18,8 @@ public:
 private:
 	template<class T>
 	static T computeEnergy(const T &eePosY,
-						   const T &wheelRadius,
-						   const T &beta,
 						   double c,
 						   double weight) {
-		// distance of wheel center to ground
-//		T d = wheelRadius*cos(beta);
-
 		T constraint = eePosY;
 		return (T)0.5 * constraint*constraint * c * weight;
 	}
@@ -40,6 +35,6 @@ private:
 	};
 
 	// DOFs: eePosY, beta
-	static const int numDOFs = 2;
+	static const int numDOFs = 1;
 };
 
