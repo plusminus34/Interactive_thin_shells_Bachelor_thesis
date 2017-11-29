@@ -22,11 +22,10 @@ private:
 						   const T &beta,
 						   double c,
 						   double weight) {
-
 		// distance of wheel center to ground
-		T d = wheelRadius*cos(beta);
+//		T d = wheelRadius*cos(beta);
 
-		T constraint = eePosY - d;
+		T constraint = eePosY;
 		return (T)0.5 * constraint*constraint * c * weight;
 	}
 

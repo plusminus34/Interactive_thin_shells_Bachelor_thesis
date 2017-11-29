@@ -13,6 +13,7 @@ typedef Eigen::Matrix3d Matrix3x3;
 typedef Eigen::SparseMatrix<double> SparseMatrix;
 typedef Eigen::Triplet<double> MTriplet;
 
+// TODO: Consolidate `Vector3T` and `V3T`. I think we can only use `V3T`, but with better name (too similar to V3D)
 template <class T>
 using Vector3T = Eigen::Matrix<T, 3, 1>;
 template <class T>

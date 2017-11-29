@@ -20,8 +20,11 @@ double MPO_RobotEndEffectorsObjective::computeValue(const dVector& p){
 		theMotionPlan->robotStateTrajectory.getQAtTimeIndex(j, q_t);
 
 		for (int i=0;i<nLimbs;i++){
-			const auto &ee = theMotionPlan->endEffectorTrajectories[i];
-			retVal += computeEnergy<double>(ee.EEPos[j], ee.endEffectorLocalCoords, q_t, ee.endEffectorRB);
+			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
+			retVal += computeEnergy<double>(ee.EEPos[j], ee.getWheelRho(),
+											ee.wheelYawAxis, ee.wheelYawAngle[j],
+											ee.wheelTiltAxis, ee.wheelTiltAngle[j],
+											ee.endEffectorLocalCoords, q_t, ee.endEffectorRB);
 		}
 	}
 
@@ -40,6 +43,9 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 	// size of robot state `q` as DOFs
 	if (theMotionPlan->robotStatesParamsStartIndex >= 0)
 		numDOFs += theMotionPlan->robotRepresentation->getDimensionCount();
+	// 2 DOFs for yaw and tilt angle
+	if(theMotionPlan->wheelParamsStartIndex >= 0)
+		numDOFs += 2;
 
 	int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
@@ -49,17 +55,19 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 		for (int k = 0; k < q_t.size(); ++k)
 			qAD[k] = q_t[k];
 
+
 		for (int i=0;i<nLimbs;i++){
 
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
-			Vector3T<ScalarDiff> eePosLocal;
-			for (int k = 0; k < 3; ++k)
-				eePosLocal[k] = ee.endEffectorLocalCoords[k];
 
-			Vector3T<ScalarDiff> eePos;
-			for (int k = 0; k < 3; ++k)
-				eePos[k] = ee.EEPos[j][k];
+			V3T<ScalarDiff> rho = ee.getWheelRho();
+			V3T<ScalarDiff> yawAxis = ee.wheelYawAxis;
+			V3T<ScalarDiff> tiltAxis = ee.wheelTiltAxis;
+			ScalarDiff yawAngle = ee.wheelYawAngle[j];
+			ScalarDiff tiltAngle = ee.wheelTiltAngle[j];
 
+			V3T<ScalarDiff> eePosLocal = ee.endEffectorLocalCoords;
+			V3T<ScalarDiff> eePos = ee.EEPos[j];
 
 			std::vector<DOF<ScalarDiff>> dofs(numDOFs);
 			int index = 0;
@@ -77,10 +85,21 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 					index++;
 				}
 			}
+			if (theMotionPlan->wheelParamsStartIndex >= 0){
+				dofs[index].v = &yawAngle;
+				dofs[index].i = theMotionPlan->getWheelYawAngleIndex(i, j);
+				index++;
+				dofs[index].v = &tiltAngle;
+				dofs[index].i = theMotionPlan->getWheelTiltAngleIndex(i, j);
+				index++;
+			}
 
 			for (int k = 0; k < numDOFs; ++k) {
 				dofs[k].v->deriv() = 1.0;
-				ScalarDiff energy = computeEnergy<ScalarDiff>(eePos, eePosLocal, qAD, ee.endEffectorRB);
+				ScalarDiff energy = computeEnergy<ScalarDiff>(eePos, rho,
+															  yawAxis, yawAngle,
+															  tiltAxis, tiltAngle,
+															  eePosLocal, qAD, ee.endEffectorRB);
 				grad[dofs[k].i] += energy.deriv();
 				dofs[k].v->deriv() = 0.0;
 			}
@@ -93,7 +112,7 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
-	// number of DOFs for an end effector at one time sample
+	// number of DOFs for ONE end effector at ONE time sample
 	int numDOFs = 0;
 	// 3 DOFs for eePos
 	if (theMotionPlan->feetPositionsParamsStartIndex >= 0)
@@ -101,6 +120,9 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 	// size of robot state `q` as DOFs
 	if (theMotionPlan->robotStatesParamsStartIndex >= 0)
 		numDOFs += theMotionPlan->robotRepresentation->getDimensionCount();
+	// 2 DOFs for yaw and tilt angle
+	if(theMotionPlan->wheelParamsStartIndex >= 0)
+		numDOFs += 2;
 
 	int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
@@ -112,14 +134,15 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 
 		for (int i=0;i<nLimbs;i++){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
-			Vector3T<ScalarDiffDiff> eePosLocal;
-			for (int k = 0; k < 3; ++k)
-				eePosLocal[k] = ee.endEffectorLocalCoords[k];
 
-			Vector3T<ScalarDiffDiff> eePos;
-			for (int k = 0; k < 3; ++k)
-				eePos[k] = ee.EEPos[j][k];
+			V3T<ScalarDiffDiff> rho = ee.getWheelRho();
+			V3T<ScalarDiffDiff> yawAxis = ee.wheelYawAxis;
+			V3T<ScalarDiffDiff> tiltAxis = ee.wheelTiltAxis;
+			ScalarDiffDiff yawAngle = ee.wheelYawAngle[j];
+			ScalarDiffDiff tiltAngle = ee.wheelTiltAngle[j];
 
+			V3T<ScalarDiffDiff> eePosLocal = ee.endEffectorLocalCoords;
+			V3T<ScalarDiffDiff> eePos = ee.EEPos[j];
 
 			std::vector<DOF<ScalarDiffDiff>> dofs(numDOFs);
 			int index = 0;
@@ -137,12 +160,23 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 					index++;
 				}
 			}
+			if (theMotionPlan->wheelParamsStartIndex >= 0){
+				dofs[index].v = &yawAngle;
+				dofs[index].i = theMotionPlan->getWheelYawAngleIndex(i, j);
+				index++;
+				dofs[index].v = &tiltAngle;
+				dofs[index].i = theMotionPlan->getWheelTiltAngleIndex(i, j);
+				index++;
+			}
 
 			for (int k = 0; k < numDOFs; ++k) {
 				dofs[k].v->deriv().value() = 1.0;
 				for (int l = 0; l <= k; ++l) {
 					dofs[l].v->value().deriv() = 1.0;
-					ScalarDiffDiff energy = computeEnergy<ScalarDiffDiff>(eePos, eePosLocal, qAD, ee.endEffectorRB);
+					ScalarDiffDiff energy = computeEnergy<ScalarDiffDiff>(eePos, rho,
+																		  yawAxis, yawAngle,
+																		  tiltAxis, tiltAngle,
+																		  eePosLocal, qAD, ee.endEffectorRB);
 					ADD_HES_ELEMENT(hessianEntries,
 									dofs[k].i,
 									dofs[l].i,

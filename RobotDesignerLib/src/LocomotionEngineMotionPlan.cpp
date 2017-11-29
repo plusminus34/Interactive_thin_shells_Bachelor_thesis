@@ -53,6 +53,21 @@ P3D LocomotionEngine_EndEffectorTrajectory::getEEPositionAt(double t) const {
 	return P3D() + traj.evaluate_linear(t);
 }
 
+V3D LocomotionEngine_EndEffectorTrajectory::getWheelRho() const
+{
+	Vector3d rho = wheelTiltAxis.cross(wheelAxis).normalized() * wheelRadius;
+	return rho;
+}
+
+P3D LocomotionEngine_EndEffectorTrajectory::getWheelCenterPositionAt(double t) const
+{
+	V3D rho = getWheelRho();
+	double yawAngle = getWheelYawAngleAt(t);
+	double tiltAngle = getWheelTiltAngleAt(t);
+	rho = rotateWheelAxisWith(rho, wheelYawAxis, yawAngle, wheelTiltAxis, tiltAngle);
+	return getEEPositionAt(t) + rho;
+}
+
 double LocomotionEngine_EndEffectorTrajectory::getWheelYawAngleAt(double t) const {
 	//very slow method, but easy to implement...
 	Trajectory1D traj;
@@ -381,8 +396,12 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 			endEffectorTrajectories[index].wheelYawAngle = DynamicArray<double>(nSamplingPoints, 0);
 			endEffectorTrajectories[index].wheelTiltAngle = DynamicArray<double>(nSamplingPoints, 0);
 
+			// contact point to ground
+			Vector3d rho = endEffectorTrajectories[index].wheelTiltAxis.cross(endEffectorTrajectories[index].wheelAxis);
+			rho = rho.normalized() * endEffectorTrajectories[index].wheelRadius;
+
 			for (int k=0;k<nSamplingPoints;k++){
-				endEffectorTrajectories[index].EEPos[k] = eeWorldCoords;
+				endEffectorTrajectories[index].EEPos[k] = eeWorldCoords + rho;
 				endEffectorTrajectories[index].defaultEEPos[k] = endEffectorTrajectories[index].EEPos[k];
 				endEffectorTrajectories[index].contactFlag[k] = 1.0;
 			}
@@ -1415,14 +1434,14 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 		{
 			glColor4d(0.2, 0.6, 0.8, 0.8);
 			double width = 0.02;
-			for (const auto &ee : endEffectorTrajectories) {
+			for (const LocomotionEngine_EndEffectorTrajectory &ee : endEffectorTrajectories) {
 				double alpha = ee.getWheelYawAngleAt(f);
 				double beta = ee.getWheelTiltAngleAt(f);
 				double radius = ee.wheelRadius;
 				V3D axis = ee.getRotatedWheelAxis(alpha, beta);
-				P3D eePos = ee.getEEPositionAt(f);
-				drawCylinder(eePos - axis*0.5*width, axis*width, radius, 24);
-				drawArrow(eePos, eePos + axis*0.05, 0.005);
+				P3D wheelCenter = ee.getWheelCenterPositionAt(f);
+				drawCylinder(wheelCenter - axis*0.5*width, axis*width, radius, 24);
+				drawArrow(wheelCenter, wheelCenter + axis*0.05, 0.005);
 			}
 		}
 

@@ -54,6 +54,11 @@ public:
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
 	P3D getEEPositionAt(double t) const;
 
+	// TODO: maybe we can store rho alongside with wheelAxis etc.
+	V3D getWheelRho() const;
+
+	P3D getWheelCenterPositionAt(double t) const;
+
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
 	double getWheelYawAngleAt(double t) const;
 
