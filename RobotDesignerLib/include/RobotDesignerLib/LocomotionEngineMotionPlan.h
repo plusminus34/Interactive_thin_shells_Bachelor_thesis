@@ -13,6 +13,8 @@
 
 class LocomotionEngine_EndEffectorTrajectory{
 public:
+	// world coords of end effector position
+	// for a wheel, EEPos is the point of contact with the ground
 	DynamicArray<P3D> EEPos;
 	DynamicArray<V3D> contactForce;
 	DynamicArray<double> contactFlag;
@@ -20,9 +22,9 @@ public:
 	DynamicArray<P3D> defaultEEPos;
 	DynamicArray<double> verticalGRFUpperBoundValues;
 	DynamicArray<double> tangentGRFBoundValues;
-	DynamicArray<double> wheelSpeed;
-	double wheelRadius = 0.1;
 
+	double wheelRadius = 0.1;			// wheel radius
+	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
 	V3D wheelAxis;						// wheel axis in world coords.
 	V3D wheelYawAxis;					// yaw axis in world coords.
 	V3D wheelTiltAxis;					// tilt axis in world coords.
@@ -53,9 +55,9 @@ public:
 	P3D getEEPositionAt(double t) const;
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
-	double getWheelAxisAlphaAt(double t) const;
+	double getWheelYawAngleAt(double t) const;
 
-	double getWheelAxisBetaAt(double t) const;
+	double getWheelTiltAngleAt(double t) const;
 
 	template<class T>
 	static Vector3T<T> rotateWheelAxisWith(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {

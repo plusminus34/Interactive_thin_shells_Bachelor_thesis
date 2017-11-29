@@ -53,7 +53,7 @@ P3D LocomotionEngine_EndEffectorTrajectory::getEEPositionAt(double t) const {
 	return P3D() + traj.evaluate_linear(t);
 }
 
-double LocomotionEngine_EndEffectorTrajectory::getWheelAxisAlphaAt(double t) const {
+double LocomotionEngine_EndEffectorTrajectory::getWheelYawAngleAt(double t) const {
 	//very slow method, but easy to implement...
 	Trajectory1D traj;
 	for (uint i = 0; i<wheelYawAngle.size(); i++)
@@ -61,7 +61,7 @@ double LocomotionEngine_EndEffectorTrajectory::getWheelAxisAlphaAt(double t) con
 	return traj.evaluate_linear(t);
 }
 
-double LocomotionEngine_EndEffectorTrajectory::getWheelAxisBetaAt(double t) const {
+double LocomotionEngine_EndEffectorTrajectory::getWheelTiltAngleAt(double t) const {
 	//very slow method, but easy to implement...
 	Trajectory1D traj;
 	for (uint i = 0; i<wheelTiltAngle.size(); i++)
@@ -1106,8 +1106,8 @@ P3D LocomotionEngineMotionPlan::getCenterOfRotationAt(double t, Eigen::VectorXd 
 
 	int i = 0;
 	for (const auto &ee : endEffectorTrajectories) {
-		double alpha = ee.getWheelAxisAlphaAt(t);
-		double beta = ee.getWheelAxisBetaAt(t);
+		double alpha = ee.getWheelYawAngleAt(t);
+		double beta = ee.getWheelTiltAngleAt(t);
 		V3D wheelAxis = ee.wheelAxis;
 		V3D yawAxis = ee.wheelYawAxis;
 		V3D tiltAxis = ee.wheelTiltAxis;
@@ -1416,8 +1416,8 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 			glColor4d(0.2, 0.6, 0.8, 0.8);
 			double width = 0.02;
 			for (const auto &ee : endEffectorTrajectories) {
-				double alpha = ee.getWheelAxisAlphaAt(f);
-				double beta = ee.getWheelAxisBetaAt(f);
+				double alpha = ee.getWheelYawAngleAt(f);
+				double beta = ee.getWheelTiltAngleAt(f);
 				double radius = ee.wheelRadius;
 				V3D axis = ee.getRotatedWheelAxis(alpha, beta);
 				P3D eePos = ee.getEEPositionAt(f);
@@ -1451,8 +1451,8 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 			glColor4d(0.0, 0.0, 1.0, 0.5);
 			for (const auto &ee : endEffectorTrajectories) {
 				P3D wheelCenter = ee.getEEPositionAt(f);
-				double alpha = ee.getWheelAxisAlphaAt(f);
-				double beta = ee.getWheelAxisBetaAt(f);
+				double alpha = ee.getWheelYawAngleAt(f);
+				double beta = ee.getWheelTiltAngleAt(f);
 				V3D v = ee.getRotatedWheelAxis(alpha, beta);
 //				V3D vWorld = endEffectorTrajectories[i].endEffectorRB->getWorldCoordinates(v);
 
