@@ -86,7 +86,7 @@ void QPControlConstraints::addEndEffectorNoSlipConstraints(int constraintStartIn
 	qpPlan->robotRepresentation->getQDot(qDot);
 	int nDim = qpPlan->robotRepresentation->getDimensionCount();
 
-//	print("..\\out\\qDot.m", qDot);
+//	print("../out/qDot.m", qDot);
 
 	for (uint eeIndex = 0; eeIndex < qpPlan->contactEndEffectors.size(); eeIndex++){
 		dVector J_qDotDot = qpPlan->contactEndEffectors[eeIndex].J * qpPlan->a;

@@ -67,8 +67,6 @@ public:
 	}
 
 	virtual void setParameters(const dVector& params) {
-		assert(currentParams.size() == params.size());
-
 		DynamicArray<double> tempparams(params.size());
 
 		dVector::Map(&tempparams[0], tempparams.size()) = params;

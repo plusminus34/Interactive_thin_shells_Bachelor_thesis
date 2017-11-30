@@ -23,7 +23,7 @@ RigidBody
 	frictionCoefficient 0.800000
 	restitutionCoefficient 0.200000
 	thickness 0.030000
-	CDP Capsule 0 0 0.01 0 0 -0.01 0.02
+	CDP Sphere 0 0 0 0.02
 /End
 
 RigidBody
@@ -37,7 +37,7 @@ RigidBody
 	frictionCoefficient 0.800000
 	restitutionCoefficient 0.200000
 	thickness 0.030000
-	CDP Capsule 0 0 0.01 0 0 -0.01 0.02
+	CDP Sphere 0 0 0 0.02
 /End
 
 RigidBody
@@ -51,7 +51,7 @@ RigidBody
 	frictionCoefficient 0.800000
 	restitutionCoefficient 0.200000
 	thickness 0.030000
-	CDP Capsule 0 0 0.01 0 0 -0.01 0.02
+	CDP Sphere 0 0 0 0.02
 /End
 
 RigidBody
@@ -65,7 +65,7 @@ RigidBody
 	frictionCoefficient 0.800000
 	restitutionCoefficient 0.200000
 	thickness 0.030000
-	CDP Capsule 0 0 0.01 0 0 -0.01 0.02
+	CDP Sphere 0 0 0 0.02
 /End
 
 RigidBody

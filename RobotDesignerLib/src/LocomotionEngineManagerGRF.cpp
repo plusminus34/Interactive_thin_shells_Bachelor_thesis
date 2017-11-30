@@ -1,6 +1,8 @@
 #include <RobotDesignerLib/LocomotionEngineManagerGRF.h>
 
 #include <RobotDesignerLib/MPO_VelocitySoftConstraints.h>
+#include <RobotDesignerLib/MPO_EEPosSwingObjective.h>
+#include <RobotDesignerLib/MPO_RobotWheelAxisObjective.h>
 
 //#define DEBUG_WARMSTART
 //#define CHECK_DERIVATIVES_AFTER_WARMSTART
@@ -230,7 +232,7 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 		motionPlan->desDistanceToTravel.z() = desSpeedZ * ((double)i / 4.0);
 		motionPlan->desTurningAngle = desTurningAngle * ((double)i / 4.0);
 
-		runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_END_EFFECTORS | OPT_COM_ORIENTATIONS | OPT_ROBOT_STATES);
+		runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_END_EFFECTORS | OPT_WHEELS | OPT_COM_ORIENTATIONS | OPT_ROBOT_STATES);
 #ifdef DEBUG_WARMSTART
 		Logger::consolePrint("WARM START, alltogether optimizer step %d...\n", i);
 		if (tmpWSIndex <= wsLimit++)
@@ -248,6 +250,7 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 
 void LocomotionEngineManagerGRF::setDefaultOptimizationFlags() {
 	motionPlan->optimizeEndEffectorPositions = true;
+	motionPlan->optimizeWheels = true;
 	motionPlan->optimizeCOMPositions = true;
 	motionPlan->optimizeCOMOrientations = true;
 	motionPlan->optimizeRobotStates = true;
@@ -278,6 +281,7 @@ void LocomotionEngineManagerGRFv1::setupObjectives() {
 	ef->objectives.push_back(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 10000.0));
 	ef->objectives.push_back(new MPO_RobotCOMObjective(ef->theMotionPlan, "robot COM objective", 10000.0));
 	ef->objectives.push_back(new MPO_RobotEndEffectorsObjective(ef->theMotionPlan, "robot EE objective", 10000.0));
+	ef->objectives.push_back(new MPO_RobotWheelAxisObjective(ef->theMotionPlan, "robot wheel axis objective", 10000.0));
 	ef->objectives.push_back(new MPO_RobotCOMOrientationsObjective(ef->theMotionPlan, "robot COM orientations objective", 10000.0));
 	ef->objectives.push_back(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
 
@@ -326,6 +330,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 	//consistancy constraints (between robot states and other auxiliary variables)
 	ef->objectives.push_back(new MPO_RobotEndEffectorsObjective(ef->theMotionPlan, "robot EE objective", 10000.0));
+	ef->objectives.push_back(new MPO_RobotWheelAxisObjective(ef->theMotionPlan, "robot wheel axis objective", 10000.0));
 	ef->objectives.push_back(new MPO_RobotCOMObjective(ef->theMotionPlan, "robot COM objective", 10000.0));
 	ef->objectives.push_back(new MPO_RobotCOMOrientationsObjective(ef->theMotionPlan, "robot COM orientations objective", 10000.0));
 
@@ -337,6 +342,9 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	//constraints ensuring feet don't slide...
 
 	ef->objectives.push_back(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0));
+
+	// constraint ensuring the y component of the EE position follows the swing motion
+//	ef->objectives.push_back(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0));
 
 	//periodic boundary constraints...
 	if (ef->theMotionPlan->wrapAroundBoundaryIndex >= 0) {

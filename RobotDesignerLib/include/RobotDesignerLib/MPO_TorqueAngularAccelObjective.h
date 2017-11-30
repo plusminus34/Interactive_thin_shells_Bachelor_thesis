@@ -11,8 +11,9 @@ public:
 	virtual ~MPO_TorqueAngularAccelObjective(void);
 
 	virtual double computeValue(const dVector& p);
-
+#if 1
 	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
+#endif
 	virtual void addGradientTo(dVector& grad, const dVector& p);
 
 private:

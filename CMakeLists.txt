@@ -10,12 +10,22 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 # TODO: find a better place than data ...
 add_definitions(-DSCP_WORKING_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
+set(SCP_GUI_TWO_WINDOWS FALSE CACHE BOOL "Use two window mode to circumvent OpenGL compatibility")
+if (SCP_GUI_TWO_WINDOWS)
+    add_definitions(-DGUI_TWO_WINDOWS)
+endif()
+
+set(SCP_EIGEN_NO_DEBUG FALSE CACHE BOOL "Disable Eigen asserts")
+if (SCP_EIGEN_NO_DEBUG)
+    add_definitions(-DEIGEN_NO_DEBUG)
+endif()
+
 # dependencies project-wide
 find_package(Eigen3 3.3.4 REQUIRED)
 
 # enable parallel build for Visual Studio
 if (WIN32)
-	add_compile_options(/MP)
+    add_compile_options(/MP)
 endif()
 
 # add directories (in each subdirectory there needs to be a 'CMakeLists.txt')

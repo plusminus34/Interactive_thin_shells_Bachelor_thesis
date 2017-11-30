@@ -113,20 +113,20 @@ void QPControlEnergyFunction::setCurrentBestSolution(const dVector& p){
 	theQPCPlan->setParametersFromList(p);
 
 /*
-	print("..\\out\\M.m", theQPCPlan->M);
-	print("..\\out\\a.m", theQPCPlan->a);
+	print("../out/M.m", theQPCPlan->M);
+	print("../out/a.m", theQPCPlan->a);
 	dVector tmp = (theQPCPlan->M * theQPCPlan->a);
-	print("..\\out\\Ma.m", tmp);
-	print("..\\out\\u.m", theQPCPlan->u);
+	print("../out/Ma.m", tmp);
+	print("../out/u.m", theQPCPlan->u);
 	tmp = theQPCPlan->M * theQPCPlan->a - theQPCPlan->u;
-	print("..\\out\\Ma-u.m", tmp);
-	print("..\\out\\gf.m", theQPCPlan->gravitationalForces);
+	print("../out/Ma-u.m", tmp);
+	print("../out/gf.m", theQPCPlan->gravitationalForces);
 	tmp = theQPCPlan->M * theQPCPlan->a - theQPCPlan->u - theQPCPlan->gravitationalForces;
-	print("..\\out\\Ma-u-gf.m", tmp);
+	print("../out/Ma-u-gf.m", tmp);
 */
 
 	if (printDebugInfo){
-//		print("..\\out\\p.m", p);
+//		print("../out/p.m", p);
 
 		Logger::consolePrint("-------------------------------\n");
 		Logger::logPrint("-------------------------------\n");

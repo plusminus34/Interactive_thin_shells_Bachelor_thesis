@@ -32,6 +32,9 @@ public:
 	bool initialized = false;
 	GLApplication* glApp;
 
+	nanogui::Graph* energyGraph;
+	std::vector<float> energyGraphValues;
+
 	MOPTParams moptParams;
 
 	Robot* robot = nullptr;
@@ -80,5 +83,15 @@ public:
 	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
+private:
+	bool showWeightsAndEnergyValues;
+	void ToggleEnergyMenu();
+	void CreateEnergyMenu();
+	nanogui::Window * energyMenu = nullptr;
+	std::vector<nanogui::Slider*> energySliders;
+	std::vector<nanogui::FloatBox<double>*> energyTextboxes;
+	std::vector<nanogui::FloatBox<double>*> weightTextboxes;
+	void updateSliders();
+	V3D COMSpeed;
 };
 

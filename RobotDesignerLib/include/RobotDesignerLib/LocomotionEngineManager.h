@@ -41,6 +41,7 @@
 #define OPT_END_EFFECTORS 0x0001
 #define OPT_COM_POSITIONS 0x0002
 #define OPT_COM_ORIENTATIONS 0x0004
+#define OPT_WHEELS 0x0040
 #define OPT_ROBOT_STATES 0x0008
 #define OPT_GRFS 0x0010
 #define OPT_BARYCENTRIC_WEIGHTS 0x0020
@@ -79,6 +80,7 @@ public:
 
 	double runMOPTStep(int optimizationFlags) {
 		motionPlan->optimizeEndEffectorPositions = (optimizationFlags & OPT_END_EFFECTORS) != 0;
+		motionPlan->optimizeWheels = (optimizationFlags & OPT_WHEELS) != 0;
 		motionPlan->optimizeCOMPositions = (optimizationFlags & OPT_COM_POSITIONS) != 0;
 		motionPlan->optimizeCOMOrientations = (optimizationFlags & OPT_COM_ORIENTATIONS) != 0;
 		motionPlan->optimizeRobotStates = (optimizationFlags & OPT_ROBOT_STATES) != 0;

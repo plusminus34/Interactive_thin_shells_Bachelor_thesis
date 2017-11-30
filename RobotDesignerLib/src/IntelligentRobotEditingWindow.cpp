@@ -19,6 +19,10 @@ IntelligentRobotEditingWindow::IntelligentRobotEditingWindow(int x, int y, int w
 	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -1.5;
 
 	dynamic_cast<GLTrackingCamera*>(this->camera)->setCameraTarget(P3D(0, -0.25, 0));
+
+	tWidget = new TranslateWidget(AXIS_X | AXIS_Y | AXIS_Z);
+	tWidget->visible = false;
+
 }
 
 void IntelligentRobotEditingWindow::addMenuItems() {
@@ -26,7 +30,7 @@ void IntelligentRobotEditingWindow::addMenuItems() {
 }
 
 IntelligentRobotEditingWindow::~IntelligentRobotEditingWindow(){
-
+	delete tWidget;
 }
 
 void IntelligentRobotEditingWindow::drawAuxiliarySceneInfo(){
@@ -123,8 +127,8 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 			}
 
 			rdApp->robot->setState(&rs);
-			rdApp->prd->setParameters(currentDesignParameters);
-
+			updateParamsAndMotion(Eigen::Map<dVector>(currentDesignParameters.data(), currentDesignParameters.size()));
+			syncSliders();
 		}
 
 		return true;
@@ -135,45 +139,194 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 
 bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 	if (Robot* robot = rdApp->robot) {
-
-		ReducedRobotState rs(robot);
-		robot->setState(&rdApp->prd->defaultRobotState);
-
 		preDraw();
 		Ray ray = getRayFromScreenCoords(xPos, yPos);
 		postDraw();
 
-		for (int i = 0; i < robot->getRigidBodyCount(); i++)
-			robot->getRigidBody(i)->selected = false;
+		if (tWidget->visible) {
+			preDraw();
+			bool clickProcessed = false;
+			if ((clickProcessed = tWidget->onMouseMoveEvent(xPos, yPos)) == true) {
+				ReducedRobotState rs(robot);
+				robot->setState(&rdApp->prd->defaultRobotState);
 
-		highlightedRigidBody = NULL;
-		P3D pLocal;
-		double tMin = DBL_MAX;
-		for (int i = 0; i < robot->getRigidBodyCount(); i++){
-			if (robot->getRigidBody(i)->getRayIntersectionPointTo(ray, &pLocal)) {
-				double tVal = ray.getRayParameterFor(robot->getRigidBody(i)->getWorldCoordinates(pLocal));
+				P3D pOriginal;
+				int pStartIndex = -1;
+				if (highlightedEE){
+					pOriginal = highlightedEEParent->getWorldCoordinates(highlightedEE->coords);
+					pStartIndex = rdApp->prd->eeParamMap[highlightedEEParent].index;
+				}
+				else {
+					pOriginal = highlightedJoint->getWorldPosition();
+					pStartIndex = rdApp->prd->jointParamMap[highlightedJoint].index;
+				}
 
-				if (tVal < tMin) {
-					tMin = tVal;
-					highlightedRigidBody = robot->getRigidBody(i);
+				V3D offset(pOriginal, tWidget->pos);
+
+				DynamicArray<double> currentDesignParameters;
+				rdApp->prd->getCurrentSetOfParameters(currentDesignParameters);
+
+
+				if (highlightedEE) {
+					offset = highlightedEEParent->getLocalCoordinates(offset);
+					for (int i = 0; i < 3; i++)
+						currentDesignParameters[pStartIndex + i] += offset[i];
+				}
+				else {
+					if (glfwGetKey(this->rdApp->glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
+						offset = highlightedJoint->parent->getLocalCoordinates(offset);
+						for (int i = 0; i < 3; i++)
+							currentDesignParameters[pStartIndex + i] += offset[i];
+					}
+					else {
+						V3D offsetP = highlightedJoint->parent->getLocalCoordinates(offset);
+						for (int i = 0; i < 3; i++)
+							currentDesignParameters[pStartIndex + i] += offsetP[i];
+						V3D offsetC = highlightedJoint->child->getLocalCoordinates(offset);
+						for (int i = 0; i < 3; i++)
+							currentDesignParameters[pStartIndex + 3 + i] += offsetC[i];
+
+					}
+
+				}
+
+				robot->setState(&rs);
+				updateParamsAndMotion(Eigen::Map<dVector>(currentDesignParameters.data(), currentDesignParameters.size()));
+				syncSliders();
+			}
+			postDraw();
+			if (clickProcessed)
+				return true;
+		}
+		else {
+			ReducedRobotState rs(robot);
+			robot->setState(&rdApp->prd->defaultRobotState);
+
+			//check if any of the joints are highlighted...
+			for (int i = 0; i < robot->getJointCount(); i++)
+				robot->getJoint(i)->selected = false;
+
+			highlightedJoint = NULL;
+			double tMinJ = DBL_MAX;
+
+			for (int i = 0; i < robot->getJointCount(); i++) {
+				P3D p;
+				double dist = ray.getDistanceToPoint(robot->getJoint(i)->getWorldPosition(), &p);
+				double tVal = ray.getRayParameterFor(p);
+				if (dist < robot->getJoint(i)->parent->abstractViewCylinderRadius * 1.2 && tVal < tMinJ) {
+					tMinJ = tVal;
+					highlightedJoint = robot->getJoint(i);
 				}
 			}
+
+			for (int i = 0; i < robot->getRigidBodyCount(); i++)
+				for (uint j = 0; j < robot->getRigidBody(i)->rbProperties.endEffectorPoints.size(); j++)
+					robot->getRigidBody(i)->rbProperties.endEffectorPoints[j].selected = false;
+
+			highlightedEE = NULL;
+			highlightedEEParent = NULL;
+			double tMinEE = DBL_MAX;
+
+			for (int i = 0; i < robot->getRigidBodyCount(); i++)
+				for (uint j = 0; j < robot->getRigidBody(i)->rbProperties.endEffectorPoints.size(); j++) {
+					P3D p;
+					double dist = ray.getDistanceToPoint(robot->getRigidBody(i)->getWorldCoordinates(robot->getRigidBody(i)->rbProperties.endEffectorPoints[j].coords), &p);
+					double tVal = ray.getRayParameterFor(p);
+					if (dist < robot->getRigidBody(i)->abstractViewCylinderRadius * 1.2 && tVal < tMinEE) {
+						tMinEE = tVal;
+						highlightedEE = &robot->getRigidBody(i)->rbProperties.endEffectorPoints[j];
+						highlightedEEParent = robot->getRigidBody(i);
+					}
+				}
+
+
+
+			for (int i = 0; i < robot->getRigidBodyCount(); i++)
+				robot->getRigidBody(i)->selected = false;
+
+			highlightedRigidBody = NULL;
+
+			P3D pLocal;
+			double tMinB = DBL_MAX;
+			for (int i = 0; i < robot->getRigidBodyCount(); i++) {
+				if (robot->getRigidBody(i)->getRayIntersectionPointTo(ray, &pLocal)) {
+					double tVal = ray.getRayParameterFor(robot->getRigidBody(i)->getWorldCoordinates(pLocal));
+
+					if (tVal < tMinB) {
+						tMinB = tVal;
+						highlightedRigidBody = robot->getRigidBody(i);
+					}
+				}
+			}
+
+			if (highlightedJoint && highlightedRigidBody)
+				if (highlightedJoint->parent == highlightedRigidBody || highlightedJoint->child == highlightedRigidBody) {
+					highlightedRigidBody = NULL;
+					tMinB = DBL_MAX;
+				}
+
+			if (highlightedEE && highlightedRigidBody)
+				if (highlightedEEParent == highlightedRigidBody) {
+					highlightedRigidBody = NULL;
+					tMinB = DBL_MAX;
+				}
+
+			if (highlightedJoint && (tMinJ > tMinB || tMinJ > tMinEE))
+				highlightedJoint = NULL;
+
+			if (highlightedEE && (tMinEE > tMinB || tMinEE > tMinJ))
+				highlightedEE = NULL;
+
+			if (highlightedRigidBody && (tMinB > tMinEE || tMinB > tMinJ))
+				highlightedRigidBody = NULL;
+
+			if (highlightedJoint)
+				highlightedJoint->selected = true;
+
+			if (highlightedEE)
+				highlightedEE->selected = true;
+
+			if (highlightedRigidBody)
+				highlightedRigidBody->selected = true;
+
+			robot->setState(&rs);
+
 		}
 
-		robot->setState(&rs);
-
-		if (highlightedRigidBody) {
-			highlightedRigidBody->selected = true;
-//			Logger::consolePrint("highlighted rb %s, positioned at %lf %lf %lf\n", highlightedRigidBody->name.c_str(), highlightedRigidBody->getCMPosition().x(), highlightedRigidBody->getCMPosition().y(), highlightedRigidBody->getCMPosition().z());
-		}
 	}
+
+
 	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 }
 
 bool IntelligentRobotEditingWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos){
-	int shiftDown = glfwGetKey(this->rdApp->glfwWindow, GLFW_KEY_LEFT_SHIFT);
-	if (GlobalMouseState::lButtonPressed && shiftDown == GLFW_PRESS) {
+	int ctrlDown = glfwGetKey(this->rdApp->glfwWindow, GLFW_KEY_LEFT_CONTROL);
+	if (((GlobalMouseState::lButtonPressed && ctrlDown == GLFW_PRESS) || (GlobalMouseState::rButtonPressed)) && tWidget->visible) {
+		tWidget->visible = false;
+		highlightedEE = NULL;
+		highlightedJoint = NULL;
+		highlightedRigidBody = NULL;
 		return true;
+	}
+
+	if (GlobalMouseState::lButtonPressed) {
+		tWidget->visible = false;
+
+		ReducedRobotState rs(rdApp->robot);
+		rdApp->robot->setState(&rdApp->prd->defaultRobotState);
+
+
+		//if a joint or EE is selected, turn tWidget on and sync it ...
+		if (highlightedEE) {
+			tWidget->visible = true;
+			tWidget->pos = highlightedEEParent->getWorldCoordinates(highlightedEE->coords);
+		}
+
+		if (highlightedJoint) {
+			tWidget->visible = true;
+			tWidget->pos = highlightedJoint->getWorldPosition();
+		}
+		rdApp->robot->setState(&rs);
 	}
 
 	return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
@@ -181,6 +334,272 @@ bool IntelligentRobotEditingWindow::onMouseButtonEvent(int button, int action, i
 
 void IntelligentRobotEditingWindow::setViewportParameters(int posX, int posY, int sizeX, int sizeY){
 	GLWindow3D::setViewportParameters(posX, posY, sizeX, sizeY);
+}
+
+void IntelligentRobotEditingWindow::resetParams()
+{
+	dVector p;	rdApp->prd->getCurrentSetOfParameters(p);
+	p.setZero();
+	rdApp->prd->setParameters(p);
+	syncSliders();
+}
+
+void IntelligentRobotEditingWindow::updateJacobian()
+{
+	//evaluates dm/dp at (m,p). It is assumed that m corresponds to a minimum of the energy (i.e. m = arg min (E(m(p)))
+	// Let g = \partial E / \partial m
+	// partial g / partial p + partial g / partial m * dm/dp = dg/dp = 0
+	// dm/dp = -partial g / partial m ^ -1 * partial g / partial p
+
+#ifdef USE_MATLAB
+	igl::matlab::mlinit(&matlabengine);
+	igl::matlab::mleval(&matlabengine, "desktop");
+#endif
+
+	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+	m0 = m;
+
+	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
+	p0 = Eigen::Map<dVector>(p.data(), p.size());
+
+	SparseMatrix dgdm;
+	dVector dgdpi, dmdpi;
+	dgdp.resize(m.size(), p.size());
+	dVector g_m, g_p;
+
+	resize(dgdm, m.size(), m.size());
+	resize(dmdp, m.size(), p.size());
+	resize(dgdpi, m.size());
+
+	Timer timerN; timerN.restart();
+	DynamicArray<MTriplet> triplets;
+	rdApp->moptWindow->locomotionManager->energyFunction->addHessianEntriesTo(triplets, m);
+	dgdm.setFromTriplets(triplets.begin(), triplets.end());
+
+	Eigen::SimplicialLDLT<SparseMatrix, Eigen::Lower> solver;
+	//	Eigen::SparseLU<SparseMatrix> solver;
+	solver.compute(dgdm);
+	Logger::consolePrint("Time to construct dgdm: %lf\n", timerN.timeEllapsed());
+	double dp = 0.001;
+	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
+	timerN.restart();
+	if (compute_dgdp_With_FD)
+	{
+		for (uint i = 0; i < p.size(); i++) {
+			resize(g_m, m.size());
+			resize(g_p, m.size());
+
+			double pVal = p[i];
+			p[i] = pVal + dp;
+			rdApp->prd->setParameters(p);
+			rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_p, m);
+			p[i] = pVal - dp;
+			rdApp->prd->setParameters(p);
+			rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_m, m);
+			p[i] = pVal;
+			rdApp->prd->setParameters(p);
+
+			dgdp.col(i) = (g_p - g_m) / (2 * dp);
+		}
+	}
+	else
+	{
+
+	}
+	Logger::consolePrint("Time to construct dgdp: %lf\n", timerN.timeEllapsed());
+	timerN.restart();
+	dmdp = solver.solve(dgdp) * -1;
+	Logger::consolePrint("Time to solve for J: %lf\n", timerN.timeEllapsed());
+
+	if (useSVD)
+	{
+		Eigen::JacobiSVD<MatrixNxM> svd(dmdp, Eigen::ComputeThinU | Eigen::ComputeThinV);
+		dmdp_V = svd.matrixV();
+	}
+#ifdef USE_MATLAB
+	RUN_IN_MATLAB(
+		igl::matlab::mlsetmatrix(&matlabengine, "dmdp", dmdp);
+	igl::matlab::mlsetmatrix(&matlabengine, "dmdp_V", dmdp_V);
+	)
+#endif
+}
+
+void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
+	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
+
+	//dm/dp, the analytic version. 
+	updateJacobian();
+
+	//Now estimate this jacobian with finite differences...
+	MatrixNxM dmdp_FD;
+	dVector m_initial, m_m, m_p;
+	resize(dmdp_FD, m.size(), p.size());
+	double dp = 0.001;
+	rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_initial);
+	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
+	for (uint i = 0; i < p.size(); i++) {
+		resize(m_m, m.size());
+		resize(m_p, m.size());
+
+		double pVal = p[i];
+		p[i] = pVal + dp;
+		rdApp->prd->setParameters(p);
+		//now we must solve this thing a loooot...
+
+		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
+		for (int j = 0; j < 300; j++)
+			rdApp->moptWindow->runMOPTStep();
+
+		rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_m);
+		p[i] = pVal - dp;
+		rdApp->prd->setParameters(p);
+		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
+		for (int j = 0; j < 300; j++)
+			rdApp->moptWindow->runMOPTStep();
+		rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_p);
+
+		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
+		p[i] = pVal;
+		rdApp->prd->setParameters(p);
+
+		dmdp_FD.col(i) = (m_p - m_m) / (2 * dp);
+	}
+
+	print("../out/dmdp.m", dmdp);
+	print("../out/dmdp_FD.m", dmdp_FD);
+}
+
+void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep() {
+	updateJacobian();
+
+	//If we have some objective O, expressed as a function of m, then dO/dp = dO/dm * dm/dp
+	dVector dOdm;
+	dVector dOdp;
+	resize(dOdm, m0.size());
+	resize(dOdp, p0.size());
+
+	rdApp->moptWindow->locomotionManager->energyFunction->objectives[optimizeEnergyNum]->addGradientTo(dOdm, m0);
+	
+	dOdp = dmdp.transpose() * dOdm;
+
+	updateParamsAndMotion(p0-stepSize*dOdp);
+}
+
+void IntelligentRobotEditingWindow::showMenu(){
+	if (!rdApp->robot)
+		return;
+	if (!menu)
+		CreateParametersDesignWindow();
+	menu->setVisible(true);
+}
+
+void IntelligentRobotEditingWindow::hideMenu()
+{
+	if (menu)
+		menu->setVisible(false);
+}
+
+void IntelligentRobotEditingWindow::syncSliders()
+{
+	DynamicArray<double> p;
+	rdApp->prd->getCurrentSetOfParameters(p);
+	auto removeTrailingZeros = [](string &&s) {return s.erase(s.find_last_not_of('0') + 1, string::npos); };
+	for (uint i = 0; i < sliders.size(); i++)
+	{
+		sliders[i]->setValue((float)p[i]);
+		textboxes[i]->setValue(removeTrailingZeros(to_string(p[i])));
+	}
+}
+void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
+{
+	if (menu)
+		menu->dispose();
+
+	menu = rdApp->mainMenu->addWindow(Eigen::Vector2i(viewportX, viewportY), "Design Parameters");
+	rdApp->mainMenu->addButton("Reset Params", [this]() { resetParams(); });
+	rdApp->mainMenu->addButton("Compute Jacobian", [this]() { updateJacobian(); });
+
+	rdApp->mainMenu->addVariable("Update Jacobian continuously", updateJacobiancontinuously);
+	rdApp->mainMenu->addVariable("Use Jacobian", updateMotionBasedOnJacobian);
+	rdApp->mainMenu->addVariable("Use SVD", useSVD);
+
+	rdApp->mainMenu->addButton("Do Optimization step", [this]() { DoDesignParametersOptimizationStep(); });
+	rdApp->mainMenu->addVariable("Optimize Energy num", optimizeEnergyNum);
+	rdApp->mainMenu->addVariable("Step Size", stepSize);
+
+	using namespace nanogui;
+	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
+
+	Widget *panel = new Widget(rdApp->mainMenu->window());
+	GridLayout *layout =
+		new GridLayout(Orientation::Horizontal, 2,
+			Alignment::Middle, 15, 5);
+	layout->setColAlignment(
+	{ Alignment::Maximum, Alignment::Fill });
+	layout->setSpacing(0, 10);
+	panel->setLayout(layout);
+
+
+	auto removeTrailingZeros = [](string &&s) {return s.erase(s.find_last_not_of('0') + 1, string::npos); };
+	sliders.resize(rdApp->prd->getNumberOfParameters());
+	textboxes.resize(rdApp->prd->getNumberOfParameters());
+	for (int i = 0; i < rdApp->prd->getNumberOfParameters(); i++)
+	{
+		Slider *slider = new Slider(panel);
+		slider->setValue((float)p[i]);
+		slider->setRange({ -0.1,0.1 });
+		slider->setFixedWidth(150);
+		TextBox *textBox = new TextBox(panel);
+		textBox->setValue(removeTrailingZeros(to_string(p[i])));
+		textBox->setFixedWidth(50);
+		textBox->setEditable(true);
+		textBox->setFixedHeight(18);
+
+		slider->setCallback([&, i, textBox](float value) {
+			updateParamsUsingSliders(i, value);
+			textBox->setValue(removeTrailingZeros(to_string(value)));
+		});
+		textBox->setCallback([&, i, slider](const std::string &str) {
+			updateParamsUsingSliders(i, std::stod(str));
+			slider->setValue((float)std::stod(str));
+			return true;
+		});
+		sliders[i] = slider;
+		textboxes[i] = textBox;
+	}
+	rdApp->mainMenu->addWidget("", panel);
+	rdApp->menuScreen->performLayout();
+	slidervalues.resize(rdApp->prd->getNumberOfParameters());
+	slidervalues.setZero();
+}
+void IntelligentRobotEditingWindow::updateParamsUsingSliders(int paramIndex, double value)
+{
+	slidervalues(paramIndex) = value;
+	dVector p;
+	if (!useSVD) {
+		rdApp->prd->getCurrentSetOfParameters(p);
+		p(paramIndex) = value;
+	}
+	else {
+		p = p0 + dmdp_V*slidervalues;
+	}
+	updateParamsAndMotion(p);
+}
+void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
+{
+	if (updateJacobiancontinuously)
+	{
+		Timer timerN; timerN.restart();
+		updateJacobian();
+		Logger::consolePrint("Total time to compute J: %lf\n", timerN.timeEllapsed());
+	}
+	rdApp->prd->setParameters(p);
+	if (updateMotionBasedOnJacobian) {
+		dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+		m = m0 + dmdp*(p - p0);
+		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m);
+	}
 }
 
 void IntelligentRobotEditingWindow::drawScene() {
@@ -192,6 +611,8 @@ void IntelligentRobotEditingWindow::drawScene() {
 	if (!rdApp->robot)
 		return;
 
+	tWidget->draw();
+
 	int flags = SHOW_ABSTRACT_VIEW | SHOW_BODY_FRAME | SHOW_JOINTS | HIGHLIGHT_SELECTED;
 
 	ReducedRobotState rs(rdApp->robot);
@@ -201,16 +622,17 @@ void IntelligentRobotEditingWindow::drawScene() {
 	if (rdApp->simWindow->rbEngine)
 		rdApp->simWindow->rbEngine->drawRBs(flags);
 
-//	for (int i = 0; i < rdApp->robot->getJointCount(); i++)
-//		drawSphere(rdApp->prd->initialJointMorphology[rdApp->robot->getJoint(i)].worldCoords, 0.015);
+/*
+	//	for (int i = 0; i < rdApp->robot->getJointCount(); i++)
+	//		drawSphere(rdApp->prd->initialJointMorphology[rdApp->robot->getJoint(i)].worldCoords, 0.015);
 
-	if (highlightedRigidBody && highlightedRigidBody->pJoints.size() == 1 && (highlightedRigidBody->cJoints.size() > 0 || highlightedRigidBody->rbProperties.endEffectorPoints.size() > 0)){
+	if (highlightedRigidBody && highlightedRigidBody->pJoints.size() == 1 && (highlightedRigidBody->cJoints.size() > 0 || highlightedRigidBody->rbProperties.endEffectorPoints.size() > 0)) {
 		P3D p1 = highlightedRigidBody->pJoints[0]->getWorldPosition();
 		P3D p2;
 		if (highlightedRigidBody->cJoints.size() == 1)
 			p2 = highlightedRigidBody->cJoints[0]->getWorldPosition();
 		else {
-			for (auto& eeItr : highlightedRigidBody->rbProperties.endEffectorPoints){
+			for (auto& eeItr : highlightedRigidBody->rbProperties.endEffectorPoints) {
 				p2 += highlightedRigidBody->getWorldCoordinates(eeItr.coords);
 			}
 			p2 /= highlightedRigidBody->rbProperties.endEffectorPoints.size();
@@ -220,7 +642,7 @@ void IntelligentRobotEditingWindow::drawScene() {
 		drawSphere(p2, 0.015);
 
 	}
-
+*/
 
 	rdApp->robot->setState(&rs);
 }
@@ -271,4 +693,5 @@ void IntelligentRobotEditingWindow::setupLights() {
 	glEnable(GL_LIGHT3);
 	glEnable(GL_LIGHT4);
 }
+
 

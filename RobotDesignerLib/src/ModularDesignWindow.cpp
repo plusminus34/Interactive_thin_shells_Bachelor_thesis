@@ -26,6 +26,9 @@ key 'D': delete the subtree from the selected RMC
 key 'S': save the whole design to ../out/tmpModularDesign.dsn
 key 'R': load design from ../out/tmpModularDesign.dsn
 
+key 'Z': add a body feature
+key '-' and '=': resize selected body feature
+
 // Fabrication
 key 'J': output fabricatable rigidbody meshes in ../out/. File format: $(rbName)_merged.obj
 
@@ -772,6 +775,49 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		saveFile("../out/tmpModularRobotDesign.dsn");
 	}
 
+	if (key == GLFW_KEY_MINUS && action == GLFW_PRESS) {
+		if (selectedFP){
+			selectedFP->featureSize = max(0.01, selectedFP->featureSize - 0.005);
+			createBodyMesh3D();
+		}
+		if (selectedRobot && selectedRobot->selectedRMC) {
+			if (LivingSphereEE* selectedSphere = dynamic_cast<LivingSphereEE*> (selectedRobot->selectedRMC)) {
+				selectedSphere->sphereRadius = max(0.01, selectedSphere->sphereRadius - 0.005);
+				selectedSphere->update();
+				updateLivingBracket();
+			}
+		}
+		if (selectedRobot && selectedRobot->selectedRMC) {
+			if (LivingWheelEE* selectedWheel = dynamic_cast<LivingWheelEE*> (selectedRobot->selectedRMC)) {
+				selectedWheel->radius = max(0.01, selectedWheel->radius - 0.005);
+				selectedWheel->update();
+				updateLivingBracket();
+			}
+		}
+	}
+
+	if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS) {
+		if (selectedFP){
+			selectedFP->featureSize = selectedFP->featureSize + 0.005;
+			createBodyMesh3D();
+		}
+		if (selectedRobot && selectedRobot->selectedRMC) {
+			if (LivingSphereEE* selectedSphere = dynamic_cast<LivingSphereEE*> (selectedRobot->selectedRMC)) {
+				selectedSphere->sphereRadius = selectedSphere->sphereRadius + 0.005;
+				selectedSphere->update();
+				updateLivingBracket();
+			}
+		}
+		if (selectedRobot && selectedRobot->selectedRMC) {
+			if (LivingWheelEE* selectedWheel = dynamic_cast<LivingWheelEE*> (selectedRobot->selectedRMC)) {
+				selectedWheel->radius = selectedWheel->radius + 0.005;
+				selectedWheel->update();
+				updateLivingBracket();
+			}
+		}
+	}
+
+
 	if (key == GLFW_KEY_Z && action == GLFW_PRESS)
 	{
 		bodyFeaturePts.push_back(RBFeaturePoint(P3D(0, 0, 0), 0.02));
@@ -1219,6 +1265,18 @@ void ModularDesignWindow::loadConfig(const char* fName)
 		else if (strcmp(keyword, "LivingSphereEE") == 0)
 		{
 			RMC* rmc = new LivingSphereEE();
+			rmcWarehouse.push_back(rmc);
+			rmcWarehouse.back()->loadFromFile(fp);
+			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;
+
+			for (uint i = 0; i < rmc->pins.size(); i++)
+			{
+				rmcPinNameMap[rmc->pins[i].name] = &rmc->pins[i];
+			}
+		}
+		else if (strcmp(keyword, "LivingWheelEE") == 0)
+		{
+			RMC* rmc = new LivingWheelEE();
 			rmcWarehouse.push_back(rmc);
 			rmcWarehouse.back()->loadFromFile(fp);
 			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;
@@ -1745,11 +1803,17 @@ void ModularDesignWindow::loadParametersForLivingBracket()
 //		TwAddVarRW(glApp->mainMenuBar, "bracket connector angle", TW_TYPE_DOUBLE, &lbh->bracketConnectorAngle, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
 	}
 
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_EE)
+	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_SPHERE_EE)
 	{
 		LivingSphereEE* sphereEE = dynamic_cast<LivingSphereEE*>(selectedRobot->selectedRMC);
 //		TwAddVarRW(glApp->mainMenuBar, "sphere radius", TW_TYPE_DOUBLE, &(sphereEE->sphereRadius), "min=0.001 max=0.1 step=0.001 group='LivingBracket'");
 	}
+	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_WHEEL_EE)
+	{
+		LivingWheelEE* wheelEE = dynamic_cast<LivingWheelEE*>(selectedRobot->selectedRMC);
+//		TwAddVarRW(glApp->mainMenuBar, "wheel radius", TW_TYPE_DOUBLE, &(wheelEE->radius), "min=0.001 max=0.1 step=0.001 group='LivingBracket'");
+	}
+
 }
 
 void ModularDesignWindow::unloadParametersForLivingBracket()
@@ -1762,9 +1826,13 @@ void ModularDesignWindow::unloadParametersForLivingBracket()
 //		TwRemoveVar(glApp->mainMenuBar, "bracket connector angle");
 	}
 
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_EE)
+	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_SPHERE_EE)
 	{
-//		TwRemoveVar(glApp->mainMenuBar, "sphere radius");
+		//		TwRemoveVar(glApp->mainMenuBar, "sphere radius");
+	}
+	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_WHEEL_EE)
+	{
+		//		TwRemoveVar(glApp->mainMenuBar, "wheel radius");
 	}
 }
 
@@ -1798,12 +1866,21 @@ void ModularDesignWindow::updateLivingBracket(){
 		}
 	}
 
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_EE)
+	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_SPHERE_EE)
 	{
 		if (rmcMirrorMap.count(selectedRobot->selectedRMC))
 		{
 			RMC* mirrorRMC = rmcMirrorMap[selectedRobot->selectedRMC];
 			dynamic_cast<LivingSphereEE*>(mirrorRMC)->syncSymmParameters(dynamic_cast<LivingSphereEE*>(selectedRobot->selectedRMC));
+		}
+	}
+
+	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_WHEEL_EE)
+	{
+		if (rmcMirrorMap.count(selectedRobot->selectedRMC))
+		{
+			RMC* mirrorRMC = rmcMirrorMap[selectedRobot->selectedRMC];
+			dynamic_cast<LivingWheelEE*>(mirrorRMC)->syncSymmParameters(dynamic_cast<LivingWheelEE*>(selectedRobot->selectedRMC));
 		}
 	}
 

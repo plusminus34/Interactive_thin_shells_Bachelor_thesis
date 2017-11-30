@@ -40,12 +40,14 @@ void MPO_PseudoPeriodicEECOMPoseConstraint::addGradientTo(dVector & grad, const 
 			
 			if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
 				//dFdEE_end
-				grad[theMotionPlan->feetPositionsParamsStartIndex + timeIndexend * nLimbs * 2 + i * 2 + 0] += 2 * temp[0] * weight;
-				grad[theMotionPlan->feetPositionsParamsStartIndex + timeIndexend * nLimbs * 2 + i * 2 + 1] += 2 * temp[2] * weight;
+				grad[theMotionPlan->feetPositionsParamsStartIndex + timeIndexend * nLimbs * 3 + i * 3 + 0] += 2 * temp[0] * weight;
+				grad[theMotionPlan->feetPositionsParamsStartIndex + timeIndexend * nLimbs * 3 + i * 3 + 1] += 2 * temp[1] * weight;
+				grad[theMotionPlan->feetPositionsParamsStartIndex + timeIndexend * nLimbs * 3 + i * 3 + 2] += 2 * temp[2] * weight;
 
 				//dFdEE_start
-				grad[theMotionPlan->feetPositionsParamsStartIndex + timeIndexstart * nLimbs * 2 + i * 2 + 0] += -2 * temp[0] * weight;
-				grad[theMotionPlan->feetPositionsParamsStartIndex + timeIndexstart * nLimbs * 2 + i * 2 + 1] += -2 * temp[2] * weight;
+				grad[theMotionPlan->feetPositionsParamsStartIndex + timeIndexstart * nLimbs * 3 + i * 3 + 0] += -2 * temp[0] * weight;
+				grad[theMotionPlan->feetPositionsParamsStartIndex + timeIndexstart * nLimbs * 3 + i * 3 + 1] += -2 * temp[1] * weight;
+				grad[theMotionPlan->feetPositionsParamsStartIndex + timeIndexstart * nLimbs * 3 + i * 3 + 2] += -2 * temp[2] * weight;
 			}
 
 			dFdcom += temp;
@@ -70,7 +72,6 @@ void MPO_PseudoPeriodicEECOMPoseConstraint::addHessianEntriesTo(DynamicArray<MTr
 		int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 		Matrix3x3 I; I.setIdentity();
 
-		
  		for (int s = 0; s <= 1; s++) {
 			for (int t = 0; t <= 1; t++) {
 				double sign_s = 2 * s - 1; // s or t=0   sign_s or t=-1   time start
@@ -86,7 +87,7 @@ void MPO_PseudoPeriodicEECOMPoseConstraint::addHessianEntriesTo(DynamicArray<MTr
 				for (int i = 0; i < nLimbs; i++) {
 
 					//FD asks me to do this @@...
-					if (s == 1 && t == 0) {}
+					if (s == 1 && t == 0) {} // MGSTUCK: why? or: what is s and t
 					else 
 					{
 						//dsame
@@ -101,16 +102,11 @@ void MPO_PseudoPeriodicEECOMPoseConstraint::addHessianEntriesTo(DynamicArray<MTr
 										signterm * 2 * I(j, k), weight);
 
 
-								if (j != 2 && k != 2) {
-									if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
-										uint jj = (j == 1) ? 2 : j;
-										uint kk = (k == 1) ? 2 : k;
-										ADD_HES_ELEMENT(hessianEntries,
-											theMotionPlan->feetPositionsParamsStartIndex + timeIndex_s * nLimbs * 2 + i * 2 + j,
-											theMotionPlan->feetPositionsParamsStartIndex + timeIndex_t * nLimbs * 2 + i * 2 + k,
-											signterm * 2 * I(jj, kk), weight);
-									}
-
+								if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
+									ADD_HES_ELEMENT(hessianEntries,
+										theMotionPlan->feetPositionsParamsStartIndex + timeIndex_s * nLimbs * 3 + i * 3 + j,
+										theMotionPlan->feetPositionsParamsStartIndex + timeIndex_t * nLimbs * 3 + i * 3 + k,
+										signterm * 2 * I(j, k), weight);
 								}
 							}
 						}
@@ -118,13 +114,12 @@ void MPO_PseudoPeriodicEECOMPoseConstraint::addHessianEntriesTo(DynamicArray<MTr
 										
 					//ddifferent  
 					for (uint j = 0; j < 3; j++) {
-						for (uint k = 0; k < 2; k++) {
+						for (uint k = 0; k < 3; k++) {
 							if (theMotionPlan->feetPositionsParamsStartIndex >= 0 && theMotionPlan->COMPositionsParamsStartIndex >= 0) {
-								uint kk = (k == 1) ? 2 : k;
 								ADD_HES_ELEMENT(hessianEntries,
 									theMotionPlan->COMPositionsParamsStartIndex + 3 * timeIndex_s + j,
-									theMotionPlan->feetPositionsParamsStartIndex + timeIndex_t * nLimbs * 2 + i * 2 + k,
-									-signterm * 2 * I(j, kk), weight);
+									theMotionPlan->feetPositionsParamsStartIndex + timeIndex_t * nLimbs * 3 + i * 3 + k,
+									-signterm * 2 * I(j, k), weight);
 
 								//FD asks me to comment this @@...
 								/*ADD_HES_ELEMENT(hessianEntries,
@@ -134,27 +129,9 @@ void MPO_PseudoPeriodicEECOMPoseConstraint::addHessianEntriesTo(DynamicArray<MTr
 							}
 						}
 					}
-
-
 				}
-								
-
-
-
-
-
-
-
 			}		
 		}
-		
-
-
-
-
-
-
-
 	}
 }
 

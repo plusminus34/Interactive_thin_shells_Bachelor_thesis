@@ -20,10 +20,15 @@ public:
 	DynamicArray<P3D> defaultEEPos;
 	DynamicArray<double> verticalGRFUpperBoundValues;
 	DynamicArray<double> tangentGRFBoundValues;
+	DynamicArray<double> wheelSpeed;
+	double wheelRadius = 0.1;
+	DynamicArray<double> wheelAxisAlpha;
 
 	V3D targetOffsetFromCOM;
 	RigidBody* endEffectorRB;
 	P3D endEffectorLocalCoords;
+
+	DynamicArray<double> targetEEPosY;
 
 	//this is the limb the end effector trajectory belongs to
 	GenericLimb* theLimb;
@@ -46,6 +51,8 @@ public:
 	void initialize(int nPos){
 		contactForce.resize(nPos);
 		EEPos.resize(nPos);
+		wheelSpeed.resize(nPos);
+		wheelAxisAlpha.resize(nPos);
 		defaultEEPos.resize(nPos);
 		contactFlag.resize(nPos, 0);
 		EEWeights.resize(nPos, 0.05);
@@ -65,12 +72,21 @@ public:
 	}
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
-	P3D getEEPositionAt(double t){
+	P3D getEEPositionAt(double t) const {
 		//very slow method, but easy to implement...
 		Trajectory3D traj;
 		for (uint i = 0;i<EEPos.size();i++)
 			traj.addKnot((double)i / (EEPos.size() - 1), EEPos[i]);
 		return P3D() + traj.evaluate_linear(t);
+	}
+
+	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
+	double getWheelAxisAlphaAt(double t) const {
+		//very slow method, but easy to implement...
+		Trajectory1D traj;
+		for (uint i = 0; i<wheelAxisAlpha.size(); i++)
+			traj.addKnot((double)i / (wheelAxisAlpha.size() - 1), wheelAxisAlpha[i]);
+		return traj.evaluate_linear(t);
 	}
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
@@ -347,11 +363,15 @@ public:
 	bool optimizeCOMPositions;
 	bool optimizeCOMOrientations;
 	bool optimizeEndEffectorPositions;
+	bool optimizeWheels;
 	bool optimizeBarycentricWeights;
 	bool optimizeRobotStates;
 	bool optimizeContactForces;
 
 	bool enforceGRFConstraints;
+
+	const static int nWheelParams = 1; // wheel speed
+	const static int nWheelParamsEE = 1; // wheel speed
 
 	//TODO: optimize contact flags too?!?
 
@@ -360,6 +380,7 @@ public:
 	int COMPositionsParamsStartIndex;
 	int COMOrientationsParamsStartIndex;
 	int feetPositionsParamsStartIndex;
+	int wheelParamsStartIndex;
 	int barycentricWeightsParamsStartIndex;
 	int robotStatesParamsStartIndex;
 	int contactForcesParamsStartIndex;
@@ -384,6 +405,10 @@ public:
 	double totalMass;
 	double totalInertia;
 	double frictionCoeff = -1.0;     // when frictionCoeff < 0, friction cone constraints are disabled.
+
+public:
+	int getWheelAxisAlphaIndex(int i, int j) const;
+
 public:
 	DynamicArray<LocomotionEngine_EndEffectorTrajectory> endEffectorTrajectories;
 	LocomotionEngine_COMTrajectory COMTrajectory;
@@ -396,7 +421,7 @@ public:
 
 	void updateParameterStartIndices(){
 		paramCount = 0;
-		COMPositionsParamsStartIndex = COMOrientationsParamsStartIndex = feetPositionsParamsStartIndex = barycentricWeightsParamsStartIndex = robotStatesParamsStartIndex = contactForcesParamsStartIndex = -1;
+		COMPositionsParamsStartIndex = COMOrientationsParamsStartIndex = feetPositionsParamsStartIndex = wheelParamsStartIndex = barycentricWeightsParamsStartIndex = robotStatesParamsStartIndex = contactForcesParamsStartIndex = -1;
 
 		if (optimizeCOMPositions){
 			COMPositionsParamsStartIndex = paramCount;
@@ -410,7 +435,14 @@ public:
 
 		if (optimizeEndEffectorPositions){
 			feetPositionsParamsStartIndex = paramCount;
-			paramCount += nSamplePoints * endEffectorTrajectories.size() * 2;
+			paramCount += nSamplePoints * endEffectorTrajectories.size() * 3;
+		}
+
+		if (optimizeWheels){
+			// per end effector wheel params: speed
+			wheelParamsStartIndex = paramCount;
+			paramCount += nSamplePoints * endEffectorTrajectories.size() * nWheelParams;
+			paramCount += nSamplePoints * endEffectorTrajectories.size() * nWheelParamsEE;
 		}
 
 		if (optimizeBarycentricWeights){
@@ -457,9 +489,20 @@ public:
 		if (optimizeEndEffectorPositions){
 			for (int j=0; j<nSamplePoints;j++)
 				for (uint i=0;i<endEffectorTrajectories.size();i++)
-					for (int k=0;k<2;k++){
+					for (int k=0; k<3; k++){
 						minLimits.push_back(0);
 					}
+		}
+
+		if (optimizeWheels){
+			for (int j=0; j<nSamplePoints;j++)
+				for (uint i=0;i<endEffectorTrajectories.size();i++)
+					for (int k=0; k<nWheelParams; k++){
+						minLimits.push_back(0);
+					}
+			for (int j=0; j<nSamplePoints;j++)
+				for (uint i=0;i<endEffectorTrajectories.size();i++)
+					minLimits.push_back(0);
 		}
 
 		if (optimizeBarycentricWeights){
@@ -512,11 +555,25 @@ public:
 		}
 
 		if (optimizeEndEffectorPositions){
-			for (int j=0; j<nSamplePoints;j++)
-				for (uint i=0;i<endEffectorTrajectories.size();i++)
-					for (int k=0;k<2;k++){
+			for (uint i=0;i<endEffectorTrajectories.size();i++)
+			{
+				for (int j=0; j<nSamplePoints;j++)
+					for (int k=0; k<3; k++){
 						maxLimits.push_back(0);
 					}
+				maxLimits.push_back(0);
+			}
+		}
+
+		if (optimizeWheels){
+			for (int j=0; j<nSamplePoints;j++)
+				for (uint i=0;i<endEffectorTrajectories.size();i++)
+					for (int k=0; k<nWheelParams; k++){
+						maxLimits.push_back(0);
+					}
+			for (int j=0; j<nSamplePoints;j++)
+				for (uint i=0;i<endEffectorTrajectories.size();i++)
+					maxLimits.push_back(0);
 		}
 
 		if (optimizeBarycentricWeights){
@@ -572,8 +629,19 @@ public:
 			for (int j=0; j<nSamplePoints;j++)
 				for (uint i=0;i<endEffectorTrajectories.size();i++){
 					params.push_back(endEffectorTrajectories[i].EEPos[j][0]);
+					params.push_back(endEffectorTrajectories[i].EEPos[j][1]);
 					params.push_back(endEffectorTrajectories[i].EEPos[j][2]);
 				}
+		}
+
+		if (optimizeWheels){
+			for (int j=0; j<nSamplePoints; j++)
+				for (uint i=0; i<endEffectorTrajectories.size(); i++){
+					params.push_back(endEffectorTrajectories[i].wheelSpeed[j]);
+				}
+			for (int j=0; j<nSamplePoints; j++)
+				for (uint i=0; i<endEffectorTrajectories.size(); i++)
+					params.push_back(endEffectorTrajectories[i].wheelAxisAlpha[j]);
 		}
 
 		if (optimizeBarycentricWeights){
@@ -620,9 +688,21 @@ public:
 			for (int j=0; j<nSamplePoints;j++){
 				for (uint i=0;i<endEffectorTrajectories.size();i++){
 					endEffectorTrajectories[i].EEPos[j][0] = p[pIndex++];
+					endEffectorTrajectories[i].EEPos[j][1] = p[pIndex++];
 					endEffectorTrajectories[i].EEPos[j][2] = p[pIndex++];
 				}
 			}
+		}
+
+		if (optimizeWheels){
+			for (int j=0; j<nSamplePoints;j++){
+				for (uint i=0;i<endEffectorTrajectories.size();i++){
+					endEffectorTrajectories[i].wheelSpeed[j] = p[pIndex++];
+				}
+			}
+			for (int j=0; j<nSamplePoints;j++)
+				for (uint i=0;i<endEffectorTrajectories.size();i++)
+					endEffectorTrajectories[i].wheelAxisAlpha[j] = p[pIndex++];
 		}
 
 		if (optimizeBarycentricWeights){
@@ -855,6 +935,8 @@ public:
 
 
 	P3D getCOP(int tIndex);
+
+	P3D getCenterOfRotationAt(double t, Eigen::VectorXd &error) const;
 
 	void getVelocityTimeIndicesFor(int tIndex, int& tm, int& tp, bool wrapAround = true) const;
 

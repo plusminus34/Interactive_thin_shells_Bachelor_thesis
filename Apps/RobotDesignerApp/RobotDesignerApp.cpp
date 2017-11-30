@@ -7,9 +7,32 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
+#define START_WITH_VISUAL_DESIGNER
 
+/*
+should take a look at convergence rates
+- how often is a step size of 1 taken?
+- what happens to convergence tail (value is of course not the same) as different objectives are turned off?
+- would GD do better at that point towards the end? Should the line search try to increase too?
+- is it the global regularizer that is causing problems?
+- or is it the high weights of the soft constraints?
 
-//#define START_WITH_VISUAL_DESIGNER
+*/
+
+//create a few first designs that have wheels
+//write out a flag in the rbs file, to indicate that the end effector is a wheel and that it has some radius (and later, that it is passive or active), also, its rotation axis in the local coordinate frame of the parent RB
+//have the method that draws rigid bodies change the way the wheel EE mesh is visualized and make it look like it is spinning...
+
+//need to think of rigid bodies that are not part of the state of the robot, but they have equivalents in ODE: wheels and linkages are examples of this...
+
+//want:
+// passive wheels, active wheels
+// point feet, ball feet (equivalent to an end effector wheel whose orientation is frozen to the foot)!!
+
+//add some wheels to the designer
+//add body volume via shape features stuffs
+//add other accents, like eyes and antennas
+
 
 //need a proper save/load routine: design, an entire robot, motion plan...
 
@@ -54,7 +77,10 @@ RobotDesignerApp::RobotDesignerApp(){
 
 	mainMenu->addGroup("RobotDesigner Options");
 	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
-	mainMenu->addVariable("View Mode", viewOptions, true)->setItems({ "Sim Only", "Sim+MOPT", "Sim+Design", "MOPT+iEdit"});
+	mainMenu->addVariable<RD_VIEW_OPTIONS>("View Mode",
+		[this](const RD_VIEW_OPTIONS &val) {viewOptions = val; setupWindows(); },
+		[this]() {return viewOptions;},
+		true)->setItems({ "Sim Only", "Sim+MOPT", "Sim+Design", "MOPT+iEdit" });
 
 	nanogui::Widget *tools = new nanogui::Widget(mainMenu->window());
 	mainMenu->addWidget("", tools);
@@ -94,11 +120,12 @@ RobotDesignerApp::RobotDesignerApp(){
 	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
 	
 #else
-    loadFile("../data/robotsAndMotionPlans/spotMini/robot2.rbs");
-    loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
+	loadFile("../data/robotsAndMotionPlans/spotMini/robotCar.rbs");
+	loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
 //	loadToSim();
 	loadToSim(false);
-    loadFile("../data/robotsAndMotionPlans/spotMini/trot3.p");
+//	loadFile("../data/robotsAndMotionPlans/spotMini/trot3.p");
+//	loadFile("../data/robotsAndMotionPlans/spotMini/stand.p");
 #endif
 
 	menuScreen->performLayout();
@@ -128,6 +155,8 @@ void RobotDesignerApp::setupWindows() {
 	w = (GLApplication::getMainWindowWidth()) - offset;
 	h = GLApplication::getMainWindowHeight();
 
+	iEditWindow->hideMenu();
+
 	if (viewOptions == SIM_AND_MOPT){
 		moptWindow->setViewportParameters(offset, 0, w / 2, h);
 		moptWindow->ffpViewer->setViewportParameters(offset, 0, w/2, h/4);
@@ -147,6 +176,7 @@ void RobotDesignerApp::setupWindows() {
 
 		consoleWindow->setViewportParameters(offset + w / 2, 0, w / 2, 280);
 		iEditWindow->setViewportParameters(offset + w / 2, 0, w / 2, h);
+		iEditWindow->showMenu();
 	}
 	else {
 		consoleWindow->setViewportParameters(offset, 0, w, 280);
@@ -313,7 +343,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 
 	if (fNameExt.compare("ffp") == 0) {
 		moptWindow->footFallPattern.loadFromFile(fName);
-		moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+		moptWindow->footFallPattern.writeToFile("../out/tmpFFP.ffp");
 		return;
 	}
 
@@ -321,7 +351,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		if (moptWindow->locomotionManager && moptWindow->locomotionManager->motionPlan){
 			moptWindow->locomotionManager->motionPlan->readParamsFromFile(fName);
 			moptWindow->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
-			moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+			moptWindow->footFallPattern.writeToFile("../out/tmpFFP.ffp");
 			moptWindow->syncMOPTWindowParameters();
 		}
 		return;
@@ -432,7 +462,7 @@ void RobotDesignerApp::process() {
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
 void RobotDesignerApp::drawScene() {
-	setupWindows();
+
 }
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
@@ -472,238 +502,3 @@ bool RobotDesignerApp::processCommandLine(const std::string& cmdLine) {
 	return false;
 }
 
-void RobotDesignerApp::compute_dmdp_Jacobian()
-{
-//evaluates dm/dp at (m,p). It is assumed that m corresponds to a minimum of the energy (i.e. m = arg min (E(m(p)))
-// Let g = \partial E / \partial m
-// partial g / partial p + partial g / partial m * dm/dp = dg/dp = 0
-// dm/dp = -partial g / partial m ^ -1 * partial g / partial p
-
-#ifdef USE_MATLAB
-	igl::matlab::mlinit(&matlabengine);
-	igl::matlab::mleval(&matlabengine, "desktop");
-#endif
-
-	dVector m; moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
-	m0 = m;
-	
-	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
-	p0 = Eigen::Map<dVector>(p.data(),p.size());
-
-	SparseMatrix dgdm;
-	dVector dgdpi, dmdpi;
-	MatrixNxM dgdp(m.size(), p.size());
-	dVector g_m, g_p;
-
-	resize(dgdm, m.size(), m.size());
-	resize(dmdp, m.size(), p.size());
-	resize(dgdpi, m.size());
-
-
-	DynamicArray<MTriplet> triplets;
-	moptWindow->locomotionManager->energyFunction->addHessianEntriesTo(triplets, m);
-	dgdm.setFromTriplets(triplets.begin(), triplets.end());
-
-	Eigen::SimplicialLDLT<SparseMatrix, Eigen::Lower> solver;
-	//	Eigen::SparseLU<SparseMatrix> solver;
-	solver.compute(dgdm);
-
-	double dp = 0.001;
-	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
-	for (uint i = 0; i < p.size(); i++) {
-		resize(g_m, m.size());
-		resize(g_p, m.size());
-
-		double pVal = p[i];
-		p[i] = pVal + dp;
-		prd->setParameters(p);
-		moptWindow->locomotionManager->energyFunction->addGradientTo(g_p, m);
-		p[i] = pVal - dp;
-		prd->setParameters(p);
-		moptWindow->locomotionManager->energyFunction->addGradientTo(g_m, m);
-		p[i] = pVal;
-		prd->setParameters(p);
-
-		dgdp.col(i) = (g_p - g_m) / (2 * dp);
-	}
-	dmdp = solver.solve(dgdp) * -1;
-	Eigen::JacobiSVD<MatrixNxM> svd(dmdp, Eigen::ComputeThinU | Eigen::ComputeThinV);
-	dmdp_V = svd.matrixV();
-	
-#ifdef USE_MATLAB
-	RUN_IN_MATLAB(
-		igl::matlab::mlsetmatrix(&matlabengine, "dmdp", dmdp);
-		igl::matlab::mlsetmatrix(&matlabengine, "dmdp_V", dmdp_V);
-	)
-#endif
-}
-
-void RobotDesignerApp::test_dmdp_Jacobian() {
-	dVector m; moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
-	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
-
-	//dm/dp, the analytic version. 
-	compute_dmdp_Jacobian();
-
-	//Now estimate this jacobian with finite differences...
-	MatrixNxM dmdp_FD;
-	dVector m_initial, m_m, m_p;
-	resize(dmdp_FD, m.size(), p.size());
-	double dp = 0.001;
-	moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_initial);
-	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
-	for (uint i = 0; i < p.size(); i++) {
-		resize(m_m, m.size());
-		resize(m_p, m.size());
-
-		double pVal = p[i];
-		p[i] = pVal + dp;
-		prd->setParameters(p);
-		//now we must solve this thing a loooot...
-
-		moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
-		for (int j = 0; j < 300; j++)
-			moptWindow->runMOPTStep();
-
-		moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_m);
-		p[i] = pVal - dp;
-		prd->setParameters(p);
-		moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
-		for (int j = 0; j < 300; j++)
-			moptWindow->runMOPTStep();
-		moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_p);
-
-		moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
-		p[i] = pVal;
-		prd->setParameters(p);
-
-		dmdp_FD.col(i) = (m_p - m_m) / (2 * dp);
-	}
-
-	print("../out/dmdp.m", dmdp);
-	print("../out/dmdp_FD.m", dmdp_FD);
-}
-
-void RobotDesignerApp::testOptimizeDesign() {
-	dVector m; moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
-	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
-	MatrixNxM dmdp; compute_dmdp_Jacobian();
-
-	//If we have some objective O, expressed as a function of m, then dO/dp = dO/dm * dm/dp
-	dVector dOdm;
-	dVector dOdp;
-	resize(dOdm, m.size());
-	resize(dOdp, p.size());
-
-	moptWindow->locomotionManager->energyFunction->objectives[11]->addGradientTo(dOdm, m);
-
-	dOdp = dmdp.transpose() * dOdm;
-
-	Logger::consolePrint("dOdp[0]: %lf\n", dOdp[0]);
-
-	double len = dOdp.norm();
-	if (len > 0.01)
-		dOdp = dOdp / len * 0.01;
-
-	Logger::consolePrint("p[0] before: %lf\n", p[0]);
-
-	for (uint i = 0; i < p.size(); i++)
-		p[i] -= dOdp[i];
-	Logger::consolePrint("p[0] after: %lf\n", p[0]);
-	prd->setParameters(p);
-}
-
-void RobotDesignerApp::resyncRBS() {
-	if (!robot)
-		return;
-
-	robot->fixJointConstraints();
-
-	if (designWindow)
-		designWindow->matchDesignWithRobot(robot, initialRobotState);
-
-	/*
-
-	test this - does it work by default, or must we first set motor angles to zero then reset?!?
-
-	do a "proper" parameterization with symmetry based on the initial design... body dimension as well as all limb lengths and end effectors...
-
-	when rbs gets modified:
-	- sync with design window...
-	- sync with motion plan (including end effectors... what else gets set when the motion plan is first created?!?)...
-	- sync with ODE engine (joint positions/axes, CDPs)...
-	*/
-
-
-}
-
-void RobotDesignerApp::CreateParametersDesignWindow()
-{
-	mainMenu->addWindow(Eigen::Vector2i(10, 10),"Design Parameters");
-	mainMenu->addButton("Compute Jacobian", [this]() { compute_dmdp_Jacobian(); });
-
-	mainMenu->addVariable("Update params wrt J", updateMotionBasedOnJacobian);
-	mainMenu->addVariable("Use SVD", useSVD);
-
-	using namespace nanogui;
-	DynamicArray<double> p;	prd->getCurrentSetOfParameters(p);
-
-	Widget *panel = new Widget(mainMenu->window());
-	GridLayout *layout =
-		new GridLayout(Orientation::Horizontal, 2,
-			Alignment::Middle, 15, 5);
-	layout->setColAlignment(
-	{ Alignment::Maximum, Alignment::Fill });
-	layout->setSpacing(0, 10);
-	panel->setLayout(layout);
-
-
-	auto removeTrailingZeros = [](string &&s) {return s.erase(s.find_last_not_of('0') + 1, string::npos); };
-	for (int i = 0; i < prd->getNumberOfParameters(); i++)
-	{
-		Slider *slider = new Slider(panel);
-		slider->setValue((float)p[i]);
-		slider->setRange({-0.1,0.1});
-		slider->setFixedWidth(150);
-		TextBox *textBox = new TextBox(panel);
-		textBox->setValue(removeTrailingZeros(to_string(p[i])));
-		textBox->setFixedWidth(50);
-		textBox->setEditable(true);
-		textBox->setFixedHeight(18);
-
-		slider->setCallback([&, i, textBox](float value) {
-			updateParamsAndMotion(i, value);
-			textBox->setValue(removeTrailingZeros(to_string(value)));
-		});
-		textBox->setCallback([&, i, slider](const std::string &str) {
-			updateParamsAndMotion(i, std::stod(str));
-			slider->setValue((float)std::stod(str));
-			return true;
-		});
-
-	}
-	mainMenu->addWidget("", panel);
-	menuScreen->performLayout();
-	slidervalues.resize(prd->getNumberOfParameters());
-	slidervalues.setZero();
-}
-
-void RobotDesignerApp::updateParamsAndMotion(int paramIndex, double value){
-	slidervalues(paramIndex) = value;
-	dVector p;
-	if (!useSVD){
-		prd->getCurrentSetOfParameters(p);
-		p(paramIndex) = value;
-	}
-	else{
-		p = p0 + dmdp_V*slidervalues;
-	}
-
-	prd->setParameters(p);
-	resyncRBS();
-	if (updateMotionBasedOnJacobian){
-		dVector m; moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
-		m = m0 + dmdp*dVector::Map(p.data(),p.size());
-		moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m);
-	}
-}

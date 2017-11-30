@@ -268,9 +268,9 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 				if (theMotionPlan->feetPositionsParamsStartIndex > -1)
 				{
                     V3D tmp = (V3D)(dTdE * (torque - angularAccel));
-					grad.segment<2>(theMotionPlan->feetPositionsParamsStartIndex +
-						2 * (j * theMotionPlan->endEffectorTrajectories.size() + i))
-						+= weight * Vector2d(tmp[0], tmp[2]);
+					grad.segment<3>(theMotionPlan->feetPositionsParamsStartIndex +
+						3 * (j * theMotionPlan->endEffectorTrajectories.size() + i))
+						+= weight * Vector3d(tmp[0], tmp[1], tmp[2]);
 				}
 			}
 		}
@@ -278,6 +278,7 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 
 }
 
+#if 1
 void MPO_TorqueAngularAccelObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
@@ -359,7 +360,7 @@ void MPO_TorqueAngularAccelObjective::addHessianEntriesTo(DynamicArray<MTriplet>
 	}
 
 }
-
+#endif
 void MPO_TorqueAngularAccelObjective::AngleAxisTorqueCrossHessianHelper(DynamicArray<MTriplet>& hessianEntries, int j, int jpp, int jp, int jm, int jmm, Matrix3x3& dw1, Matrix3x3& dw2, Matrix3x3& dw3, Matrix3x3& dw4, double scale)
 {
 	int startIndexjmm = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jmm;
@@ -380,7 +381,7 @@ void MPO_TorqueAngularAccelObjective::AngleAxisTorqueCrossHessianHelper(DynamicA
 
 			int startIndexF = theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i);
 			int startIndexC = theMotionPlan->COMPositionsParamsStartIndex + 3 * j;
-			int startIndexE = theMotionPlan->feetPositionsParamsStartIndex + 2 * (j * theMotionPlan->endEffectorTrajectories.size() + i);
+			int startIndexE = theMotionPlan->feetPositionsParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i);
 
 			if (theMotionPlan->contactForcesParamsStartIndex > -1)
 			{
@@ -444,27 +445,27 @@ void MPO_TorqueAngularAccelObjective::AngleAxisTorqueCrossHessianHelper(DynamicA
 				Matrix3x3 H;
 				H = -dTdE * scale * dw1.transpose();
 
-				for (int i = 0; i < 2; i++)
+				for (int i = 0; i < 3; i++)
 					for (int j = 0; j < 3; j++)
-						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjp + j, H(2 * i, j), weight);
+						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjp + j, H(i, j), weight);
 
 				H = -dTdE * scale * dw2.transpose();
 
-				for (int i = 0; i < 2; i++)
+				for (int i = 0; i < 3; i++)
 					for (int j = 0; j < 3; j++)
-						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjpp + j, H(2 * i, j), weight);
+						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjpp + j, H(i, j), weight);
 
 				H = dTdE * scale * dw3.transpose();
 
-				for (int i = 0; i < 2; i++)
+				for (int i = 0; i < 3; i++)
 					for (int j = 0; j < 3; j++)
-						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjmm + j, H(2 * i, j), weight);
+						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjmm + j, H(i, j), weight);
 
 				H = dTdE * scale * dw4.transpose();
 
-				for (int i = 0; i < 2; i++)
+				for (int i = 0; i < 3; i++)
 					for (int j = 0; j < 3; j++)
-						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjm + j, H(2 * i, j), weight);
+						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjm + j, H(i, j), weight);
 			}
 
 		}
@@ -491,7 +492,7 @@ void MPO_TorqueAngularAccelObjective::TorqueInnerHessianHelper(DynamicArray<MTri
 
 			int startIndexF = theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i);
 			int startIndexC = theMotionPlan->COMPositionsParamsStartIndex + 3 * j;
-			int startIndexE = theMotionPlan->feetPositionsParamsStartIndex + 2 * (j * theMotionPlan->endEffectorTrajectories.size() + i);
+			int startIndexE = theMotionPlan->feetPositionsParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i);
 
 			for (uint k = 0; k < theMotionPlan->endEffectorTrajectories.size(); k++)
 			{
@@ -505,7 +506,7 @@ void MPO_TorqueAngularAccelObjective::TorqueInnerHessianHelper(DynamicArray<MTri
 					Matrix3x3 t_dTdC = -t_dTdE;
 
 					int t_startIndexF = theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + k);
-					int t_startIndexE = theMotionPlan->feetPositionsParamsStartIndex + 2 * (j * theMotionPlan->endEffectorTrajectories.size() + k);
+					int t_startIndexE = theMotionPlan->feetPositionsParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + k);
 
 					if (theMotionPlan->contactForcesParamsStartIndex > -1)
 					{
@@ -529,9 +530,9 @@ void MPO_TorqueAngularAccelObjective::TorqueInnerHessianHelper(DynamicArray<MTri
 									H.row(p) = dTdF * t_dTdE.row(p).transpose();
 							}
 
-							for (int i = 0; i < 2; i++)
+							for (int i = 0; i < 3; i++)
 								for (int j = 0; j < 3; j++)
-									ADD_HES_ELEMENT(hessianEntries, t_startIndexE + i, startIndexF + j, H(i * 2, j), weight);
+									ADD_HES_ELEMENT(hessianEntries, t_startIndexE + i, startIndexF + j, H(i, j), weight);
 						}
 
 
@@ -568,9 +569,9 @@ void MPO_TorqueAngularAccelObjective::TorqueInnerHessianHelper(DynamicArray<MTri
 						{
 							H = t_dTdE * dTdC.transpose();
 
-							for (int i = 0; i < 2; i++)
+							for (int i = 0; i < 3; i++)
 								for (int j = 0; j < 3; j++)
-									ADD_HES_ELEMENT(hessianEntries, t_startIndexE + i, startIndexC + j, H(i * 2, j), weight);
+									ADD_HES_ELEMENT(hessianEntries, t_startIndexE + i, startIndexC + j, H(i, j), weight);
 						}
 
 					}
@@ -582,9 +583,9 @@ void MPO_TorqueAngularAccelObjective::TorqueInnerHessianHelper(DynamicArray<MTri
 							Matrix3x3 H;
 							H = t_dTdE * dTdE.transpose();
 
-							for (int p = 0; p < 2; p++)
-								for (int j = 0; j <= (i == k ? p : 1); j++)
-									ADD_HES_ELEMENT(hessianEntries, t_startIndexE + p, startIndexE + j, H(p * 2, j * 2), weight);
+							for (int p = 0; p < 3; p++)
+								for (int j = 0; j < (i == k ? p+1 : 3); j++) // MGSTUCK: what's happening here? `j <= ... ` correct?
+									ADD_HES_ELEMENT(hessianEntries, t_startIndexE + p, startIndexE + j, H(p, j), weight);
 						}
 					}
 				}

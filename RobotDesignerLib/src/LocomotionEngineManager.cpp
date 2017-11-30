@@ -1,6 +1,8 @@
 #include <RobotDesignerLib/LocomotionEngineManager.h>
 #include <RobotDesignerLib/MPO_PeriodicRobotStateTrajectoriesObjective.h>
 
+#include <OptimizationLib/GradientDescentFunctionMinimizer.h>
+
 LocomotionEngineManager::LocomotionEngineManager(){
 }
 
@@ -32,6 +34,7 @@ double LocomotionEngineManager::optimizeMoptionPlan(int maxIterations) {
 
 	if (useObjectivesOnly) {
 		NewtonFunctionMinimizer minimizer(maxIterations);
+//		GradientDescentFunctionMinimizer minimizer;
 		minimizer.maxLineSearchIterations = 12;
 		minimizer.printOutput = energyFunction->printDebugInfo;
 		minimizer.minimize(energyFunction, params, val);
@@ -46,6 +49,8 @@ double LocomotionEngineManager::optimizeMoptionPlan(int maxIterations) {
 	return val;
 }
 
+#include <iostream>
+
 double LocomotionEngineManager::runMOPTStep() {
 	motionPlan->syncMotionPlanWithFootFallPattern(*footFallPattern);
 
@@ -54,8 +59,8 @@ double LocomotionEngineManager::runMOPTStep() {
 		dVector params;
 		motionPlan->writeMPParametersToList(params);
 
-		energyFunction->testGradientWithFD(params);
-		energyFunction->testHessianWithFD(params);
+//		energyFunction->testGradientWithFD(params);
+//		energyFunction->testHessianWithFD(params);
 		energyFunction->testIndividualGradient(params);
 		energyFunction->testIndividualHessian(params);
 	}
@@ -90,6 +95,48 @@ double LocomotionEngineManager::runMOPTStep() {
 		}
 	}
 
+	// print wheel speeds and angles
+	{
+//		std::ofstream file ("../out/wheelSpeedAndAngle.txt");
+
+//		int nSamples = motionPlan->nSamplePoints;
+//		int nWheels = motionPlan->endEffectorTrajectories.size();
+
+//		for (int j = 0; j < nSamples; ++j) {
+
+//			Eigen::MatrixXd A(nWheels, 2);
+//			Eigen::VectorXd b(nWheels);
+
+//			int i = 0;
+//			for (const auto &ee : motionPlan->endEffectorTrajectories) {
+//				double alpha = ee.wheelAxisAlpha[j];
+//				V3D pos = ee.endEffectorRB->getWorldCoordinates(ee.endEffectorLocalCoords);
+
+//				A(i, 0) = 1;
+//				A(i, 1) = std::tan(alpha);
+//				b(i) = -pos(2) - pos(0)*tan(alpha);
+//				i++;
+//			}
+
+//			Eigen::Vector2d centerOfRotation = A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
+
+//			std::cout << "center of rotation: " << centerOfRotation.transpose() << std::endl;
+//			std::cout << "error             : " << (A*centerOfRotation - b).transpose() << std::endl;
+
+//		}
+
+
+//		int i = 0;
+//		for (const auto &ee : motionPlan->endEffectorTrajectories) {
+//			std::cout << "ee world pos: \n"
+//					  << ee.endEffectorRB->getWorldCoordinates(ee.endEffectorLocalCoords)
+//					  << std::endl;
+//			for (int j = 0; j < ee.wheelSpeed.size(); ++j) {
+//				std::cout << i << ", " << j << ": " << ee.wheelSpeed[j] << ", " << ee.wheelAxisAlpha[j] << ", " << std::endl;
+//			}
+//			i++;
+//		}
+	}
 
 	return energyVal;
 }

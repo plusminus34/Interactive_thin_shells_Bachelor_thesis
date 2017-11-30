@@ -66,6 +66,9 @@ void ObjectiveFunction::addEstimatedGradientTo(dVector& gradient, const dVector&
 }
 
 void ObjectiveFunction::testGradientWithFD(const dVector& p){
+	double tol = 1e-4;
+	double eps = 1e-10;
+
 	dVector FDGradient;
 	dVector analyticGradient;
 
@@ -78,15 +81,19 @@ void ObjectiveFunction::testGradientWithFD(const dVector& p){
     Logger::logPrint("Objective Function: testing gradients...\n");
 	Logger::print("Objective Function: testing gradients...norms: analytic: %lf, FD: %lf\n", analyticGradient.norm(), FDGradient.norm());
 	for (int i=0;i<p.size();i++){
-		double err = FDGradient[i] - analyticGradient[i];
-		if (fabs(err) > 0.0001 && 2 * fabs(err) / (fabs(FDGradient[i]) + fabs(analyticGradient[i])) > 0.001) {
-			Logger::logPrint("Mismatch element %d: Analytic val: %lf, FD val: %lf. Error: %lf\n", i, analyticGradient[i], FDGradient[i], err);
-			Logger::print("Mismatch element %d: Analytic val: %lf, FD val: %lf. Error: %lf\n", i, analyticGradient[i], FDGradient[i], err);
+		double absErr = std::abs(FDGradient[i] - analyticGradient[i]);
+		double relError = 2 * absErr / (eps + analyticGradient[i] + FDGradient[i]);
+		if (relError > tol) {
+			Logger::logPrint("Mismatch element %d: Analytic val: %lf, FD val: %lf. Error: %lf(%lf\%)\n", i, analyticGradient[i], FDGradient[i], absErr, relError*100);
+			Logger::print("Mismatch element %d: Analytic val: %lf, FD val: %lf. Error: %lf(%lf\%)\n", i, analyticGradient[i], FDGradient[i], absErr, relError*100);
 		}
 	}
 }
 
 void ObjectiveFunction::testHessianWithFD(const dVector& p){
+	double tol = 1e-4;
+	double eps = 1e-10;
+
 	SparseMatrix FDHessian(p.size(), p.size());
 	SparseMatrix analyticHessian(p.size(), p.size());
 	DynamicArray<MTriplet> hessianEntries;
@@ -100,10 +107,11 @@ void ObjectiveFunction::testHessianWithFD(const dVector& p){
 	Logger::print("Objective Function: testing hessians...\n");
 	for (int i=0;i<p.size();i++){
 		for (int j=0;j<p.size();j++){
-            double err = FDHessian.coeff(i, j) - analyticHessian.coeff(i, j);
-			if (fabs(err) > 0.001) {
-				Logger::logPrint("Mismatch element %d,%d: Analytic val: %lf, FD val: %lf. Error: %lf\n", i, j, analyticHessian.coeff(i, j), FDHessian.coeff(i, j), err);
-				Logger::print("Mismatch element %d,%d: Analytic val: %lf, FD val: %lf. Error: %lf\n", i, j, analyticHessian.coeff(i, j), FDHessian.coeff(i, j), err);
+			double absErr = std::abs(FDHessian.coeff(i, j) - analyticHessian.coeff(i, j));
+			double relError = 2 * absErr / (eps + FDHessian.coeff(i, j) + analyticHessian.coeff(i, j));
+			if (relError > tol) {
+				Logger::logPrint("Mismatch element %d,%d: Analytic val: %lf, FD val: %lf. Error: %lf(%lf\%)\n", i, j, analyticHessian.coeff(i, j), FDHessian.coeff(i, j), absErr, relError*100);
+				Logger::print("Mismatch element %d,%d: Analytic val: %lf, FD val: %lf. Error: %lf(%lf\%)\n", i, j, analyticHessian.coeff(i, j), FDHessian.coeff(i, j), absErr, relError*100);
 			}			
 		}
 	}

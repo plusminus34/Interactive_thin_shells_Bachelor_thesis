@@ -45,8 +45,9 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 
 			//compute the gradient with respect to the feet locations
 			if (theMotionPlan->feetPositionsParamsStartIndex >= 0){
-				grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0] += -err[0]*weight;
-				grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1] += -err[2]*weight;
+				grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 0] += -err[0]*weight;
+				grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1] += -err[1]*weight;
+				grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 2] += -err[2]*weight;
 			}
 
 			//and now compute the gradient with respect to the robot q's
@@ -80,8 +81,12 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 
 			//compute the gradient with respect to the feet locations
 			if (theMotionPlan->feetPositionsParamsStartIndex >= 0){
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0, 1, weight);
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1, 1, weight);
+				for (int k = 0; k < 3; ++k) {
+					ADD_HES_ELEMENT(hessianEntries,
+									theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k,
+									theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k,
+									1, weight);
+				}
 			}
 
 
@@ -112,8 +117,12 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 				//and now the mixed derivatives
 				if (theMotionPlan->feetPositionsParamsStartIndex >= 0){
 					for (int k=0;k<theMotionPlan->robotRepresentation->getDimensionCount();k++){
-						ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0, theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k, -dEndEffectordq(0, k), weight);
-						ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1, theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k, -dEndEffectordq(2, k), weight);
+						for (int dim = 0; dim < 3; ++dim) {
+							ADD_HES_ELEMENT(hessianEntries,
+											theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + dim,
+											theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k,
+											-dEndEffectordq(dim, k), weight);
+						}
 					}
 				}
 			}		

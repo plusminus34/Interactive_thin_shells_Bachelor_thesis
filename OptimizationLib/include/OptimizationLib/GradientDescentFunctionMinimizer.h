@@ -9,10 +9,6 @@ public:
 		optName = "Gradient Descent";
 	}
 
-	GradientDescentFunctionMinimizer() {
-		optName = "Gradient Descent";
-	}
-
 	virtual ~GradientDescentFunctionMinimizer() {}
 
 	// Since the gradient of a function gives the direction of steepest descent, all one needs to do is go in that direction...

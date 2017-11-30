@@ -43,14 +43,14 @@ public:
 	/**
 		This method returns the coordinates of the point that is passed in as a parameter(expressed in local coordinates), in world coordinates.
 	*/
-	inline P3D getWorldCoordinates(const P3D& localPoint){
+	inline P3D getWorldCoordinates(const P3D& localPoint) const {
 		return position + getWorldCoordinates(V3D(localPoint));
 	}
 
 	/**
 		This method returns the vector that is passed in as a parameter(expressed in local coordinates), in world coordinates.
 	*/
-	inline V3D getWorldCoordinates(const V3D& localVector){
+	inline V3D getWorldCoordinates(const V3D& localVector) const {
 		//the rigid body's orientation is a unit quaternion. Using this, we can obtain the global coordinates of a local vector
 		return orientation.rotate(localVector);
 	}

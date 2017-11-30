@@ -2,22 +2,45 @@
 
 #include <MathLib/Matrix.h>
 #include <MathLib/P3D.h>
+#include <MathLib/V3D.h>
 #include <MathLib/MathLib.h>
 
 class RBFeaturePoint {
 public:
 	P3D coords;
 	double featureSize = 0.01;
+	bool selected = false;
 	RBFeaturePoint(const P3D& p, double fSize = 0.01) {
 		coords = p;
 		featureSize = fSize;
 	}
 };
 
+enum END_EFFECTOR_TYPE {
+	EE_POINT = 0,
+	EE_ACTIVE_WHEEL,
+	EE_PASSIVE_WHEEL,
+	EE_WELDED_WHEEL
+};
+
 class RBEndEffector : public RBFeaturePoint {
 public:
 	RBEndEffector(const P3D& p, double fSize = 0.01) : RBFeaturePoint(p, fSize) {
 	}
+
+public:
+	END_EFFECTOR_TYPE eeType = EE_POINT;
+
+	bool isWheel() { return eeType != EE_POINT; }
+	bool isActiveWheel() { return eeType == EE_ACTIVE_WHEEL; }
+	bool isWeldedWheel() { return eeType == EE_WELDED_WHEEL; }
+	bool isFreeToMoveWheel() { return eeType == EE_PASSIVE_WHEEL; }
+
+	void setMode(END_EFFECTOR_TYPE eet) { this->eeType = eet; }
+
+	//if this is a wheel, we keep track of its axis of rotation, expressed in local coordinates...
+	V3D localCoordsWheelAxis;
+	//the radius is stored in feature size...
 };
 
 /*================================================================================================================*
