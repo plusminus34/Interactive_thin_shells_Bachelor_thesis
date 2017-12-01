@@ -77,6 +77,20 @@ void MOPTWindow::addMenuItems() {
 		[this](bool val) {if (locomotionManager) locomotionManager->printDebugInfo = val; },
 		[this] { if (locomotionManager) return locomotionManager->printDebugInfo; else return false; });
 	glApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "IPv1", "IPv2" });
+
+
+
+	{
+		using namespace nanogui;
+
+		Window *window = new Window(glApp->menuScreen, "Wheel Control");
+		window->setPosition(Eigen::Vector2i(300, 0));
+		window->setWidth(300);
+		window->setLayout(new GroupLayout());
+
+		energyGraph = window->add<Graph>("Energy function");
+	}
+
 /*
 	//this is the slider for the phase...
 	new nanogui::Label(glApp->mainMenu->window(), "Slider and text box", "sans-bold");
@@ -130,12 +144,15 @@ void MOPTWindow::loadRobot(Robot* robot, ReducedRobotState* startState)
 	// ******************* footfall patern *******************
 	footFallPattern = FootFallPattern();
 
-	int iMin = 0, iMax = nPoints / nLegs - 1;
-	footFallPattern.strideSamplePoints = nPoints;
-	for (int j = 0; j < nLegs; j++)
-		footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nPoints / nLegs, iMax + j*nPoints / nLegs);
+	bool createDefaultFFP = false;
+	if (createDefaultFFP){
+		int iMin = 0, iMax = nPoints / nLegs - 1;
+		footFallPattern.strideSamplePoints = nPoints;
+		for (int j = 0; j < nLegs; j++)
+			footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nPoints / nLegs, iMax + j*nPoints / nLegs);
+	}
 
-	footFallPattern.loadFromFile("..\\out\\tmpFFP.ffp");
+	footFallPattern.loadFromFile("../out/tmpFFP.ffp");
 }
 
 void MOPTWindow::syncMOPTWindowParameters() {
@@ -165,7 +182,7 @@ void MOPTWindow::syncMotionPlanParameters(){
 LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	delete locomotionManager;
 
-	footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+	footFallPattern.writeToFile("../out/tmpFFP.ffp");
 
 	/* ----------- Reset the state of the robot ------------ */
 	robot->setState(&startState);
@@ -206,6 +223,16 @@ double MOPTWindow::runMOPTStep(){
 	syncMotionPlanParameters();
 
 	double energyVal = locomotionManager->runMOPTStep();
+
+	// plot energy value
+	{
+		energyGraphValues.push_back(energyVal);
+		int start = std::max(0, (int)energyGraphValues.size()-100);
+		int size = std::min(100, (int)energyGraphValues.size());
+		Eigen::Map<Eigen::VectorXf> values(&energyGraphValues[start], size);
+		energyGraph->setValues(values);
+	}
+
 
 	return energyVal;
 }

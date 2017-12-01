@@ -5,7 +5,7 @@ double Globals::g = -9.8;
 //this is the direction of the up-vector
 V3D Globals::worldUp = V3D(0, 1, 0);
 //and the ground plane
-Plane Globals::groundPlane = Plane(P3D(0,0,0), Globals::worldUp);
+Plane Globals::groundPlane = Plane(P3D(0,-0.1,0), Globals::worldUp);
 //this is the total ellapsed sim time
 double Globals::currentSimulationTime = 0;
 

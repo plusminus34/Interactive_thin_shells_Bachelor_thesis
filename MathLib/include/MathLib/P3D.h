@@ -50,6 +50,9 @@ public:
 	//return *this - p
     V3D operator - (const P3D &p) const;
 
+	//return *this - p
+	P3D operator - (const V3D &p) const;
+
 	//*this += v
 	P3D& operator += (const V3D &v);
 

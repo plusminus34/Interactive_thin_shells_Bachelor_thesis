@@ -8,10 +8,6 @@
 
 #include <nanogui/screen.h>
 
-//#ifdef __linux__
-//#define GUI_TWO_WINDOWS
-//#endif
-
 GLApplication* glAppInstance = NULL;
 
 GLApplication::GLApplication(int x, int y, int w, int h, bool maximizeWindows){
@@ -640,7 +636,6 @@ void GLApplication::draw(){
 	}
 
 	glEnable(GL_COLOR_MATERIAL);
-
 	drawScene();
 
 	if (showMenus) {

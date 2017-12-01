@@ -212,7 +212,7 @@ void TestAppRobotMotionOptimization::loadFile(const char* fName) {
 
 	if (fNameExt.compare("ffp") == 0) {
 		moptWindow->footFallPattern.loadFromFile(fName);
-		moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+		moptWindow->footFallPattern.writeToFile("../out/tmpFFP.ffp");
 		return;
 	}
 
@@ -220,7 +220,7 @@ void TestAppRobotMotionOptimization::loadFile(const char* fName) {
 		if (locomotionManager && locomotionManager->motionPlan){
 			locomotionManager->motionPlan->readParamsFromFile(fName);
 			locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
-			moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+			moptWindow->footFallPattern.writeToFile("../out/tmpFFP.ffp");
 		}
 		return;
 	}

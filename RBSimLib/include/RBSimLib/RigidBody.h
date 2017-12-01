@@ -80,7 +80,7 @@ public:
 	/**
 		This method returns the coordinates of the point that is passed in as a parameter(expressed in local coordinates), in world coordinates.
 	*/
-	P3D getWorldCoordinates(const P3D& localPoint);
+	P3D getWorldCoordinates(const P3D& localPoint) const;
 
 	/**
 		This method is used to return the local coordinates of the point that is passed in as a parameter (expressed in global coordinates)
@@ -95,7 +95,7 @@ public:
 	/**
 		This method returns the vector that is passed in as a parameter(expressed in local coordinates), in world coordinates.
 	*/
-	V3D getWorldCoordinates(const V3D& localVector);
+	V3D getWorldCoordinates(const V3D& localVector) const;
 
 	inline std::string getName(){
 		return name;
@@ -116,7 +116,7 @@ public:
 	/**
 		This method returns the world coordinates of the position of the center of mass of the object
 	*/
-	inline P3D getCMPosition(){
+	inline P3D getCMPosition() const {
 		return state.position;
 	}
 

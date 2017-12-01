@@ -289,38 +289,6 @@ void V3D::zero() {
 	at(0) = at(1) = at(2) = 0;
 }
 
-
-V3D rotateVec(const V3D& v, double alpha, const V3D &axis) {
-	assert(IS_EQUAL(axis.length2(), 1));
-	double xP = axis.at(0);
-	double yP = axis.at(1);
-	double zP = axis.at(2);
-	double cosa = cos(alpha);
-	double sina = sin(alpha);
-
-	double s[3][3] = {	{ 0,			-zP,		yP },
-	{ zP,			0,			-xP },
-	{ -yP,			xP,			0 } };
-	double UUT[3][3] = {{ xP*xP,		xP*yP,		xP*zP },
-	{ yP*xP,		yP*yP,		yP*zP },
-	{ zP*xP,		zP*yP,		zP*zP } };
-	double I[3][3] = { { 1,0,0 },{ 0,1,0 },{ 0,0,1 } };
-	double R[3][3] = { { 0,0,0 },{ 0,0,0 },{ 0,0,0 } };
-
-	for (int i = 0;i<3;i++)
-		for (int j = 0;j<3;j++)
-		R[i][j] = UUT[i][j] + cosa*(I[i][j] - UUT[i][j]) + sina*s[i][j];
-
-	//now that we finally have the transformation matrix set up, we can rotate the vector
-	V3D result;
-
-	result.at(0) = (R[0][0] * v[0] + R[0][1] * v[1] + R[0][2] * v[2]);
-	result.at(1) = (R[1][0] * v[0] + R[1][1] * v[1] + R[1][2] * v[2]);
-	result.at(2) = (R[2][0] * v[0] + R[2][1] * v[1] + R[2][2] * v[2]);
-
-	return result;
-}
-
 // Returns a (uniformly) random unit vector
 V3D getRandomUnitVector() {
 	return V3D(randNumberIn01Range(), randNumberIn01Range(), randNumberIn01Range()).unit();

@@ -53,8 +53,9 @@ void MPO_EEPoseOffsetConstraintToInitial::addGradientTo(dVector& grad, const dVe
 				}
 
 				if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
-					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 0] += 2 * diff[0] * weight;
-					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + 1] += 2 * diff[2] * weight;
+					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 0] += 2 * diff[0] * weight;
+					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1] += 2 * diff[1] * weight;
+					grad[theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 2] += 2 * diff[2] * weight;
 
 				}
 			}
@@ -79,28 +80,23 @@ void MPO_EEPoseOffsetConstraintToInitial::addHessianEntriesTo(DynamicArray<MTrip
 							theMotionPlan->COMPositionsParamsStartIndex + 3 * j + t,
 							I(s, t), weight);
 
-					if (s != 2 && t != 2) {
-						if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
-							uint ss = (s == 1) ? 2 : s;
-							uint tt = (t == 1) ? 2 : t;
+					if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
 
-							ADD_HES_ELEMENT(hessianEntries,
-								theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + s,
-								theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + t,
-								I(ss, tt), weight);
-						}
+						ADD_HES_ELEMENT(hessianEntries,
+							theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + s,
+							theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + t,
+							I(s, t), weight);
 					}
 				}
 			}
 			
 			for (uint s = 0; s < 3; s++) {
-				for (uint t = 0; t < 2; t++) {
+				for (uint t = 0; t < 3; t++) {
 					if (theMotionPlan->feetPositionsParamsStartIndex >= 0 && theMotionPlan->COMPositionsParamsStartIndex >= 0) {
-						uint tt = (t == 1) ? 2 : t;
 						ADD_HES_ELEMENT(hessianEntries,
 							theMotionPlan->COMPositionsParamsStartIndex + 3 * j + s,
-							theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + t,
-							-I(s, tt), weight);
+							theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + t,
+							-I(s, t), weight);
 
 						/*ADD_HES_ELEMENT(hessianEntries,
 							theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 2 + i * 2 + t,

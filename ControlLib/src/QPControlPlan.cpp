@@ -65,9 +65,9 @@ void QPControlPlan::initializeControlStep() {
 
 	//this explains the method implemented above -> gravitational forces (in generalized coordinates) should induce an acceleration (in generalized coordinates) that only has a non-zero component for the body (e.g. no joint angle accelerations due just to gravity).
 	dVector aTmp = M.ldlt().solve(gravitationalForces);
-	print("..\\out\\M.m", M);
-	print("..\\out\\gForce.m", gravitationalForces);
-	print("..\\out\\a.m", aTmp);
+	print("../out/M.m", M);
+	print("../out/gForce.m", gravitationalForces);
+	print("../out/a.m", aTmp);
 	exit(0);
 */
 }

@@ -11,6 +11,7 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	wrapAroundBoundaryIndex = -1;
 	optimizeCOMPositions = true;
 	optimizeEndEffectorPositions = false;
+	optimizeWheels = false;
 	optimizeBarycentricWeights = true;
 	optimizeRobotStates = true;
 	optimizeContactForces = true;
@@ -158,29 +159,25 @@ void LocomotionEngineMotionPlan::syncFootFallPatternWithMotionPlan(FootFallPatte
 }
 
 void LocomotionEngineMotionPlan::syncMotionPlanWithFootFallPattern(FootFallPattern& ffp){
-	std::vector<std::vector<double> > yPositions;
+
 	for (uint i=0;i<endEffectorTrajectories.size();i++){
-		yPositions.push_back(std::vector<double>());
+		DynamicArray<double> &targetEEPosY = endEffectorTrajectories[i].targetEEPosY;
 		GenericLimb* limb = endEffectorTrajectories[i].theLimb;
 
+		targetEEPosY.resize(nSamplePoints);
 		for (int j=0;j<nSamplePoints;j++){
-			yPositions.back().push_back(0);
-
 			if (ffp.isInSwing(limb, j)){
 				if (!ffp.isStart(limb, j) || ffp.isAlwaysInSwing(limb)){
 					double swingPhase = ffp.getSwingPhaseForTimeIndex(limb, j);
 					double heightRatio = 1 - fabs(0.5 - swingPhase) / 0.5;
 //					Logger::consolePrint("swing phase: %lf height: %lf\n", swingPhase, heightRatio);
 //					heightRatio = 1.0;
-					yPositions.back().back() = swingFootHeight * heightRatio;
+					targetEEPosY[j] = swingFootHeight * heightRatio;
 				}
 			}
 		}
 	}
-	syncMotionPlanWithFootFallPattern(ffp,yPositions);
-}
 
-void LocomotionEngineMotionPlan::syncMotionPlanWithFootFallPattern(FootFallPattern& ffp, const std::vector<std::vector<double> > &yPositions){
 	for (int j=0;j<nSamplePoints;j++){
 		int nStanceLimbs = 0;
 		double sumWeights = 0;
@@ -195,11 +192,11 @@ void LocomotionEngineMotionPlan::syncMotionPlanWithFootFallPattern(FootFallPatte
 		for (uint i=0;i<endEffectorTrajectories.size();i++){
 			GenericLimb* limb = endEffectorTrajectories[i].theLimb;
 			endEffectorTrajectories[i].contactFlag[j] = 1;
-			endEffectorTrajectories[i].EEPos[j][1] = 0;
+//			endEffectorTrajectories[i].EEPos[j][1] = 0;
 
 			if (ffp.isInSwing(limb, j)){
 				endEffectorTrajectories[i].contactFlag[j] = 0;
-				endEffectorTrajectories[i].EEPos[j][1] = yPositions[i][j];
+//				endEffectorTrajectories[i].EEPos[j][1] = yPositions[i][j];
 			}
 
 			if (ffp.isInStance(limb, j)){
@@ -288,6 +285,80 @@ P3D LocomotionEngineMotionPlan::getCOP(int tIndex) {
 		return P3D() + zmp;
 	}
 	return x;
+}
+
+P3D LocomotionEngineMotionPlan::getCenterOfRotationAt(double t, Eigen::VectorXd &error) const
+{
+	int nWheels = endEffectorTrajectories.size();
+
+	Eigen::MatrixXd A(2*nWheels, 2);
+	Eigen::VectorXd b(2*nWheels);
+
+	int i = 0;
+	for (const auto &ee : endEffectorTrajectories) {
+		double alpha = ee.getWheelAxisAlphaAt(t);
+		P3D p3 = ee.getEEPositionAt(t);
+		V3D v3 = rotateVec(V3D(1,0,0), alpha, V3D(0,1,0));
+
+		Eigen::Vector2d p(p3(0), p3(2));
+		Eigen::Vector2d v(v3(0), v3(2));
+
+		Matrix2x2 vvt = v*v.transpose();
+
+		A(2*i+0, 0) = 1 - vvt(0,0);
+		A(2*i+0, 1) = 0 - vvt(0,1);
+		A(2*i+1, 0) = 0 - vvt(1,0);
+		A(2*i+1, 1) = 1 - vvt(1,1);
+
+		Eigen::Vector2d bb = (Matrix2x2::Identity() - vvt)*p;
+		b(2*i+0) = bb(0);
+		b(2*i+1) = bb(1);
+
+		i++;
+	}
+
+	Eigen::Vector2d centerOfRotation = A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
+	error = (A*centerOfRotation - b).transpose();
+
+	P3D centerOfRotation3d(centerOfRotation(0), 0, centerOfRotation(1));
+
+
+//	Eigen::MatrixXd A(nWheels, 2);
+//	Eigen::VectorXd b(nWheels);
+
+//	int i = 0;
+//	for (const auto &ee : endEffectorTrajectories) {
+//		double alpha = ee.getWheelAxisAlphaAt(t);
+//		P3D pos = ee.getEEPositionAt(t);
+
+//		A(i, 0) = 1;
+//		A(i, 1) = std::tan(alpha);
+//		b(i) = pos(2) + pos(0)*tan(alpha);
+//		i++;
+//	}
+
+//	Eigen::Vector2d centerOfRotation = A.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(b);
+//	error = (A*centerOfRotation - b).transpose();
+
+//	P3D centerOfRotation3d(centerOfRotation(1), 0, centerOfRotation(0));
+
+//	int ii=0;
+//	for (const auto &ee : endEffectorTrajectories) {
+//		double alpha = ee.getWheelAxisAlphaAt(t);
+//		P3D pos = ee.getEEPositionAt(t);
+
+//		V3D axis = ee.endEffectorRB->getWorldCoordinates(V3D(1,0,0));
+
+//		V3D a = centerOfRotation3d - pos;
+//		a(1) = 0;
+//		double angle = std::acos((a).dot(axis) / (axis.norm() * a.norm()));
+//		std::cout << ii << ": " << alpha / M_PI * 180 - angle / M_PI * 180 << std::endl;
+
+//		ii++;
+//	}
+
+
+	return centerOfRotation3d;
 }
 
 void LocomotionEngineMotionPlan::getVelocityTimeIndicesFor(int tIndex, int &tm, int &tp, bool wrapAround) const {
@@ -555,6 +626,58 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 		//-------------------------------------
 
 		robot->setState(&oldState);	
+
+		// draw wheels at end effectors
+		{
+			glColor4d(0.6, 0.6, 0.6, 0.8);
+			double width = 0.02;
+			for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
+				double alpha = endEffectorTrajectories[i].getWheelAxisAlphaAt(f);
+				double radius = endEffectorTrajectories[i].wheelRadius;
+				V3D axis = rotateVec(Vector3d(1, 0, 0), alpha, Vector3d(0, 1, 0));
+				drawCylinder(endEffectorTrajectories[i].getEEPositionAt(f) - axis*0.5*width, axis*width, radius, 24);
+			}
+		}
+
+		// draw center of rotation
+		{
+			glLineWidth(5);
+			Eigen::VectorXd error;
+			P3D COR = getCenterOfRotationAt(f, error);
+
+			glColor4d(0.3, 0.3, 0.3, 0.5);
+			for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
+				P3D wheelCenter = endEffectorTrajectories[i].getEEPositionAt(f);
+				glBegin(GL_LINES);
+					gl_Vertex3d(COR);
+					gl_Vertex3d(wheelCenter);
+				glEnd();
+
+			}
+
+			glColor4d(1.0, 0., 0., 1.0);
+			glBegin(GL_LINES);
+				gl_Vertex3d(COR);
+				gl_Vertex3d(COR + V3D(0, error.norm(), 0));
+			glEnd();
+
+			glColor4d(0.0, 0.0, 1.0, 0.5);
+			for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
+				P3D wheelCenter = endEffectorTrajectories[i].getEEPositionAt(f);
+				double angle = endEffectorTrajectories[i].getWheelAxisAlphaAt(f);
+				V3D v = rotateVec(V3D(1,0,0), angle, V3D(0,1,0));
+//				V3D vWorld = endEffectorTrajectories[i].endEffectorRB->getWorldCoordinates(v);
+
+				P3D a = wheelCenter + v*10;
+				P3D b = wheelCenter - v*10;
+
+				glBegin(GL_LINES);
+					gl_Vertex3d(a);
+					gl_Vertex3d(b);
+				glEnd();
+
+			}
+		}
 	}
 
 	glEnable(GL_LIGHTING);
@@ -731,4 +854,9 @@ void LocomotionEngineMotionPlan::drawMotionPlan2(double f, int animationCycle, b
 
 		robot->setState(&oldState);
 	}
+}
+
+int LocomotionEngineMotionPlan::getWheelAxisAlphaIndex(int i, int j) const
+{
+	return wheelParamsStartIndex + (nSamplePoints+j)*endEffectorTrajectories.size()*nWheelParams + i;
 }
