@@ -27,7 +27,7 @@
 
 
 
-#define START_WITH_VISUAL_DESIGNER
+//#define START_WITH_VISUAL_DESIGNER
 
 
 class IntelligentRobotEditingWindow;

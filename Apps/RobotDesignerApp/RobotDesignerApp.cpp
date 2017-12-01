@@ -18,6 +18,10 @@ should take a look at convergence rates
 - start and end on a different motion plan? What happens then when the design changes? Impose constraints only on the start and end states (joint angles only)?
 */
 
+//fixed vs active vs passive wheels vs point feet
+//mechanical coupling via linkages
+//proper friction cones
+
 
 //create a few first designs that have wheels
 //write out a flag in the rbs file, to indicate that the end effector is a wheel and that it has some radius (and later, that it is passive or active), also, its rotation axis in the local coordinate frame of the parent RB
@@ -124,7 +128,7 @@ RobotDesignerApp::RobotDesignerApp(){
     loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
 //	loadToSim();
 	loadToSim(false);
-    loadFile("../data/robotsAndMotionPlans/spotMini/trot3.p");
+    loadFile("../data/robotsAndMotionPlans/spotMini/trot4.p");
 #endif
 
 	menuScreen->performLayout();
