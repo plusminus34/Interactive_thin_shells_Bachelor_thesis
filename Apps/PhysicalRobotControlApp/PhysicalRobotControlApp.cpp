@@ -6,6 +6,7 @@
 #include <MathLib/MathLib.h>
 #include <RBSimLib/ODERBEngine.h>
 #include <ControlLib/SimpleLimb.h>
+#include "PololuServoControlInterface.h"
 
 PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	setWindowTitle("Physical Robot Control");
@@ -13,14 +14,34 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	loadFile("../data/rbs/robotArm1DOF.rbs");
 
 	showMesh = false;
+	showRotationAxes = true;
 
 	mainMenu->addGroup("IK App Visualization options");
 
 	mainMenu->addVariable("Draw Meshes", showMesh);
-	mainMenu->addVariable("Draw MOIs", showMOI);
-	mainMenu->addVariable("Draw CDPs", showCDPs);
 	mainMenu->addVariable("Draw Joints", showRotationAxes);
-//	mainMenu->addVariable("Draw SkeletonView", drawSkeletonView);
+
+	mainMenu->addGroup("Motor Controller");
+
+	nanogui::Widget *tools = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", tools);
+	tools->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+
+	nanogui::Button* button = new nanogui::Button(tools, "");
+	button->setCallback([this]() { if (rci && rci->isConnected()) rci->openCommunicationPort(); else if (rci) rci->closeCommunicationPort(); });
+	button->setIcon(ENTYPO_ICON_CYCLE);
+	button->setTooltip("Connect/Disconnect");
+
+	button = new nanogui::Button(tools, "");
+	button->setCallback([this]() { if (rci && rci->isConnected()) rci->toggleMotorPower(); });
+	button->setIcon(ENTYPO_ICON_POWER_PLUG);
+	button->setTooltip("Motors on/off");
+
+	button = new nanogui::Button(tools, "");
+	button->setCallback([this]() { if (rci && rci->isConnected()) rci->driveMotorPositionsToZero(); });
+	button->setIcon(ENTYPO_ICON_HOME);
+	button->setTooltip("GoToZero");
 
 	menuScreen->performLayout();
 
@@ -41,10 +62,8 @@ void PhysicalRobotControlApp::loadRobot(const char* fName) {
 	delete ikSolver;
 	ikSolver = new IK_Solver(robot, true);
 
-//	poseSolver = new IKPoseSolver(robot);
-//	poseSolver->setTargetLimb(targetLimb);
-
-	//controller = new IKPoseSolver(robot, motionPlan);
+	delete rci;
+	rci = new PololuServoControlInterface(robot);
 }
 
 void PhysicalRobotControlApp::loadFile(const char* fName) {
@@ -81,6 +100,9 @@ void PhysicalRobotControlApp::process() {
 	ikSolver->ikEnergyFunction->regularizer = 100;
 	ikSolver->ikOptimizer->checkDerivatives = true;
 	ikSolver->solve();
+
+	if (rci)
+		rci->syncPhysicalRobotWithSimRobot();
 }
 
 //triggered when mouse moves
@@ -188,7 +210,14 @@ void PhysicalRobotControlApp::drawScene() {
 
 	glEnable(GL_LIGHTING);
 	glPushMatrix();
+
 	rbEngine->drawRBs(flags);
+
+	ReducedRobotState rs(robot);
+	if (rci) rci->syncSimRobotWithPhysicalRobot();
+	glTranslated(0.2, 0, 0);
+	rbEngine->drawRBs(flags);
+	robot->setState(&rs);
 
 	glPopMatrix();
 	glDisable(GL_LIGHTING);

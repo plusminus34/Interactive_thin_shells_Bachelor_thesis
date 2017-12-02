@@ -18,8 +18,10 @@ using namespace	std;
 * Robot Design and Simulation interface
 */
 class RobotControlInterface{
-private:
+protected:
 	Robot* robot = NULL;
+	bool connected = false;
+	bool motorsOn = false;
 
 public:
 
@@ -64,17 +66,10 @@ public:
 		setSimRobotStateFromCurrentMotorValues();
 	}
 
-	//motors may be assembled in a different way than how they are modeled, so account for that...
-	void flipMotorTargetsIfNeeded() {
-		for (int i = 0; i < robot->getJointCount(); i++) {
-			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-			if (!hj) continue;
-			if (hj->motorProperties.flipMotorAxis) {
-				hj->motorProperties.targetMotorAngle *= -1;
-				hj->motorProperties.targetMotorVelocity *= -1;
-				hj->motorProperties.targetMotorAcceleration *= -1;
-			}
-		}
+	//the time window dt estimates the amount of time before the next command is issued (or, alternatively, how long we'd expect the physical robot to take before it can match the target values)
+	virtual void syncPhysicalRobotWithSimRobot(double dt = 0.1) {
+		setTargetMotorValuesFromSimRobotState();
+		sendControlInputsToPhysicalRobot();
 	}
 
 	//set motor goals from target values
@@ -88,6 +83,16 @@ public:
 	virtual void closeCommunicationPort() = 0;
 	virtual void driveMotorPositionsToZero() = 0;
 
-	virtual void deactivateMotors() = 0;
+	void toggleMotorPower() {
+		motorsOn = !motorsOn;
+	}
+
+	bool motorsHavePower() {
+		return motorsOn;
+	}
+
+	bool isConnected() {
+		return connected;
+	}
 
 };

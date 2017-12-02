@@ -14,19 +14,23 @@
 #include <termios.h>
 #endif
 
+//the assumption here is that the max range of pwm signals gets mapped to the max range of angles... should be easy-ish to check if i have a servomotor with 180deg range and another with 90...
+//should also implement functionality that sends out all the signals at once...
+//should also implement nicely the method that computes speed limits based on current angle and target angle and dt...
+
 unsigned short getMaestroSignalFromAngle(double angle, double angleRange, double pwmWidthAtZero, double pwmRange) {
 	boundToRange(angle, -angleRange, angleRange);
 	//maestro units are measured in 0.25microseconds increments, hence the factor of 4
-	return (pwmWidthAtZero + angle / angleRange * pwmRange) * 4;
+	return (unsigned short)((pwmWidthAtZero + angle / angleRange * pwmRange) * 4);
 }
 
 //a value of 40 corresponds to a speed limit of pwm=1000microseconds/s which corresponds to 90deg/s (if pwmRange is 500 and angle range is 45).
 unsigned short getMaestroSignalFromAngularSpeed(double speed, double angleRange, double pwmRange) {
 	//maestro units are measured in 0.25microseconds/10ms increments, hence the factor of 4 / 100
 
-	//TODO: units do change if the refreshRate us not 50Hz!
+	//NOTE: units do change if the refreshRate us not 50Hz! (https://www.pololu.com/docs/0J40/4.b)
 
-	return speed / angleRange * pwmRange * 4 / 100;
+	return (unsigned short)(speed / angleRange * pwmRange * 4 / 100);
 }
 
 double getAngleFromMaestroSignal(unsigned short ms, double angleRange, double pwmWidthAtZero, double pwmRange) {
@@ -36,9 +40,11 @@ double getAngleFromMaestroSignal(unsigned short ms, double angleRange, double pw
 	return (pwm - pwmWidthAtZero) / pwmRange * angleRange;
 }
 
+
 // Gets the position of a Maestro channel.
 // See the "Serial Servo Commands" section of the user's guide.
-int maestroGetPosition(int fd, unsigned char channel){
+int PololuServoControlInterface::maestroGetPosition(unsigned char channel){
+	if (!connected) return 0;
 	unsigned char command[] = { 0x90, channel };
 	if (write(fd, command, sizeof(command)) == -1)
 	{
@@ -60,8 +66,11 @@ int maestroGetPosition(int fd, unsigned char channel){
 // Sets the target of a Maestro channel.
 // See the "Serial Servo Commands" section of the user's guide.
 // The units of 'target' are quarter-microseconds. If 0, the motor will no longer receive pulses
-int maestroSetTargetPosition(int fd, unsigned char channel, unsigned short target) {
-	unsigned char command[] = { 0x84, channel, target & 0x7F, target >> 7 & 0x7F };
+int PololuServoControlInterface::maestroSetTargetPosition(unsigned char channel, unsigned short target) {
+	if (!connected) return 0;
+	if (motorsOn == false)
+		target = 0;
+	unsigned char command[] = {0x84, channel, (unsigned short)(target & 0x7F), (unsigned short)(target >> 7 & 0x7F)};
 	if (write(fd, command, sizeof(command)) == -1)
 	{
 		Logger::consolePrint("error writing target position\n");
@@ -73,8 +82,11 @@ int maestroSetTargetPosition(int fd, unsigned char channel, unsigned short targe
 // Sets the velocity limit of a Maestro channel.
 // See the "Serial Servo Commands" section of the user's guide.
 // The units of 'target' are (0.25 micros)/(10 ms). If 0, the motor will have no speed limit
-int maestroSetTargetSpeed(int fd, unsigned char channel, unsigned short target) {
-	unsigned char command[] = { 0x87, channel, target & 0x7F, target >> 7 & 0x7F };
+int PololuServoControlInterface::maestroSetTargetSpeed(unsigned char channel, unsigned short target) {
+	if (!connected) return 0;
+	if (motorsOn == false)
+		target = 0;
+	unsigned char command[] = { 0x87, channel, (unsigned short) (target & 0x7F), (unsigned short)(target >> 7 & 0x7F) };
 	if (write(fd, command, sizeof(command)) == -1) {
 		Logger::consolePrint("error writing target velocity\n");
 		return -1;
@@ -82,37 +94,73 @@ int maestroSetTargetSpeed(int fd, unsigned char channel, unsigned short target) 
 	return 0;
 }
 
+bool PololuServoControlInterface::servosAreMoving() {
+	if (!connected) return 0;
+	unsigned char command[] = { 0x93 };
+	if (write(fd, command, sizeof(command)) == -1)
+	{
+		perror("error writing");
+		return false;
+	}
+
+	unsigned char response[1];
+	if (read(fd, response, 1) != 1)
+	{
+		perror("error reading");
+		return false;
+	}
+	return response != 0x00;
+}
+
 double PololuServoControlInterface::getServomotorAngle(int motorID) {
-	return getAngleFromMaestroSignal(maestroGetPosition(fd, (unsigned char)motorID), angleRange, pwmWidthAtZero, pwmRange);
+	return getAngleFromMaestroSignal(maestroGetPosition((unsigned char)motorID), angleRange, pwmWidthAtZero, pwmRange);
 }
 
 void PololuServoControlInterface::setServomotorAngle(int motorID, double val) {
-	maestroSetTargetPosition(fd, (unsigned char)motorID, getMaestroSignalFromAngle(val, angleRange, pwmWidthAtZero, pwmRange));
+	maestroSetTargetPosition((unsigned char)motorID, getMaestroSignalFromAngle(val, angleRange, pwmWidthAtZero, pwmRange));
 }
 
 //val is specified in rad/s
 void PololuServoControlInterface::setServomotorMaxSpeed(int motorID, double val) {
-	maestroSetTargetPosition(fd, (unsigned char)motorID, getMaestroSignalFromAngularSpeed(val, angleRange, pwmRange));
+	maestroSetTargetPosition((unsigned char)motorID, getMaestroSignalFromAngularSpeed(val, angleRange, pwmRange));
 }
 
 //set motor goals from target values
 void PololuServoControlInterface::sendControlInputsToPhysicalRobot() {
-	
+	for (int i = 0; i < robot->getJointCount(); i++) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
+		if (hj->motorProperties.flipMotorAxis) {
+			hj->motorProperties.targetMotorAngle *= -1;
+		}
+		setServomotorAngle(hj->motorProperties.motorID, hj->motorProperties.targetMotorAngle);
+	}
+
+	//TODO: should implement here the option of sending all position commands at once...
+	//TODO: somewhere we should be computing speed limits...
 }
 
 //read motor positions
 void PololuServoControlInterface::readPhysicalRobotMotorPositions() {
+	for (int i = 0; i < robot->getJointCount(); i++) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
 
+		hj->motorProperties.currentMotorAngle = getServomotorAngle(hj->motorProperties.motorID);
+
+		if (hj->motorProperties.flipMotorAxis)
+			hj->motorProperties.currentMotorAngle *= -1;
+	}
 }
 
 //read motor positions
 void PololuServoControlInterface::readPhysicalRobotMotorVelocities() {
-
+	//we cannot read motor velocities from the servomotors...
 }
 
 void PololuServoControlInterface::openCommunicationPort() {
 	// Open the Maestro's virtual COM port.
-	std::string portName = "\\\\.\\COM6" + comNumber;
+	std::string portName = "\\\\.\\COM" + comNumber;
 	//std::string portName = "/dev/ttyACM0";  // Linux
 	//std::string portName = "/dev/cu.usbmodem00034567";  // Mac OS X
 
@@ -121,9 +169,9 @@ void PololuServoControlInterface::openCommunicationPort() {
 		Logger::consolePrint("Could not open port COM%d\n", comNumber);
 		return;
 	}
-	else {
-		Logger::consolePrint("Port COM%d opened successfuly\n", comNumber);
-	}
+
+	Logger::consolePrint("Port COM%d opened successfuly\n", comNumber);
+	connected = true;
 
 #ifdef _WIN32
 	_setmode(fd, _O_BINARY);
@@ -135,17 +183,56 @@ void PololuServoControlInterface::openCommunicationPort() {
 	options.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
 	tcsetattr(fd, TCSANOW, &options);
 #endif
+	motorsOn = true;
+	toggleMotorPower();
 }
 
 void PololuServoControlInterface::closeCommunicationPort() {
+	if (!connected) return;
 	close(fd);
+	connected = false;
 }
 
 void PololuServoControlInterface::driveMotorPositionsToZero() {
+	motorsOn = true;
+	toggleMotorPower();
+
+	for (int i = 0; i < robot->getJointCount(); i++) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
+		hj->motorProperties.targetMotorAngle = 0;
+		maestroSetTargetSpeed(hj->motorProperties.motorID, 4);//make sure the motors all go to zero slowly...
+	}
+	sendControlInputsToPhysicalRobot();
+
+	while (servosAreMoving());
+
+	for (int i = 0; i < robot->getJointCount(); i++) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
+		maestroSetTargetSpeed(hj->motorProperties.motorID, 0);//remove the speed limits...
+	}
+	toggleMotorPower();
 
 }
 
-void PololuServoControlInterface::deactivateMotors() {
-
+void PololuServoControlInterface::toggleMotorPower() {
+	motorsOn = !motorsOn;
+	if (motorsOn == false) {
+		for (int i = 0; i < robot->getJointCount(); i++) {
+			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+			if (!hj) continue;
+			maestroSetTargetPosition(hj->motorProperties.motorID, 0);
+		}
+	}
+	else {
+		readPhysicalRobotMotorPositions();
+		for (int i = 0; i < robot->getJointCount(); i++) {
+			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+			if (!hj) continue;
+			hj->motorProperties.targetMotorAngle = hj->motorProperties.currentMotorAngle;
+		}
+		sendControlInputsToPhysicalRobot();
+	}
 }
 

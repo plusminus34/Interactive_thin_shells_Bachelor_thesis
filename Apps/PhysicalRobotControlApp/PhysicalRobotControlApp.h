@@ -10,7 +10,7 @@
 #include <GUILib/GLWindow3DWithMesh.h>
 #include <GUILib/GLWindowContainer.h>
 #include <ControlLib/IK_Solver.h>
-
+#include "RobotControlInterface.h"
 
 using namespace	std;
 
@@ -36,6 +36,7 @@ private:
 	P3D targetPoint;	//in world coordinates
 
 	IK_Solver* ikSolver = NULL;
+	RobotControlInterface* rci = NULL;
 
 public:
 

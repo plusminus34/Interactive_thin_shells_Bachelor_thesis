@@ -11,7 +11,6 @@ using namespace	std;
 */
 class PololuServoControlInterface : public RobotControlInterface{
 private:
-	Robot* robot = NULL;
 
 	int comNumber = 6;
 	int fd = -1;
@@ -31,25 +30,29 @@ private:
 	void setServomotorAngle(int motorID, double val);
 	void setServomotorMaxSpeed(int motorID, double val);
 
+	bool servosAreMoving();
+	int maestroGetPosition(unsigned char channel);
+	int maestroSetTargetPosition(unsigned char channel, unsigned short target);
+	int maestroSetTargetSpeed(unsigned char channel, unsigned short target);
+
+
 public:
 	// constructor
-	PololuServoControlInterface(Robot* robot) : RobotControlInterface() {}
+	PololuServoControlInterface(Robot* robot) : RobotControlInterface(robot) {}
 
 	// destructor
 	virtual ~PololuServoControlInterface(void) {}
 
 	//set motor goals from target values
-	virtual void sendControlInputsToPhysicalRobot() = 0;
+	virtual void sendControlInputsToPhysicalRobot();
 	//read motor positions
-	virtual void readPhysicalRobotMotorPositions() = 0;
+	virtual void readPhysicalRobotMotorPositions();
 	//read motor positions
-	virtual void readPhysicalRobotMotorVelocities() = 0;
+	virtual void readPhysicalRobotMotorVelocities();
 
-	virtual void openCommunicationPort() = 0;
-	virtual void closeCommunicationPort() = 0;
-	virtual void driveMotorPositionsToZero() = 0;
-
-
-	virtual void deactivateMotors() {}
+	virtual void openCommunicationPort();
+	virtual void closeCommunicationPort();
+	virtual void driveMotorPositionsToZero();
+	void toggleMotorPower();
 
 };
