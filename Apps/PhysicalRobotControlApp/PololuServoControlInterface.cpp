@@ -44,7 +44,7 @@ double getAngleFromMaestroSignal(unsigned short ms, double angleRange, double pw
 // Gets the position of a Maestro channel.
 // See the "Serial Servo Commands" section of the user's guide.
 int PololuServoControlInterface::maestroGetPosition(unsigned char channel){
-	if (!connected) return 0;
+	if (!connected) return (int)pwmWidthAtZero * 4;
 	unsigned char command[] = { 0x90, channel };
 	if (write(fd, command, sizeof(command)) == -1)
 	{

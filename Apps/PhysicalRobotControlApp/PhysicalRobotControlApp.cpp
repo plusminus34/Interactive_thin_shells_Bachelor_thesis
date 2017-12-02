@@ -29,7 +29,7 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 		nanogui::Alignment::Middle, 0, 4));
 
 	nanogui::Button* button = new nanogui::Button(tools, "");
-	button->setCallback([this]() { if (rci && rci->isConnected()) rci->openCommunicationPort(); else if (rci) rci->closeCommunicationPort(); });
+	button->setCallback([this]() { if (rci && rci->isConnected() == false) rci->openCommunicationPort(); else if (rci) rci->closeCommunicationPort(); });
 	button->setIcon(ENTYPO_ICON_CYCLE);
 	button->setTooltip("Connect/Disconnect");
 
