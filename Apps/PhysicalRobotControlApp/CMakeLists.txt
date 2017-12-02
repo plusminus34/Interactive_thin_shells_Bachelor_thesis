@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(IKApp)
+project(PhysicalRobotControlApp)
 
 file(GLOB sources
 		${CMAKE_CURRENT_SOURCE_DIR}/*.h

@@ -2,10 +2,10 @@
 
 #include <RBSimLib/Joint.h>
 
-class DXL_Properites {
+class MotorProperites {
 public:
 	//the id of the motor that a virtual joint corresponds to
-	int dxl_id = -1;
+	int motorID = -1;
 	//angles are stored in radians, velocities in radians/sec
 	double targetMotorAngle = 0;
 	double targetMotorVelocity = 0;
@@ -31,7 +31,7 @@ public:
 	//keep a 'default' angle... useful for applications that create a robot and its state at the same time
 	double defaultAngle = 0;
 
-	DXL_Properites dynamixelProperties;
+	MotorProperites motorProperties;
 public:
 	HingeJoint();
 	virtual ~HingeJoint(void);

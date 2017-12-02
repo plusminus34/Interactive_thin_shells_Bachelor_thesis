@@ -1,22 +1,18 @@
 #include <GUILib/GLUtils.h>
 
-#include "IKApp.h"
+#include "PhysicalRobotControlApp.h"
 #include <GUILib/GLMesh.h>
 #include <GUILib/GLContentManager.h>
 #include <MathLib/MathLib.h>
 #include <RBSimLib/ODERBEngine.h>
 #include <ControlLib/SimpleLimb.h>
 
-IKApp::IKApp() {
-	setWindowTitle("RobotIK");
+PhysicalRobotControlApp::PhysicalRobotControlApp() {
+	setWindowTitle("Physical Robot Control");
 
-//	loadFile("../data/rbs/trex.rbs");
-//	loadFile("../data/rbs/trex.rs");
+	loadFile("../data/rbs/robotArm1DOF.rbs");
 
-	loadFile("../data/rbs/bip/bip.rbs");
-
-	showMesh = true;
-
+	showMesh = false;
 
 	mainMenu->addGroup("IK App Visualization options");
 
@@ -31,7 +27,7 @@ IKApp::IKApp() {
 	showGroundPlane = false;
 }
 
-void IKApp::loadRobot(const char* fName) {
+void PhysicalRobotControlApp::loadRobot(const char* fName) {
 	delete robot;
 	delete rbEngine;
 //	delete poseSolver;
@@ -51,7 +47,7 @@ void IKApp::loadRobot(const char* fName) {
 	//controller = new IKPoseSolver(robot, motionPlan);
 }
 
-void IKApp::loadFile(const char* fName) {
+void PhysicalRobotControlApp::loadFile(const char* fName) {
 	Logger::consolePrint("Loading file \'%s\'...\n", fName);
 	std::string fileName;
 	fileName.assign(fName);
@@ -69,26 +65,26 @@ void IKApp::loadFile(const char* fName) {
 	}
 }
 
-IKApp::~IKApp(void) {
+PhysicalRobotControlApp::~PhysicalRobotControlApp(void) {
 //	delete poseSolver;
 	delete rbEngine;
 	delete robot;
 }
 
 // Restart the application.
-void IKApp::restart() {
+void PhysicalRobotControlApp::restart() {
 	loadFile("../data/rbs/bip/bip.rbs");
 }
 
 // Run the App tasks
-void IKApp::process() {
+void PhysicalRobotControlApp::process() {
 	ikSolver->ikEnergyFunction->regularizer = 100;
 	ikSolver->ikOptimizer->checkDerivatives = true;
 	ikSolver->solve();
 }
 
 //triggered when mouse moves
-bool IKApp::onMouseMoveEvent(double xPos, double yPos) {
+bool PhysicalRobotControlApp::onMouseMoveEvent(double xPos, double yPos) {
 	Ray ray = getRayFromScreenCoords(xPos, yPos);
 
 	if (robot && selectedRigidBody == NULL){
@@ -126,7 +122,7 @@ bool IKApp::onMouseMoveEvent(double xPos, double yPos) {
 }
 
 //triggered when mouse buttons are pressed
-bool IKApp::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
+bool PhysicalRobotControlApp::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
 
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 		selectedRigidBody = highlightedRigidBody;
@@ -151,30 +147,30 @@ bool IKApp::onMouseButtonEvent(int button, int action, int mods, double xPos, do
 }
 
 //triggered when using the mouse wheel
-bool IKApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
+bool PhysicalRobotControlApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	if (GLApplication::onMouseWheelScrollEvent(xOffset, yOffset)) return true;
 
 	return false;
 }
 
-bool IKApp::onKeyEvent(int key, int action, int mods) {
+bool PhysicalRobotControlApp::onKeyEvent(int key, int action, int mods) {
 
 	if (GLApplication::onKeyEvent(key, action, mods)) return true;
 
 	return false;
 }
 
-bool IKApp::onCharacterPressedEvent(int key, int mods) {
+bool PhysicalRobotControlApp::onCharacterPressedEvent(int key, int mods) {
 	if (GLApplication::onCharacterPressedEvent(key, mods)) return true;
 	return false;
 }
 
-void IKApp::saveFile(const char* fName) {
+void PhysicalRobotControlApp::saveFile(const char* fName) {
 	Logger::consolePrint("SAVE FILE: Do not know what to do with file \'%s\'\n", fName);
 }
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
-void IKApp::drawScene() {
+void PhysicalRobotControlApp::drawScene() {
 	glColor3d(1, 1, 1);
 	glDisable(GL_LIGHTING);
 
@@ -207,18 +203,18 @@ void IKApp::drawScene() {
 }
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
-void IKApp::drawAuxiliarySceneInfo() {
+void PhysicalRobotControlApp::drawAuxiliarySceneInfo() {
 
 }
 
-bool IKApp::processCommandLine(const std::string& cmdLine) {
+bool PhysicalRobotControlApp::processCommandLine(const std::string& cmdLine) {
 	if (GLApplication::processCommandLine(cmdLine)) return true;
 
 	return false;
 }
 
 
-void IKApp::setupLights() {
+void PhysicalRobotControlApp::setupLights() {
 	GLfloat bright[] = { 0.8f, 0.8f, 0.8f, 1.0f };
 	GLfloat mediumbright[] = { 0.3f, 0.3f, 0.3f, 1.0f };
 

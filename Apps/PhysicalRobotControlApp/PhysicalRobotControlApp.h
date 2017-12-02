@@ -19,7 +19,7 @@ using namespace	std;
 /**
 * Robot Design and Simulation interface
 */
-class IKApp : public GLApplication {
+class PhysicalRobotControlApp : public GLApplication {
 private:
 	Robot* robot = NULL;
 	AbstractRBEngine* rbEngine = NULL;
@@ -40,9 +40,9 @@ private:
 public:
 
 	// constructor
-	IKApp();
+	PhysicalRobotControlApp();
 	// destructor
-	virtual ~IKApp(void);
+	virtual ~PhysicalRobotControlApp(void);
 	// Run the App tasks
 	virtual void process();
 	// Restart the application.

@@ -1,9 +1,9 @@
 
-#include "IKApp.h"
+#include "PhysicalRobotControlApp.h"
 
 int main(void){
 
-	IKApp app;
+	PhysicalRobotControlApp app;
 	app.runMainLoop();
 
 	return 0;
