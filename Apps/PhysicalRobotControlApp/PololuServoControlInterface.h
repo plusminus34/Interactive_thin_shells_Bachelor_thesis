@@ -20,11 +20,13 @@ private:
 
 	//TODO these parameters are all servomotor specific, and should perhaps be set per motor rather than globally...
 
+
+	//It appears that the max range of pwm signals gets mapped to the max range of angles...
 	//range of motion (radians) is -maxAngle..maxAngle
 	double angleRange = RAD(45.0);
-	//we will be sending the motors a pwm signal, whose width is measured in microseconds...
+	double pwmRange = 500; //width of signal is measured in miscroseconds....
+	//this corresponds to the pwm signal that gets the servomotor to be at 0 (or in the very middle of its range of motion)
 	double pwmWidthAtZero = 1520;//in microseconds
-	double pwmRange = 500;
 
 	double getServomotorAngle(int motorID);
 	void setServomotorAngle(int motorID, double val);
