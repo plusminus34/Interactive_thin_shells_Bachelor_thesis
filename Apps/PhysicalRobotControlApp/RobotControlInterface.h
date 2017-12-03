@@ -38,9 +38,9 @@ public:
 			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
 			if (!hj) continue;
 			Quaternion q;
-			q.setRotationFrom(hj->motorProperties.currentMotorAngle, hj->rotationAxis);
+			q.setRotationFrom(hj->motor.currentMotorAngle, hj->rotationAxis);
 			rs.setJointRelativeOrientation(q, i);
-			rs.setJointRelativeAngVelocity(hj->rotationAxis * hj->motorProperties.currentMotorVelocity, i);
+			rs.setJointRelativeAngVelocity(hj->rotationAxis * hj->motor.currentMotorVelocity, i);
 		}
 		robot->setState(&rs);
 	}
@@ -54,8 +54,8 @@ public:
 			if (!hj) continue;
 			Quaternion q = rs.getJointRelativeOrientation(i);
 			V3D w = rs.getJointRelativeAngVelocity(i);
-			hj->motorProperties.targetMotorAngle = q.getRotationAngle(hj->rotationAxis);
-			hj->motorProperties.targetMotorVelocity = w.dot(hj->rotationAxis);
+			hj->motor.targetMotorAngle = q.getRotationAngle(hj->rotationAxis);
+			hj->motor.targetMotorVelocity = w.dot(hj->rotationAxis);
 		}
 	}
 

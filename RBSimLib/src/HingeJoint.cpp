@@ -50,11 +50,11 @@ bool HingeJoint::processInputLine(char* line) {
 		return true;
 		break;
 	case RB_MOTOR_ID:
-		sscanf(line, "%d", &motorProperties.motorID);
+		sscanf(line, "%d", &motor.motorID);
 		return true;
 		break;
 	case RB_FLIPMOTORAXISDIR:
-		motorProperties.flipMotorAxis = true;
+		motor.flipMotorAxis = true;
 		return true;
 		break;
 	case RB_MAPPING_INFO:
@@ -87,11 +87,11 @@ void HingeJoint::writeToFile(FILE* fp) {
 	fprintf(fp, "\t\t%s %lf %lf %lf\n", getRBString(RB_JOINT_ROT_AXES), rotationAxis[0], rotationAxis[1], rotationAxis[2]);
 	if (shouldUseJointLimits())
 		fprintf(fp, "\t\t%s %lf %lf\n", getRBString(RB_JOINT_LIMITS), minAngle, maxAngle);
-	if (motorProperties.flipMotorAxis) {
+	if (motor.flipMotorAxis) {
 		fprintf(fp, "\t\t%s\n", getRBString(RB_FLIPMOTORAXISDIR));
 	}
 
-	fprintf(fp, "\t\t%s %d\n", getRBString(RB_MOTOR_ID), motorProperties.motorID);
+	fprintf(fp, "\t\t%s %d\n", getRBString(RB_MOTOR_ID), motor.motorID);
 	fprintf(fp, "\t\t%s %lf\n", getRBString(RB_DEFAULT_ANGLE), defaultAngle);
 	fprintf(fp, "\t\t%s %d %d\n", getRBString(RB_MAPPING_INFO), mappingInfo.index1, mappingInfo.index2);
 	writeCommonAttributesToFile(fp);
