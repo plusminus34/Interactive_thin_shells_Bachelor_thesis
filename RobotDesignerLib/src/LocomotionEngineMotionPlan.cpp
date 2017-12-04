@@ -401,7 +401,7 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 			rho = rho.normalized() * endEffectorTrajectories[index].wheelRadius;
 
 			for (int k=0;k<nSamplingPoints;k++){
-				endEffectorTrajectories[index].EEPos[k] = eeWorldCoords + rho;
+				endEffectorTrajectories[index].EEPos[k] = eeWorldCoords;
 				endEffectorTrajectories[index].defaultEEPos[k] = endEffectorTrajectories[index].EEPos[k];
 				endEffectorTrajectories[index].contactFlag[k] = 1.0;
 			}
@@ -1135,7 +1135,9 @@ P3D LocomotionEngineMotionPlan::getCenterOfRotationAt(double t, Eigen::VectorXd 
 		V3D v3 = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(wheelAxis, yawAxis, alpha, tiltAxis, beta);
 
 		Eigen::Vector3d p = p3;
+		p[1] = 0;
 		Eigen::Vector3d v = v3;
+		v[1] = 0;
 
 		Matrix3x3 vvt = v*v.transpose();
 		Matrix3x3 tmp = Matrix3x3::Identity() - vvt;
