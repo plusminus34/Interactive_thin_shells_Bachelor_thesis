@@ -12,11 +12,12 @@ using namespace	std;
 class PololuServoControlInterface : public RobotControlInterface{
 private:
 
-	int comNumber = 6;
-	int fd = -1;
-
+//SOME OF THESE PARAMETERS MUST BE SET WITH THE POLOLU SERVOMOTOR CONTROLLER, INCLUDING THE MAESTRO’S SERIAL MODE WHICH NEEDS TO BE SET TO “USB Dual Port”
+	int comNumber = 4;
 	//this is the refresh/update frequency for the servomotors
 	int refreshRate = 50; //in Hz; 50Hz is the nominal refresh rate that most/all servomotors should work with, but some can use refresh rates of up to 333Hz
+
+	int fd = -1;
 
 	double getServomotorAngle(Motor& mp);
 	void setServomotorAngle(Motor& mp, double val);
@@ -30,7 +31,7 @@ private:
 
 public:
 	// constructor
-	PololuServoControlInterface(Robot* robot) : RobotControlInterface(robot) {}
+	PololuServoControlInterface(Robot* robot);
 
 	// destructor
 	virtual ~PololuServoControlInterface(void) {}

@@ -214,7 +214,8 @@ void PhysicalRobotControlApp::drawScene() {
 	rbEngine->drawRBs(flags);
 
 	ReducedRobotState rs(robot);
-	if (rci) rci->syncSimRobotWithPhysicalRobot();
+	if (rci) 
+		rci->syncSimRobotWithPhysicalRobot();
 	glTranslated(0.2, 0, 0);
 	rbEngine->drawRBs(flags);
 	robot->setState(&rs);

@@ -34,6 +34,7 @@ public:
 		double angleMax = getAngleForPWM(pwmMax);
 
 		boundToRange(angle, angleMin, angleMax);
+//		Logger::consolePrint("angle min: %lf angle max: %lf, angle: %lf, pwm: %lf\n", angleMin, angleMax, angle, pwmFor0Deg + angle / anglePerPWMunit());
 
 		return pwmFor0Deg + angle / anglePerPWMunit();
 	}
