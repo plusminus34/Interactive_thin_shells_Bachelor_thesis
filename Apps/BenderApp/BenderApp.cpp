@@ -28,9 +28,12 @@ BenderApp::BenderApp()
 	femMesh->addGravityForces(V3D(0, -9.8, 0));
 #else
 
-	int nRows = 20;
-	int nCols = 20;
-	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, nRows, nCols);
+	//int nRows = 20;
+	//int nCols = 20;
+	//CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, nRows, nCols);
+	int nRows = 40;
+	int nCols = 8;
+	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.05, 0.05, nRows, nCols);
 
 	femMesh = new CSTSimulationMesh2D();
 	femMesh->readMeshFromFile("../data/FEM/2d/triMeshTMP.tri2d");
@@ -69,11 +72,11 @@ bool BenderApp::onMouseMoveEvent(double xPos, double yPos) {
 		int selectedMountID = getMountId(selectedNodeID);
 		std::cout << "node belongs to mount " << selectedMountID << std::endl;
 		if (selectedMountID < 0) {
-			Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
-			P3D targetPinPos; 
-			getRayFromScreenCoords(xPos,yPos).getDistanceToPlane(plane,&targetPinPos);
-			femMesh->setPinnedNode(selectedNodeID,targetPinPos);
-			return true;
+			//Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
+			//P3D targetPinPos; 
+			//getRayFromScreenCoords(xPos,yPos).getDistanceToPlane(plane,&targetPinPos);
+			//femMesh->setPinnedNode(selectedNodeID,targetPinPos);
+			//return true;
 		}
 		else {
 			Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
@@ -94,7 +97,7 @@ bool BenderApp::onMouseButtonEvent(int button, int action, int mods, double xPos
 #ifdef EDIT_BOUNDARY_CONDITIONS
 
 	if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-		if (action == GLFW_PRESS && mods & GLFW_MOD_SHIFT) {
+		if (action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
 			femMesh->removePinnedNodeConstraints();
 			for (Mount & m : mounts) {
 				m.clear();
@@ -103,16 +106,25 @@ bool BenderApp::onMouseButtonEvent(int button, int action, int mods, double xPos
 	}
 
 	if (button == GLFW_MOUSE_BUTTON_LEFT){
-		if (action == GLFW_PRESS && mods & GLFW_MOD_SHIFT) {
-			selectedNodeID = femMesh->getSelectedNodeID(lastClickedRay);
-			if (selectedNodeID >= 0) {
+		if (action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
+			int selectedNodeID_temp = femMesh->getSelectedNodeID(lastClickedRay);
+			if (selectedNodeID_temp >= 0) {
 				if (selected_mount >= 0 && selected_mount <= 9) {
-					addMountedNode(selected_mount,selectedNodeID);
+					addMountedNode(selected_mount,selectedNodeID_temp);
 				}
 				return true;
 			}
-
 		}
+		else if (action == GLFW_PRESS && mods & GLFW_MOD_SHIFT) {
+			selectedNodeID = femMesh->getSelectedNodeID(lastClickedRay);
+			//if (selectedNodeID >= 0) {
+			//	if (selected_mount >= 0 && selected_mount <= 9) {
+			//		addMountedNode(selected_mount,selectedNodeID);
+			//	}
+			//	return true;
+			//}
+		}
+
 		else {
 			selectedNodeID = -1;
 		}
@@ -276,7 +288,7 @@ void BenderApp::restart() {
 void BenderApp::addMountedNode(int mount_id, int node_id)
 {
 	for (Mount & m : mounts) {
-		m.unassignPinnedNode(mount_id);
+		m.unassignPinnedNode(node_id);
 	}
 
 	mounts[mount_id].assignPinnedNode(node_id, femMesh->nodes[node_id]->getWorldPosition());

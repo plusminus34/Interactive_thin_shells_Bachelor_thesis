@@ -15,11 +15,16 @@ void Mount::assignPinnedNode(int id, P3D const & pos)
 {
 	node_id.push_back(id);
 	position.push_back(pos);
+	std::cout << "asigned nodes: ";
+	for (size_t i = 0; i < node_id.size(); ++i) {
+		std::cout << node_id[i] << " ";
+	}
+	std::cout << std::endl;
 }
 
 void Mount::unassignPinnedNode(int id)
 {
-	for (size_t i = 0; i < node_id.size(); ++i) {
+	for (int i = node_id.size()-1; i >= 0; --i) {
 		if (node_id[i] == id) {
 			node_id.erase(node_id.begin() + i);
 			position.erase(position.begin() + i);
