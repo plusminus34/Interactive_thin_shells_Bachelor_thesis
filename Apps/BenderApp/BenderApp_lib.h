@@ -11,8 +11,11 @@ public:
 	void clear();
 	void assignPinnedNode(int id,P3D const & pos);
 	void unassignPinnedNode(int id);
+	int getNodeIndexFromID(int id);
+	P3D getTargetPosition(int id);
+
 	void shift(V3D const & delta);
 	void rotate2D(P3D const & origin,double alpha);
-
+	
 
 };

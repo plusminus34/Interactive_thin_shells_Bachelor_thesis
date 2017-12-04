@@ -1,5 +1,6 @@
 #include "BenderApp_lib.h"
 #include "FEMSimLib/FixedPointSpring2D.h"
+#include <iostream>
 
 
 
@@ -23,6 +24,26 @@ void Mount::unassignPinnedNode(int id)
 			node_id.erase(node_id.begin() + i);
 			position.erase(position.begin() + i);
 		}
+	}
+}
+
+int Mount::getNodeIndexFromID(int id) {
+	for (size_t i = 0; i < node_id.size(); ++i) {
+		if (id == node_id[i]) {
+			return(i);
+		}
+	}
+	return(-1);
+}
+
+P3D Mount::getTargetPosition(int id) {
+	int idx = getNodeIndexFromID(id);
+	if (idx >= 0) {
+		return(position[idx]);
+	}
+	else {
+		std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << std::endl;
+		exit(1);
 	}
 }
 

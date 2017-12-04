@@ -70,7 +70,8 @@ bool BenderApp::onMouseMoveEvent(double xPos, double yPos) {
 		std::cout << "node belongs to mount " << selectedMountID << std::endl;
 		if (selectedMountID < 0) {
 			Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
-			P3D targetPinPos; getRayFromScreenCoords(xPos,yPos).getDistanceToPlane(plane,&targetPinPos);
+			P3D targetPinPos; 
+			getRayFromScreenCoords(xPos,yPos).getDistanceToPlane(plane,&targetPinPos);
 			femMesh->setPinnedNode(selectedNodeID,targetPinPos);
 			return true;
 		}
@@ -78,7 +79,7 @@ bool BenderApp::onMouseMoveEvent(double xPos, double yPos) {
 			Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
 			P3D targetPos; 
 			getRayFromScreenCoords(xPos,yPos).getDistanceToPlane(plane,&targetPos);
-			V3D delta = targetPos - femMesh->nodes[selectedNodeID]->getWorldPosition();
+			V3D delta = targetPos - mounts[selectedMountID].getTargetPosition(selectedNodeID);
 			mounts[selectedMountID].shift(delta);
 			updateMountEnergy();
 			return true;
