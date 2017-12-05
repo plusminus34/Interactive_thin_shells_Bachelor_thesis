@@ -29,6 +29,11 @@ private:
 	bool showRotationAxes = false;
 	bool showCDPs = false;
 
+	bool playFFTrajectory = true;
+	double trajPhase = 0.0;
+	double trajDuration = 1.0;
+
+
 
 	RigidBody* selectedRigidBody = NULL;
 	RigidBody* highlightedRigidBody = NULL;
@@ -37,6 +42,8 @@ private:
 
 	IK_Solver* ikSolver = NULL;
 	RobotControlInterface* rci = NULL;
+
+	Trajectory1D FFTrajectory;
 
 public:
 

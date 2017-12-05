@@ -22,8 +22,6 @@ BK DS-3002HV: minPWM: 910, maxPWM: 2090
 //should also implement nicely the method that computes speed limits based on current angle and target angle and dt...
 //do the numbers below depend on the control frequency?!?
 
-//make motors on/off be much simpler, just ignore the send commands...
-
 unsigned short getMaestroSignalFromAngle(double angle, Motor& mp) {
 	//maestro units are measured in 0.25microseconds increments, hence the factor of 4
 	return (unsigned short)(mp.getPWMForAngle(angle) * 4);

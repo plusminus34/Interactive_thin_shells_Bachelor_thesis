@@ -43,9 +43,22 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	button->setIcon(ENTYPO_ICON_HOME);
 	button->setTooltip("GoToZero");
 
+
+	mainMenu->addVariable("Follow Trajectory", playFFTrajectory);
+	mainMenu->addVariable("duration", trajDuration);
+
 	menuScreen->performLayout();
 
 	showGroundPlane = false;
+
+
+	int nPts = 10;
+	for (int i = 0; i < nPts; i++) {
+		double t = (double)i / (nPts - 1);
+		FFTrajectory.addKnot(t, sin(2 * M_PI * t) * RAD(45));
+	}
+	FFTrajectory.addKnot(1, 0);
+
 }
 
 void PhysicalRobotControlApp::loadRobot(const char* fName) {
@@ -97,9 +110,31 @@ void PhysicalRobotControlApp::restart() {
 
 // Run the App tasks
 void PhysicalRobotControlApp::process() {
-	ikSolver->ikEnergyFunction->regularizer = 100;
-	ikSolver->ikOptimizer->checkDerivatives = true;
-	ikSolver->solve();
+	if (playFFTrajectory == false) {
+		ikSolver->ikEnergyFunction->regularizer = 100;
+		ikSolver->ikOptimizer->checkDerivatives = true;
+		ikSolver->solve();
+	}
+	else {
+		ReducedRobotState rs(robot);
+
+		double nextTrajPhase = trajPhase;
+		double dt = 1.0 / desiredFrameRate;
+		nextTrajPhase += dt / trajDuration;
+		if (nextTrajPhase > 1.0)
+			nextTrajPhase -= 1.0;
+
+		for (int i = 0; i < robot->getJointCount(); i++) {
+			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+			if (!hj) continue;
+			double angleNow = FFTrajectory.evaluate_linear(trajPhase);
+			double angleNext = FFTrajectory.evaluate_linear(nextTrajPhase);
+			rs.setJointRelativeOrientation(getRotationQuaternion(angleNext, hj->rotationAxis), hj->jIndex);
+			rs.setJointRelativeAngVelocity(hj->rotationAxis * ((angleNext - angleNow) / dt), hj->jIndex);
+		}
+		trajPhase = nextTrajPhase;
+		robot->setState(&rs);
+	}
 
 	if (rci)
 		rci->syncPhysicalRobotWithSimRobot();
