@@ -254,7 +254,7 @@ void GLApplication::setupMainMenu() {
 
 	button = new nanogui::Button(tools, "");
 	button->setFlags(nanogui::Button::ToggleButton);
-	button->setIcon(ENTYPO_ICON_CAMERA);
+	button->setIcon(ENTYPO_ICON_VIDEO_CAMERA);
 	button->setChangeCallback([this, button](bool val) {  followCameraTarget = val; });
 	button->setTooltip("Follow camera target");
 

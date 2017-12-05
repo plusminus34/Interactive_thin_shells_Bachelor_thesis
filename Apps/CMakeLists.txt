@@ -20,3 +20,6 @@ add_subdirectory(FEMSim3DApp)
 add_subdirectory(RBSimApp)
 add_subdirectory(WheeledRobotSimApp)
 add_subdirectory(RobotDesignerApp)
+add_subdirectory(PhysicalRobotControlApp)
+
+

@@ -2,10 +2,10 @@
 
 #include <RBSimLib/Joint.h>
 
-class DXL_Properites {
+class Motor {
 public:
 	//the id of the motor that a virtual joint corresponds to
-	int dxl_id = -1;
+	int motorID = -1;
 	//angles are stored in radians, velocities in radians/sec
 	double targetMotorAngle = 0;
 	double targetMotorVelocity = 0;
@@ -16,6 +16,34 @@ public:
 
 	//depending on how the robot is assembled, the axis may point in the wrong direction, relative to the simulation mode. Make this easy to fix...
 	bool flipMotorAxis = false;
+
+	//for servomotors (as opposed to say dynamixels) there needs to be a bit of calibration to know how they need to be controlled properly
+	//all this data depends on the type of servomotor used, as well as on the way in which the horn is assembled...
+	//PWM signals are measured in microseconds... the min/max values can either be found in specs or experimentally
+	double pwmMin = 1000;
+	double pwmMax = 2000;
+
+	//the numbers below depend on how the servomotor is assembled, as well as on the specs of the servomotors...
+	double pwmFor0Deg = 1500;
+	double pwmFor45Deg = 2000;
+
+	double anglePerPWMunit() { return RAD(45) / (pwmFor45Deg - pwmFor0Deg); }
+
+	double getPWMForAngle(double angle) {
+		double angleMin = getAngleForPWM(pwmMin);
+		double angleMax = getAngleForPWM(pwmMax);
+
+		boundToRange(angle, angleMin, angleMax);
+//		Logger::consolePrint("angle min: %lf angle max: %lf, angle: %lf, pwm: %lf\n", angleMin, angleMax, angle, pwmFor0Deg + angle / anglePerPWMunit());
+
+		return pwmFor0Deg + angle / anglePerPWMunit();
+	}
+
+	double getAngleForPWM(double pwm) {
+		boundToRange(pwm, pwmMin, pwmMax);
+
+		return (pwm - pwmFor0Deg) * anglePerPWMunit();
+	}
 };
 
 /*================================================================================================================================*
@@ -31,7 +59,7 @@ public:
 	//keep a 'default' angle... useful for applications that create a robot and its state at the same time
 	double defaultAngle = 0;
 
-	DXL_Properites dynamixelProperties;
+	Motor motor;
 public:
 	HingeJoint();
 	virtual ~HingeJoint(void);
