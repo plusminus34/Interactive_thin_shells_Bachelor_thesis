@@ -35,7 +35,7 @@ P3D RigidBody::getWorldCoordinates(const P3D& localPoint) const {
 /**
 	This method returns the vector that is passed in as a parameter(expressed in local coordinates), in world coordinates.
 */
-V3D RigidBody::getWorldCoordinates(const V3D& localVector){
+V3D RigidBody::getWorldCoordinates(const V3D& localVector) const {
 	return this->state.getWorldCoordinates(localVector);
 }
 

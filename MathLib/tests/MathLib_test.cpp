@@ -12,7 +12,7 @@ TEST(MathLibTest, rotateVec_test) {
 	Vector3d axis(0, 0, 1);
 
 	// rotate a around axis by alpha
-	double alpha = 90. / 180.*M_PI;
+	double alpha = 90. / 180.*PI;
 	Vector3d b = rotateVec(a, alpha, axis);
 
 	EXPECT_NEAR((b-Vector3d(0, 1, 0)).squaredNorm(), 0, 1e-8);
