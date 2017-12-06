@@ -10,8 +10,10 @@ int Logger::maxConsoleLineCount = 10;
 
 std::string Logger::ms_strLogPath = std::string("../out");
 
-std::string Logger::ms_strLogFileName = Logger::ms_strLogPath + std::string("\\log.txt");
-std::string Logger::ms_strConsoleFileName = Logger::ms_strLogPath + std::string("\\console.txt");
+std::string Logger::ms_strLogFileName = Logger::ms_strLogPath + std::string("/log.txt");
+std::string Logger::ms_strLog2FileName = Logger::ms_strLogPath + std::string("/log2.txt");
+
+std::string Logger::ms_strConsoleFileName = Logger::ms_strLogPath + std::string("/console.txt");
 
 void Logger::consolePrint(const char *fmt, ...) {
 	char *pBuffer = NULL;
@@ -43,6 +45,7 @@ void Logger::print(const char *fmt, ...){
 	Path::create(ms_strLogPath);
 
 	printf(pBuffer);
+	fflush(stdout);
 
 	RELEASE_STRING_FROM_ARGUMENT_LIST(pBuffer);
 }
@@ -63,6 +66,21 @@ void Logger::logPrint(const char *fmt, ...) {
 	RELEASE_STRING_FROM_ARGUMENT_LIST(pBuffer);
 }
 
+void Logger::log2Print(const char *fmt, ...) {
+	char *pBuffer = NULL;
+	GET_STRING_FROM_ARGUMENT_LIST(fmt, pBuffer);
+
+	Path::create(ms_strLogPath);
+
+	// printf("%s", pBuffer);
+
+	static FILE *fp = fopen(ms_strLog2FileName.c_str(), "wt");
+	fprintf(fp, "%s", pBuffer);
+	fflush(fp);
+
+
+	RELEASE_STRING_FROM_ARGUMENT_LIST(pBuffer);
+}
 
 #ifdef WIN32
 #include <windows.h>

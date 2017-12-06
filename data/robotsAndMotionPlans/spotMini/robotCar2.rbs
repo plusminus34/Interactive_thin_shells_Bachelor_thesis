@@ -142,7 +142,7 @@ RigidBody
 /End
 
 	hingeJoint
-		jointAxes 0.000000 1.000000 0.000000
+		jointAxes 1 0 0
 		dxlID -1
 		mappingInfo 0 1
 		name rb0_rb1
@@ -153,7 +153,7 @@ RigidBody
 	/Joint
 
 	hingeJoint
-		jointAxes 0.000000 1.000000 0.000000
+		jointAxes 1 0 0
 		dxlID -1
 		mappingInfo 1 1
 		name rb0_rb4
@@ -164,7 +164,7 @@ RigidBody
 	/Joint
 	
 	hingeJoint
-		jointAxes 0.000000 1.000000 0.000000
+		jointAxes 1 0 0
 		dxlID -1
 		mappingInfo 2 1
 		name rb0_rb7
@@ -175,7 +175,7 @@ RigidBody
 	/Joint	
 	
 	hingeJoint
-		jointAxes 0.000000 1.000000 0.000000
+		jointAxes 1 0 0
 		dxlID -1
 		mappingInfo 3 1
 		name rb0_rb10

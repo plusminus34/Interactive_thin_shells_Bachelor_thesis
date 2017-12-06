@@ -83,7 +83,7 @@ void ObjectiveFunction::testGradientWithFD(const dVector& p){
 	for (int i=0;i<p.size();i++){
 		double absErr = std::abs(FDGradient[i] - analyticGradient[i]);
 		double relError = 2 * absErr / (eps + analyticGradient[i] + FDGradient[i]);
-		if (relError > tol) {
+		if (relError > tol && absErr > 1e-6) {
 			Logger::logPrint("Mismatch element %d: Analytic val: %lf, FD val: %lf. Error: %lf(%lf\%)\n", i, analyticGradient[i], FDGradient[i], absErr, relError*100);
 			Logger::print("Mismatch element %d: Analytic val: %lf, FD val: %lf. Error: %lf(%lf\%)\n", i, analyticGradient[i], FDGradient[i], absErr, relError*100);
 		}
@@ -109,7 +109,7 @@ void ObjectiveFunction::testHessianWithFD(const dVector& p){
 		for (int j=0;j<p.size();j++){
 			double absErr = std::abs(FDHessian.coeff(i, j) - analyticHessian.coeff(i, j));
 			double relError = 2 * absErr / (eps + FDHessian.coeff(i, j) + analyticHessian.coeff(i, j));
-			if (relError > tol) {
+			if (relError > tol && absErr > 1e-6) {
 				Logger::logPrint("Mismatch element %d,%d: Analytic val: %lf, FD val: %lf. Error: %lf(%lf\%)\n", i, j, analyticHessian.coeff(i, j), FDHessian.coeff(i, j), absErr, relError*100);
 				Logger::print("Mismatch element %d,%d: Analytic val: %lf, FD val: %lf. Error: %lf(%lf\%)\n", i, j, analyticHessian.coeff(i, j), FDHessian.coeff(i, j), absErr, relError*100);
 			}			

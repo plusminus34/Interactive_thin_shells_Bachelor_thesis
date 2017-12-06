@@ -1,0 +1,372 @@
+RigidBody
+	name rb0
+	mass 0.696000
+	moi 0.010419 0.012527 0.003254 -0.000000 -0.000000 -0.000000
+	position 0.000000 -0.040434 -0.005507
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj
+	mesh ../out/LivingConnectorMesh0.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430-BodyBracket.obj
+	mesh ../out/BodyMesh.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj
+	mesh ../out/LivingConnectorMesh3.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430-BodyBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj
+	mesh ../out/LivingConnectorMesh6.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430-BodyBracket.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj
+	mesh ../out/LivingConnectorMesh10.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430-BodyBracket.obj
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.060838 0.040434 -0.118430
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.060839 0.022935 -0.118431
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 0.060838 -0.027866 -0.118430
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 0.060838 -0.027866 -0.118430
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.000000 0.040434 0.005507
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.060838 0.040434 -0.118430
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.060839 0.022935 -0.118431
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 -0.060838 -0.027866 -0.118430
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 -0.060838 -0.027866 -0.118430
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.061191 0.040434 0.118431
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.061191 0.022935 0.118431
+	meshTransformation 0.000000 0.720291 0.000000 0.693672 -0.061191 -0.027866 0.118431
+	meshTransformation 0.000000 0.720291 0.000000 0.693672 -0.061191 -0.027866 0.118431
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.061191 0.040434 0.118431
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.061191 0.022935 0.118431
+	meshTransformation 0.000000 0.720291 0.000000 -0.693672 0.061191 -0.027866 0.118431
+	meshTransformation 0.000000 0.720291 0.000000 -0.693672 0.061191 -0.027866 0.118431
+	mappingInfo -1 -1
+	CDP Box -0.086191 -0.052866 -0.143430 0.086191 -0.002866 0.143431
+/End
+
+
+RigidBody
+	name rb1
+	mass 0.296000
+	moi 0.000133 0.000192 0.000245 0.000051 -0.000000 -0.000000
+	position 0.081615 -0.126215 -0.123538
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/LivingBracketMesh0.obj
+	mesh ../out/LivingConnectorMesh1.obj
+	mesh ../data/robotDesigner/meshes/cube.obj
+	mesh ../out/LivingConnectorMesh2.obj
+	mesh ../out/LivingWheelEEMesh0.obj
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 -0.020777 0.057915 -0.000399
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.020777 0.021689 0.000042
+	meshTransformation 0.707106 0.707107 0.000000 0.000000 -0.020777 -0.008311 -0.000399
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.009222 -0.008311 0.000601
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 0.024223 -0.008311 -0.000399
+	endEffector 0.024223 -0.008311 -0.000399 0.050000 1 1.000000 0.000000 -0.000000
+	mappingInfo -1 -1
+	CDP Sphere 0.024223 -0.008311 -0.000399 0.050000
+/End
+
+
+RigidBody
+	name rb2
+	mass 0.296000
+	moi 0.000133 0.000192 0.000245 -0.000051 0.000000 -0.000000
+	position -0.081615 -0.126215 -0.123538
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/LivingBracketMesh1.obj
+	mesh ../out/LivingConnectorMesh4.obj
+	mesh ../data/robotDesigner/meshes/cube.obj
+	mesh ../out/LivingConnectorMesh5.obj
+	mesh ../out/LivingWheelEEMesh1.obj
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 0.020777 0.057915 -0.000399
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.020777 0.021689 0.000042
+	meshTransformation 0.707106 0.707107 0.000000 0.000000 0.020777 -0.008311 -0.000399
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.009222 -0.008311 0.000601
+	meshTransformation 0.500000 -0.500000 -0.500000 -0.500000 -0.024223 -0.008311 -0.000399
+	endEffector -0.024223 -0.008311 -0.000399 0.050000 1 -1.000000 0.000000 -0.000000
+	mappingInfo -1 -1
+	CDP Sphere -0.024223 -0.008311 -0.000399 0.050000
+/End
+
+
+RigidBody
+	name rb3
+	mass 0.296000
+	moi 0.000133 0.000410 0.000464 -0.000076 -0.000000 -0.000000
+	position -0.091886 -0.126215 0.112924
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/LivingBracketMesh2.obj
+	mesh ../out/LivingConnectorMesh7.obj
+	mesh ../data/robotDesigner/meshes/cube.obj
+	mesh ../out/LivingConnectorMesh8.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430-BodyBracket.obj
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation 0.000000 0.720291 0.000000 0.693672 0.030695 0.057915 -0.000000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.030695 0.021689 0.000000
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 0.030695 -0.008311 -0.000000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.000695 -0.008311 -0.000000
+	meshTransformation -0.000000 0.707107 -0.707107 0.000000 -0.050105 -0.008311 -0.000000
+	meshTransformation -0.000000 0.707107 -0.707107 0.000000 -0.050105 -0.008311 -0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb4
+	mass 0.164000
+	moi 0.000040 0.000049 0.000049 -0.000000 -0.000000 -0.000000
+	position -0.185716 -0.134526 0.112925
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/LivingBracketMesh3.obj
+	mesh ../out/LivingConnectorMesh9.obj
+	mesh ../out/LivingWheelEEMesh2.obj
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshTransformation -0.000000 0.707107 -0.707107 0.000000 0.043725 -0.000000 -0.000001
+	meshTransformation 1.000000 0.000000 0.000000 -0.000000 0.007500 0.000000 0.000001
+	meshTransformation 0.707106 0.000000 -0.000000 -0.707107 -0.007500 -0.000000 -0.000001
+	endEffector -0.007500 -0.000000 -0.000001 0.050000 1 -1.000000 0.000001 -0.000000
+	mappingInfo -1 -1
+	CDP Sphere -0.007500 -0.000000 -0.000001 0.050000
+/End
+
+
+RigidBody
+	name rb5
+	mass 0.214000
+	moi 0.000106 0.000106 0.000151 0.000028 -0.000000 0.000000
+	position 0.072686 -0.123050 0.112925
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/LivingBracketMesh4.obj
+	mesh ../out/LivingConnectorMesh11.obj
+	mesh ../data/robotDesigner/meshes/cube.obj
+	mesh ../out/LivingConnectorMesh12.obj
+	mesh ../out/LivingBracketMesh5.obj
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription motor
+	meshTransformation 0.000000 0.720291 0.000000 -0.693672 -0.011495 0.054750 -0.000001
+	meshTransformation 1.000000 -0.000000 -0.000000 0.000000 -0.011495 0.018524 -0.000000
+	meshTransformation 0.000000 1.000000 0.000000 -0.000000 -0.011495 -0.011476 -0.000001
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.018504 -0.011526 0.000000
+	meshTransformation 0.707106 0.000000 0.000000 0.707107 0.054730 -0.011476 -0.000001
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb6
+	mass 0.246000
+	moi 0.000060 0.000255 0.000255 0.000000 -0.000000 0.000000
+	position 0.166283 -0.134542 0.112924
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/robotDesigner/motorMeshes/XM-430-BodyBracket.obj
+	mesh ../out/LivingConnectorMesh13.obj
+	mesh ../out/LivingWheelEEMesh3.obj
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	carveMesh None
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshTransformation 0.707106 0.000000 0.000000 0.707107 -0.038867 0.000016 -0.000000
+	meshTransformation 0.707106 0.000000 0.000000 0.707107 -0.038867 0.000016 -0.000000
+	meshTransformation 1.000000 0.000000 -0.000000 -0.000000 0.011934 -0.000033 0.000000
+	meshTransformation 0.707106 0.000000 0.000000 0.707107 0.026933 0.000016 -0.000000
+	endEffector 0.026933 0.000016 -0.000000 0.050000 1 1.000000 0.000002 -0.000000
+	mappingInfo -1 -1
+	CDP Sphere 0.026933 0.000016 -0.000000 0.050000
+/End
+
+
+	hingeJoint
+		jointAxes 0.000000 0.000000 -1.000000
+		dxlID -1
+		defaultAngle 0.000000
+		mappingInfo 0 2
+		name rb0_rb1
+		parent rb0
+		child rb1
+		jointCPos -0.020777 0.057915 -0.000399
+		jointPPos 0.060838 -0.027866 -0.118430
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 0.000000 -1.000000
+		dxlID -1
+		defaultAngle 0.000000
+		mappingInfo 1 2
+		name rb0_rb2
+		parent rb0
+		child rb2
+		jointCPos 0.020777 0.057915 -0.000399
+		jointPPos -0.060838 -0.027866 -0.118430
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.999291 0.000000 -0.037638
+		dxlID -1
+		defaultAngle 0.000000
+		mappingInfo 2 2
+		name rb0_rb3
+		parent rb0
+		child rb3
+		jointCPos 0.030695 0.057915 -0.000000
+		jointPPos -0.061191 -0.027866 0.118431
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 0.000000 -1.000000
+		dxlID -1
+		defaultAngle 0.000000
+		mappingInfo 2 6
+		name rb3_rb4
+		parent rb3
+		child rb4
+		jointCPos 0.043725 -0.000000 -0.000001
+		jointPPos -0.050105 -0.008311 -0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes -0.999291 0.000000 -0.037638
+		dxlID -1
+		defaultAngle 0.000000
+		mappingInfo 3 2
+		name rb0_rb5
+		parent rb0
+		child rb5
+		jointCPos -0.011495 0.054750 -0.000001
+		jointPPos 0.061191 -0.027866 0.118431
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 -0.000000 1.000000
+		dxlID -1
+		defaultAngle -0.000000
+		mappingInfo 3 6
+		name rb5_rb6
+		parent rb5
+		child rb6
+		jointCPos -0.038867 0.000016 -0.000000
+		jointPPos 0.054730 -0.011476 -0.000001
+	/Joint
+
+

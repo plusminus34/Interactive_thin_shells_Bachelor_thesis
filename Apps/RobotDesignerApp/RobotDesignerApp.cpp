@@ -7,17 +7,21 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-#define START_WITH_VISUAL_DESIGNER
-
 /*
 should take a look at convergence rates
-- how often is a step size of 1 taken?
-- what happens to convergence tail (value is of course not the same) as different objectives are turned off?
-- would GD do better at that point towards the end? Should the line search try to increase too?
-- is it the global regularizer that is causing problems?
-- or is it the high weights of the soft constraints?
+- global regularizer makes a huge difference, it seems.
+	- we may want it to be adaptive (use small value unless system solving fails)
+	- we quite likely want it to be different for different types of params (joint angles vs cartesian dimensions vs ground reaction forces)
+	- should at least at the global regulaizer as a menu parameter such that it can be easily changed
 
+- set up MOPT also for non-periodic motions
+- start and end on a different motion plan? What happens then when the design changes? Impose constraints only on the start and end states (joint angles only)?
 */
+
+//fixed vs active vs passive wheels vs point feet
+//mechanical coupling via linkages
+//proper friction cones
+
 
 //create a few first designs that have wheels
 //write out a flag in the rbs file, to indicate that the end effector is a wheel and that it has some radius (and later, that it is passive or active), also, its rotation axis in the local coordinate frame of the parent RB
@@ -120,12 +124,11 @@ RobotDesignerApp::RobotDesignerApp(){
 	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
 	
 #else
-	loadFile("../data/robotsAndMotionPlans/spotMini/robotCar.rbs");
-	loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
+    loadFile("../data/robotsAndMotionPlans/spotMini/robot2.rbs");
+    loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
 //	loadToSim();
 	loadToSim(false);
-//	loadFile("../data/robotsAndMotionPlans/spotMini/trot3.p");
-//	loadFile("../data/robotsAndMotionPlans/spotMini/stand.p");
+    loadFile("../data/robotsAndMotionPlans/spotMini/trot3.p");
 #endif
 
 	menuScreen->performLayout();
@@ -343,7 +346,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 
 	if (fNameExt.compare("ffp") == 0) {
 		moptWindow->footFallPattern.loadFromFile(fName);
-		moptWindow->footFallPattern.writeToFile("../out/tmpFFP.ffp");
+		moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
 		return;
 	}
 
@@ -351,7 +354,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		if (moptWindow->locomotionManager && moptWindow->locomotionManager->motionPlan){
 			moptWindow->locomotionManager->motionPlan->readParamsFromFile(fName);
 			moptWindow->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
-			moptWindow->footFallPattern.writeToFile("../out/tmpFFP.ffp");
+			moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
 			moptWindow->syncMOPTWindowParameters();
 		}
 		return;
@@ -406,6 +409,14 @@ void RobotDesignerApp::saveFile(const char* fName) {
 
 void RobotDesignerApp::runMOPTStep() {
 	double energyVal = moptWindow->runMOPTStep();
+
+/*
+	static int count = 0;
+	Logger::log2Print("%lf\n", energyVal);
+	count++;
+	if (count > 400)
+		exit(0);
+*/
 }
 
 P3D RobotDesignerApp::getCameraTarget() {

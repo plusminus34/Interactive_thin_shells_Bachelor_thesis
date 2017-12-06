@@ -139,7 +139,7 @@ void MOPTWindow::loadRobot(Robot* robot, ReducedRobotState* startState)
 	this->startState = *startState;
 
 	int nLegs = robot->bFrame->limbs.size();
-	nPoints = 3 * nLegs;
+	nPoints = 6 * nLegs;
 
 	// ******************* footfall patern *******************
 	footFallPattern = FootFallPattern();
@@ -210,6 +210,7 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	syncMOPTWindowParameters();
 
 	locomotionManager->setDefaultOptimizationFlags();
+	locomotionManager->energyFunction->regularizer = 0.0001;
 
 	CreateEnergyMenu();
 

@@ -27,7 +27,7 @@
 
 
 
-// #define START_WITH_VISUAL_DESIGNER
+#define START_WITH_VISUAL_DESIGNER
 
 
 class IntelligentRobotEditingWindow;
@@ -77,7 +77,7 @@ public:
 #ifdef START_WITH_VISUAL_DESIGNER
 	RD_VIEW_OPTIONS viewOptions = SIM_AND_DESIGN;
 #else //  START_WITH_VISUAL_DESIGNER
-	RD_VIEW_OPTIONS viewOptions = SIM_AND_DESIGN;// MOPT_AND_IEDIT;// SIM_AND_DESIGN;
+	RD_VIEW_OPTIONS viewOptions = SIM_AND_MOPT;// MOPT_AND_IEDIT;// SIM_AND_DESIGN;
 #endif
 	bool doDebug = false;
 

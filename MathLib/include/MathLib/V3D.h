@@ -2,12 +2,17 @@
 
 #include "MathLib.h"
 #include "Matrix.h"
+#include "AutoDiff.h"
+
+// TODO: move somewhere else
+typedef AutoDiffT<double, double> ScalarDiff;
+typedef AutoDiffT<ScalarDiff, ScalarDiff> ScalarDiffDiff;
 
 class P3D;
 /**
 * Vector in 3d.
 */
-class V3D : public Vector3d {
+class V3D : public V3T<double> {
 public:
 
 /**
@@ -136,9 +141,6 @@ public:
 	Matrix3x3 getSkewSymmetricMatrix();
 
 };
-
-template <class T>
-using Vector3T = Eigen::Matrix<T, 3, 1>;
 
 // Returns a new vector obtained by rotating v. Alpha is specified in radians, and axis is assumed to be a unit vector
 template<class T>
