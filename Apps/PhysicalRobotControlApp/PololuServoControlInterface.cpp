@@ -97,6 +97,7 @@ int PololuServoControlInterface::maestroSetTargetPosition(Motor& mp, unsigned sh
 // The units of 'target' are (0.25 micros)/(10 ms). If 0, the motor will have no speed limit
 int PololuServoControlInterface::maestroSetTargetSpeed(Motor& mp, unsigned short target) {
 	if (!connected) return 0;
+	if (controlPositionsOnly) return 0;
 
 	unsigned char command[] = { 0x87, 0, (unsigned short) (target & 0x7F), (unsigned short)(target >> 7 & 0x7F) };
 	command[1] = (unsigned char)mp.motorID;

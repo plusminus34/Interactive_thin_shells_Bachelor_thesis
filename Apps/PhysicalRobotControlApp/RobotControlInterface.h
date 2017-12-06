@@ -95,4 +95,6 @@ public:
 		return connected;
 	}
 
+	bool controlPositionsOnly = false;
+
 };

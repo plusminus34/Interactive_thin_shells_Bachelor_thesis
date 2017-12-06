@@ -46,6 +46,7 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 
 	mainMenu->addVariable("Follow Trajectory", playFFTrajectory);
 	mainMenu->addVariable("duration", trajDuration);
+	mainMenu->addVariable("control positions only", controlPositionsOnly);
 
 	menuScreen->performLayout();
 
@@ -137,8 +138,10 @@ void PhysicalRobotControlApp::process() {
 		robot->setState(&rs);
 	}
 
-	if (rci)
+	if (rci) {
+		rci->controlPositionsOnly = controlPositionsOnly;
 		rci->syncPhysicalRobotWithSimRobot(dt);
+	}
 }
 
 //triggered when mouse moves
