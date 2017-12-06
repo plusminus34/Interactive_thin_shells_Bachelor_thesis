@@ -2,6 +2,7 @@
 
 #include <RobotDesignerLib/MPO_VelocitySoftConstraints.h>
 #include <RobotDesignerLib/MPO_WheelSpeedConstraint.h>
+#include <RobotDesignerLib/MPO_WheelAccelerationConstraint.h>
 #include <RobotDesignerLib/MPO_EEPosSwingObjective.h>
 #include <RobotDesignerLib/MPO_RobotWheelAxisObjective.h>
 #include <RobotDesignerLib/MPO_StartVelocityConstraint.h>
@@ -287,7 +288,7 @@ void LocomotionEngineManagerGRFv1::setupObjectives() {
 	ef->objectives.push_back(new MPO_RobotCOMOrientationsObjective(ef->theMotionPlan, "robot COM orientations objective", 10000.0));
 	ef->objectives.push_back(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
 	ef->objectives.push_back(new MPO_WheelSpeedConstraints(ef->theMotionPlan, "wheel speed bound constraint", 1e4));
-
+	ef->objectives.push_back(new MPO_WheelAccelerationConstraints(ef->theMotionPlan, "wheel accel. bound constraint", 1e2));
 
 	//functional objectives
 	ef->objectives.push_back(new MPO_COMTravelObjective(ef->theMotionPlan, "COM Travel objective", 50.0));
@@ -343,6 +344,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->objectives.push_back(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 1.0));
 	ef->objectives.push_back(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
 	ef->objectives.push_back(new MPO_WheelSpeedConstraints(ef->theMotionPlan, "wheel speed bound constraint", 1e4));
+	ef->objectives.push_back(new MPO_WheelAccelerationConstraints(ef->theMotionPlan, "wheel accel. bound constraint", 1e2));
 
 	//constraints ensuring feet don't slide...
 	ef->objectives.push_back(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0));
