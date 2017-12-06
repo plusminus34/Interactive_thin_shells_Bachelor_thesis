@@ -182,10 +182,14 @@ public:
 	double GRFEpsilon = 0.4;				// for SoftUnilateralConstraint
 	double pseudoLimbEpsilon = 0.1;
 
-	// Parameters for motor velocity constraint
+	// Parameters for joint motor velocity constraint
 	double jointVelocityLimit = 0;
 	double jointVelocityEpsilon = 0.4;		// for SoftUnilateralConstraint
 	
+	// Parameters for wheel motor speed constraint
+	double wheelSpeedLimit = 0;
+	double wheelSpeedEpsilon = 0.4;		// for SoftUnilateralConstraint
+
 public:
 	bool optimizeCOMPositions;
 	bool optimizeCOMOrientations;
@@ -197,6 +201,7 @@ public:
 
 	bool enforceGRFConstraints;
 
+	// TODO: clean up / consolidate nWheelParams and nWheelParamsEE
 	const static int nWheelParams = 1; // wheel speed
 	const static int nWheelParamsEE = 1; // wheel speed
 
@@ -234,6 +239,7 @@ public:
 	double frictionCoeff = -1.0;     // when frictionCoeff < 0, friction cone constraints are disabled.
 
 public:
+	int getWheelSpeedIndex(int i, int j) const;
 	int getWheelYawAngleIndex(int i, int j) const;
 	int getWheelTiltAngleIndex(int i, int j) const;
 

@@ -1,5 +1,4 @@
 #include <RobotDesignerLib/MPO_VelocitySoftConstraints.h>
-#include <iostream>
 
 MPO_VelocitySoftBoundConstraints::MPO_VelocitySoftBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int startQIndex, int endQIndex) {
 
