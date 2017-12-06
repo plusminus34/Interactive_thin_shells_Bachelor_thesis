@@ -12,7 +12,7 @@ should take a look at convergence rates
 - global regularizer makes a huge difference, it seems.
 	- we may want it to be adaptive (use small value unless system solving fails)
 	- we quite likely want it to be different for different types of params (joint angles vs cartesian dimensions vs ground reaction forces)
-	- should at least at the global regulaizer as a menu parameter such that it can be easily changed
+	- should at least add the global regulaizer as a menu parameter such that it can be easily changed
 
 - set up MOPT also for non-periodic motions
 - start and end on a different motion plan? What happens then when the design changes? Impose constraints only on the start and end states (joint angles only)?

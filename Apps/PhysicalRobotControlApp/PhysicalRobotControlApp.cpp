@@ -45,7 +45,7 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 
 
 	mainMenu->addVariable("Follow Trajectory", playFFTrajectory);
-	mainMenu->addVariable("duration", trajDuration);
+	mainMenu->addVariable("duration", trajDuration)->setSpinnable(true);
 	mainMenu->addVariable("control positions only", controlPositionsOnly);
 
 	menuScreen->performLayout();

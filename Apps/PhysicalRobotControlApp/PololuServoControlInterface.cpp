@@ -33,6 +33,12 @@ unsigned short getMaestroSignalFromAngularSpeed(double speed, Motor& mp, int sig
 	if (speed <= 0)
 		return 0;
 
+	//speed is measured in rad/s. The number we pass to the maestro board needs to be measured in 0.25microseconds/10ms
+
+	//1 rad corresponds to 1 / anglePerPWMunit() PWM units
+	//1s is 100 of the time units...
+
+
 	//maestro units are measured in 0.25microseconds/10ms increments, hence the factor of 4 / 100
 	double speedUnits = 4.0 * 10.0 / 1000.0;
 
@@ -42,7 +48,7 @@ unsigned short getMaestroSignalFromAngularSpeed(double speed, Motor& mp, int sig
 	if (signalPeriod > 20)
 		speedUnits = 4.0 * (signalPeriod/2) / 1000.0;
 
-	return (unsigned short)(mp.anglePerPWMunit() * speed * speedUnits);
+	return (unsigned short)(speed / mp.anglePerPWMunit() * speedUnits);
 }
 
 double getAngleFromMaestroSignal(unsigned short ms, Motor& mp) {
@@ -97,7 +103,7 @@ int PololuServoControlInterface::maestroSetTargetPosition(Motor& mp, unsigned sh
 // The units of 'target' are (0.25 micros)/(10 ms). If 0, the motor will have no speed limit
 int PololuServoControlInterface::maestroSetTargetSpeed(Motor& mp, unsigned short target) {
 	if (!connected) return 0;
-	if (controlPositionsOnly) return 0;
+	if (controlPositionsOnly) target = 0;
 
 	unsigned char command[] = { 0x87, 0, (unsigned short) (target & 0x7F), (unsigned short)(target >> 7 & 0x7F) };
 	command[1] = (unsigned char)mp.motorID;
@@ -136,7 +142,7 @@ void PololuServoControlInterface::setServomotorAngle(Motor& mp, double val) {
 
 //val is specified in rad/s
 void PololuServoControlInterface::setServomotorMaxSpeed(Motor& mp, double val) {
-	maestroSetTargetPosition(mp, getMaestroSignalFromAngularSpeed(val, mp, signalPeriod));
+	maestroSetTargetSpeed(mp, getMaestroSignalFromAngularSpeed(val, mp, signalPeriod));
 }
 
 //set motor goals from target values
@@ -151,10 +157,8 @@ void PololuServoControlInterface::sendControlInputsToPhysicalRobot() {
 		if (hj->motor.flipMotorAxis)
 			hj->motor.targetMotorAngle *= -1;
 
-		setServomotorAngle(hj->motor, hj->motor.targetMotorAngle);
 		setServomotorMaxSpeed(hj->motor, hj->motor.targetMotorVelocity);
-
-
+		setServomotorAngle(hj->motor, hj->motor.targetMotorAngle);
 	}
 
 	//TODO: should implement here the option of sending all position commands at once...

@@ -33,7 +33,7 @@ private:
 	double trajPhase = 0.0;
 	double trajDuration = 1.0;
 
-	bool controlPositionsOnly = true;
+	bool controlPositionsOnly = false;
 
 
 
