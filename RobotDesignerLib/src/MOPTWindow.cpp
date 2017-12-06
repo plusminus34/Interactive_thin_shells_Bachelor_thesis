@@ -77,6 +77,14 @@ void MOPTWindow::addMenuItems() {
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
 	}
 	{
+		auto tmpVar = glApp->mainMenu->addVariable("wheel accel. limit", moptParams.wheelAccelLimit);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
+	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("wheel accel. epsilon", moptParams.wheelAccelEpsilon);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
+	}
+	{
 		glApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
 	}
 
@@ -175,6 +183,9 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.wheelSpeedLimit = locomotionManager->motionPlan->wheelSpeedLimit;
 	moptParams.wheelSpeedEpsilon = locomotionManager->motionPlan->wheelSpeedEpsilon;
 
+	moptParams.wheelAccelLimit = locomotionManager->motionPlan->wheelAccelLimit;
+	moptParams.wheelAccelEpsilon = locomotionManager->motionPlan->wheelAccelEpsilon;
+
 	moptParams.writeJointVelocityProfile = locomotionManager->writeVelocityProfileToFile;
 	moptParams.motionPlanDuration = locomotionManager->motionPlan->motionPlanDuration;
 	moptParams.checkDerivatives = locomotionManager->checkDerivatives;
@@ -191,6 +202,9 @@ void MOPTWindow::syncMotionPlanParameters(){
 
 	locomotionManager->motionPlan->wheelSpeedLimit = moptParams.wheelSpeedLimit;
 	locomotionManager->motionPlan->wheelSpeedEpsilon = moptParams.wheelSpeedEpsilon;
+
+	locomotionManager->motionPlan->wheelAccelLimit = moptParams.wheelAccelLimit;
+	locomotionManager->motionPlan->wheelAccelEpsilon = moptParams.wheelAccelEpsilon;
 
 	locomotionManager->writeVelocityProfileToFile = moptParams.writeJointVelocityProfile;
 	locomotionManager->motionPlan->motionPlanDuration = moptParams.motionPlanDuration;

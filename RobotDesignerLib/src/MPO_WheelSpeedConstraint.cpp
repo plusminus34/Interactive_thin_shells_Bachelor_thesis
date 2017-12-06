@@ -15,28 +15,23 @@ MPO_WheelSpeedConstraints::~MPO_WheelSpeedConstraints(void) {
 
 double MPO_WheelSpeedConstraints::computeValue(const dVector& s) {
 
-	if (theMotionPlan->wheelParamsStartIndex >= 0){
+	constraintLowerBound->setLimit(-theMotionPlan->wheelSpeedLimit);
+	constraintUpperBound->setLimit(theMotionPlan->wheelSpeedLimit);
+	constraintLowerBound->setEpsilon(theMotionPlan->wheelSpeedEpsilon);
+	constraintUpperBound->setEpsilon(theMotionPlan->wheelSpeedEpsilon);
 
-		constraintLowerBound->setLimit(-theMotionPlan->wheelSpeedLimit);
-		constraintUpperBound->setLimit(theMotionPlan->wheelSpeedLimit);
-		constraintLowerBound->setEpsilon(theMotionPlan->wheelSpeedEpsilon);
-		constraintUpperBound->setEpsilon(theMotionPlan->wheelSpeedEpsilon);
+	double retVal = 0;
 
-		double retVal = 0;
+	for (int j=0; j<theMotionPlan->nSamplePoints; j++){
+		for (uint i=0; i<theMotionPlan->endEffectorTrajectories.size(); i++){
 
-		for (int j=0; j<theMotionPlan->nSamplePoints; j++){
-			for (uint i=0; i<theMotionPlan->endEffectorTrajectories.size(); i++){
-
-				double wheelSpeed = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j];
-				retVal += constraintLowerBound->computeValue(wheelSpeed);
-				retVal += constraintUpperBound->computeValue(wheelSpeed);
-			}
+			double wheelSpeed = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j];
+			retVal += constraintLowerBound->computeValue(wheelSpeed);
+			retVal += constraintUpperBound->computeValue(wheelSpeed);
 		}
-
-		return retVal * weight;
 	}
 
-	return 0;
+	return retVal * weight;
 }
 
 void MPO_WheelSpeedConstraints::addGradientTo(dVector& grad, const dVector& p) {

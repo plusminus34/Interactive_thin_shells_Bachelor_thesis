@@ -189,6 +189,8 @@ public:
 	// Parameters for wheel motor speed constraint
 	double wheelSpeedLimit = 0;
 	double wheelSpeedEpsilon = 0.4;		// for SoftUnilateralConstraint
+	double wheelAccelLimit = 0;
+	double wheelAccelEpsilon = 1.0;		// for SoftUnilateralConstraint
 
 public:
 	bool optimizeCOMPositions;
