@@ -45,7 +45,7 @@ public:
 		robot->setState(&rs);
 	}
 
-	virtual void setTargetMotorValuesFromSimRobotState() {
+	virtual void setTargetMotorValuesFromSimRobotState(double dt) {
 		//given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot... 
 		ReducedRobotState rs(robot);
 
@@ -68,7 +68,7 @@ public:
 
 	//the time window dt estimates the amount of time before the next command is issued (or, alternatively, how long we'd expect the physical robot to take before it can match the target values)
 	virtual void syncPhysicalRobotWithSimRobot(double dt = 0.1) {
-		setTargetMotorValuesFromSimRobotState();
+		setTargetMotorValuesFromSimRobotState(dt);
 		sendControlInputsToPhysicalRobot();
 	}
 

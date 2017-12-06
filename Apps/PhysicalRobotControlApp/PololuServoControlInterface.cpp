@@ -28,10 +28,21 @@ unsigned short getMaestroSignalFromAngle(double angle, Motor& mp) {
 }
 
 //a value of 40 corresponds to a speed limit of pwm=1000microseconds/s which corresponds to 90deg/s (if pwmRange is 500 and angle range is 45).
-unsigned short getMaestroSignalFromAngularSpeed(double speed, Motor& mp) {
+unsigned short getMaestroSignalFromAngularSpeed(double speed, Motor& mp, int signalPeriod) {
+	//this means no speed limit
+	if (speed <= 0)
+		return 0;
+
 	//maestro units are measured in 0.25microseconds/10ms increments, hence the factor of 4 / 100
-	//NOTE: units do change if the refreshRate us not 50Hz! (https://www.pololu.com/docs/0J40/4.b) - how do we set the frequency to begin with?!?
-	return (unsigned short)(mp.anglePerPWMunit() * speed * 4 / 100);
+	double speedUnits = 4.0 * 10.0 / 1000.0;
+
+	//however, this is at the default signal period... it changes as described here otherwise...
+	if (signalPeriod < 20)
+		speedUnits = 4.0 * signalPeriod / 1000.0;
+	if (signalPeriod > 20)
+		speedUnits = 4.0 * (signalPeriod/2) / 1000.0;
+
+	return (unsigned short)(mp.anglePerPWMunit() * speed * speedUnits);
 }
 
 double getAngleFromMaestroSignal(unsigned short ms, Motor& mp) {
@@ -124,7 +135,7 @@ void PololuServoControlInterface::setServomotorAngle(Motor& mp, double val) {
 
 //val is specified in rad/s
 void PololuServoControlInterface::setServomotorMaxSpeed(Motor& mp, double val) {
-	maestroSetTargetPosition(mp, getMaestroSignalFromAngularSpeed(val, mp));
+	maestroSetTargetPosition(mp, getMaestroSignalFromAngularSpeed(val, mp, signalPeriod));
 }
 
 //set motor goals from target values
@@ -140,6 +151,9 @@ void PololuServoControlInterface::sendControlInputsToPhysicalRobot() {
 			hj->motor.targetMotorAngle *= -1;
 
 		setServomotorAngle(hj->motor, hj->motor.targetMotorAngle);
+		setServomotorMaxSpeed(hj->motor, hj->motor.targetMotorVelocity);
+
+
 	}
 
 	//TODO: should implement here the option of sending all position commands at once...
@@ -206,7 +220,7 @@ void PololuServoControlInterface::driveMotorPositionsToZero() {
 		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
 		if (!hj) continue;
 		hj->motor.targetMotorAngle = 0;
-		maestroSetTargetSpeed(hj->motor, 30);//make sure the motors all go to zero slowly...
+		hj->motor.targetMotorVelocity = 1.0;//make sure the motors all go to zero slowly...
 	}
 	sendControlInputsToPhysicalRobot();
 
@@ -215,14 +229,35 @@ void PololuServoControlInterface::driveMotorPositionsToZero() {
 	for (int i = 0; i < robot->getJointCount(); i++) {
 		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
 		if (!hj) continue;
-		maestroSetTargetSpeed(hj->motor, 0);//remove the speed limits...
+		hj->motor.targetMotorVelocity = -1.0;//-1 here we will take to mean no speed limit...
 	}
+	sendControlInputsToPhysicalRobot();
 
 }
 
 void PololuServoControlInterface::toggleMotorPower() {
 	motorsOn = !motorsOn;
 }
+
+void PololuServoControlInterface::setTargetMotorValuesFromSimRobotState(double dt) {
+	readPhysicalRobotMotorPositions();
+
+	//given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot... 
+	ReducedRobotState rs(robot);
+
+	for (int i = 0; i < robot->getJointCount(); i++) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
+		Quaternion q = rs.getJointRelativeOrientation(i);
+		V3D w = rs.getJointRelativeAngVelocity(i);
+		hj->motor.targetMotorAngle = q.getRotationAngle(hj->rotationAxis);
+
+		//we expect we have dt time to go from the current position to the target position... we ideally want to ensure that the motor gets there exactly dt time from now, so we must limit its velocity...
+		double speedLimit = fabs(hj->motor.targetMotorAngle - hj->motor.currentMotorAngle) / dt;
+		hj->motor.targetMotorVelocity = speedLimit;
+	}
+}
+
 
 PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotControlInterface(robot) {
 	//TODO: we will need a much better way of setting motor parameters...

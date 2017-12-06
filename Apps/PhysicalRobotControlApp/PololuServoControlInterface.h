@@ -14,9 +14,9 @@ private:
 
 //SOME OF THESE PARAMETERS MUST BE SET WITH THE POLOLU SERVOMOTOR CONTROLLER, INCLUDING THE MAESTRO’S SERIAL MODE WHICH NEEDS TO BE SET TO “USB Dual Port”
 	int comNumber = 4;
-	//this is the refresh/update frequency for the servomotors
-	int refreshRate = 50; //in Hz; 50Hz is the nominal refresh rate that most/all servomotors should work with, but some can use refresh rates of up to 333Hz
-
+	//this is the period of servo pulses, expressed in milliseconds - set by the maestro control center, so make sure it matches up...
+	int signalPeriod = 20; //in ms
+	//file handle used for communication with the maestro board
 	int fd = -1;
 
 	double getServomotorAngle(Motor& mp);
@@ -27,6 +27,7 @@ private:
 	int maestroGetPosition(Motor& mp);
 	int maestroSetTargetPosition(Motor& mp, unsigned short target);
 	int maestroSetTargetSpeed(Motor& mp, unsigned short target);
+
 
 
 public:
@@ -42,6 +43,8 @@ public:
 	virtual void readPhysicalRobotMotorPositions();
 	//read motor positions
 	virtual void readPhysicalRobotMotorVelocities();
+
+	virtual void setTargetMotorValuesFromSimRobotState(double dt);
 
 	virtual void openCommunicationPort();
 	virtual void closeCommunicationPort();

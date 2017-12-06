@@ -110,6 +110,8 @@ void PhysicalRobotControlApp::restart() {
 
 // Run the App tasks
 void PhysicalRobotControlApp::process() {
+	double dt = 1.0 / desiredFrameRate;
+
 	if (playFFTrajectory == false) {
 		ikSolver->ikEnergyFunction->regularizer = 100;
 		ikSolver->ikOptimizer->checkDerivatives = true;
@@ -119,7 +121,6 @@ void PhysicalRobotControlApp::process() {
 		ReducedRobotState rs(robot);
 
 		double nextTrajPhase = trajPhase;
-		double dt = 1.0 / desiredFrameRate;
 		nextTrajPhase += dt / trajDuration;
 		if (nextTrajPhase > 1.0)
 			nextTrajPhase -= 1.0;
@@ -137,7 +138,7 @@ void PhysicalRobotControlApp::process() {
 	}
 
 	if (rci)
-		rci->syncPhysicalRobotWithSimRobot();
+		rci->syncPhysicalRobotWithSimRobot(dt);
 }
 
 //triggered when mouse moves
