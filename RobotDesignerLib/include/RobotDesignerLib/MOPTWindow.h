@@ -40,6 +40,9 @@ public:
 	bool initialized = false;
 	GLApplication* glApp;
 
+	bool startWithEmptyFFP = true;
+	int nTimeSteps = 12;
+
 	nanogui::Graph* energyGraph;
 	std::vector<float> energyGraphValues;
 
@@ -60,7 +63,6 @@ public:
 	};
 	OPT_OPTIONS optimizeOption = GRF_OPT_V2;
 
-	int nPoints;
 	bool printDebugInfo;
 	void addMenuItems();
 

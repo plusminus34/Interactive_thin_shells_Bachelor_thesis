@@ -178,8 +178,9 @@ bool FootFallPatternViewer::onMouseButtonEvent(int button, int action, int mods,
 	oldCol = col;
 
 	selectedLimbIndex = -1;
-	if (ffp->isInSwing(ffp->stepPatterns[row].limb, start + col))
-		selectedLimbIndex = row;
+	if (row < ffp->stepPatterns.size())
+		if (ffp->isInSwing(ffp->stepPatterns[row].limb, start + col))
+			selectedLimbIndex = row;
 
 	return true;
 }
@@ -229,9 +230,11 @@ bool FootFallPatternViewer::onMouseMoveEvent(double xPos, double yPos) {
 	if (GlobalMouseState::lButtonPressed == false && GlobalMouseState::rButtonPressed == false) {
 		selectedLimbIndex = -1;
 		selectedColIndex = -1;
-		if (ffp->isInSwing(ffp->stepPatterns[row].limb, start + col))
-			selectedLimbIndex = row;
-		selectedColIndex = col;
+		if (row < ffp->stepPatterns.size()){
+			if (ffp->isInSwing(ffp->stepPatterns[row].limb, start + col))
+				selectedLimbIndex = row;
+			selectedColIndex = col;
+		}
 	}
 	else if(ffpMovable && selectedLimbIndex >= 0 && selectedLimbIndex < (int)ffp->stepPatterns.size())
 	{
