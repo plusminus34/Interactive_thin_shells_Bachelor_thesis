@@ -11,7 +11,10 @@
 PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	setWindowTitle("Physical Robot Control");
 
-	loadFile("../data/rbs/robotArm1DOF.rbs");
+//	loadFile("../data/rbs/robotArm1DOF.rbs");
+//	loadFile("../data/rbs/robotArm2DOF.rbs");
+
+	loadFile("../data/rbs/robotArm3DOF.rbs");
 
 	showMesh = false;
 	showRotationAxes = true;

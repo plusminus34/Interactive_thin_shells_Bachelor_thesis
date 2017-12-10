@@ -1,0 +1,50 @@
+# Define the rigid bodies that will make up the character
+
+RigidBody 
+	name base
+	mass 1
+	moi 1.3 1.3 1.8
+	colour 0.6 0.6 0.6 1
+	position 0 0 0
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.35
+/End
+
+RigidBody 
+	name arm1
+	mass 1
+	colour 0.6 0.6 0.6 1
+	position 0 1.035 0
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.35
+	bodyPointFeature 0.000000 0.05 0 0.0001
+/End
+
+RigidBody 
+	name arm2
+	mass 1
+	colour 0.6 0.6 0.6 1
+	position 0 1.035 0
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.35
+	bodyPointFeature 0.000000 0.05 0 0.0001
+/End
+
+	hingeJoint
+		jointAxes 1 0 0
+		name rb0_rb1
+		parent base
+		child arm1
+		jointCPos 0 -0.05 0
+		jointPPos 0 0.05 0
+	/Joint
+
+	hingeJoint
+		jointAxes 1 0 0
+		name rb1_rb2
+		parent arm1
+		child arm2
+		jointCPos 0 -0.05 0
+		jointPPos 0 0.05 0
+	/Joint
+
