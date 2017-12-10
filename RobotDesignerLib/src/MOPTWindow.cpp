@@ -30,6 +30,15 @@ void MOPTWindow::addMenuItems() {
 	new nanogui::CheckBox(popup, "A check box");
 */
 
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("startWithEmptyFFP", startWithEmptyFFP);
+	}
+
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("# of MOPT sample points", nTimeSteps);
+		tmpVar->setSpinnable(true);
+	}
+
 	glApp->mainMenu->addVariable<bool>("Show energies menu",
 		[this](bool value) {
 			showWeightsAndEnergyValues = value;
@@ -146,8 +155,7 @@ void MOPTWindow::clear()
 
 }
 
-void MOPTWindow::loadRobot(Robot* robot, ReducedRobotState* startState)
-{
+void MOPTWindow::loadRobot(Robot* robot, ReducedRobotState* startState){
 	clear();
 
 	initialized = true;
@@ -155,17 +163,15 @@ void MOPTWindow::loadRobot(Robot* robot, ReducedRobotState* startState)
 	this->startState = *startState;
 
 	int nLegs = robot->bFrame->limbs.size();
-	nPoints = 6 * nLegs;
 
 	// ******************* footfall patern *******************
 	footFallPattern = FootFallPattern();
 
-	bool createDefaultFFP = false;
-	if (createDefaultFFP){
-		int iMin = 0, iMax = nPoints / nLegs - 1;
-		footFallPattern.strideSamplePoints = nPoints;
+	if (startWithEmptyFFP == false){
+		int iMin = 0, iMax = nTimeSteps / nLegs - 1;
+		footFallPattern.strideSamplePoints = nTimeSteps;
 		for (int j = 0; j < nLegs; j++)
-			footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nPoints / nLegs, iMax + j*nPoints / nLegs);
+			footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nTimeSteps / nLegs, iMax + j*nTimeSteps / nLegs);
 	}
 
 	footFallPattern.loadFromFile("../out/tmpFFP.ffp");
@@ -223,15 +229,15 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	switch (optimizeOption)
 	{
 	case GRF_OPT:
-		locomotionManager = new LocomotionEngineManagerGRFv1(robot, &footFallPattern, nPoints + 1); break;
+		locomotionManager = new LocomotionEngineManagerGRFv1(robot, &footFallPattern, nTimeSteps + 1); break;
 	case GRF_OPT_V2:
-		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nPoints + 1); break;
+		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nTimeSteps + 1); break;
 	case IP_OPT:
-		locomotionManager = new LocomotionEngineManagerIPv1(robot, &footFallPattern, nPoints + 1); break;
+		locomotionManager = new LocomotionEngineManagerIPv1(robot, &footFallPattern, nTimeSteps + 1); break;
 	case IP_OPT_V2:
-		locomotionManager = new LocomotionEngineManagerIPv2(robot, &footFallPattern, nPoints + 1); break;
+		locomotionManager = new LocomotionEngineManagerIPv2(robot, &footFallPattern, nTimeSteps + 1); break;
 	default:
-		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nPoints + 1); break;
+		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nTimeSteps + 1); break;
 	}
 
 	syncMotionPlanParameters();
