@@ -39,6 +39,13 @@ void MOPTWindow::addMenuItems() {
 		tmpVar->setSpinnable(true);
 	}
 
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("globalMOPTRegularizer", globalMOPTRegularizer);
+		tmpVar->setSpinnable(false); tmpVar->setMinValue(0); tmpVar->setMaxValue(100);
+	}
+
+	
+
 	glApp->mainMenu->addVariable<bool>("Show energies menu",
 		[this](bool value) {
 			showWeightsAndEnergyValues = value;
@@ -248,7 +255,7 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	syncMOPTWindowParameters();
 
 	locomotionManager->setDefaultOptimizationFlags();
-	locomotionManager->energyFunction->regularizer = 0.0001;
+	locomotionManager->energyFunction->regularizer = globalMOPTRegularizer;
 
 	CreateEnergyMenu();
 
@@ -259,6 +266,8 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 
 double MOPTWindow::runMOPTStep(){
 	syncMotionPlanParameters();
+
+	locomotionManager->energyFunction->regularizer = globalMOPTRegularizer;
 
 	double energyVal = locomotionManager->runMOPTStep();
 

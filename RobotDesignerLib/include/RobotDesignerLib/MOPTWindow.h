@@ -42,6 +42,7 @@ public:
 
 	bool startWithEmptyFFP = true;
 	int nTimeSteps = 12;
+	double globalMOPTRegularizer = 0.0001;
 
 	nanogui::Graph* energyGraph;
 	std::vector<float> energyGraphValues;
