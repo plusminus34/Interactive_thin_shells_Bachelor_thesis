@@ -1,4 +1,5 @@
-//#include <limits>
+
+#include <algorithm>
 
 
 #include "MathLib/P3D.h"
@@ -7,24 +8,20 @@
 #include "Mount.h"
 
 
-P3D Mount::getTransformedX(P3D const & x0) 
+
+
+void Mount::dxDpar(P3D const & x0, std::vector<double> const & parameters, std::vector<V3D> & grad)
 {
-	return(transformation(x0, parameters));
+	dxDparFD(x0, parameters, grad);
 }
 
 
-void Mount::dxDpar(P3D const & x0, std::vector<double> const & parameters, std::vector<V3D> & DxDpar)
-{
-	dxDparFD(x0, parameters, DxDpar);
-}
-
-
-void Mount::dxDparFD(P3D const & x0, std::vector<double> const & parameters, std::vector<V3D> & DxDpar)
+void Mount::dxDparFD(P3D const & x0, std::vector<double> const & parameters, std::vector<V3D> & grad)
 {
 	double const delta = 1e-6;
 	int n_par = parameters.size();
 
-	dxDpar.resize(n_par);
+	grad.resize(n_par);
 
 	std::vector<double> parametersPdelta(n_par);
 	std::vector<double> parametersMdelta(n_par);
@@ -35,18 +32,23 @@ void Mount::dxDparFD(P3D const & x0, std::vector<double> const & parameters, std
 		parametersPdelta[i] += delta;
 		parametersMdelta[i] -= delta;
 
-		dxDpar[i] = transformation(x0, parametersPdelta) - transformation(x0, parametersMdelta);
-		dxDpar[i] /= 2.0 * delta;
+		grad[i] = transformation(x0, parametersPdelta) - transformation(x0, parametersMdelta);
+		grad[i] /= 2.0 * delta;
 	}
 
 }
 
 P3D Mount::getTransformedX(P3D const & x0)
 {
-	transformation(x0, parameters);
+	return(transformation(x0, parameters));
 }
 
-P3D Mount::getDxDpar(P3D const & x0, std::vector<V3D> & DxDpar)
+void Mount::getDxDpar(P3D const & x0, std::vector<V3D> & grad)
 {
-	dxDpar(x0, parameters, DxDpar);
+	dxDpar(x0, parameters, grad);
+}
+
+void Mount::reset()
+{
+	std::fill(parameters.begin(), parameters.end(), 0);
 }

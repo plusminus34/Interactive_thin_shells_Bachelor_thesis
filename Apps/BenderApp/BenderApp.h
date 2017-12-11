@@ -2,27 +2,33 @@
 
 #include <GUILib/GLApplication.h>
 #include <string>
+#include <array>
 #include <map>
 
-#include <FEMSimLib/SimulationMesh.h>
-#include "BenderApp_lib.h"
+#include "BenderSimulationMesh2D.h"
+//#include "Mount.h"
+
 
 /**
  * Test App
  */
 class BenderApp : public GLApplication {
 private:
-	SimulationMesh* femMesh;
+	BenderSimulationMesh2D* femMesh;
 
-	std::vector<Mount> mounts;
+	//std::array<Mount*, 2> mounts;
 	int selected_mount = -1;
 
+	// state of the app
 	bool computeStaticSolution = false;
+	bool optimizeObjective = false;
+
 	bool checkDerivatives = false;
 
 	double simTimeStep = 1/100.0;
 
 	Ray lastClickedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
+	Ray lastMovedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
 	Ray currentRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
 	int selectedNodeID = -1;
 	double shearModulus = 50, bulkModulus = 50;

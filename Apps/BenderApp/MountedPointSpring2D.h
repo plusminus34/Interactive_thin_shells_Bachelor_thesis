@@ -3,7 +3,7 @@
 
 
 
-class MountedPointSpring2D : private FixedPointSpring2D {
+class MountedPointSpring2D : public FixedPointSpring2D {
 
 public: 
 	Mount * mount;

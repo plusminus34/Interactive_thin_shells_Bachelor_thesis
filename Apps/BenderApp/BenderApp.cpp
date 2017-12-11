@@ -9,46 +9,31 @@
 #include <FEMSimLib/MassSpringSimulationMesh3D.h>
 #include <GUILib/GLUtils.h>
 
+#include "RotationMount.h"
+#include "MountedPointSpring2D.h"
 
 #define EDIT_BOUNDARY_CONDITIONS
 
 //#define CONSTRAINED_DYNAMICS_DEMO
 
 BenderApp::BenderApp() 
-: mounts(9)
 {
 	setWindowTitle("Test FEM Sim Application...");
 
-#ifdef CONSTRAINED_DYNAMICS_DEMO
-	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, 1, 1);
-
-	femMesh = new CSTSimulationMesh2D();
-	femMesh->readMeshFromFile("../data/FEM/2d/triMeshTMP.tri2d");
-	femMesh->nodes[0]->addMassContribution(1.0);
-	femMesh->addGravityForces(V3D(0, -9.8, 0));
-#else
-
-	//int nRows = 20;
-	//int nCols = 20;
-	//CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, nRows, nCols);
 	int nRows = 40;
 	int nCols = 8;
-	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.05, 0.05, nRows, nCols);
+	BenderSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.05, 0.05, nRows, nCols);
 
-	femMesh = new CSTSimulationMesh2D();
+	femMesh = new BenderSimulationMesh2D();
 	femMesh->readMeshFromFile("../data/FEM/2d/triMeshTMP.tri2d");
 	femMesh->addGravityForces(V3D(0, -9.8, 0));
-	//set some boundary conditions...
-	for (int i = 0; i < nCols;i++)
-		femMesh->setPinnedNode(i, femMesh->nodes[i]->getWorldPosition());
-#endif
 
-/*
-	MassSpringSimulationMesh3D::generateTestMassSpringSystem("../data/FEM/3d/massSpringSystem.ms");
-	femMesh = new MassSpringSimulationMesh3D();
-	femMesh->readMeshFromFile("../data/FEM/3d/massSpringSystem.ms");
-	femMesh->addGravityForces(V3D(0, -9.8, 0));
-*/
+
+	//set some boundary conditions...
+	//for (int i = 0; i < nCols;i++) {
+	//	femMesh->setPinnedNode(i, femMesh->nodes[i]->getWorldPosition());
+	//}
+
 
 	showGroundPlane = false;
 
@@ -60,17 +45,20 @@ BenderApp::BenderApp()
 
 }
 
-BenderApp::~BenderApp(void){
+BenderApp::~BenderApp()
+{
 }
 
 //triggered when mouse moves
 bool BenderApp::onMouseMoveEvent(double xPos, double yPos) {
-	lastClickedRay = getRayFromScreenCoords(xPos, yPos);
+	//lastClickedRay = getRayFromScreenCoords(xPos, yPos);
 
+	lastMovedRay = currentRay;
 	currentRay = getRayFromScreenCoords(xPos, yPos);
+	
+
 	if (selectedNodeID != -1){
-		int selectedMountID = getMountId(selectedNodeID);
-		std::cout << "node belongs to mount " << selectedMountID << std::endl;
+		int selectedMountID = selected_mount;
 		if (selectedMountID < 0) {
 			//Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
 			//P3D targetPinPos; 
@@ -80,14 +68,18 @@ bool BenderApp::onMouseMoveEvent(double xPos, double yPos) {
 		}
 		else {
 			Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
-			P3D targetPos; 
-			getRayFromScreenCoords(xPos,yPos).getDistanceToPlane(plane,&targetPos);
-			V3D delta = targetPos - mounts[selectedMountID].getTargetPosition(selectedNodeID);
-			mounts[selectedMountID].shift(delta);
-			updateMountEnergy();
+			P3D targetPos;
+			P3D lastPos;
+			currentRay.getDistanceToPlane(plane,&targetPos);
+			lastMovedRay.getDistanceToPlane(plane, &lastPos);
+			V3D delta = targetPos - lastPos;
+			//V3D delta = targetPos - femMesh->nodes[selectedNodeID]->getWorldPosition();
+			dynamic_cast<RotationMount*>(femMesh->mounts[selectedMountID])->shift(delta);
+			//updateMountEnergy();
 			return true;
 		}
 	}
+	
 	else if (GLApplication::onMouseMoveEvent(xPos, yPos) == true) return true;
 	return false;
 }
@@ -99,17 +91,18 @@ bool BenderApp::onMouseButtonEvent(int button, int action, int mods, double xPos
 	if (button == GLFW_MOUSE_BUTTON_RIGHT) {
 		if (action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
 			femMesh->removePinnedNodeConstraints();
-			for (Mount & m : mounts) {
-				m.clear();
+			for (Mount * m : femMesh->mounts) {
+				m->reset();
 			}
 		}
 	}
 
 	if (button == GLFW_MOUSE_BUTTON_LEFT){
+		lastClickedRay = lastMovedRay;
 		if (action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
 			int selectedNodeID_temp = femMesh->getSelectedNodeID(lastClickedRay);
 			if (selectedNodeID_temp >= 0) {
-				if (selected_mount >= 0 && selected_mount <= 9) {
+				if (selected_mount >= 0 && selected_mount <= 2) {
 					addMountedNode(selected_mount,selectedNodeID_temp);
 				}
 				return true;
@@ -142,13 +135,12 @@ bool BenderApp::onMouseButtonEvent(int button, int action, int mods, double xPos
 //triggered when using the mouse wheel
 bool BenderApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	
-	if (selected_mount > 0) {
+	if (selected_mount >= 0) {
 		std::cout << "Offsets: " << xOffset << " " << yOffset << std::endl;
 		Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
 		P3D origin; 
-		lastClickedRay.getDistanceToPlane(plane,&origin);
-		mounts[selected_mount].rotate2D(origin, yOffset * 0.05);
-		updateMountEnergy();
+		currentRay.getDistanceToPlane(plane,&origin);
+		dynamic_cast<RotationMount*>(femMesh->mounts[selected_mount])->rotate(origin, yOffset * 0.05);
 		return(true);
 	}
 	
@@ -167,7 +159,7 @@ bool BenderApp::onKeyEvent(int key, int action, int mods) {
 bool BenderApp::onCharacterPressedEvent(int key, int mods) {
 #ifdef EDIT_BOUNDARY_CONDITIONS
 	if (!mods) {
-		if (key >= '0' && key <= '9') {
+		if (key >= '0' && key <= '1') {
 			int mount_id = key - '0';
 			selected_mount = mount_id;
 			std::cout << "selected mount: " << selected_mount << std::endl;
@@ -192,14 +184,16 @@ void BenderApp::loadFile(const char* fName) {
 	std::string fNameExt = fileName.substr(fileName.find_last_of('.') + 1);
 	if (fNameExt == "tri2d") {
 		delete femMesh;
-		femMesh = new CSTSimulationMesh2D;
+		femMesh = new BenderSimulationMesh2D;
 		femMesh->readMeshFromFile(fName);
 		Logger::consolePrint("...Done!");
 	} else if (fNameExt == "obj") {
-		delete femMesh;
-		femMesh = new CSTSimulationMesh3D;
-		femMesh->readMeshFromFile(fName);
-		Logger::consolePrint("...Done!");
+		std::cerr << "Error: functionality not implemented. (" << __FILE__ << ":" << __LINE__ << ")" << std::endl;
+		exit(1);
+		//delete femMesh;
+		//femMesh = new CSTSimulationMesh3D;
+		//femMesh->readMeshFromFile(fName);
+		//Logger::consolePrint("...Done!");
 	} else {
 		Logger::consolePrint("...but how to do with that?");
 	}
@@ -223,40 +217,43 @@ void BenderApp::process() {
 	double maxRunningTime = 1.0 / desiredFrameRate;
 	femMesh->checkDerivatives = checkDerivatives != 0;
 
-	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
-	while (simulationTime < 1.0 * maxRunningTime) {
-        //femMesh->checkDerivatives = true;
-//		shearModulus = MAX(1, shearModulus);
-//		bulkModulus = MAX(1, bulkModulus);
-//		if (autoUpdateShearModulusAndBulkModulus)
-//			femMesh->setShearModulusAndBulkModulus(shearModulus, bulkModulus);
-		simulationTime += simTimeStep;
+
+	auto solve_mesh = [&] ()
+	{
 		if (computeStaticSolution)
 			femMesh->solve_statics();
 		else {
-
-#ifdef CONSTRAINED_DYNAMICS_DEMO
-//figure out a constraint force here...
-			V3D f_orig = femMesh->nodes[0]->getExternalForce();
-			V3D x = femMesh->nodes[0]->getWorldPosition();
-			V3D xDot = femMesh->nodes[0]->getVelocity();
-			double m = 1.0;
-
-			double C = 0.5 * (x.dot(x) - 1);
-			double CDot = x.dot(xDot);
-
-			double lambda = -f_orig.dot(x) - xDot.dot(xDot) - 50 * C - 5 * CDot;
-			lambda /= x.dot(x);
-			V3D fConstraint = x * lambda;
-
-
-			femMesh->nodes[0]->setCoordinates(P3D() + fConstraint + f_orig, femMesh->f_ext);
 			femMesh->solve_dynamics(simTimeStep);
-			femMesh->nodes[0]->setCoordinates(P3D() + f_orig, femMesh->f_ext);
-#else
-			femMesh->solve_dynamics(simTimeStep);
-#endif
-//			femMesh->fakeContactWithPlane(Plane(P3D(0, 0, 0), V3D(0, 1, 0)));
+		}
+	};
+
+
+
+	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
+	while (simulationTime < 1.0 * maxRunningTime) {
+
+		simulationTime += simTimeStep;
+
+		if(optimizeObjective) {
+			
+			// assume: mesh has already been solved before
+
+			// compute dO/dxi	[n_par x 1]
+			// (TODO)
+
+			// compute gamma with linesearch	[scalar]
+			// (TODO)
+
+			// update xi
+			// (TODO) xi = xi - gamma * dO/dxi
+
+			// push xi (to mounts)
+			// (TODO)
+
+			solve_mesh();
+		}
+		else {
+			solve_mesh();
 		}
 	}
 }
@@ -287,14 +284,14 @@ void BenderApp::restart() {
 
 void BenderApp::addMountedNode(int mount_id, int node_id)
 {
-	for (Mount & m : mounts) {
-		m.unassignPinnedNode(node_id);
+	femMesh->setMountedNode(node_id, femMesh->nodes[node_id]->getWorldPosition(), mount_id);
+	std::cout << "pinned nodes are: ";
+	for(BaseEnergyUnit* np : femMesh->pinnedNodeElements) {
+		std::cout << dynamic_cast<MountedPointSpring2D*>(np)->node->nodeIndex << " ";
 	}
-
-	mounts[mount_id].assignPinnedNode(node_id, femMesh->nodes[node_id]->getWorldPosition());
-	updateMountEnergy();
+	std::cout << std::endl;
 }
-
+/*
 void BenderApp::updateMountEnergy()
 {
 	for (Mount & m : mounts) {
@@ -315,6 +312,7 @@ int BenderApp::getMountId(int node_id)
 	}
 	return(-1);
 }
+*/
 
 bool BenderApp::processCommandLine(const std::string& cmdLine) {
 
