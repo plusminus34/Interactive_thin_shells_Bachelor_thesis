@@ -18,7 +18,9 @@ public:
 
 	void setMountedNode(int nodeID, const P3D & x0, int mountID);
 
-	double computeO(double & o);
+	double computeO();
+	double computeOofx(dVector const & x_in);
+
 	void computeDoDx(dVector & dodx);
 
 };

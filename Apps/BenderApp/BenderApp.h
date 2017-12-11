@@ -16,20 +16,18 @@ class BenderApp : public GLApplication {
 private:
 	BenderSimulationMesh2D* femMesh;
 	
-	std::vector<double> xi;
+	dVector xi;
 
 	dVector dOdxi;
 	dVector dOdx;
 	std::vector<dVector> deltaFdeltaxi;
 	std::vector<dVector> deltaxdeltaxi;
 
-	
-
-	//std::array<Mount*, 2> mounts;
 	int selected_mount = -1;
 
+
 	// state of the app
-	bool computeStaticSolution = false;
+	bool computeStaticSolution = true;
 	bool optimizeObjective = false;
 
 	bool checkDerivatives = false;
@@ -64,6 +62,7 @@ public:
 
 	// optimization process
 	void computeDoDxi(dVector & dodxi);
+	double peekOofXi(dVector const & xi_in);
 
 	void pullXi();
 	void pushXi();

@@ -30,12 +30,15 @@ BenderApp::BenderApp()
 	femMesh->readMeshFromFile("../data/FEM/2d/triMeshTMP.tri2d");
 	femMesh->addGravityForces(V3D(0, -9.8, 0));
 
+	// initialize the parameter vector
+	pullXi();
 
-	//set some boundary conditions...
-	//for (int i = 0; i < nCols;i++) {
-	//	femMesh->setPinnedNode(i, femMesh->nodes[i]->getWorldPosition());
-	//}
 
+	//set two mounts with pins
+	for (int i = 0; i < nCols;i++) {
+		addMountedNode(i, 0);
+		addMountedNode((nRows-1)*nCols + i, 1);
+	}
 
 	showGroundPlane = false;
 
@@ -230,27 +233,63 @@ void BenderApp::process() {
 	};
 
 
-
 	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
 	while (simulationTime < 1.0 * maxRunningTime) {
 
 		simulationTime += simTimeStep;
 
 		if(optimizeObjective) {
-			
-			// assume: mesh has already been solved before
 
 			// compute dO/dxi	[n_par x 1]
 			computeDoDxi(dOdxi);
 
 			// compute gamma with linesearch	[scalar]
 			// (TODO)
+			double gamma;
+			{
+				auto O_formal = [&] (dVector const & xi) {
+					return peekOofXi(xi);
+				};
+
+				auto f = [&] (dVector const & xi) {
+					return(O_formal(xi));
+				};
+
+				
+				double gamma_start = 1.0;
+				int maxIter = 10;
+
+
+				//double gamma_old = gamma_start;
+				double gamma_test = gamma_start;
+				dVector xi_old = xi;
+				double f_init = femMesh->computeO();
+				dVector search_direction = dOdxi;
+
+				dVector xi_new;
+				dVector xi_test;
+
+				for(int j = 0; j < maxIter; ++j) {
+					xi_test = xi_old - gamma_test * search_direction;
+					double f_new = f(xi_test);
+
+					if(!isfinite(f_new)) {
+						gamma_test /= 2.0;
+					}
+					else if(f_new > f_init && j <= maxIter) {
+						gamma_test /= 2.0;
+					}
+					else {
+						break;
+					}
+				}
+				gamma = gamma_test;
+			}
 
 			// update xi
 			// (TODO) xi = xi - gamma * dO/dxi
-
-			// push xi (to mounts)
-			// (TODO)
+			xi = xi - gamma * dOdxi;
+			pushXi();
 
 			solve_mesh();
 		}
@@ -264,19 +303,40 @@ void BenderApp::process() {
 
 void BenderApp::pullXi()
 {
+	/*
 	xi.resize(0);
 	for(Mount const * m: femMesh->mounts) {
 		xi.insert(xi.end(), m->parameters.begin(), m->parameters.end());
+	}
+	*/
+	int n_parameters = 0;
+	for(Mount const * m: femMesh->mounts) {
+		n_parameters += m->parameters.size();
+	}
+	xi.resize(n_parameters);
+	int i = 0;
+	for(Mount const * m: femMesh->mounts) {
+		for(double p : m->parameters) {
+			xi[i++] = p;
+		}
 	}
 }
 
 void BenderApp::pushXi()
 {
+	/*
 	int i = 0;
 	for(Mount const * m: femMesh->mounts) {
 		int n_par = m->parameters.size();
 		std::copy(xi.begin()+i; xi.begin()+i+n_par, m->parameters.begin());
 		i += n_par;
+	}
+	*/
+	int i = 0;
+	for(Mount * m: femMesh->mounts) {
+		for(double & p : m->parameters) {
+			p = xi[i++];
+		}
 	}
 }
 
@@ -324,6 +384,36 @@ void BenderApp::computeDoDxi(dVector & dodxi)
 }
 
 
+
+double BenderApp::peekOofXi(dVector const & xi_in) {
+
+	// store the current state of the mesh
+	dVector x_temp = femMesh->x;
+	dVector v_temp = femMesh->v;
+	//dVector m_temp = femMesh->m;
+	dVector f_ext_temp = femMesh->f_ext;
+	dVector xSolver_temp = femMesh->xSolver;
+
+	// store curent parameters xi
+	dVector xi_temp = xi;
+
+	// new parameters
+	xi = xi_in;
+	pushXi();
+	femMesh->solve_statics();
+	double O = femMesh->computeO();
+
+	// set mesh to old state
+	xi = xi_temp;
+	pushXi();
+	femMesh->x = x_temp;
+	femMesh->v = v_temp;
+	//femMesh->m = m_temp;
+	femMesh->f_ext = f_ext_temp;
+	femMesh->xSolver = xSolver_temp;
+
+	return(o);
+}
 
 
 

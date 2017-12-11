@@ -28,7 +28,7 @@ void BenderSimulationMesh2D::setMountedNode(int nodeID, const P3D & x0, int moun
 
 
 
-double BenderSimulationMesh2D::computeO(double & o)
+double BenderSimulationMesh2D::computeO()
 {
 	double o = 0;
 	for(MeshObjective const * obj : objectives)
@@ -37,6 +37,16 @@ double BenderSimulationMesh2D::computeO(double & o)
 	}
 	return(o);
 }
+
+double BenderSimulationMesh2D::computeOofx(dVector const & x_in) {
+	double o = 0;
+	for(MeshObjective const * obj : objectives)
+	{
+		obj->addO(x_in, X, o);
+	}
+	return(o);
+}
+
 
 
 void BenderSimulationMesh2D::computeDoDx(dVector & dodx)
