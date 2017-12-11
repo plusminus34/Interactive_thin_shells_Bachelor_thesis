@@ -22,8 +22,7 @@ private:
 	//the energy function operates on a motion plan...
 	LocomotionEngineMotionPlan* theMotionPlan;
 
-	std::shared_ptr<SoftUnilateralConstraint> constraintLowerBound;
-	std::shared_ptr<SoftUnilateralUpperConstraint> constraintUpperBound;
+	std::shared_ptr<SoftSymmetricBarrierConstraint> constraintSymmetricBound;
 
 	int startQIndex, endQIndex;
 };

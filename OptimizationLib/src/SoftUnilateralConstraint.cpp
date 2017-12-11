@@ -54,6 +54,8 @@ double SoftUnilateralConstraint::computeSecondDerivative(double x) {
 	return 0;
 }
 
+
+
 SoftUnilateralUpperConstraint::SoftUnilateralUpperConstraint(double l, double stiffness, double epsilon){
 	this->limit = l;
 	this->epsilon = epsilon;
@@ -135,4 +137,41 @@ double SmoothBarrierConstraint::computeSecondDerivative(double x) {
 	if (x < 0.00001) x = 0.00001; x /= epsilon;
 	if (x > 1) return 0;
 	return 2 / ((x)*(x)*(x));
+}
+
+SoftSymmetricBarrierConstraint::SoftSymmetricBarrierConstraint(double limit, double stiffness)
+{
+	this->limit = limit;
+	this->stiffness = stiffness;
+}
+
+SoftSymmetricBarrierConstraint::~SoftSymmetricBarrierConstraint() {}
+
+double SoftSymmetricBarrierConstraint::computeValue(double x)
+{
+	double xx = fabs(x) - limit;
+	if (xx < 0)
+		return 0;
+	else
+		return stiffness*xx*xx;
+}
+
+double SoftSymmetricBarrierConstraint::computeDerivative(double x)
+{
+	double xx = fabs(x) - limit;
+	if (xx < 0)    // |x|<limit
+		return 0;
+	else if (x>0)  // x>limit
+		return 2 * stiffness*xx;
+	else           // x<-limit
+		return -2 * stiffness*xx;
+}
+
+double SoftSymmetricBarrierConstraint::computeSecondDerivative(double x)
+{
+	double xx = fabs(x) - limit;
+	if (xx < 0)
+		return 0;
+	else
+		return 2 * stiffness;
 }
