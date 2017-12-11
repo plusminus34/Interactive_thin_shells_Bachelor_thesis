@@ -18,7 +18,7 @@ MOPTWindow::MOPTWindow(int x, int y, int w, int h, GLApplication* glApp) : GLWin
 
 void MOPTWindow::addMenuItems() {
 /*
-	auto tmp = new nanogui::Label(glApp->mainMenu->window(), "Popup buttons", "sans-bold");
+	auto tmp = new nanoFui::Label(glApp->mainMenu->window(), "Popup buttons", "sans-bold");
 	glApp->mainMenu->addWidget("", tmp);
 
 	nanogui::PopupButton *popupBtn = new nanogui::PopupButton(glApp->mainMenu->window(), "Popup", ENTYPO_ICON_EXPORT);
@@ -361,7 +361,7 @@ void MOPTWindow::CreateEnergyMenu()
 
 	Widget *panel = new Widget(glApp->mainMenu->window());
 	GridLayout *layout =
-		new GridLayout(Orientation::Horizontal, 4,
+		new GridLayout(Orientation::Horizontal, 5,
 			Alignment::Middle);
 	layout->setColAlignment(
 	{ Alignment::Maximum, Alignment::Fill });
@@ -377,6 +377,9 @@ void MOPTWindow::CreateEnergyMenu()
 	{
 		double value = 0;
 		new Label(panel, locomotionManager->energyFunction->objectives[i]->description , "sans-bold");
+		CheckBox *chkBox = new CheckBox(panel,"");
+		chkBox->setChecked(locomotionManager->energyFunction->objectives[i]->isActive);
+		chkBox->setCallback([this, i](bool value){locomotionManager->energyFunction->objectives[i]->isActive = value; });
 		Slider *slider = new Slider(panel);
 		slider->setValue(0);
 		slider->setRange({ 0.0,1.0 });
@@ -394,8 +397,7 @@ void MOPTWindow::CreateEnergyMenu()
 		textBox->setFixedHeight(18);
 		textBox->setEditable(true);
 		textBox->setValue(locomotionManager->energyFunction->objectives[i]->weight);
-		textBox->setCallback([this, i](double value)
-			{locomotionManager->energyFunction->objectives[i]->weight=value; });
+		textBox->setCallback([this, i](double value){locomotionManager->energyFunction->objectives[i]->weight=value; });
 		weightTextboxes[i] = textBox;
 	}
 	energyMenu->setVisible(false);

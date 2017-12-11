@@ -30,6 +30,7 @@ public:
 	dVector bestSolutionYet;
 
 	double weight = 1.0;
+	bool isActive = true;
 	std::string description;
 };
 
