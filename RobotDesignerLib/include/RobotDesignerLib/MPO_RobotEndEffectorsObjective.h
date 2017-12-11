@@ -17,7 +17,7 @@ public:
 
 private:
 	template<class T>
-	T computeEnergy(const Vector3T<T> &eePos, const Vector3T<T> &rho,
+	T computeEnergyWheel(const Vector3T<T> &eePos, const Vector3T<T> &rho,
 					const Vector3T<T> &yawAxis, T yawAngle,
 					const Vector3T<T> &tiltAxis, T tiltAngle,
 					const Vector3T<T> &eePosLocal, const VectorXT<T> &q_t, const RigidBody *rb) const {
@@ -35,6 +35,18 @@ private:
 
 		Vector3T<T> err;
 		err = robotEEPos - eePos - rhoRot;
+		T error = (T)0.5 * err.squaredNorm() * (T)weight;
+		return error;
+	}
+
+	template<class T>
+	T computeEnergyFoot(const Vector3T<T> &eePos, const Vector3T<T> &eePosLocal, const VectorXT<T> &q_t, const RigidBody *rb) const {
+
+		// end effector position according to robot pose (/robot state)
+		Vector3T<T> robotEEPos = theMotionPlan->robotRepresentation->getWorldCoordinatesForT(eePosLocal, rb, q_t);
+
+		Vector3T<T> err;
+		err = robotEEPos - eePos;
 		T error = (T)0.5 * err.squaredNorm() * (T)weight;
 		return error;
 	}

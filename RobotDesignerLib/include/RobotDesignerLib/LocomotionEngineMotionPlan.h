@@ -23,6 +23,7 @@ public:
 	DynamicArray<double> verticalGRFUpperBoundValues;
 	DynamicArray<double> tangentGRFBoundValues;
 
+	bool isWheel = false;
 	double wheelRadius = 0.1;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
 	V3D wheelAxis;						// wheel axis in world coords.
@@ -206,6 +207,10 @@ public:
 	// TODO: clean up / consolidate nWheelParams and nWheelParamsEE
 	const static int nWheelParams = 1; // wheel speed
 	const static int nWheelParamsEE = 1; // wheel speed
+
+	int nWheels = 0;
+	std::map<int, int> wheelToEEIndex;
+	std::map<int, int> eeToWheelIndex;
 
 	//TODO: optimize contact flags too?!?
 
