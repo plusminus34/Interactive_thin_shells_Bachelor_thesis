@@ -25,3 +25,24 @@ void BenderSimulationMesh2D::setMountedNode(int nodeID, const P3D & x0, int moun
 	pinnedNodeElements.push_back(new MountedPointSpring2D(this, nodes[nodeID], rp, mounts[mountID] ));
 }
 
+
+
+double BenderSimulationMesh2D::computeO(double & o)
+{
+	double o = 0;
+	for(MeshObjective const * obj : objectives)
+	{
+		obj->addO(x, X, o);
+	}
+	return(o);
+}
+
+
+void BenderSimulationMesh2D::computeDoDx(dVector & dodx)
+{
+	dodx.resize(x.size());
+	for(MeshObjective const * obj : objectives)
+	{
+		obj->addDoDx(x, X, dodx);
+	}
+}

@@ -9,6 +9,8 @@
 #include <FEMSimLib/MassSpringSimulationMesh3D.h>
 #include <GUILib/GLUtils.h>
 
+#include <algorithm>
+
 #include "RotationMount.h"
 #include "MountedPointSpring2D.h"
 
@@ -258,6 +260,48 @@ void BenderApp::process() {
 	}
 }
 
+
+
+void BenderApp::pullXi()
+{
+	xi.resize(0);
+	for(Mount const * m: femMesh->mounts) {
+		xi.insert(xi.end(), m->parameters.begin(), m->parameters.end());
+	}
+}
+
+void BenderApp::pushXi()
+{
+	int i = 0;
+	for(Mount const * m: femMesh->mounts) {
+		int n_par = m->parameters.size();
+		std::copy(xi.begin()+i; xi.begin()+i+n_par, m->parameters.begin());
+		i += n_par;
+	}
+}
+
+
+void BenderApp::computeDoDxi(dVector & dodxi)
+{
+
+	// compute dO/dx [length(x) x 1]
+	femMesh->computeDoDx(dOdx);
+
+	// compute dF/dxi [length(x) x xi]
+	computeDeltaFDeltaXi();
+
+	// get dF/dx  [lengh(x) x length(x)]
+	
+
+	// solve dF/dx * y = dF/dxi		(y is dx/dxi)
+
+
+}
+
+
+
+
+
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
 void BenderApp::drawScene() {
 	glDisable(GL_TEXTURE_2D);
@@ -291,28 +335,7 @@ void BenderApp::addMountedNode(int mount_id, int node_id)
 	}
 	std::cout << std::endl;
 }
-/*
-void BenderApp::updateMountEnergy()
-{
-	for (Mount & m : mounts) {
-		for (size_t i = 0; i < m.node_id.size(); ++i) {
-			femMesh->setPinnedNode(m.node_id[i],m.position[i]);
-		}
-	}
-}
 
-int BenderApp::getMountId(int node_id)
-{
-	for (size_t i = 0; i < mounts.size(); ++i) {
-		for (int id : mounts[i].node_id) {
-			if (id == node_id) {
-				return(i);
-			}
-		}
-	}
-	return(-1);
-}
-*/
 
 bool BenderApp::processCommandLine(const std::string& cmdLine) {
 
@@ -320,4 +343,3 @@ bool BenderApp::processCommandLine(const std::string& cmdLine) {
 
 	return false;
 }
-

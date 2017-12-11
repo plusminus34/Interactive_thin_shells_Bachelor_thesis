@@ -15,6 +15,14 @@
 class BenderApp : public GLApplication {
 private:
 	BenderSimulationMesh2D* femMesh;
+	
+	std::vector<double> xi;
+
+	dVector dOdx;
+	std::vector<dVector> deltaFdeltaxi;
+	std::vector<dVector> deltaxdeltaxi;
+
+	
 
 	//std::array<Mount*, 2> mounts;
 	int selected_mount = -1;
@@ -50,8 +58,15 @@ public:
 
 	// add a node to a mount
 	void addMountedNode(int mount_id, int node_id);
-	void updateMountEnergy();
-	int getMountId(int node_id);
+	//void updateMountEnergy();
+	//int getMountId(int node_id);
+
+	// optimization process
+	void computeDoDxi(dVector & dodxi);
+
+	void pullXi();
+	void pushXi();
+
 
 	//input callbacks...
 
