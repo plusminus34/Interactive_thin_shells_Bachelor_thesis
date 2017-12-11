@@ -5,9 +5,10 @@
 
 BenderSimulationMesh2D::BenderSimulationMesh2D()
 {
+	int parameterStartIndex = 0;
 	for(Mount*& m : mounts) {
-		m = new RotationMount(0.0, 0.0, 0.0);
-		std::cout << "just breaking..." << std::endl;
+		m = new RotationMount(0.0, 0.0, 0.0, parameterStartIndex);
+		parameterStartIndex += 3;
 	}
 }
 

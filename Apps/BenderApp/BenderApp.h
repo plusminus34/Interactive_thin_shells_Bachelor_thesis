@@ -18,6 +18,7 @@ private:
 	
 	std::vector<double> xi;
 
+	dVector dOdxi;
 	dVector dOdx;
 	std::vector<dVector> deltaFdeltaxi;
 	std::vector<dVector> deltaxdeltaxi;

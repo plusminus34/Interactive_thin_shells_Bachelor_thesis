@@ -16,7 +16,7 @@ public:
 	virtual void addEnergyGradientTo(const dVector& x, const dVector& X, dVector& grad);
 	virtual void addEnergyHessianTo(const dVector& x, const dVector& X, std::vector<MTriplet>& hesEntries);
 
-	virtual void addDeltaFDeltaXi
+	virtual void addDeltaFDeltaXi(std::vector<dVector> & dfdxi);	// each dVector is the dF for one parameter xi
 	//virtual void draw(const dVector& x);
 
 };

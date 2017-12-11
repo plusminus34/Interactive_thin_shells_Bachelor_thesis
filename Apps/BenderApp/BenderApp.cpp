@@ -241,7 +241,7 @@ void BenderApp::process() {
 			// assume: mesh has already been solved before
 
 			// compute dO/dxi	[n_par x 1]
-			// (TODO)
+			computeDoDxi(dOdxi);
 
 			// compute gamma with linesearch	[scalar]
 			// (TODO)
@@ -283,18 +283,43 @@ void BenderApp::pushXi()
 
 void BenderApp::computeDoDxi(dVector & dodxi)
 {
+	dodxi.resize(xi.size());
 
 	// compute dO/dx [length(x) x 1]
 	femMesh->computeDoDx(dOdx);
 
 	// compute dF/dxi [length(x) x xi]
-	computeDeltaFDeltaXi();
+	deltaFdeltaxi.resize(xi.size());
+	for(int i = 0; i < femMesh->x.size(); ++i) {
+		deltaFdeltaxi[i].setZero();
+	}
+	for(BaseEnergyUnit* pin : femMesh->pinnedNodeElements) {
+		dynamic_cast<MountedPointSpring2D*>(pin)->addDeltaFDeltaXi(deltaFdeltaxi);
+	}
 
-	// get dF/dx  [lengh(x) x length(x)]
-	
+	// get dF/dx  (Hessian from FEM simulation)  [lengh(x) x length(x)]
+	SparseMatrix H(femMesh->x.size(), femMesh->x.size());
+	DynamicArray<MTriplet> hessianEntries(0);
+	femMesh->energyFunction->addHessianEntriesTo(hessianEntries, femMesh->x);
+
+	H.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
 
 	// solve dF/dx * y = dF/dxi		(y is dx/dxi)
+	Eigen::SimplicialLDLT<SparseMatrix> solver;
+	solver.compute(H);
+	if (solver.info() != Eigen::Success) {
+		std::cerr << "Eigen::SimplicialLDLT decomposition failed." << std::endl;
+		exit(1);
+	}
+	// solve for each parameter xi
+	for(int i = 0; i < xi.size(); ++i) {
+		deltaxdeltaxi[i] = solver.solve(deltaFdeltaxi[i]);
+	}
 
+	// do/dxi = do/dx * dx/dxi
+	for(int i = 0; i < xi.size(); ++i) {
+		dodxi = dOdx.transpose() * deltaxdeltaxi[i];
+	}
 
 }
 

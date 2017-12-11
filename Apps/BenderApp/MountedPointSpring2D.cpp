@@ -31,3 +31,27 @@ void MountedPointSpring2D::addEnergyHessianTo(const dVector & x, const dVector &
 	ddEdxdx << 1, 0, 0, 1;
 	addSparseMatrixDenseBlockToTriplet(hesEntries, node->dataStartIndex, node->dataStartIndex, K * ddEdxdx, true);
 }
+
+
+void MountedPointSpring2D::addDeltaFDeltaXi(std::vector<dVector> & dfdxi)
+{
+	double K = this->K;
+
+	std::vector<V3D> & dfdxi_temp;
+
+	mount->getDxDpar(targetPosition, dfdxi_temp);
+
+	for(V3D & gradi : dfdxi_temp) {
+		gradi *= K;
+	}
+
+	int xi_idx_start = mount->parametersStartIndex;
+	int data_idx_start = node->dataStartIndex;
+
+	for(int i = 0; i < dfdxi_temp.size(); ++i) {
+		for(int j = 0; j < 2; ++j) {
+			dfdxi[xi_idx_start + i][data_idx_start + j] += dfdxi_temp[i][j];
+		}
+	}
+
+}

@@ -9,6 +9,7 @@ class Mount {
 
 public:
 	std::vector<double> parameters;
+	int parametersStartIndex;	// position of parameter set in context of the global parameter set
 
 public:
 	//virtual std::vector<double> get_parameters() = 0;
