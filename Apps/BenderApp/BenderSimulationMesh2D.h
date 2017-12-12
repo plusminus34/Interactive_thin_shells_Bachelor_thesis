@@ -27,6 +27,7 @@ public:
 
 	void computeDoDx(dVector & dodx);
 
-	
+
+	void drawSimulationMesh();
 
 };

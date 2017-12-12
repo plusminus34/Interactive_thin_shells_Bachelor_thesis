@@ -14,4 +14,5 @@ public:
 
 	virtual void addO(const dVector & x, const dVector & X, double & o) const = 0;
 	virtual void addDoDx(const dVector & x, const dVector & X, dVector & dodx) const = 0;
+
 };

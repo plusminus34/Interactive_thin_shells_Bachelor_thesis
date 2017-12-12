@@ -28,7 +28,7 @@ private:
 
 	// state of the app
 	bool computeStaticSolution = true;
-	bool optimizeObjective = false;
+	bool optimizeObjective = true;
 
 	bool checkDerivatives = false;
 

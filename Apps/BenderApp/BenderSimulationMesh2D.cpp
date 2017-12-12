@@ -57,8 +57,20 @@ double BenderSimulationMesh2D::computeOofx(dVector const & x_in) {
 void BenderSimulationMesh2D::computeDoDx(dVector & dodx)
 {
 	dodx.resize(x.size());
+	dodx.setZero();
 	for(MeshObjective const * obj : objectives)
 	{
 		obj->addDoDx(x, X, dodx);
+	}
+}
+
+
+
+void BenderSimulationMesh2D::drawSimulationMesh() 
+{
+	SimulationMesh::drawSimulationMesh();
+
+	for(MeshObjective * obj : objectives) {
+		dynamic_cast<NodePositionObjective *>(obj)->draw(x);
 	}
 }

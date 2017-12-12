@@ -29,7 +29,8 @@ BenderApp::BenderApp()
 
 	femMesh = new BenderSimulationMesh2D();
 	femMesh->readMeshFromFile("../data/FEM/2d/triMeshTMP.tri2d");
-	femMesh->addGravityForces(V3D(0, -9.8, 0));
+	//femMesh->addGravityForces(V3D(0, -9.8, 0));
+	femMesh->addGravityForces(V3D(0, 0, 0));
 
 	// initialize the parameter vector
 	pullXi();
@@ -44,20 +45,22 @@ BenderApp::BenderApp()
 	{
 		auto curve_normalized = [](double z) -> double 
 		{
-			return(0);
+			return(std::sin(z*PI));
 		};
 
 		auto curve = [curve_normalized](double z, double lb, double ub) -> double
 		{
-			return(curve_normalized((z-lb)/(ub-lb)));
+			return(curve_normalized((z-lb)/(ub-lb)) * (ub-lb));
 		};
 
-		double lb = femMesh->nodes[0*nCols + 0]->getWorldPosition().at(1);
-		double ub = femMesh->nodes[(nRows-1)*nCols + 0]->getWorldPosition().at(1);
+		double lb = femMesh->nodes[0*nCols + 0]->getWorldPosition().at(0);
+		double ub = femMesh->nodes[(nRows-1)*nCols + 0]->getWorldPosition().at(0);
 		for(int i = 0; i < nRows; ++i) {
 			int id = i*nCols + 0;
 			P3D pt = femMesh->nodes[id]->getWorldPosition();
-			V3D d(0, curve(pt.at(1), lb, ub) ,0);
+			V3D d(-pt.at(0)*0.2, curve(pt.at(0), lb, ub)*0.2 , 0);
+			//V3D d(0, curve(pt.at(0), lb, ub)*0.2 , 0);
+			//V3D d(0, 0.2 , 0);
 			femMesh->setNodePositionObjective(id, pt + d);
 		}
 	}
@@ -373,7 +376,8 @@ void BenderApp::computeDoDxi(dVector & dodxi)
 
 	// compute dF/dxi [length(x) x xi]
 	deltaFdeltaxi.resize(xi.size());
-	for(int i = 0; i < femMesh->x.size(); ++i) {
+	for(int i = 0; i < xi.size(); ++i) {
+		deltaFdeltaxi[i].resize(femMesh->x.size());
 		deltaFdeltaxi[i].setZero();
 	}
 	for(BaseEnergyUnit* pin : femMesh->pinnedNodeElements) {
@@ -386,22 +390,24 @@ void BenderApp::computeDoDxi(dVector & dodxi)
 	femMesh->energyFunction->addHessianEntriesTo(hessianEntries, femMesh->x);
 
 	H.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
-
+	
 	// solve dF/dx * y = dF/dxi		(y is dx/dxi)
 	Eigen::SimplicialLDLT<SparseMatrix> solver;
+	H *= -1.0;
 	solver.compute(H);
 	if (solver.info() != Eigen::Success) {
 		std::cerr << "Eigen::SimplicialLDLT decomposition failed." << std::endl;
 		exit(1);
 	}
 	// solve for each parameter xi
+	deltaxdeltaxi.resize(xi.size());
 	for(int i = 0; i < xi.size(); ++i) {
 		deltaxdeltaxi[i] = solver.solve(deltaFdeltaxi[i]);
 	}
 
 	// do/dxi = do/dx * dx/dxi
 	for(int i = 0; i < xi.size(); ++i) {
-		dodxi = dOdx.transpose() * deltaxdeltaxi[i];
+		dodxi[i] = dOdx.transpose() * deltaxdeltaxi[i];
 	}
 
 }
