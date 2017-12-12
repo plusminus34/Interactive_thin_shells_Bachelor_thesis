@@ -409,6 +409,9 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 				// contact point to ground
 				Vector3d rho = endEffectorTrajectories[index].wheelTiltAxis.cross(endEffectorTrajectories[index].wheelAxis);
 				rho = rho.normalized() * endEffectorTrajectories[index].wheelRadius;
+
+				// output some info
+				Logger::consolePrint("Wheel radius %d: %f", index, endEffectorTrajectories[index].wheelRadius);
 			}
 			else if(rbEndEffector.isWeldedWheel())
 				Logger::consolePrint("Warning: Welded wheels have not been tested!");

@@ -117,6 +117,20 @@ RobotDesignerApp::RobotDesignerApp(){
 	mainMenu->addGroup("Sim Options");
 	simWindow->addMenuItems();
 
+	{
+		nanogui::Button *mpaButton = mainMenu->addButton("Motion Plan Analysis",[](){});
+		mpaButton->setFlags(nanogui::Button::Flags::ToggleButton);
+		mpaButton->setChangeCallback([this](bool state){
+
+			if(state){
+				if(!motionPlanAnalysis)
+					motionPlanAnalysis = new MotionPlanAnalysis(moptWindow->locomotionManager->motionPlan, menuScreen);
+			}
+			motionPlanAnalysis->window->setVisible(state);
+			menuScreen->performLayout();
+		});
+	}
+
 	showGroundPlane = false;
 	bgColor[0] = bgColor[1] = bgColor[2] = 0.75;
 
