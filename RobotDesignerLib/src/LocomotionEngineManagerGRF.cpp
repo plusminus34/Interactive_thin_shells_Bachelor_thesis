@@ -6,6 +6,7 @@
 #include <RobotDesignerLib/MPO_EEPosSwingObjective.h>
 #include <RobotDesignerLib/MPO_RobotWheelAxisObjective.h>
 #include <RobotDesignerLib/MPO_StartVelocityConstraint.h>
+#include <RobotDesignerLib/MPO_VelocityL0Regularization.h>
 
 //#define DEBUG_WARMSTART
 //#define CHECK_DERIVATIVES_AFTER_WARMSTART
@@ -350,8 +351,8 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->objectives.push_back(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0));
 	ef->objectives.push_back(new MPO_WheelGroundObjective(ef->theMotionPlan, "wheel ground objective", 10000.0));
 
-	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 0, 10000.0));
-	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "end velocity zero objective", ef->theMotionPlan->nSamplePoints-2, 10000.0));
+	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 0, 10000.0)); ef->objectives.back()->isActive = false;
+	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "end velocity zero objective", ef->theMotionPlan->nSamplePoints-2, 10000.0)); ef->objectives.back()->isActive = false;
 //	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 1, 10000.0));
 
 	// constraint ensuring the y component of the EE position follows the swing motion
@@ -384,6 +385,8 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->objectives.push_back(new MPO_NonLimbSmoothMotionObjective(ef->theMotionPlan, "robot smooth joint angles objective (non-limb)", 0.01));
 
 	ef->objectives.push_back(new MPO_SmoothCOMTrajectories(ef->theMotionPlan, "smoothCOM", 50));
+
+	ef->objectives.push_back(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization", 1, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1)); ef->objectives.back()->isActive = false;
 }
 
 LocomotionEngineManagerGRFv2::~LocomotionEngineManagerGRFv2(){

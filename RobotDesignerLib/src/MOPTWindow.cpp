@@ -101,6 +101,10 @@ void MOPTWindow::addMenuItems() {
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
 	}
 	{
+		auto tmpVar = glApp->mainMenu->addVariable("joint velocity L0 delta", moptParams.jointL0Delta);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
 		glApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
 	}
 
@@ -192,6 +196,8 @@ void MOPTWindow::syncMOPTWindowParameters() {
 
 	moptParams.jointVelocityLimit = locomotionManager->motionPlan->jointVelocityLimit;
 	moptParams.jointVelocityEpsilon = locomotionManager->motionPlan->jointVelocityEpsilon;
+
+	moptParams.jointVelocityEpsilon = locomotionManager->motionPlan->jointL0Delta;
 
 	moptParams.wheelSpeedLimit = locomotionManager->motionPlan->wheelSpeedLimit;
 	moptParams.wheelSpeedEpsilon = locomotionManager->motionPlan->wheelSpeedEpsilon;

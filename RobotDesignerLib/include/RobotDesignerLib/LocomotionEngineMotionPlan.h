@@ -193,6 +193,9 @@ public:
 	double wheelAccelLimit = 0;
 	double wheelAccelEpsilon = 1.0;		// for SoftUnilateralConstraint
 
+	//	parameters for L0 optimization
+	double jointL0Delta = 1;
+
 public:
 	bool optimizeCOMPositions;
 	bool optimizeCOMOrientations;

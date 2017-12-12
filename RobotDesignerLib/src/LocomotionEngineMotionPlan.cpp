@@ -378,7 +378,7 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 			// is end effector a wheel?
 			const RBProperties &rbProperties = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties;
 			const RBEndEffector &rbEndEffector = rbProperties.endEffectorPoints[j];
-
+			endEffectorTrajectories[index].isWheel = rbEndEffector.isWheel();
 			if(rbEndEffector.isWheel())
 			{
 				if(!rbEndEffector.isActiveWheel())
