@@ -70,6 +70,7 @@ BenderApp::BenderApp()
 
 	mainMenu->addGroup("FEM Sim options");
 	mainMenu->addVariable("Static solve", computeStaticSolution);
+	mainMenu->addVariable("Optimize Objective", optimizeObjective);
 	mainMenu->addVariable("Check derivatives", checkDerivatives);
 	menuScreen->performLayout();
 

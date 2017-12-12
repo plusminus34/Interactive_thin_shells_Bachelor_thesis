@@ -1,3 +1,5 @@
+#include <GUILib/GLUtils.h>
+
 #include "MountedPointSpring2D.h"
 
 
@@ -55,3 +57,21 @@ void MountedPointSpring2D::addDeltaFDeltaXi(std::vector<dVector> & dfdxi)
 	}
 
 }
+
+
+
+void MountedPointSpring2D::draw(const dVector& x) {
+	// draw line to current position
+	glColor3d(1, 0, 0);
+	P3D pi =(node->getCoordinates(x));
+	P3D pj = mount->getTransformedX(targetPosition);
+	glBegin(GL_LINES);
+	glVertex3d(pi[0], pi[1], 0);
+	glVertex3d(pj[0], pj[1], 0);
+	glEnd();
+	// draw node
+	glColor3d(0.6, 0, 1);
+	drawSphere(node->getWorldPosition(), 0.008);
+
+}
+
