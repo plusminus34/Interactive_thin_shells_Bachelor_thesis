@@ -378,12 +378,9 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 			// is end effector a wheel?
 			const RBProperties &rbProperties = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties;
 			const RBEndEffector &rbEndEffector = rbProperties.endEffectorPoints[j];
-			endEffectorTrajectories[index].isWheel = rbEndEffector.isWheel();
-			if(rbEndEffector.isWheel())
-			{
-				if(!rbEndEffector.isActiveWheel())
-					Logger::consolePrint("Warning: Currently only active wheels are supported!");
 
+			if(rbEndEffector.isActiveWheel())
+			{
 				wheelToEEIndex[nWheels] = index;
 				eeToWheelIndex[index] = nWheels;
 				nWheels++;
@@ -413,6 +410,11 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 				Vector3d rho = endEffectorTrajectories[index].wheelTiltAxis.cross(endEffectorTrajectories[index].wheelAxis);
 				rho = rho.normalized() * endEffectorTrajectories[index].wheelRadius;
 			}
+			else if(rbEndEffector.isWeldedWheel())
+				Logger::consolePrint("Warning: Welded wheels have not been tested!");
+			else if(rbEndEffector.isFreeToMoveWheel())
+				Logger::consolePrint("Warning: Free-to-move wheels are not working! (yet...)");
+
 
 			for (int k=0;k<nSamplingPoints;k++){
 				endEffectorTrajectories[index].EEPos[k] = eeWorldCoords;

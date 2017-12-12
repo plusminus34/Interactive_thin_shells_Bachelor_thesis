@@ -356,7 +356,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 //	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 1, 10000.0));
 
 	// constraint ensuring the y component of the EE position follows the swing motion
-//	ef->objectives.push_back(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0));
+	ef->objectives.push_back(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0));
 
 	//periodic boundary constraints...
 	if (ef->theMotionPlan->wrapAroundBoundaryIndex >= 0) {
