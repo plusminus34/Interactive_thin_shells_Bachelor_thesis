@@ -56,7 +56,7 @@ public:
 	virtual void restart();
 
 	// add a node to a mount
-	void addMountedNode(int mount_id, int node_id);
+	void addMountedNode(int node_id, int mount_id);
 	//void updateMountEnergy();
 	//int getMountId(int node_id);
 

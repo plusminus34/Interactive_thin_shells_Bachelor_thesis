@@ -37,7 +37,7 @@ void MountedPointSpring2D::addDeltaFDeltaXi(std::vector<dVector> & dfdxi)
 {
 	double K = this->K;
 
-	std::vector<V3D> & dfdxi_temp;
+	std::vector<V3D> dfdxi_temp;
 
 	mount->getDxDpar(targetPosition, dfdxi_temp);
 

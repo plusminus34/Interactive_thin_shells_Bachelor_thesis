@@ -1,9 +1,11 @@
+#pragma once
 
 #include <array>
 
 #include "FEMSimLib/CSTSimulationMesh2D.h"
 #include "Mount.h"
 #include "MeshObjective.h"
+#include "NodePositionObjective.h"
 
 
 class BenderSimulationMesh2D : public CSTSimulationMesh2D {
@@ -16,11 +18,15 @@ public:
 	BenderSimulationMesh2D();
 	~BenderSimulationMesh2D();
 
+	// mesh manipulation
 	void setMountedNode(int nodeID, const P3D & x0, int mountID);
+	void setNodePositionObjective(int nodeID, const P3D & x0);
 
 	double computeO();
 	double computeOofx(dVector const & x_in);
 
 	void computeDoDx(dVector & dodx);
+
+	
 
 };

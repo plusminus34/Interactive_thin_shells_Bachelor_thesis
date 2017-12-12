@@ -26,6 +26,11 @@ void BenderSimulationMesh2D::setMountedNode(int nodeID, const P3D & x0, int moun
 	pinnedNodeElements.push_back(new MountedPointSpring2D(this, nodes[nodeID], rp, mounts[mountID] ));
 }
 
+void BenderSimulationMesh2D::setNodePositionObjective(int nodeID, const P3D & x0) 
+{
+	objectives.push_back(new NodePositionObjective(nodes[nodeID], x0));
+}
+
 
 
 double BenderSimulationMesh2D::computeO()

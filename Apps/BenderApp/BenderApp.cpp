@@ -10,6 +10,7 @@
 #include <GUILib/GLUtils.h>
 
 #include <algorithm>
+#include <cmath>
 
 #include "RotationMount.h"
 #include "MountedPointSpring2D.h"
@@ -33,12 +34,34 @@ BenderApp::BenderApp()
 	// initialize the parameter vector
 	pullXi();
 
-
 	//set two mounts with pins
-	for (int i = 0; i < nCols;i++) {
+	for (int i = 0; i < nCols; ++i) {
 		addMountedNode(i, 0);
 		addMountedNode((nRows-1)*nCols + i, 1);
 	}
+
+	// set some curve to "uppermost" column
+	{
+		auto curve_normalized = [](double z) -> double 
+		{
+			return(0);
+		};
+
+		auto curve = [curve_normalized](double z, double lb, double ub) -> double
+		{
+			return(curve_normalized((z-lb)/(ub-lb)));
+		};
+
+		double lb = femMesh->nodes[0*nCols + 0]->getWorldPosition().at(1);
+		double ub = femMesh->nodes[(nRows-1)*nCols + 0]->getWorldPosition().at(1);
+		for(int i = 0; i < nRows; ++i) {
+			int id = i*nCols + 0;
+			P3D pt = femMesh->nodes[id]->getWorldPosition();
+			V3D d(0, curve(pt.at(1), lb, ub) ,0);
+			femMesh->setNodePositionObjective(id, pt + d);
+		}
+	}
+
 
 	showGroundPlane = false;
 
@@ -412,7 +435,7 @@ double BenderApp::peekOofXi(dVector const & xi_in) {
 	femMesh->f_ext = f_ext_temp;
 	femMesh->xSolver = xSolver_temp;
 
-	return(o);
+	return(O);
 }
 
 
@@ -441,7 +464,7 @@ void BenderApp::restart() {
 }
 
 
-void BenderApp::addMountedNode(int mount_id, int node_id)
+void BenderApp::addMountedNode(int node_id, int mount_id)
 {
 	femMesh->setMountedNode(node_id, femMesh->nodes[node_id]->getWorldPosition(), mount_id);
 	std::cout << "pinned nodes are: ";
