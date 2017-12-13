@@ -58,8 +58,8 @@ BenderApp::BenderApp()
 		for(int i = 0; i < nRows; ++i) {
 			int id = i*nCols + 0;
 			P3D pt = femMesh->nodes[id]->getWorldPosition();
-			V3D d(-pt.at(0)*0.2, curve(pt.at(0), lb, ub)*0.2 , 0);
-			//V3D d(0, curve(pt.at(0), lb, ub)*0.2 , 0);
+			//V3D d(-pt.at(0)*0.2, curve(pt.at(0), lb, ub)*0.2 , 0);
+			V3D d(0, curve(pt.at(0), lb, ub)*0.2 , 0);
 			//V3D d(0, 0.2 , 0);
 			femMesh->setNodePositionObjective(id, pt + d);
 		}
@@ -135,7 +135,7 @@ bool BenderApp::onMouseButtonEvent(int button, int action, int mods, double xPos
 			int selectedNodeID_temp = femMesh->getSelectedNodeID(lastClickedRay);
 			if (selectedNodeID_temp >= 0) {
 				if (selected_mount >= 0 && selected_mount <= 2) {
-					addMountedNode(selected_mount,selectedNodeID_temp);
+					addMountedNode(selectedNodeID_temp, selected_mount);
 				}
 				return true;
 			}
@@ -144,7 +144,7 @@ bool BenderApp::onMouseButtonEvent(int button, int action, int mods, double xPos
 			selectedNodeID = femMesh->getSelectedNodeID(lastClickedRay);
 			//if (selectedNodeID >= 0) {
 			//	if (selected_mount >= 0 && selected_mount <= 9) {
-			//		addMountedNode(selected_mount,selectedNodeID);
+			//		addMountedNode(selectedNodeID, selected_mount);
 			//	}
 			//	return true;
 			//}

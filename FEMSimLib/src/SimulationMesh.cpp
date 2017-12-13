@@ -60,13 +60,13 @@ void SimulationMesh::solve_dynamics(double dt){
 	}
 
 	double functionValue = energyFunction->computeValue(xSolver);
-	Logger::consolePrint("energy value before solve: %lf\n", functionValue);
+//	Logger::consolePrint("energy value before solve: %lf\n", functionValue);
    
 	NewtonFunctionMinimizer minimizer(3);
 	minimizer.printOutput = true;
 	minimizer.minimize(energyFunction, xSolver, functionValue);
 
-	Logger::consolePrint("energy value after solve: %lf\n", functionValue);
+//	Logger::consolePrint("energy value after solve: %lf\n", functionValue);
 
 	//update the velocity for each node now...
 	v = (xSolver - x) / dt;
@@ -76,19 +76,20 @@ void SimulationMesh::solve_dynamics(double dt){
 void SimulationMesh::solve_statics(){
 	xSolver = x;
 	energyFunction->setToStaticsMode(0.01);
+
 	if (checkDerivatives){
 		energyFunction->testGradientWithFD(xSolver);
 		energyFunction->testHessianWithFD(xSolver);
 	}
 
 	double functionValue = energyFunction->computeValue(xSolver);
-	Logger::consolePrint("energy value before solve: %lf\n", functionValue);
+//	Logger::consolePrint("energy value before solve: %lf\n", functionValue);
 
 	NewtonFunctionMinimizer minimizer(50);
-	minimizer.printOutput = true;
+	minimizer.printOutput = false;
 	minimizer.minimize(energyFunction, xSolver, functionValue);
 
-	Logger::consolePrint("energy value after solve: %lf\n", functionValue);
+//	Logger::consolePrint("energy value after solve: %lf\n", functionValue);
 
 	v.setZero();
 	x = xSolver;
