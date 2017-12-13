@@ -78,7 +78,7 @@ void MOPTWindow::addMenuItems() {
 	}
 	{
 		auto tmpVar = glApp->mainMenu->addVariable("joint velocity limit", moptParams.jointVelocityLimit);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
 	}
 	{
 		auto tmpVar = glApp->mainMenu->addVariable("joint velocity epsilon", moptParams.jointVelocityEpsilon);

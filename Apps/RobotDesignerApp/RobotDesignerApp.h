@@ -17,6 +17,7 @@
 #include <RobotDesignerLib/ParameterizedRobotDesign.h>
 #include <RobotDesignerLib/MOPTWindow.h>
 #include <RobotDesignerLib/SimWindow.h>
+#include <RobotDesignerLib/MotionPlanAnalysis.h>
 
 #ifdef USE_MATLAB
 	#define RUN_IN_MATLAB(x) x
@@ -41,6 +42,7 @@ public:
 	MOPTWindow* moptWindow = NULL;
 	SimWindow* simWindow = NULL;
 	IntelligentRobotEditingWindow* iEditWindow = NULL;
+	MotionPlanAnalysis *motionPlanAnalysis = nullptr;
 
 	bool shouldShowSimWindow();
 	bool shouldShowMOPTWindow();

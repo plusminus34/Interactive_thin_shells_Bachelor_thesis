@@ -21,5 +21,6 @@ add_subdirectory(RBSimApp)
 add_subdirectory(WheeledRobotSimApp)
 add_subdirectory(RobotDesignerApp)
 add_subdirectory(PhysicalRobotControlApp)
+add_subdirectory(PlotExampleApp)
 
 
