@@ -84,6 +84,15 @@ double LocomotionEngine_EndEffectorTrajectory::getWheelTiltAngleAt(double t) con
 	return traj.evaluate_linear(t);
 }
 
+double LocomotionEngine_EndEffectorTrajectory::getWheelSpeedAt(double t) const
+{
+	//very slow method, but easy to implement...
+	Trajectory1D traj;
+	for (uint i = 0; i<wheelSpeed.size(); i++)
+		traj.addKnot((double)i / (wheelSpeed.size() - 1), wheelSpeed[i]);
+	return traj.evaluate_linear(t);
+}
+
 double LocomotionEngine_EndEffectorTrajectory::getContactFlagAt(double t){
 	boundToRange(&t, 0, 1);
 	int tIndex = (int)(t * (double)(contactFlag.size()-1));

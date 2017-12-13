@@ -2,8 +2,7 @@
 #define MOTION_PLAN_ANALYSIS_H
 
 #include <RobotDesignerLib/LocomotionEngineMotionPlan.h>
-
-#include <nanogui/common.h>
+#include <GUILib/Plot.h>
 
 class MotionPlanAnalysis
 {
@@ -12,10 +11,13 @@ public:
 
 	~MotionPlanAnalysis();
 
-	void updateMotionPlan(const LocomotionEngineMotionPlan *motionPlan);
+	void updateFromMotionPlan(const LocomotionEngineMotionPlan *motionPlan);
 
-	const LocomotionEngineMotionPlan *motionPlan;
+	void setTimeAt(float t);
+
+//private:
 	nanogui::Window *window;
+	Plot *plot;
 };
 
 #endif // MOTION_PLAN_ANALYSIS_H

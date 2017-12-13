@@ -62,6 +62,8 @@ public:
 	PlotData &plotData(const std::string &name) { return mDataColl[name]; }
 	void setPlotData(const std::string &name, const PlotData &data);
 
+	const std::map<std::string, PlotData> &dataColl() { return mDataColl; }
+
 	// TODO: come up with better names
 	void updateMinMax();
 	const Eigen::Vector2f &dataMin() const { return mDataMin; }
