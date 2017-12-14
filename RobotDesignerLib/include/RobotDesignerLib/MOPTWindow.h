@@ -49,6 +49,8 @@ public:
 	nanogui::Graph* energyGraph;
 	std::vector<float> energyGraphValues;
 
+	nanogui::Graph* velocityProfileGraph;
+
 	MOPTParams moptParams;
 
 	Robot* robot = nullptr;
@@ -106,5 +108,6 @@ private:
 	std::vector<nanogui::FloatBox<double>*> weightTextboxes;
 	void updateSliders();
 	V3D COMSpeed;
+	nanogui::Window* velocityProfileWindow;
 };
 

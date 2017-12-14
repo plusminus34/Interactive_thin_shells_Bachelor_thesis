@@ -321,8 +321,6 @@ void MOPTWindow::drawScene() {
 	}
 	if (showWeightsAndEnergyValues)
 		updateSliders();
-
-
 }
 
 void MOPTWindow::drawAuxiliarySceneInfo(){
@@ -341,6 +339,54 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 		if (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging())
 			if (ffpViewer->onMouseMoveEvent(xPos, yPos)) return true;
 	}
+	preDraw();
+	Ray ray = getRayFromScreenCoords(xPos, yPos);
+	postDraw();
+
+	ReducedRobotState rs(robot);
+
+	Joint* joint;
+	dVector velocity;
+	double tMinJ = DBL_MAX;
+
+	int i;
+	for (i = 0; i < robot->getJointCount(); i++) {
+		P3D p;
+		double dist = ray.getDistanceToPoint(robot->getJoint(i)->getWorldPosition(), &p);
+		double tVal = ray.getRayParameterFor(p);
+		if (dist < robot->getJoint(i)->parent->abstractViewCylinderRadius * 1.2 && tVal < tMinJ) {
+			tMinJ = tVal;
+			joint = robot->getJoint(i);
+			locomotionManager->motionPlan->getJointAngleVelocityProfile(velocity, i);
+			stringstream s; s << velocity.transpose();
+			Logger::consolePrint(s.str().c_str());
+			break;
+		}
+	}
+
+
+	using namespace nanogui;
+	if (i == robot->getJointCount())
+	{
+		if (velocityProfileWindow != nullptr)
+		{
+			velocityProfileWindow->dispose();
+			velocityProfileWindow = nullptr;
+		}
+		return GLWindow3D::onMouseMoveEvent(xPos, yPos);
+	}
+	
+	if (velocityProfileWindow == nullptr)
+	{
+		velocityProfileWindow = new Window(glApp->menuScreen, "asdf");
+		velocityProfileWindow->setWidth(300);
+		velocityProfileWindow->setLayout(new GroupLayout());
+		velocityProfileGraph = velocityProfileWindow->add<Graph>("Velocity");
+	}
+	velocityProfileWindow->setPosition(Eigen::Vector2i(xPos, yPos));
+	velocityProfileGraph->setValues(velocity.cast<float>());
+	
+	glApp->menuScreen->performLayout();
 
 	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 }

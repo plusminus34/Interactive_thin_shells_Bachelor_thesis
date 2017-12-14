@@ -1259,6 +1259,34 @@ bool LocomotionEngineMotionPlan::getJointAngleVelocityProfile(std::vector<JointV
 	return true;
 }
 
+bool LocomotionEngineMotionPlan::getJointAngleVelocityProfile(dVector &velocityProfile, int jointIndex) const
+{
+	if (robotStatesParamsStartIndex < 0)
+	{
+//		error = "robotStatesParamsStartIndex < 0";
+		return false;
+	}
+	
+	int nTimeSteps = nSamplePoints;
+	if (wrapAroundBoundaryIndex >= 0) nTimeSteps--;
+	int i = jointIndex + 6;
+	velocityProfile.resize(nTimeSteps);
+	double dt = motionPlanDuration / nTimeSteps;
+
+	for (int j = 0; j < nTimeSteps; j++) {
+		int jm, jp;
+
+		getVelocityTimeIndicesFor(j, jm, jp);
+		if (jm == -1 || jp == -1) continue;
+
+		double velocity = (robotStateTrajectory.qArray[jp][i] - robotStateTrajectory.qArray[jm][i]) / dt;
+		velocityProfile(j) = velocity;
+	}
+
+	return true;
+}
+
+
 //TODO: redo motion plan animation to update state in terms of deltas, rather than the animation cycle thing?
 void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bool drawRobot, bool drawSkeleton, bool drawPlanDetails, bool drawContactForces, bool drawOrientation){
 	if (drawPlanDetails){
