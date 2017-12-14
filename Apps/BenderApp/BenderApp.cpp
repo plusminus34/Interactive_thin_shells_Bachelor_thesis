@@ -253,17 +253,22 @@ void BenderApp::process() {
 	auto solve_mesh = [&] ()
 	{
 		if (computeStaticSolution)
+		{
 			femMesh->solve_statics();
+			simulationTime += maxRunningTime + 1.0;
+		}
 		else {
 			femMesh->solve_dynamics(simTimeStep);
+			simulationTime += simTimeStep;
 		}
 	};
 
 
 	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
+	int counter = 0;
 	while (simulationTime < 1.0 * maxRunningTime) {
-
-		simulationTime += simTimeStep;
+		std::cout << "counter = " << counter++ << std::endl;
+		
 
 		if(optimizeObjective) {
 
@@ -277,9 +282,20 @@ void BenderApp::process() {
 				auto O_formal = [&] (dVector const & xi) {
 					return peekOofXi(xi);
 				};
+				auto O_approx = [&] (dVector const & xi) {
+					dVector dxi = xi - BenderApp::xi;
+					x_approx = femMesh->x;
+					for(int i = 0; i < xi.size(); ++i) {
+						for(int j = 0; j < x_approx.size(); ++j) {
+							x_approx[j] += deltaxdeltaxi[i][j] * dxi[i];	// note: deltaxdeltaxi should have been computed before within 'computeDoDx()'
+						}
+					}
+					return(femMesh->computeOofx(x_approx));
 
-				auto f = [&] (dVector const & xi) {
-					return(O_formal(xi));
+				};
+
+				auto f = [&] (dVector const & xi) { 					
+					return(O_approx(xi));
 				};
 
 				
@@ -299,6 +315,8 @@ void BenderApp::process() {
 				for(int j = 0; j < maxIter; ++j) {
 					xi_test = xi_old - gamma_test * search_direction;
 					double f_new = f(xi_test);
+
+					std::cout << "j " << j << "  o_init = " << f_init << "  o_probe = " << f_new << std::endl;
 
 					if(!isfinite(f_new)) {
 						gamma_test /= 2.0;

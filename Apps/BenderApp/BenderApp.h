@@ -23,6 +23,8 @@ private:
 	std::vector<dVector> deltaFdeltaxi;
 	std::vector<dVector> deltaxdeltaxi;
 
+	dVector x_approx;
+
 	int selected_mount = -1;
 
 
