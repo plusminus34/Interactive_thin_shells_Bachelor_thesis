@@ -108,6 +108,6 @@ private:
 	std::vector<nanogui::FloatBox<double>*> weightTextboxes;
 	void updateSliders();
 	V3D COMSpeed;
-	nanogui::Window* velocityProfileWindow;
+	nanogui::Window* velocityProfileWindow=nullptr;
 };
 

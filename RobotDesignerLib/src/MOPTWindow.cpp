@@ -358,12 +358,9 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 			tMinJ = tVal;
 			joint = robot->getJoint(i);
 			locomotionManager->motionPlan->getJointAngleVelocityProfile(velocity, i);
-			stringstream s; s << velocity.transpose();
-			Logger::consolePrint(s.str().c_str());
 			break;
 		}
 	}
-
 
 	using namespace nanogui;
 	if (i == robot->getJointCount())
@@ -378,12 +375,12 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	
 	if (velocityProfileWindow == nullptr)
 	{
-		velocityProfileWindow = new Window(glApp->menuScreen, "asdf");
+		velocityProfileWindow = new Window(glApp->menuScreen, "Velocity Profile");
 		velocityProfileWindow->setWidth(300);
 		velocityProfileWindow->setLayout(new GroupLayout());
 		velocityProfileGraph = velocityProfileWindow->add<Graph>("Velocity");
 	}
-	velocityProfileWindow->setPosition(Eigen::Vector2i(xPos, yPos));
+	velocityProfileWindow->setPosition(Eigen::Vector2i(xPos /1.5, yPos / 1.5));
 	velocityProfileGraph->setValues(velocity.cast<float>());
 	
 	glApp->menuScreen->performLayout();
