@@ -18,6 +18,8 @@ private:
 	int signalPeriod = 20; //in ms
 	//file handle used for communication with the maestro board
 	int fd = -1;
+	//the target commands can be sent all at once, or one-by-one... which do we want?
+	bool writeAllTargetCommandsAtOnce = false;
 
 	double getServomotorAngle(Motor& mp);
 	void setServomotorAngle(Motor& mp, double val);
@@ -27,7 +29,7 @@ private:
 	int maestroGetPosition(Motor& mp);
 	int maestroSetTargetPosition(Motor& mp, unsigned short target);
 	int maestroSetTargetSpeed(Motor& mp, unsigned short target);
-
+	int maestroSetMultipleTargets(int startID, const DynamicArray<unsigned short>& targetValues);
 
 
 public:

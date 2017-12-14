@@ -27,7 +27,7 @@ public:
 	double pwmFor0Deg = 1500;
 	double pwmFor45Deg = 2000;
 
-	double anglePerPWMunit() { return RAD(45) / (pwmFor45Deg - pwmFor0Deg); }
+	double anglePerPWMunit() { return RAD(45.0) / (pwmFor45Deg - pwmFor0Deg); }
 
 	double getPWMForAngle(double angle) {
 		double angleMin = getAngleForPWM(pwmMin);

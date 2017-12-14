@@ -18,7 +18,7 @@ MOPTWindow::MOPTWindow(int x, int y, int w, int h, GLApplication* glApp) : GLWin
 
 void MOPTWindow::addMenuItems() {
 /*
-	auto tmp = new nanogui::Label(glApp->mainMenu->window(), "Popup buttons", "sans-bold");
+	auto tmp = new nanoFui::Label(glApp->mainMenu->window(), "Popup buttons", "sans-bold");
 	glApp->mainMenu->addWidget("", tmp);
 
 	nanogui::PopupButton *popupBtn = new nanogui::PopupButton(glApp->mainMenu->window(), "Popup", ENTYPO_ICON_EXPORT);
@@ -29,6 +29,22 @@ void MOPTWindow::addMenuItems() {
 	new nanogui::Label(popup, "Arbitrary widgets can be placed here");
 	new nanogui::CheckBox(popup, "A check box");
 */
+
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("startWithEmptyFFP", startWithEmptyFFP);
+	}
+
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("# of MOPT sample points", nTimeSteps);
+		tmpVar->setSpinnable(true);
+	}
+
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("globalMOPTRegularizer", globalMOPTRegularizer);
+		tmpVar->setSpinnable(false); tmpVar->setMinValue(0); tmpVar->setMaxValue(100);
+	}
+
+	
 
 	glApp->mainMenu->addVariable<bool>("Show energies menu",
 		[this](bool value) {
@@ -67,6 +83,26 @@ void MOPTWindow::addMenuItems() {
 	{
 		auto tmpVar = glApp->mainMenu->addVariable("joint velocity epsilon", moptParams.jointVelocityEpsilon);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
+	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("wheel speed limit", moptParams.wheelSpeedLimit);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
+	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("wheel speed epsilon", moptParams.wheelSpeedEpsilon);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
+	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("wheel accel. limit", moptParams.wheelAccelLimit);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
+	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("wheel accel. epsilon", moptParams.wheelAccelEpsilon);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
+	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("joint velocity L0 delta", moptParams.jointL0Delta);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 	{
 		glApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
@@ -130,8 +166,7 @@ void MOPTWindow::clear()
 
 }
 
-void MOPTWindow::loadRobot(Robot* robot, ReducedRobotState* startState)
-{
+void MOPTWindow::loadRobot(Robot* robot, ReducedRobotState* startState){
 	clear();
 
 	initialized = true;
@@ -139,17 +174,15 @@ void MOPTWindow::loadRobot(Robot* robot, ReducedRobotState* startState)
 	this->startState = *startState;
 
 	int nLegs = robot->bFrame->limbs.size();
-	nPoints = 6 * nLegs;
 
 	// ******************* footfall patern *******************
 	footFallPattern = FootFallPattern();
 
-	bool createDefaultFFP = false;
-	if (createDefaultFFP){
-		int iMin = 0, iMax = nPoints / nLegs - 1;
-		footFallPattern.strideSamplePoints = nPoints;
+	if (startWithEmptyFFP == false){
+		int iMin = 0, iMax = nTimeSteps / nLegs - 1;
+		footFallPattern.strideSamplePoints = nTimeSteps;
 		for (int j = 0; j < nLegs; j++)
-			footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nPoints / nLegs, iMax + j*nPoints / nLegs);
+			footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nTimeSteps / nLegs, iMax + j*nTimeSteps / nLegs);
 	}
 
 	footFallPattern.loadFromFile("../out/tmpFFP.ffp");
@@ -160,8 +193,18 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.desTravelDistX = locomotionManager->motionPlan->desDistanceToTravel.x();
 	moptParams.desTravelDistZ = locomotionManager->motionPlan->desDistanceToTravel.z();
 	moptParams.desTurningAngle = locomotionManager->motionPlan->desTurningAngle;
+
 	moptParams.jointVelocityLimit = locomotionManager->motionPlan->jointVelocityLimit;
 	moptParams.jointVelocityEpsilon = locomotionManager->motionPlan->jointVelocityEpsilon;
+
+	moptParams.jointVelocityEpsilon = locomotionManager->motionPlan->jointL0Delta;
+
+	moptParams.wheelSpeedLimit = locomotionManager->motionPlan->wheelSpeedLimit;
+	moptParams.wheelSpeedEpsilon = locomotionManager->motionPlan->wheelSpeedEpsilon;
+
+	moptParams.wheelAccelLimit = locomotionManager->motionPlan->wheelAccelLimit;
+	moptParams.wheelAccelEpsilon = locomotionManager->motionPlan->wheelAccelEpsilon;
+
 	moptParams.writeJointVelocityProfile = locomotionManager->writeVelocityProfileToFile;
 	moptParams.motionPlanDuration = locomotionManager->motionPlan->motionPlanDuration;
 	moptParams.checkDerivatives = locomotionManager->checkDerivatives;
@@ -172,8 +215,16 @@ void MOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->motionPlan->desDistanceToTravel.x() = moptParams.desTravelDistX;
 	locomotionManager->motionPlan->desDistanceToTravel.z() = moptParams.desTravelDistZ;
 	locomotionManager->motionPlan->desTurningAngle = moptParams.desTurningAngle;
+
 	locomotionManager->motionPlan->jointVelocityLimit = moptParams.jointVelocityLimit;
 	locomotionManager->motionPlan->jointVelocityEpsilon = moptParams.jointVelocityEpsilon;
+
+	locomotionManager->motionPlan->wheelSpeedLimit = moptParams.wheelSpeedLimit;
+	locomotionManager->motionPlan->wheelSpeedEpsilon = moptParams.wheelSpeedEpsilon;
+
+	locomotionManager->motionPlan->wheelAccelLimit = moptParams.wheelAccelLimit;
+	locomotionManager->motionPlan->wheelAccelEpsilon = moptParams.wheelAccelEpsilon;
+
 	locomotionManager->writeVelocityProfileToFile = moptParams.writeJointVelocityProfile;
 	locomotionManager->motionPlan->motionPlanDuration = moptParams.motionPlanDuration;
 	locomotionManager->checkDerivatives = moptParams.checkDerivatives;
@@ -191,15 +242,15 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	switch (optimizeOption)
 	{
 	case GRF_OPT:
-		locomotionManager = new LocomotionEngineManagerGRFv1(robot, &footFallPattern, nPoints + 1); break;
+		locomotionManager = new LocomotionEngineManagerGRFv1(robot, &footFallPattern, nTimeSteps + 1); break;
 	case GRF_OPT_V2:
-		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nPoints + 1); break;
+		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nTimeSteps + 1); break;
 	case IP_OPT:
-		locomotionManager = new LocomotionEngineManagerIPv1(robot, &footFallPattern, nPoints + 1); break;
+		locomotionManager = new LocomotionEngineManagerIPv1(robot, &footFallPattern, nTimeSteps + 1); break;
 	case IP_OPT_V2:
-		locomotionManager = new LocomotionEngineManagerIPv2(robot, &footFallPattern, nPoints + 1); break;
+		locomotionManager = new LocomotionEngineManagerIPv2(robot, &footFallPattern, nTimeSteps + 1); break;
 	default:
-		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nPoints + 1); break;
+		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nTimeSteps + 1); break;
 	}
 
 	syncMotionPlanParameters();
@@ -210,7 +261,7 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	syncMOPTWindowParameters();
 
 	locomotionManager->setDefaultOptimizationFlags();
-	locomotionManager->energyFunction->regularizer = 0.0001;
+	locomotionManager->energyFunction->regularizer = globalMOPTRegularizer;
 
 	CreateEnergyMenu();
 
@@ -221,6 +272,8 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 
 double MOPTWindow::runMOPTStep(){
 	syncMotionPlanParameters();
+
+	locomotionManager->energyFunction->regularizer = globalMOPTRegularizer;
 
 	double energyVal = locomotionManager->runMOPTStep();
 
@@ -323,7 +376,7 @@ void MOPTWindow::CreateEnergyMenu()
 
 	Widget *panel = new Widget(glApp->mainMenu->window());
 	GridLayout *layout =
-		new GridLayout(Orientation::Horizontal, 4,
+		new GridLayout(Orientation::Horizontal, 5,
 			Alignment::Middle);
 	layout->setColAlignment(
 	{ Alignment::Maximum, Alignment::Fill });
@@ -339,6 +392,9 @@ void MOPTWindow::CreateEnergyMenu()
 	{
 		double value = 0;
 		new Label(panel, locomotionManager->energyFunction->objectives[i]->description , "sans-bold");
+		CheckBox *chkBox = new CheckBox(panel,"");
+		chkBox->setChecked(locomotionManager->energyFunction->objectives[i]->isActive);
+		chkBox->setCallback([this, i](bool value){locomotionManager->energyFunction->objectives[i]->isActive = value; });
 		Slider *slider = new Slider(panel);
 		slider->setValue(0);
 		slider->setRange({ 0.0,1.0 });
@@ -356,8 +412,7 @@ void MOPTWindow::CreateEnergyMenu()
 		textBox->setFixedHeight(18);
 		textBox->setEditable(true);
 		textBox->setValue(locomotionManager->energyFunction->objectives[i]->weight);
-		textBox->setCallback([this, i](double value)
-			{locomotionManager->energyFunction->objectives[i]->weight=value; });
+		textBox->setCallback([this, i](double value){locomotionManager->energyFunction->objectives[i]->weight=value; });
 		weightTextboxes[i] = textBox;
 	}
 	energyMenu->setVisible(false);

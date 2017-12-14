@@ -57,6 +57,26 @@ public:
 	double computeSecondDerivative(double x);
 };
 
+class SoftSymmetricBarrierConstraint {
+
+public:
+
+	SoftSymmetricBarrierConstraint(double limit, double stiffness);
+
+	virtual ~SoftSymmetricBarrierConstraint();
+
+	//comptue f(x)
+	double computeValue(double x);
+
+	//compute df/dx
+	double computeDerivative(double x);
+
+	//compute ddf/dxdx
+	double computeSecondDerivative(double x);
+	double stiffness = 1;
+	double limit = 1;
+};
+
 /*!
 	class used to model unilateral constraints of the type x > 0 using a C2 penalty energy f(x). f(x) goes to infinity as x goes to 0, and to 0 as x goes to epsilon.
 */

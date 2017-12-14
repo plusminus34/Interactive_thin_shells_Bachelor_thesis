@@ -24,10 +24,13 @@ double MPO_RobotWheelAxisObjective::computeValue(const dVector& p){
 		for (int i=0;i<nEEs;i++){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 
-			retVal += computeEnergy(ee.wheelAxis, ee.endEffectorLocalCoords,
-									ee.endEffectorRB, q_t,
-									ee.wheelYawAxis, ee.wheelYawAngle[j],
-									ee.wheelTiltAxis, ee.wheelTiltAngle[j]);
+			if(ee.isWheel)
+			{
+				retVal += computeEnergy(ee.wheelAxis, ee.endEffectorLocalCoords,
+										ee.endEffectorRB, q_t,
+										ee.wheelYawAxis, ee.wheelYawAngle[j],
+										ee.wheelTiltAxis, ee.wheelTiltAngle[j]);
+			}
 		}
 	}
 
@@ -58,40 +61,44 @@ void MPO_RobotWheelAxisObjective::addGradientTo(dVector& grad, const dVector& p)
 		for (int i=0;i<nLimbs;i++){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 
-			V3T<ScalarDiff> eePosLocal = ee.endEffectorLocalCoords;
-			V3T<ScalarDiff> wheelAxis = ee.wheelAxis;
+			if(ee.isWheel)
+			{
 
-			ScalarDiff yawAngle = ee.wheelYawAngle[j];
-			V3T<ScalarDiff> yawAxis = ee.wheelYawAxis;
-			ScalarDiff tiltAngle = ee.wheelTiltAngle[j];
-			V3T<ScalarDiff> tiltAxis = ee.wheelTiltAxis;
+				V3T<ScalarDiff> eePosLocal = ee.endEffectorLocalCoords;
+				V3T<ScalarDiff> wheelAxis = ee.wheelAxis;
 
-			std::vector<DOF<ScalarDiff>> dofs(numDOFs);
-			int index = 0;
-			if (theMotionPlan->wheelParamsStartIndex >= 0){
-				dofs[index].v = &yawAngle;
-				dofs[index].i = theMotionPlan->getWheelYawAngleIndex(i, j);
-				index++;
-				dofs[index].v = &tiltAngle;
-				dofs[index].i = theMotionPlan->getWheelTiltAngleIndex(i, j);
-				index++;
-			}
-			if (theMotionPlan->robotStatesParamsStartIndex >= 0){
-				for (int k = 0; k < q.size(); ++k){
-					dofs[index].v = &q[k];
-					dofs[index].i = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k;
+				ScalarDiff yawAngle = ee.wheelYawAngle[j];
+				V3T<ScalarDiff> yawAxis = ee.wheelYawAxis;
+				ScalarDiff tiltAngle = ee.wheelTiltAngle[j];
+				V3T<ScalarDiff> tiltAxis = ee.wheelTiltAxis;
+
+				std::vector<DOF<ScalarDiff>> dofs(numDOFs);
+				int index = 0;
+				if (theMotionPlan->wheelParamsStartIndex >= 0){
+					dofs[index].v = &yawAngle;
+					dofs[index].i = theMotionPlan->getWheelYawAngleIndex(i, j);
+					index++;
+					dofs[index].v = &tiltAngle;
+					dofs[index].i = theMotionPlan->getWheelTiltAngleIndex(i, j);
 					index++;
 				}
-			}
+				if (theMotionPlan->robotStatesParamsStartIndex >= 0){
+					for (int k = 0; k < q.size(); ++k){
+						dofs[index].v = &q[k];
+						dofs[index].i = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k;
+						index++;
+					}
+				}
 
-			for (int k = 0; k < numDOFs; ++k) {
-				dofs[k].v->deriv() = 1.0;
-				ScalarDiff energy = computeEnergy(wheelAxis, eePosLocal,
-												  ee.endEffectorRB, q,
-												  yawAxis, yawAngle,
-												  tiltAxis, tiltAngle);
-				grad[dofs[k].i] += energy.deriv();
-				dofs[k].v->deriv() = 0.0;
+				for (int k = 0; k < numDOFs; ++k) {
+					dofs[k].v->deriv() = 1.0;
+					ScalarDiff energy = computeEnergy(wheelAxis, eePosLocal,
+													  ee.endEffectorRB, q,
+													  yawAxis, yawAngle,
+													  tiltAxis, tiltAngle);
+					grad[dofs[k].i] += energy.deriv();
+					dofs[k].v->deriv() = 0.0;
+				}
 			}
 		}
 	}
@@ -121,47 +128,51 @@ void MPO_RobotWheelAxisObjective::addHessianEntriesTo(DynamicArray<MTriplet>& he
 		for (int i=0;i<nLimbs;i++){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 
-			V3T<ScalarDiffDiff> eePosLocal = ee.endEffectorLocalCoords;
-			V3T<ScalarDiffDiff> wheelAxis = ee.wheelAxis;
+			if(ee.isWheel)
+			{
 
-			ScalarDiffDiff yawAngle = ee.wheelYawAngle[j];
-			V3T<ScalarDiffDiff> yawAxis = ee.wheelYawAxis;
-			ScalarDiffDiff tiltAngle = ee.wheelTiltAngle[j];
-			V3T<ScalarDiffDiff> tiltAxis = ee.wheelTiltAxis;
+				V3T<ScalarDiffDiff> eePosLocal = ee.endEffectorLocalCoords;
+				V3T<ScalarDiffDiff> wheelAxis = ee.wheelAxis;
 
-			std::vector<DOF<ScalarDiffDiff>> dofs(numDOFs);
-			int index = 0;
-			if (theMotionPlan->wheelParamsStartIndex >= 0){
-				dofs[index].v = &yawAngle;
-				dofs[index].i = theMotionPlan->getWheelYawAngleIndex(i, j);
-				index++;
-				dofs[index].v = &tiltAngle;
-				dofs[index].i = theMotionPlan->getWheelTiltAngleIndex(i, j);
-				index++;
-			}
-			if (theMotionPlan->robotStatesParamsStartIndex >= 0){
-				for (int k = 0; k < q.size(); ++k){
-					dofs[index].v = &q[k];
-					dofs[index].i = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k;
+				ScalarDiffDiff yawAngle = ee.wheelYawAngle[j];
+				V3T<ScalarDiffDiff> yawAxis = ee.wheelYawAxis;
+				ScalarDiffDiff tiltAngle = ee.wheelTiltAngle[j];
+				V3T<ScalarDiffDiff> tiltAxis = ee.wheelTiltAxis;
+
+				std::vector<DOF<ScalarDiffDiff>> dofs(numDOFs);
+				int index = 0;
+				if (theMotionPlan->wheelParamsStartIndex >= 0){
+					dofs[index].v = &yawAngle;
+					dofs[index].i = theMotionPlan->getWheelYawAngleIndex(i, j);
+					index++;
+					dofs[index].v = &tiltAngle;
+					dofs[index].i = theMotionPlan->getWheelTiltAngleIndex(i, j);
 					index++;
 				}
-			}
-
-			for (int k = 0; k < numDOFs; ++k) {
-				dofs[k].v->deriv().value() = 1.0;
-				for (int l = 0; l <= k; ++l) {
-					dofs[l].v->value().deriv() = 1.0;
-					ScalarDiffDiff energy = computeEnergy(wheelAxis, eePosLocal,
-													  ee.endEffectorRB, q,
-													  yawAxis, yawAngle,
-													  tiltAxis, tiltAngle);
-					ADD_HES_ELEMENT(hessianEntries,
-									dofs[k].i,
-									dofs[l].i,
-									energy.deriv().deriv(), 1.0);
-					dofs[l].v->value().deriv() = 0.0;
+				if (theMotionPlan->robotStatesParamsStartIndex >= 0){
+					for (int k = 0; k < q.size(); ++k){
+						dofs[index].v = &q[k];
+						dofs[index].i = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k;
+						index++;
+					}
 				}
-				dofs[k].v->deriv().value() = 0.0;
+
+				for (int k = 0; k < numDOFs; ++k) {
+					dofs[k].v->deriv().value() = 1.0;
+					for (int l = 0; l <= k; ++l) {
+						dofs[l].v->value().deriv() = 1.0;
+						ScalarDiffDiff energy = computeEnergy(wheelAxis, eePosLocal,
+															  ee.endEffectorRB, q,
+															  yawAxis, yawAngle,
+															  tiltAxis, tiltAngle);
+						ADD_HES_ELEMENT(hessianEntries,
+										dofs[k].i,
+										dofs[l].i,
+										energy.deriv().deriv(), 1.0);
+						dofs[l].v->value().deriv() = 0.0;
+					}
+					dofs[k].v->deriv().value() = 0.0;
+				}
 			}
 		}
 	}

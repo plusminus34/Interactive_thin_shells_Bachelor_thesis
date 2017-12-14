@@ -1,6 +1,6 @@
-#include <RobotDesignerLib/MPO_VelocitySoftConstraints.h>
+#include <RobotDesignerLib/MPO_VelocityL0Regularization.h>
 
-MPO_VelocitySoftBoundConstraints::MPO_VelocitySoftBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int startQIndex, int endQIndex) {
+MPO_VelocityL0Regularization::MPO_VelocityL0Regularization(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int startQIndex, int endQIndex) {
 
 	theMotionPlan = mp;
 	this->description = objectiveDescription;
@@ -8,17 +8,18 @@ MPO_VelocitySoftBoundConstraints::MPO_VelocitySoftBoundConstraints(LocomotionEng
 	this->startQIndex = startQIndex;
 	this->endQIndex = endQIndex;
 
-	constraintSymmetricBound = std::make_shared<SoftSymmetricBarrierConstraint>(theMotionPlan->wheelSpeedLimit, 10);
 }
 
-MPO_VelocitySoftBoundConstraints::~MPO_VelocitySoftBoundConstraints(void) {
+MPO_VelocityL0Regularization::~MPO_VelocityL0Regularization(void) {
 }
 
-double MPO_VelocitySoftBoundConstraints::computeValue(const dVector& s) {
+double MPO_VelocityL0Regularization::computeValue(const dVector& s) {
 
 	if (theMotionPlan->robotStatesParamsStartIndex >= 0){
 
-		constraintSymmetricBound->limit = theMotionPlan->jointVelocityLimit;
+		double delta = theMotionPlan->jointL0Delta;
+
+		auto f = [delta](double t) {return (t*t) / (t*t + delta); };
 
 		double retVal = 0;
 
@@ -37,7 +38,7 @@ double MPO_VelocitySoftBoundConstraints::computeValue(const dVector& s) {
 
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
-				retVal += constraintSymmetricBound->computeValue(velocity);
+				retVal += f(velocity)/dt;
 			}
 		}
 
@@ -47,11 +48,14 @@ double MPO_VelocitySoftBoundConstraints::computeValue(const dVector& s) {
 	return 0;
 }
 
-void MPO_VelocitySoftBoundConstraints::addGradientTo(dVector& grad, const dVector& p) {
+void MPO_VelocityL0Regularization::addGradientTo(dVector& grad, const dVector& p) {
 
 	if (theMotionPlan->robotStatesParamsStartIndex >= 0){
 
-		constraintSymmetricBound->limit = theMotionPlan->jointVelocityLimit;
+		double delta = theMotionPlan->jointL0Delta;
+
+		auto g = [delta](double t) {return (2*t*delta) / ((t*t + delta)*(t*t + delta)); };
+
 
 		int nSamplePoints = theMotionPlan->nSamplePoints;
 		if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1; //don't double count... the last robot pose is already the same as the first one, which means that COM and feet locations are in correct locations relative to each other, so no need to ask for that again explicitely...
@@ -68,7 +72,7 @@ void MPO_VelocitySoftBoundConstraints::addGradientTo(dVector& grad, const dVecto
 
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
-				double dC = constraintSymmetricBound->computeDerivative(velocity);
+				double dC = g(velocity);
 				
 
 				grad[theMotionPlan->robotStatesParamsStartIndex + theMotionPlan->robotStateTrajectory.nStateDim * jm + i] -= weight * dC / dt;
@@ -78,11 +82,13 @@ void MPO_VelocitySoftBoundConstraints::addGradientTo(dVector& grad, const dVecto
 	}
 }
 
-void MPO_VelocitySoftBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
+void MPO_VelocityL0Regularization::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
 
 	if (theMotionPlan->robotStatesParamsStartIndex >= 0){
 
-		constraintSymmetricBound->limit = theMotionPlan->jointVelocityLimit;
+		double delta = theMotionPlan->jointL0Delta;
+
+		auto h = [delta](double t) {double dt2 = delta + t*t; return (2 * delta)*(delta - 3 * t*t) / (dt2*dt2*dt2); };
 
 		int nSamplePoints = theMotionPlan->nSamplePoints;
 		if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1; //don't double count... the last robot pose is already the same as the first one, which means that COM and feet locations are in correct locations relative to each other, so no need to ask for that again explicitely...
@@ -108,19 +114,19 @@ void MPO_VelocitySoftBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet
 								hessianEntries,
 								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
 								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								weight * constraintSymmetricBound->computeSecondDerivative(velocity) / (dt*dt));
+								weight * h(velocity) / (dt*dt));
 					// d_jp_jp
 					addMTripletToList_reflectUpperElements(
 								hessianEntries,
 								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
 								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								weight * constraintSymmetricBound->computeSecondDerivative(velocity) / (dt*dt));
+								weight * h(velocity) / (dt*dt));
 					// d_jm_jp
 					addMTripletToList_reflectUpperElements(
 								hessianEntries,
 								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
 								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								- weight * constraintSymmetricBound->computeSecondDerivative(velocity) / (dt*dt));
+								- weight * h(velocity) / (dt*dt));
 				}
 			}
 		}

@@ -1,9 +1,12 @@
 #include <RobotDesignerLib/LocomotionEngineManagerGRF.h>
 
 #include <RobotDesignerLib/MPO_VelocitySoftConstraints.h>
+#include <RobotDesignerLib/MPO_WheelSpeedConstraint.h>
+#include <RobotDesignerLib/MPO_WheelAccelerationConstraint.h>
 #include <RobotDesignerLib/MPO_EEPosSwingObjective.h>
 #include <RobotDesignerLib/MPO_RobotWheelAxisObjective.h>
 #include <RobotDesignerLib/MPO_StartVelocityConstraint.h>
+#include <RobotDesignerLib/MPO_VelocityL0Regularization.h>
 
 //#define DEBUG_WARMSTART
 //#define CHECK_DERIVATIVES_AFTER_WARMSTART
@@ -285,6 +288,8 @@ void LocomotionEngineManagerGRFv1::setupObjectives() {
 	ef->objectives.push_back(new MPO_RobotWheelAxisObjective(ef->theMotionPlan, "robot wheel axis objective", 10000.0));
 	ef->objectives.push_back(new MPO_RobotCOMOrientationsObjective(ef->theMotionPlan, "robot COM orientations objective", 10000.0));
 	ef->objectives.push_back(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
+	ef->objectives.push_back(new MPO_WheelSpeedConstraints(ef->theMotionPlan, "wheel speed bound constraint", 1e4));
+	ef->objectives.push_back(new MPO_WheelAccelerationConstraints(ef->theMotionPlan, "wheel accel. bound constraint", 1e2));
 
 	//functional objectives
 	ef->objectives.push_back(new MPO_COMTravelObjective(ef->theMotionPlan, "COM Travel objective", 50.0));
@@ -339,17 +344,19 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->objectives.push_back(new MPO_ForceAccelObjective(ef->theMotionPlan, "force acceleration objective", 1.0));
 	ef->objectives.push_back(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 1.0));
 	ef->objectives.push_back(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
+	ef->objectives.push_back(new MPO_WheelSpeedConstraints(ef->theMotionPlan, "wheel speed bound constraint", 1e4));
+	ef->objectives.push_back(new MPO_WheelAccelerationConstraints(ef->theMotionPlan, "wheel accel. bound constraint", 1e2));
 
 	//constraints ensuring feet don't slide...
 	ef->objectives.push_back(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0));
 	ef->objectives.push_back(new MPO_WheelGroundObjective(ef->theMotionPlan, "wheel ground objective", 10000.0));
 
-	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 0, 10000.0));
-	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "end velocity zero objective", ef->theMotionPlan->nSamplePoints-2, 10000.0));
+	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 0, 10000.0)); ef->objectives.back()->isActive = false;
+	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "end velocity zero objective", ef->theMotionPlan->nSamplePoints-2, 10000.0)); ef->objectives.back()->isActive = false;
 //	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 1, 10000.0));
 
 	// constraint ensuring the y component of the EE position follows the swing motion
-//	ef->objectives.push_back(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0));
+	ef->objectives.push_back(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0));
 
 	//periodic boundary constraints...
 	if (ef->theMotionPlan->wrapAroundBoundaryIndex >= 0) {
@@ -378,6 +385,8 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->objectives.push_back(new MPO_NonLimbSmoothMotionObjective(ef->theMotionPlan, "robot smooth joint angles objective (non-limb)", 0.01));
 
 	ef->objectives.push_back(new MPO_SmoothCOMTrajectories(ef->theMotionPlan, "smoothCOM", 50));
+
+	ef->objectives.push_back(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization", 1, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1)); ef->objectives.back()->isActive = false;
 }
 
 LocomotionEngineManagerGRFv2::~LocomotionEngineManagerGRFv2(){

@@ -68,7 +68,8 @@ double LocomotionEngine_EnergyFunction::computeValue(const dVector& p){
 	double totalEnergy = 0;
 
 	for (uint i=0; i<objectives.size(); i++)
-		totalEnergy += objectives[i]->computeValue(p);
+		if (objectives[i]->isActive)
+			totalEnergy += objectives[i]->computeValue(p);
 
 	//add the regularizer contribution
 	if (regularizer > 0){
@@ -101,21 +102,22 @@ void LocomotionEngine_EnergyFunction::addHessianEntriesTo(DynamicArray<MTriplet>
 	//and now the contributions of the individual objectives
 
 	// Sequential version
-	// 	for (uint i = 0; i < objectives.size(); i++)
-	// 		objectives[i]->addHessianEntriesTo(hessianEntries, p);
+	for (uint i = 0; i < objectives.size(); i++)
+		if (objectives[i]->isActive)
+			objectives[i]->addHessianEntriesTo(hessianEntries, p);
 
 	// Parallel version
-	#pragma omp parallel num_threads(2)
-	{
-		std::vector<MTriplet> hessianEntries_private;
-		#pragma omp for schedule(dynamic) nowait //fill vec_private in parallel
-		for (uint i = 0; i < objectives.size(); i++)
-		{ 
-			objectives[i]->addHessianEntriesTo(hessianEntries_private, p);
-		}
-		#pragma omp critical
-		hessianEntries.insert(hessianEntries.end(), hessianEntries_private.begin(), hessianEntries_private.end());
-	}
+// 	#pragma omp parallel num_threads(2)
+// 	{
+// 		std::vector<MTriplet> hessianEntries_private;
+// 		#pragma omp for schedule(dynamic) nowait //fill vec_private in parallel
+// 		for (uint i = 0; i < objectives.size(); i++)
+// 		{ 
+// 			objectives[i]->addHessianEntriesTo(hessianEntries_private, p);
+// 		}
+// 		#pragma omp critical
+// 		hessianEntries.insert(hessianEntries.end(), hessianEntries_private.begin(), hessianEntries_private.end());
+// 	}
 
 	/////////////////////////////////////////////
 	//  Switch to this when openmp 4.0 support appears
@@ -140,7 +142,8 @@ void LocomotionEngine_EnergyFunction::addGradientTo(dVector& grad, const dVector
 
 	//and now the contributions of the individual objectives
 	for (uint i=0; i<objectives.size(); i++)
-		objectives[i]->addGradientTo(grad, p);
+		if(objectives[i]->isActive)
+			objectives[i]->addGradientTo(grad, p);
 }
 
 //this method gets called whenever a new best solution to the objective function is found

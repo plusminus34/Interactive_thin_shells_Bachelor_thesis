@@ -19,8 +19,18 @@ struct MOPTParams {
 	double desTravelDistX = 0;
 	double desTravelDistZ = 0;
 	double desTurningAngle = 0;
+
 	double jointVelocityLimit = 10;
 	double jointVelocityEpsilon = 0.4;
+
+	double jointL0Delta = 1;
+
+	double wheelSpeedLimit = 20;
+	double wheelSpeedEpsilon = 0.4;
+
+	double wheelAccelLimit = 20;
+	double wheelAccelEpsilon = 1.0;
+
 	bool writeJointVelocityProfile = false;
 	double motionPlanDuration = 0.8;
 	bool checkDerivatives = false;
@@ -31,6 +41,10 @@ class MOPTWindow : public GLWindow3D {
 public:
 	bool initialized = false;
 	GLApplication* glApp;
+
+	bool startWithEmptyFFP = true;
+	int nTimeSteps = 12;
+	double globalMOPTRegularizer = 0.0001;
 
 	nanogui::Graph* energyGraph;
 	std::vector<float> energyGraphValues;
@@ -52,7 +66,6 @@ public:
 	};
 	OPT_OPTIONS optimizeOption = GRF_OPT_V2;
 
-	int nPoints;
 	bool printDebugInfo;
 	void addMenuItems();
 

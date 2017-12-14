@@ -31,10 +31,10 @@ public:
 public:
 	END_EFFECTOR_TYPE eeType = EE_POINT;
 
-	bool isWheel() { return eeType != EE_POINT; }
-	bool isActiveWheel() { return eeType == EE_ACTIVE_WHEEL; }
-	bool isWeldedWheel() { return eeType == EE_WELDED_WHEEL; }
-	bool isFreeToMoveWheel() { return eeType == EE_PASSIVE_WHEEL; }
+	bool isWheel() const { return eeType != EE_POINT; }
+	bool isActiveWheel() const { return eeType == EE_ACTIVE_WHEEL; }
+	bool isWeldedWheel() const { return eeType == EE_WELDED_WHEEL; }
+	bool isFreeToMoveWheel() const { return eeType == EE_PASSIVE_WHEEL; }
 
 	void setMode(END_EFFECTOR_TYPE eet) { this->eeType = eet; }
 

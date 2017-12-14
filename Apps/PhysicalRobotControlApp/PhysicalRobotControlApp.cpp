@@ -11,7 +11,10 @@
 PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	setWindowTitle("Physical Robot Control");
 
-	loadFile("../data/rbs/robotArm1DOF.rbs");
+//	loadFile("../data/rbs/robotArm1DOF.rbs");
+//	loadFile("../data/rbs/robotArm2DOF.rbs");
+
+	loadFile("../data/rbs/robotArm3DOF.rbs");
 
 	showMesh = false;
 	showRotationAxes = true;
@@ -45,7 +48,7 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 
 
 	mainMenu->addVariable("Follow Trajectory", playFFTrajectory);
-	mainMenu->addVariable("duration", trajDuration);
+	mainMenu->addVariable("duration", trajDuration)->setSpinnable(true);
 	mainMenu->addVariable("control positions only", controlPositionsOnly);
 
 	menuScreen->performLayout();

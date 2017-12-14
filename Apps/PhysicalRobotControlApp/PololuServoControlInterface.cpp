@@ -18,9 +18,10 @@
 BK DS-3002HV: minPWM: 910, maxPWM: 2090
 */
 
-//should also implement functionality that sends out all the signals at once...
-//should also implement nicely the method that computes speed limits based on current angle and target angle and dt...
-//do the numbers below depend on the control frequency?!?
+//- should also deal with motors that are in velocity mode...
+//- how well is the speed limit working? Does the board go to the final target just in time? Or way early? Or doesn't get there? Can at least plot desired vs final angles...
+//- wheels and other things should be some sort of helper RBs which do not get read/baked into the structure of a robot... mopt won't know about them, but the simulation will...
+//- do the DXL communication protocol as well...
 
 unsigned short getMaestroSignalFromAngle(double angle, Motor& mp) {
 	//maestro units are measured in 0.25microseconds increments, hence the factor of 4
@@ -33,6 +34,12 @@ unsigned short getMaestroSignalFromAngularSpeed(double speed, Motor& mp, int sig
 	if (speed <= 0)
 		return 0;
 
+	//speed is measured in rad/s. The number we pass to the maestro board needs to be measured in 0.25microseconds/10ms
+
+	//1 rad corresponds to 1 / anglePerPWMunit() PWM units
+	//1s is 100 of the time units...
+
+
 	//maestro units are measured in 0.25microseconds/10ms increments, hence the factor of 4 / 100
 	double speedUnits = 4.0 * 10.0 / 1000.0;
 
@@ -42,7 +49,7 @@ unsigned short getMaestroSignalFromAngularSpeed(double speed, Motor& mp, int sig
 	if (signalPeriod > 20)
 		speedUnits = 4.0 * (signalPeriod/2) / 1000.0;
 
-	return (unsigned short)(mp.anglePerPWMunit() * speed * speedUnits);
+	return (unsigned short)(speed / mp.anglePerPWMunit() * speedUnits);
 }
 
 double getAngleFromMaestroSignal(unsigned short ms, Motor& mp) {
@@ -75,7 +82,6 @@ int PololuServoControlInterface::maestroGetPosition(Motor& mp){
 	return response[0] + 256 * response[1];
 }
 
-
 // Sets the target of a Maestro channel.
 // See the "Serial Servo Commands" section of the user's guide.
 // The units of 'target' are quarter-microseconds. If 0, the motor will no longer receive pulses
@@ -92,12 +98,36 @@ int PololuServoControlInterface::maestroSetTargetPosition(Motor& mp, unsigned sh
 	return 0;
 }
 
+// Sets the target of a Maestro channel.
+// See the "Serial Servo Commands" section of the user's guide.
+// The units of 'target' are quarter-microseconds. If 0, the motor will no longer receive pulses
+int PololuServoControlInterface::maestroSetMultipleTargets(int startID, const DynamicArray<unsigned short>& targetValues) {
+	if (!connected) return 0;
+
+	DynamicArray<unsigned char> command;
+	command.push_back(0x9F);
+	command.push_back((unsigned char)targetValues.size());
+	command.push_back((unsigned char)startID);
+
+	for (uint i = 0; i < targetValues.size(); i++) {
+		command.push_back((unsigned short)(targetValues[i] & 0x7F));
+		command.push_back((unsigned short)(targetValues[i] >> 7 & 0x7F));
+	}
+
+	if (write(fd, &command[0], command.size()) == -1){
+		Logger::consolePrint("error writing target position\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 // Sets the velocity limit of a Maestro channel.
 // See the "Serial Servo Commands" section of the user's guide.
 // The units of 'target' are (0.25 micros)/(10 ms). If 0, the motor will have no speed limit
 int PololuServoControlInterface::maestroSetTargetSpeed(Motor& mp, unsigned short target) {
 	if (!connected) return 0;
-	if (controlPositionsOnly) return 0;
+	if (controlPositionsOnly) target = 0;
 
 	unsigned char command[] = { 0x87, 0, (unsigned short) (target & 0x7F), (unsigned short)(target >> 7 & 0x7F) };
 	command[1] = (unsigned char)mp.motorID;
@@ -136,7 +166,7 @@ void PololuServoControlInterface::setServomotorAngle(Motor& mp, double val) {
 
 //val is specified in rad/s
 void PololuServoControlInterface::setServomotorMaxSpeed(Motor& mp, double val) {
-	maestroSetTargetPosition(mp, getMaestroSignalFromAngularSpeed(val, mp, signalPeriod));
+	maestroSetTargetSpeed(mp, getMaestroSignalFromAngularSpeed(val, mp, signalPeriod));
 }
 
 //set motor goals from target values
@@ -151,14 +181,38 @@ void PololuServoControlInterface::sendControlInputsToPhysicalRobot() {
 		if (hj->motor.flipMotorAxis)
 			hj->motor.targetMotorAngle *= -1;
 
-		setServomotorAngle(hj->motor, hj->motor.targetMotorAngle);
 		setServomotorMaxSpeed(hj->motor, hj->motor.targetMotorVelocity);
-
-
+		if (writeAllTargetCommandsAtOnce == false)
+			setServomotorAngle(hj->motor, hj->motor.targetMotorAngle);
 	}
 
-	//TODO: should implement here the option of sending all position commands at once...
-	//TODO: somewhere we should be computing speed limits...
+	if (writeAllTargetCommandsAtOnce) {
+		//this mode needs a contiguous block of motor ids that are stored in ascending order... 
+		//if we're not to make any assumption about the order in which the motorID's are assigned, then we have to search for each contiguous block, send those commands and then start over...
+
+		DynamicArray<unsigned short> targetVals;
+		int startID = 0;
+
+		for (int j = startID; j < robot->getJointCount(); j++) {
+			bool foundID = false;
+			for (int i = 0; i < robot->getJointCount(); i++) {
+				HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+				if (!hj) continue;
+				if (hj->motor.motorID == j){
+					targetVals.push_back(getMaestroSignalFromAngle(hj->motor.targetMotorAngle, hj->motor));
+					foundID = true;
+					break;
+				}
+			}
+			if (foundID == false || j == robot->getJointCount()-1) {
+				//we should now send off all the information...
+				if (targetVals.size() > 0)
+					maestroSetMultipleTargets(startID, targetVals);
+				targetVals.clear();
+				startID = j;
+			}
+		}
+	}
 }
 
 //read motor positions
@@ -268,10 +322,33 @@ PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotCo
 		if (!hj) continue;
 
 		hj->motor.motorID = i;
-		hj->motor.pwmMin = 910;//depends on the type of servomotor
-		hj->motor.pwmMax = 2100;//depends on type of servomotor
-		hj->motor.pwmFor0Deg = 1430; //this depends on how the horn is mounted...
-		hj->motor.pwmFor45Deg = 1870; //this depends on how the horn is mounted...
+
+		if (i == 0) {
+			//settings for the BK DS-3002HV
+			hj->motor.pwmMin = 910;//depends on the type of servomotor
+			hj->motor.pwmMax = 2090;//depends on type of servomotor
+			hj->motor.pwmFor0Deg = 1430; //this depends on how the horn is mounted...
+			hj->motor.pwmFor45Deg = 1870; //this depends on how the horn is mounted...
+		}
+
+		if (i == 1) {
+			//settings for the TURNIGY S306G-HV
+			hj->motor.pwmMin = 910;//depends on the type of servomotor
+			hj->motor.pwmMax = 2100;//depends on type of servomotor
+			hj->motor.pwmFor0Deg = 1430; //this depends on how the horn is mounted...
+			hj->motor.pwmFor45Deg = 1865; //this depends on how the horn is mounted...
+//			hj->motor.flipMotorAxis = true;
+		}
+
+		if (i == 2) {
+			//settings for the MKS DS95
+			hj->motor.pwmMin = 800;//depends on the type of servomotor
+			hj->motor.pwmMax = 2160;//depends on type of servomotor
+			hj->motor.pwmFor0Deg = 1390; //this depends on how the horn is mounted...
+			hj->motor.pwmFor45Deg = 1935; //this depends on how the horn is mounted...
+ //			hj->motor.flipMotorAxis = true;
+		}
+
 	}
 }
 

@@ -1,5 +1,5 @@
-#ifndef MPO_VELOCITY_SOFT_BOUND_CONSTRAINTS_H
-#define MPO_VELOCITY_SOFT_BOUND_CONSTRAINTS_H
+#ifndef MPO_WHEEL_SPEED_CONSTRAINTS_H
+#define MPO_WHEEL_SPEED_CONSTRAINTS_H
 
 #include <OptimizationLib/ObjectiveFunction.h>
 #include <MathLib/Matrix.h>
@@ -8,10 +8,10 @@
 
 #include <memory>
 
-class MPO_VelocitySoftBoundConstraints : public ObjectiveFunction {
+class MPO_WheelSpeedConstraints : public ObjectiveFunction {
 public:
-	MPO_VelocitySoftBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int startQIndex, int endQIndex);
-	virtual ~MPO_VelocitySoftBoundConstraints(void);
+	MPO_WheelSpeedConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
+	virtual ~MPO_WheelSpeedConstraints(void);
 
 	virtual double computeValue(const dVector& p);
 
@@ -22,9 +22,8 @@ private:
 	//the energy function operates on a motion plan...
 	LocomotionEngineMotionPlan* theMotionPlan;
 
-	std::shared_ptr<SoftSymmetricBarrierConstraint> constraintSymmetricBound;
-
-	int startQIndex, endQIndex;
+	std::shared_ptr<SoftUnilateralConstraint> constraintLowerBound;
+	std::shared_ptr<SoftUnilateralUpperConstraint> constraintUpperBound;
 };
 
 #endif // MPO_VELOCITY_SOFT_BOUND_CONSTRAINTS_H
