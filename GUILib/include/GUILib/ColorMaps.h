@@ -16,11 +16,14 @@ namespace ColorMaps {
 
 typedef std::vector<Eigen::Vector3f> ColorMap;
 
-Eigen::Vector3f getColorAt(const ColorMap &colorMap, float t)
+Eigen::Vector3f getColorAt(const ColorMap &colorMap, float t, float startAt = 0.f, float endAt = 1.f)
 {
 	// clamp t to [0, 1]
 	t = std::max(0.f, t);
 	t = std::min(1.f, t);
+
+	// scale by start and end
+	t = startAt + t*(endAt - startAt);
 
 	int im = std::floor(t*(float)(colorMap.size()));
 	int ip = std::min(im+1, (int)colorMap.size()-1);

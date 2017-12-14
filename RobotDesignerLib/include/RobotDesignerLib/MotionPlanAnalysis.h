@@ -35,7 +35,8 @@ public: //private:
 	nanogui::Window *window;
 
 	enum PlotNames {
-		WHEEL_SPEED, WHEEL_TILT_ANGLE, WHEEL_YAW_ANGLE
+		WHEEL_SPEED, WHEEL_TILT_ANGLE, WHEEL_YAW_ANGLE, EE_POS_Y,
+		ROBOT_STATE
 	};
 	std::map<PlotNames, PlotWidget> plots;
 };

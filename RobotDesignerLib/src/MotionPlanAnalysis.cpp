@@ -10,14 +10,34 @@ using namespace Eigen;
 MotionPlanAnalysis::MotionPlanAnalysis(nanogui::Screen *screen){
 
 	window = new Window(screen, "Motion Plan Analysis");
-	window->setLayout(new GridLayout(Orientation::Vertical, 4, Alignment::Middle, 15, 5));
+	window->setLayout(new GridLayout(Orientation::Vertical, 10, Alignment::Middle, 15, 5));
 	window->setVisible(false);
 	window->setPosition({1200, 0});
 
-	// create a plot
+	Widget *buttons = new Widget(window);
+	buttons->setLayout(new GridLayout(Orientation::Horizontal, 4, Alignment::Minimum, 0, 5));
+
+	// create a EE plots
 	plots[WHEEL_SPEED] = makePlotWidget(window, "Wheel Speed");
 	plots[WHEEL_TILT_ANGLE] = makePlotWidget(window, "Wheel Tilt Angle");
 	plots[WHEEL_YAW_ANGLE] = makePlotWidget(window, "Wheel Yaw Angle");
+	plots[EE_POS_Y] = makePlotWidget(window, "EE pos y");
+
+	// create robot state plots
+	plots[ROBOT_STATE] = makePlotWidget(window, "Robot State");
+
+	// create show/hide toggle buttons
+	for (auto &plotWidget : plots) {
+		Button *b = new Button(buttons, plotWidget.second.plot->caption());
+		b->setPushed(true);
+		b->setFlags(Button::ToggleButton);
+		Widget *widget = plotWidget.second.widget;
+		b->setChangeCallback([screen,widget](bool state){
+			widget->setVisible(state);
+			screen->performLayout();
+		});
+
+	}
 
 }
 
@@ -43,7 +63,7 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 				y[i] = eeTraj.wheelSpeed[i];
 			}
 
-			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::viridis, (float)index/(float)nEEs), 1.f));
+			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::viridis, (float)index/(float)nEEs, 0.3f), 1.f));
 			plots[WHEEL_SPEED].plot->setPlotData("ee " + std::to_string(index), data);
 		}
 
@@ -57,7 +77,7 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 				y[i] = eeTraj.wheelTiltAngle[i];
 			}
 
-			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::viridis, (float)index/(float)nEEs), 1.f));
+			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::viridis, (float)index/(float)nEEs, 0.3f), 1.f));
 			plots[WHEEL_TILT_ANGLE].plot->setPlotData("ee " + std::to_string(index), data);
 		}
 
@@ -71,11 +91,53 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 				y[i] = eeTraj.wheelYawAngle[i];
 			}
 
-			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::magma, (float)index/(float)nEEs), 1.f));
+			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::viridis, (float)index/(float)nEEs, 0.3f), 1.f));
 			plots[WHEEL_YAW_ANGLE].plot->setPlotData("ee " + std::to_string(index), data);
 		}
 
+		// wheel yaw angle
+		{
+			int nTimeSteps = eeTraj.EEPos.size();
+			VectorXf x(nTimeSteps);
+			VectorXf y(nTimeSteps);
+			for (int i = 0; i < nTimeSteps; ++i){
+				x[i] = (float)i/((float)nTimeSteps-1);
+				y[i] = eeTraj.EEPos[i][1];
+			}
+
+			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)index/(float)nEEs), 1.f));
+			plots[EE_POS_Y].plot->setPlotData("ee " + std::to_string(index), data);
+		}
+
 		index++;
+	}
+
+	const LocomotionEngine_RobotStateTrajectory &rsTraj = motionPlan->robotStateTrajectory;
+	if(rsTraj.qArray.size() > 0)
+	{
+
+		int nTimeSteps = rsTraj.qArray.size();
+
+		VectorXf x(nTimeSteps);
+		for (int i = 0; i < nTimeSteps; ++i)
+			x[i] = (float)i/((float)nTimeSteps-1);
+
+		int sizeQ = rsTraj.qArray[0].size();
+		std::vector<VectorXf> y(sizeQ);
+		for (int i = 0; i < sizeQ; ++i) {
+			y[i].resize(nTimeSteps);
+		}
+
+		for (int i = 0; i < nTimeSteps; ++i) {
+			for (int j = 0; j < sizeQ; ++j)
+				y[j][i] = rsTraj.qArray[i][j];
+		}
+
+		for (int i = 0; i < sizeQ; ++i) {
+			PlotData data(x, y[i], nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)i/(float)(sizeQ), 0.2f), 1.f));
+			plots[ROBOT_STATE].plot->setPlotData("q " + std::to_string(i), data);
+		}
+
 	}
 
 	updatePlotScaling();
@@ -102,19 +164,19 @@ PlotWidget MotionPlanAnalysis::makePlotWidget(nanogui::Window *window, const std
 
 	Plot *plot = new Plot(widget, name);
 	plot->setSize(Vector2i(400, 200));
-	plot->setBackgroundColor(nanogui::Color(Eigen::Vector3f(0.5, 0.5, 0.5), 0.1f));
+//	plot->setBackgroundColor(nanogui::Color(Eigen::Vector3f(0.5, 0.5, 0.5), 0.1f));
 	plot->setNumTicks(Vector2i(10, 5));
 
 	Widget *widgetButtons = new Widget(widget);
-	widgetButtons->setLayout(new GridLayout(Orientation::Vertical, 2, Alignment::Fill, 15, 5));
+	widgetButtons->setLayout(new GridLayout(Orientation::Vertical, 2, Alignment::Minimum, 0, 5));
 
 	// create some buttons
-	Button *b = new Button(widgetButtons, "Show Legend");
+	Button *b = new Button(widgetButtons, "Legend");
 	b->setFlags(Button::ToggleButton);
 	b->setChangeCallback([plot](bool state){
 		plot->setShowLegend(state);
 	});
-	b = new Button(widgetButtons, "Show Ticks");
+	b = new Button(widgetButtons, "Ticks");
 	b->setFlags(Button::ToggleButton);
 	b->setChangeCallback([plot](bool state){
 		plot->setShowTicks(state);
