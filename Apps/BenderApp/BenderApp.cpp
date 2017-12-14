@@ -299,7 +299,7 @@ void BenderApp::process() {
 				};
 
 				
-				double gamma_start = 1.0;
+				double gamma_start = 0.02;
 				int maxIter = 10;
 
 
