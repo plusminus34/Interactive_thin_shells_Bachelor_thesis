@@ -337,7 +337,7 @@ void BenderApp::process() {
 
 			// update xi
 			// (TODO) xi = xi - gamma * dO/dxi
-			xi = xi - gamma * dOdxi;
+			xi = xi - 0.5*gamma * dOdxi;
 			pushXi();
 
 			solve_mesh();
@@ -346,7 +346,7 @@ void BenderApp::process() {
 			double e_new = femMesh->computeTargetPositionError();
 			double delta_o = o_new - o_last;
 			double delta_e = e_new - e_last;
-			Logger::consolePrint("o / e / delta o / delta e = %f %f %f %f", o_new, e_new, delta_o, delta_e);
+			Logger::consolePrint("o | e | delta o | delta e = %-10f | %-10f | %+-10.7f | %+-10.7f \n", o_new, e_new, delta_o, delta_e);
 			o_last = o_new;
 			e_last = e_new;
 
