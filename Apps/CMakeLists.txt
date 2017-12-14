@@ -13,6 +13,7 @@ endif()
 
 add_subdirectory(OptimizationDemoApp)
 add_subdirectory(FireworksApp)
+add_subdirectory(PDEsDemoApp)
 add_subdirectory(ShaderTestApp)
 add_subdirectory(IKApp)
 add_subdirectory(FEMSimApp)

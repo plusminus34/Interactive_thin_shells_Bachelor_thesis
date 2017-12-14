@@ -314,4 +314,5 @@ public:
 		double t; int qIndex; double velocity;
 	};
 	bool getJointAngleVelocityProfile(std::vector<JointVelocity> &velocityProfile, std::string &error) const;
+	bool getJointAngleVelocityProfile(dVector &velocityProfile, int jointIndex) const;
 };
