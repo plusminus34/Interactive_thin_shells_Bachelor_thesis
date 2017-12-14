@@ -19,7 +19,7 @@ Plot::Plot(Widget *parent, const std::string &caption)
 	mBackgroundColor = Color(20, 128);
 	mForegroundColor = Color(255, 255, 255, 128);
 	mShowLegend = false;
-	mShowTicks = true;
+	mShowTicks = false;
 	mNumTicks = Vector2i(10, 10);
 	mTickHeight = 10;
 	mTextColor = Color(240, 192);

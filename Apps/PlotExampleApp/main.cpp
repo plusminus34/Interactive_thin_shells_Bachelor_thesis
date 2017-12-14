@@ -70,6 +70,11 @@ int main(void){
 	b->setFlags(Button::ToggleButton);
 	b->setChangeCallback([plot](bool state) { plot->setShowLegend(state); });
 
+	b = new Button(window, "Show Ticks");
+	b->setFlags(Button::ToggleButton);
+	b->setChangeCallback([plot](bool state) { plot->setShowTicks(state); });
+
+
 	Vector2f zoomMin(0, -1);
 	Vector2f zoomMax(1, 1);
 	std::stringstream bName; bName << "Zoom, to (" << zoomMin << ") x (" << zoomMax << ")";

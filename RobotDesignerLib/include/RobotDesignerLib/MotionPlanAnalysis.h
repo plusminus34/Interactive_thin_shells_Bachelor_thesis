@@ -4,6 +4,17 @@
 #include <RobotDesignerLib/LocomotionEngineMotionPlan.h>
 #include <GUILib/Plot.h>
 
+struct PlotWidget {
+	PlotWidget(){}
+	PlotWidget(Plot *plot, nanogui::Widget *widget){
+		this->plot = plot;
+		this->widget = widget;
+	}
+
+	Plot *plot;
+	nanogui::Widget *widget;
+};
+
 class MotionPlanAnalysis
 {
 public:
@@ -15,9 +26,18 @@ public:
 
 	void setTimeAt(float t);
 
-//private:
+private:
+	PlotWidget makePlotWidget(nanogui::Window *window, const std::string &name);
+
+	void updatePlotScaling();
+
+public: //private:
 	nanogui::Window *window;
-	Plot *plot;
+
+	enum PlotNames {
+		WHEEL_SPEED, WHEEL_TILT_ANGLE, WHEEL_YAW_ANGLE
+	};
+	std::map<PlotNames, PlotWidget> plots;
 };
 
 #endif // MOTION_PLAN_ANALYSIS_H
