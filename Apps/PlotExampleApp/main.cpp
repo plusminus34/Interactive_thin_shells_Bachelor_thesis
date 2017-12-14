@@ -20,13 +20,13 @@ int main(void){
 	Plot *plot = new Plot(window, "my first plot");
 
 	// add some data ...
-	VectorXf x1(3); x1 << 0, 1, 2;
+	VectorXf x1(3); x1 << -0.68, 1, 2;
 	VectorXf y1(3); y1 << 0, 2, 10;
 	plot->setPlotData("data 1", PlotData(x1, y1, Color(Vector3f(1, 0, 0), 0.5), 4));
 
 	// ... some more ...
 	VectorXf x2(3); x2 << 0, 0.2, 2;
-	VectorXf y2(3); y2 << -3.f, 2, 4;
+	VectorXf y2(3); y2 << -3.3f, 2, 4;
 	plot->setPlotData("data 2", PlotData(x2, y2, Color(Vector3f(0, 1, 0), 1)));
 
 	// ... a sine wave ...
@@ -63,7 +63,7 @@ int main(void){
 	plot->setPlotData("data 3", PlotData(Vector2f(plot->dataMin()[0], plot->dataMax()[0]) , Vector2f(0,0), Color(Vector3f(0, 0, 0), 0.2), 2));
 
 	plot->setFooter("Lots of plots");
-	plot->setBackgroundColor(Color(1.f,1.f,1.f,0.5f));
+//	plot->setBackgroundColor(Color(1.f,1.f,1.f,0.5f));
 	plot->setSize(Vector2i(800, 800));
 
 	Button *b = new Button(window, "Show Legend");

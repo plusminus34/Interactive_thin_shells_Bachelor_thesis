@@ -17,38 +17,17 @@ void PlotData::updateMinMax()
 Plot::Plot(Widget *parent, const std::string &caption)
 	: Widget(parent), mCaption(caption) {
 	mBackgroundColor = Color(20, 128);
-	mForegroundColor = Color(255, 192, 0, 128);
+	mForegroundColor = Color(255, 255, 255, 128);
 	mShowLegend = false;
+	mShowTicks = true;
+	mNumTicks = Vector2i(10, 10);
+	mTickHeight = 10;
 	mTextColor = Color(240, 192);
 }
 
 void Plot::setPlotData(const std::string &name, const PlotData &data)
 {
 	mDataColl[name] = data;
-}
-
-void Plot::updateMinMax()
-{
-	mDataMin = Vector2f(HUGE_VAL, HUGE_VAL);
-	mDataMax = Vector2f(-HUGE_VAL, -HUGE_VAL);
-
-	for(const auto &d : mDataColl) {
-		const PlotData &data = d.second;
-		for (int i = 0; i < 2; ++i) {
-			mDataMin[i] = std::min(mDataMin[i], data.mMinVal[i]);
-			mDataMax[i] = std::max(mDataMax[i], data.mMaxVal[i]);
-		}
-	}
-
-	float range = (mDataMax[1] - mDataMin[1]);
-	mDataMin[1] -= 0.1*range;
-	mDataMax[1] += 0.1*range;
-
-//	for (int i = 0; i < 2; ++i) {
-//		float range = (mDataMax[i] - mDataMin[i]);
-//		mDataMin[i] -= 0.1*range;
-//		mDataMax[i] += 0.1*range;
-//	}
 }
 
 void Plot::draw(NVGcontext *ctx) {
@@ -84,6 +63,68 @@ void Plot::draw(NVGcontext *ctx) {
 			nvgStrokeWidth(ctx, data.mWidth);
 			nvgStroke(ctx);
 		}
+	}
+
+
+	if(mShowTicks)
+	{
+		// set up stroke
+		nvgStrokeColor(ctx, mForegroundColor);
+		nvgStrokeWidth(ctx, 1.f);
+
+		// set up font
+		nvgFontSize(ctx, 14.0f);
+
+		// ticks on x axis
+		{
+			nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_BOTTOM);
+
+			// compute tick step
+			float tickStep = computeTickStep(0);
+			float mag = computeMagnitude(tickStep);
+			float start = std::floor(mDataMin(0)/std::pow(10, mag))*std::pow(10, mag);;
+			start = std::floor(start/tickStep)*tickStep;
+
+			float vy = mPos.y() + mSize.y();
+			for (float x = start; x <= mDataMax(0); x+=tickStep) {
+				float vx = mPos.x() + scaledXValue(x) * mSize.x();
+				nvgBeginPath(ctx);
+				nvgMoveTo(ctx, vx, vy);
+				nvgLineTo(ctx, vx, vy-mTickHeight);
+				nvgStroke(ctx);
+
+				char c[100];
+				std::sprintf(c, "%g", x);
+				nvgFillColor(ctx, mForegroundColor);
+				nvgText(ctx, vx, vy-mTickHeight, c, NULL);
+			}
+		}
+
+		// ticks on y axis
+		{
+			nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+
+			// compute tick step
+			float tickStep = computeTickStep(1);
+			float mag = computeMagnitude(tickStep);
+			float start = std::floor(mDataMin(1)/std::pow(10, mag))*std::pow(10, mag);;
+			start = std::floor(start/tickStep)*tickStep;
+
+			float vx = mPos.x();
+			for (float y = start; y <= mDataMax(1); y+=tickStep) {
+				float vy = mPos.y() + (1-scaledYValue(y)) * mSize.y();
+				nvgBeginPath(ctx);
+				nvgMoveTo(ctx, vx, vy);
+				nvgLineTo(ctx, vx+mTickHeight, vy);
+				nvgStroke(ctx);
+
+				char c[100];
+				std::sprintf(c, "%g", y);
+				nvgFillColor(ctx, mForegroundColor);
+				nvgText(ctx, vx+mTickHeight+4, vy, c, NULL);
+			}
+		}
+
 	}
 
 	nvgFontFace(ctx, "sans");
@@ -156,4 +197,41 @@ bool Plot::load(Serializer &s) {
 	if (!s.get("textColor", mTextColor)) return false;
 //	if (!s.get("values", mXValues)) return false;
 	return true;
+}
+
+void Plot::updateMinMax()
+{
+	mDataMin = Vector2f(HUGE_VAL, HUGE_VAL);
+	mDataMax = Vector2f(-HUGE_VAL, -HUGE_VAL);
+
+	for(const auto &d : mDataColl) {
+		const PlotData &data = d.second;
+		for (int i = 0; i < 2; ++i) {
+			mDataMin[i] = std::min(mDataMin[i], data.mMinVal[i]);
+			mDataMax[i] = std::max(mDataMax[i], data.mMaxVal[i]);
+		}
+	}
+
+	float range = (mDataMax[1] - mDataMin[1]);
+	mDataMin[1] -= 0.1*range;
+	mDataMax[1] += 0.1*range;
+
+//	for (int i = 0; i < 2; ++i) {
+//		float range = (mDataMax[i] - mDataMin[i]);
+//		mDataMin[i] -= 0.1*range;
+//		mDataMax[i] += 0.1*range;
+//	}
+}
+
+float Plot::computeTickStep(int dim) const
+{
+	float range = mDataMax(dim)-mDataMin(dim);
+	float tickStep = range/(float)mNumTicks(dim);
+	float mag = std::floor(std::log10(tickStep));
+	return std::round(tickStep/std::pow(10, mag))*std::pow(10, mag);
+}
+
+float Plot::computeMagnitude(float x)
+{
+	return std::floor(std::log10(x));
 }

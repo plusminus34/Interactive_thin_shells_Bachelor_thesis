@@ -18,6 +18,7 @@ MotionPlanAnalysis::MotionPlanAnalysis(nanogui::Screen *screen){
 	plot = new Plot(window, "Wheel Speed");
 	plot->setSize(Vector2i(400, 200));
 	plot->setBackgroundColor(nanogui::Color(Eigen::Vector3f(0.5, 0.5, 0.5), 0.1f));
+	plot->setNumTicks(Vector2i(10, 5));
 
 	// create some buttons
 	Button *b = new Button(window, "Show Legend");
@@ -50,7 +51,7 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 			VectorXf x(nTimeSteps);
 			VectorXf y(nTimeSteps);
 			for (int i = 0; i < nTimeSteps; ++i){
-				x[i] = (float)i/(float)nTimeSteps;
+				x[i] = (float)i/((float)nTimeSteps-1);
 				y[i] = eeTraj.wheelSpeed[i];
 			}
 

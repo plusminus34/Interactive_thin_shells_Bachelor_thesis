@@ -71,6 +71,12 @@ public:
 	const Eigen::Vector2f &dataMax() const { return mDataMax; }
 	void setDataMax(const Eigen::Vector2f &dataMax) { mDataMax = dataMax; }
 
+	bool showTicks() const { return mShowTicks; }
+	void setShowTicks(bool showTicks) { mShowTicks = showTicks; }
+
+	const Eigen::Vector2i &numTicks() const { return mNumTicks; }
+	void setNumTicks(const Eigen::Vector2i &numTicks) { mNumTicks = numTicks; }
+
 	// TODO: should we rather override `preferredSize` or use `setSize` from `Widget`?
 	//	virtual Eigen::Vector2i preferredSize(NVGcontext *ctx) const override;
 	virtual void draw(NVGcontext *ctx) override;
@@ -82,10 +88,15 @@ private:
 	float scaledXValue(float value) { return (value-mDataMin(0))/(mDataMax(0)-mDataMin(0)); }
 	float scaledYValue(float value) { return (value-mDataMin(1))/(mDataMax(1)-mDataMin(1)); }
 
+	float computeTickStep(int dim) const;
+	static float computeMagnitude(float x);
+
 protected:
 	std::string mCaption, mHeader, mFooter;
-	bool mShowLegend;
 	nanogui::Color mBackgroundColor, mForegroundColor, mTextColor;
+	bool mShowLegend, mShowTicks;
+	Eigen::Vector2i mNumTicks;
+	int mTickHeight;
 
 	std::map<std::string, PlotData> mDataColl;
 	Eigen::Vector2f mDataMin, mDataMax;
