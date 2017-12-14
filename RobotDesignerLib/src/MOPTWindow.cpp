@@ -273,7 +273,7 @@ double MOPTWindow::runMOPTStep(){
 
 	// plot energy value
 	{
-		energyGraphValues.push_back(energyVal);
+		energyGraphValues.push_back((float)energyVal);
 		int start = std::max(0, (int)energyGraphValues.size()-100);
 		int size = std::min(100, (int)energyGraphValues.size());
 		Eigen::Map<Eigen::VectorXf> values(&energyGraphValues[start], size);
