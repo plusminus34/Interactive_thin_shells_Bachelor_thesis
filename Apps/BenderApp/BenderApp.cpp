@@ -491,7 +491,7 @@ void BenderApp::restart() {
 
 void BenderApp::addMountedNode(int node_id, int mount_id)
 {
-	femMesh->setMountedNode(node_id, femMesh->nodes[node_id]->getWorldPosition(), mount_id);
+	femMesh->setMountedNode(node_id, femMesh->nodes[node_id]->getCoordinates(femMesh->X), mount_id);
 	std::cout << "pinned nodes are: ";
 	for(BaseEnergyUnit* np : femMesh->pinnedNodeElements) {
 		std::cout << dynamic_cast<MountedPointSpring2D*>(np)->node->nodeIndex << " ";
