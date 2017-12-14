@@ -1,3 +1,6 @@
+
+#include <cmath>
+
 #include <GUILib/GLUtils.h>
 #include "MathLib/V3D.h"
 
@@ -11,10 +14,10 @@ NodePositionObjective::NodePositionObjective(Node * node, P3D const & targetPosi
 }
 
 
-void NodePositionObjective::addO(const dVector & x, const dVector & X, double & O) const
+void NodePositionObjective::addO(const dVector & x, const dVector & X, double & o) const
 {
 	V3D d = node->getCoordinates(x) - targetPosition;
-	O += 0.5 * d.dot(d);
+	o += 0.5 * d.dot(d);
 }
 
 
@@ -24,6 +27,16 @@ void NodePositionObjective::addDoDx(const dVector & x, const dVector & X, dVecto
 		dodx[node->dataStartIndex + i] += x[node->dataStartIndex + i] - targetPosition[i];
 	}
 }
+
+
+void NodePositionObjective::addError(const dVector & x, double & e) const
+{
+	V3D d = node->getCoordinates(x) - targetPosition;
+	e += sqrt(d.dot(d));
+}
+
+
+
 void NodePositionObjective::draw(dVector const & x) 
 {
 	glColor3d(0, 1, 0);

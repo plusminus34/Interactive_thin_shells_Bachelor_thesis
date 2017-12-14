@@ -27,6 +27,9 @@ private:
 
 	int selected_mount = -1;
 
+	// diagnostics
+	double o_last = 0.0;	// last result for mesh objective function
+	double e_last = 0.0; // last result for error of mesh objective
 
 	// state of the app
 	bool computeStaticSolution = true;

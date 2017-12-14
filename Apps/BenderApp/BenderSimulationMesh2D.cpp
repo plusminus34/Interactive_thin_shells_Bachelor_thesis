@@ -32,6 +32,23 @@ void BenderSimulationMesh2D::setNodePositionObjective(int nodeID, const P3D & x0
 }
 
 
+void BenderSimulationMesh2D::setNodeGlobalNodePositionObjective(dVector const & x)
+{
+	clearObjectives();
+
+	for(int i = 0; i < nodes.size(); ++i) {
+		setNodePositionObjective(i, nodes[i]->getCoordinates(x));
+	}
+}
+
+
+void BenderSimulationMesh2D::clearObjectives()
+{
+	for(MeshObjective * obj: objectives) {
+		delete obj;
+	}
+	objectives.resize(0);
+}
 
 double BenderSimulationMesh2D::computeO()
 {
@@ -62,6 +79,20 @@ void BenderSimulationMesh2D::computeDoDx(dVector & dodx)
 	{
 		obj->addDoDx(x, X, dodx);
 	}
+}
+
+
+double BenderSimulationMesh2D::computeTargetPositionError()
+{
+	double e = 0;
+	int n_obj = 0;
+	for(MeshObjective const * obj : objectives)
+	{
+		obj->addError(x, e);
+		++n_obj;
+	}
+	double e_rel = e / static_cast<double>(n_obj);
+	return(e_rel);
 }
 
 

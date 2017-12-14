@@ -72,6 +72,10 @@ BenderApp::BenderApp()
 	mainMenu->addVariable("Static solve", computeStaticSolution);
 	mainMenu->addVariable("Optimize Objective", optimizeObjective);
 	mainMenu->addVariable("Check derivatives", checkDerivatives);
+	mainMenu->addButton("set state target", [this](){
+		                                             femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
+	                                                 });
+
 	menuScreen->performLayout();
 
 
@@ -337,10 +341,22 @@ void BenderApp::process() {
 			pushXi();
 
 			solve_mesh();
+
+			double o_new = femMesh->computeO();
+			double e_new = femMesh->computeTargetPositionError();
+			double delta_o = o_new - o_last;
+			double delta_e = e_new - e_last;
+			Logger::consolePrint("o / e / delta o / delta e = %f %f %f %f", o_new, e_new, delta_o, delta_e);
+			o_last = o_new;
+			e_last = e_new;
+
 		}
 		else {
 			solve_mesh();
 		}
+
+
+
 	}
 }
 
