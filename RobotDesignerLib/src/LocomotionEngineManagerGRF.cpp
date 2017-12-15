@@ -5,7 +5,7 @@
 #include <RobotDesignerLib/MPO_WheelAccelerationConstraint.h>
 #include <RobotDesignerLib/MPO_EEPosSwingObjective.h>
 #include <RobotDesignerLib/MPO_RobotWheelAxisObjective.h>
-#include <RobotDesignerLib/MPO_StartVelocityConstraint.h>
+#include <RobotDesignerLib/MPO_COMZeroVelocityConstraint.h>
 #include <RobotDesignerLib/MPO_VelocityL0Regularization.h>
 
 //#define DEBUG_WARMSTART

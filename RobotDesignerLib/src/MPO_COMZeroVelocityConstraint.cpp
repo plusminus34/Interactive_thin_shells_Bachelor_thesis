@@ -1,4 +1,4 @@
-#include <RobotDesignerLib/MPO_StartVelocityConstraint.h>
+#include <RobotDesignerLib/MPO_COMZeroVelocityConstraint.h>
 #include <iostream>
 
 MPO_COMZeroVelocityConstraint::MPO_COMZeroVelocityConstraint(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, int timeIndex, double weight) {
