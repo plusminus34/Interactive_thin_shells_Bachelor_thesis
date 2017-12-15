@@ -10,21 +10,26 @@ using namespace Eigen;
 MotionPlanAnalysis::MotionPlanAnalysis(nanogui::Screen *screen){
 
 	window = new Window(screen, "Motion Plan Analysis");
-	window->setLayout(new GridLayout(Orientation::Vertical, 10, Alignment::Middle, 15, 5));
+	window->setLayout(new GridLayout(Orientation::Vertical, 2, Alignment::Middle, 15, 5));
 	window->setVisible(false);
 	window->setPosition({1200, 0});
 
 	Widget *buttons = new Widget(window);
-	buttons->setLayout(new GridLayout(Orientation::Horizontal, 4, Alignment::Minimum, 0, 5));
+	buttons->setLayout(new GridLayout(Orientation::Horizontal, 10, Alignment::Minimum, 0, 5));
+
+	Widget *widgetPlots = new Widget(window);
+	widgetPlots->setLayout(new GridLayout(Orientation::Vertical, 4, Alignment::Minimum, 0, 5));
 
 	// create a EE plots
-	plots[WHEEL_SPEED] = makePlotWidget(window, "Wheel Speed");
-	plots[WHEEL_TILT_ANGLE] = makePlotWidget(window, "Wheel Tilt Angle");
-	plots[WHEEL_YAW_ANGLE] = makePlotWidget(window, "Wheel Yaw Angle");
-	plots[EE_POS_Y] = makePlotWidget(window, "EE pos y");
+	plots[WHEEL_SPEED] = makePlotWidget(widgetPlots, "Wheel Speed");
+	plots[WHEEL_TILT_ANGLE] = makePlotWidget(widgetPlots, "Wheel Tilt Angle");
+	plots[WHEEL_YAW_ANGLE] = makePlotWidget(widgetPlots, "Wheel Yaw Angle");
+	plots[EE_POS_Y] = makePlotWidget(widgetPlots, "EE pos y");
 
 	// create robot state plots
-	plots[ROBOT_STATE] = makePlotWidget(window, "Robot State");
+	plots[JOINT_ANGLES] = makePlotWidget(widgetPlots, "Joint Angles");
+	plots[COM_POSITION] = makePlotWidget(widgetPlots, "COM Position");
+	plots[COM_ORIENTATION] = makePlotWidget(widgetPlots, "COM Orientation");
 
 	// create show/hide toggle buttons
 	for (auto &plotWidget : plots) {
@@ -113,31 +118,77 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 	}
 
 	const LocomotionEngine_RobotStateTrajectory &rsTraj = motionPlan->robotStateTrajectory;
-	if(rsTraj.qArray.size() > 0)
+	if(rsTraj.qArray.size() > 6)
 	{
-
 		int nTimeSteps = rsTraj.qArray.size();
 
 		VectorXf x(nTimeSteps);
 		for (int i = 0; i < nTimeSteps; ++i)
 			x[i] = (float)i/((float)nTimeSteps-1);
 
-		int sizeQ = rsTraj.qArray[0].size();
-		std::vector<VectorXf> y(sizeQ);
-		for (int i = 0; i < sizeQ; ++i) {
+		int nJoints = rsTraj.qArray[6].size()-6;
+		std::vector<VectorXf> y(nJoints);
+		for (int i = 0; i < nJoints; ++i) {
 			y[i].resize(nTimeSteps);
 		}
 
 		for (int i = 0; i < nTimeSteps; ++i) {
-			for (int j = 0; j < sizeQ; ++j)
+			for (int j = 0; j < nJoints; ++j)
+				y[j][i] = rsTraj.qArray[i][j+6];
+		}
+
+		for (int i = 0; i < nJoints; ++i) {
+			PlotData data(x, y[i], nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)i/(float)(nJoints), 0.2f), 1.f));
+			plots[JOINT_ANGLES].plot->setPlotData("q " + std::to_string(i+6), data);
+		}
+	}
+
+	if(rsTraj.qArray.size() >= 3)
+	{
+		int nTimeSteps = rsTraj.qArray.size();
+
+		VectorXf x(nTimeSteps);
+		for (int i = 0; i < nTimeSteps; ++i)
+			x[i] = (float)i/((float)nTimeSteps-1);
+
+		std::vector<VectorXf> y(3);
+		for (int i = 0; i < 3; ++i) {
+			y[i].resize(nTimeSteps);
+		}
+
+		for (int i = 0; i < nTimeSteps; ++i) {
+			for (int j = 0; j < 3; ++j)
 				y[j][i] = rsTraj.qArray[i][j];
 		}
 
-		for (int i = 0; i < sizeQ; ++i) {
-			PlotData data(x, y[i], nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)i/(float)(sizeQ), 0.2f), 1.f));
-			plots[ROBOT_STATE].plot->setPlotData("q " + std::to_string(i), data);
+		for (int i = 0; i < 3; ++i) {
+			PlotData data(x, y[i], nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)i/(float)(3), 0.2f), 1.f));
+			plots[COM_POSITION].plot->setPlotData("q " + std::to_string(i), data);
+		}
+	}
+
+	if(rsTraj.qArray.size() >= 6)
+	{
+		int nTimeSteps = rsTraj.qArray.size();
+
+		VectorXf x(nTimeSteps);
+		for (int i = 0; i < nTimeSteps; ++i)
+			x[i] = (float)i/((float)nTimeSteps-1);
+
+		std::vector<VectorXf> y(3);
+		for (int i = 0; i < 3; ++i) {
+			y[i].resize(nTimeSteps);
 		}
 
+		for (int i = 0; i < nTimeSteps; ++i) {
+			for (int j = 0; j < 3; ++j)
+				y[j][i] = rsTraj.qArray[i][j+3];
+		}
+
+		for (int i = 0; i < 3; ++i) {
+			PlotData data(x, y[i], nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)i/(float)(3), 0.2f), 1.f));
+			plots[COM_ORIENTATION].plot->setPlotData("q " + std::to_string(i+3), data);
+		}
 	}
 
 	updatePlotScaling();
@@ -157,7 +208,7 @@ void MotionPlanAnalysis::setTimeAt(float t)
 	}
 }
 
-PlotWidget MotionPlanAnalysis::makePlotWidget(nanogui::Window *window, const std::string &name)
+PlotWidget MotionPlanAnalysis::makePlotWidget(nanogui::Widget *window, const std::string &name)
 {
 	Widget *widget = new Widget(window);
 	widget->setLayout(new GridLayout(Orientation::Horizontal, 2, Alignment::Fill, 5, 5));

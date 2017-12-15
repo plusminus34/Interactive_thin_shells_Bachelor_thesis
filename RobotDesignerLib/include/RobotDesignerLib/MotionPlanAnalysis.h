@@ -27,7 +27,7 @@ public:
 	void setTimeAt(float t);
 
 private:
-	PlotWidget makePlotWidget(nanogui::Window *window, const std::string &name);
+	PlotWidget makePlotWidget(nanogui::Widget *window, const std::string &name);
 
 	void updatePlotScaling();
 
@@ -36,7 +36,7 @@ public: //private:
 
 	enum PlotNames {
 		WHEEL_SPEED, WHEEL_TILT_ANGLE, WHEEL_YAW_ANGLE, EE_POS_Y,
-		ROBOT_STATE
+		JOINT_ANGLES, COM_POSITION, COM_ORIENTATION
 	};
 	std::map<PlotNames, PlotWidget> plots;
 };
