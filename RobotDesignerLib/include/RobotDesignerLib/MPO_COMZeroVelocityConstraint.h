@@ -1,5 +1,5 @@
-#ifndef MPO_START_VELOCITY_CONSTRAINT_H
-#define MPO_START_VELOCITY_CONSTRAINT_H
+#ifndef MPO_COM_ZERO_VELOCITY_CONSTRAINT_H
+#define MPO_COM_ZERO_VELOCITY_CONSTRAINT_H
 
 #include <OptimizationLib/ObjectiveFunction.h>
 #include <MathLib/Matrix.h>

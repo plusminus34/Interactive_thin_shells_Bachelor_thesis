@@ -110,7 +110,7 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 				y[i] = eeTraj.EEPos[i][1];
 			}
 
-			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)index/(float)nEEs), 1.f));
+			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)index/(float)nEEs, 0.2f), 1.f));
 			plots[EE_POS_Y].plot->setPlotData("ee " + std::to_string(index), data);
 		}
 
