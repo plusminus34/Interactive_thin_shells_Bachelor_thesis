@@ -17,12 +17,12 @@ public:
 
 private:
 	template<class T>
-	static Vector3T<T> computeConstraint(const Vector3T<T> &eePosjp1, const Vector3T<T> &eePosj, double dt, const Vector3T<T> &omega, const Vector3T<T> &radius) {
+	static Vector3T<T> computeConstraintWheel(const Vector3T<T> &eePosjp1, const Vector3T<T> &eePosj, double dt, const Vector3T<T> &omega, const Vector3T<T> &radius) {
 		return (eePosjp1 - eePosj)/(T)dt + omega.cross(radius);
 	}
 
 	template<class T>
-	static T computeEnergy(const Vector3T<T> &eePosjp1, const Vector3T<T> &eePosj, double dt,
+	static T computeEnergyWheel(const Vector3T<T> &eePosjp1, const Vector3T<T> &eePosj, double dt,
 						   const Vector3T<T> &rho, const Vector3T<T> &wheelAxis,
 						   const Vector3T<T> &axisYaw, const T &alphaj, const T &alphajp1,
 						   const Vector3T<T> &axisTilt, const T &betaj, const T &betajp1,
@@ -34,7 +34,13 @@ private:
 		Vector3T<T> rr = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(rho, axisYaw, (T)0.5*(alphaj+alphajp1), axisTilt, (T)0.5*(betaj+betajp1));
 		// interpolate (average) wheel speed
 		Vector3T<T> omega = axisRot*(speedj+speedjp1)*0.5;
-		Vector3T<T> constraint = computeConstraint(eePosjp1, eePosj, dt, omega, rr);
+		Vector3T<T> constraint = computeConstraintWheel(eePosjp1, eePosj, dt, omega, rr);
+		return (T)0.5 * constraint.squaredNorm() * c * weight;
+	}
+
+	template<class T>
+	static T computeEnergyFoot(const Vector3T<T> &eePosjp1, const Vector3T<T> &eePosj, double c, double weight) {
+		Vector3T<T> constraint = (eePosjp1-eePosj);
 		return (T)0.5 * constraint.squaredNorm() * c * weight;
 	}
 
@@ -49,6 +55,8 @@ private:
 	};
 
 	// eePosj (3), eePosjm1 (3), speedj, speedjm1, alphaj, alphajm1, betaj, betajm1
-	static const int numDOFs = 12;
+	static const int numDOFsWheel = 12;
+	// eePosj (3), eePosjm1 (3)
+	static const int numDOFsFoot = 6;
 };
 

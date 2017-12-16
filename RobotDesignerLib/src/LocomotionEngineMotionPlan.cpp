@@ -84,6 +84,15 @@ double LocomotionEngine_EndEffectorTrajectory::getWheelTiltAngleAt(double t) con
 	return traj.evaluate_linear(t);
 }
 
+double LocomotionEngine_EndEffectorTrajectory::getWheelSpeedAt(double t) const
+{
+	//very slow method, but easy to implement...
+	Trajectory1D traj;
+	for (uint i = 0; i<wheelSpeed.size(); i++)
+		traj.addKnot((double)i / (wheelSpeed.size() - 1), wheelSpeed[i]);
+	return traj.evaluate_linear(t);
+}
+
 double LocomotionEngine_EndEffectorTrajectory::getContactFlagAt(double t){
 	boundToRange(&t, 0, 1);
 	int tIndex = (int)(t * (double)(contactFlag.size()-1));
@@ -375,30 +384,49 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 			endEffectorTrajectories[index].endEffectorRB = this->robot->bFrame->limbs[i]->getLastLimbSegment();
 			endEffectorTrajectories[index].endEffectorLocalCoords = eeLocalCoords;
 
-			// set wheel radius from rb properties
+			// is end effector a wheel?
 			const RBProperties &rbProperties = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties;
 			const RBEndEffector &rbEndEffector = rbProperties.endEffectorPoints[j];
-			endEffectorTrajectories[index].wheelRadius = rbEndEffector.featureSize;
 
-			// set wheel axis
-			V3D wheelAxisLocal = rbEndEffector.localCoordsWheelAxis;
-			RigidBody* rigidBody = this->robot->bFrame->limbs[i]->getLastLimbSegment();
-			V3D wheelAxisWorld = rigidBody->getWorldCoordinates(wheelAxisLocal).normalized();
-			endEffectorTrajectories[index].wheelAxis = wheelAxisWorld;
+			if(rbEndEffector.isActiveWheel())
+			{
+				wheelToEEIndex[nWheels] = index;
+				eeToWheelIndex[index] = nWheels;
+				nWheels++;
 
-			// set yaw axis (always going to be y-axis)
-			endEffectorTrajectories[index].wheelYawAxis = V3D(0, 1, 0);
+				endEffectorTrajectories[index].isWheel = true;
 
-			// set tilt axis
-			endEffectorTrajectories[index].wheelTiltAxis = wheelAxisWorld.cross(endEffectorTrajectories[index].wheelYawAxis);
+				// set wheel radius from rb properties
+				endEffectorTrajectories[index].wheelRadius = rbEndEffector.featureSize;
 
-			// set wheel angles
-			endEffectorTrajectories[index].wheelYawAngle = DynamicArray<double>(nSamplingPoints, 0);
-			endEffectorTrajectories[index].wheelTiltAngle = DynamicArray<double>(nSamplingPoints, 0);
+				// set wheel axis
+				V3D wheelAxisLocal = rbEndEffector.localCoordsWheelAxis;
+				RigidBody* rigidBody = this->robot->bFrame->limbs[i]->getLastLimbSegment();
+				V3D wheelAxisWorld = rigidBody->getWorldCoordinates(wheelAxisLocal).normalized();
+				endEffectorTrajectories[index].wheelAxis = wheelAxisWorld;
 
-			// contact point to ground
-			Vector3d rho = endEffectorTrajectories[index].wheelTiltAxis.cross(endEffectorTrajectories[index].wheelAxis);
-			rho = rho.normalized() * endEffectorTrajectories[index].wheelRadius;
+				// set yaw axis (always going to be y-axis)
+				endEffectorTrajectories[index].wheelYawAxis = V3D(0, 1, 0);
+
+				// set tilt axis
+				endEffectorTrajectories[index].wheelTiltAxis = wheelAxisWorld.cross(endEffectorTrajectories[index].wheelYawAxis);
+
+				// set wheel angles
+				endEffectorTrajectories[index].wheelYawAngle = DynamicArray<double>(nSamplingPoints, 0);
+				endEffectorTrajectories[index].wheelTiltAngle = DynamicArray<double>(nSamplingPoints, 0);
+
+				// contact point to ground
+				Vector3d rho = endEffectorTrajectories[index].wheelTiltAxis.cross(endEffectorTrajectories[index].wheelAxis);
+				rho = rho.normalized() * endEffectorTrajectories[index].wheelRadius;
+
+				// output some info
+				Logger::consolePrint("Wheel radius %d: %f", index, endEffectorTrajectories[index].wheelRadius);
+			}
+			else if(rbEndEffector.isWeldedWheel())
+				Logger::consolePrint("Warning: Welded wheels have not been tested!");
+			else if(rbEndEffector.isFreeToMoveWheel())
+				Logger::consolePrint("Warning: Free-to-move wheels are not working! (yet...)");
+
 
 			for (int k=0;k<nSamplingPoints;k++){
 				endEffectorTrajectories[index].EEPos[k] = eeWorldCoords;
@@ -564,15 +592,15 @@ void LocomotionEngineMotionPlan::getParameterMinValues(dVector &minV){
 
 	if (optimizeWheels){
 		for (int j=0; j<nSamplePoints;j++)
-			for (uint i=0;i<endEffectorTrajectories.size();i++)
+			for (int i=0;i<nWheels;i++)
 				for (int k=0; k<nWheelParams; k++){
 					minLimits.push_back(0);
 				}
 		for (int j=0; j<nSamplePoints;j++)
-			for (uint i=0;i<endEffectorTrajectories.size();i++)
+			for (int i=0;i<nWheels;i++)
 				minLimits.push_back(0);
 		for (int j=0; j<nSamplePoints;j++)
-			for (uint i=0;i<endEffectorTrajectories.size();i++)
+			for (int i=0;i<nWheels;i++)
 				minLimits.push_back(0);
 	}
 
@@ -637,15 +665,15 @@ void LocomotionEngineMotionPlan::getParameterMaxValues(dVector &maxV){
 
 	if (optimizeWheels){
 		for (int j=0; j<nSamplePoints;j++)
-			for (uint i=0;i<endEffectorTrajectories.size();i++)
+			for (int i=0;i<nWheels;i++)
 				for (int k=0; k<nWheelParams; k++){
 					maxLimits.push_back(0);
 				}
 		for (int j=0; j<nSamplePoints;j++)
-			for (uint i=0;i<endEffectorTrajectories.size();i++)
+			for (int i=0;i<nWheels;i++)
 				maxLimits.push_back(0);
 		for (int j=0; j<nSamplePoints;j++)
-			for (uint i=0;i<endEffectorTrajectories.size();i++)
+			for (int i=0;i<nWheels;i++)
 				maxLimits.push_back(0);
 	}
 
@@ -709,14 +737,14 @@ void LocomotionEngineMotionPlan::writeMPParametersToList(dVector &p){
 
 	if (optimizeWheels){
 		for (int j=0; j<nSamplePoints; j++)
-			for (uint i=0; i<endEffectorTrajectories.size(); i++)
-				params.push_back(endEffectorTrajectories[i].wheelSpeed[j]);
+			for (int i=0; i<nWheels; i++)
+				params.push_back(endEffectorTrajectories[wheelToEEIndex[i]].wheelSpeed[j]);
 		for (int j=0; j<nSamplePoints; j++)
-			for (uint i=0; i<endEffectorTrajectories.size(); i++)
-				params.push_back(endEffectorTrajectories[i].wheelYawAngle[j]);
+			for (int i=0; i<nWheels; i++)
+				params.push_back(endEffectorTrajectories[wheelToEEIndex[i]].wheelYawAngle[j]);
 		for (int j=0; j<nSamplePoints; j++)
-			for (uint i=0; i<endEffectorTrajectories.size(); i++)
-				params.push_back(endEffectorTrajectories[i].wheelTiltAngle[j]);
+			for (int i=0; i<nWheels; i++)
+				params.push_back(endEffectorTrajectories[wheelToEEIndex[i]].wheelTiltAngle[j]);
 	}
 
 	if (optimizeBarycentricWeights){
@@ -771,14 +799,14 @@ void LocomotionEngineMotionPlan::setMPParametersFromList(const dVector &p){
 
 	if (optimizeWheels){
 		for (int j=0; j<nSamplePoints;j++)
-			for (uint i=0;i<endEffectorTrajectories.size();i++)
-				endEffectorTrajectories[i].wheelSpeed[j] = p[pIndex++];
+			for (int i=0;i<nWheels;i++)
+				endEffectorTrajectories[wheelToEEIndex[i]].wheelSpeed[j] = p[pIndex++];
 		for (int j=0; j<nSamplePoints;j++)
-			for (uint i=0;i<endEffectorTrajectories.size();i++)
-				endEffectorTrajectories[i].wheelYawAngle[j] = p[pIndex++];
+			for (int i=0;i<nWheels;i++)
+				endEffectorTrajectories[wheelToEEIndex[i]].wheelYawAngle[j] = p[pIndex++];
 		for (int j=0; j<nSamplePoints;j++)
-			for (uint i=0;i<endEffectorTrajectories.size();i++)
-				endEffectorTrajectories[i].wheelTiltAngle[j] = p[pIndex++];
+			for (int i=0;i<nWheels;i++)
+				endEffectorTrajectories[wheelToEEIndex[i]].wheelTiltAngle[j] = p[pIndex++];
 	}
 
 	if (optimizeBarycentricWeights){
@@ -1040,9 +1068,9 @@ void LocomotionEngineMotionPlan::updateParameterStartIndices(){
 	if (optimizeWheels){
 		// per end effector wheel params: speed
 		wheelParamsStartIndex = paramCount;
-		paramCount += nSamplePoints * endEffectorTrajectories.size() * nWheelParams;
-		paramCount += nSamplePoints * endEffectorTrajectories.size() * nWheelParamsEE;
-		paramCount += nSamplePoints * endEffectorTrajectories.size() * nWheelParamsEE;
+		paramCount += nSamplePoints * nWheels * nWheelParams;
+		paramCount += nSamplePoints * nWheels * nWheelParamsEE;
+		paramCount += nSamplePoints * nWheels * nWheelParamsEE;
 	}
 
 	if (optimizeBarycentricWeights){
@@ -1242,6 +1270,34 @@ bool LocomotionEngineMotionPlan::getJointAngleVelocityProfile(std::vector<JointV
 
 	return true;
 }
+
+bool LocomotionEngineMotionPlan::getJointAngleVelocityProfile(dVector &velocityProfile, int jointIndex) const
+{
+	if (robotStatesParamsStartIndex < 0)
+	{
+//		error = "robotStatesParamsStartIndex < 0";
+		return false;
+	}
+	
+	int nTimeSteps = nSamplePoints;
+	if (wrapAroundBoundaryIndex >= 0) nTimeSteps--;
+	int i = jointIndex + 6;
+	velocityProfile.resize(nTimeSteps);
+	double dt = motionPlanDuration / nTimeSteps;
+
+	for (int j = 0; j < nTimeSteps; j++) {
+		int jm, jp;
+
+		getVelocityTimeIndicesFor(j, jm, jp);
+		if (jm == -1 || jp == -1) continue;
+
+		double velocity = (robotStateTrajectory.qArray[jp][i] - robotStateTrajectory.qArray[jm][i]) / dt;
+		velocityProfile(j) = velocity;
+	}
+
+	return true;
+}
+
 
 //TODO: redo motion plan animation to update state in terms of deltas, rather than the animation cycle thing?
 void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bool drawRobot, bool drawSkeleton, bool drawPlanDetails, bool drawContactForces, bool drawOrientation){
@@ -1667,16 +1723,15 @@ void LocomotionEngineMotionPlan::drawMotionPlan2(double f, int animationCycle, b
 
 int LocomotionEngineMotionPlan::getWheelSpeedIndex(int i, int j) const
 {
-	return wheelParamsStartIndex + nWheelParams*(j*endEffectorTrajectories.size() + i);
+	return wheelParamsStartIndex + j*nWheels + eeToWheelIndex.at(i);
 }
-
 
 int LocomotionEngineMotionPlan::getWheelYawAngleIndex(int i, int j) const
 {
-	return wheelParamsStartIndex + (nSamplePoints+j)*endEffectorTrajectories.size()*nWheelParams + i;
+	return wheelParamsStartIndex + (nSamplePoints+j)*nWheels + eeToWheelIndex.at(i);
 }
 
 int LocomotionEngineMotionPlan::getWheelTiltAngleIndex(int i, int j) const
 {
-	return wheelParamsStartIndex + (2*nSamplePoints+j)*endEffectorTrajectories.size()*nWheelParams + i;
+	return wheelParamsStartIndex + (2*nSamplePoints+j)*nWheels + eeToWheelIndex.at(i);
 }

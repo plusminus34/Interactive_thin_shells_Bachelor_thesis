@@ -23,6 +23,8 @@ struct MOPTParams {
 	double jointVelocityLimit = 10;
 	double jointVelocityEpsilon = 0.4;
 
+	double jointL0Delta = 1;
+
 	double wheelSpeedLimit = 20;
 	double wheelSpeedEpsilon = 0.4;
 
@@ -42,9 +44,12 @@ public:
 
 	bool startWithEmptyFFP = true;
 	int nTimeSteps = 12;
+	double globalMOPTRegularizer = 0.0001;
 
 	nanogui::Graph* energyGraph;
 	std::vector<float> energyGraphValues;
+
+	nanogui::Graph* velocityProfileGraph;
 
 	MOPTParams moptParams;
 
@@ -103,5 +108,6 @@ private:
 	std::vector<nanogui::FloatBox<double>*> weightTextboxes;
 	void updateSliders();
 	V3D COMSpeed;
+	nanogui::Window* velocityProfileWindow=nullptr;
 };
 

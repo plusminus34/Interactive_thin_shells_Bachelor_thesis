@@ -23,6 +23,7 @@ public:
 	DynamicArray<double> verticalGRFUpperBoundValues;
 	DynamicArray<double> tangentGRFBoundValues;
 
+	bool isWheel = false;
 	double wheelRadius = 0.1;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
 	V3D wheelAxis;						// wheel axis in world coords.
@@ -63,6 +64,8 @@ public:
 	double getWheelYawAngleAt(double t) const;
 
 	double getWheelTiltAngleAt(double t) const;
+
+	double getWheelSpeedAt(double t) const;
 
 	template<class T>
 	static Vector3T<T> rotateWheelAxisWith(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {
@@ -192,6 +195,9 @@ public:
 	double wheelAccelLimit = 0;
 	double wheelAccelEpsilon = 1.0;		// for SoftUnilateralConstraint
 
+	//	parameters for L0 optimization
+	double jointL0Delta = 1;
+
 public:
 	bool optimizeCOMPositions;
 	bool optimizeCOMOrientations;
@@ -206,6 +212,10 @@ public:
 	// TODO: clean up / consolidate nWheelParams and nWheelParamsEE
 	const static int nWheelParams = 1; // wheel speed
 	const static int nWheelParamsEE = 1; // wheel speed
+
+	int nWheels = 0;
+	std::map<int, int> wheelToEEIndex;
+	std::map<int, int> eeToWheelIndex;
 
 	//TODO: optimize contact flags too?!?
 
@@ -304,4 +314,5 @@ public:
 		double t; int qIndex; double velocity;
 	};
 	bool getJointAngleVelocityProfile(std::vector<JointVelocity> &velocityProfile, std::string &error) const;
+	bool getJointAngleVelocityProfile(dVector &velocityProfile, int jointIndex) const;
 };

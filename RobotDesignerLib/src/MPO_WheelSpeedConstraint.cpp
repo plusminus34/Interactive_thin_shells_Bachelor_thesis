@@ -25,9 +25,11 @@ double MPO_WheelSpeedConstraints::computeValue(const dVector& s) {
 	for (int j=0; j<theMotionPlan->nSamplePoints; j++){
 		for (uint i=0; i<theMotionPlan->endEffectorTrajectories.size(); i++){
 
-			double wheelSpeed = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j];
-			retVal += constraintLowerBound->computeValue(wheelSpeed);
-			retVal += constraintUpperBound->computeValue(wheelSpeed);
+			if(theMotionPlan->endEffectorTrajectories[i].isWheel){
+				double wheelSpeed = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j];
+				retVal += constraintLowerBound->computeValue(wheelSpeed);
+				retVal += constraintUpperBound->computeValue(wheelSpeed);
+			}
 		}
 	}
 
@@ -46,13 +48,15 @@ void MPO_WheelSpeedConstraints::addGradientTo(dVector& grad, const dVector& p) {
 		for (int j=0; j<theMotionPlan->nSamplePoints; j++){
 			for (uint i=0; i<theMotionPlan->endEffectorTrajectories.size(); i++){
 
-				double wheelSpeed = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j];
+				if(theMotionPlan->endEffectorTrajectories[i].isWheel){
+					double wheelSpeed = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j];
 
-				// lower bound gradient
-				grad[theMotionPlan->getWheelSpeedIndex(i,j)] += weight * constraintLowerBound->computeDerivative(wheelSpeed);
+					// lower bound gradient
+					grad[theMotionPlan->getWheelSpeedIndex(i,j)] += weight * constraintLowerBound->computeDerivative(wheelSpeed);
 
-				// upper bound gradient
-				grad[theMotionPlan->getWheelSpeedIndex(i,j)] += weight * constraintUpperBound->computeDerivative(wheelSpeed);
+					// upper bound gradient
+					grad[theMotionPlan->getWheelSpeedIndex(i,j)] += weight * constraintUpperBound->computeDerivative(wheelSpeed);
+				}
 			}
 		}
 	}
@@ -70,21 +74,23 @@ void MPO_WheelSpeedConstraints::addHessianEntriesTo(DynamicArray<MTriplet>& hess
 		for (int j=0; j<theMotionPlan->nSamplePoints; j++){
 			for (uint i=0; i<theMotionPlan->endEffectorTrajectories.size(); i++){
 
-				double wheelSpeed = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j];
+				if(theMotionPlan->endEffectorTrajectories[i].isWheel){
+					double wheelSpeed = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j];
 
-				// lower bound hessian
-				addMTripletToList_reflectUpperElements(
-							hessianEntries,
-							theMotionPlan->getWheelSpeedIndex(i,j),
-							theMotionPlan->getWheelSpeedIndex(i,j),
-							weight * constraintLowerBound->computeSecondDerivative(wheelSpeed));
+					// lower bound hessian
+					addMTripletToList_reflectUpperElements(
+								hessianEntries,
+								theMotionPlan->getWheelSpeedIndex(i,j),
+								theMotionPlan->getWheelSpeedIndex(i,j),
+								weight * constraintLowerBound->computeSecondDerivative(wheelSpeed));
 
-				// upper bound hessian
-				addMTripletToList_reflectUpperElements(
-							hessianEntries,
-							theMotionPlan->getWheelSpeedIndex(i,j),
-							theMotionPlan->getWheelSpeedIndex(i,j),
-							weight * constraintUpperBound->computeSecondDerivative(wheelSpeed));
+					// upper bound hessian
+					addMTripletToList_reflectUpperElements(
+								hessianEntries,
+								theMotionPlan->getWheelSpeedIndex(i,j),
+								theMotionPlan->getWheelSpeedIndex(i,j),
+								weight * constraintUpperBound->computeSecondDerivative(wheelSpeed));
+				}
 			}
 		}
 	}

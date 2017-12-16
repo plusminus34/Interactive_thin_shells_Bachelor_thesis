@@ -78,6 +78,7 @@ RobotDesignerApp::RobotDesignerApp(){
 	moptWindow = new MOPTWindow(0, 0, 100, 100, this);
 	simWindow = new SimWindow(0, 0, 100, 100, this);
 	iEditWindow = new IntelligentRobotEditingWindow(0, 0, 100, 100, this);
+	motionPlanAnalysis = new MotionPlanAnalysis(menuScreen);
 
 	mainMenu->addGroup("RobotDesigner Options");
 	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
@@ -116,6 +117,13 @@ RobotDesignerApp::RobotDesignerApp(){
 
 	mainMenu->addGroup("Sim Options");
 	simWindow->addMenuItems();
+
+	// button to toggle motion plan analysis
+	{
+		nanogui::Button *mpaButton = mainMenu->addButton("Motion Plan Analysis",[](){});
+		mpaButton->setFlags(nanogui::Button::Flags::ToggleButton);
+		mpaButton->setChangeCallback([this](bool state){ motionPlanAnalysis->window->setVisible(state); });
+	}
 
 	showGroundPlane = false;
 	bgColor[0] = bgColor[1] = bgColor[2] = 0.75;
@@ -401,6 +409,7 @@ void RobotDesignerApp::loadToSim(bool initializeMOPT){
 void RobotDesignerApp::warmStartMOPT(bool initializeMotionPlan) {
 	moptWindow->initializeNewMP(initializeMotionPlan);
 	simWindow->loadMotionPlan(moptWindow->locomotionManager->motionPlan);
+	motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
 }
 
 void RobotDesignerApp::saveFile(const char* fName) {
@@ -466,6 +475,9 @@ void RobotDesignerApp::process() {
 	}
 	else if (runOption == MOTION_PLAN_OPTIMIZATION) {
 		runMOPTStep();
+
+		if(motionPlanAnalysis->window->visible())
+			motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
 	}
 	if (simWindow->getActiveController())
 		moptWindow->ffpViewer->cursorPosition = simWindow->getActiveController()->stridePhase;
@@ -500,6 +512,11 @@ void RobotDesignerApp::drawAuxiliarySceneInfo() {
 	if (shouldShowIEditWindow()) {
 		iEditWindow->draw();
 		iEditWindow->drawAuxiliarySceneInfo();
+	}
+
+	if(motionPlanAnalysis->window->visible())
+	{
+		motionPlanAnalysis->setTimeAt(moptWindow->ffpViewer->cursorPosition);
 	}
 }
 
