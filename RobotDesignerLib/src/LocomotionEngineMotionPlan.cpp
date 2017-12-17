@@ -84,6 +84,15 @@ double LocomotionEngine_EndEffectorTrajectory::getWheelTiltAngleAt(double t) con
 	return traj.evaluate_linear(t);
 }
 
+double LocomotionEngine_EndEffectorTrajectory::getWheelSpeedAt(double t) const
+{
+	//very slow method, but easy to implement...
+	Trajectory1D traj;
+	for (uint i = 0; i<wheelSpeed.size(); i++)
+		traj.addKnot((double)i / (wheelSpeed.size() - 1), wheelSpeed[i]);
+	return traj.evaluate_linear(t);
+}
+
 double LocomotionEngine_EndEffectorTrajectory::getContactFlagAt(double t){
 	boundToRange(&t, 0, 1);
 	int tIndex = (int)(t * (double)(contactFlag.size()-1));
@@ -379,11 +388,8 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 			const RBProperties &rbProperties = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties;
 			const RBEndEffector &rbEndEffector = rbProperties.endEffectorPoints[j];
 
-			if(rbEndEffector.isWheel())
+			if(rbEndEffector.isActiveWheel())
 			{
-				if(!rbEndEffector.isActiveWheel())
-					Logger::consolePrint("Warning: Currently only active wheels are supported!");
-
 				wheelToEEIndex[nWheels] = index;
 				eeToWheelIndex[index] = nWheels;
 				nWheels++;
@@ -412,7 +418,15 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 				// contact point to ground
 				Vector3d rho = endEffectorTrajectories[index].wheelTiltAxis.cross(endEffectorTrajectories[index].wheelAxis);
 				rho = rho.normalized() * endEffectorTrajectories[index].wheelRadius;
+
+				// output some info
+				Logger::consolePrint("Wheel radius %d: %f", index, endEffectorTrajectories[index].wheelRadius);
 			}
+			else if(rbEndEffector.isWeldedWheel())
+				Logger::consolePrint("Warning: Welded wheels have not been tested!");
+			else if(rbEndEffector.isFreeToMoveWheel())
+				Logger::consolePrint("Warning: Free-to-move wheels are not working! (yet...)");
+
 
 			for (int k=0;k<nSamplingPoints;k++){
 				endEffectorTrajectories[index].EEPos[k] = eeWorldCoords;
@@ -1256,6 +1270,34 @@ bool LocomotionEngineMotionPlan::getJointAngleVelocityProfile(std::vector<JointV
 
 	return true;
 }
+
+bool LocomotionEngineMotionPlan::getJointAngleVelocityProfile(dVector &velocityProfile, int jointIndex) const
+{
+	if (robotStatesParamsStartIndex < 0)
+	{
+//		error = "robotStatesParamsStartIndex < 0";
+		return false;
+	}
+	
+	int nTimeSteps = nSamplePoints;
+	if (wrapAroundBoundaryIndex >= 0) nTimeSteps--;
+	int i = jointIndex + 6;
+	velocityProfile.resize(nTimeSteps);
+	double dt = motionPlanDuration / nTimeSteps;
+
+	for (int j = 0; j < nTimeSteps; j++) {
+		int jm, jp;
+
+		getVelocityTimeIndicesFor(j, jm, jp);
+		if (jm == -1 || jp == -1) continue;
+
+		double velocity = (robotStateTrajectory.qArray[jp][i] - robotStateTrajectory.qArray[jm][i]) / dt;
+		velocityProfile(j) = velocity;
+	}
+
+	return true;
+}
+
 
 //TODO: redo motion plan animation to update state in terms of deltas, rather than the animation cycle thing?
 void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bool drawRobot, bool drawSkeleton, bool drawPlanDetails, bool drawContactForces, bool drawOrientation){

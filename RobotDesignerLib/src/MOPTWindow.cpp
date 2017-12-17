@@ -78,7 +78,7 @@ void MOPTWindow::addMenuItems() {
 	}
 	{
 		auto tmpVar = glApp->mainMenu->addVariable("joint velocity limit", moptParams.jointVelocityLimit);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
 	}
 	{
 		auto tmpVar = glApp->mainMenu->addVariable("joint velocity epsilon", moptParams.jointVelocityEpsilon);
@@ -99,6 +99,10 @@ void MOPTWindow::addMenuItems() {
 	{
 		auto tmpVar = glApp->mainMenu->addVariable("wheel accel. epsilon", moptParams.wheelAccelEpsilon);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
+	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("joint velocity L0 delta", moptParams.jointL0Delta);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 	{
 		glApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
@@ -192,6 +196,8 @@ void MOPTWindow::syncMOPTWindowParameters() {
 
 	moptParams.jointVelocityLimit = locomotionManager->motionPlan->jointVelocityLimit;
 	moptParams.jointVelocityEpsilon = locomotionManager->motionPlan->jointVelocityEpsilon;
+
+	moptParams.jointVelocityEpsilon = locomotionManager->motionPlan->jointL0Delta;
 
 	moptParams.wheelSpeedLimit = locomotionManager->motionPlan->wheelSpeedLimit;
 	moptParams.wheelSpeedEpsilon = locomotionManager->motionPlan->wheelSpeedEpsilon;
@@ -315,8 +321,6 @@ void MOPTWindow::drawScene() {
 	}
 	if (showWeightsAndEnergyValues)
 		updateSliders();
-
-
 }
 
 void MOPTWindow::drawAuxiliarySceneInfo(){
@@ -335,6 +339,51 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 		if (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging())
 			if (ffpViewer->onMouseMoveEvent(xPos, yPos)) return true;
 	}
+	preDraw();
+	Ray ray = getRayFromScreenCoords(xPos, yPos);
+	postDraw();
+
+	ReducedRobotState rs(robot);
+
+	Joint* joint;
+	dVector velocity;
+	double tMinJ = DBL_MAX;
+
+	int i;
+	for (i = 0; i < robot->getJointCount(); i++) {
+		P3D p;
+		double dist = ray.getDistanceToPoint(robot->getJoint(i)->getWorldPosition(), &p);
+		double tVal = ray.getRayParameterFor(p);
+		if (dist < robot->getJoint(i)->parent->abstractViewCylinderRadius * 1.2 && tVal < tMinJ) {
+			tMinJ = tVal;
+			joint = robot->getJoint(i);
+			locomotionManager->motionPlan->getJointAngleVelocityProfile(velocity, i);
+			break;
+		}
+	}
+
+	using namespace nanogui;
+	if (i == robot->getJointCount())
+	{
+		if (velocityProfileWindow != nullptr)
+		{
+			velocityProfileWindow->dispose();
+			velocityProfileWindow = nullptr;
+		}
+		return GLWindow3D::onMouseMoveEvent(xPos, yPos);
+	}
+	
+	if (velocityProfileWindow == nullptr)
+	{
+		velocityProfileWindow = new Window(glApp->menuScreen, "Velocity Profile");
+		velocityProfileWindow->setWidth(300);
+		velocityProfileWindow->setLayout(new GroupLayout());
+		velocityProfileGraph = velocityProfileWindow->add<Graph>("Velocity");
+	}
+	velocityProfileWindow->setPosition(Eigen::Vector2i(xPos /1.5, yPos / 1.5));
+	velocityProfileGraph->setValues(velocity.cast<float>());
+	
+	glApp->menuScreen->performLayout();
 
 	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 }

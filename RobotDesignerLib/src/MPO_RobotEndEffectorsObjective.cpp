@@ -18,6 +18,7 @@ double MPO_RobotEndEffectorsObjective::computeValue(const dVector& p){
 	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
 		VectorXT<double> q_t;
 		theMotionPlan->robotStateTrajectory.getQAtTimeIndex(j, q_t);
+		theMotionPlan->robotRepresentation->setQ(q_t);
 
 		for (int i=0;i<nLimbs;i++){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
@@ -28,7 +29,8 @@ double MPO_RobotEndEffectorsObjective::computeValue(const dVector& p){
 													 ee.endEffectorLocalCoords, q_t, ee.endEffectorRB);
 			}
 			else{
-				retVal += computeEnergyFoot<double>(ee.EEPos[j], ee.endEffectorLocalCoords, q_t, ee.endEffectorRB);
+				Vector3d err(ee.EEPos[j] - theMotionPlan->robotRepresentation->getWorldCoordinatesFor(ee.endEffectorLocalCoords, ee.endEffectorRB));
+				retVal += 0.5 * weight * err.squaredNorm();
 			}
 		}
 	}
@@ -39,6 +41,8 @@ double MPO_RobotEndEffectorsObjective::computeValue(const dVector& p){
 void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
+
+	MatrixNxM dEndEffectordq;
 
 	// number of DOFs for an end effector at one time sample
 	int numDOFs = 0;
@@ -60,6 +64,9 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 		// get robot state at timestep j
 		dVector q_t;
 		theMotionPlan->robotStateTrajectory.getQAtTimeIndex(j, q_t);
+		theMotionPlan->robotRepresentation->setQ(q_t);
+
+
 		VectorXT<ScalarDiff> qAD(q_t.size());
 		for (int k = 0; k < q_t.size(); ++k)
 			qAD[k] = q_t[k];
@@ -113,39 +120,38 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 					dofs[k].v->deriv() = 0.0;
 				}
 			}
-			else{
-				std::vector<DOF<ScalarDiff>> dofs(numDOFs);
-				int index = 0;
-				if (theMotionPlan->feetPositionsParamsStartIndex >= 0){
-					for (int k = 0; k < 3; ++k) {
-						dofs[index].v = &eePos[k];
-						dofs[index].i = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k;
-						index++;
-					}
-				}
-				if (theMotionPlan->robotStatesParamsStartIndex >= 0){
-					for (int k = 0; k < qAD.size(); ++k){
-						dofs[index].v = &qAD[k];
-						dofs[index].i = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k;
-						index++;
-					}
+			else
+			{
+				Vector3d err(ee.EEPos[j] - theMotionPlan->robotRepresentation->getWorldCoordinatesFor(ee.endEffectorLocalCoords, ee.endEffectorRB));
+				//compute the gradient with respect to the feet locations
+				if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
+					int ind = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
+					grad.segment<3>(ind) += weight*err;
+// 					grad[ind + 0] += err[0] * weight;
+// 					grad[ind + 1] += err[1] * weight;
+// 					grad[ind + 2] += err[2] * weight;
 				}
 
-				for (int k = 0; k < numDOFs; ++k) {
-					dofs[k].v->deriv() = 1.0;
-					ScalarDiff energy = computeEnergyFoot<ScalarDiff>(eePos, eePosLocal, qAD, ee.endEffectorRB);
-					grad[dofs[k].i] += energy.deriv();
-					dofs[k].v->deriv() = 0.0;
+				//and now compute the gradient with respect to the robot q's
+				if (theMotionPlan->robotStatesParamsStartIndex >= 0) {
+					theMotionPlan->robotRepresentation->compute_dpdq(ee.endEffectorLocalCoords, ee.endEffectorRB, dEndEffectordq);
+
+					//dEdee * deedq = dEdq
+					int ind = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim;
+					grad.segment(ind, dEndEffectordq.cols()) += -weight*dEndEffectordq.transpose()*err;
+// 					for (int k = 0; k < 3; k++)
+// 						for (int l = 0; l < theMotionPlan->robotRepresentation->getDimensionCount(); l++)
+// 							grad[ind + l] += -dEndEffectordq(k, l) * err[k] * weight;
 				}
 			}
 		}
 	}
-
 }
 
 void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
+	MatrixNxM dEndEffectordq, ddEndEffectordq_dqi;
 
 	// number of DOFs for an end effector at one time sample
 	int numDOFs = 0;
@@ -165,6 +171,8 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
 		dVector q_t;
 		theMotionPlan->robotStateTrajectory.getQAtTimeIndex(j, q_t);
+		theMotionPlan->robotRepresentation->setQ(q_t);
+
 		VectorXT<ScalarDiffDiff> qAD(q_t.size());
 		for (int k = 0; k < q_t.size(); ++k)
 			qAD[k] = q_t[k];
@@ -225,35 +233,45 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 				}
 			}
 			else{
-				std::vector<DOF<ScalarDiffDiff>> dofs(numDOFs);
-				int index = 0;
-				if (theMotionPlan->feetPositionsParamsStartIndex >= 0){
-					for (int k = 0; k < 3; ++k) {
-						dofs[index].v = &eePos[k];
-						dofs[index].i = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + k;
-						index++;
-					}
+				Vector3d err(theMotionPlan->robotRepresentation->getWorldCoordinatesFor(ee.endEffectorLocalCoords, ee.endEffectorRB) - ee.EEPos[j]);
+				//compute the gradient with respect to the feet locations
+				if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
+					ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 0, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 0, 1, weight);
+					ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1, 1, weight);
+					ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 2, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 2, 1, weight);
 				}
-				if (theMotionPlan->robotStatesParamsStartIndex >= 0){
-					for (int k = 0; k < qAD.size(); ++k){
-						dofs[index].v = &qAD[k];
-						dofs[index].i = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k;
-						index++;
-					}
-				}
+				//and now compute the gradient with respect to the robot q's
+				if (theMotionPlan->robotStatesParamsStartIndex >= 0) {
+					theMotionPlan->robotRepresentation->compute_dpdq(ee.endEffectorLocalCoords, ee.endEffectorRB, dEndEffectordq);
 
-				for (int k = 0; k < numDOFs; ++k) {
-					dofs[k].v->deriv().value() = 1.0;
-					for (int l = 0; l <= k; ++l) {
-						dofs[l].v->value().deriv() = 1.0;
-						ScalarDiffDiff energy = computeEnergyFoot<ScalarDiffDiff>(eePos, eePosLocal, qAD, ee.endEffectorRB);
-						ADD_HES_ELEMENT(hessianEntries,
-										dofs[k].i,
-										dofs[l].i,
-										energy.deriv().deriv(), 1.0);
-						dofs[l].v->value().deriv() = 0.0;
+					for (int k = 0; k < theMotionPlan->robotRepresentation->getDimensionCount(); k++) {
+						bool hasNonZeros = theMotionPlan->robotRepresentation->compute_ddpdq_dqi(ee.endEffectorLocalCoords, ee.endEffectorRB, ddEndEffectordq_dqi, k);
+						if (hasNonZeros == false) continue;
+						for (int l = k; l < theMotionPlan->robotRepresentation->getDimensionCount(); l++)
+							for (int m = 0; m < 3; m++) {
+								double val = ddEndEffectordq_dqi(m, l) * err[m];
+								ADD_HES_ELEMENT(hessianEntries, theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k, theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + l, val, weight);
+							}
 					}
-					dofs[k].v->deriv().value() = 0.0;
+
+					//now add the outer product of the jacobians...
+					for (int k = 0; k < theMotionPlan->robotRepresentation->getDimensionCount(); k++) {
+						for (int l = k; l < theMotionPlan->robotRepresentation->getDimensionCount(); l++) {
+							double val = 0;
+							for (int m = 0; m < 3; m++)
+								val += dEndEffectordq(m, k) * dEndEffectordq(m, l);
+							ADD_HES_ELEMENT(hessianEntries, theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k, theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + l, val, weight);
+						}
+					}
+
+					//and now the mixed derivatives
+					if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
+						for (int k = 0; k < theMotionPlan->robotRepresentation->getDimensionCount(); k++) {
+							ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 0, theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k, -dEndEffectordq(0, k), weight);
+							ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 1, theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k, -dEndEffectordq(1, k), weight);
+							ADD_HES_ELEMENT(hessianEntries, theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3 + 2, theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k, -dEndEffectordq(2, k), weight);
+						}
+					}
 				}
 			}
 		}

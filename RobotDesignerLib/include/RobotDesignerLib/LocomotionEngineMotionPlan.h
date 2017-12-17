@@ -65,6 +65,8 @@ public:
 
 	double getWheelTiltAngleAt(double t) const;
 
+	double getWheelSpeedAt(double t) const;
+
 	template<class T>
 	static Vector3T<T> rotateWheelAxisWith(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {
 		// First tilt the axis ...
@@ -193,6 +195,9 @@ public:
 	double wheelAccelLimit = 0;
 	double wheelAccelEpsilon = 1.0;		// for SoftUnilateralConstraint
 
+	//	parameters for L0 optimization
+	double jointL0Delta = 1;
+
 public:
 	bool optimizeCOMPositions;
 	bool optimizeCOMOrientations;
@@ -309,4 +314,5 @@ public:
 		double t; int qIndex; double velocity;
 	};
 	bool getJointAngleVelocityProfile(std::vector<JointVelocity> &velocityProfile, std::string &error) const;
+	bool getJointAngleVelocityProfile(dVector &velocityProfile, int jointIndex) const;
 };

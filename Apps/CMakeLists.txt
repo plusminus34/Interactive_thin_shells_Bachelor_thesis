@@ -13,6 +13,7 @@ endif()
 
 add_subdirectory(OptimizationDemoApp)
 add_subdirectory(FireworksApp)
+add_subdirectory(PDEsDemoApp)
 add_subdirectory(ShaderTestApp)
 add_subdirectory(IKApp)
 add_subdirectory(FEMSimApp)
@@ -21,5 +22,6 @@ add_subdirectory(RBSimApp)
 add_subdirectory(WheeledRobotSimApp)
 add_subdirectory(RobotDesignerApp)
 add_subdirectory(PhysicalRobotControlApp)
+add_subdirectory(PlotExampleApp)
 
 
