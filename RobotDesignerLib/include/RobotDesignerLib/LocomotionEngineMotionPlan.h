@@ -250,6 +250,9 @@ public:
 	double totalInertia;
 	double frictionCoeff = -1.0;     // when frictionCoeff < 0, friction cone constraints are disabled.
 
+
+	void addEndEffector(GenericLimb* theLimb, RigidBody* rb, int eeIndex, int nSamplingPoints);
+
 public:
 	int getWheelSpeedIndex(int i, int j) const;
 	int getWheelYawAngleIndex(int i, int j) const;
