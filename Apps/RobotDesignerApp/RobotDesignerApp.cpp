@@ -7,67 +7,7 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-/*
-should take a look at convergence rates
-- global regularizer makes a huge difference, it seems.
-	- we may want it to be adaptive (use small value unless system solving fails)
-	- we quite likely want it to be different for different types of params (joint angles vs cartesian dimensions vs ground reaction forces)
-	- should at least add the global regulaizer as a menu parameter such that it can be easily changed
-
-- set up MOPT also for non-periodic motions
-- start and end on a different motion plan? What happens then when the design changes? Impose constraints only on the start and end states (joint angles only)?
-*/
-
-//fixed vs active vs passive wheels vs point feet
-//mechanical coupling via linkages
-//proper friction cones
-
-
-//create a few first designs that have wheels
-//write out a flag in the rbs file, to indicate that the end effector is a wheel and that it has some radius (and later, that it is passive or active), also, its rotation axis in the local coordinate frame of the parent RB
-//have the method that draws rigid bodies change the way the wheel EE mesh is visualized and make it look like it is spinning...
-
-//need to think of rigid bodies that are not part of the state of the robot, but they have equivalents in ODE: wheels and linkages are examples of this...
-
-//want:
-// passive wheels, active wheels
-// point feet, ball feet (equivalent to an end effector wheel whose orientation is frozen to the foot)!!
-
-//add some wheels to the designer
-//add body volume via shape features stuffs
-//add other accents, like eyes and antennas
-
-
-//need a proper save/load routine: design, an entire robot, motion plan...
-
-//make a bunch of robot templates:
-//cassie
-//three legged robot
-//a strider robot
-//a dog robot
-//hexa-like robot
-//probably need to work a bit on body shape/body characteristics
-
-//can we go all the way to creating 3d printable geometry?
-
-//can we update the nanogui extensions easily?!?
-
-//tangentGRFBoundValues is useful for warmstarting to incrementally bound tangential forces. But need to implement proper friction, methinks...
-//perhaps make the non-mesh version of the renderer prettier... it will allow us to test the code before (or even if it wont happen that) the visual designer part is integrated.
-//everything needs to happen via rbs files. The visual designer will output an rbs file which gets loaded the normal way, then it knows how to sync back changes with the rbs, and that's all...
-//the constraint system should be much more modular, with each type of MOPT adding its own constraints to a global list
-//will need to add the option to save/load ffps, mopt, rbs/robotdesigner files, etc
-//the wheel type model can also play a key role in removing the assumption of point feet. Can we model a human-like foot rolling? The COP can travel around during walking, and this can be modeled by having a wheel-like foot. Can this then, in conjunction with a MOPT QP tracker lead to natural toe-off motions?
-//wheels can be locked to the feet (then you ask that the whole orientation of the foot matches that of the upper leg), or they can be moving independently, passive (GRF straight up only) or active...
-
-//try a flying trot gait for the robot. Try also to match the new robot gait capabilities (Laikago) maybe with a slightly more conservative gait (some overlap in stance for all 4) as well as shorter gait duration overall
-//make a Cassie model and simulation, especially once limb collision are enabled. A little cassie-like robot could also be a good target for Siggraph, maybe...
-//make a base robot design window class that does nothing, only loads rbs and returns it
-//have a bool display design window, such that when it ain't, it shows full screen robot
-//fix all the old Tw references, lots of them around
-//create a robot parameterization + add option to do one design step optimization, as a test, like in the old app I once wrote...
-//add collision objectives both to IK solver and to MOPT
-//add velocity limit objective to MOPT
+//make also a car with 3 wheels, the front one "articulated"
 
 RobotDesignerApp::RobotDesignerApp(){
 	bgColor[0] = bgColor[1] = bgColor[2] = 1;
@@ -136,7 +76,7 @@ RobotDesignerApp::RobotDesignerApp(){
     loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
 //	loadToSim();
 	loadToSim(false);
-    loadFile("../data/robotsAndMotionPlans/spotMini/trot3.p");
+    loadFile("../data/robotsAndMotionPlans/spotMini/trot4.p");
 #endif
 
 	menuScreen->performLayout();

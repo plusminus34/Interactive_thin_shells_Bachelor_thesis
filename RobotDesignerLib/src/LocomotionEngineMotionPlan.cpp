@@ -367,6 +367,8 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 
 	//and now proceed to initialize everything else...
 	this->robotRepresentation = new GeneralizedCoordinatesRobotRepresentation(robot);
+	robotRepresentation->getQ(initialRobotState);
+
 	//create the end effector trajectories here based on the robot configuration...
 	for (int i=0;i<nLegs;i++){
 		int nEEs = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties.getEndEffectorPointCount();
@@ -921,7 +923,6 @@ void LocomotionEngineMotionPlan::writeParamsToFile(FILE *fp) {
 	fprintf(fp, "\n\n%10.10lf %10.10lf %10.10lf %10.10lf %10.10lf %10.10lf %10.10lf\n", swingFootHeight, desDistanceToTravel[0], desDistanceToTravel[2], desTurningAngle,
 			motionPlanDuration, verticalGRFLowerBoundVal, GRFEpsilon);
 
-	fprintf(fp, "\n\n%d %d %10.10lf %10.10lf\n", transitionStartIndex, transitionEndIndex, transitionStartPhase, transitionEndPhase);
 
 	fprintf(fp, "\n\n%d\n", wrapAroundBoundaryIndex);
 
@@ -977,8 +978,6 @@ void LocomotionEngineMotionPlan::readParamsFromFile(FILE *fp) {
 
 	fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf", &swingFootHeight, &desDistanceToTravel[0], &desDistanceToTravel[2], &desTurningAngle,
 			&motionPlanDuration, &verticalGRFLowerBoundVal, &GRFEpsilon);
-
-	fscanf(fp, "%d %d %lf %lf", &transitionStartIndex, &transitionEndIndex, &transitionStartPhase, &transitionEndPhase);
 
 	wrapAroundBoundaryIndex = 0;
 	fscanf(fp, "%d", &wrapAroundBoundaryIndex);

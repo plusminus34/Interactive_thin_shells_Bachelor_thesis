@@ -71,6 +71,8 @@ public:
 	bool printDebugInfo;
 	void addMenuItems();
 
+	bool periodicMotion = true;
+
 public:
 	MOPTWindow(int x, int y, int w, int h, GLApplication* glApp);
 	~MOPTWindow();
