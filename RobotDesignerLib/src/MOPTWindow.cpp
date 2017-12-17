@@ -35,6 +35,10 @@ void MOPTWindow::addMenuItems() {
 	}
 
 	{
+		auto tmpVar = glApp->mainMenu->addVariable("generate periodic motion", periodicMotion);
+	}
+
+	{
 		auto tmpVar = glApp->mainMenu->addVariable("# of MOPT sample points", nTimeSteps);
 		tmpVar->setSpinnable(true);
 	}
@@ -244,7 +248,7 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	case GRF_OPT:
 		locomotionManager = new LocomotionEngineManagerGRFv1(robot, &footFallPattern, nTimeSteps + 1); break;
 	case GRF_OPT_V2:
-		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nTimeSteps + 1); break;
+		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nTimeSteps + 1, periodicMotion); break;
 	case IP_OPT:
 		locomotionManager = new LocomotionEngineManagerIPv1(robot, &footFallPattern, nTimeSteps + 1); break;
 	case IP_OPT_V2:

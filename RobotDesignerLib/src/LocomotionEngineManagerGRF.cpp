@@ -7,6 +7,8 @@
 #include <RobotDesignerLib/MPO_RobotWheelAxisObjective.h>
 #include <RobotDesignerLib/MPO_COMZeroVelocityConstraint.h>
 #include <RobotDesignerLib/MPO_VelocityL0Regularization.h>
+#include <RobotDesignerLib/MPO_StateMatchObjective.h>
+
 
 //#define DEBUG_WARMSTART
 //#define CHECK_DERIVATIVES_AFTER_WARMSTART
@@ -18,15 +20,19 @@
 LocomotionEngineManagerGRF::LocomotionEngineManagerGRF() {
 }
 
-LocomotionEngineManagerGRF::LocomotionEngineManagerGRF(Robot* robot, FootFallPattern* ffp, int nSamplePoints) {
+LocomotionEngineManagerGRF::LocomotionEngineManagerGRF(Robot* robot, FootFallPattern* ffp, int nSamplePoints, bool periodicMotion) {
+	this->periodicMotion = periodicMotion;
+
 	this->footFallPattern = ffp;
 
 	motionPlan = new LocomotionEngineMotionPlan(robot, nSamplePoints);
 
 	motionPlan->syncMotionPlanWithFootFallPattern(*footFallPattern);
 
-	//for boundary conditions, make sure initial and final conditions match
-	motionPlan->setPeriodicBoundaryConditionsToTimeSample(0);
+	if (periodicMotion) {
+		//for boundary conditions, make sure initial and final conditions match
+		motionPlan->setPeriodicBoundaryConditionsToTimeSample(0);
+	}
 
 	motionPlan->frictionCoeff = -1;
 
@@ -318,7 +324,7 @@ LocomotionEngineManagerGRFv1::~LocomotionEngineManagerGRFv1(){
 LocomotionEngineManagerGRFv2::LocomotionEngineManagerGRFv2() : LocomotionEngineManagerGRF() {
 }
 
-LocomotionEngineManagerGRFv2::LocomotionEngineManagerGRFv2(Robot* robot, FootFallPattern* ffp, int nSamplePoints) : LocomotionEngineManagerGRF(robot, ffp, nSamplePoints) {
+LocomotionEngineManagerGRFv2::LocomotionEngineManagerGRFv2(Robot* robot, FootFallPattern* ffp, int nSamplePoints, bool periodicMotion) : LocomotionEngineManagerGRF(robot, ffp, nSamplePoints, periodicMotion) {
 	setupObjectives();
 	useObjectivesOnly = true;
 }
@@ -351,18 +357,26 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->objectives.push_back(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0));
 	ef->objectives.push_back(new MPO_WheelGroundObjective(ef->theMotionPlan, "wheel ground objective", 10000.0));
 
-	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 0, 10000.0)); ef->objectives.back()->isActive = false;
-	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "end velocity zero objective", ef->theMotionPlan->nSamplePoints-2, 10000.0)); ef->objectives.back()->isActive = false;
+//	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 0, 10000.0)); ef->objectives.back()->isActive = false;
+//	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "end velocity zero objective", ef->theMotionPlan->nSamplePoints-2, 10000.0)); ef->objectives.back()->isActive = false;
 //	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 1, 10000.0));
 
 	// constraint ensuring the y component of the EE position follows the swing motion
 	ef->objectives.push_back(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0));
 
 	//periodic boundary constraints...
-	if (ef->theMotionPlan->wrapAroundBoundaryIndex >= 0) {
+	if (ef->theMotionPlan->wrapAroundBoundaryIndex >= 0 && periodicMotion) {
 		ef->objectives.push_back(new MPO_PeriodicRobotStateTrajectoriesObjective(ef->theMotionPlan, "periodic joint angles", 10000.0, ef->theMotionPlan->nSamplePoints - 1, ef->theMotionPlan->wrapAroundBoundaryIndex, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
 		ef->objectives.push_back(new MPO_PeriodicRobotStateTrajectoriesObjective(ef->theMotionPlan, "periodic body orientations (ROLL)", 10000.0, ef->theMotionPlan->nSamplePoints - 1, ef->theMotionPlan->wrapAroundBoundaryIndex, 4, 4));
 		ef->objectives.push_back(new MPO_PeriodicRobotStateTrajectoriesObjective(ef->theMotionPlan, "periodic body orientations (PITCH)", 10000.0, ef->theMotionPlan->nSamplePoints - 1, ef->theMotionPlan->wrapAroundBoundaryIndex, 5, 5));
+	}
+
+	//if there are no periodic motion constraints, then we must provide some targets for the start and end of the motion...
+	if (periodicMotion == false) {
+		ef->objectives.push_back(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ first", 10000, 0, ef->theMotionPlan->initialRobotState));
+		ef->objectives.push_back(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ second", 10000, 1, ef->theMotionPlan->initialRobotState));
+		ef->objectives.push_back(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ second last", 10000, ef->theMotionPlan->nSamplePoints - 2, ef->theMotionPlan->initialRobotState));
+		ef->objectives.push_back(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ last", 10000, ef->theMotionPlan->nSamplePoints - 1, ef->theMotionPlan->initialRobotState));
 	}
 
 	//functional objectives
