@@ -1,8 +1,10 @@
 #ifndef MOTION_PLAN_ANALYSIS_H
 #define MOTION_PLAN_ANALYSIS_H
 
-#include <RobotDesignerLib/LocomotionEngineMotionPlan.h>
+#include <GUILib/GLIncludes.h>
 #include <GUILib/Plot.h>
+
+#include <RobotDesignerLib/LocomotionEngineMotionPlan.h>
 
 struct PlotWidget {
 	PlotWidget(){}

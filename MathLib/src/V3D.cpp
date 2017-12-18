@@ -289,6 +289,17 @@ void V3D::zero() {
 	at(0) = at(1) = at(2) = 0;
 }
 
+Vector3d rotateVec(const Vector3d &v, double alpha, const Vector3d &axis)
+{
+	assert(IS_EQUAL(axis.squaredNorm(), 1));
+// 	Timer timer;
+// 	timer.restart();
+	Vector3d result;
+	result = Eigen::AngleAxis<double>(alpha, axis)*v;
+// 	Logger::consolePrint("%lf\n", timer.timeEllapsed());
+	return result;
+}
+
 // Returns a (uniformly) random unit vector
 V3D getRandomUnitVector() {
 	return V3D(randNumberIn01Range(), randNumberIn01Range(), randNumberIn01Range()).unit();

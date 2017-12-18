@@ -188,6 +188,8 @@ public:
 	// Parameters for joint motor velocity constraint
 	double jointVelocityLimit = 0;
 	double jointVelocityEpsilon = 0.4;		// for SoftUnilateralConstraint
+
+	dVector initialRobotState;
 	
 	// Parameters for wheel motor speed constraint
 	double wheelSpeedLimit = 0;
@@ -231,24 +233,14 @@ public:
 	int paramCount;
 
 	//points to the point that, in joint angle space, should correspond to the last time index, for boundary conditions...
-	int wrapAroundBoundaryIndex;
-
-	// the time index that transition starts
-	int transitionStartIndex = -1;
-	// the time index that transition ends
-	int transitionEndIndex = -1;
-	// the stride phase that transition starts
-	double transitionStartPhase = -1.0;
-	// the time index that transition ends
-	double transitionEndPhase = -1.0;
-	// the motion plan that the transition starts from
-	LocomotionEngineMotionPlan* transitionStartPlan = NULL;
-	// the motion plan that the transition ends with
-	LocomotionEngineMotionPlan* transitionEndPlan = NULL;
+	int wrapAroundBoundaryIndex = -1;
 
 	double totalMass;
 	double totalInertia;
 	double frictionCoeff = -1.0;     // when frictionCoeff < 0, friction cone constraints are disabled.
+
+
+	void addEndEffector(GenericLimb* theLimb, RigidBody* rb, int eeIndex, int nSamplingPoints);
 
 public:
 	int getWheelSpeedIndex(int i, int j) const;

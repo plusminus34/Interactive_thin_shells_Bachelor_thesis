@@ -217,6 +217,7 @@ PlotWidget MotionPlanAnalysis::makePlotWidget(nanogui::Widget *window, const std
 	plot->setSize(Vector2i(400, 200));
 //	plot->setBackgroundColor(nanogui::Color(Eigen::Vector3f(0.5, 0.5, 0.5), 0.1f));
 	plot->setNumTicks(Vector2i(10, 5));
+	plot->setShowTicks(true);
 
 	Widget *widgetButtons = new Widget(widget);
 	widgetButtons->setLayout(new GridLayout(Orientation::Vertical, 2, Alignment::Minimum, 0, 5));

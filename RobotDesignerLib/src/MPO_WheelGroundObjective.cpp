@@ -19,7 +19,7 @@ double MPO_WheelGroundObjective::computeValue(const dVector& p){
 	const int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 
 	for (int j=0; j<theMotionPlan->nSamplePoints; j++){
-		for (uint i=0; i<nLimbs; i++){
+		for (int i=0; i<nLimbs; i++){
 
 			double eePosY = theMotionPlan->endEffectorTrajectories[i].EEPos[j](1);
 			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];

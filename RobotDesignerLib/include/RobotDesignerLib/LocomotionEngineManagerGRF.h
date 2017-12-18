@@ -3,9 +3,12 @@
 #include <RobotDesignerLib/LocomotionEngineManager.h>
 
 class LocomotionEngineManagerGRF : public LocomotionEngineManager {
+protected:
+	bool periodicMotion = true;
+
 public:
 	LocomotionEngineManagerGRF();
-	LocomotionEngineManagerGRF(Robot* robot, FootFallPattern* footFallPattern, int nSamplePoints);
+	LocomotionEngineManagerGRF(Robot* robot, FootFallPattern* footFallPattern, int nSamplePoints, bool periodicMotion = true);
 
 	~LocomotionEngineManagerGRF();
 
@@ -32,8 +35,10 @@ public:
 /*************************************************************************************************************/
 class LocomotionEngineManagerGRFv2 : public LocomotionEngineManagerGRF {
 public:
+
+public:
 	LocomotionEngineManagerGRFv2();
-	LocomotionEngineManagerGRFv2(Robot* robot, FootFallPattern* footFallPattern, int nSamplePoints);
+	LocomotionEngineManagerGRFv2(Robot* robot, FootFallPattern* footFallPattern, int nSamplePoints, bool periodicMotion = true);
 
 	~LocomotionEngineManagerGRFv2();
 	void setupObjectives();

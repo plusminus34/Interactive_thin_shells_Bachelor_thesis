@@ -367,74 +367,21 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 
 	//and now proceed to initialize everything else...
 	this->robotRepresentation = new GeneralizedCoordinatesRobotRepresentation(robot);
+	robotRepresentation->getQ(initialRobotState);
+
 	//create the end effector trajectories here based on the robot configuration...
 	for (int i=0;i<nLegs;i++){
 		int nEEs = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties.getEndEffectorPointCount();
 		for (int j=0; j<nEEs; j++){
-			P3D eeLocalCoords = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties.getEndEffectorPoint(j);
-			P3D eeWorldCoords = this->robot->bFrame->limbs[i]->getLastLimbSegment()->getWorldCoordinates(eeLocalCoords);
-			eeWorldCoords[1] = 0;
-
-			endEffectorTrajectories.push_back(LocomotionEngine_EndEffectorTrajectory(nSamplingPoints));
-			int index = endEffectorTrajectories.size() - 1;
-			endEffectorTrajectories[index].CPIndex = j;
-			endEffectorTrajectories[index].targetOffsetFromCOM = V3D(this->robot->getRoot()->getCMPosition(), eeWorldCoords);
-
-			endEffectorTrajectories[index].theLimb = this->robot->bFrame->limbs[i];
-			endEffectorTrajectories[index].endEffectorRB = this->robot->bFrame->limbs[i]->getLastLimbSegment();
-			endEffectorTrajectories[index].endEffectorLocalCoords = eeLocalCoords;
-
-			// is end effector a wheel?
-			const RBProperties &rbProperties = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties;
-			const RBEndEffector &rbEndEffector = rbProperties.endEffectorPoints[j];
-
-			if(rbEndEffector.isActiveWheel())
-			{
-				wheelToEEIndex[nWheels] = index;
-				eeToWheelIndex[index] = nWheels;
-				nWheels++;
-
-				endEffectorTrajectories[index].isWheel = true;
-
-				// set wheel radius from rb properties
-				endEffectorTrajectories[index].wheelRadius = rbEndEffector.featureSize;
-
-				// set wheel axis
-				V3D wheelAxisLocal = rbEndEffector.localCoordsWheelAxis;
-				RigidBody* rigidBody = this->robot->bFrame->limbs[i]->getLastLimbSegment();
-				V3D wheelAxisWorld = rigidBody->getWorldCoordinates(wheelAxisLocal).normalized();
-				endEffectorTrajectories[index].wheelAxis = wheelAxisWorld;
-
-				// set yaw axis (always going to be y-axis)
-				endEffectorTrajectories[index].wheelYawAxis = V3D(0, 1, 0);
-
-				// set tilt axis
-				endEffectorTrajectories[index].wheelTiltAxis = wheelAxisWorld.cross(endEffectorTrajectories[index].wheelYawAxis);
-
-				// set wheel angles
-				endEffectorTrajectories[index].wheelYawAngle = DynamicArray<double>(nSamplingPoints, 0);
-				endEffectorTrajectories[index].wheelTiltAngle = DynamicArray<double>(nSamplingPoints, 0);
-
-				// contact point to ground
-				Vector3d rho = endEffectorTrajectories[index].wheelTiltAxis.cross(endEffectorTrajectories[index].wheelAxis);
-				rho = rho.normalized() * endEffectorTrajectories[index].wheelRadius;
-
-				// output some info
-				Logger::consolePrint("Wheel radius %d: %f", index, endEffectorTrajectories[index].wheelRadius);
-			}
-			else if(rbEndEffector.isWeldedWheel())
-				Logger::consolePrint("Warning: Welded wheels have not been tested!");
-			else if(rbEndEffector.isFreeToMoveWheel())
-				Logger::consolePrint("Warning: Free-to-move wheels are not working! (yet...)");
-
-
-			for (int k=0;k<nSamplingPoints;k++){
-				endEffectorTrajectories[index].EEPos[k] = eeWorldCoords;
-				endEffectorTrajectories[index].defaultEEPos[k] = endEffectorTrajectories[index].EEPos[k];
-				endEffectorTrajectories[index].contactFlag[k] = 1.0;
-			}
+			addEndEffector(this->robot->bFrame->limbs[i], this->robot->bFrame->limbs[i]->getLastLimbSegment(), j, nSamplingPoints);
 		}
 	}
+
+	//the root may also have end effectros (e.g. wheels attached directly to the main body), so we should go through those as well...
+	int nEEs = this->robot->root->rbProperties.getEndEffectorPointCount();
+	for (int j = 0; j<nEEs; j++)
+		addEndEffector(NULL, robot->root, j, nSamplingPoints);
+
 
 	robotStateTrajectory.robotRepresentation = this->robotRepresentation;
 	robotStateTrajectory.initialize(nSamplingPoints);
@@ -446,6 +393,71 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 //	verticalGRFLowerBoundVal = fabs(totalMass * Globals::g / robot->bFrame->limbs.size() / 5.0) * 2;
 //	minVerticalGRFEpsilon = fabs(totalMass * Globals::g / robot->bFrame->limbs.size() / 5.0) * 0.5;
 }
+
+void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody* rb, int eeIndex, int nSamplingPoints) {
+	P3D eeLocalCoords = rb->rbProperties.getEndEffectorPoint(eeIndex);
+	P3D eeWorldCoords = rb->getWorldCoordinates(eeLocalCoords);
+	eeWorldCoords[1] = 0;
+
+	endEffectorTrajectories.push_back(LocomotionEngine_EndEffectorTrajectory(nSamplingPoints));
+	int index = endEffectorTrajectories.size() - 1;
+	endEffectorTrajectories[index].CPIndex = eeIndex;
+	endEffectorTrajectories[index].targetOffsetFromCOM = V3D(this->robot->getRoot()->getCMPosition(), eeWorldCoords);
+
+	endEffectorTrajectories[index].theLimb = theLimb;
+	endEffectorTrajectories[index].endEffectorRB = rb;
+	endEffectorTrajectories[index].endEffectorLocalCoords = eeLocalCoords;
+
+	// is end effector a wheel?
+	const RBProperties &rbProperties = rb->rbProperties;
+	const RBEndEffector &rbEndEffector = rbProperties.endEffectorPoints[eeIndex];
+
+	if (rbEndEffector.isActiveWheel())
+	{
+		wheelToEEIndex[nWheels] = index;
+		eeToWheelIndex[index] = nWheels;
+		nWheels++;
+
+		endEffectorTrajectories[index].isWheel = true;
+
+		// set wheel radius from rb properties
+		endEffectorTrajectories[index].wheelRadius = rbEndEffector.featureSize;
+
+		// set wheel axis
+		V3D wheelAxisLocal = rbEndEffector.localCoordsWheelAxis;
+		V3D wheelAxisWorld = rb->getWorldCoordinates(wheelAxisLocal).normalized();
+		endEffectorTrajectories[index].wheelAxis = wheelAxisWorld;
+
+		// set yaw axis (always going to be y-axis)
+		endEffectorTrajectories[index].wheelYawAxis = V3D(0, 1, 0);
+
+		// set tilt axis
+		endEffectorTrajectories[index].wheelTiltAxis = wheelAxisWorld.cross(endEffectorTrajectories[index].wheelYawAxis);
+
+		// set wheel angles
+		endEffectorTrajectories[index].wheelYawAngle = DynamicArray<double>(nSamplingPoints, 0);
+		endEffectorTrajectories[index].wheelTiltAngle = DynamicArray<double>(nSamplingPoints, 0);
+
+		// contact point to ground
+		Vector3d rho = endEffectorTrajectories[index].wheelTiltAxis.cross(endEffectorTrajectories[index].wheelAxis);
+		rho = rho.normalized() * endEffectorTrajectories[index].wheelRadius;
+
+		// output some info
+		Logger::consolePrint("Wheel radius %d: %f", index, endEffectorTrajectories[index].wheelRadius);
+	}
+	else if (rbEndEffector.isWeldedWheel())
+		Logger::consolePrint("Warning: Welded wheels have not been tested!");
+	else if (rbEndEffector.isFreeToMoveWheel())
+		Logger::consolePrint("Warning: Free-to-move wheels are not working! (yet...)");
+
+
+	for (int k = 0; k<nSamplingPoints; k++) {
+		endEffectorTrajectories[index].EEPos[k] = eeWorldCoords;
+		endEffectorTrajectories[index].defaultEEPos[k] = endEffectorTrajectories[index].EEPos[k];
+		endEffectorTrajectories[index].contactFlag[k] = 1.0;
+	}
+}
+
 
 //syncs the footfall pattern with the current motion plan
 void LocomotionEngineMotionPlan::syncFootFallPatternWithMotionPlan(FootFallPattern& ffp) {
@@ -911,7 +923,6 @@ void LocomotionEngineMotionPlan::writeParamsToFile(FILE *fp) {
 	fprintf(fp, "\n\n%10.10lf %10.10lf %10.10lf %10.10lf %10.10lf %10.10lf %10.10lf\n", swingFootHeight, desDistanceToTravel[0], desDistanceToTravel[2], desTurningAngle,
 			motionPlanDuration, verticalGRFLowerBoundVal, GRFEpsilon);
 
-	fprintf(fp, "\n\n%d %d %10.10lf %10.10lf\n", transitionStartIndex, transitionEndIndex, transitionStartPhase, transitionEndPhase);
 
 	fprintf(fp, "\n\n%d\n", wrapAroundBoundaryIndex);
 
@@ -967,8 +978,6 @@ void LocomotionEngineMotionPlan::readParamsFromFile(FILE *fp) {
 
 	fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf", &swingFootHeight, &desDistanceToTravel[0], &desDistanceToTravel[2], &desTurningAngle,
 			&motionPlanDuration, &verticalGRFLowerBoundVal, &GRFEpsilon);
-
-	fscanf(fp, "%d %d %lf %lf", &transitionStartIndex, &transitionEndIndex, &transitionStartPhase, &transitionEndPhase);
 
 	wrapAroundBoundaryIndex = 0;
 	fscanf(fp, "%d", &wrapAroundBoundaryIndex);
