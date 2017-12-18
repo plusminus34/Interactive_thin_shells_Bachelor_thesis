@@ -20,8 +20,11 @@ double MPO_WheelSpeedRegularizer::computeValue(const dVector& s){
 
 	for (int j=0;j<end;j++){
 		for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
-			double tmpV = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j];
-			retVal += 0.5 * tmpV*tmpV;
+			if(theMotionPlan->endEffectorTrajectories[i].isWheel)
+			{
+				double tmpV = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j];
+				retVal += 0.5 * tmpV*tmpV;
+			}
 		}
 	}
 	
@@ -32,17 +35,15 @@ void MPO_WheelSpeedRegularizer::addGradientTo(dVector& grad, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
-	if(theMotionPlan->wheelParamsStartIndex < 0)
-		return;
-
 	int end = theMotionPlan->nSamplePoints;
 //	if (theMotionPlan->wrapAroundBoundaryIndex >= 0) end -= 1; //don't double count... the last robot pose is already the same as the first one, so no need to penalize twice...
 
 	//and now compute the gradient with respect to the robot q's
-	if (theMotionPlan->robotStatesParamsStartIndex >= 0){
+	if (theMotionPlan->wheelParamsStartIndex >= 0){
 		for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i)
-			for (int j=0;j<end;j++)
-				grad[theMotionPlan->getWheelSpeedIndex(i, j)] += theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j] * weight;
+			if(theMotionPlan->endEffectorTrajectories[i].isWheel)
+				for (int j=0;j<end;j++)
+					grad[theMotionPlan->getWheelSpeedIndex(i, j)] += theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j] * weight;
 	}
 }
 
@@ -50,16 +51,14 @@ void MPO_WheelSpeedRegularizer::addHessianEntriesTo(DynamicArray<MTriplet>& hess
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
-	if(theMotionPlan->wheelParamsStartIndex < 0)
-		return;
-
 	int end = theMotionPlan->nSamplePoints;
 //	if (theMotionPlan->wrapAroundBoundaryIndex >= 0) end -= 1; //don't double count... the last robot pose is already the same as the first one, so no need to penalize twice...
 
 	//and now compute the gradient with respect to the robot q's
-	if (theMotionPlan->robotStatesParamsStartIndex >= 0){
+	if (theMotionPlan->wheelParamsStartIndex >= 0){
 		for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i)
-			for (int j=0;j<end;j++)
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->getWheelSpeedIndex(i, j), theMotionPlan->getWheelSpeedIndex(i, j), 1, weight);
+			if(theMotionPlan->endEffectorTrajectories[i].isWheel)
+				for (int j=0;j<end;j++)
+					ADD_HES_ELEMENT(hessianEntries, theMotionPlan->getWheelSpeedIndex(i, j), theMotionPlan->getWheelSpeedIndex(i, j), 1, weight);
 	}
 }
