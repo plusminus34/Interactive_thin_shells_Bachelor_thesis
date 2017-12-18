@@ -2,10 +2,12 @@
 
 #include <RobotDesignerLib/MPO_VelocitySoftConstraints.h>
 #include <RobotDesignerLib/MPO_WheelSpeedConstraint.h>
+#include <RobotDesignerLib/MPO_WheelSpeedRegularizer.h>
 #include <RobotDesignerLib/MPO_WheelAccelerationConstraint.h>
 #include <RobotDesignerLib/MPO_EEPosSwingObjective.h>
 #include <RobotDesignerLib/MPO_RobotWheelAxisObjective.h>
 #include <RobotDesignerLib/MPO_COMZeroVelocityConstraint.h>
+#include <RobotDesignerLib/MPO_DefaultRobotStateConstraint.h>
 #include <RobotDesignerLib/MPO_VelocityL0Regularization.h>
 #include <RobotDesignerLib/MPO_StateMatchObjective.h>
 
@@ -357,9 +359,15 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->objectives.push_back(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0));
 	ef->objectives.push_back(new MPO_WheelGroundObjective(ef->theMotionPlan, "wheel ground objective", 10000.0));
 
-//	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 0, 10000.0)); ef->objectives.back()->isActive = false;
-//	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "end velocity zero objective", ef->theMotionPlan->nSamplePoints-2, 10000.0)); ef->objectives.back()->isActive = false;
-//	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 1, 10000.0));
+	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 0, 10000.0));
+	ef->objectives.back()->isActive = false;
+	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "end velocity zero objective", ef->theMotionPlan->nSamplePoints-2, 10000.0));
+	ef->objectives.back()->isActive = false;
+
+	ef->objectives.push_back(new MPO_DefaultRobotStateConstraint(ef->theMotionPlan, "start default rs objective", 0, 10000.0));
+	ef->objectives.back()->isActive = false;
+	ef->objectives.push_back(new MPO_DefaultRobotStateConstraint(ef->theMotionPlan, "end default rs objective", ef->theMotionPlan->nSamplePoints-2, 10000.0));
+	ef->objectives.back()->isActive = false;
 
 	// constraint ensuring the y component of the EE position follows the swing motion
 	ef->objectives.push_back(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0));
@@ -387,6 +395,8 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->objectives.push_back(new MPO_SmoothStanceLegMotionObjective(ef->theMotionPlan, "robot stance leg smooth joint angle trajectories", 0.01));
 	ef->objectives.push_back(new MPO_StanceLegMotionRegularizer(ef->theMotionPlan, "robot stance legs motion regularizer", 0.01));
 	ef->objectives.push_back(new MPO_FeetPathSmoothnessObjective(ef->theMotionPlan, "foot path smoothness objective", 10.0));
+
+	ef->objectives.push_back(new MPO_WheelSpeedRegularizer(ef->theMotionPlan, "wheel speed regularizer", 1e-4));
 
 	ef->objectives.push_back(new MPO_RobotStateRegularizer(ef->theMotionPlan, "robot joint angles regularizer objective", 0.0010 * 1, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
 	ef->objectives.push_back(new MPO_NonLimbMotionRegularizer(ef->theMotionPlan, "robot joint angles regularizer objective (non-limb)", 0.01));
