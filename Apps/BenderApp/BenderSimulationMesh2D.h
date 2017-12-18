@@ -12,6 +12,7 @@ class BenderSimulationMesh2D : public CSTSimulationMesh2D {
 
 public:
 	std::array<Mount*, 2> mounts;
+	std::vector<Mount*> handles;
 	std::vector<MeshObjective *> objectives;
 
 public:

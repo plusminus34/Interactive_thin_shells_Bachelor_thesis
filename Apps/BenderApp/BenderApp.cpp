@@ -23,9 +23,9 @@ BenderApp::BenderApp()
 {
 	setWindowTitle("Test FEM Sim Application...");
 
-	int nRows = 40;
-	int nCols = 8;
-	BenderSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.05, 0.05, nRows, nCols);
+	int nRows = 60;
+	int nCols = 9;
+	BenderSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 2.0/nRows, 0.01, nRows, nCols);
 
 	femMesh = new BenderSimulationMesh2D();
 	femMesh->readMeshFromFile("../data/FEM/2d/triMeshTMP.tri2d");
@@ -72,17 +72,85 @@ BenderApp::BenderApp()
 	mainMenu->addVariable("Static solve", computeStaticSolution);
 	mainMenu->addVariable("Optimize Objective", optimizeObjective);
 	mainMenu->addVariable("Check derivatives", checkDerivatives);
-	mainMenu->addButton("set state target", [this](){
+	mainMenu->addVariable("Approx. line search", approxLineSearch);
+	mainMenu->addButton("set state as target", [this](){
 		                                             femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
 	                                                 });
+	
+	
+
+	
+	//initInteractionMenu();
+
+	/*
+	mainMenu->addGroup("Mode");
+
+	nanogui::Widget *modes = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", modes);
+	modes->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+
+	nanogui::Button* button = new nanogui::Button(modes, "");
+	*/
+	initInteractionMenu(mainMenu);
 
 	menuScreen->performLayout();
-
-
 }
 
 BenderApp::~BenderApp()
 {
+}
+
+void BenderApp::initInteractionMenu(nanogui::FormHelper* menu)
+{
+	
+	// add selection for interaction mode
+	 menu->addGroup("Mode");
+	{
+		nanogui::Widget *modes = new nanogui::Widget(menu->window());
+		menu->addWidget("", modes);
+		modes->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+
+		nanogui::Button* button;
+		button = new nanogui::Button(modes, "View");
+		button->setFlags(nanogui::Button::RadioButton);
+		button->setCallback([this](){interactionMode = InteractionMode::VIEW;});
+		button->setPushed(true);
+		interactionMode = InteractionMode::VIEW;
+		button = new nanogui::Button(modes, "Select");
+		button->setFlags(nanogui::Button::RadioButton);
+		button->setCallback([this](){interactionMode = InteractionMode::SELECT;});
+		button = new nanogui::Button(modes, "Drag");
+		button->setFlags(nanogui::Button::RadioButton);
+		button->setCallback([this](){interactionMode = InteractionMode::DRAG;});
+		button = new nanogui::Button(modes, "Draw");
+		button->setFlags(nanogui::Button::RadioButton);
+		button->setCallback([this](){interactionMode = InteractionMode::DRAW;});
+	}
+
+	// add combo box for selected mount/handle
+	menu->addGroup("Selection");
+	{
+		nanogui::Widget *selection = new nanogui::Widget(menu->window());
+		menu->addWidget("", selection);
+		selection->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+			nanogui::Alignment::Middle, 0, 4));
+		comboBoxFixtureSelection = new nanogui::ComboBox(selection, { "Combo box item 1", "Combo box item 2", "Combo box item 3"});
+	}
+	menu->addButton("add mount", [this](){});
+
+	menu->addGroup("Tools");
+	menu->addVariable("Add/remove nodes", toolMode, true) -> setItems({"pick single node", "brush"});
+	
+};
+
+void BenderApp::updateMountSelectionBox()
+{
+	for(int i = 0; i < femMesh->mounts.size(); ++i) {
+
+	}
+
 }
 
 //triggered when mouse moves
@@ -299,11 +367,11 @@ void BenderApp::process() {
 				};
 
 				auto f = [&] (dVector const & xi) { 					
-					return(O_approx(xi));
+					return(approxLineSearch ? O_approx(xi) : O_formal(xi));
 				};
 
 				
-				double gamma_start = 0.02;
+				double gamma_start = 1.0;
 				int maxIter = 10;
 
 
@@ -337,7 +405,8 @@ void BenderApp::process() {
 
 			// update xi
 			// (TODO) xi = xi - gamma * dO/dxi
-			xi = xi - 0.5*gamma * dOdxi;
+			xi = xi - 0.25*gamma * dOdxi;
+			//xi = xi - gamma * dOdxi;
 			pushXi();
 
 			solve_mesh();
@@ -346,7 +415,7 @@ void BenderApp::process() {
 			double e_new = femMesh->computeTargetPositionError();
 			double delta_o = o_new - o_last;
 			double delta_e = e_new - e_last;
-			Logger::consolePrint("o | e | delta o | delta e = %-10f | %-10f | %+-10.7f | %+-10.7f \n", o_new, e_new, delta_o, delta_e);
+			Logger::consolePrint("o | e | delta o | delta e = %10f | %10f | %+-10.7f | %+-10.7f \n", o_new, e_new, delta_o, delta_e);
 			o_last = o_new;
 			e_last = e_new;
 

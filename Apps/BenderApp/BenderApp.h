@@ -34,6 +34,7 @@ private:
 	// state of the app
 	bool computeStaticSolution = true;
 	bool optimizeObjective = true;
+	bool approxLineSearch = true;
 
 	bool checkDerivatives = false;
 
@@ -45,6 +46,21 @@ private:
 	int selectedNodeID = -1;
 	double shearModulus = 50, bulkModulus = 50;
 	bool autoUpdateShearModulusAndBulkModulus = false;
+
+	// Interaction Menu
+	//nanogui::Screen *interactionMenuScreen = nullptr;
+	//nanogui::FormHelper *interactionMenu = nullptr;
+
+	// states
+	enum InteractionMode {VIEW, SELECT, DRAG, DRAW};
+	InteractionMode interactionMode = VIEW;
+	enum ToolMode {PICK_NODE, BRUSH};
+	ToolMode toolMode = PICK_NODE;
+
+	// menu elements
+	nanogui::ComboBox* comboBoxFixtureSelection;
+
+
 
 public:
 	// constructor
@@ -91,6 +107,10 @@ public:
 	
 	virtual void saveFile(const char* fName);
 	virtual void loadFile(const char* fName);
+
+
+	void initInteractionMenu(nanogui::FormHelper* menu);
+	void updateMountSelectionBox();
 
 };
 
