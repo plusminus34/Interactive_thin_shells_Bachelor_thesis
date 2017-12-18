@@ -6,7 +6,7 @@
 #include <MathLib/MathLib.h>
 #include <RBSimLib/ODERBEngine.h>
 #include <ControlLib/SimpleLimb.h>
-#include "PololuServoControlInterface.h"
+#include <ControlLib/PololuServoControlInterface.h>
 
 PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	setWindowTitle("Physical Robot Control");

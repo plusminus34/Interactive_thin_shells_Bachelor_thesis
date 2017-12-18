@@ -1,12 +1,17 @@
 #include "RobotDesignerLib/MPO_StateMatchObjective.h"
 
+//some problems:
+//- if initial robot state is not made such that all EEs hit the ground, then it will pose major conflicts with other objectives.
+//- are F=ma and angular equivalent not active when the motion is not periodic? Or why are there no GRFs?
+
+
 MPO_StateMatchObjective::MPO_StateMatchObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int stateIndex, dVector& targetRobotState) {
 	theMotionPlan = mp;
 
 	//altogether, these indices provide a yaw orientation and plane translation independent way of measuring differences to target state... 
-	qIndices.push_back(1);	//this is the height of the robot's body
-	qIndices.push_back(4);	//the roll
-	qIndices.push_back(5);	//the pitch
+//	qIndices.push_back(1);	//this is the height of the robot's body
+//	qIndices.push_back(4);	//the roll
+//	qIndices.push_back(5);	//the pitch
 
 	for (int i = 0; i < mp->robot->getJointCount(); i++)	// add all the joint angles now...
 		qIndices.push_back(6 + i);
