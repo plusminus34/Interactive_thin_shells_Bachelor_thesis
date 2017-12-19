@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cmath>
+#include <iostream>
 
 #include "MathLib/P3D.h"
 
@@ -53,4 +54,21 @@ void RotationMount::shift(V3D const & delta)
 {
 	parameters[1] += delta[0];
 	parameters[2] += delta[1];
+}
+
+
+void RotationMount::dxDpar(P3D const & x0, std::vector<double> const & parameters, std::vector<V3D> & grad)
+{
+	int n_par = parameters.size();
+	grad.resize(n_par);
+
+	double sina = std::sin(parameters[0]);
+	double cosa = std::cos(parameters[0]);
+
+	// dx/dalpha
+	grad[0] = V3D(-sina*x0[0]-cosa*x0[1],  cosa*x0[0]-sina*x0[1], 0.0);
+	grad[1] = V3D(1.0,                     0.0,                   0.0);
+	grad[2] = V3D(0.0,                     1.0,                   0.0);
+
+std::cout << "compute dxdpar analytically" << std::endl;
 }

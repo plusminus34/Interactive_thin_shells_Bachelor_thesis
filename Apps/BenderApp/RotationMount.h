@@ -18,7 +18,7 @@ public:
 	};
 
 	virtual P3D transformation(P3D const & x0, std::vector<double> const & parameters);
-
+	virtual void dxDpar(P3D const & x0, std::vector<double> const & parameters, std::vector<V3D> & grad);
 
 	//virtual void getDxDpar(P3D const & x0, std::vector<V3D> & grad);
 

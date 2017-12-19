@@ -11,8 +11,7 @@
 class BenderSimulationMesh2D : public CSTSimulationMesh2D {
 
 public:
-	std::array<Mount*, 2> mounts;
-	std::vector<Mount*> handles;
+	std::vector<Mount*> mounts;
 	std::vector<MeshObjective *> objectives;
 
 public:
@@ -20,9 +19,14 @@ public:
 	~BenderSimulationMesh2D();
 
 	// mesh manipulation
+	void addRotationMount();
+	void removeMount(int mountID);
+
 	void setMountedNode(int nodeID, const P3D & x0, int mountID);
 	void setNodePositionObjective(int nodeID, const P3D & x0);
 	void setNodeGlobalNodePositionObjective(dVector const & x);
+
+	int getMountIdOfNode(int nodeID);
 
 	void clearObjectives();
 

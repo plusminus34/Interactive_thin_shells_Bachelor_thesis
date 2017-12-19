@@ -13,12 +13,14 @@ MountedPointSpring2D::~MountedPointSpring2D()
 
 
 double MountedPointSpring2D::getEnergy(const dVector & x, const dVector & X){
+	if(!mount->active) {return(0.0);};
 	//E = 0.5K xTx
 	P3D mountedTargetPosition = mount->getTransformedX(targetPosition);
 	return 0.5 * K * (node->getCoordinates(x)-mountedTargetPosition).dot(node->getCoordinates(x)-mountedTargetPosition);
 }
 
 void MountedPointSpring2D::addEnergyGradientTo(const dVector& x, const dVector& X, dVector& grad) {
+	if(!mount->active) {return;}
 	//compute the gradient, and write it out
 	//dEdx = Kx
 	P3D mountedTargetPosition = mount->getTransformedX(targetPosition);
@@ -28,6 +30,7 @@ void MountedPointSpring2D::addEnergyGradientTo(const dVector& x, const dVector& 
 }
 
 void MountedPointSpring2D::addEnergyHessianTo(const dVector & x, const dVector & X, std::vector<MTriplet>& hesEntries){
+	if(!mount->active) {return;}
 	//ddEdxdx = I;
 	Matrix2x2 ddEdxdx;
 	ddEdxdx << 1, 0, 0, 1;
@@ -37,14 +40,16 @@ void MountedPointSpring2D::addEnergyHessianTo(const dVector & x, const dVector &
 
 void MountedPointSpring2D::addDeltaFDeltaXi(std::vector<dVector> & dfdxi)
 {
+	if(!mount->active) {return;}
+
 	double K = this->K;
 
 	std::vector<V3D> dfdxi_temp;
 
-	mount->getDxDpar(targetPosition, dfdxi_temp);
+	mount->getDxDpar(mount->getTransformedX(targetPosition), dfdxi_temp);
 
 	for(V3D & gradi : dfdxi_temp) {
-		gradi *= -K;
+		gradi *= K;
 	}
 
 	int xi_idx_start = mount->parametersStartIndex;

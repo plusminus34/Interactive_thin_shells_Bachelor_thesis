@@ -10,6 +10,8 @@ class Mount {
 public:
 	std::vector<double> parameters;
 	int parametersStartIndex;	// position of parameter set in context of the global parameter set
+	bool parameterOptimization = true;	// whether or not this mount is part of the global parameter optimization
+	bool active = true;				
 
 public:
 	//virtual std::vector<double> get_parameters() = 0;

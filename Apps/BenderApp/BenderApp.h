@@ -13,7 +13,7 @@
  * Test App
  */
 class BenderApp : public GLApplication {
-private:
+public:
 	BenderSimulationMesh2D* femMesh;
 	
 	dVector xi;
@@ -58,7 +58,7 @@ private:
 	ToolMode toolMode = PICK_NODE;
 
 	// menu elements
-	nanogui::ComboBox* comboBoxFixtureSelection;
+	nanogui::ComboBox* comboBoxMountSelection;
 
 
 
@@ -76,6 +76,9 @@ public:
 	// Restart the application.
 	virtual void restart();
 
+	// add a mount
+	void addRotationMount();
+	void removeSelectedMount();
 	// add a node to a mount
 	void addMountedNode(int node_id, int mount_id);
 	//void updateMountEnergy();
@@ -111,6 +114,9 @@ public:
 
 	void initInteractionMenu(nanogui::FormHelper* menu);
 	void updateMountSelectionBox();
+
+	void switchInteractionMode(InteractionMode mode);
+	void setSelectedMount(int mountID);
 
 };
 

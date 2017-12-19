@@ -5,7 +5,7 @@
 
 class MountedPointSpring2D : public FixedPointSpring2D {
 
-public: 
+public:
 	Mount * mount;
 
 public: 

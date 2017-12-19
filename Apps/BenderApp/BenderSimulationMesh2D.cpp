@@ -5,11 +5,13 @@
 
 BenderSimulationMesh2D::BenderSimulationMesh2D()
 {
+	/*
 	int parameterStartIndex = 0;
 	for(Mount*& m : mounts) {
 		m = new RotationMount(0.0, 0.0, 0.0, parameterStartIndex);
 		parameterStartIndex += 3;
 	}
+	*/
 }
 
 BenderSimulationMesh2D::~BenderSimulationMesh2D()
@@ -18,6 +20,32 @@ BenderSimulationMesh2D::~BenderSimulationMesh2D()
 		delete m;
 	}
 }
+
+void BenderSimulationMesh2D::addRotationMount() 
+{
+	mounts.push_back(new RotationMount);
+}
+
+void BenderSimulationMesh2D::removeMount(int mountID) 
+{
+
+	if(mountID < 0 || mountID >= mounts.size()) {
+		return;
+	}
+
+	// remove all pins to the mount
+	for(int i = pinnedNodeElements.size()-1; i >= 0; --i) {
+		if(dynamic_cast<MountedPointSpring2D *>(pinnedNodeElements[i])->mount == mounts[mountID]) {
+			delete pinnedNodeElements[i];
+			pinnedNodeElements.erase(pinnedNodeElements.begin()+i);
+		}
+	}
+
+	// remove the mount
+	delete mounts[mountID];
+	mounts.erase(mounts.begin()+mountID);
+}
+
 
 void BenderSimulationMesh2D::setMountedNode(int nodeID, const P3D & x0, int mountID)
 {
@@ -39,6 +67,32 @@ void BenderSimulationMesh2D::setNodeGlobalNodePositionObjective(dVector const & 
 	for(int i = 0; i < nodes.size(); ++i) {
 		setNodePositionObjective(i, nodes[i]->getCoordinates(x));
 	}
+}
+
+
+int BenderSimulationMesh2D::getMountIdOfNode(int nodeID) {
+	Node * node = nodes[nodeID];
+	// search pins for node id
+	int pinnedNodeElementID = -1;
+	for(int j = 0; j < pinnedNodeElements.size(); ++j) {
+		if(dynamic_cast<FixedPointSpring2D *>(pinnedNodeElements[j])->node == node) {
+			pinnedNodeElementID = j;
+			break;
+		}
+	}
+	// search for mount id
+	if(pinnedNodeElementID >=0) {
+		for(int j = 0; j < mounts.size(); ++j) {
+			if(mounts[j] == dynamic_cast<MountedPointSpring2D *>(pinnedNodeElements[pinnedNodeElementID])->mount) {
+				return(j);
+			}
+		}
+	}
+	else {
+		return(-1);
+	}
+
+	return(-1);
 }
 
 

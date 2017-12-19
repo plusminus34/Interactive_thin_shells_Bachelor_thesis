@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 
 #include "RotationMount.h"
 #include "MountedPointSpring2D.h"
@@ -23,23 +24,17 @@ BenderApp::BenderApp()
 {
 	setWindowTitle("Test FEM Sim Application...");
 
-	int nRows = 60;
-	int nCols = 9;
-	BenderSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 2.0/nRows, 0.01, nRows, nCols);
+	int nRows = 30;
+	int nCols = 7;
+	double length = 2.0;
+	double height = 0.1;
+	BenderSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -length/2.0, 0, length/(nRows-1), height/(nCols-1), nRows, nCols);
 
 	femMesh = new BenderSimulationMesh2D();
 	femMesh->readMeshFromFile("../data/FEM/2d/triMeshTMP.tri2d");
 	//femMesh->addGravityForces(V3D(0, -9.8, 0));
 	femMesh->addGravityForces(V3D(0, 0, 0));
 
-	// initialize the parameter vector
-	pullXi();
-
-	//set two mounts with pins
-	for (int i = 0; i < nCols; ++i) {
-		addMountedNode(i, 0);
-		addMountedNode((nRows-1)*nCols + i, 1);
-	}
 
 	// set some curve to "uppermost" column
 	{
@@ -68,6 +63,8 @@ BenderApp::BenderApp()
 
 	showGroundPlane = false;
 
+	// menu
+
 	mainMenu->addGroup("FEM Sim options");
 	mainMenu->addVariable("Static solve", computeStaticSolution);
 	mainMenu->addVariable("Optimize Objective", optimizeObjective);
@@ -77,24 +74,21 @@ BenderApp::BenderApp()
 		                                             femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
 	                                                 });
 	
-	
-
-	
-	//initInteractionMenu();
-
-	/*
-	mainMenu->addGroup("Mode");
-
-	nanogui::Widget *modes = new nanogui::Widget(mainMenu->window());
-	mainMenu->addWidget("", modes);
-	modes->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
-		nanogui::Alignment::Middle, 0, 4));
-
-	nanogui::Button* button = new nanogui::Button(modes, "");
-	*/
 	initInteractionMenu(mainMenu);
 
 	menuScreen->performLayout();
+
+
+	//set two mounts with pins
+	addRotationMount();
+	addRotationMount();
+	for (int i = 0; i < nCols; ++i) {
+		addMountedNode(i, 0);
+		addMountedNode((nRows-1)*nCols + i, 1);
+	}
+	pullXi();
+
+
 }
 
 BenderApp::~BenderApp()
@@ -115,30 +109,58 @@ void BenderApp::initInteractionMenu(nanogui::FormHelper* menu)
 		nanogui::Button* button;
 		button = new nanogui::Button(modes, "View");
 		button->setFlags(nanogui::Button::RadioButton);
-		button->setCallback([this](){interactionMode = InteractionMode::VIEW;});
+		button->setCallback([this](){switchInteractionMode(InteractionMode::VIEW);});
 		button->setPushed(true);
-		interactionMode = InteractionMode::VIEW;
+		switchInteractionMode(InteractionMode::VIEW);
 		button = new nanogui::Button(modes, "Select");
 		button->setFlags(nanogui::Button::RadioButton);
-		button->setCallback([this](){interactionMode = InteractionMode::SELECT;});
+		button->setCallback([this](){switchInteractionMode(InteractionMode::SELECT);});
 		button = new nanogui::Button(modes, "Drag");
 		button->setFlags(nanogui::Button::RadioButton);
-		button->setCallback([this](){interactionMode = InteractionMode::DRAG;});
+		button->setCallback([this](){switchInteractionMode(InteractionMode::DRAG);});
 		button = new nanogui::Button(modes, "Draw");
 		button->setFlags(nanogui::Button::RadioButton);
-		button->setCallback([this](){interactionMode = InteractionMode::DRAW;});
+		button->setCallback([this](){switchInteractionMode(InteractionMode::DRAW);});
 	}
 
 	// add combo box for selected mount/handle
-	menu->addGroup("Selection");
+	menu->addGroup("Mounts");
 	{
 		nanogui::Widget *selection = new nanogui::Widget(menu->window());
 		menu->addWidget("", selection);
 		selection->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 			nanogui::Alignment::Middle, 0, 4));
-		comboBoxFixtureSelection = new nanogui::ComboBox(selection, { "Combo box item 1", "Combo box item 2", "Combo box item 3"});
+		comboBoxMountSelection = new nanogui::ComboBox(selection, { "Combo box item 1", "Combo box item 2", "Combo box item 3"});
+		comboBoxMountSelection->setCallback([this](int idx){selected_mount = idx;
+		                                                    std::cout << "selected mount: " << selected_mount << std::endl;
+															});
 	}
-	menu->addButton("add mount", [this](){});
+	{
+		nanogui::Widget *mountStatus = new nanogui::Widget(menu->window());
+		menu->addWidget("", mountStatus);
+		mountStatus->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+			nanogui::Alignment::Middle, 0, 4));
+		nanogui::Button *b;
+		b = new nanogui::Button(mountStatus, "toogle xi");
+		b->setCallback([this](){femMesh->mounts[selected_mount]->parameterOptimization ^= true;
+		                        updateMountSelectionBox();
+								});
+		b = new nanogui::Button(mountStatus, "toogle active");
+		b->setCallback([this](){femMesh->mounts[selected_mount]->active ^= true;
+								updateMountSelectionBox();
+								});
+	}
+	{
+		nanogui::Widget *mountAdd = new nanogui::Widget(menu->window());
+		menu->addWidget("", mountAdd);
+		mountAdd->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+			nanogui::Alignment::Middle, 0, 4));
+		nanogui::Button *b;
+		b = new nanogui::Button(mountAdd, "add mount");
+		b->setCallback([this](){addRotationMount();});
+		b = new nanogui::Button(mountAdd, "remove mount");
+		b->setCallback([this](){removeSelectedMount();});
+	}
 
 	menu->addGroup("Tools");
 	menu->addVariable("Add/remove nodes", toolMode, true) -> setItems({"pick single node", "brush"});
@@ -147,11 +169,54 @@ void BenderApp::initInteractionMenu(nanogui::FormHelper* menu)
 
 void BenderApp::updateMountSelectionBox()
 {
+	std::vector<std::string> items(femMesh->mounts.size());
 	for(int i = 0; i < femMesh->mounts.size(); ++i) {
+		std::stringstream item;
+		item << "Mount " << i << " | ";
+		if(femMesh->mounts[i]->parameterOptimization) {
+			item << "xi";
+		}
+		else {
+			item << "  ";
+		}
+		item << " | ";
+		if(femMesh->mounts[i]->active) {
+			item << "active";
+		}
+		else {
+			item << "      ";
+		}
+		item << " |";
 
+		items[i] = item.str();
 	}
 
+	comboBoxMountSelection->setItems(items);
+	selected_mount = comboBoxMountSelection->selectedIndex();
+
+	menuScreen->performLayout();
 }
+
+
+void BenderApp::switchInteractionMode(InteractionMode mode)
+{
+	if(mode == InteractionMode::DRAG) {
+		if(interactionMode != InteractionMode::DRAG) {
+			selectedNodeID = -1;
+		}
+	}
+
+	interactionMode = mode;
+}
+
+void BenderApp::setSelectedMount(int mountID)
+{
+	if(mountID >= 0) {
+		selected_mount = mountID;
+		comboBoxMountSelection->setSelectedIndex(mountID);
+	}
+}
+
 
 //triggered when mouse moves
 bool BenderApp::onMouseMoveEvent(double xPos, double yPos) {
@@ -160,6 +225,35 @@ bool BenderApp::onMouseMoveEvent(double xPos, double yPos) {
 	lastMovedRay = currentRay;
 	currentRay = getRayFromScreenCoords(xPos, yPos);
 	
+	if(interactionMode == InteractionMode::VIEW) {
+		return(GLApplication::onMouseMoveEvent(xPos, yPos));
+	}
+	else if(interactionMode == InteractionMode::SELECT) {
+
+		return(true);
+	}
+	else if(interactionMode == InteractionMode::DRAG) {
+		if (selectedNodeID != -1)
+		{
+			Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
+			P3D targetPos;
+			P3D lastPos;
+			currentRay.getDistanceToPlane(plane,&targetPos);
+			lastMovedRay.getDistanceToPlane(plane, &lastPos);
+			V3D delta = targetPos - lastPos;
+			dynamic_cast<RotationMount*>(femMesh->mounts[selected_mount])->shift(delta);
+		}
+		return(true);
+	}
+	else if(interactionMode == InteractionMode::DRAW) {
+
+		return(true);
+	}
+	else {
+		return(false);
+	}
+
+
 
 	if (selectedNodeID != -1){
 		int selectedMountID = selected_mount;
@@ -184,73 +278,109 @@ bool BenderApp::onMouseMoveEvent(double xPos, double yPos) {
 		}
 	}
 	
-	else if (GLApplication::onMouseMoveEvent(xPos, yPos) == true) return true;
+	
 	return false;
 }
 
 //triggered when mouse buttons are pressed
 bool BenderApp::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
-#ifdef EDIT_BOUNDARY_CONDITIONS
+	
+	
+	if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		if(interactionMode == InteractionMode::VIEW) {
+			return(GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos));
+		}
+		else if(interactionMode == InteractionMode::SELECT) {
+			int selectedNodeID_temp = femMesh->getSelectedNodeID(lastMovedRay);
+			int selectedMountID_temp = femMesh->getMountIdOfNode(selectedNodeID_temp);
+			setSelectedMount(selectedMountID_temp);
+			return(true);
+		}
+		else if(interactionMode == InteractionMode::DRAG) {
+			if(action == GLFW_PRESS) {
+				lastClickedRay = lastMovedRay;
+				selectedNodeID = femMesh->getSelectedNodeID(lastClickedRay);
+			}
+			else {
+				selectedNodeID = -1;
+			}
+			return(true);
+		}
+		else if(interactionMode == InteractionMode::DRAW) {
+			if(toolMode == ToolMode::PICK_NODE) {
+				int selectedNodeID_temp = femMesh->getSelectedNodeID(lastMovedRay);
+				addMountedNode(selectedNodeID_temp, selected_mount);
+			}
+			return(true);
+		}
+		else {
+			return(false);
+		}
+
+
+	}
 
 	if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+		/*
 		if (action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
 			femMesh->removePinnedNodeConstraints();
 			for (Mount * m : femMesh->mounts) {
 				m->reset();
 			}
 		}
-	}
+		*/
 
-	if (button == GLFW_MOUSE_BUTTON_LEFT){
-		lastClickedRay = lastMovedRay;
-		if (action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
-			int selectedNodeID_temp = femMesh->getSelectedNodeID(lastClickedRay);
-			if (selectedNodeID_temp >= 0) {
-				if (selected_mount >= 0 && selected_mount <= 2) {
-					addMountedNode(selectedNodeID_temp, selected_mount);
-				}
-				return true;
-			}
+		if(interactionMode == InteractionMode::VIEW) {
+			return(GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos));
 		}
-		else if (action == GLFW_PRESS && mods & GLFW_MOD_SHIFT) {
-			selectedNodeID = femMesh->getSelectedNodeID(lastClickedRay);
-			//if (selectedNodeID >= 0) {
-			//	if (selected_mount >= 0 && selected_mount <= 9) {
-			//		addMountedNode(selectedNodeID, selected_mount);
-			//	}
-			//	return true;
-			//}
-		}
+		else if(interactionMode == InteractionMode::SELECT) {
 
+			return(true);
+		}
+		else if(interactionMode == InteractionMode::DRAG) {
+
+			return(true);
+		}
+		else if(interactionMode == InteractionMode::DRAW) {
+			int selectedNodeID_temp = femMesh->getSelectedNodeID(lastMovedRay);
+			// TODO: remove node from mount
+			return(true);
+		}
 		else {
-			selectedNodeID = -1;
+			return(false);
 		}
+
 	}
-#endif
 
-	if (GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
-
-//	Logger::consolePrint("--> %d\n", selectedNodeID);
-//	Logger::consolePrint("--> %lf %lf %lf\n", lastClickedRay.origin[0], lastClickedRay.origin[1], lastClickedRay.origin[2]);
-//	Logger::consolePrint("--> %lf %lf %lf\n", lastClickedRay.direction[0], lastClickedRay.direction[1], lastClickedRay.direction[2]);
 	return false;
 }
 
 //triggered when using the mouse wheel
 bool BenderApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	
-	if (selected_mount >= 0) {
-		std::cout << "Offsets: " << xOffset << " " << yOffset << std::endl;
-		Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
-		P3D origin; 
-		currentRay.getDistanceToPlane(plane,&origin);
-		dynamic_cast<RotationMount*>(femMesh->mounts[selected_mount])->rotate(origin, yOffset * 0.05);
+	if(interactionMode == InteractionMode::VIEW) {
+		return(GLApplication::onMouseWheelScrollEvent(xOffset, yOffset));
+	}
+	else if(interactionMode == InteractionMode::SELECT) {
 		return(true);
 	}
-	
-	if (GLApplication::onMouseWheelScrollEvent(xOffset, yOffset)) return true;
+	else if(interactionMode == InteractionMode::DRAG) {
+		if (selected_mount >= 0) {
+			std::cout << "Offsets: " << xOffset << " " << yOffset << std::endl;
+			Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
+			P3D origin; 
+			currentRay.getDistanceToPlane(plane,&origin);
+			dynamic_cast<RotationMount*>(femMesh->mounts[selected_mount])->rotate(origin, yOffset * 0.05);
+		}
+		return(true);
+	}
+	else if(interactionMode == InteractionMode::DRAW) {
 
-	return false;
+		return(true);
+	}
+	else {
+		return(false);
+	}
 }
 
 bool BenderApp::onKeyEvent(int key, int action, int mods) {	
@@ -263,6 +393,7 @@ bool BenderApp::onKeyEvent(int key, int action, int mods) {
 bool BenderApp::onCharacterPressedEvent(int key, int mods) {
 #ifdef EDIT_BOUNDARY_CONDITIONS
 	if (!mods) {
+		/*
 		if (key >= '0' && key <= '1') {
 			int mount_id = key - '0';
 			selected_mount = mount_id;
@@ -272,6 +403,7 @@ bool BenderApp::onCharacterPressedEvent(int key, int mods) {
 			selected_mount = -1;
 			std::cout << "no mount selected" << std::endl;
 		}
+		*/
 	}
 #endif	
 	if (GLApplication::onCharacterPressedEvent(key, mods)) return true;
@@ -346,6 +478,8 @@ void BenderApp::process() {
 
 			// compute dO/dxi	[n_par x 1]
 			computeDoDxi(dOdxi);
+std::cout << "dodxi = " << dOdxi[0] << " " << dOdxi[1] << " " << dOdxi[2];
+std::cout << std::endl;
 
 			// compute gamma with linesearch	[scalar]
 			// (TODO)
@@ -371,29 +505,32 @@ void BenderApp::process() {
 				};
 
 				
-				double gamma_start = 1.0;
-				int maxIter = 10;
+				double gamma_start = 0.1;
+				int maxIter = 30;
 
 
 				//double gamma_old = gamma_start;
 				double gamma_test = gamma_start;
 				dVector xi_old = xi;
 				double f_init = femMesh->computeO();
-				dVector search_direction = dOdxi;
+				//double f_init = f(xi_old);
+				//dVector search_direction = dOdxi;
 
 				dVector xi_new;
 				dVector xi_test;
 
 				for(int j = 0; j < maxIter; ++j) {
-					xi_test = xi_old - gamma_test * search_direction;
+					xi_test = xi_old - gamma_test * dOdxi;
 					double f_new = f(xi_test);
 
-					std::cout << "j " << j << "  o_init = " << f_init << "  o_probe = " << f_new << std::endl;
+					std::cout << "xi_old   " << xi_old[0] << " " << xi_old[1] << " " << xi_old[2] << std::endl;
+					std::cout << "xi_test  " << xi_test[0] << " " << xi_test[1] << " " << xi_test[2] << std::endl;
+					std::cout << "j " << j << "  gamma: " << gamma_test << "  o_init = " << f_init << "  o_probe = " << f_new << std::endl;
 
 					if(!isfinite(f_new)) {
 						gamma_test /= 2.0;
 					}
-					else if(f_new > f_init && j <= maxIter) {
+					else if(f_new >= f_init && j <= maxIter) {
 						gamma_test /= 2.0;
 					}
 					else {
@@ -402,10 +539,11 @@ void BenderApp::process() {
 				}
 				gamma = gamma_test;
 			}
+			
 
 			// update xi
 			// (TODO) xi = xi - gamma * dO/dxi
-			xi = xi - 0.25*gamma * dOdxi;
+			xi = xi - 0.5*gamma * dOdxi;
 			//xi = xi - gamma * dOdxi;
 			pushXi();
 
@@ -433,39 +571,32 @@ void BenderApp::process() {
 
 void BenderApp::pullXi()
 {
-	/*
-	xi.resize(0);
-	for(Mount const * m: femMesh->mounts) {
-		xi.insert(xi.end(), m->parameters.begin(), m->parameters.end());
-	}
-	*/
 	int n_parameters = 0;
 	for(Mount const * m: femMesh->mounts) {
-		n_parameters += m->parameters.size();
+		if(m->active && m->parameterOptimization) {
+			n_parameters += m->parameters.size();
+		}
 	}
 	xi.resize(n_parameters);
 	int i = 0;
-	for(Mount const * m: femMesh->mounts) {
-		for(double p : m->parameters) {
-			xi[i++] = p;
+	for(Mount * m: femMesh->mounts) {
+		if(m->active && m->parameterOptimization) {
+			m->parametersStartIndex = i;
+			for(double p : m->parameters) {
+				xi[i++] = p;
+			}
 		}
 	}
 }
 
 void BenderApp::pushXi()
 {
-	/*
-	int i = 0;
-	for(Mount const * m: femMesh->mounts) {
-		int n_par = m->parameters.size();
-		std::copy(xi.begin()+i; xi.begin()+i+n_par, m->parameters.begin());
-		i += n_par;
-	}
-	*/
-	int i = 0;
 	for(Mount * m: femMesh->mounts) {
-		for(double & p : m->parameters) {
-			p = xi[i++];
+		if(m->active && m->parameterOptimization) {
+			int i = 0;
+			for(double & p : m->parameters) {
+				p = xi[m->parametersStartIndex + (i++)];
+			}
 		}
 	}
 }
@@ -491,7 +622,11 @@ void BenderApp::computeDoDxi(dVector & dodxi)
 	// get dF/dx  (Hessian from FEM simulation)  [lengh(x) x length(x)]
 	SparseMatrix H(femMesh->x.size(), femMesh->x.size());
 	DynamicArray<MTriplet> hessianEntries(0);
+
+	//double regularizer_temp = dynamic_cast<FEMEnergyFunction *>(femMesh->energyFunction)->regularizer;
+	femMesh->energyFunction->setToStaticsMode(0.0);
 	femMesh->energyFunction->addHessianEntriesTo(hessianEntries, femMesh->x);
+	femMesh->energyFunction->setToStaticsMode(0.01);
 
 	H.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
 	
@@ -506,7 +641,7 @@ void BenderApp::computeDoDxi(dVector & dodxi)
 	// solve for each parameter xi
 	deltaxdeltaxi.resize(xi.size());
 	for(int i = 0; i < xi.size(); ++i) {
-		deltaxdeltaxi[i] = solver.solve(deltaFdeltaxi[i]);
+		deltaxdeltaxi[i] = solver.solve(-deltaFdeltaxi[i]);
 	}
 
 	// do/dxi = do/dx * dx/dxi
@@ -523,11 +658,11 @@ double BenderApp::peekOofXi(dVector const & xi_in) {
 	// store the current state of the mesh
 	dVector x_temp = femMesh->x;
 	dVector v_temp = femMesh->v;
-	//dVector m_temp = femMesh->m;
+	dVector m_temp = femMesh->m;
 	dVector f_ext_temp = femMesh->f_ext;
 	dVector xSolver_temp = femMesh->xSolver;
 
-	// store curent parameters xi
+	// store current parameters xi
 	dVector xi_temp = xi;
 
 	// new parameters
@@ -541,7 +676,7 @@ double BenderApp::peekOofXi(dVector const & xi_in) {
 	pushXi();
 	femMesh->x = x_temp;
 	femMesh->v = v_temp;
-	//femMesh->m = m_temp;
+	femMesh->m = m_temp;
 	femMesh->f_ext = f_ext_temp;
 	femMesh->xSolver = xSolver_temp;
 
@@ -557,10 +692,30 @@ void BenderApp::drawScene() {
 	glColor3d(1,1,1);
 	femMesh->drawSimulationMesh();
 
-#ifdef CONSTRAINED_DYNAMICS_DEMO
-	glColor3d(1, 1, 1);
-	drawCircle(0, 0, 1, 100);
-#endif
+
+
+	// draw origin
+	// draw line to current position
+	P3D p0(0.0, 0.0, 0.0);
+	double l = 0.2;
+	P3D px(l, 0.0, 0.0);
+	P3D py(0.0, l, 0.0);
+	P3D pz(0.0, 0.0, l);
+	glColor3d(0.8, 0, 0);
+	glBegin(GL_LINES);
+	glVertex3d(p0[0], p0[1], p0[2]);
+	glVertex3d(px[0], px[1], px[2]);
+	glEnd();
+	glColor3d(0, 0.8, 0);
+	glBegin(GL_LINES);
+	glVertex3d(p0[0], p0[1], p0[2]);
+	glVertex3d(py[0], py[1], py[2]);
+	glEnd();
+	glColor3d(0, 0, 0.8);
+	glBegin(GL_LINES);
+	glVertex3d(p0[0], p0[1], p0[2]);
+	glVertex3d(pz[0], pz[1], pz[2]);
+	glEnd();
 }
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
@@ -573,9 +728,25 @@ void BenderApp::restart() {
 
 }
 
+void BenderApp::addRotationMount() 
+{
+	femMesh->addRotationMount();
+	pullXi();
+	updateMountSelectionBox();
+}
+
+void BenderApp::removeSelectedMount()
+{
+	femMesh->removeMount(selected_mount);
+	pullXi();
+	updateMountSelectionBox();
+}
+
 
 void BenderApp::addMountedNode(int node_id, int mount_id)
 {
+	if(node_id < 0) {return;}
+
 	femMesh->setMountedNode(node_id, femMesh->nodes[node_id]->getCoordinates(femMesh->X), mount_id);
 	std::cout << "pinned nodes are: ";
 	for(BaseEnergyUnit* np : femMesh->pinnedNodeElements) {

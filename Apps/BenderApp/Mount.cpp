@@ -18,7 +18,7 @@ void Mount::dxDpar(P3D const & x0, std::vector<double> const & parameters, std::
 
 void Mount::dxDparFD(P3D const & x0, std::vector<double> const & parameters, std::vector<V3D> & grad)
 {
-	double const delta = 1e-6;
+	double const delta = 1.0e-12;
 	int n_par = parameters.size();
 
 	grad.resize(n_par);
