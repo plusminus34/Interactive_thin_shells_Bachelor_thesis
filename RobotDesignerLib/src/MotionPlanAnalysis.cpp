@@ -5,7 +5,7 @@
 #include <GUILib/ColorMaps.h>
 
 using namespace nanogui;
-using namespace Eigen;
+//using namespace Eigen;
 
 MotionPlanAnalysis::MotionPlanAnalysis(nanogui::Screen *screen){
 

@@ -59,7 +59,7 @@ LivingBracketMotor_XM430::LivingBracketMotor_XM430() {
 	motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
 	motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
 	motorWholeMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430.obj"); motorWholeMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
-	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430-BodyBracket.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430_basicBodyBracket.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
 	hornCarvingMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430_hornCarving.obj");
 	// bodyCarvingMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430_bodyCarving.obj");
 
