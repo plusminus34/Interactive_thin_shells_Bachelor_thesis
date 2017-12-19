@@ -5,6 +5,7 @@
 #include <RobotDesignerLib/MPO_WheelSpeedRegularizer.h>
 #include <RobotDesignerLib/MPO_WheelAngleRegularizer.h>
 #include <RobotDesignerLib/MPO_WheelAccelerationConstraint.h>
+#include <RobotDesignerLib/MPO_PeriodicWheelTrajectoriesObjective.h>
 #include <RobotDesignerLib/MPO_EEPosSwingObjective.h>
 #include <RobotDesignerLib/MPO_RobotWheelAxisObjective.h>
 #include <RobotDesignerLib/MPO_COMZeroVelocityConstraint.h>
@@ -378,6 +379,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 		ef->objectives.push_back(new MPO_PeriodicRobotStateTrajectoriesObjective(ef->theMotionPlan, "periodic joint angles", 10000.0, ef->theMotionPlan->nSamplePoints - 1, ef->theMotionPlan->wrapAroundBoundaryIndex, 6, ef->theMotionPlan->robotRepresentation->getDimensionCount() - 1));
 		ef->objectives.push_back(new MPO_PeriodicRobotStateTrajectoriesObjective(ef->theMotionPlan, "periodic body orientations (ROLL)", 10000.0, ef->theMotionPlan->nSamplePoints - 1, ef->theMotionPlan->wrapAroundBoundaryIndex, 4, 4));
 		ef->objectives.push_back(new MPO_PeriodicRobotStateTrajectoriesObjective(ef->theMotionPlan, "periodic body orientations (PITCH)", 10000.0, ef->theMotionPlan->nSamplePoints - 1, ef->theMotionPlan->wrapAroundBoundaryIndex, 5, 5));
+		ef->objectives.push_back(new MPO_PeriodicWheelTrajectoriesObjective(ef->theMotionPlan, "periodic wheel speed", 10000.0, ef->theMotionPlan->nSamplePoints - 1, ef->theMotionPlan->wrapAroundBoundaryIndex));
 	}
 
 	//if there are no periodic motion constraints, then we must provide some targets for the start and end of the motion...
