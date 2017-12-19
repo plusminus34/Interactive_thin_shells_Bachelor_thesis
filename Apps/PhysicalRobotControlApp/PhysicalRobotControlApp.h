@@ -10,7 +10,7 @@
 #include <GUILib/GLWindow3DWithMesh.h>
 #include <GUILib/GLWindowContainer.h>
 #include <ControlLib/IK_Solver.h>
-#include "RobotControlInterface.h"
+#include <ControlLib/RobotControlInterface.h>
 
 using namespace	std;
 

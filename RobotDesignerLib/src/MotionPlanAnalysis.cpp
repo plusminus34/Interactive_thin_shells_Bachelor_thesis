@@ -15,7 +15,7 @@ MotionPlanAnalysis::MotionPlanAnalysis(nanogui::Screen *screen){
 	window->setPosition({1200, 0});
 
 	Widget *buttons = new Widget(window);
-	buttons->setLayout(new GridLayout(Orientation::Horizontal, 10, Alignment::Minimum, 0, 5));
+	buttons->setLayout(new GridLayout(Orientation::Horizontal, 5, Alignment::Minimum, 0, 5));
 
 	Widget *widgetPlots = new Widget(window);
 	widgetPlots->setLayout(new GridLayout(Orientation::Vertical, 4, Alignment::Minimum, 0, 5));
@@ -25,17 +25,21 @@ MotionPlanAnalysis::MotionPlanAnalysis(nanogui::Screen *screen){
 	plots[WHEEL_TILT_ANGLE] = makePlotWidget(widgetPlots, "Wheel Tilt Angle");
 	plots[WHEEL_YAW_ANGLE] = makePlotWidget(widgetPlots, "Wheel Yaw Angle");
 	plots[EE_POS_Y] = makePlotWidget(widgetPlots, "EE pos y");
+	plots[GRF_FORCES] = makePlotWidget(widgetPlots, "GRF Forces");
 
 	// create robot state plots
 	plots[JOINT_ANGLES] = makePlotWidget(widgetPlots, "Joint Angles");
 	plots[COM_POSITION] = makePlotWidget(widgetPlots, "COM Position");
 	plots[COM_ORIENTATION] = makePlotWidget(widgetPlots, "COM Orientation");
 
+
+
 	// create show/hide toggle buttons
 	for (auto &plotWidget : plots) {
 		Button *b = new Button(buttons, plotWidget.second.plot->caption());
 		b->setPushed(true);
 		b->setFlags(Button::ToggleButton);
+		b->setFontSize(14);
 		Widget *widget = plotWidget.second.widget;
 		b->setChangeCallback([screen,widget](bool state){
 			widget->setVisible(state);
@@ -110,8 +114,22 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 				y[i] = eeTraj.EEPos[i][1];
 			}
 
-			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)index/(float)nEEs), 1.f));
+			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)index/(float)nEEs, 0.2f), 1.f));
 			plots[EE_POS_Y].plot->setPlotData("ee " + std::to_string(index), data);
+		}
+
+		// GRF forces
+		{
+			int nTimeSteps = eeTraj.contactForce.size();
+			VectorXf x(nTimeSteps);
+			VectorXf y(nTimeSteps);
+			for (int i = 0; i < nTimeSteps; ++i){
+				x[i] = (float)i/((float)nTimeSteps-1);
+				y[i] = eeTraj.contactForce[i].norm();
+			}
+
+			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)index/(float)nEEs, 0.2f), 1.f));
+			plots[GRF_FORCES].plot->setPlotData("ee " + std::to_string(index), data);
 		}
 
 		index++;
@@ -217,6 +235,7 @@ PlotWidget MotionPlanAnalysis::makePlotWidget(nanogui::Widget *window, const std
 	plot->setSize(Vector2i(400, 200));
 //	plot->setBackgroundColor(nanogui::Color(Eigen::Vector3f(0.5, 0.5, 0.5), 0.1f));
 	plot->setNumTicks(Vector2i(10, 5));
+	plot->setShowTicks(true);
 
 	Widget *widgetButtons = new Widget(widget);
 	widgetButtons->setLayout(new GridLayout(Orientation::Vertical, 2, Alignment::Minimum, 0, 5));

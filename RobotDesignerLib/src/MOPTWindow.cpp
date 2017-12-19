@@ -347,7 +347,10 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	Ray ray = getRayFromScreenCoords(xPos, yPos);
 	postDraw();
 
-	ReducedRobotState rs(robot);
+	ReducedRobotState oldState(robot);
+	ReducedRobotState robotState(robot);
+	locomotionManager->motionPlan->robotStateTrajectory.getRobotPoseAt(moptParams.phase, robotState);
+	robot->setState(&robotState);
 
 	Joint* joint;
 	dVector velocity;
@@ -388,7 +391,7 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	velocityProfileGraph->setValues(velocity.cast<float>());
 	
 	glApp->menuScreen->performLayout();
-
+	robot->setState(&oldState);
 	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 }
 
@@ -478,12 +481,21 @@ void MOPTWindow::updateSliders()
 		s.precision(2);
 		s << val;
 		return s.str(); };
-	
+
+	double maxValue = -HUGE_VAL;
+	std::vector<double> values(NE);
 	for (int i = 0; i < NE; i++)
 	{
 		double value = locomotionManager->energyFunction->objectives[i]->computeValue(params);
-		energySliders[i]->setValue((float)value);
-		energyTextboxes[i]->TextBox::setValue(double2string(value));
+		values[i] = value;
+		if(locomotionManager->energyFunction->objectives[i]->isActive)
+			maxValue = std::max(maxValue, value);
+	}
+
+	for (int i = 0; i < NE; i++)
+	{
+		energySliders[i]->setValue((float)(values[i]/maxValue));
+		energyTextboxes[i]->TextBox::setValue(double2string(values[i]));
 	}
 }
 

@@ -138,7 +138,7 @@ public:
 	dVector p0;
 	dVector slidervalues;
 	bool updateMotionBasedOnJacobian = false;
-
+	bool optimizeWhileAnimating = false;
 };
 
 

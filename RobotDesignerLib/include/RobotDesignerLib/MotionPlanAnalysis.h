@@ -38,7 +38,8 @@ public: //private:
 
 	enum PlotNames {
 		WHEEL_SPEED, WHEEL_TILT_ANGLE, WHEEL_YAW_ANGLE, EE_POS_Y,
-		JOINT_ANGLES, COM_POSITION, COM_ORIENTATION
+		JOINT_ANGLES, COM_POSITION, COM_ORIENTATION,
+		GRF_FORCES
 	};
 	std::map<PlotNames, PlotWidget> plots;
 };

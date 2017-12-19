@@ -8,7 +8,7 @@ MPO_VelocitySoftBoundConstraints::MPO_VelocitySoftBoundConstraints(LocomotionEng
 	this->startQIndex = startQIndex;
 	this->endQIndex = endQIndex;
 
-	constraintSymmetricBound = std::make_shared<SoftSymmetricBarrierConstraint>(theMotionPlan->wheelSpeedLimit, 10);
+	constraintSymmetricBound = std::make_shared<SoftSymmetricBarrierConstraint>(theMotionPlan->jointVelocityLimit, 10);
 }
 
 MPO_VelocitySoftBoundConstraints::~MPO_VelocitySoftBoundConstraints(void) {
@@ -33,7 +33,6 @@ double MPO_VelocitySoftBoundConstraints::computeValue(const dVector& s) {
 			if (jm == -1 || jp == -1) continue;
 
 			double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
-			dt *= 2; // because we're taking v = (jp-jm)/(2 dt)
 
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
@@ -64,7 +63,6 @@ void MPO_VelocitySoftBoundConstraints::addGradientTo(dVector& grad, const dVecto
 			if (jm == -1 || jp == -1) continue;
 
 			double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
-			dt *= 2; // because we're taking v = (jp-jm)/(2 dt)
 
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
@@ -95,7 +93,6 @@ void MPO_VelocitySoftBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet
 			if (jm == -1 || jp == -1) continue;
 
 			double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
-			dt *= 2; // because we're taking v = (jp-jm)/(2 dt)
 
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
