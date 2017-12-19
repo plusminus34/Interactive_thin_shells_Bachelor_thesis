@@ -60,7 +60,8 @@ sudo cp *.a /usr/local/lib
 ##### MA27
 1. Get MA27 from http://www.hsl.rl.ac.uk/download/MA27/1.0.0/a/
 2. Build it:
-```
+
+```bash
 ./configure
 make 
 sudo make install
@@ -73,7 +74,7 @@ sudo make install
    2. Apply patch to OOQP folder: `patch -p0 < OOQP_hash.patch`
 3. Build OOQP:
 
-```
+```bash
 MA27LIB=/usr/local/lib/libma27.a ./configure
 make
 sudo make install
@@ -82,9 +83,12 @@ sudo make install
 ##### ODE
 1. Get ode-0.13 from https://sourceforge.net/projects/opende/files/ODE/0.13/.
 2. 	Build it:
+
+```bash
  	CXXFLAGS=-fpermissive ./configure
    	make
    	sudo make install
+```
 
 ##### FreeType  (https://www.freetype.org/):
 `sudo apt install libfreetype6 libfreetype6-dev`
@@ -102,7 +106,7 @@ cmake -DNANOGUI_USE_GLAD=1 ..
 `NANOGUI_USE_GLAD` makes sure we use glad.
 
 4. Compile
-```
+```bash
 make
 ```
 
