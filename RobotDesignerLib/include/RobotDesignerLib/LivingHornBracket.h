@@ -145,48 +145,66 @@ public:
 */
 class LivingHornBracket {
 public:
-	void draw();
+	virtual void draw() = 0;
 
 	//this is the motor the horn bracket is attached to
 	LivingBracketMotor* motor;
+
+	// feature points of the bracket...
+	vector<P3D> featurePoints;
 
 	// position and orientation of the pin
 	P3D pinPosition;
 	Quaternion pinOrientation;
 
-	// feature points
-	vector<P3D> featurePoints;
+	GLMesh* bracketMesh = NULL;
+	GLMesh* outputMesh = NULL;
+
 
 	//the initial angle of the bracket - brackets will always be mounted at 0. This angle tells the bracket what the offset from zero is...
 	double bracketInitialAngle = 0;
 	//the bracket ends with a top surface that will accomodate a connector. The angle of this surface, relative to the orientation of the bracket, is specified here...
 	double bracketConnectorAngle = 0.0;
 
-	//in m(eters)
-	double bracketConnectorThickness = 0.003;
-
 	GLShaderMaterial shaderMaterial;
-
-	GLMesh* bracketMesh;
-	GLMesh* leftSideMesh;
-	GLMesh* rightSideMesh;
-	GLMesh* bridgeMesh;
-	GLMesh* outputMesh;
 
 private:
 
 public:
 	LivingHornBracket(LivingBracketMotor* motor, LivingHornBracket* lbh = NULL);
-
 	virtual ~LivingHornBracket(void);
+	virtual void generateBracketMesh() = 0;
 
-	//returns the distance from the ray's origin if the ray hits the body part, or -1 otherwise...
-	double getDistanceToRayOriginIfHit(const Ray& ray);
+	virtual void setColor(const Vector4d& color = Vector4d(0, 0, 0, 0));
+	Transformation getPinTransformation();
+
+};
+
+
+/*
+Horn brackets whose geometry is determined by several parameters that indicate how it will move.
+*/
+class LivingHornBracket_XM430 : public LivingHornBracket {
+public:
+	virtual void draw();
+
+	//in m(eters)
+	double bracketConnectorThickness = 0.003;
+
+	GLMesh* leftSideMesh;
+	GLMesh* rightSideMesh;
+	GLMesh* bridgeMesh;
+
+private:
+
+public:
+	LivingHornBracket_XM430(LivingBracketMotor* motor, LivingHornBracket* lbh = NULL);
+
+	virtual ~LivingHornBracket_XM430(void);
 
 	void generatePointLists(DynamicArray<P3D>& bracketFace, DynamicArray<P3D>& bracketBridge, DynamicArray<P3D>& bracketConnector);
 	void generateBracketMesh();
-
-	Transformation getPinTransformation();
-	void setColor(const Vector4d& color = Vector4d(0, 0, 0, 0));
+	virtual void setColor(const Vector4d& color = Vector4d(0, 0, 0, 0));
 };
+
 

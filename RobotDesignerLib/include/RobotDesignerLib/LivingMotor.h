@@ -4,7 +4,7 @@
 class LivingMotor : public RMC
 {
 public:
-	LivingBracketMotor_XM430* motor = NULL;
+	LivingBracketMotor* motor = NULL;
 	LivingHornBracket* bracket = NULL;
 	vector<RMCPin> candidatePins;
 	int activeBodyPinID = -1;
