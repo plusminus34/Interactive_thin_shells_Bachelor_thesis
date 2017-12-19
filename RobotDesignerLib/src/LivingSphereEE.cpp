@@ -170,7 +170,7 @@ LivingWheelEE::LivingWheelEE()
 		pins.push_back(pin);
 	}
 
-	originalWheelMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/wheel2.obj");
+	originalWheelMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-wheel2.obj");
 
 	update();
 }

@@ -4,6 +4,7 @@
 
 #include <nanogui/nanogui.h>
 #include <GUILib/Plot.h>
+#include <MathLib/MathLib.h>
 
 using namespace nanogui;
 

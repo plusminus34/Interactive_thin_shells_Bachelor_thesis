@@ -56,12 +56,12 @@ void LivingBracketMotor::setColor(const Vector4d& color /*= Vector4d(0, 0, 0, 0)
 }
 
 LivingBracketMotor_XM430::LivingBracketMotor_XM430() {
-	motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
-	motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
-	motorWholeMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430.obj"); motorWholeMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
-	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430_basicBodyBracket.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
-	hornCarvingMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430_hornCarving.obj");
-	// bodyCarvingMesh = GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430_bodyCarving.obj");
+	motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
+	motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+	motorWholeMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430.obj"); motorWholeMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
+	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_basicBodyBracket.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+	hornCarvingMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_hornCarving.obj");
+	// bodyCarvingMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_bodyCarving.obj");
 
 	bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
 	hornMaterial.setColor(0.7, 0.7, 0.7, 1.0);
@@ -106,7 +106,7 @@ void LivingBracketMotor_XM430::generateBodyBracketMeshes()
 
 		pinInfos.push_back(PinInfo(pinTrans, "BottomBracketPin", FPs, center, V3D(0, -1, 0)));
 	
-		bracketCarvingMeshes.push_back(GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430_bottomCarving.obj"));
+		bracketCarvingMeshes.push_back(GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_bottomCarving.obj"));
 	}
 
 	{
@@ -125,7 +125,7 @@ void LivingBracketMotor_XM430::generateBodyBracketMeshes()
 		
 		pinInfos.push_back(PinInfo(pinTrans, "LeftBracketPin", FPs, center, V3D(-1, 0, 0)));
 	
-		bracketCarvingMeshes.push_back(GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430_leftCarving.obj"));
+		bracketCarvingMeshes.push_back(GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_leftCarving.obj"));
 	}
 
 	{
@@ -144,7 +144,7 @@ void LivingBracketMotor_XM430::generateBodyBracketMeshes()
 
 		pinInfos.push_back(PinInfo(pinTrans, "RightBracketPin", FPs, center, V3D(1, 0, 0)));
 	
-		bracketCarvingMeshes.push_back(GLContentManager::getGLMesh("../data/robotDesigner/motorMeshes/XM-430_rightCarving.obj"));
+		bracketCarvingMeshes.push_back(GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_rightCarving.obj"));
 	}
 
 	/*{

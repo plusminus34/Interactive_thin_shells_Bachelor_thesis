@@ -826,16 +826,16 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 	{
         throw std::runtime_error("This functionality is not available.");
 //		set<string> motorMeshFiles = {
-//			"../data/robotDesigner/motorMeshes/XM-430.obj"
+//			"../data/robotDesigner/meshes/XM-430.obj"
 //		};
 
 //		set<string> junkMeshFiles = {
-//			"../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj"
+//			"../data/robotDesigner/meshes/XM-430-MotorPlate.obj"
 //		};
 
 //		for (auto& rb : tmpRBs)
 //		{
-//			vector<GLMesh*> motorMeshes;
+//			vector<GLMesh*> meshes;
 //			vector<Transformation> motorTrans;
 //			vector<GLMesh*> motorCarveMeshes;
 //			vector<string> motorDescritions;
@@ -843,12 +843,12 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 //			for (int i = 0; i < (int)rb.meshes.size(); i++)
 //			{
 //				if (motorMeshFiles.count(rb.meshes[i]->path)) {
-//					motorMeshes.push_back(rb.meshes[i]);
+//					meshes.push_back(rb.meshes[i]);
 //					motorTrans.push_back(rb.meshTransformations[i]);
 //					motorCarveMeshes.push_back(NULL);
 //					motorDescritions.push_back("motor");
 
-//					motorMeshes.push_back(rb.meshes[i]);
+//					meshes.push_back(rb.meshes[i]);
 //					motorTrans.push_back(rb.meshTransformations[i]);
 //					motorCarveMeshes.push_back(NULL);
 //					motorDescritions.push_back(rb.meshDescriptions[i]);
@@ -872,7 +872,7 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 //					}
 
 //					if (rb.meshDescriptions[i] != "skeleton") {
-//						motorMeshes.push_back(rb.meshes[i]);
+//						meshes.push_back(rb.meshes[i]);
 //						motorTrans.push_back(rb.meshTransformations[i]);
 //						motorCarveMeshes.push_back(NULL);
 //						motorDescritions.push_back(rb.meshDescriptions[i]);
@@ -902,7 +902,7 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 //			rbMesh->path = "../out/" + rb.name + "_merge.obj";
 //			rbMesh->writeTriangulatedMeshToObj(rbMesh->path.c_str());
 //			GLContentManager::addMeshFileMapping(rbMesh, rbMesh->path.c_str());
-//			rb.meshes = motorMeshes;
+//			rb.meshes = meshes;
 //			rb.meshTransformations = motorTrans;
 //			rb.carveMeshes = motorCarveMeshes;
 //			rb.meshDescriptions = motorDescritions;
