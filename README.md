@@ -57,6 +57,7 @@ sudo make
 # copy or symlink libgtest.a and libgtest_main.a to your /usr/local/lib folder
 sudo cp *.a /usr/local/lib
 ```
+
 ##### MA27
 1. Get MA27 from http://www.hsl.rl.ac.uk/download/MA27/1.0.0/a/
 2. Build it:
@@ -98,7 +99,7 @@ sudo make install
 2. Run `git submodule update --init --recursive`
 3. Generate build files. In the cloned folder do:
 
-```
+```bash
 mkdir build && cd build
 cmake -DNANOGUI_USE_GLAD=1 ..
 ```
@@ -106,8 +107,9 @@ cmake -DNANOGUI_USE_GLAD=1 ..
 `NANOGUI_USE_GLAD` makes sure we use glad.
 
 4. Compile
+
 ```bash
-make
+make -j12
 ```
 
 > Notes: If your GPU driver can't create a OpenGL context in compatability mode, run CMake with `SCP_GUI_TWO_WINDOWS=1 cmake ..`
