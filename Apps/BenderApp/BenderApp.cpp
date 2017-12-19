@@ -106,21 +106,20 @@ void BenderApp::initInteractionMenu(nanogui::FormHelper* menu)
 		modes->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 		nanogui::Alignment::Middle, 0, 4));
 
-		nanogui::Button* button;
-		button = new nanogui::Button(modes, "View");
-		button->setFlags(nanogui::Button::RadioButton);
-		button->setCallback([this](){switchInteractionMode(InteractionMode::VIEW);});
-		button->setPushed(true);
+		buttonsInteractionMode[0] = new nanogui::Button(modes, "View");
+		buttonsInteractionMode[0]->setFlags(nanogui::Button::RadioButton);
+		buttonsInteractionMode[0]->setCallback([this](){switchInteractionMode(InteractionMode::VIEW);});
+		buttonsInteractionMode[0]->setPushed(true);
 		switchInteractionMode(InteractionMode::VIEW);
-		button = new nanogui::Button(modes, "Select");
-		button->setFlags(nanogui::Button::RadioButton);
-		button->setCallback([this](){switchInteractionMode(InteractionMode::SELECT);});
-		button = new nanogui::Button(modes, "Drag");
-		button->setFlags(nanogui::Button::RadioButton);
-		button->setCallback([this](){switchInteractionMode(InteractionMode::DRAG);});
-		button = new nanogui::Button(modes, "Draw");
-		button->setFlags(nanogui::Button::RadioButton);
-		button->setCallback([this](){switchInteractionMode(InteractionMode::DRAW);});
+		buttonsInteractionMode[1] = new nanogui::Button(modes, "Select");
+		buttonsInteractionMode[1]->setFlags(nanogui::Button::RadioButton);
+		buttonsInteractionMode[1]->setCallback([this](){switchInteractionMode(InteractionMode::SELECT);});
+		buttonsInteractionMode[2] = new nanogui::Button(modes, "Drag");
+		buttonsInteractionMode[2]->setFlags(nanogui::Button::RadioButton);
+		buttonsInteractionMode[2]->setCallback([this](){switchInteractionMode(InteractionMode::DRAG);});
+		buttonsInteractionMode[3] = new nanogui::Button(modes, "Edit");
+		buttonsInteractionMode[3]->setFlags(nanogui::Button::RadioButton);
+		buttonsInteractionMode[3]->setCallback([this](){switchInteractionMode(InteractionMode::DRAW);});
 	}
 
 	// add combo box for selected mount/handle
@@ -321,14 +320,6 @@ bool BenderApp::onMouseButtonEvent(int button, int action, int mods, double xPos
 	}
 
 	if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-		/*
-		if (action == GLFW_PRESS && mods & GLFW_MOD_CONTROL) {
-			femMesh->removePinnedNodeConstraints();
-			for (Mount * m : femMesh->mounts) {
-				m->reset();
-			}
-		}
-		*/
 
 		if(interactionMode == InteractionMode::VIEW) {
 			return(GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos));
@@ -343,7 +334,7 @@ bool BenderApp::onMouseButtonEvent(int button, int action, int mods, double xPos
 		}
 		else if(interactionMode == InteractionMode::DRAW) {
 			int selectedNodeID_temp = femMesh->getSelectedNodeID(lastMovedRay);
-			// TODO: remove node from mount
+			unmountNode(selectedNodeID_temp, selected_mount);
 			return(true);
 		}
 		else {
@@ -391,7 +382,7 @@ bool BenderApp::onKeyEvent(int key, int action, int mods) {
 }
 
 bool BenderApp::onCharacterPressedEvent(int key, int mods) {
-#ifdef EDIT_BOUNDARY_CONDITIONS
+
 	if (!mods) {
 		/*
 		if (key >= '0' && key <= '1') {
@@ -404,8 +395,30 @@ bool BenderApp::onCharacterPressedEvent(int key, int mods) {
 			std::cout << "no mount selected" << std::endl;
 		}
 		*/
+
+		auto setInteractionModeAndButtons = [this](InteractionMode mode)
+		{
+			interactionMode = mode;
+			for(auto b : buttonsInteractionMode) {
+				b->setPushed(false);
+			}
+			buttonsInteractionMode[static_cast<int>(mode)]->setPushed(true);
+		};
+
+		if(key == 'v') {
+			setInteractionModeAndButtons(InteractionMode::VIEW);
+		}
+		else if(key == 's') {
+			setInteractionModeAndButtons(InteractionMode::SELECT);
+		}
+		else if(key == 'd') {
+			setInteractionModeAndButtons(InteractionMode::DRAG);
+		}
+		else if(key == 'e') {
+			setInteractionModeAndButtons(InteractionMode::DRAW);
+		}
 	}
-#endif	
+
 	if (GLApplication::onCharacterPressedEvent(key, mods)) return true;
 
 	return false;
@@ -488,6 +501,7 @@ std::cout << std::endl;
 				auto O_formal = [&] (dVector const & xi) {
 					return peekOofXi(xi);
 				};
+
 				auto O_approx = [&] (dVector const & xi) {
 					dVector dxi = xi - BenderApp::xi;
 					x_approx = femMesh->x;
@@ -497,7 +511,6 @@ std::cout << std::endl;
 						}
 					}
 					return(femMesh->computeOofx(x_approx));
-
 				};
 
 				auto f = [&] (dVector const & xi) { 					
@@ -505,11 +518,9 @@ std::cout << std::endl;
 				};
 
 				
-				double gamma_start = 0.1;
-				int maxIter = 30;
+				double gamma_start = 1.0;
+				int maxIter = 20;
 
-
-				//double gamma_old = gamma_start;
 				double gamma_test = gamma_start;
 				dVector xi_old = xi;
 				double f_init = femMesh->computeO();
@@ -692,10 +703,28 @@ void BenderApp::drawScene() {
 	glColor3d(1,1,1);
 	femMesh->drawSimulationMesh();
 
+	// draw nodes of mounted points
+	for(int i = 0; i < femMesh->pinnedNodeElements.size(); ++i) {
+		MountedPointSpring2D * mp = static_cast<MountedPointSpring2D *>(femMesh->pinnedNodeElements[i]);
 
+		double size = 0.005;
+		P3D color(0.5, 0.0, 1.0);
+		P3D white(1.0, 1.0, 1.0);
+		P3D red(1.0, 1.0, 1.0);
+		if(!mp->mount->parameterOptimization) {
+			color = P3D(0.0, 0.0, 0.8);
+		}
+		if(!mp->mount->active) {
+			color = color*0.5 + red*0.5;
+		}
+		if(mp->mount == femMesh->mounts[selected_mount]) {
+			size *= 1.8;
+		}
+
+		mp->draw(femMesh->x, size, color(0), color(1), color(2));
+	}
 
 	// draw origin
-	// draw line to current position
 	P3D p0(0.0, 0.0, 0.0);
 	double l = 0.2;
 	P3D px(l, 0.0, 0.0);
@@ -746,13 +775,22 @@ void BenderApp::removeSelectedMount()
 void BenderApp::addMountedNode(int node_id, int mount_id)
 {
 	if(node_id < 0) {return;}
+	if(mount_id < 0) {return;}
 
 	femMesh->setMountedNode(node_id, femMesh->nodes[node_id]->getCoordinates(femMesh->X), mount_id);
-	std::cout << "pinned nodes are: ";
-	for(BaseEnergyUnit* np : femMesh->pinnedNodeElements) {
-		std::cout << dynamic_cast<MountedPointSpring2D*>(np)->node->nodeIndex << " ";
-	}
-	std::cout << std::endl;
+	//std::cout << "pinned nodes are: ";
+	//for(BaseEnergyUnit* np : femMesh->pinnedNodeElements) {
+	//	std::cout << dynamic_cast<MountedPointSpring2D*>(np)->node->nodeIndex << " ";
+	//}
+	//std::cout << std::endl;
+}
+
+void BenderApp::unmountNode(int node_id, int mount_id)
+{
+	if(node_id < 0) {return;}
+	if(mount_id < 0) {return;}
+
+	femMesh->unmountNode(node_id, mount_id);
 }
 
 

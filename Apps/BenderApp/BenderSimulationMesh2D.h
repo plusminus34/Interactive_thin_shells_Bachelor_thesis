@@ -23,8 +23,12 @@ public:
 	void removeMount(int mountID);
 
 	void setMountedNode(int nodeID, const P3D & x0, int mountID);
+	void unmountNode(int nodeID, int mountID);
+
 	void setNodePositionObjective(int nodeID, const P3D & x0);
 	void setNodeGlobalNodePositionObjective(dVector const & x);
+
+	
 
 	int getMountIdOfNode(int nodeID);
 

@@ -54,6 +54,19 @@ void BenderSimulationMesh2D::setMountedNode(int nodeID, const P3D & x0, int moun
 	pinnedNodeElements.push_back(new MountedPointSpring2D(this, nodes[nodeID], rp, mounts[mountID] ));
 }
 
+void BenderSimulationMesh2D::unmountNode(int nodeID, int mountID)
+{
+	Node * node = nodes[nodeID];
+	Mount * mount = mounts[mountID];
+	for(int i = pinnedNodeElements.size()-1; i >= 0; --i) {
+		MountedPointSpring2D * pin = dynamic_cast<MountedPointSpring2D *>(pinnedNodeElements[i]);
+		if(pin->node == node && pin->mount == mount) {
+			delete pinnedNodeElements[i];
+			pinnedNodeElements.erase(pinnedNodeElements.begin()+i);
+		}
+	}
+}
+
 void BenderSimulationMesh2D::setNodePositionObjective(int nodeID, const P3D & x0) 
 {
 	objectives.push_back(new NodePositionObjective(nodes[nodeID], x0));

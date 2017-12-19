@@ -58,7 +58,8 @@ public:
 	ToolMode toolMode = PICK_NODE;
 
 	// menu elements
-	nanogui::ComboBox* comboBoxMountSelection;
+	nanogui::ComboBox * comboBoxMountSelection;
+	std::array<nanogui::Button *, 4> buttonsInteractionMode;
 
 
 
@@ -81,6 +82,7 @@ public:
 	void removeSelectedMount();
 	// add a node to a mount
 	void addMountedNode(int node_id, int mount_id);
+	void unmountNode(int node_id, int mount_id);
 	//void updateMountEnergy();
 	//int getMountId(int node_id);
 
