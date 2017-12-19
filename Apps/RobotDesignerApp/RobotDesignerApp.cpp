@@ -62,7 +62,11 @@ RobotDesignerApp::RobotDesignerApp(){
 	{
 		nanogui::Button *mpaButton = mainMenu->addButton("Motion Plan Analysis",[](){});
 		mpaButton->setFlags(nanogui::Button::Flags::ToggleButton);
-		mpaButton->setChangeCallback([this](bool state){ motionPlanAnalysis->window->setVisible(state); });
+		mpaButton->setChangeCallback([this](bool state){
+			motionPlanAnalysis->window->setVisible(state);
+			if(moptWindow->locomotionManager->motionPlan)
+				motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
+		});
 	}
 
 	showGroundPlane = false;
