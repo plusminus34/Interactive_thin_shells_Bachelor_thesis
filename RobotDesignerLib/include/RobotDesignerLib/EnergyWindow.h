@@ -1,5 +1,6 @@
 #pragma once
 
+#include <GUILib/GLIncludes.h>
 #include <nanogui/nanogui.h>
 #include <GUILib/Plot.h>
 #include <RobotDesignerLib/LocomotionEngineEnergyFunction.h>
