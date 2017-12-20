@@ -361,7 +361,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 	//constraints ensuring feet don't slide...
 	ef->objectives.push_back(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0));
-	ef->objectives.push_back(new MPO_WheelGroundObjective(ef->theMotionPlan, "wheel ground objective", 10000.0));
+	ef->objectives.push_back(new MPO_EndEffectorGroundObjective(ef->theMotionPlan, "EE ground objective", 10000.0));
 
 	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 0, 10000.0));
 	ef->objectives.back()->isActive = false;
