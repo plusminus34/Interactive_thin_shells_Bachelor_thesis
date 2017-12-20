@@ -60,6 +60,12 @@ void LocomotionEngine_EnergyFunction::testIndividualHessian(dVector& params){
 	}
 }
 
+void LocomotionEngine_EnergyFunction::addObjectiveFunction(ObjectiveFunction *obj, string groupName)
+{
+	objectives.push_back(obj);
+	objGroups[groupName].push_back(obj);
+}
+
 double LocomotionEngine_EnergyFunction::computeValue(const dVector& p){
 	assert(p.size() == theMotionPlan->paramCount);
 

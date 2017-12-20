@@ -48,15 +48,6 @@ void MOPTWindow::addMenuItems() {
 		tmpVar->setSpinnable(false); tmpVar->setMinValue(0); tmpVar->setMaxValue(100);
 	}
 
-	
-
-	glApp->mainMenu->addVariable<bool>("Show energies menu",
-		[this](bool value) {
-			showWeightsAndEnergyValues = value;
-			ToggleEnergyMenu();
-		},
-		[this]() {return showWeightsAndEnergyValues; });
-
 	{
 		auto tmpVar = glApp->mainMenu->addVariable("swingFootHeight", moptParams.swingFootHeight);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
@@ -267,10 +258,6 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	locomotionManager->setDefaultOptimizationFlags();
 	locomotionManager->energyFunction->regularizer = globalMOPTRegularizer;
 
-	CreateEnergyMenu();
-
-
-
 	return locomotionManager;
 }
 
@@ -323,8 +310,6 @@ void MOPTWindow::drawScene() {
 			       locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(startIndex);
 			
 	}
-	if (showWeightsAndEnergyValues)
-		updateSliders();
 }
 
 void MOPTWindow::drawAuxiliarySceneInfo(){
@@ -408,95 +393,6 @@ bool MOPTWindow::onMouseButtonEvent(int button, int action, int mods, double xPo
 void MOPTWindow::setViewportParameters(int posX, int posY, int sizeX, int sizeY){
 	GLWindow3D::setViewportParameters(posX, posY, sizeX, sizeY);
 	ffpViewer->setViewportParameters(posX, (int)(sizeY * 3.0 / 4), sizeX, (int)(sizeY / 4.0));
-}
-
-void MOPTWindow::ToggleEnergyMenu()
-{
-	energyMenu->setVisible(showWeightsAndEnergyValues);
-}
-
-void MOPTWindow::CreateEnergyMenu()
-{
-	if (energyMenu)
-		energyMenu->dispose();
-	nanogui::Window* mainwindow = glApp->mainMenu->window();
-	energyMenu = glApp->mainMenu->addWindow(Eigen::Vector2i(viewportX, viewportY), "Energy values and weights");
-
-	using namespace nanogui;
-
-	Widget *panel = new Widget(glApp->mainMenu->window());
-	GridLayout *layout =
-		new GridLayout(Orientation::Horizontal, 5,
-			Alignment::Middle);
-	layout->setColAlignment(
-	{ Alignment::Maximum, Alignment::Fill });
-	layout->setSpacing(0, 10);
-	panel->setLayout(layout);
-
-	int NE = locomotionManager->energyFunction->objectives.size();
-	energySliders.resize(NE);
-	energyTextboxes.resize(NE);
-	weightTextboxes.resize(NE);
-
-	for (int i = 0; i < NE; i++)
-	{
-		double value = 0;
-		new Label(panel, locomotionManager->energyFunction->objectives[i]->description , "sans-bold");
-		CheckBox *chkBox = new CheckBox(panel,"");
-		chkBox->setChecked(locomotionManager->energyFunction->objectives[i]->isActive);
-		chkBox->setCallback([this, i](bool value){locomotionManager->energyFunction->objectives[i]->isActive = value; });
-		Slider *slider = new Slider(panel);
-		slider->setValue(0);
-		slider->setRange({ 0.0,1.0 });
-		slider->setFixedWidth(50);
-		energySliders[i] = slider;
-
-		FloatBox<double> *textBox = new FloatBox<double>(panel);
-		textBox->setFixedWidth(80);
-		textBox->setEditable(false);
-		textBox->setFixedHeight(18);
-		energyTextboxes[i] = textBox;
-
-		textBox = new FloatBox<double>(panel);
-		textBox->setFixedWidth(80);
-		textBox->setFixedHeight(18);
-		textBox->setEditable(true);
-		textBox->setValue(locomotionManager->energyFunction->objectives[i]->weight);
-		textBox->setCallback([this, i](double value){locomotionManager->energyFunction->objectives[i]->weight=value; });
-		weightTextboxes[i] = textBox;
-	}
-	energyMenu->setVisible(false);
-	glApp->mainMenu->addWidget("", panel);
-	glApp->mainMenu->setWindow(mainwindow);
-	glApp->menuScreen->performLayout();
-}
-
-void MOPTWindow::updateSliders()
-{
-	int NE = locomotionManager->energyFunction->objectives.size();
-	dVector params;
-	locomotionManager->motionPlan->writeMPParametersToList(params);
-	auto double2string = [](double val) {
-		ostringstream s;
-		s.precision(2);
-		s << val;
-		return s.str(); };
-
-	double maxValue = -HUGE_VAL;
-	std::vector<double> values(NE);
-	for (int i = 0; i < NE; i++)
-	{
-		double value = locomotionManager->energyFunction->objectives[i]->computeValue(params);
-		values[i] = value;
-		if(locomotionManager->energyFunction->objectives[i]->isActive)
-			maxValue = std::max(maxValue, value);
-	}
-
-	for (int i = 0; i < NE; i++)
-	{
-		energySliders[i]->setValue((float)(values[i]/maxValue));
-		energyTextboxes[i]->TextBox::setValue(double2string(values[i]));
-	}
 }
 
 void MOPTWindow::setupLights() {

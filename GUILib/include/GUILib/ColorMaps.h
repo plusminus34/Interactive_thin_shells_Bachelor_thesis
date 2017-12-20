@@ -7,7 +7,10 @@
  *
  */
 
-#pragma once
+//#pragma once
+
+#ifndef COLOR_MAPS_H
+#define COLOR_MAPS_H
 
 #include <Eigen/Core>
 #include <vector>
@@ -16,32 +19,9 @@ namespace ColorMaps {
 
 typedef std::vector<Eigen::Vector3f> ColorMap;
 
-Eigen::Vector3f getColorAt(const ColorMap &colorMap, float t, float startAt = 0.f, float endAt = 1.f)
-{
-	// clamp t to [0, 1]
-	t = std::max(0.f, t);
-	t = std::min(1.f, t);
+Eigen::Vector3f getColorAt(const ColorMap &colorMap, float t, float startAt = 0.f, float endAt = 1.f);
 
-	// scale by start and end
-	t = startAt + t*(endAt - startAt);
-
-	int im = std::floor(t*(float)(colorMap.size()));
-	int ip = std::min(im+1, (int)colorMap.size()-1);
-
-	if(im == ip)
-	{
-		return colorMap[im];
-	}
-	else
-	{
-		float tm = (float)im/((float)colorMap.size()-1);
-		float tp = (float)ip/((float)colorMap.size()-1);
-
-		return (t-tm)/(tp-tm)*colorMap[im] + (tp-t)/(tp-tm)*colorMap[ip];
-	}
-}
-
-ColorMap magma = {
+static ColorMap magma = {
 	{0.001462f, 0.000466f, 0.013866f},
 	{0.002258f, 0.001295f, 0.018331f},
 	{0.003279f, 0.002305f, 0.023708f},
@@ -300,8 +280,7 @@ ColorMap magma = {
 	{0.987053f, 0.991438f, 0.749504f}
 };
 
-
-ColorMap inferno = {
+static ColorMap inferno = {
 	{0.001462f, 0.000466f, 0.013866f},
 	{0.002267f, 0.001270f, 0.018570f},
 	{0.003299f, 0.002249f, 0.024239f},
@@ -560,7 +539,7 @@ ColorMap inferno = {
 	 {0.988362f, 0.998364f, 0.644924f}
 };
 
-ColorMap plasma = {
+static ColorMap plasma = {
 	{0.050383f, 0.029803f, 0.527975f},
 	{0.063536f, 0.028426f, 0.533124f},
 	{0.075353f, 0.027206f, 0.538007f},
@@ -819,7 +798,7 @@ ColorMap plasma = {
 	{0.940015f, 0.975158f, 0.131326f}
 };
 
-ColorMap viridis = {
+static ColorMap viridis = {
 	{0.267004f, 0.004874f, 0.329415f},
 	{0.268510f, 0.009605f, 0.335427f},
 	{0.269944f, 0.014625f, 0.341379f},
@@ -1079,3 +1058,5 @@ ColorMap viridis = {
 };
 
 }
+
+#endif // COLOR_MAPS_H

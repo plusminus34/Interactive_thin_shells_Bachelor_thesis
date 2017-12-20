@@ -4,6 +4,7 @@
 #include <RobotDesignerLib/MPO_WheelSpeedConstraint.h>
 #include <RobotDesignerLib/MPO_WheelSpeedRegularizer.h>
 #include <RobotDesignerLib/MPO_WheelAngleRegularizer.h>
+#include <RobotDesignerLib/MPO_WheelSpeedTargetObjective.h>
 #include <RobotDesignerLib/MPO_WheelAccelerationConstraint.h>
 #include <RobotDesignerLib/MPO_PeriodicWheelTrajectoriesObjective.h>
 #include <RobotDesignerLib/MPO_EEPosSwingObjective.h>
@@ -343,81 +344,89 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->objectives.clear();
 
 	//GRF constraints
-	ef->objectives.push_back(new MPO_GRFRegularizer(ef->theMotionPlan, "GRF regularizers", 10000.0));
-	ef->objectives.push_back(new MPO_GRFSoftBoundConstraints(ef->theMotionPlan, "GRF bound constraints", 10000.0));
+	ef->addObjectiveFunction(new MPO_GRFSwingRegularizer(ef->theMotionPlan, "GRF swing regularizer", 10000.0), "Regularizers");
+	ef->addObjectiveFunction(new MPO_GRFStanceRegularizer(ef->theMotionPlan, "GRF stance regularizer", 1e-6), "Regularizers");
+	ef->addObjectiveFunction(new MPO_GRFSoftBoundConstraints(ef->theMotionPlan, "GRF bound constraints", 10000.0), "Bound Constraints");
 
 	//consistancy constraints (between robot states and other auxiliary variables)
-	ef->objectives.push_back(new MPO_RobotEndEffectorsObjective(ef->theMotionPlan, "robot EE objective", 10000.0));
-	ef->objectives.push_back(new MPO_RobotWheelAxisObjective(ef->theMotionPlan, "robot wheel axis objective", 10000.0));
-	ef->objectives.push_back(new MPO_RobotCOMObjective(ef->theMotionPlan, "robot COM objective", 10000.0));
-	ef->objectives.push_back(new MPO_RobotCOMOrientationsObjective(ef->theMotionPlan, "robot COM orientations objective", 10000.0));
+	ef->addObjectiveFunction(new MPO_RobotEndEffectorsObjective(ef->theMotionPlan, "robot EE objective", 10000.0), "Kinematic Constraints");
+	ef->addObjectiveFunction(new MPO_RobotWheelAxisObjective(ef->theMotionPlan, "robot wheel axis objective", 10000.0), "Kinematic Constraints");
+	ef->addObjectiveFunction(new MPO_RobotCOMObjective(ef->theMotionPlan, "robot COM objective", 10000.0), "Kinematic Constraints");
+	ef->addObjectiveFunction(new MPO_RobotCOMOrientationsObjective(ef->theMotionPlan, "robot COM orientations objective", 10000.0), "Kinematic Constraints");
 
 	//dynamics constraints
-	ef->objectives.push_back(new MPO_ForceAccelObjective(ef->theMotionPlan, "force acceleration objective", 1.0));
-	ef->objectives.push_back(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 1.0));
-	ef->objectives.push_back(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, dimCount - 1));
-	ef->objectives.push_back(new MPO_WheelSpeedConstraints(ef->theMotionPlan, "wheel speed bound constraint", 1e4));
-	ef->objectives.push_back(new MPO_WheelAccelerationConstraints(ef->theMotionPlan, "wheel accel. bound constraint", 1e2));
+	ef->addObjectiveFunction(new MPO_ForceAccelObjective(ef->theMotionPlan, "force acceleration objective", 1.0), "Dynamic Constraints");
+	ef->addObjectiveFunction(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 1.0), "Dynamic Constraints");
+
+	ef->addObjectiveFunction(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, dimCount - 1), "Bound Constraints");
+	ef->addObjectiveFunction(new MPO_WheelSpeedConstraints(ef->theMotionPlan, "wheel speed bound constraint", 1e4), "Bound Constraints");
+	ef->addObjectiveFunction(new MPO_WheelAccelerationConstraints(ef->theMotionPlan, "wheel accel. bound constraint", 1e2), "Bound Constraints");
 
 	//constraints ensuring feet don't slide...
-	ef->objectives.push_back(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0));
-	ef->objectives.push_back(new MPO_WheelGroundObjective(ef->theMotionPlan, "wheel ground objective", 10000.0));
+	ef->addObjectiveFunction(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0), "Kinematic Constraints");
+	ef->addObjectiveFunction(new MPO_EndEffectorGroundObjective(ef->theMotionPlan, "EE ground objective", 10000.0), "Kinematic Constraints");
 
-	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 0, 10000.0));
+	ef->addObjectiveFunction(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 0, 10000.0), "Boundary Constraints");
 	ef->objectives.back()->isActive = false;
-	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "end velocity zero objective", nSamples -2, 10000.0));
+	ef->addObjectiveFunction(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "end velocity zero objective", nSamples-2, 10000.0), "Boundary Constraints");
 	ef->objectives.back()->isActive = false;
 
-	ef->objectives.push_back(new MPO_DefaultRobotStateConstraint(ef->theMotionPlan, "start default rs objective", 0, 10000.0));
+	ef->addObjectiveFunction(new MPO_DefaultRobotStateConstraint(ef->theMotionPlan, "start default rs objective", 0, 10000.0), "Boundary Constraints");
 	ef->objectives.back()->isActive = false;
-	ef->objectives.push_back(new MPO_DefaultRobotStateConstraint(ef->theMotionPlan, "end default rs objective", nSamples -2, 10000.0));
+	ef->addObjectiveFunction(new MPO_DefaultRobotStateConstraint(ef->theMotionPlan, "end default rs objective", nSamples-2, 10000.0), "Boundary Constraints");
 	ef->objectives.back()->isActive = false;
+
+	ef->addObjectiveFunction(new MPO_WheelSpeedTargetObjective(ef->theMotionPlan, "wheel speed zero @t=0", 0, 0, 10000.0), "Boundary Constraints");
+	ef->objectives.back()->isActive = false;
+	ef->addObjectiveFunction(new MPO_WheelSpeedTargetObjective(ef->theMotionPlan, "wheel speed zero @t=end", nSamples-1, 0, 10000.0), "Boundary Constraints");
+	ef->objectives.back()->isActive = false;
+
 
 	// constraint ensuring the y component of the EE position follows the swing motion
-	ef->objectives.push_back(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0));
+	ef->addObjectiveFunction(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0), "Objectives");
 
 	//periodic boundary constraints...
 	if (ef->theMotionPlan->wrapAroundBoundaryIndex >= 0 && periodicMotion) {
-		ef->objectives.push_back(new MPO_PeriodicRobotStateTrajectoriesObjective(ef->theMotionPlan, "periodic joint angles", 10000.0, nSamples - 1, ef->theMotionPlan->wrapAroundBoundaryIndex, 6, dimCount - 1));
-		ef->objectives.push_back(new MPO_PeriodicRobotStateTrajectoriesObjective(ef->theMotionPlan, "periodic body orientations (ROLL)", 10000.0, nSamples - 1, ef->theMotionPlan->wrapAroundBoundaryIndex, 4, 4));
-		ef->objectives.push_back(new MPO_PeriodicRobotStateTrajectoriesObjective(ef->theMotionPlan, "periodic body orientations (PITCH)", 10000.0, nSamples - 1, ef->theMotionPlan->wrapAroundBoundaryIndex, 5, 5));
-		ef->objectives.push_back(new MPO_PeriodicWheelTrajectoriesObjective(ef->theMotionPlan, "periodic wheel speed", 10000.0, nSamples - 1, ef->theMotionPlan->wrapAroundBoundaryIndex));
+		ef->addObjectiveFunction(new MPO_PeriodicRobotStateTrajectoriesObjective(ef->theMotionPlan, "periodic joint angles", 10000.0, nSamples - 1, ef->theMotionPlan->wrapAroundBoundaryIndex, 6, dimCount - 1), "Periodic Constraints");
+		ef->addObjectiveFunction(new MPO_PeriodicRobotStateTrajectoriesObjective(ef->theMotionPlan, "periodic body orientations (ROLL)", 10000.0, nSamples - 1, ef->theMotionPlan->wrapAroundBoundaryIndex, 4, 4), "Periodic Constraints");
+		ef->addObjectiveFunction(new MPO_PeriodicRobotStateTrajectoriesObjective(ef->theMotionPlan, "periodic body orientations (PITCH)", 10000.0, nSamples - 1, ef->theMotionPlan->wrapAroundBoundaryIndex, 5, 5), "Periodic Constraints");
+		ef->addObjectiveFunction(new MPO_PeriodicWheelTrajectoriesObjective(ef->theMotionPlan, "periodic wheel speed", 10000.0, nSamples - 1, ef->theMotionPlan->wrapAroundBoundaryIndex), "Periodic Constraints");
 	}
 
 	//if there are no periodic motion constraints, then we must provide some targets for the start and end of the motion...
 	if (periodicMotion == false) {
-		ef->objectives.push_back(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ first", 10000, 0, ef->theMotionPlan->initialRobotState));
-		ef->objectives.push_back(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ second", 10000, 1, ef->theMotionPlan->initialRobotState));
-		ef->objectives.push_back(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ second last", 10000, nSamples - 2, ef->theMotionPlan->initialRobotState));
-		ef->objectives.push_back(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ last", 10000, nSamples - 1, ef->theMotionPlan->initialRobotState));
+		ef->addObjectiveFunction(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ first", 10000, 0, ef->theMotionPlan->initialRobotState), "Boundary Constraints");
+		ef->addObjectiveFunction(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ second", 10000, 1, ef->theMotionPlan->initialRobotState), "Boundary Constraints");
+		ef->addObjectiveFunction(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ second last", 10000, nSamples - 2, ef->theMotionPlan->initialRobotState), "Boundary Constraints");
+		ef->addObjectiveFunction(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ last", 10000, nSamples - 1, ef->theMotionPlan->initialRobotState), "Boundary Constraints");
 	}
 
 	//functional objectives
-	ef->objectives.push_back(new MPO_COMTravelObjective(ef->theMotionPlan, "COM Travel objective", 50.0));
-	ef->objectives.push_back(new MPO_COMTurningObjective(ef->theMotionPlan, "COM turning objective (YAW)", 50.0));
+	ef->addObjectiveFunction(new MPO_COMTravelObjective(ef->theMotionPlan, "COM Travel objective", 50.0), "Objectives");
+	ef->addObjectiveFunction(new MPO_COMTurningObjective(ef->theMotionPlan, "COM turning objective (YAW)", 50.0), "Objectives");
 
 	//motion regularizers
-	ef->objectives.push_back(new MPO_SmoothStanceLegMotionObjective(ef->theMotionPlan, "robot stance leg smooth joint angle trajectories", 0.01));
-	ef->objectives.push_back(new MPO_StanceLegMotionRegularizer(ef->theMotionPlan, "robot stance legs motion regularizer", 0.01));
-	ef->objectives.push_back(new MPO_FeetPathSmoothnessObjective(ef->theMotionPlan, "foot path smoothness objective", 10.0));
+	ef->addObjectiveFunction(new MPO_SmoothStanceLegMotionObjective(ef->theMotionPlan, "robot stance leg smooth joint angle trajectories", 0.01), "Smooth Regularizer");
+	ef->addObjectiveFunction(new MPO_StanceLegMotionRegularizer(ef->theMotionPlan, "robot stance legs motion regularizer", 0.01), "Smooth Regularizer");
+	ef->addObjectiveFunction(new MPO_FeetPathSmoothnessObjective(ef->theMotionPlan, "foot path smoothness objective", 10.0), "Smooth Regularizer");
 
-	ef->objectives.push_back(new MPO_WheelSpeedRegularizer(ef->theMotionPlan, "wheel speed regularizer", 1e-4));
-	ef->objectives.push_back(new MPO_WheelAngleRegularizer(ef->theMotionPlan, "wheel angle regularizer", 1e-4));
+	ef->addObjectiveFunction(new MPO_WheelSpeedRegularizer(ef->theMotionPlan, "wheel speed regularizer", 1e-4), "Regularizers");
+	ef->addObjectiveFunction(new MPO_WheelAngleRegularizer(ef->theMotionPlan, "wheel angle regularizer", 1e-4), "Regularizers");
 
-	ef->objectives.push_back(new MPO_RobotStateRegularizer(ef->theMotionPlan, "robot joint angles regularizer objective", 0.0010 * 1, 6, dimCount - 1));
-	ef->objectives.push_back(new MPO_NonLimbMotionRegularizer(ef->theMotionPlan, "robot joint angles regularizer objective (non-limb)", 0.01));
+	ef->addObjectiveFunction(new MPO_RobotStateRegularizer(ef->theMotionPlan, "robot joint angles regularizer objective", 0.0010 * 1, 6, dimCount - 1), "Regularizers");
+	ef->addObjectiveFunction(new MPO_NonLimbMotionRegularizer(ef->theMotionPlan, "robot joint angles regularizer objective (non-limb)", 0.01), "Smooth Regularizer");
 
-	ef->objectives.push_back(new MPO_RobotStateRegularizer(ef->theMotionPlan, "robot body orientation regularizer objective (ROLL)", 1, 5, 5));
-	ef->objectives.push_back(new MPO_RobotStateRegularizer(ef->theMotionPlan, "robot body orientation regularizer objective (PITCH)", 1, 4, 4));
-	ef->objectives.push_back(new MPO_RobotStateRegularizer(ef->theMotionPlan, "robot body orientation regularizer objective (YAW)", 1, 3, 3));
-	ef->objectives.push_back(new MPO_SmoothRobotMotionTrajectories(ef->theMotionPlan, "robot smooth joint angle trajectories", 0.01, 6, dimCount - 1));
-	ef->objectives.push_back(new MPO_SmoothRobotMotionTrajectories(ef->theMotionPlan, "robot smooth body orientation trajectories", 1, 3, 5));
-	ef->objectives.push_back(new MPO_NonLimbSmoothMotionObjective(ef->theMotionPlan, "robot smooth joint angles objective (non-limb)", 0.01));
+	ef->addObjectiveFunction(new MPO_RobotStateRegularizer(ef->theMotionPlan, "robot body orientation regularizer objective (ROLL)", 1, 5, 5), "Regularizers");
+	ef->addObjectiveFunction(new MPO_RobotStateRegularizer(ef->theMotionPlan, "robot body orientation regularizer objective (PITCH)", 1, 4, 4), "Regularizers");
+	ef->addObjectiveFunction(new MPO_RobotStateRegularizer(ef->theMotionPlan, "robot body orientation regularizer objective (YAW)", 1, 3, 3), "Regularizers");
+	ef->addObjectiveFunction(new MPO_SmoothRobotMotionTrajectories(ef->theMotionPlan, "robot smooth joint angle trajectories", 0.01, 6, dimCount - 1), "Smooth Regularizer");
+	ef->addObjectiveFunction(new MPO_SmoothRobotMotionTrajectories(ef->theMotionPlan, "robot smooth body orientation trajectories", 1, 3, 5), "Smooth Regularizer");
+	ef->addObjectiveFunction(new MPO_NonLimbSmoothMotionObjective(ef->theMotionPlan, "robot smooth joint angles objective (non-limb)", 0.01), "Smooth Regularizer");
 
-	ef->objectives.push_back(new MPO_SmoothCOMTrajectories(ef->theMotionPlan, "smoothCOM", 50));
+	ef->addObjectiveFunction(new MPO_SmoothCOMTrajectories(ef->theMotionPlan, "smoothCOM", 50), "Smooth Regularizer");
 
-	ef->objectives.push_back(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization (Partial)", 1, 6, dimCount - 1,false)); ef->objectives.back()->isActive = false;
-	ef->objectives.push_back(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization (Full)", 1, 6, dimCount - 1,true)); ef->objectives.back()->isActive = false;
+	ef->addObjectiveFunction(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization (Partial)", 1, 6, dimCount - 1,false), "L0 Regularizers"); ef->objectives.back()->isActive = false;
+	ef->addObjectiveFunction(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization (Full)", 1, 6, dimCount - 1,true), "L0 Regularizers"); ef->objectives.back()->isActive = false;
 }
 
 LocomotionEngineManagerGRFv2::~LocomotionEngineManagerGRFv2(){

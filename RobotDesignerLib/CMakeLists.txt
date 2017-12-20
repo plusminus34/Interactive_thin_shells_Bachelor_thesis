@@ -72,7 +72,7 @@ source_group("Header Files\\MOPT"
 		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/MPO_DynamicStabilityObjective.h
 		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/MPO_FeetPathSmoothnessObjective.h
 		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/MPO_FeetSlidingObjective.h
-		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/MPO_WheelGroundObjective.h
+		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/MPO_EndEffectorGroundObjective.h
 		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/MPO_PeriodicRobotStateTrajectoriesObjective.h
 		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/MPO_RobotCOMObjective.h
 		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/MPO_RobotEndEffectorsObjective.h
@@ -111,7 +111,7 @@ source_group("Source Files\\MOPT"
 		${CMAKE_CURRENT_SOURCE_DIR}/src/MPO_DynamicStabilityObjective.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/src/MPO_FeetPathSmoothnessObjective.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/src/MPO_FeetSlidingObjective.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/src/MPO_WheelGroundObjective.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/src/MPO_EndEffectorGroundObjective.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/src/MPO_PeriodicRobotStateTrajectoriesObjective.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/src/MPO_RobotCOMObjective.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/src/MPO_RobotEndEffectorsObjective.cpp
