@@ -2,9 +2,15 @@
 #include <MathLib/ConvexHull3D.h>
 #include <GUILib/GLContentManager.h>
 
-LivingHornBracket::LivingHornBracket(LivingBracketMotor* motor, LivingHornBracket* lbh)
-{
+LivingHornBracket::LivingHornBracket(LivingBracketMotor* motor, LivingHornBracket* lbh){
 	this->motor = motor;
+
+	if (lbh) {
+		bracketInitialAngle = lbh->bracketInitialAngle;
+		bracketConnectorAngle = lbh->bracketConnectorAngle;
+		motor->rotAngleMin = lbh->motor->rotAngleMin;
+		motor->rotAngleMax = lbh->motor->rotAngleMax;
+	}
 
 	shaderMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
 	string mat = "../data/textures/matcap/whitefluff2.bmp";
@@ -21,8 +27,23 @@ Transformation LivingHornBracket::getPinTransformation(){
 }
 
 void LivingHornBracket::setColor(const Vector4d& color /*= Vector4d(0, 0, 0, 0)*/){
-	GLShaderMaterial defaultMat;
-	defaultMat.setColor(color[0], color[1], color[2], color[3]);
+	if (color.isZero())
+	{
+		bracketMesh->setMaterial(shaderMaterial);
+	}
+	else {
+		GLShaderMaterial defaultMat;
+		defaultMat.setColor(color[0], color[1], color[2], color[3]);
+		bracketMesh->setMaterial(defaultMat);
+	}
+}
+
+void LivingHornBracket::draw() {
+	glColor3d(1, 1, 1);
+	glDisable(GL_LIGHTING);
+
+	glEnable(GL_LIGHTING);
+	bracketMesh->drawMesh();
 }
 
 
@@ -34,12 +55,7 @@ LivingHornBracket_XM430::LivingHornBracket_XM430(LivingBracketMotor* motor, Livi
 	this->rightSideMesh = new GLMesh();
 	this->bridgeMesh = new GLMesh();
 
-	if (LivingHornBracket_XM430* lbhxm430 = dynamic_cast<LivingHornBracket_XM430*>(lbh)){
-		bracketInitialAngle = lbhxm430->bracketInitialAngle;
-		bracketConnectorAngle = lbhxm430->bracketConnectorAngle;
-		motor->rotAngleMin = lbhxm430->motor->rotAngleMin;
-		motor->rotAngleMax = lbhxm430->motor->rotAngleMax;
-	}
+
 	generateBracketMesh();
 
 	bracketMesh->setMaterial(shaderMaterial);
@@ -47,15 +63,6 @@ LivingHornBracket_XM430::LivingHornBracket_XM430(LivingBracketMotor* motor, Livi
 
 LivingHornBracket_XM430::~LivingHornBracket_XM430(void){
 	delete bracketMesh;
-}
-
-void LivingHornBracket_XM430::draw() {
-	double hornOffset = motor->boundingBox.halfSides().z() + 2 * motor->hornThickness + 0.00001;
-	glColor3d(1, 1, 1);
-	glDisable(GL_LIGHTING);
-
-	glEnable(GL_LIGHTING);
-	bracketMesh->drawMesh();
 }
 
 void addBracketFacePoly(GLMesh* bracketMesh, const DynamicArray<P3D>& bracketFace, double faceOffset, bool reversed) {
@@ -92,7 +99,7 @@ void LivingHornBracket_XM430::generateBracketMesh() {
 	bridgeMesh->clear();
 
 	double hornStart = motor->boundingBox.halfSides().z();
-	double hornEnd = hornStart + 2 * motor->hornThickness;
+	double hornEnd = hornStart + 2 * hornThickness;
 
 	DynamicArray<P3D> bracketFace, bracketBridge, bracketConnector;
 	generatePointLists(bracketFace, bracketBridge, bracketConnector);
@@ -123,17 +130,6 @@ void LivingHornBracket_XM430::generateBracketMesh() {
 	bracketMesh->calBoundingBox();
 }
 
-void LivingHornBracket_XM430::setColor(const Vector4d& color /*= Vector4d(0, 0, 0, 0)*/){
-	if (color.isZero())
-	{
-		bracketMesh->setMaterial(shaderMaterial);
-	}
-	else {
-		GLShaderMaterial defaultMat;
-		defaultMat.setColor(color[0], color[1], color[2], color[3]);
-		bracketMesh->setMaterial(defaultMat);
-	}
-}
 
 void LivingHornBracket_XM430::generatePointLists(DynamicArray<P3D>& bracketFace, DynamicArray<P3D>& bracketBridge, DynamicArray<P3D>& bracketConnector) {
 	//the width of the bracket - it should depend on the motor dimension (horn width, etc...)
@@ -197,7 +193,7 @@ void LivingHornBracket_XM430::generatePointLists(DynamicArray<P3D>& bracketFace,
 
 	Quaternion q = getRotationQuaternion(bracketInitialAngle, V3D(0, 0, 1));
 
-	bracketFace.push_back(P3D() + q.rotate(V3D(-motor->hornRadius, -motor->hornRadius, 0)));
+	bracketFace.push_back(P3D() + q.rotate(V3D(-hornRadius, -hornRadius, 0)));
 	bracketFace.push_back(P3D() + q.rotate(V3D(-bracketWidth / 2, bracketMinHeight, 0)));
 
 
@@ -205,13 +201,13 @@ void LivingHornBracket_XM430::generatePointLists(DynamicArray<P3D>& bracketFace,
 	bracketFace.push_back(P3D() + q.rotate(V3D(p3.x(), p3.y(), 0)));
 
 	bracketFace.push_back(P3D() + q.rotate(V3D(bracketWidth / 2, bracketMinHeight, 0)));
-	bracketFace.push_back(P3D() + q.rotate(V3D(motor->hornRadius, -motor->hornRadius, 0)));
+	bracketFace.push_back(P3D() + q.rotate(V3D(hornRadius, -hornRadius, 0)));
 
 	bracketConnector.push_back(P3D() + q.rotate(V3D(p2.x(), p2.y(), 0)));
 	bracketConnector.push_back(P3D() + q.rotate(V3D(p3.x(), p3.y(), 0)));
 
 	double hornStart = motor->boundingBox.halfSides().z();
-	double hornEnd = hornStart + 2 * motor->hornThickness;
+	double hornEnd = hornStart + 2 * hornThickness;
 	P3D rq1(q.rotate(V3D(p2.x(), p2.y(), 0)));
 	P3D rq2(q.rotate(V3D(p3.x(), p3.y(), 0)));
 	rq1 += V3D(0, 1, 0).rotate(bracketConnectorAngle + bracketInitialAngle, V3D(0, 0, 1)) * bracketConnectorThickness;
@@ -225,6 +221,31 @@ void LivingHornBracket_XM430::generatePointLists(DynamicArray<P3D>& bracketFace,
 
 	pinPosition = (rq1 + rq2) * 0.5;
 	pinOrientation = getRotationQuaternion(bracketConnectorAngle + bracketInitialAngle, V3D(0, 0, 1));
+
+}
+
+/* ---------------------------------------------------------------------------- */
+
+LivingHornBracket_XM430V2::LivingHornBracket_XM430V2(LivingBracketMotor* motor, LivingHornBracket* lbh) : LivingHornBracket(motor, lbh) {
+	this->bracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_hornBracket.obj")->clone();
+	//initialize these properties that define the bracket characteristics...
+	featurePoints.push_back(P3D(0.017, 0.022, 0.023));
+	featurePoints.push_back(P3D(0.017, 0.022, -0.023));
+	featurePoints.push_back(P3D(-0.017, 0.022, -0.023));
+	featurePoints.push_back(P3D(-0.017, 0.022, 0.023));
+
+	pinPosition = P3D(0, 0.022, 0);
+	pinOrientation = Quaternion();
+
+	bracketMesh->setMaterial(shaderMaterial);
+}
+
+LivingHornBracket_XM430V2::~LivingHornBracket_XM430V2(void) {
+	delete bracketMesh;
+}
+
+void LivingHornBracket_XM430V2::generateBracketMesh() {
+
 
 }
 

@@ -34,19 +34,13 @@ public:
 
 	double rotAngle = 0;
 
-	double hornRadius = 0.1;
-	double hornThickness = 0.02;
 	//We assume that the motor is enclosed into an axis-aligned box - this will be used to figure out the geometry of the bracket...
 	AxisAlignedBoundingBox boundingBox = AxisAlignedBoundingBox(P3D(-0.2, -0.5, -0.2), P3D(0.2, 0.2, 0.2));
 
 	GLMesh* motorBodyMesh = NULL;
 	GLMesh* motorHornMesh = NULL;
-	GLMesh* motorWholeMesh = NULL;
 	GLMesh* bodyBracketMesh = NULL;
-	GLMesh* hornCarvingMesh = NULL;
-	GLMesh* bodyCarvingMesh = NULL;
 
-	vector<GLMesh*> bracketCarvingMeshes;
 	vector<PinInfo> pinInfos;
 
 	LivingHornBracket* hornBracket = NULL;
@@ -63,8 +57,18 @@ public:
 
 class LivingBracketMotor_XM430 : public LivingBracketMotor {
 public:
+
+public:
 	LivingBracketMotor_XM430();
 	~LivingBracketMotor_XM430(void);
+
+	void generateBodyBracketMeshes();
+};
+
+class LivingBracketMotor_XM430V2 : public LivingBracketMotor {
+public:
+	LivingBracketMotor_XM430V2();
+	~LivingBracketMotor_XM430V2(void);
 
 	void generateBodyBracketMeshes();
 };

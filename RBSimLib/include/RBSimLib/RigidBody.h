@@ -39,8 +39,6 @@ public:
 	DynamicArray<CollisionDetectionPrimitive*> cdps;
 	// meshes that are used to visualize the rigid body
 	DynamicArray<GLMesh*> meshes;
-	// meshes that are used to do carving to make room for the real meshes.
-	DynamicArray<GLMesh*> carveMeshes;
 	// meshTransformation corresponding to meshes.
 	DynamicArray<Transformation> meshTransformations;
 	// discriptions of the each mesh

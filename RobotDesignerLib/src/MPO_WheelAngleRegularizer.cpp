@@ -20,7 +20,7 @@ double MPO_WheelAngleRegularizer::computeValue(const dVector& s){
 
 	for (int j=0;j<end;j++){
 		int jp = (j+1 > end-1) ? 0 : j+1;
-		for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
+		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
 			if(theMotionPlan->endEffectorTrajectories[i].isWheel)
 			{
 				double tmpV = theMotionPlan->endEffectorTrajectories[i].wheelYawAngle[j] - theMotionPlan->endEffectorTrajectories[i].wheelYawAngle[jp];
@@ -44,7 +44,7 @@ void MPO_WheelAngleRegularizer::addGradientTo(dVector& grad, const dVector& p) {
 
 	//and now compute the gradient with respect to the robot q's
 	if (theMotionPlan->wheelParamsStartIndex >= 0){
-		for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i)
+		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i)
 			if(theMotionPlan->endEffectorTrajectories[i].isWheel)
 				for (int j=0;j<end;j++)
 				{
@@ -68,7 +68,7 @@ void MPO_WheelAngleRegularizer::addHessianEntriesTo(DynamicArray<MTriplet>& hess
 
 	//and now compute the gradient with respect to the robot q's
 	if (theMotionPlan->wheelParamsStartIndex >= 0){
-		for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i)
+		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i)
 			if(theMotionPlan->endEffectorTrajectories[i].isWheel)
 				for (int j=0;j<end;j++)
 				{

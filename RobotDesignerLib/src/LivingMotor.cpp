@@ -6,7 +6,8 @@
 LivingMotor::LivingMotor(LivingHornBracket* lbh)
 {
 	motor = new LivingBracketMotor_XM430();
-	bracket = new LivingHornBracket_XM430(motor, lbh);
+//	bracket = new LivingHornBracket_XM430(motor, lbh);
+	bracket = new LivingHornBracket_XM430V2(motor, lbh);
 
 	type = LIVING_MOTOR;
 
@@ -148,7 +149,6 @@ void LivingMotor::generatePins()
 		bracketPin.face.vertices = pinInfo.featurePoints;
 		bracketPin.face.center = pinInfo.center;
 		bracketPin.face.normal = pinInfo.normal;
-		bracketPin.mesh = motor->bracketCarvingMeshes[i];
 		candidatePins.push_back(bracketPin);
 	}
 
@@ -156,50 +156,15 @@ void LivingMotor::generatePins()
 	activeBodyPinID = 0;
 }
 
-void LivingMotor::exportMeshes(const char* dirName, int index, bool mergeMeshes)
+void LivingMotor::exportMeshes(const char* dirName, int index)
 {
 	// *************************** Horn Bracket Mesh ***************************
 	string bracketFileName = dirName + string("LivingBracketMesh") + to_string(index) + string(".obj");
-	if (mergeMeshes)
-	{
-            // This was disabled because MeshBoolean.exe is for Windows only
-            // If this is needed, we can re-enable it.
-            throw std::runtime_error("This functionality is not available.");
-//            GLMesh* resMesh = bracket->bridgeMesh->clone();
-//            meshBooleanIntrusive(resMesh, bracket->leftSideMesh, "Union");
-//            meshBooleanIntrusive(resMesh, bracket->rightSideMesh, "Union");
-//            bracket->outputMesh = resMesh;
-        }
-	else {
-		bracket->outputMesh = bracket->bracketMesh->clone();
-	}
 
 	bracket->outputMesh->path = bracketFileName;
 	GLContentManager::addMeshFileMapping(bracket->outputMesh, bracketFileName.c_str());
 	bracket->outputMesh->writeTriangulatedMeshToObj(bracketFileName.c_str());
 
-	// ******************* Body Carving Mesh *******************
-	if (mergeMeshes)
-	{
-		string bodyCarvingMeshName = dirName + string("LivingBodyCarvingMesh") + to_string(index) + string(".obj");
-		GLMesh* bodyCarvingMesh = new GLMesh();
-		RMCPin* bodyPin = &pins[1];
-
-		// int noholePin = bodyPin->idle ? 0 : activeBodyPinID;
-		int noholePin = 0;
-
-		for (int i = 0; i < (int)candidatePins.size(); i++)
-		{
-			RMCPin& candPin = candidatePins[i];
-			if (i == noholePin || !candPin.mesh) continue;	
-			bodyCarvingMesh->append(candPin.mesh);
-		}
-		
-		bodyCarvingMesh->path = bodyCarvingMeshName;
-		GLContentManager::addMeshFileMapping(bodyCarvingMesh, bodyCarvingMeshName.c_str());
-		bodyCarvingMesh->writeTriangulatedMeshToObj(bodyCarvingMeshName.c_str());
-		motor->bodyCarvingMesh = bodyCarvingMesh;
-	}
 }
 
 void LivingMotor::syncSymmParameters(LivingMotor* refMotor)

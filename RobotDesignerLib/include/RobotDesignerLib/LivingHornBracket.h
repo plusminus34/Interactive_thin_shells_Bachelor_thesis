@@ -145,12 +145,12 @@ public:
 */
 class LivingHornBracket {
 public:
-	virtual void draw() = 0;
+	virtual void draw();
 
 	//this is the motor the horn bracket is attached to
 	LivingBracketMotor* motor;
 
-	// feature points of the bracket...
+	// feature points of the bracket... used for living connectors
 	vector<P3D> featurePoints;
 
 	// position and orientation of the pin
@@ -159,7 +159,6 @@ public:
 
 	GLMesh* bracketMesh = NULL;
 	GLMesh* outputMesh = NULL;
-
 
 	//the initial angle of the bracket - brackets will always be mounted at 0. This angle tells the bracket what the offset from zero is...
 	double bracketInitialAngle = 0;
@@ -182,11 +181,14 @@ public:
 
 
 /*
-Horn brackets whose geometry is determined by several parameters that indicate how it will move.
+	Horn brackets whose geometry is determined by several parameters that indicate how it will move.
 */
 class LivingHornBracket_XM430 : public LivingHornBracket {
 public:
-	virtual void draw();
+
+	double hornRadius = 0.01;
+	double hornThickness = 0.002;
+
 
 	//in m(eters)
 	double bracketConnectorThickness = 0.003;
@@ -204,7 +206,19 @@ public:
 
 	void generatePointLists(DynamicArray<P3D>& bracketFace, DynamicArray<P3D>& bracketBridge, DynamicArray<P3D>& bracketConnector);
 	void generateBracketMesh();
-	virtual void setColor(const Vector4d& color = Vector4d(0, 0, 0, 0));
 };
 
+
+/*
+Horn brackets whose geometry is determined by several parameters that indicate how it will move.
+*/
+class LivingHornBracket_XM430V2 : public LivingHornBracket {
+
+public:
+	LivingHornBracket_XM430V2(LivingBracketMotor* motor, LivingHornBracket* lbh = NULL);
+	virtual ~LivingHornBracket_XM430V2(void);
+
+	void generateBracketMesh();
+
+};
 

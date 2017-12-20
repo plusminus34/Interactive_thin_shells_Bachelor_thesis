@@ -1682,7 +1682,7 @@ void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot,
 	}
 	robot->fixJointConstraints();
 
-	robot->saveToRBSFile(fName, robotMeshDir, templateRobot, freezeRobotRoot, mergeMeshes, forFabrication);
+	robot->saveToRBSFile(fName, robotMeshDir, templateRobot, freezeRobotRoot);
 
 	//saverbs should also save an rs file, right after having restored the joint angles... I think it's cleaner that way...
 //	ReducedRobotState tmpState = robot->getReducedRobotState(rbRobot);

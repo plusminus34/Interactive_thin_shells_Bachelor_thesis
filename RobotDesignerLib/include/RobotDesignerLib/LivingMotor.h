@@ -20,7 +20,7 @@ public:
 
 	virtual void generatePins();
 
-	void exportMeshes(const char* dirName, int index, bool mergeMeshes = false);
+	void exportMeshes(const char* dirName, int index);
 	void syncSymmParameters(LivingMotor* refMotor);
 	void switchToBestBodyPin();
 };

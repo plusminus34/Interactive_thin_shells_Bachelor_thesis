@@ -16,7 +16,7 @@ double MPO_PeriodicWheelTrajectoriesObjective::computeValue(const dVector& s){
 	//	theMotionPlan->setMPParametersFromList(p);
 
 	double retVal = 0;
-	for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
+	for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
 		double tmpV = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[timeIndex2] - theMotionPlan->endEffectorTrajectories[i].wheelSpeed[timeIndex1];
 		retVal += 0.5 * tmpV*tmpV;
 	}
@@ -30,7 +30,7 @@ void MPO_PeriodicWheelTrajectoriesObjective::addGradientTo(dVector& grad, const 
 
 	//and now compute the gradient with respect to the robot q's
 	if (theMotionPlan->wheelParamsStartIndex >= 0){
-		for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
+		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
 			double tmpV = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[timeIndex2] - theMotionPlan->endEffectorTrajectories[i].wheelSpeed[timeIndex1];
 			grad[theMotionPlan->getWheelSpeedIndex(i, timeIndex1)] += -tmpV * weight;
 			grad[theMotionPlan->getWheelSpeedIndex(i, timeIndex2)] += tmpV * weight;
@@ -44,7 +44,7 @@ void MPO_PeriodicWheelTrajectoriesObjective::addHessianEntriesTo(DynamicArray<MT
 
 	//and now compute the gradient with respect to the robot q's
 	if (theMotionPlan->wheelParamsStartIndex >= 0){
-		for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
+		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
 			ADD_HES_ELEMENT(hessianEntries, theMotionPlan->getWheelSpeedIndex(i, timeIndex1), theMotionPlan->getWheelSpeedIndex(i, timeIndex1), 1, weight);
 			ADD_HES_ELEMENT(hessianEntries, theMotionPlan->getWheelSpeedIndex(i, timeIndex2), theMotionPlan->getWheelSpeedIndex(i, timeIndex2), 1, weight);
 			ADD_HES_ELEMENT(hessianEntries, theMotionPlan->getWheelSpeedIndex(i, timeIndex1), theMotionPlan->getWheelSpeedIndex(i, timeIndex2), -1, weight);

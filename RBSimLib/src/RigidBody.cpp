@@ -312,10 +312,6 @@ void RigidBody::writeToFile(FILE* fp){
 	for (uint i = 0; i < meshes.size(); i++)
 		fprintf(fp, "\t%s %s\n", getRBString(RB_MESH_NAME), meshes[i]->path.empty() ? "None" : meshes[i]->path.c_str());
 
-	for (uint i = 0; i < carveMeshes.size(); i++) {
-		fprintf(fp, "\t%s %s\n", getRBString(RB_CARVE_MESH_NAME), carveMeshes[i] ? carveMeshes[i]->path.c_str() : "None");
-	}
-
 	for (uint i = 0; i < meshDescriptions.size(); i++) {
 		fprintf(fp, "\t%s %s\n", getRBString(RB_MESH_DESCRIPTION), meshDescriptions[i].c_str());
 	}
@@ -384,21 +380,6 @@ void RigidBody::loadFromFile(FILE* fp){
 					}					
 				}
 				break;
-			case RB_CARVE_MESH_NAME: {
-				char tmpStr[200];
-				sscanf(line, "%s", tmpStr);
-				std::string str(tmpStr);
-				if (str == "None"){
-					carveMeshes.push_back(NULL);
-				}
-				else {
-					tmpMesh = GLContentManager::getGLMesh(tmpStr);
-					tmpMesh->computeNormals();
-					tmpMesh->computeTangents();
-					carveMeshes.push_back(tmpMesh);
-				}				
-			}
-			break;
 			case RB_MATERIAL:
 				if (meshes.size() > 0) {
 					char tmpStr[200];
