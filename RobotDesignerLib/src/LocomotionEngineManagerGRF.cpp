@@ -343,7 +343,8 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->objectives.clear();
 
 	//GRF constraints
-	ef->objectives.push_back(new MPO_GRFRegularizer(ef->theMotionPlan, "GRF regularizers", 10000.0));
+	ef->objectives.push_back(new MPO_GRFSwingRegularizer(ef->theMotionPlan, "GRF swing regularizer", 10000.0));
+	ef->objectives.push_back(new MPO_GRFStanceRegularizer(ef->theMotionPlan, "GRF stance regularizer", 1.0));
 	ef->objectives.push_back(new MPO_GRFSoftBoundConstraints(ef->theMotionPlan, "GRF bound constraints", 10000.0));
 
 	//consistancy constraints (between robot states and other auxiliary variables)

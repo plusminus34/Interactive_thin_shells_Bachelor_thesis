@@ -6,16 +6,16 @@
 
 //if a GRF is not used/useful (e.g. the leg is in swing), then we should encourage a small value for it...
 
-MPO_GRFRegularizer::MPO_GRFRegularizer(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
+MPO_GRFSwingRegularizer::MPO_GRFSwingRegularizer(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
 	theMotionPlan = mp;
 	this->description = objectiveDescription;
 	this->weight = weight;
 }
 
-MPO_GRFRegularizer::~MPO_GRFRegularizer(void){
+MPO_GRFSwingRegularizer::~MPO_GRFSwingRegularizer(void){
 }
 
-double MPO_GRFRegularizer::computeValue(const dVector& s){
+double MPO_GRFSwingRegularizer::computeValue(const dVector& s){
 	//assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//theMotionPlan->setMPParametersFromList(s);
 
@@ -32,7 +32,7 @@ double MPO_GRFRegularizer::computeValue(const dVector& s){
 }
 
 
-void MPO_GRFRegularizer::addGradientTo(dVector& grad, const dVector& p) {
+void MPO_GRFSwingRegularizer::addGradientTo(dVector& grad, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 //	theMotionPlan->setMPParametersFromList(p);
 
@@ -48,7 +48,7 @@ void MPO_GRFRegularizer::addGradientTo(dVector& grad, const dVector& p) {
 		}
 }
 
-void MPO_GRFRegularizer::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
+void MPO_GRFSwingRegularizer::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
@@ -62,6 +62,66 @@ void MPO_GRFRegularizer::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntr
 		}
 }
 
+/*****************************************************************************************************
+***************************** GRF Regularizer when in stance *****************************************
+******************************************************************************************************/
+
+//if a GRF is not used/useful (e.g. the leg is in swing), then we should encourage a small value for it...
+
+MPO_GRFStanceRegularizer::MPO_GRFStanceRegularizer(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
+	theMotionPlan = mp;
+	this->description = objectiveDescription;
+	this->weight = weight;
+}
+
+MPO_GRFStanceRegularizer::~MPO_GRFStanceRegularizer(void){
+}
+
+double MPO_GRFStanceRegularizer::computeValue(const dVector& s){
+	//assume the parameters of the motion plan have been set already by the collection of objective functions class
+	//theMotionPlan->setMPParametersFromList(s);
+
+	double retVal = 0;
+	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
+		for (uint i=0;i<theMotionPlan->endEffectorTrajectories.size();i++){
+			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
+			retVal += 0.5 * theMotionPlan->endEffectorTrajectories[i].contactForce[j].length2() * c;
+		}
+	}
+
+	return retVal * weight;
+}
+
+
+void MPO_GRFStanceRegularizer::addGradientTo(dVector& grad, const dVector& p) {
+	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
+//	theMotionPlan->setMPParametersFromList(p);
+
+
+	if (theMotionPlan->contactForcesParamsStartIndex >= 0)
+		for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
+			for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
+				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
+				for (int k = 0; k < 3;k++)
+					grad[theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + k] += theMotionPlan->endEffectorTrajectories[i].contactForce[j][k] * c * weight;
+
+			}
+		}
+}
+
+void MPO_GRFStanceRegularizer::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
+	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
+	//	theMotionPlan->setMPParametersFromList(p);
+
+	if (theMotionPlan->contactForcesParamsStartIndex >= 0)
+		for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
+			for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
+				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
+				for (int k = 0; k < 3; k++)
+					ADD_HES_ELEMENT(hessianEntries, theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + k, theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + k, c, weight);
+			}
+		}
+}
 
 /*****************************************************************************************************
 ***************************** Lower bound on GRFs - want pushing-only forces *************************
