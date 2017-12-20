@@ -54,7 +54,7 @@ LivingHornBracket_XM430::LivingHornBracket_XM430(LivingBracketMotor* motor, Livi
 	this->leftSideMesh = new GLMesh();
 	this->rightSideMesh = new GLMesh();
 	this->bridgeMesh = new GLMesh();
-
+//	this->outputMesh = new GLMesh();
 
 	generateBracketMesh();
 
@@ -228,6 +228,7 @@ void LivingHornBracket_XM430::generatePointLists(DynamicArray<P3D>& bracketFace,
 
 LivingHornBracket_XM430V2::LivingHornBracket_XM430V2(LivingBracketMotor* motor, LivingHornBracket* lbh) : LivingHornBracket(motor, lbh) {
 	this->bracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_hornBracket.obj")->clone();
+
 	//initialize these properties that define the bracket characteristics...
 	featurePoints.push_back(P3D(0.017, 0.022, 0.023));
 	featurePoints.push_back(P3D(0.017, 0.022, -0.023));

@@ -6,8 +6,8 @@
 LivingMotor::LivingMotor(LivingHornBracket* lbh)
 {
 	motor = new LivingBracketMotor_XM430();
-//	bracket = new LivingHornBracket_XM430(motor, lbh);
-	bracket = new LivingHornBracket_XM430V2(motor, lbh);
+	bracket = new LivingHornBracket_XM430(motor, lbh);
+//	bracket = new LivingHornBracket_XM430V2(motor, lbh);
 
 	type = LIVING_MOTOR;
 
@@ -160,6 +160,9 @@ void LivingMotor::exportMeshes(const char* dirName, int index)
 {
 	// *************************** Horn Bracket Mesh ***************************
 	string bracketFileName = dirName + string("LivingBracketMesh") + to_string(index) + string(".obj");
+
+	if (!bracket->outputMesh)
+		bracket->outputMesh = bracket->bracketMesh->clone();
 
 	bracket->outputMesh->path = bracketFileName;
 	GLContentManager::addMeshFileMapping(bracket->outputMesh, bracketFileName.c_str());

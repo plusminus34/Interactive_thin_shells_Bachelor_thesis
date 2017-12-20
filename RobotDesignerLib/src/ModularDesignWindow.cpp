@@ -641,11 +641,6 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		}
 	}
 
-	if (key == GLFW_KEY_J && action == GLFW_PRESS)
-	{
-		saveToRBSFile("../out/tmpRobot.rbs", NULL, true, true);
-	}
-
 	if (key == GLFW_KEY_E && action == GLFW_PRESS)
 	{
 		saveToRBSFile("../out/tmpRobot.rbs");
@@ -1645,7 +1640,7 @@ void ModularDesignWindow::exportMeshes()
 /**
 	Saves an rbs file. No motor rotations will be baked in...
 */
-void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot, bool mergeMeshes, bool forFabrication){
+void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot){
 	Logger::consolePrint("Save picked RMCRobot to RBS file '%s'\n", fName);
 
 	RMCRobot* robot = new RMCRobot(new RMC(), transformationMap);
@@ -1976,7 +1971,7 @@ void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot, ReducedRobotState*
 
 
 
-void ModularDesignWindow::transferMeshes(Robot* tRobot, ReducedRobotState* initialRobotState, bool mergeMeshes){
+void ModularDesignWindow::transferMeshes(Robot* tRobot, ReducedRobotState* initialRobotState){
 	// adjust design
 	matchDesignWithRobot(tRobot, initialRobotState);
 
