@@ -30,6 +30,11 @@ void Plot::setPlotData(const std::string &name, const PlotData &data)
 	mDataColl[name] = data;
 }
 
+void Plot::clearPlotData()
+{
+	mDataColl.clear();
+}
+
 void Plot::draw(NVGcontext *ctx) {
 	Widget::draw(ctx);
 

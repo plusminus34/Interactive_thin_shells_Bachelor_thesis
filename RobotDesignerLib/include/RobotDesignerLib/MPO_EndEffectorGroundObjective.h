@@ -4,11 +4,11 @@
 #include <MathLib/Matrix.h>
 #include <RobotDesignerLib/LocomotionEngineMotionPlan.h>
 
-class MPO_WheelGroundObjective : public ObjectiveFunction {
+class MPO_EndEffectorGroundObjective : public ObjectiveFunction {
 
 public:
-	MPO_WheelGroundObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
-	virtual ~MPO_WheelGroundObjective(void);
+	MPO_EndEffectorGroundObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
+	virtual ~MPO_EndEffectorGroundObjective(void);
 
 	virtual double computeValue(const dVector& p);
 
@@ -37,4 +37,3 @@ private:
 	// DOFs: eePosY, beta
 	static const int numDOFs = 1;
 };
-

@@ -1,15 +1,15 @@
 #pragma once
 
+
 #include <OptimizationLib/ObjectiveFunction.h>
 #include <MathLib/Matrix.h>
 #include <RobotDesignerLib/LocomotionEngineMotionPlan.h>
 
-#include <memory>
+class MPO_PeriodicWheelTrajectoriesObjective : public ObjectiveFunction {
 
-class MPO_VelocityL0Regularization : public ObjectiveFunction {
 public:
-	MPO_VelocityL0Regularization(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int startQIndex, int endQIndex, bool mode);
-	virtual ~MPO_VelocityL0Regularization(void);
+	MPO_PeriodicWheelTrajectoriesObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int timeIndex1, int timeIndex2);
+	virtual ~MPO_PeriodicWheelTrajectoriesObjective(void);
 
 	virtual double computeValue(const dVector& p);
 
@@ -20,7 +20,5 @@ private:
 	//the energy function operates on a motion plan...
 	LocomotionEngineMotionPlan* theMotionPlan;
 
-	int startQIndex, endQIndex;
-public:
-	bool mode;
+	int timeIndex1, timeIndex2;
 };

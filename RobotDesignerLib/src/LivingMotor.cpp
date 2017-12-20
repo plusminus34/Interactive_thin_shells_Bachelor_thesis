@@ -6,7 +6,7 @@
 LivingMotor::LivingMotor(LivingHornBracket* lbh)
 {
 	motor = new LivingBracketMotor_XM430();
-	bracket = new LivingHornBracket(motor, lbh);
+	bracket = new LivingHornBracket_XM430(motor, lbh);
 
 	type = LIVING_MOTOR;
 

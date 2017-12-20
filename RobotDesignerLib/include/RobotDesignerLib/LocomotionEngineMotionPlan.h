@@ -271,6 +271,8 @@ public:
 	//if minV is equal to maxV, then there are no bounds for that variable...
 	virtual void getParameterMaxValues(dVector& maxV);
 
+	virtual dVector getMPParameters();
+
 	virtual void writeMPParametersToList(dVector& p);
 
 	virtual void setMPParametersFromList(const dVector& p);

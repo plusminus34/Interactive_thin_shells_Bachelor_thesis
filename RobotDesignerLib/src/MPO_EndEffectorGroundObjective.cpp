@@ -1,19 +1,19 @@
-#include <RobotDesignerLib/MPO_WheelGroundObjective.h>
+#include <RobotDesignerLib/MPO_EndEffectorGroundObjective.h>
 
 #include <MathLib/AutoDiff.h>
 
 //TODO: these should be hard constraints, as should the periodic motions...
 
-MPO_WheelGroundObjective::MPO_WheelGroundObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
+MPO_EndEffectorGroundObjective::MPO_EndEffectorGroundObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
 	theMotionPlan = mp;
 	this->description = objectiveDescription;
 	this->weight = weight;
 }
 
-MPO_WheelGroundObjective::~MPO_WheelGroundObjective(void){
+MPO_EndEffectorGroundObjective::~MPO_EndEffectorGroundObjective(void){
 }
 
-double MPO_WheelGroundObjective::computeValue(const dVector& p){
+double MPO_EndEffectorGroundObjective::computeValue(const dVector& p){
 
 	double retVal = 0;
 	const int nLimbs = theMotionPlan->endEffectorTrajectories.size();
@@ -31,7 +31,7 @@ double MPO_WheelGroundObjective::computeValue(const dVector& p){
 	return retVal;
 }
 
-void MPO_WheelGroundObjective::addGradientTo(dVector& grad, const dVector& p) {
+void MPO_EndEffectorGroundObjective::addGradientTo(dVector& grad, const dVector& p) {
 
 	if (theMotionPlan->feetPositionsParamsStartIndex < 0/* || theMotionPlan->wheelParamsStartIndex < 0*/)
 		return;
@@ -63,7 +63,7 @@ void MPO_WheelGroundObjective::addGradientTo(dVector& grad, const dVector& p) {
 	}
 }
 
-void MPO_WheelGroundObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
+void MPO_EndEffectorGroundObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
 
 	if (theMotionPlan->feetPositionsParamsStartIndex < 0 /*|| theMotionPlan->wheelParamsStartIndex < 0*/)
 		return;

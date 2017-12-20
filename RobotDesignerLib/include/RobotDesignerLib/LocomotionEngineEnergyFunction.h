@@ -5,7 +5,6 @@
 
 class LocomotionEngine_EnergyFunction : public ObjectiveFunction {
 public:
-	DynamicArray<ObjectiveFunction*> objectives;
 
 	LocomotionEngine_EnergyFunction(LocomotionEngineMotionPlan* mp);
 	virtual ~LocomotionEngine_EnergyFunction(void);
@@ -23,9 +22,13 @@ public:
 	void testIndividualGradient(dVector& params);
 	void testIndividualHessian(dVector& params);
 
-	bool printDebugInfo;
+	void addObjectiveFunction(ObjectiveFunction* obj, std::string string = "no group");
 
 public:
+	DynamicArray<ObjectiveFunction*> objectives;
+	std::map<std::string, std::vector<ObjectiveFunction*>> objGroups;
+
+	bool printDebugInfo;
 	double regularizer;
 
 private:

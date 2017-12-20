@@ -18,6 +18,7 @@
 #include <RobotDesignerLib/MOPTWindow.h>
 #include <RobotDesignerLib/SimWindow.h>
 #include <RobotDesignerLib/MotionPlanAnalysis.h>
+#include <RobotDesignerLib/EnergyWindow.h>
 
 #ifdef USE_MATLAB
 	#define RUN_IN_MATLAB(x) x
@@ -43,6 +44,7 @@ public:
 	SimWindow* simWindow = NULL;
 	IntelligentRobotEditingWindow* iEditWindow = NULL;
 	MotionPlanAnalysis *motionPlanAnalysis = nullptr;
+	EnergyWindow *energyWindow = nullptr;
 
 	bool shouldShowSimWindow();
 	bool shouldShowMOPTWindow();
@@ -138,7 +140,7 @@ public:
 	dVector p0;
 	dVector slidervalues;
 	bool updateMotionBasedOnJacobian = false;
-
+	bool optimizeWhileAnimating = false;
 };
 
 

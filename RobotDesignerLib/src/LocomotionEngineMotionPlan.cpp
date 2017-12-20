@@ -722,6 +722,13 @@ void LocomotionEngineMotionPlan::getParameterMaxValues(dVector &maxV){
 		maxV[i] = maxLimits[i];
 }
 
+dVector LocomotionEngineMotionPlan::getMPParameters()
+{
+	dVector params;
+	writeMPParametersToList(params);
+	return params;
+}
+
 void LocomotionEngineMotionPlan::writeMPParametersToList(dVector &p){
 	updateParameterStartIndices();
 	std::vector<double> params;
