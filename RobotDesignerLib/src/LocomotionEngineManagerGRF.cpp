@@ -239,11 +239,11 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 
 
 	//	return;
-
-	for (int i = 0; i < 5; i++) {
-		motionPlan->desDistanceToTravel.x() = desSpeedX * ((double)i / 4.0);
-		motionPlan->desDistanceToTravel.z() = desSpeedZ * ((double)i / 4.0);
-		motionPlan->desTurningAngle = desTurningAngle * ((double)i / 4.0);
+	int nCount = 10;
+	for (int i = 0; i < nCount; i++) {
+		motionPlan->desDistanceToTravel.x() = desSpeedX * ((double)i / (nCount - 1));
+		motionPlan->desDistanceToTravel.z() = desSpeedZ * ((double)i / (nCount - 1));
+		motionPlan->desTurningAngle = desTurningAngle * ((double)i / (nCount - 1));
 
 		runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_END_EFFECTORS | OPT_WHEELS | OPT_COM_ORIENTATIONS | OPT_ROBOT_STATES);
 #ifdef DEBUG_WARMSTART

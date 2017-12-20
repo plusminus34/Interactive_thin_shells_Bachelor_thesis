@@ -9,6 +9,8 @@
 
 //make also a car with 3 wheels, the front one "articulated"
 
+//Search direction is not a descent direction(g.dp = -178.802280).Patching it up... - do it by adding an incrementally increasing regularizer
+
 RobotDesignerApp::RobotDesignerApp(){
 	bgColor[0] = bgColor[1] = bgColor[2] = 1;
 	setWindowTitle("RobotDesigner");

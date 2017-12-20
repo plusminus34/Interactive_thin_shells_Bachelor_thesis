@@ -6,7 +6,7 @@
 
 class MPO_StateMatchObjective : public ObjectiveFunction {
 public:
-	MPO_StateMatchObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int stateIndex, dVector& targetRobotState);
+	MPO_StateMatchObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int stateIndex, dVector& targetRobotState, bool includeGlobalStateDimensions = false);
 	virtual ~MPO_StateMatchObjective(void);
 
 	virtual double computeValue(const dVector& p);
