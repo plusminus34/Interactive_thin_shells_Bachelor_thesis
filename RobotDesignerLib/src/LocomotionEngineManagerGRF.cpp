@@ -4,6 +4,7 @@
 #include <RobotDesignerLib/MPO_WheelSpeedConstraint.h>
 #include <RobotDesignerLib/MPO_WheelSpeedRegularizer.h>
 #include <RobotDesignerLib/MPO_WheelAngleRegularizer.h>
+#include <RobotDesignerLib/MPO_WheelSpeedTargetObjective.h>
 #include <RobotDesignerLib/MPO_WheelAccelerationConstraint.h>
 #include <RobotDesignerLib/MPO_PeriodicWheelTrajectoriesObjective.h>
 #include <RobotDesignerLib/MPO_EEPosSwingObjective.h>
@@ -366,13 +367,19 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "start velocity zero objective", 0, 10000.0));
 	ef->objectives.back()->isActive = false;
-	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "end velocity zero objective", nSamples -2, 10000.0));
+	ef->objectives.push_back(new MPO_COMZeroVelocityConstraint(ef->theMotionPlan, "end velocity zero objective", nSamples-2, 10000.0));
 	ef->objectives.back()->isActive = false;
 
 	ef->objectives.push_back(new MPO_DefaultRobotStateConstraint(ef->theMotionPlan, "start default rs objective", 0, 10000.0));
 	ef->objectives.back()->isActive = false;
-	ef->objectives.push_back(new MPO_DefaultRobotStateConstraint(ef->theMotionPlan, "end default rs objective", nSamples -2, 10000.0));
+	ef->objectives.push_back(new MPO_DefaultRobotStateConstraint(ef->theMotionPlan, "end default rs objective", nSamples-2, 10000.0));
 	ef->objectives.back()->isActive = false;
+
+	ef->objectives.push_back(new MPO_WheelSpeedTargetObjective(ef->theMotionPlan, "wheel speed zero @t=0", 0, 0, 10000.0));
+	ef->objectives.back()->isActive = false;
+	ef->objectives.push_back(new MPO_WheelSpeedTargetObjective(ef->theMotionPlan, "wheel speed zero @t=end", nSamples-1, 0, 10000.0));
+	ef->objectives.back()->isActive = false;
+
 
 	// constraint ensuring the y component of the EE position follows the swing motion
 	ef->objectives.push_back(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0));
