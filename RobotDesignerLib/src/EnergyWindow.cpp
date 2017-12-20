@@ -1,8 +1,12 @@
 #include <RobotDesignerLib/EnergyWindow.h>
+#include <GUILib/ColorMaps.h>
 
 EnergyWindow::EnergyWindow()
 {
-
+	plotXValues.resize(numPlotValues);
+	for (int i = 0; i < numPlotValues; ++i) {
+		plotXValues[i] = (float)i;
+	}
 }
 
 void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunction, nanogui::Screen *screen)
@@ -12,57 +16,76 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 	if (window)
 		window->dispose();
 	window = new Window(screen, "Motion Plan Analysis");
-	window->setLayout(new GridLayout(Orientation::Vertical, 2, Alignment::Middle, 15, 5));
-	window->setVisible(true);
+	window->setLayout(new GridLayout(Orientation::Horizontal, 2, Alignment::Middle, 15, 5));
+	window->setVisible(false);
 	window->setPosition({1100, 0});
 
-	Widget *panel = new Widget(window);
-	GridLayout *layout = new GridLayout(Orientation::Horizontal, 5, Alignment::Fill);
-	layout->setColAlignment({ Alignment::Minimum, Alignment::Fill });
-	layout->setSpacing(0, 10);
-	panel->setLayout(layout);
+	// make energy panel
+	{
+		Widget *energyPanel = new Widget(window);
+		GridLayout *layout = new GridLayout(Orientation::Horizontal, 5, Alignment::Fill);
+		layout->setColAlignment({ Alignment::Minimum, Alignment::Fill });
+		layout->setSpacing(0, 10);
+		energyPanel->setLayout(layout);
 
-	energyUIRows.clear();
+		energyUIRows.clear();
 
-	for (const auto &objGroup : energyFunction->objGroups) {
+		for (const auto &objGroup : energyFunction->objGroups) {
 
-		Label *l = new Label(panel, objGroup.first, "sans-bold");
-		l->setColor(Color(0.2f, 0.7f, 1.0f, 1.f));
-		new Label(panel, "", "");
-		new Label(panel, "", "");
-		new Label(panel, "", "");
-		new Label(panel, "", "");
+			Label *l = new Label(energyPanel, objGroup.first, "sans-bold");
+			l->setColor(Color(0.2f, 0.7f, 1.0f, 1.f));
+			new Label(energyPanel, "", "");
+			new Label(energyPanel, "", "");
+			new Label(energyPanel, "", "");
+			new Label(energyPanel, "", "");
 
-		for (ObjectiveFunction *obj : objGroup.second) {
+			for (ObjectiveFunction *obj : objGroup.second) {
 
-			EnergyUIElement el;
+				EnergyUIElement el;
 
-			new Label(panel, obj->description, "sans");
-			CheckBox *chkBox = new CheckBox(panel,"");
-			chkBox->setChecked(obj->isActive);
-			chkBox->setCallback([obj](bool value){obj->isActive = value; });
-			Slider *slider = new Slider(panel);
-			slider->setValue(0);
-			slider->setRange({ 0.0,1.0 });
-			slider->setFixedWidth(100);
-			el.slider = slider;
+				new Label(energyPanel, obj->description, "sans");
+				CheckBox *chkBox = new CheckBox(energyPanel,"");
+				chkBox->setChecked(obj->isActive);
+				chkBox->setCallback([obj](bool value){obj->isActive = value; });
+				Slider *slider = new Slider(energyPanel);
+				slider->setValue(0);
+				slider->setRange({ 0.0,1.0 });
+				slider->setFixedWidth(100);
+				el.slider = slider;
 
-			FloatBox<double> *textBox = new FloatBox<double>(panel);
-			textBox->setFixedWidth(80);
-			textBox->setEditable(false);
-			textBox->setFixedHeight(18);
-			el.textbox = textBox;
+				FloatBox<double> *textBox = new FloatBox<double>(energyPanel);
+				textBox->setFixedWidth(80);
+				textBox->setEditable(false);
+				textBox->setFixedHeight(18);
+				el.textbox = textBox;
 
-			textBox = new FloatBox<double>(panel);
-			textBox->setFixedWidth(80);
-			textBox->setFixedHeight(18);
-			textBox->setEditable(true);
-			textBox->setValue(obj->weight);
-			textBox->setCallback([obj](double value){obj->weight=value; });
-			el.weightTextbox = textBox;
+				textBox = new FloatBox<double>(energyPanel);
+				textBox->setFixedWidth(80);
+				textBox->setFixedHeight(18);
+				textBox->setEditable(true);
+				textBox->setValue(obj->weight);
+				textBox->setCallback([obj](double value){obj->weight=value; });
+				el.weightTextbox = textBox;
 
-			energyUIRows[objGroup.first].push_back(el);
+				energyUIRows[objGroup.first].push_back(el);
+			}
 		}
+	}
+
+	// make energy plot
+	{
+		Widget *plotPanel = new Widget(window);
+		GridLayout *layout = new GridLayout(Orientation::Horizontal, 5, Alignment::Fill);
+		layout->setColAlignment({ Alignment::Minimum, Alignment::Fill });
+		layout->setSpacing(0, 10);
+		plotPanel->setLayout(layout);
+
+		energyPlot = new Plot(plotPanel, "Energy Plot");
+
+		energyPlot->setSize(Vector2i(600, 1000));
+		energyPlot->setNumTicks(Vector2i(10, 5));
+		energyPlot->setShowTicks(true);
+		energyPlot->setShowLegend(true);
 	}
 
 	screen->performLayout();
@@ -89,6 +112,7 @@ void EnergyWindow::updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFun
 		}
 	}
 
+	// update energy menu
 	index = 0;
 	for (auto &energyRow : energyUIRows) {
 		for (EnergyUIElement &el : energyRow.second){
@@ -97,6 +121,32 @@ void EnergyWindow::updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFun
 			el.textbox->TextBox::setValue(double2string(value));
 		}
 	}
+
+	// update energy plot
+	energyPlot->clearPlotData();
+	index = 0;
+	for (const auto &objGroup : energyFunction->objGroups) {
+		for (ObjectiveFunction *obj : objGroup.second){
+			if(obj->isActive)
+			{
+				float value = values[index];
+				std::vector<float> &eValues = energyHist[obj->description];
+				eValues.push_back(value);
+
+				int size = std::min(numPlotValues, (int)eValues.size());
+				int start = std::max(0, (int)eValues.size()-size);
+				Eigen::Map<Eigen::VectorXf> y(&eValues[start], size);
+
+				start = std::max(0, (int)plotXValues.size()-size);
+				Eigen::Map<Eigen::VectorXf> x(&plotXValues[start], size);
+
+				PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)index/(float)(40), 0.2f), 1.f));
+				energyPlot->setPlotData(obj->description, data);
+			}
+			index++;
+		}
+	}
+	energyPlot->updateMinMax();
 }
 
 void EnergyWindow::setVisible(bool visible)

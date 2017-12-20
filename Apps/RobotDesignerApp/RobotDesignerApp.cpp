@@ -77,11 +77,11 @@ RobotDesignerApp::RobotDesignerApp(){
 		button->setFontSize(14);
 		button->setFlags(Button::Flags::ToggleButton);
 		button->setChangeCallback([this](bool state){
-			energyWindow->setVisible(state);
 			if(moptWindow->locomotionManager->energyFunction){
 				if(state)
 					energyWindow->createEnergyMenu(moptWindow->locomotionManager->energyFunction, menuScreen);
 				energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
+				energyWindow->setVisible(state);
 			}
 		});
 	}
@@ -381,7 +381,10 @@ void RobotDesignerApp::warmStartMOPT(bool initializeMotionPlan) {
 	motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
 
 	if(moptWindow->locomotionManager->energyFunction)
+	{
+		energyWindow->createEnergyMenu(moptWindow->locomotionManager->energyFunction, menuScreen);
 		energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
+	}
 }
 
 void RobotDesignerApp::saveFile(const char* fName) {

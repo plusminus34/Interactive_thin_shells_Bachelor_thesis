@@ -1,6 +1,7 @@
 #pragma once
 
 #include <nanogui/nanogui.h>
+#include <GUILib/Plot.h>
 #include <RobotDesignerLib/LocomotionEngineEnergyFunction.h>
 
 class EnergyWindow
@@ -24,4 +25,9 @@ private:
 	};
 	std::map<std::string, std::vector<EnergyUIElement>> energyUIRows;
 
+	Plot *energyPlot = nullptr;
+	std::map<std::string, std::vector<float>> energyHist;
+
+	const int numPlotValues = 100;
+	Eigen::VectorXf plotXValues;
 };
