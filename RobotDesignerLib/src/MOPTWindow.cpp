@@ -425,46 +425,54 @@ void MOPTWindow::CreateEnergyMenu()
 	using namespace nanogui;
 
 	Widget *panel = new Widget(glApp->mainMenu->window());
-	GridLayout *layout =
-		new GridLayout(Orientation::Horizontal, 5,
-			Alignment::Middle);
-	layout->setColAlignment(
-	{ Alignment::Maximum, Alignment::Fill });
+	GridLayout *layout = new GridLayout(Orientation::Horizontal, 5, Alignment::Fill);
+	layout->setColAlignment({ Alignment::Minimum, Alignment::Fill });
 	layout->setSpacing(0, 10);
 	panel->setLayout(layout);
 
-	int NE = locomotionManager->energyFunction->objectives.size();
-	energySliders.resize(NE);
-	energyTextboxes.resize(NE);
-	weightTextboxes.resize(NE);
+	energyUIRows.clear();
 
-	for (int i = 0; i < NE; i++)
-	{
-		double value = 0;
-		new Label(panel, locomotionManager->energyFunction->objectives[i]->description , "sans-bold");
-		CheckBox *chkBox = new CheckBox(panel,"");
-		chkBox->setChecked(locomotionManager->energyFunction->objectives[i]->isActive);
-		chkBox->setCallback([this, i](bool value){locomotionManager->energyFunction->objectives[i]->isActive = value; });
-		Slider *slider = new Slider(panel);
-		slider->setValue(0);
-		slider->setRange({ 0.0,1.0 });
-		slider->setFixedWidth(50);
-		energySliders[i] = slider;
+	for (const auto &objGroup : locomotionManager->energyFunction->objGroups) {
 
-		FloatBox<double> *textBox = new FloatBox<double>(panel);
-		textBox->setFixedWidth(80);
-		textBox->setEditable(false);
-		textBox->setFixedHeight(18);
-		energyTextboxes[i] = textBox;
+		Label *l = new Label(panel, objGroup.first, "sans-bold");
+		l->setColor(Color(0.2f, 0.7f, 1.0f, 1.f));
+		new Label(panel, "", "");
+		new Label(panel, "", "");
+		new Label(panel, "", "");
+		new Label(panel, "", "");
 
-		textBox = new FloatBox<double>(panel);
-		textBox->setFixedWidth(80);
-		textBox->setFixedHeight(18);
-		textBox->setEditable(true);
-		textBox->setValue(locomotionManager->energyFunction->objectives[i]->weight);
-		textBox->setCallback([this, i](double value){locomotionManager->energyFunction->objectives[i]->weight=value; });
-		weightTextboxes[i] = textBox;
+		for (ObjectiveFunction *obj : objGroup.second) {
+
+			EnergyUIElement el;
+
+			new Label(panel, obj->description, "sans");
+			CheckBox *chkBox = new CheckBox(panel,"");
+			chkBox->setChecked(obj->isActive);
+			chkBox->setCallback([obj](bool value){obj->isActive = value; });
+			Slider *slider = new Slider(panel);
+			slider->setValue(0);
+			slider->setRange({ 0.0,1.0 });
+			slider->setFixedWidth(100);
+			el.slider = slider;
+
+			FloatBox<double> *textBox = new FloatBox<double>(panel);
+			textBox->setFixedWidth(80);
+			textBox->setEditable(false);
+			textBox->setFixedHeight(18);
+			el.textbox = textBox;
+
+			textBox = new FloatBox<double>(panel);
+			textBox->setFixedWidth(80);
+			textBox->setFixedHeight(18);
+			textBox->setEditable(true);
+			textBox->setValue(obj->weight);
+			textBox->setCallback([obj](double value){obj->weight=value; });
+			el.weightTextbox = textBox;
+
+			energyUIRows[objGroup.first].push_back(el);
+		}
 	}
+
 	energyMenu->setVisible(false);
 	glApp->mainMenu->addWidget("", panel);
 	glApp->mainMenu->setWindow(mainwindow);
@@ -473,7 +481,6 @@ void MOPTWindow::CreateEnergyMenu()
 
 void MOPTWindow::updateSliders()
 {
-	int NE = locomotionManager->energyFunction->objectives.size();
 	dVector params;
 	locomotionManager->motionPlan->writeMPParametersToList(params);
 	auto double2string = [](double val) {
@@ -483,19 +490,24 @@ void MOPTWindow::updateSliders()
 		return s.str(); };
 
 	double maxValue = -HUGE_VAL;
-	std::vector<double> values(NE);
-	for (int i = 0; i < NE; i++)
-	{
-		double value = locomotionManager->energyFunction->objectives[i]->computeValue(params);
-		values[i] = value;
-		if(locomotionManager->energyFunction->objectives[i]->isActive)
-			maxValue = std::max(maxValue, value);
+	int NE = locomotionManager->energyFunction->objectives.size();
+	std::vector<double> values(NE); int index = 0;
+	for (const auto &objGroup : locomotionManager->energyFunction->objGroups) {
+		for (ObjectiveFunction *obj : objGroup.second){
+			double value = obj->computeValue(params);
+			values[index++] = value;
+			if(obj->isActive)
+				maxValue = std::max(maxValue, value);
+		}
 	}
 
-	for (int i = 0; i < NE; i++)
-	{
-		energySliders[i]->setValue((float)(values[i]/maxValue));
-		energyTextboxes[i]->TextBox::setValue(double2string(values[i]));
+	index = 0;
+	for (auto &energyRow : energyUIRows) {
+		for (EnergyUIElement &el : energyRow.second){
+			double value = values[index++];
+			el.slider->setValue((float)(value/maxValue));
+			el.textbox->TextBox::setValue(double2string(value));
+		}
 	}
 }
 
