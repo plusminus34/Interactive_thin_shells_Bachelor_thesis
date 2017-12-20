@@ -347,7 +347,10 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	Ray ray = getRayFromScreenCoords(xPos, yPos);
 	postDraw();
 
-	ReducedRobotState rs(robot);
+	ReducedRobotState oldState(robot);
+	ReducedRobotState robotState(robot);
+	locomotionManager->motionPlan->robotStateTrajectory.getRobotPoseAt(moptParams.phase, robotState);
+	robot->setState(&robotState);
 
 	Joint* joint;
 	dVector velocity;
@@ -388,7 +391,7 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	velocityProfileGraph->setValues(velocity.cast<float>());
 	
 	glApp->menuScreen->performLayout();
-
+	robot->setState(&oldState);
 	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 }
 

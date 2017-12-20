@@ -127,9 +127,6 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 				if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
 					int ind = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
 					grad.segment<3>(ind) += weight*err;
-// 					grad[ind + 0] += err[0] * weight;
-// 					grad[ind + 1] += err[1] * weight;
-// 					grad[ind + 2] += err[2] * weight;
 				}
 
 				//and now compute the gradient with respect to the robot q's
@@ -139,9 +136,6 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 					//dEdee * deedq = dEdq
 					int ind = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim;
 					grad.segment(ind, dEndEffectordq.cols()) += -weight*dEndEffectordq.transpose()*err;
-// 					for (int k = 0; k < 3; k++)
-// 						for (int l = 0; l < theMotionPlan->robotRepresentation->getDimensionCount(); l++)
-// 							grad[ind + l] += -dEndEffectordq(k, l) * err[k] * weight;
 				}
 			}
 		}

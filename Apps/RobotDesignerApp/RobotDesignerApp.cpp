@@ -250,6 +250,8 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 	if (key == GLFW_KEY_4 && action == GLFW_PRESS)
 		runOption = PHYSICS_SIMULATION_WITH_TORQUE_CONTROL;
 
+	if (key == GLFW_KEY_A)
+		optimizeWhileAnimating = !optimizeWhileAnimating;
 	mainMenu->refresh();
 
 	if (GLApplication::onKeyEvent(key, action, mods)) return true;
@@ -404,7 +406,16 @@ void RobotDesignerApp::process() {
 
 	lastRunOptionSelected = runOption;
 
+	auto DoMOPTStep = [&]() {
+		runMOPTStep();
+		if (motionPlanAnalysis->window->visible())
+			motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
+	};
+
 	if (runOption != MOTION_PLAN_OPTIMIZATION && simWindow->getActiveController()) {
+		if (optimizeWhileAnimating)
+			DoMOPTStep();
+
 		double simulationTime = 0;
 		double maxRunningTime = 1.0 / desiredFrameRate;
 
@@ -417,12 +428,9 @@ void RobotDesignerApp::process() {
 		}
 
 	}
-	else if (runOption == MOTION_PLAN_OPTIMIZATION) {
-		runMOPTStep();
+	else if (runOption == MOTION_PLAN_OPTIMIZATION)
+		DoMOPTStep();
 
-		if(motionPlanAnalysis->window->visible())
-			motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
-	}
 	if (simWindow->getActiveController())
 		moptWindow->ffpViewer->cursorPosition = simWindow->getActiveController()->stridePhase;
 }
