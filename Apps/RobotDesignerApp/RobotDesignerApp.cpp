@@ -19,6 +19,7 @@ RobotDesignerApp::RobotDesignerApp(){
 	simWindow = new SimWindow(0, 0, 100, 100, this);
 	iEditWindow = new IntelligentRobotEditingWindow(0, 0, 100, 100, this);
 	motionPlanAnalysis = new MotionPlanAnalysis(menuScreen);
+	energyWindow = new EnergyWindow();
 
 	mainMenu->addGroup("RobotDesigner Options");
 	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
@@ -52,22 +53,44 @@ RobotDesignerApp::RobotDesignerApp(){
 	button->setCallback([this]() { warmStartMOPT(true); });
 	button->setTooltip("Warmstart MOPT");
 
-	mainMenu->addGroup("MOPT Options");
-	moptWindow->addMenuItems();
-
-	mainMenu->addGroup("Sim Options");
-	simWindow->addMenuItems();
-
-	// button to toggle motion plan analysis
 	{
-		nanogui::Button *mpaButton = mainMenu->addButton("Motion Plan Analysis",[](){});
-		mpaButton->setFlags(nanogui::Button::Flags::ToggleButton);
+		using namespace nanogui;
+
+		mainMenu->addGroup("Toggle Windows");
+
+		Widget *widget = new Widget(mainMenu->window());
+		mainMenu->addWidget("", widget);
+		widget->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Middle, 0, 4));
+
+		// button to toggle motion plan analysis
+		Button *mpaButton = new Button(widget, "Motion Plan Analysis");
+		mpaButton->setFontSize(14);
+		mpaButton->setFlags(Button::Flags::ToggleButton);
 		mpaButton->setChangeCallback([this](bool state){
 			motionPlanAnalysis->window->setVisible(state);
 			if(moptWindow->locomotionManager->motionPlan)
 				motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
 		});
+
+		// button to toggle energy window
+		Button *button = new Button(widget, "Energy Window");
+		button->setFontSize(14);
+		button->setFlags(Button::Flags::ToggleButton);
+		button->setChangeCallback([this](bool state){
+			energyWindow->setVisible(state);
+			if(moptWindow->locomotionManager->energyFunction){
+				if(state)
+					energyWindow->createEnergyMenu(moptWindow->locomotionManager->energyFunction, menuScreen);
+				energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
+			}
+		});
 	}
+
+	mainMenu->addGroup("MOPT Options");
+	moptWindow->addMenuItems();
+
+	mainMenu->addGroup("Sim Options");
+	simWindow->addMenuItems();
 
 	showGroundPlane = false;
 	bgColor[0] = bgColor[1] = bgColor[2] = 0.75;
@@ -356,6 +379,9 @@ void RobotDesignerApp::warmStartMOPT(bool initializeMotionPlan) {
 	moptWindow->initializeNewMP(initializeMotionPlan);
 	simWindow->loadMotionPlan(moptWindow->locomotionManager->motionPlan);
 	motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
+
+	if(moptWindow->locomotionManager->energyFunction)
+		energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
 }
 
 void RobotDesignerApp::saveFile(const char* fName) {
@@ -410,6 +436,8 @@ void RobotDesignerApp::process() {
 		runMOPTStep();
 		if (motionPlanAnalysis->window->visible())
 			motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
+		if(moptWindow->locomotionManager->energyFunction)
+			energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
 	};
 
 	if (runOption != MOTION_PLAN_OPTIMIZATION && simWindow->getActiveController()) {

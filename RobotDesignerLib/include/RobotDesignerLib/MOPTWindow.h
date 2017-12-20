@@ -100,22 +100,9 @@ public:
 	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
+
 private:
-	bool showWeightsAndEnergyValues;
-	void ToggleEnergyMenu();
-	void CreateEnergyMenu();
-	void updateSliders();
-
-	nanogui::Window * energyMenu = nullptr;
-
-	struct EnergyUIElement {
-		nanogui::Slider* slider;
-		nanogui::FloatBox<double>* textbox;
-		nanogui::FloatBox<double>* weightTextbox;
-	};
-	std::map<std::string, std::vector<EnergyUIElement>> energyUIRows;
 
 	V3D COMSpeed;
 	nanogui::Window* velocityProfileWindow=nullptr;
 };
-
