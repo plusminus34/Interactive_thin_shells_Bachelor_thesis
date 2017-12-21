@@ -26,8 +26,12 @@ public:
 
 	dVector x_approx;
 
+	std::vector<GradientBasedFunctionMinimizer*> minimizers;
 	GradientBasedFunctionMinimizer * minimizer;
 	NodePositionObjectiveFunction * objectiveFunction;
+	int maxIterations = 10;
+	double solveResidual = 1e-5;
+	int maxLineSearchIterations = 15;
 
 	int selected_mount = -1;
 
@@ -67,7 +71,7 @@ public:
 	nanogui::ComboBox * comboBoxMountSelection;
 	std::array<nanogui::Button *, 4> buttonsInteractionMode;
 
-
+	nanogui::ComboBox * comboBoxOptimizationAlgorithm;
 
 public:
 	// constructor
@@ -91,6 +95,7 @@ public:
 	void unmountNode(int node_id, int mount_id);
 	//void updateMountEnergy();
 	//int getMountId(int node_id);
+
 
 	// optimization process
 	void solveMesh();

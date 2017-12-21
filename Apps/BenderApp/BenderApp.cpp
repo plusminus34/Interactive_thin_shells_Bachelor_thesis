@@ -9,6 +9,7 @@
 #include <FEMSimLib/MassSpringSimulationMesh3D.h>
 #include <GUILib/GLUtils.h>
 #include "OptimizationLib/GradientDescentFunctionMinimizer.h"
+#include "OptimizationLib/BFGSFunctionMinimizer.h"
 
 #include <algorithm>
 #include <cmath>
@@ -91,7 +92,13 @@ BenderApp::BenderApp()
 
 
 	// prepare minimizer and objective funciton
-	minimizer = new GradientDescentFunctionMinimizer();
+	//minimizer = new GradientDescentFunctionMinimizer();
+	
+	minimizers.push_back(new GradientDescentFunctionMinimizer(maxIterations, solveResidual, maxLineSearchIterations, false));
+	minimizers.push_back(new BFGSFunctionMinimizer           (maxIterations, solveResidual, maxLineSearchIterations, false));
+
+	minimizer = minimizers[comboBoxOptimizationAlgorithm->selectedIndex()];
+	
 	objectiveFunction = new NodePositionObjectiveFunction(this);
 
 }
@@ -102,6 +109,24 @@ BenderApp::~BenderApp()
 
 void BenderApp::initInteractionMenu(nanogui::FormHelper* menu)
 {
+
+	// add selection of optimization algorithm
+	menu->addGroup("Optimization");
+	{
+		nanogui::Widget *selection = new nanogui::Widget(menu->window());
+		menu->addWidget("", selection);
+		selection->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+			nanogui::Alignment::Middle, 0, 4));
+		comboBoxOptimizationAlgorithm = new nanogui::ComboBox(selection, { "gradient descent", "quasi Newton: BFGS"});
+		comboBoxOptimizationAlgorithm->setCallback([this](int idx){minimizer = minimizers[idx]; });
+		comboBoxOptimizationAlgorithm->setSelectedIndex(1);
+
+
+		menu->addVariable("max Iterations", maxIterations);
+		menu->addVariable("solve residual", solveResidual);
+		menu->addVariable("max linesearch iter", maxLineSearchIterations);
+	}
+
 	
 	// add selection for interaction mode
 	 menu->addGroup("Mode");
@@ -589,10 +614,10 @@ void BenderApp::process() {
 			pullXi();
 
 			// minimize here
-			minimizer->lineSearchStartValue = 1.0;
-			minimizer->solveResidual = 1e-5;
-			minimizer->maxIterations = 1;
-			minimizer->maxLineSearchIterations = 15;
+			minimizer->lineSearchStartValue = 0.1;
+			minimizer->maxIterations = maxIterations;
+			minimizer->solveResidual = solveResidual;
+			minimizer->maxLineSearchIterations = maxLineSearchIterations;
 			
 			double o_new = 0;
 			minimizer->minimize(objectiveFunction, xi, o_new);
