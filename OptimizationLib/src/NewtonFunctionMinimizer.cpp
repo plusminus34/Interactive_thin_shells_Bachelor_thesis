@@ -4,6 +4,8 @@
 //TODO: try out different linear solvers, with prefactorization and without. Have a way of specifying which one this newton solver should be using...
 //TODO: get a version of the objective functions (and everything else) that works with dense matrices as well...
 
+#include <iostream>
+
 // The search direction is given by -Hinv * g
 void NewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *function, const dVector &p, dVector& dp) {
 	timerN.restart();
@@ -55,11 +57,34 @@ void NewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *function
 	if (dotProduct < 0) {
 		if (printOutput)
 			Logger::logPrint("Search direction is not a descent direction (g.dp = %lf). Patching it up...\n", dotProduct);
+
+		std::cout << "*** Search direction 1: " << dotProduct << std::endl;
+
+		for (int i = 0; i < 10; ++i) {
+			// stabilize hessian
+			for (int j = 0; j < p.size(); ++j) {
+				H.coeffRef(j,j) += 1e-2;
+			}
+
+			solver.compute(H);
+			dp = solver.solve(gradient);
+
+			double dotProduct = dp.dot(gradient);
+			std::cout << "*** Search direction " << i << ": " << dotProduct << std::endl;
+
+			if(dotProduct > 0)
+			{
+				std::cout << "*** success!" << std::endl;
+				break;
+			}
+		}
+
+
 		//invert the part that goes against the gradient while keeping everything else the same...
-		dVector dpProj = gradient * dotProduct / gradient.squaredNorm();
+//		dVector dpProj = gradient * dotProduct / gradient.squaredNorm();
 //		dp = -dpProj;
 //		dp -= 2*dpProj;
-		dp *= -1;
+//		dp *= -1;
 	}
 
 	if (printOutput)
