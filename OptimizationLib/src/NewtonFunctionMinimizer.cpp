@@ -58,27 +58,28 @@ void NewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *function
 		if (printOutput)
 			Logger::logPrint("Search direction is not a descent direction (g.dp = %lf). Patching it up...\n", dotProduct);
 
-		std::cout << "*** Search direction 1: " << dotProduct << std::endl;
-
-		for (int i = 0; i < 10; ++i) {
+		int i = 0;
+		for (; i < nMaxStabSteps; ++i) {
 			// stabilize hessian
 			for (int j = 0; j < p.size(); ++j) {
-				H.coeffRef(j,j) += 1e-2;
+				H.coeffRef(j,j) += 1e-4;
 			}
 
 			solver.compute(H);
 			dp = solver.solve(gradient);
 
-			double dotProduct = dp.dot(gradient);
-			std::cout << "*** Search direction " << i << ": " << dotProduct << std::endl;
-
+			// check if stabilization worked
+			dotProduct = dp.dot(gradient);
 			if(dotProduct > 0)
-			{
-				std::cout << "*** success!" << std::endl;
 				break;
-			}
 		}
 
+		if(printOutput){
+			if(dotProduct > 0)
+				Logger::logPrint("Search direction fixed after %d stabilization steps (g.dp = %lf)\n", i+1, dotProduct);
+			else
+				Logger::logPrint("Search direction NOT fixed after %d stabilization steps (g.dp = %lf)\n", i+1, dotProduct);
+		}
 
 		//invert the part that goes against the gradient while keeping everything else the same...
 //		dVector dpProj = gradient * dotProduct / gradient.squaredNorm();
