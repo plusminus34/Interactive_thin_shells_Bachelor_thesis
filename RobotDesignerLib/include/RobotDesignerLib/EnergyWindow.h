@@ -20,6 +20,8 @@ private:
 	nanogui::Window * window = nullptr;
 
 	struct EnergyUIElement {
+		nanogui::Label *label;
+		nanogui::CheckBox *checkBox;
 		nanogui::Slider* slider;
 		nanogui::FloatBox<double>* textbox;
 		nanogui::FloatBox<double>* weightTextbox;

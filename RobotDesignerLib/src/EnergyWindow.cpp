@@ -32,8 +32,26 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 
 		for (const auto &objGroup : energyFunction->objGroups) {
 
-			Label *l = new Label(energyPanel, objGroup.first, "sans-bold");
-			l->setColor(Color(0.2f, 0.7f, 1.0f, 1.f));
+			const std::string &groupName = objGroup.first;
+
+			Button *b = new Button(energyPanel, objGroup.first);
+//			b->setTextColor(Color(0.2f, 0.7f, 1.0f, 1.f));
+//			b->setBackgroundColor(Color(0.2f, 0.7f, 1.0f, 0.3f));
+//			b->setTextColor(Color(0, 0, 255, 180));
+			b->setBackgroundColor(Color(0, 0, 255, 25));
+			b->setFlags(Button::ToggleButton);
+			b->setChangeCallback([this, groupName, screen](bool state){
+				for (EnergyUIElement &el : energyUIRows[groupName]) {
+					el.label->setVisible(!state);
+					el.checkBox->setVisible(!state);
+					el.slider->setVisible(!state);
+					el.textbox->setVisible(!state);
+					el.weightTextbox->setVisible(!state);
+				}
+				screen->performLayout();
+			});
+			b->setFontSize(14);
+
 			new Label(energyPanel, "", "");
 			new Label(energyPanel, "", "");
 			new Label(energyPanel, "", "");
@@ -43,15 +61,18 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 
 				EnergyUIElement el;
 
-				new Label(energyPanel, obj->description, "sans");
-				CheckBox *chkBox = new CheckBox(energyPanel,"");
-				chkBox->setChecked(obj->isActive);
-				chkBox->setCallback([obj](bool value){obj->isActive = value; });
+				el.label = new Label(energyPanel, obj->description, "sans");
+				CheckBox *checkBox = new CheckBox(energyPanel,"");
+				checkBox->setChecked(obj->isActive);
+				checkBox->setCallback([obj](bool value){obj->isActive = value; });
+				el.checkBox = checkBox;
+
 				Slider *slider = new Slider(energyPanel);
 				slider->setValue(0);
 				slider->setRange({ 0.0,1.0 });
 				slider->setFixedWidth(100);
 				el.slider = slider;
+				slider->setHighlightColor(Color(0, 0, 255, 25));
 
 				FloatBox<double> *textBox = new FloatBox<double>(energyPanel);
 				textBox->setFixedWidth(80);
