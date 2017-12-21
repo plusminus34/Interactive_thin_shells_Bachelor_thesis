@@ -37,6 +37,7 @@ double LocomotionEngineManager::optimizeMoptionPlan(int maxIterations) {
 //		GradientDescentFunctionMinimizer minimizer;
 		minimizer.maxLineSearchIterations = 12;
 		minimizer.printOutput = energyFunction->printDebugInfo;
+		minimizer.useDynamicRegularization = useDynamicRegularization;
 		minimizer.minimize(energyFunction, params, val);
 	}
 	else {

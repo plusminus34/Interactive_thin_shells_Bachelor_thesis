@@ -34,6 +34,7 @@ struct MOPTParams {
 	bool writeJointVelocityProfile = false;
 	double motionPlanDuration = 0.8;
 	bool checkDerivatives = false;
+	bool useDynamicRegularization = true;
 };
 
 

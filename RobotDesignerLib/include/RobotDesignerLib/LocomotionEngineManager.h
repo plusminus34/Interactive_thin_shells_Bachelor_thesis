@@ -68,6 +68,7 @@ public:
 	ConstrainedObjectiveFunction* constrainedObjectiveFunction;
 	bool useObjectivesOnly = false;
 	bool writeParamsToFile = true;
+	bool useDynamicRegularization = true;
 public:
 	LocomotionEngineManager();
 	virtual ~LocomotionEngineManager() = 0;
@@ -91,6 +92,7 @@ public:
 	}
 
 	virtual void drawMotionPlan(double f, int animationCycle = 0, bool drawRobot = true, bool drawSkeleton = false, bool drawPlanDetails = false, bool drawContactForces = false, bool drawOrientation = false);
+
 
 };
 
