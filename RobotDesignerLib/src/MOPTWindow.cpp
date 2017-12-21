@@ -43,7 +43,7 @@ void MOPTWindow::addMenuItems() {
 		tmpVar->setSpinnable(true);
 	}
 
-	glApp->mainMenu->addVariable("Allow Dynamic regularization", moptParams.useDynamicRegularization);
+	glApp->mainMenu->addVariable("Allow Dynamic regularization", moptParams.hessCorrectionMethod)->setItems({ "None", "DynamicRegularization", "Projection"});
 
 	{
 		auto tmpVar = glApp->mainMenu->addVariable("globalMOPTRegularizer", globalMOPTRegularizer);
@@ -205,7 +205,8 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.writeJointVelocityProfile = locomotionManager->writeVelocityProfileToFile;
 	moptParams.motionPlanDuration = locomotionManager->motionPlan->motionPlanDuration;
 	moptParams.checkDerivatives = locomotionManager->checkDerivatives;
-	moptParams.useDynamicRegularization = locomotionManager->useDynamicRegularization;
+	moptParams.hessCorrectionMethod = locomotionManager->hessCorrectionMethod;
+
 }
 
 void MOPTWindow::syncMotionPlanParameters(){
@@ -228,7 +229,7 @@ void MOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->writeVelocityProfileToFile = moptParams.writeJointVelocityProfile;
 	locomotionManager->motionPlan->motionPlanDuration = moptParams.motionPlanDuration;
 	locomotionManager->checkDerivatives = moptParams.checkDerivatives;
-	locomotionManager->useDynamicRegularization = moptParams.useDynamicRegularization;
+	locomotionManager->hessCorrectionMethod = moptParams.hessCorrectionMethod;
 
 }
 

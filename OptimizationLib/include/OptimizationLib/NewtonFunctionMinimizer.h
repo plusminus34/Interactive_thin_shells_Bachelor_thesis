@@ -35,5 +35,10 @@ public:
 
 	int nMaxStabSteps = 10;		// maximum number of stabilization steps
 	double stabValue = 1e-4;	// value that gets added to hessian diagonal during stabilization step
-	bool useDynamicRegularization = true;
+	enum HessCorrectionMethod {
+		None = 0,
+		DynamicRegularization,
+		Projection
+	};
+	HessCorrectionMethod hessCorrectionMethod = None;
 };
