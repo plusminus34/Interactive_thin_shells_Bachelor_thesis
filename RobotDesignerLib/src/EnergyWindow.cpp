@@ -21,8 +21,9 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 	window->setPosition({1100, 0});
 
 	// make energy panel
+	Widget *energyPanel;
 	{
-		Widget *energyPanel = new Widget(window);
+		energyPanel = new Widget(window);
 		GridLayout *layout = new GridLayout(Orientation::Horizontal, 5, Alignment::Fill);
 		layout->setColAlignment({ Alignment::Minimum, Alignment::Fill });
 		layout->setSpacing(0, 10);
@@ -34,23 +35,17 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 
 			const std::string &groupName = objGroup.first;
 
-			Button *b = new Button(energyPanel, objGroup.first);
+			Button *buttonHideGroup = new Button(energyPanel, objGroup.first);
 //			b->setTextColor(Color(0.2f, 0.7f, 1.0f, 1.f));
 //			b->setBackgroundColor(Color(0.2f, 0.7f, 1.0f, 0.3f));
 //			b->setTextColor(Color(0, 0, 255, 180));
-			b->setBackgroundColor(Color(0, 0, 255, 25));
-			b->setFlags(Button::ToggleButton);
-			b->setChangeCallback([this, groupName, screen](bool state){
-				for (EnergyUIElement &el : energyUIRows[groupName]) {
-					el.label->setVisible(!state);
-					el.checkBox->setVisible(!state);
-					el.slider->setVisible(!state);
-					el.textbox->setVisible(!state);
-					el.weightTextbox->setVisible(!state);
-				}
+			buttonHideGroup->setBackgroundColor(Color(0, 0, 255, 25));
+			buttonHideGroup->setFlags(Button::ToggleButton);
+			buttonHideGroup->setChangeCallback([this, groupName, screen](bool state){
+				this->hideEnergyGroup(!state, groupName);
 				screen->performLayout();
 			});
-			b->setFontSize(14);
+			buttonHideGroup->setFontSize(14);
 
 			new Label(energyPanel, "", "");
 			new Label(energyPanel, "", "");
@@ -90,24 +85,42 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 
 				energyUIRows[objGroup.first].push_back(el);
 			}
+
+			if(energyGroupVisible.find(groupName) == energyGroupVisible.end())
+				energyGroupVisible[groupName] = true;
+			else
+				hideEnergyGroup(energyGroupVisible[groupName], groupName);
+			buttonHideGroup->setPushed(!energyGroupVisible[groupName]);
 		}
 	}
 
 	// make energy plot
+	Widget *plotPanel;
 	{
-		Widget *plotPanel = new Widget(window);
+		plotPanel = new Widget(window);
 		GridLayout *layout = new GridLayout(Orientation::Horizontal, 5, Alignment::Fill);
 		layout->setColAlignment({ Alignment::Minimum, Alignment::Fill });
+		layout->setRowAlignment({ Alignment::Minimum, Alignment::Fill });
 		layout->setSpacing(0, 10);
 		plotPanel->setLayout(layout);
 
-		energyPlot = new Plot(plotPanel, "Energy Plot");
+		Button *togglePlot = new Button(plotPanel, "Energy Plot");
+		togglePlot->setFlags(Button::ToggleButton);
 
-		energyPlot->setSize(Vector2i(600, 1000));
+		energyPlot = new Plot(plotPanel, "Energy Plot");
+		energyPlot->setSize(Vector2i(600, 600));
 		energyPlot->setNumTicks(Vector2i(10, 5));
 		energyPlot->setShowTicks(true);
 		energyPlot->setShowLegend(true);
+		energyPlot->setVisible(false);
+
+		togglePlot->setChangeCallback([this, screen](bool state){
+			energyPlot->setVisible(state);
+			screen->performLayout();
+		});
 	}
+
+
 
 	screen->performLayout();
 }
@@ -174,4 +187,17 @@ void EnergyWindow::setVisible(bool visible)
 {
 	if(window)
 		window->setVisible(visible);
+}
+
+void EnergyWindow::hideEnergyGroup(bool visible, const std::string &groupName)
+{
+	for (EnergyUIElement &el : energyUIRows[groupName]) {
+		el.label->setVisible(visible);
+		el.checkBox->setVisible(visible);
+		el.slider->setVisible(visible);
+		el.textbox->setVisible(visible);
+		el.weightTextbox->setVisible(visible);
+	}
+
+	energyGroupVisible[groupName] = visible;
 }
