@@ -54,40 +54,46 @@ void NewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *function
 	//dp = H.triangularView<Eigen::Lower>().solve(gradient);
 
 	double dotProduct = dp.dot(gradient);
-	if (dotProduct < 0 && useDynamicRegularization) {
-// 		if (printOutput)
-			Logger::logPrint("Search direction is not a descent direction (g.dp = %lf). Patching it up...\n", dotProduct);
+	if (dotProduct < 0 && hessCorrectionMethod != None) {
+		// 		if (printOutput)
+		Logger::logPrint("Search direction is not a descent direction (g.dp = %lf). Patching it up...\n", dotProduct);
+		if (hessCorrectionMethod == DynamicRegularization) {
+			double currStabValue = stabValue;
+			int i = 0;
+			for (; i < nMaxStabSteps; ++i) {
+				// stabilize hessian
+				for (int j = 0; j < p.size(); ++j) {
+					H.coeffRef(j, j) += currStabValue;
+				}
+				currStabValue *= 10;
+				solver.compute(H);
+				dp = solver.solve(gradient);
 
-		double currStabValue = stabValue;
-		int i = 0;
-		for (; i < nMaxStabSteps; ++i) {
-			// stabilize hessian
-			for (int j = 0; j < p.size(); ++j) {
-				H.coeffRef(j,j) += currStabValue;
+				// check if stabilization worked
+				dotProduct = dp.dot(gradient);
+				if (dotProduct > 0)
+					break;
 			}
-			currStabValue *= 10;
-			solver.compute(H);
-			dp = solver.solve(gradient);
+			if (dotProduct > 0)
+				Logger::logPrint("Search direction fixed after %d stabilization steps (g.dp = %lf)\n", i + 1, dotProduct);
+			else
+				Logger::logPrint("Search direction NOT fixed after %d stabilization steps (g.dp = %lf)\n", i + 1, dotProduct);
+		}
+		else if (hessCorrectionMethod == Projection) {
+			Eigen::SimplicialLDLT<MatrixNxM, Eigen::Lower> denseSolver;
+			MatrixNxM Hd(H);
+			Eigen::SelfAdjointEigenSolver<MatrixNxM> es(Hd);
+			Eigen::VectorXd D = es.eigenvalues();
+			Eigen::MatrixXd U = es.eigenvectors();
+			D = D.unaryExpr([](double x) {return (x < 1e-4) ? 1e-4 : x; });
+			dp = U * D.cwiseInverse().asDiagonal()*U.transpose()*gradient;
+// 			dp = denseSolver.solve(gradient);
 
 			// check if stabilization worked
 			dotProduct = dp.dot(gradient);
-			if (dotProduct > 0)
-				break;
+			if (dotProduct < 0)
+				Logger::logPrint("Search direction correction failed (Projection method)");
 		}
-
-// 		if(printOutput)
-		{
-			if(dotProduct > 0)
-				Logger::logPrint("Search direction fixed after %d stabilization steps (g.dp = %lf)\n", i+1, dotProduct);
-			else
-				Logger::logPrint("Search direction NOT fixed after %d stabilization steps (g.dp = %lf)\n", i+1, dotProduct);
-		}
-
-		//invert the part that goes against the gradient while keeping everything else the same...
-//		dVector dpProj = gradient * dotProduct / gradient.squaredNorm();
-//		dp = -dpProj;
-//		dp -= 2*dpProj;
-//		dp *= -1;
 	}
 
 	if (printOutput)

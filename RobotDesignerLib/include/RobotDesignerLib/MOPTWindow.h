@@ -35,6 +35,7 @@ struct MOPTParams {
 	double motionPlanDuration = 0.8;
 	bool checkDerivatives = false;
 	bool useDynamicRegularization = true;
+	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod;
 };
 
 
