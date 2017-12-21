@@ -4,11 +4,11 @@
 #include <MathLib/Matrix.h>
 #include <RobotDesignerLib/LocomotionEngineMotionPlan.h>
 
-class MPO_WheelAngleRegularizer : public ObjectiveFunction {
+class MPO_WheelAngleSmoothRegularizer : public ObjectiveFunction {
 
 public:
-	MPO_WheelAngleRegularizer(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
-	virtual ~MPO_WheelAngleRegularizer(void);
+	MPO_WheelAngleSmoothRegularizer(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
+	virtual ~MPO_WheelAngleSmoothRegularizer(void);
 
 	virtual double computeValue(const dVector& p);
 

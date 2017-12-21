@@ -4,6 +4,8 @@
 //TODO: try out different linear solvers, with prefactorization and without. Have a way of specifying which one this newton solver should be using...
 //TODO: get a version of the objective functions (and everything else) that works with dense matrices as well...
 
+#include <iostream>
+
 // The search direction is given by -Hinv * g
 void NewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *function, const dVector &p, dVector& dp) {
 	timerN.restart();
@@ -52,14 +54,40 @@ void NewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *function
 	//dp = H.triangularView<Eigen::Lower>().solve(gradient);
 
 	double dotProduct = dp.dot(gradient);
-	if (dotProduct < 0) {
-		if (printOutput)
+	if (dotProduct < 0 && useDynamicRegularization) {
+// 		if (printOutput)
 			Logger::logPrint("Search direction is not a descent direction (g.dp = %lf). Patching it up...\n", dotProduct);
+
+		double currStabValue = stabValue;
+		int i = 0;
+		for (; i < nMaxStabSteps; ++i) {
+			// stabilize hessian
+			for (int j = 0; j < p.size(); ++j) {
+				H.coeffRef(j,j) += currStabValue;
+			}
+			currStabValue *= 10;
+			solver.compute(H);
+			dp = solver.solve(gradient);
+
+			// check if stabilization worked
+			dotProduct = dp.dot(gradient);
+			if (dotProduct > 0)
+				break;
+		}
+
+// 		if(printOutput)
+		{
+			if(dotProduct > 0)
+				Logger::logPrint("Search direction fixed after %d stabilization steps (g.dp = %lf)\n", i+1, dotProduct);
+			else
+				Logger::logPrint("Search direction NOT fixed after %d stabilization steps (g.dp = %lf)\n", i+1, dotProduct);
+		}
+
 		//invert the part that goes against the gradient while keeping everything else the same...
-		dVector dpProj = gradient * dotProduct / gradient.squaredNorm();
+//		dVector dpProj = gradient * dotProduct / gradient.squaredNorm();
 //		dp = -dpProj;
 //		dp -= 2*dpProj;
-		dp *= -1;
+//		dp *= -1;
 	}
 
 	if (printOutput)

@@ -3,7 +3,8 @@
 #include <RobotDesignerLib/MPO_VelocitySoftConstraints.h>
 #include <RobotDesignerLib/MPO_WheelSpeedConstraint.h>
 #include <RobotDesignerLib/MPO_WheelSpeedRegularizer.h>
-#include <RobotDesignerLib/MPO_WheelAngleRegularizer.h>
+#include <RobotDesignerLib/MPO_WheelSpeedSmoothRegularizer.h>
+#include <RobotDesignerLib/MPO_WheelAngleSmoothRegularizer.h>
 #include <RobotDesignerLib/MPO_WheelSpeedTargetObjective.h>
 #include <RobotDesignerLib/MPO_WheelAccelerationConstraint.h>
 #include <RobotDesignerLib/MPO_PeriodicWheelTrajectoriesObjective.h>
@@ -241,11 +242,11 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 
 
 	//	return;
-
-	for (int i = 0; i < 5; i++) {
-		motionPlan->desDistanceToTravel.x() = desSpeedX * ((double)i / 4.0);
-		motionPlan->desDistanceToTravel.z() = desSpeedZ * ((double)i / 4.0);
-		motionPlan->desTurningAngle = desTurningAngle * ((double)i / 4.0);
+	int nCount = 10;
+	for (int i = 0; i < nCount; i++) {
+		motionPlan->desDistanceToTravel.x() = desSpeedX * ((double)i / (nCount - 1));
+		motionPlan->desDistanceToTravel.z() = desSpeedZ * ((double)i / (nCount - 1));
+		motionPlan->desTurningAngle = desTurningAngle * ((double)i / (nCount - 1));
 
 		runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_END_EFFECTORS | OPT_WHEELS | OPT_COM_ORIENTATIONS | OPT_ROBOT_STATES);
 #ifdef DEBUG_WARMSTART
@@ -411,7 +412,9 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->addObjectiveFunction(new MPO_FeetPathSmoothnessObjective(ef->theMotionPlan, "foot path smoothness objective", 10.0), "Smooth Regularizer");
 
 	ef->addObjectiveFunction(new MPO_WheelSpeedRegularizer(ef->theMotionPlan, "wheel speed regularizer", 1e-4), "Regularizers");
-	ef->addObjectiveFunction(new MPO_WheelAngleRegularizer(ef->theMotionPlan, "wheel angle regularizer", 1e-4), "Regularizers");
+	ef->objectives.back()->isActive = false;
+	ef->addObjectiveFunction(new MPO_WheelSpeedSmoothRegularizer(ef->theMotionPlan, "wheel speed smooth regularizer", 1e-4), "Smooth Regularizers");
+	ef->addObjectiveFunction(new MPO_WheelAngleSmoothRegularizer(ef->theMotionPlan, "wheel angle smooth regularizer", 1e-4), "Smooth Regularizers");
 
 	ef->addObjectiveFunction(new MPO_RobotStateRegularizer(ef->theMotionPlan, "robot joint angles regularizer objective", 0.0010 * 1, 6, dimCount - 1), "Regularizers");
 	ef->addObjectiveFunction(new MPO_NonLimbMotionRegularizer(ef->theMotionPlan, "robot joint angles regularizer objective (non-limb)", 0.01), "Smooth Regularizer");
@@ -425,8 +428,8 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 	ef->addObjectiveFunction(new MPO_SmoothCOMTrajectories(ef->theMotionPlan, "smoothCOM", 50), "Smooth Regularizer");
 
-	ef->addObjectiveFunction(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization (Partial)", 1, 6, dimCount - 1,false), "L0 Regularizers"); ef->objectives.back()->isActive = false;
-	ef->addObjectiveFunction(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization (Full)", 1, 6, dimCount - 1,true), "L0 Regularizers"); ef->objectives.back()->isActive = false;
+	ef->addObjectiveFunction(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization (Local)", 1, 6, dimCount - 1,true), "L0 Regularizers"); ef->objectives.back()->isActive = false;
+	ef->addObjectiveFunction(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization (Global)", 1, 6, dimCount - 1,false), "L0 Regularizers"); ef->objectives.back()->isActive = false;
 }
 
 LocomotionEngineManagerGRFv2::~LocomotionEngineManagerGRFv2(){

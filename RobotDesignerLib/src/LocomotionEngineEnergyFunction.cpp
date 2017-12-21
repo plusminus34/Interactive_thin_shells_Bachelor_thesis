@@ -74,7 +74,7 @@ double LocomotionEngine_EnergyFunction::computeValue(const dVector& p){
 	double totalEnergy = 0;
 
 	for (uint i=0; i<objectives.size(); i++)
-		if (objectives[i]->isActive)
+		if (objectives[i]->isActive && objectives[i]->weight!=0.0)
 			totalEnergy += objectives[i]->computeValue(p);
 
 	//add the regularizer contribution
@@ -109,7 +109,7 @@ void LocomotionEngine_EnergyFunction::addHessianEntriesTo(DynamicArray<MTriplet>
 
 	// Sequential version
 	for (uint i = 0; i < objectives.size(); i++)
-		if (objectives[i]->isActive)
+		if (objectives[i]->isActive && objectives[i]->weight != 0.0)
 			objectives[i]->addHessianEntriesTo(hessianEntries, p);
 
 	// Parallel version
@@ -148,7 +148,7 @@ void LocomotionEngine_EnergyFunction::addGradientTo(dVector& grad, const dVector
 
 	//and now the contributions of the individual objectives
 	for (uint i=0; i<objectives.size(); i++)
-		if(objectives[i]->isActive)
+		if(objectives[i]->isActive && objectives[i]->weight != 0.0)
 			objectives[i]->addGradientTo(grad, p);
 }
 

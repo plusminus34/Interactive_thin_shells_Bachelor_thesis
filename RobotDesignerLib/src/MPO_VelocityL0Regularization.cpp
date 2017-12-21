@@ -1,4 +1,6 @@
 #include <RobotDesignerLib/MPO_VelocityL0Regularization.h>
+#include <MathLib/CircShiftedView.h>
+#include <iostream>
 
 MPO_VelocityL0Regularization::MPO_VelocityL0Regularization(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int startQIndex, int endQIndex, bool mode) {
 
@@ -18,29 +20,38 @@ double MPO_VelocityL0Regularization::computeValue(const dVector& s) {
 	if (theMotionPlan->robotStatesParamsStartIndex < 0)
 		return 0;
 
-	double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
-
+	int nSamplePoints = theMotionPlan->nSamplePoints;
 	double delta = theMotionPlan->jointL0Delta;
 
-	auto f = [delta](double t) {return (t*t) / (t*t + delta); };
+// 	double dt;
+// 	if (theMotionPlan->wrapAroundBoundaryIndex >= 0)
+// 		dt = theMotionPlan->motionPlanDuration / (nSamplePoints-1);
+// 	else
+// 		dt = theMotionPlan->motionPlanDuration / nSamplePoints;
 
-	double retVal = 0;
+	auto f = [delta](double t) {return t / (t + delta); };
 
-	int nSamplePoints = theMotionPlan->nSamplePoints;
-	if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1; //don't double count... the last robot pose is already the same as the first one, which means that COM and feet locations are in correct locations relative to each other, so no need to ask for that again explicitely...
+	Eigen::Map<const Eigen::MatrixXd> Q(s.data()+theMotionPlan->robotStatesParamsStartIndex, theMotionPlan->robotStateTrajectory.qArray[0].size(), nSamplePoints);
+	auto Qt = Q.bottomRows(endQIndex - startQIndex + 1);
+	double retVal;
+	
+	if (mode) // f(v11^2)+f(v12^2)+...+f(v21^2)+f(v22^2)+...
+		retVal = (Qt.rightCols(nSamplePoints - 1) - Qt.leftCols(nSamplePoints - 1)).cwiseAbs2().unaryExpr(f).sum();
+	else     //  f(v11^2+v12^2+..)+f(v21^2+v22^2+...)+...
+		retVal = (Qt.rightCols(nSamplePoints - 1) - Qt.leftCols(nSamplePoints - 1)).cwiseAbs2().rowwise().sum().unaryExpr(f).sum();
 
-	Eigen::Map<const Eigen::MatrixXd> qMap(s.data()+theMotionPlan->robotStatesParamsStartIndex, theMotionPlan->robotStateTrajectory.qArray[0].size(), nSamplePoints);
-	for (int i = startQIndex; i <= endQIndex; i++) {
-		for (int j = 0; j < nSamplePoints; j++) {
-			int jm, jp;
 
-			theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
-			if (jm == -1 || jp == -1) continue;
-
-			double velocity = (qMap(i,jp) - qMap(i,jm)) / dt;
-			retVal += f(velocity);
-		}
-	}
+// 	for (int i = startQIndex; i <= endQIndex; i++) {
+// 		for (int j = 0; j < nSamplePoints; j++) {
+// 			int jm, jp;
+// 
+// 			theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
+// 			if (jm == -1 || jp == -1) continue;
+// 
+// 			double velocity = (Q(i,jp) - Q(i,jm)) / dt;
+// 			retVal += f(velocity);
+// 		}
+// 	}
 
 	return retVal * weight;
 }
@@ -49,84 +60,108 @@ void MPO_VelocityL0Regularization::addGradientTo(dVector& grad, const dVector& p
 
 	if (theMotionPlan->robotStatesParamsStartIndex < 0)
 		return;
-	
-
-	double delta = theMotionPlan->jointL0Delta;
-
-	auto g = [delta](double t) {return (2*t*delta) / ((t*t + delta)*(t*t + delta)); };
-
 
 	int nSamplePoints = theMotionPlan->nSamplePoints;
-	if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1; //don't double count... the last robot pose is already the same as the first one, which means that COM and feet locations are in correct locations relative to each other, so no need to ask for that again explicitely...
+	double delta = theMotionPlan->jointL0Delta;
 
-	for (int j=0; j<nSamplePoints; j++){
+	auto g = [delta](double t) {return delta / ((t + delta)*(t + delta)); };
 
-		int jm, jp;
+	Eigen::Map<const Eigen::MatrixXd> Q(p.data() + theMotionPlan->robotStatesParamsStartIndex, theMotionPlan->robotStateTrajectory.qArray[0].size(), nSamplePoints);
+	auto Qt = Q.bottomRows(endQIndex - startQIndex + 1);
 
-		theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
-		if (jm == -1 || jp == -1) continue;
+	Eigen::Map<Eigen::MatrixXd> G(grad.data() + theMotionPlan->robotStatesParamsStartIndex, theMotionPlan->robotStateTrajectory.qArray[0].size(), nSamplePoints);
+	auto Gt = G.bottomRows(endQIndex - startQIndex + 1);
 
-		double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
-
-		for (int i=startQIndex; i<=endQIndex; i++){
-			double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
-			double dC = g(velocity);
-				
-
-			grad[theMotionPlan->robotStatesParamsStartIndex + theMotionPlan->robotStateTrajectory.nStateDim * jm + i] -= weight * dC / dt;
-			grad[theMotionPlan->robotStatesParamsStartIndex + theMotionPlan->robotStateTrajectory.nStateDim * jp + i] += weight * dC / dt;
+	MatrixNxM dQ = (Qt.rightCols(nSamplePoints - 1) - Qt.leftCols(nSamplePoints - 1));
+	if(mode)
+	{
+		MatrixNxM GdQ = dQ.cwiseAbs2().unaryExpr(g);
+		for (int i = 0; i < nSamplePoints-1; i++)
+		{
+			Gt.col(i) -=     weight * 2 * dQ.col(i).cwiseProduct(GdQ.col(i));
+			Gt.col(i + 1) += weight * 2 * dQ.col(i).cwiseProduct(GdQ.col(i));
 		}
 	}
+	else
+	{
+		dVector GdQ = dQ.cwiseAbs2().rowwise().sum().unaryExpr(g);
+		for (int i = 0; i < nSamplePoints - 1; i++)
+		{
+			Gt.col(i) -= weight * 2 * dQ.col(i)*GdQ(i);
+			Gt.col(i + 1) += weight * 2 * dQ.col(i)*GdQ(i);
+		}
+	}
+// 	for (int j=0; j<nSamplePoints; j++){
+// 
+// 		int jm, jp;
+// 
+// 		theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
+// 		if (jm == -1 || jp == -1) continue;
+// 
+// 		double dt = theMotionPlan->motionPlanDuration / nSamplePoints;
+// 
+// 		for (int i=startQIndex; i<=endQIndex; i++){
+// 			double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
+// 			double dC = g(velocity);
+// 				
+// 
+// 			grad[theMotionPlan->robotStatesParamsStartIndex + theMotionPlan->robotStateTrajectory.nStateDim * jm + i] -= weight * dC / dt;
+// 			grad[theMotionPlan->robotStatesParamsStartIndex + theMotionPlan->robotStateTrajectory.nStateDim * jp + i] += weight * dC / dt;
+// 		}
+// 	}
 }
 
 void MPO_VelocityL0Regularization::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
 
-	if (theMotionPlan->robotStatesParamsStartIndex >= 0){
+	if (theMotionPlan->robotStatesParamsStartIndex < 0)
+		return;
 
-		double delta = theMotionPlan->jointL0Delta;
+	int nSamplePoints = theMotionPlan->nSamplePoints;
+	double delta = theMotionPlan->jointL0Delta;
 
-		auto h = [delta](double t) {double dt2 = delta + t*t; return (2 * delta)*(delta - 3 * t*t) / (dt2*dt2*dt2); };
+	Eigen::Map<const Eigen::MatrixXd> Q(p.data() + theMotionPlan->robotStatesParamsStartIndex, theMotionPlan->robotStateTrajectory.qArray[0].size(), nSamplePoints);
+	auto Qt = Q.bottomRows(endQIndex - startQIndex + 1);
 
-		int nSamplePoints = theMotionPlan->nSamplePoints;
-		if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1; //don't double count... the last robot pose is already the same as the first one, which means that COM and feet locations are in correct locations relative to each other, so no need to ask for that again explicitely...
+	auto g = [delta](double t) {return delta / ((t + delta)*(t + delta)); };
+	auto h = [delta](double t) {return -2*delta / ((t + delta)*(t + delta)*(t + delta)); };
 
-		for (int j=0; j<nSamplePoints; j++){
 
-			int jm, jp;
+	for (int j=0; j<nSamplePoints-1; j++){
 
-			theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
-			if (jm == -1 || jp == -1) continue;
+		int jm, jp;
+// 		auto ij2ind = [this](int i, int j){}
+// 		theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
+// 		if (jm == -1 || jp == -1) continue;
+		jp = j + 1;
+		for (int i=startQIndex; i<=endQIndex; i++){
+			double velocity = Q(i,jp) - Q(i,j);
 
-			double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
-
-			for (int i=startQIndex; i<=endQIndex; i++){
-				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
-
-				if (theMotionPlan->robotStatesParamsStartIndex >= 0){
-
-					// lower bound hessian
-					// d_jm_jm
-					addMTripletToList_reflectUpperElements(
-								hessianEntries,
-								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								weight * h(velocity) / (dt*dt));
-					// d_jp_jp
-					addMTripletToList_reflectUpperElements(
-								hessianEntries,
-								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								weight * h(velocity) / (dt*dt));
-					// d_jm_jp
-					addMTripletToList_reflectUpperElements(
-								hessianEntries,
-								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								- weight * h(velocity) / (dt*dt));
-				}
+			if (theMotionPlan->robotStatesParamsStartIndex >= 0){
+				// grad = 2 velocity g(velocity.^2)
+				// lower bound hessian
+				// d_jm_jm
+				double val = 4 * velocity * velocity *h(velocity*velocity) + 2 * g(velocity*velocity);
+				addMTripletToList_reflectUpperElements(
+							hessianEntries,
+							theMotionPlan->robotStatesParamsStartIndex + j  * theMotionPlan->robotStateTrajectory.nStateDim + i,
+							theMotionPlan->robotStatesParamsStartIndex + j  * theMotionPlan->robotStateTrajectory.nStateDim + i,
+							weight *val);
+				// d_jp_jp
+				addMTripletToList_reflectUpperElements(
+							hessianEntries,
+							theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
+							theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
+							weight * val);
+				// d_jm_jp
+				addMTripletToList_reflectUpperElements(
+							hessianEntries,
+							theMotionPlan->robotStatesParamsStartIndex + j  * theMotionPlan->robotStateTrajectory.nStateDim + i,
+							theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
+							- weight * val);
 			}
 		}
 	}
 }
+
 
 
