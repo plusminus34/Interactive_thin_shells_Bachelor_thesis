@@ -70,5 +70,4 @@ void RotationMount::dxDpar(P3D const & x0, std::vector<double> const & parameter
 	grad[1] = V3D(1.0,                     0.0,                   0.0);
 	grad[2] = V3D(0.0,                     1.0,                   0.0);
 
-std::cout << "compute dxdpar analytically" << std::endl;
 }

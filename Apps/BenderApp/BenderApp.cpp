@@ -8,6 +8,7 @@
 #include <FEMSimLib/CSTSimulationMesh3D.h>
 #include <FEMSimLib/MassSpringSimulationMesh3D.h>
 #include <GUILib/GLUtils.h>
+#include "OptimizationLib/GradientDescentFunctionMinimizer.h"
 
 #include <algorithm>
 #include <cmath>
@@ -88,6 +89,10 @@ BenderApp::BenderApp()
 	}
 	pullXi();
 
+
+	// prepare minimizer and objective funciton
+	minimizer = new GradientDescentFunctionMinimizer();
+	objectiveFunction = new NodePositionObjectiveFunction(this);
 
 }
 
@@ -453,7 +458,7 @@ void BenderApp::saveFile(const char* fName) {
 	Logger::consolePrint("SAVE FILE: Do not know what to do with file \'%s\'\n", fName);
 }
 
-
+/*
 // Run the App tasks
 void BenderApp::process() {
 	//do the work here...
@@ -462,23 +467,10 @@ void BenderApp::process() {
 	//femMesh->tempEEUnits.clear();
 	//femMesh->tempEEUnits.push_back(new CSTDrag2D(this, nodes[9], P3D(-5, 20)));
 	//
-	double simulationTime = 0;
-	double maxRunningTime = 1.0 / desiredFrameRate;
+	simulationTime = 0;
+	maxRunningTime = 1.0 / desiredFrameRate;
 	femMesh->checkDerivatives = checkDerivatives != 0;
 
-
-	auto solve_mesh = [&] ()
-	{
-		if (computeStaticSolution)
-		{
-			femMesh->solve_statics();
-			simulationTime += maxRunningTime + 1.0;
-		}
-		else {
-			femMesh->solve_dynamics(simTimeStep);
-			simulationTime += simTimeStep;
-		}
-	};
 
 
 	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
@@ -488,6 +480,8 @@ void BenderApp::process() {
 		
 
 		if(optimizeObjective) {
+
+			pullXi();
 
 			// compute dO/dxi	[n_par x 1]
 			computeDoDxi(dOdxi);
@@ -507,7 +501,7 @@ std::cout << std::endl;
 					x_approx = femMesh->x;
 					for(int i = 0; i < xi.size(); ++i) {
 						for(int j = 0; j < x_approx.size(); ++j) {
-							x_approx[j] += deltaxdeltaxi[i][j] * dxi[i];	// note: deltaxdeltaxi should have been computed before within 'computeDoDx()'
+							x_approx[j] += deltaxdeltaxi[i][j] * dxi[i];	// note: deltaxdeltaxi should have been computed before within 'computeDoDxi()'
 						}
 					}
 					return(femMesh->computeOofx(x_approx));
@@ -518,8 +512,8 @@ std::cout << std::endl;
 				};
 
 				
-				double gamma_start = 1.0;
-				int maxIter = 20;
+				double gamma_start = 0.2;
+				int maxIter = 30;
 
 				double gamma_test = gamma_start;
 				dVector xi_old = xi;
@@ -558,7 +552,7 @@ std::cout << std::endl;
 			//xi = xi - gamma * dOdxi;
 			pushXi();
 
-			solve_mesh();
+			solveMesh();
 
 			double o_new = femMesh->computeO();
 			double e_new = femMesh->computeTargetPositionError();
@@ -570,11 +564,64 @@ std::cout << std::endl;
 
 		}
 		else {
-			solve_mesh();
+			solveMesh();
 		}
 
 
 
+	}
+}
+*/
+// Run the App tasks
+void BenderApp::process() {
+	//do the work here...
+
+	simulationTime = 0;
+	maxRunningTime = 1.0 / desiredFrameRate;
+	femMesh->checkDerivatives = checkDerivatives != 0;
+
+
+	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
+	while (simulationTime < 1.0 * maxRunningTime) {
+
+		if(optimizeObjective) {
+
+			pullXi();
+
+			// minimize here
+			minimizer->lineSearchStartValue = 1.0;
+			minimizer->solveResidual = 1e-5;
+			minimizer->maxIterations = 1;
+			minimizer->maxLineSearchIterations = 15;
+			
+			double o_new = 0;
+			minimizer->minimize(objectiveFunction, xi, o_new);
+
+			double e_new = femMesh->computeTargetPositionError();
+			double delta_o = o_new - o_last;
+			double delta_e = e_new - e_last;
+			Logger::consolePrint("o | e | delta o | delta e = %10f | %10f | %+-10.7f | %+-10.7f \n", o_new, e_new, delta_o, delta_e);
+			o_last = o_new;
+			e_last = e_new;
+
+		}
+		else {
+			solveMesh();
+		}
+
+	}
+}
+
+void BenderApp::solveMesh() 
+{
+	if (computeStaticSolution)
+	{
+		femMesh->solve_statics();
+		simulationTime += maxRunningTime + 1.0;
+	}
+	else {
+		femMesh->solve_dynamics(simTimeStep);
+		simulationTime += simTimeStep;
 	}
 }
 

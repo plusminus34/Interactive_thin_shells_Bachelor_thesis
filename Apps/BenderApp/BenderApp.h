@@ -5,8 +5,9 @@
 #include <array>
 #include <map>
 
+#include "OptimizationLib/GradientBasedFunctionMinimizer.h"
+#include "NodePositionObjectiveFunction.h"
 #include "BenderSimulationMesh2D.h"
-//#include "Mount.h"
 
 
 /**
@@ -25,6 +26,9 @@ public:
 
 	dVector x_approx;
 
+	GradientBasedFunctionMinimizer * minimizer;
+	NodePositionObjectiveFunction * objectiveFunction;
+
 	int selected_mount = -1;
 
 	// diagnostics
@@ -39,6 +43,8 @@ public:
 	bool checkDerivatives = false;
 
 	double simTimeStep = 1/100.0;
+	double simulationTime;
+	double maxRunningTime;
 
 	Ray lastClickedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
 	Ray lastMovedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
@@ -87,6 +93,7 @@ public:
 	//int getMountId(int node_id);
 
 	// optimization process
+	void solveMesh();
 	void computeDoDxi(dVector & dodxi);
 	double peekOofXi(dVector const & xi_in);
 
