@@ -1,15 +1,15 @@
-#include <RobotDesignerLib/MPO_WheelAngleRegularizer.h>
+#include <RobotDesignerLib/MPO_WheelAngleSmoothRegularizer.h>
 
-MPO_WheelAngleRegularizer::MPO_WheelAngleRegularizer(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight){
+MPO_WheelAngleSmoothRegularizer::MPO_WheelAngleSmoothRegularizer(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight){
 	theMotionPlan = mp;
 	this->description = objectiveDescription;
 	this->weight = weight;
 }
 
-MPO_WheelAngleRegularizer::~MPO_WheelAngleRegularizer(void){
+MPO_WheelAngleSmoothRegularizer::~MPO_WheelAngleSmoothRegularizer(void){
 }
 
-double MPO_WheelAngleRegularizer::computeValue(const dVector& s){
+double MPO_WheelAngleSmoothRegularizer::computeValue(const dVector& s){
 	//assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
@@ -35,7 +35,7 @@ double MPO_WheelAngleRegularizer::computeValue(const dVector& s){
 	return retVal * weight;
 }
 
-void MPO_WheelAngleRegularizer::addGradientTo(dVector& grad, const dVector& p) {
+void MPO_WheelAngleSmoothRegularizer::addGradientTo(dVector& grad, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
@@ -59,7 +59,7 @@ void MPO_WheelAngleRegularizer::addGradientTo(dVector& grad, const dVector& p) {
 	}
 }
 
-void MPO_WheelAngleRegularizer::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
+void MPO_WheelAngleSmoothRegularizer::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
