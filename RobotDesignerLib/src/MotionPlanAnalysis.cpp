@@ -17,7 +17,11 @@ MotionPlanAnalysis::MotionPlanAnalysis(nanogui::Screen *screen){
 	Widget *buttons = new Widget(window);
 	buttons->setLayout(new GridLayout(Orientation::Horizontal, 5, Alignment::Minimum, 0, 5));
 
-	Widget *widgetPlots = new Widget(window);
+	VScrollPanel *vscroll = new VScrollPanel(window);
+	vscroll->setFixedHeight(std::min(1000, screen->height()-200));
+	screen->setResizeCallback();
+
+	Widget *widgetPlots = new Widget(vscroll);
 	widgetPlots->setLayout(new GridLayout(Orientation::Vertical, 4, Alignment::Minimum, 0, 5));
 
 	// create a EE plots
