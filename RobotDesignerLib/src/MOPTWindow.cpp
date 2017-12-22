@@ -105,7 +105,18 @@ void MOPTWindow::addMenuItems() {
 		glApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
 	}
 
-	glApp->mainMenu->addVariable("check derivatives", moptParams.checkDerivatives);
+	glApp->mainMenu->addButton("Check Derivatives", [this]() {
+		bool temp = moptParams.checkDerivatives; moptParams.checkDerivatives = true;
+		runMOPTStep();
+		moptParams.checkDerivatives = temp;
+	});
+
+	glApp->mainMenu->addButton("Check Hessians PSD", [this]() {
+		bool temp = moptParams.checkHessianPSD; moptParams.checkHessianPSD = true;
+		runMOPTStep();
+		moptParams.checkHessianPSD = temp;
+	});
+
 	glApp->mainMenu->addVariable<bool>("Log data",
 		[this](bool val) {if (locomotionManager) locomotionManager->printDebugInfo = val; },
 		[this] { if (locomotionManager) return locomotionManager->printDebugInfo; else return false; });
@@ -205,6 +216,7 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.writeJointVelocityProfile = locomotionManager->writeVelocityProfileToFile;
 	moptParams.motionPlanDuration = locomotionManager->motionPlan->motionPlanDuration;
 	moptParams.checkDerivatives = locomotionManager->checkDerivatives;
+	moptParams.checkHessianPSD = locomotionManager->checkHessianPSD;
 	moptParams.hessCorrectionMethod = locomotionManager->hessCorrectionMethod;
 
 }
@@ -229,6 +241,7 @@ void MOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->writeVelocityProfileToFile = moptParams.writeJointVelocityProfile;
 	locomotionManager->motionPlan->motionPlanDuration = moptParams.motionPlanDuration;
 	locomotionManager->checkDerivatives = moptParams.checkDerivatives;
+	locomotionManager->checkHessianPSD = moptParams.checkHessianPSD;
 	locomotionManager->hessCorrectionMethod = moptParams.hessCorrectionMethod;
 
 }

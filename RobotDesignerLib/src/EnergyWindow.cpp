@@ -15,15 +15,18 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 
 	if (window)
 		window->dispose();
-	window = new Window(screen, "Motion Plan Analysis");
+	window = new Window(screen, "Energy Window");
 	window->setLayout(new GridLayout(Orientation::Horizontal, 2, Alignment::Middle, 15, 5));
 	window->setVisible(false);
 	window->setPosition({1100, 0});
 
 	// make energy panel
+	VScrollPanel *vscroll = new VScrollPanel(window);
+	vscroll->setFixedHeight(screen->height()-200);
+
 	Widget *energyPanel;
 	{
-		energyPanel = new Widget(window);
+		energyPanel = new Widget(vscroll);
 		GridLayout *layout = new GridLayout(Orientation::Horizontal, 5, Alignment::Fill);
 		layout->setColAlignment({ Alignment::Minimum, Alignment::Fill });
 		layout->setSpacing(0, 10);

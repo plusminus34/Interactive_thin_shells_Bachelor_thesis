@@ -22,6 +22,7 @@ public:
 	void testIndividualGradient(dVector& params);
 	void testIndividualHessian(dVector& params);
 
+	void testIndividualHessianPSD(dVector& params);
 	void addObjectiveFunction(ObjectiveFunction* obj, std::string string = "no group");
 
 public:
