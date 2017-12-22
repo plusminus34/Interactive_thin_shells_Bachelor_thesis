@@ -65,6 +65,13 @@ double LocomotionEngineManager::runMOPTStep() {
 		energyFunction->testIndividualGradient(params);
 		energyFunction->testIndividualHessian(params);
 	}
+	if (checkHessianPSD)
+	{
+		dVector params;
+		motionPlan->writeMPParametersToList(params);
+		energyFunction->testIndividualHessianPSD(params);
+	}
+
 	energyFunction->printDebugInfo = printDebugInfo;
 
 	double energyVal = optimizeMoptionPlan();

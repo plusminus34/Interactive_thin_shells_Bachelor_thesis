@@ -117,6 +117,21 @@ void ObjectiveFunction::testHessianWithFD(const dVector& p){
 	}
 }
 
+void ObjectiveFunction::testHessianPSD(const dVector& p) {
+	SparseMatrix H(p.size(), p.size());
+	DynamicArray<MTriplet> hessianEntries;
+	hessianEntries.clear();
+	addHessianEntriesTo(hessianEntries, p);
+	H.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
+	Logger::logPrint("Objective Function: testing hessians...\n");
+	Logger::print("Objective Function: testing hessians...\n");
+
+	MatrixNxM Hd(H);
+	Eigen::SelfAdjointEigenSolver<MatrixNxM> es(Hd);
+	Eigen::VectorXd D = es.eigenvalues();
+	if(D.minCoeff()<0)
+		Logger::print("Hessian is not PSD with min eigenvalues = %lf", D.minCoeff());
+}
 
 
 

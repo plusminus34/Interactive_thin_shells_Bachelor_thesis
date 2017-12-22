@@ -57,6 +57,8 @@ public:
 	bool useBFGS = false;
 	bool printDebugInfo = true;
 	bool checkDerivatives = false;
+	bool checkHessianPSD = false;
+
 	bool locked = false; // once locked, cannot do further optimization
 	bool writeVelocityProfileToFile = false;
 
