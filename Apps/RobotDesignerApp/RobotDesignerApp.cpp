@@ -271,7 +271,7 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 	if (key == GLFW_KEY_4 && action == GLFW_PRESS)
 		runOption = PHYSICS_SIMULATION_WITH_TORQUE_CONTROL;
 
-	if (key == GLFW_KEY_A)
+	if (key == GLFW_KEY_A && action == GLFW_PRESS)
 		optimizeWhileAnimating = !optimizeWhileAnimating;
 	mainMenu->refresh();
 
