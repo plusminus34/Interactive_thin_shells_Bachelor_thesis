@@ -62,6 +62,8 @@ void LocomotionEngine_EnergyFunction::testIndividualHessian(dVector& params){
 
 void LocomotionEngine_EnergyFunction::testIndividualHessianPSD(dVector& params) {
 	DynamicArray<double> origWeights;
+	double origRegularizer = regularizer;
+	regularizer = 0;
 	for (auto obj : objectives) {
 		origWeights.push_back(obj->weight);
 		obj->weight = 0;
@@ -80,6 +82,7 @@ void LocomotionEngine_EnergyFunction::testIndividualHessianPSD(dVector& params) 
 	for (int i = 0; i < (int)objectives.size(); i++) {
 		objectives[i]->weight = origWeights[i];
 	}
+	regularizer = origRegularizer;
 }
 
 void LocomotionEngine_EnergyFunction::addObjectiveFunction(ObjectiveFunction *obj, string groupName)
