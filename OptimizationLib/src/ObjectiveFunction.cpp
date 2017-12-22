@@ -130,7 +130,7 @@ void ObjectiveFunction::testHessianPSD(const dVector& p) {
 	Eigen::SelfAdjointEigenSolver<MatrixNxM> es(Hd);
 	Eigen::VectorXd D = es.eigenvalues();
 	if(D.minCoeff()<0)
-		Logger::logPrint("Hessian is not PSD with min eigenvalues = %lf",D.minCoeff());
+		Logger::print("Hessian is not PSD with min eigenvalues = %lf", D.minCoeff());
 }
 
 
