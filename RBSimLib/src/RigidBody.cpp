@@ -328,7 +328,7 @@ void RigidBody::writeToFile(FILE* fp){
 		fprintf(fp, "\t%s %lf %lf %lf %lf\n", getRBString(RB_BODY_POINT_FEATURE), rbProperties.bodyPointFeatures[i].coords[0], rbProperties.bodyPointFeatures[i].coords[1], rbProperties.bodyPointFeatures[i].coords[2], rbProperties.bodyPointFeatures[i].featureSize);
 
 	for (uint i = 0;i<rbProperties.endEffectorPoints.size();i++)
-		fprintf(fp, "\t%s %lf %lf %lf %lf %d %lf %lf %lf\n", getRBString(RB_END_EFFECTOR), rbProperties.endEffectorPoints[i].coords[0], rbProperties.endEffectorPoints[i].coords[1], rbProperties.endEffectorPoints[i].coords[2], rbProperties.endEffectorPoints[i].featureSize, rbProperties.endEffectorPoints[i].eeType, rbProperties.endEffectorPoints[i].localCoordsWheelAxis[0], rbProperties.endEffectorPoints[i].localCoordsWheelAxis[1], rbProperties.endEffectorPoints[i].localCoordsWheelAxis[2]);
+		fprintf(fp, "\t%s %lf %lf %lf %lf %d %lf %lf %lf %d\n", getRBString(RB_END_EFFECTOR), rbProperties.endEffectorPoints[i].coords[0], rbProperties.endEffectorPoints[i].coords[1], rbProperties.endEffectorPoints[i].coords[2], rbProperties.endEffectorPoints[i].featureSize, rbProperties.endEffectorPoints[i].eeType, rbProperties.endEffectorPoints[i].localCoordsWheelAxis[0], rbProperties.endEffectorPoints[i].localCoordsWheelAxis[1], rbProperties.endEffectorPoints[i].localCoordsWheelAxis[2], rbProperties.endEffectorPoints[i].meshIndex);
 
 	fprintf(fp, "\t%s %d %d\n", getRBString(RB_MAPPING_INFO), mappingInfo.index1, mappingInfo.index2);
 
@@ -449,7 +449,7 @@ void RigidBody::loadFromFile(FILE* fp){
 				break;
 			case RB_END_EFFECTOR:{
 					RBEndEffector tmpEE(P3D(), 0.01);
-					sscanf(line, "%lf %lf %lf %lf %d %lf %lf %lf", &tmpEE.coords[0], &tmpEE.coords[1], &tmpEE.coords[2], &tmpEE.featureSize, &tmpEE.eeType, &tmpEE.localCoordsWheelAxis[0], &tmpEE.localCoordsWheelAxis[1], &tmpEE.localCoordsWheelAxis[2]);
+					sscanf(line, "%lf %lf %lf %lf %d %lf %lf %lf %d", &tmpEE.coords[0], &tmpEE.coords[1], &tmpEE.coords[2], &tmpEE.featureSize, &tmpEE.eeType, &tmpEE.localCoordsWheelAxis[0], &tmpEE.localCoordsWheelAxis[1], &tmpEE.localCoordsWheelAxis[2], &rbProperties.endEffectorPoints[i].meshIndex);
 					rbProperties.endEffectorPoints.push_back(tmpEE);
 				}
 				break;

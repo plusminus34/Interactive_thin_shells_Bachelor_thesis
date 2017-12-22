@@ -7,6 +7,8 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
+
+
 RobotDesignerApp::RobotDesignerApp(){
 	bgColor[0] = bgColor[1] = bgColor[2] = 1;
 	setWindowTitle("RobotDesigner");
@@ -450,6 +452,9 @@ void RobotDesignerApp::process() {
 
 		while (simulationTime / maxRunningTime < animationSpeedupFactor) {
 			simulationTime += simWindow->simTimeStep;
+
+//			update wheel rotations here...
+
 			simWindow->step();
 
 			if (slowMo)

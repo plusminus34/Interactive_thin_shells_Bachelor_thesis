@@ -14,6 +14,8 @@ public:
 		coords = p;
 		featureSize = fSize;
 	}
+	//in some cases we may want to know which mesh is associated with the end effectors (e.g. if they are wheels that must rotate about their axis)
+	int meshIndex = -1;
 };
 
 enum END_EFFECTOR_TYPE {

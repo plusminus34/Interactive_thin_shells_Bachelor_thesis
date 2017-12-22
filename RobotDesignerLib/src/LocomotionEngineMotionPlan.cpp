@@ -1543,21 +1543,6 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 
 		robot->setState(&oldState);	
 
-		// draw wheels at end effectors
-		{
-			glColor4d(0.2, 0.6, 0.8, 0.8);
-			double width = 0.02;
-			for (const LocomotionEngine_EndEffectorTrajectory &ee : endEffectorTrajectories) {
-				double alpha = ee.getWheelYawAngleAt(f);
-				double beta = ee.getWheelTiltAngleAt(f);
-				double radius = ee.wheelRadius;
-				V3D axis = ee.getRotatedWheelAxis(alpha, beta);
-				P3D wheelCenter = ee.getWheelCenterPositionAt(f);
-				drawCylinder(wheelCenter - axis*0.5*width, axis*width, radius, 24);
-				drawArrow(wheelCenter, wheelCenter + axis*0.05, 0.005);
-			}
-		}
-
 		// draw center of rotation
 		{
 			glLineWidth(5);
@@ -1609,6 +1594,22 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 			V3D contactForce = endEffectorTrajectories[i].getContactForceAt(f);
 			P3D EEPos = endEffectorTrajectories[i].getEEPositionAt(f);
 			drawArrow(EEPos, EEPos + contactForce * 0.05, 0.007, 12);
+		}
+	}
+
+
+	// draw wheels at end effectors
+	{
+		glColor4d(0.2, 0.6, 0.8, 0.8);
+		double width = 0.02;
+		for (const LocomotionEngine_EndEffectorTrajectory &ee : endEffectorTrajectories) {
+			double alpha = ee.getWheelYawAngleAt(f);
+			double beta = ee.getWheelTiltAngleAt(f);
+			double radius = ee.wheelRadius;
+			V3D axis = ee.getRotatedWheelAxis(alpha, beta);
+			P3D wheelCenter = ee.getWheelCenterPositionAt(f);
+			drawCylinder(wheelCenter - axis*0.5*width, axis*width, radius, 24);
+			drawArrow(wheelCenter, wheelCenter + axis*0.05, 0.005);
 		}
 	}
 

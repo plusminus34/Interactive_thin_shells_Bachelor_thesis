@@ -783,8 +783,11 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 
 		if (rmc->type == LIVING_WHEEL_EE)
 		{
+
 			LivingWheelEE* wheelEE = dynamic_cast<LivingWheelEE*>(rmc);
 			rb.meshes.push_back(wheelEE->wheelMesh);
+			//keep track of the mesh associated with this end effector - we will need to keep track of it such as to be able to spin it appropriately... 
+			rb.rbProperties.endEffectorPoints.back().meshIndex = rb.meshes.size() - 1;
 			Transformation trans;
 			trans.R = rmc->state.orientation.getRotationMatrix();
 			trans.T = rmc->state.position - rb.state.position;
