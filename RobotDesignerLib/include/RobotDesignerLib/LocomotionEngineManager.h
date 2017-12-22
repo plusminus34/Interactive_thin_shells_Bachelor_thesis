@@ -69,6 +69,7 @@ public:
 	bool useObjectivesOnly = false;
 	bool writeParamsToFile = true;
 	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod;
+	bool checkHessianPSD;
 public:
 	LocomotionEngineManager();
 	virtual ~LocomotionEngineManager() = 0;

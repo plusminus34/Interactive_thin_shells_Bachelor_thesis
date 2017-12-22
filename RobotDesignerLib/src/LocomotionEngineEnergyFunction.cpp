@@ -60,6 +60,28 @@ void LocomotionEngine_EnergyFunction::testIndividualHessian(dVector& params){
 	}
 }
 
+void LocomotionEngine_EnergyFunction::testIndividualHessianPSD(dVector& params) {
+	DynamicArray<double> origWeights;
+	for (auto obj : objectives) {
+		origWeights.push_back(obj->weight);
+		obj->weight = 0;
+	}
+
+	for (int i = 0; i < (int)objectives.size(); i++) {
+		if (i > 0)
+			objectives[i - 1]->weight = 0;
+		objectives[i]->weight = origWeights[i];
+
+		Logger::print("\n----------- Testing objective %s -------------\n", objectives[i]->description.c_str());
+		Logger::logPrint("\n----------- Testing objective %s -------------\n", objectives[i]->description.c_str());
+		testHessianPSD(params);
+	}
+
+	for (int i = 0; i < (int)objectives.size(); i++) {
+		objectives[i]->weight = origWeights[i];
+	}
+}
+
 void LocomotionEngine_EnergyFunction::addObjectiveFunction(ObjectiveFunction *obj, string groupName)
 {
 	objectives.push_back(obj);
