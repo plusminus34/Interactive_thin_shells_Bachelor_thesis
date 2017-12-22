@@ -35,7 +35,7 @@ struct MOPTParams {
 	double motionPlanDuration = 0.8;
 	bool checkDerivatives = false;
 	bool useDynamicRegularization = true;
-	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod;
+	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod = NewtonFunctionMinimizer::DynamicRegularization;
 };
 
 
@@ -46,7 +46,7 @@ public:
 
 	bool startWithEmptyFFP = true;
 	int nTimeSteps = 12;
-	double globalMOPTRegularizer = 0.0001;
+	double globalMOPTRegularizer = 0.01;
 
 	nanogui::Graph* energyGraph;
 	std::vector<float> energyGraphValues;

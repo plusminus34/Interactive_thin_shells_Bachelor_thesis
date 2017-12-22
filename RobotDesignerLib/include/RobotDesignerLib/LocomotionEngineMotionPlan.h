@@ -10,6 +10,7 @@
 #include <RobotDesignerLib/FootFallPattern.h>
 #include <vector>
 #include <RBSimLib/HingeJoint.h>
+#include <ControlLib/IK_Solver.h>
 
 class LocomotionEngine_EndEffectorTrajectory{
 public:
@@ -241,6 +242,8 @@ public:
 
 
 	void addEndEffector(GenericLimb* theLimb, RigidBody* rb, int eeIndex, int nSamplingPoints);
+
+	void addIKInitEE(RigidBody* rb, IK_Plan* ikPlan);
 
 public:
 	int getWheelSpeedIndex(int i, int j) const;

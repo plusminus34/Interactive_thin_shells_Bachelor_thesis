@@ -23,6 +23,8 @@ public:
 
 	void setupSubObjectives();
 
+	void setupSubObjectives_EEMatch();
+
 	bool printDebugInfo;
 
 public:

@@ -7,10 +7,6 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-//make also a car with 3 wheels, the front one "articulated"
-
-//Search direction is not a descent direction(g.dp = -178.802280).Patching it up... - do it by adding an incrementally increasing regularizer
-
 RobotDesignerApp::RobotDesignerApp(){
 	bgColor[0] = bgColor[1] = bgColor[2] = 1;
 	setWindowTitle("RobotDesigner");
@@ -259,9 +255,9 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 		if (key == GLFW_KEY_SLASH && action == GLFW_PRESS)
 			moptWindow->moptParams.desTurningAngle -= 0.1;
 
-		boundToRange(&moptWindow->moptParams.desTravelDistZ, -0.5, 0.5);
-		boundToRange(&moptWindow->moptParams.desTravelDistX, -0.5, 0.5);
-		boundToRange(&moptWindow->moptParams.desTurningAngle, -0.5, 0.5);
+		boundToRange(&moptWindow->moptParams.desTravelDistZ, -1.5, 1.5);
+		boundToRange(&moptWindow->moptParams.desTravelDistX, -1.5, 1.5);
+		boundToRange(&moptWindow->moptParams.desTurningAngle, -1.5, 1.5);
 		if (key == GLFW_KEY_O && action == GLFW_PRESS)
 			moptWindow->locomotionManager->motionPlan->writeRobotMotionAnglesToFile("../out/tmpMPAngles.mpa");
 	}

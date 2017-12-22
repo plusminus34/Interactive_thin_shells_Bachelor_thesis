@@ -7,6 +7,7 @@
 #include <MathLib/ConvexHull3D.h>
 #include <set>
 
+
 LocomotionEngine_EndEffectorTrajectory::LocomotionEngine_EndEffectorTrajectory(int nPos){
 	endEffectorRB = NULL;
 	theLimb = NULL;
@@ -319,16 +320,35 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	this->robot = robot;
 	this->nSamplePoints = nSamplingPoints;
 
+	/**
+		we must set up the robot such that its feet are all on the ground...
+	*/
+	ReducedRobotState startState = ReducedRobotState(robot);
+	IK_Solver ikSolver(robot);
+	ikSolver.ikPlan->setTargetIKStateFromRobot();
+
+	int nLegs = this->robot->bFrame->limbs.size();
+	for (int i = 0; i<nLegs; i++)
+		addIKInitEE(this->robot->bFrame->limbs[i]->getLastLimbSegment(), ikSolver.ikPlan);
+	addIKInitEE(robot->root, ikSolver.ikPlan);
+
+	ikSolver.ikEnergyFunction->setupSubObjectives_EEMatch();
+	ikSolver.ikEnergyFunction->regularizer = 100;
+	ikSolver.ikOptimizer->checkDerivatives = true;
+	ikSolver.solve();
+
 	//first off, compute the current position of the COM, and ensure the whole robot lies on the ground
 	totalMass = 0;
-	P3D comPos;
 
 	//this is the position of the "COM"
 	for (uint k = 0; k<robot->bFrame->bodyLinks.size(); k++) {
 		totalMass += robot->bFrame->bodyLinks[k]->rbProperties.mass;
-		comPos += robot->bFrame->bodyLinks[k]->getCMPosition() * robot->bFrame->bodyLinks[k]->rbProperties.mass;
+		defaultCOMPosition += robot->bFrame->bodyLinks[k]->getCMPosition() * robot->bFrame->bodyLinks[k]->rbProperties.mass;
 	}
-	comPos /= totalMass;
+	defaultCOMPosition /= totalMass;
+
+	desCOMHeight = defaultCOMPosition[1];
+
 
 	//approximate the inertia of the body
 	double Ixx = robot->root->rbProperties.MOI_local.coeff(0, 0); // = m(y2 + z2)/12
@@ -341,10 +361,12 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	double approxDim = pow(bodyVolume, 1 / 3.0);
 	totalInertia = totalMass * (approxDim*approxDim + approxDim*approxDim) / 12;
 
+
+/*
 	//and average position of the feet. We want to make sure they end up touching the ground
 	double eeY = 0;
 	int totalNEEs = 0;
-	int nLegs = this->robot->bFrame->limbs.size();
+
 	for (int i = 0; i<nLegs; i++) {
 		int nEEs = this->robot->bFrame->limbs[i]->getLastLimbSegment()->rbProperties.getEndEffectorPointCount();
 		for (int j = 0; j<nEEs; j++) {
@@ -355,15 +377,14 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 		}
 	}
 	if (totalNEEs > 0) eeY /= totalNEEs;
-	comPos[1] -= eeY;
-	desCOMHeight = comPos[1];
-	defaultCOMPosition = comPos;
 	//move the whole robot so that the feet are on the ground
 	ReducedRobotState rs(robot);
 	P3D rootPos = rs.getPosition();
 	rootPos.addOffsetToComponentAlong(V3D(0, 1, 0), -eeY);
 	rs.setPosition(rootPos);
 	robot->setState(&rs);
+*/
+
 
 	//and now proceed to initialize everything else...
 	this->robotRepresentation = new GeneralizedCoordinatesRobotRepresentation(robot);
@@ -386,12 +407,30 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	robotStateTrajectory.robotRepresentation = this->robotRepresentation;
 	robotStateTrajectory.initialize(nSamplingPoints);
 
-	COMTrajectory.initialize(nSamplePoints, comPos, robotRepresentation->getQAxis(3),
+	COMTrajectory.initialize(nSamplePoints, defaultCOMPosition, robotRepresentation->getQAxis(3),
 		robotRepresentation->getQAxis(4), robotRepresentation->getQAxis(5));
 
 	verticalGRFLowerBoundVal = fabs(totalMass * Globals::g / endEffectorTrajectories.size() / 5.0) * 2;
 //	verticalGRFLowerBoundVal = fabs(totalMass * Globals::g / robot->bFrame->limbs.size() / 5.0) * 2;
 //	minVerticalGRFEpsilon = fabs(totalMass * Globals::g / robot->bFrame->limbs.size() / 5.0) * 0.5;
+}
+
+void LocomotionEngineMotionPlan::addIKInitEE(RigidBody* rb, IK_Plan* ikPlan) {
+	int nEEs = rb->rbProperties.getEndEffectorPointCount();
+	for (int j = 0; j < nEEs; j++) {
+		P3D eeLocalCoords = rb->rbProperties.getEndEffectorPoint(j);
+		P3D eeWorldCoords = rb->getWorldCoordinates(eeLocalCoords);
+		eeWorldCoords[1] = 0;
+
+		if (rb->rbProperties.endEffectorPoints[j].isWheel())
+			eeWorldCoords[1] += rb->rbProperties.endEffectorPoints[j].featureSize;
+
+		ikPlan->endEffectors.push_back(IK_EndEffector());
+		ikPlan->endEffectors.back().endEffectorLocalCoords = eeLocalCoords;
+		ikPlan->endEffectors.back().endEffectorRB = rb;
+		ikPlan->endEffectors.back().targetEEPos = eeWorldCoords;
+		ikPlan->endEffectors.back().mask = V3D(0, 1, 0);
+	}
 }
 
 void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody* rb, int eeIndex, int nSamplingPoints) {

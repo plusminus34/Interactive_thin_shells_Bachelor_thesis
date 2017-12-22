@@ -1,5 +1,4 @@
 #include <RobotDesignerLib/MPO_VelocityL0Regularization.h>
-#include <MathLib/CircShiftedView.h>
 #include <iostream>
 
 MPO_VelocityL0Regularization::MPO_VelocityL0Regularization(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int startQIndex, int endQIndex, bool mode) {

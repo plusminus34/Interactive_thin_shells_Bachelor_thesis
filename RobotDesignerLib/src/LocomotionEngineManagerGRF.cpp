@@ -346,7 +346,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 	//GRF constraints
 	ef->addObjectiveFunction(new MPO_GRFSwingRegularizer(ef->theMotionPlan, "GRF swing regularizer", 10000.0), "Regularizers");
-	ef->addObjectiveFunction(new MPO_GRFStanceRegularizer(ef->theMotionPlan, "GRF stance regularizer", 1e-6), "Regularizers");
+	ef->addObjectiveFunction(new MPO_GRFStanceRegularizer(ef->theMotionPlan, "GRF stance regularizer", 1e-4), "Regularizers");
 	ef->addObjectiveFunction(new MPO_GRFSoftBoundConstraints(ef->theMotionPlan, "GRF bound constraints", 10000.0), "Bound Constraints");
 
 	//consistancy constraints (between robot states and other auxiliary variables)
@@ -356,12 +356,13 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->addObjectiveFunction(new MPO_RobotCOMOrientationsObjective(ef->theMotionPlan, "robot COM orientations objective", 10000.0), "Kinematic Constraints");
 
 	//dynamics constraints
-	ef->addObjectiveFunction(new MPO_ForceAccelObjective(ef->theMotionPlan, "force acceleration objective", 1.0), "Dynamic Constraints");
-	ef->addObjectiveFunction(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 1.0), "Dynamic Constraints");
+	ef->addObjectiveFunction(new MPO_ForceAccelObjective(ef->theMotionPlan, "force acceleration objective", 1.0), "Dynamics Constraints");
+	ef->addObjectiveFunction(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 1.0), "Dynamics Constraints");
 
 	ef->addObjectiveFunction(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, dimCount - 1), "Bound Constraints");
 	ef->addObjectiveFunction(new MPO_WheelSpeedConstraints(ef->theMotionPlan, "wheel speed bound constraint", 1e4), "Bound Constraints");
 	ef->addObjectiveFunction(new MPO_WheelAccelerationConstraints(ef->theMotionPlan, "wheel accel. bound constraint", 1e2), "Bound Constraints");
+	ef->objectives.back()->isActive = false;
 
 	//constraints ensuring feet don't slide...
 	ef->addObjectiveFunction(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0), "Kinematic Constraints");
@@ -400,6 +401,11 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 		ef->addObjectiveFunction(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ second", 10000, 1, ef->theMotionPlan->initialRobotState), "Boundary Constraints");
 		ef->addObjectiveFunction(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ second last", 10000, nSamples - 2, ef->theMotionPlan->initialRobotState), "Boundary Constraints");
 		ef->addObjectiveFunction(new MPO_StateMatchObjective(ef->theMotionPlan, "state boundary constraint @ last", 10000, nSamples - 1, ef->theMotionPlan->initialRobotState), "Boundary Constraints");
+
+		ef->addObjectiveFunction(new MPO_WheelSpeedTargetObjective(ef->theMotionPlan, "wheel speed zero @t=0", 0, 0, 10000.0), "Boundary Constraints");
+		ef->addObjectiveFunction(new MPO_WheelSpeedTargetObjective(ef->theMotionPlan, "wheel speed zero @t=1", 1, 0, 10000.0), "Boundary Constraints");
+		ef->addObjectiveFunction(new MPO_WheelSpeedTargetObjective(ef->theMotionPlan, "wheel speed zero @t=end-2", nSamples - 2, 0, 10000.0), "Boundary Constraints");
+		ef->addObjectiveFunction(new MPO_WheelSpeedTargetObjective(ef->theMotionPlan, "wheel speed zero @t=end-1", nSamples - 1, 0, 10000.0), "Boundary Constraints");
 	}
 
 	//functional objectives
