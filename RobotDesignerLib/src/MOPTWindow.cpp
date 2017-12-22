@@ -105,7 +105,12 @@ void MOPTWindow::addMenuItems() {
 		glApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
 	}
 
-	glApp->mainMenu->addVariable("check derivatives", moptParams.checkDerivatives);
+	glApp->mainMenu->addButton("Check Derivatives", [this]() {
+		bool temp = moptParams.checkDerivatives; moptParams.checkDerivatives = true;
+		runMOPTStep();
+		moptParams.checkDerivatives = temp;
+	});
+
 	glApp->mainMenu->addVariable<bool>("Log data",
 		[this](bool val) {if (locomotionManager) locomotionManager->printDebugInfo = val; },
 		[this] { if (locomotionManager) return locomotionManager->printDebugInfo; else return false; });
