@@ -449,7 +449,7 @@ void RigidBody::loadFromFile(FILE* fp){
 				break;
 			case RB_END_EFFECTOR:{
 					RBEndEffector tmpEE(P3D(), 0.01);
-					sscanf(line, "%lf %lf %lf %lf %d %lf %lf %lf %d", &tmpEE.coords[0], &tmpEE.coords[1], &tmpEE.coords[2], &tmpEE.featureSize, &tmpEE.eeType, &tmpEE.localCoordsWheelAxis[0], &tmpEE.localCoordsWheelAxis[1], &tmpEE.localCoordsWheelAxis[2], &rbProperties.endEffectorPoints[i].meshIndex);
+					sscanf(line, "%lf %lf %lf %lf %d %lf %lf %lf %d", &tmpEE.coords[0], &tmpEE.coords[1], &tmpEE.coords[2], &tmpEE.featureSize, &tmpEE.eeType, &tmpEE.localCoordsWheelAxis[0], &tmpEE.localCoordsWheelAxis[1], &tmpEE.localCoordsWheelAxis[2], &tmpEE.meshIndex);
 					rbProperties.endEffectorPoints.push_back(tmpEE);
 				}
 				break;

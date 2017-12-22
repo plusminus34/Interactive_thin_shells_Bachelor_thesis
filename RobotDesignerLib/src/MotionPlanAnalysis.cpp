@@ -19,7 +19,7 @@ MotionPlanAnalysis::MotionPlanAnalysis(nanogui::Screen *screen){
 
 	VScrollPanel *vscroll = new VScrollPanel(window);
 	vscroll->setFixedHeight(std::min(1000, screen->height()-200));
-	screen->setResizeCallback();
+//	screen->setResizeCallback();
 
 	Widget *widgetPlots = new Widget(vscroll);
 	widgetPlots->setLayout(new GridLayout(Orientation::Vertical, 4, Alignment::Minimum, 0, 5));

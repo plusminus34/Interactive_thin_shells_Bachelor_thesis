@@ -122,8 +122,6 @@ void MOPTWindow::addMenuItems() {
 		[this] { if (locomotionManager) return locomotionManager->printDebugInfo; else return false; });
 	glApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "IPv1", "IPv2" });
 
-
-
 	{
 		using namespace nanogui;
 

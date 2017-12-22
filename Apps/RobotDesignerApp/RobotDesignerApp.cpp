@@ -404,7 +404,7 @@ void RobotDesignerApp::runMOPTStep() {
 }
 
 P3D RobotDesignerApp::getCameraTarget() {
-	if (runOption != MOTION_PLAN_OPTIMIZATION)
+	if (robot)
 		return robot->root->getCMPosition();
 	else
 		return P3D(0, 1, 0);
