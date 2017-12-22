@@ -127,8 +127,8 @@ void MOPTWindow::addMenuItems() {
 	{
 		using namespace nanogui;
 
-		Window *window = new Window(glApp->menuScreen, "Wheel Control");
-		window->setPosition(Eigen::Vector2i(300, 0));
+		Window *window = new Window(glApp->menuScreen, "MOPT Energy");
+		window->setPosition(Eigen::Vector2i(900, 0));
 		window->setWidth(300);
 		window->setLayout(new GroupLayout());
 
