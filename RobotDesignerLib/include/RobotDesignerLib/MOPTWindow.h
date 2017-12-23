@@ -36,7 +36,7 @@ struct MOPTParams {
 	bool checkDerivatives = false;
 	bool useDynamicRegularization = true;
 	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod = NewtonFunctionMinimizer::DynamicRegularization;
-	bool checkHessianPSD;
+	bool checkHessianPSD = false;
 };
 
 

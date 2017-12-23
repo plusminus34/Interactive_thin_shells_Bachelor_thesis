@@ -333,9 +333,9 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	addIKInitEE(robot->root, ikSolver.ikPlan);
 
 	ikSolver.ikEnergyFunction->setupSubObjectives_EEMatch();
-	ikSolver.ikEnergyFunction->regularizer = 100;
-	ikSolver.ikOptimizer->checkDerivatives = true;
-	ikSolver.solve();
+	ikSolver.ikEnergyFunction->regularizer = 10;
+//	ikSolver.ikOptimizer->checkDerivatives = true;
+	ikSolver.solve(20);
 
 	//first off, compute the current position of the COM, and ensure the whole robot lies on the ground
 	totalMass = 0;

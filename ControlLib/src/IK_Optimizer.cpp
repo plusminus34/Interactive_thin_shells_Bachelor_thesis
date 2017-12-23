@@ -16,15 +16,16 @@ double IK_Optimizer::optimizePlan(int maxIterNum){
 	minimizer.printOutput = false;//true;
 	dVector params;
 	this->IKPlan->writeParametersToList(params);
-
-	if (checkDerivatives){
-		energyFunction->testGradientWithFD(params);
-		energyFunction->testHessianWithFD(params);
-	}
-
 	double val = 0;
-	minimizer.minimize(energyFunction, params, val);
-//	Logger::consolePrint("IK energy val: %lf\n", val);
+	for (int i = 0; i < 1; i++) {
+		if (checkDerivatives) {
+			energyFunction->testGradientWithFD(params);
+			energyFunction->testHessianWithFD(params);
+		}
+
+		minimizer.minimize(energyFunction, params, val);
+		Logger::consolePrint("IK energy val: %lf\n", val);
+	}
 
 	return val;
 }

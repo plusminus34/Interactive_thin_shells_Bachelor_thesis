@@ -122,7 +122,7 @@ void SimWindow::loadMotionPlan(LocomotionEngineMotionPlan* mp) {
 void SimWindow::drawScene() {
 	glColor3d(1, 1, 1);
 	glDisable(GL_LIGHTING);
-	drawGround(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
+	drawGround(GLContentManager::getTexture("../data/textures/grid.bmp"));
 	glEnable(GL_LIGHTING);
 
 	int flags = 0;
@@ -160,6 +160,7 @@ void SimWindow::setPerturbationForceFromMouseInput(double xPos, double yPos) {
 void SimWindow::step() {
 	if (!activeController)
 		return;
+
 	activeController->computeControlSignals(simTimeStep);
 
 	for (int i = 0; i < nPhysicsStepsPerControlStep; i++) {
@@ -167,6 +168,21 @@ void SimWindow::step() {
 		rbEngine->applyForceTo(robot->root, perturbationForce * forceScale, P3D());
 		if (activeController != kinematicController)
 			rbEngine->step(simTimeStep / nPhysicsStepsPerControlStep);
+		else {
+			//do the integration of wheel motions here...
+			for (uint j = 0; j < activeController->motionPlan->endEffectorTrajectories.size(); j++){
+				LocomotionEngine_EndEffectorTrajectory* eeTraj = &activeController->motionPlan->endEffectorTrajectories[j];
+				if (eeTraj->isWheel){
+					RigidBody* rb = eeTraj->endEffectorRB;
+					int eeIndex = eeTraj->CPIndex;
+					int meshIndex = rb->rbProperties.endEffectorPoints[eeIndex].meshIndex;
+					rb->rbProperties.endEffectorPoints[eeIndex].rotationSpeed = -eeTraj->getWheelSpeedAt(activeController->stridePhase);
+//					the original assumption, I guess, is that the wheel goes at constant speed (half of the two indices...) Do we get the right integrated quantity? Or is it maybe that the wheel is a bit too large? 
+					if (meshIndex >= 0)
+						rb->meshTransformations[meshIndex].R = getRotationQuaternion(simTimeStep / nPhysicsStepsPerControlStep * rb->rbProperties.endEffectorPoints[eeIndex].rotationSpeed, rb->rbProperties.endEffectorPoints[eeIndex].localCoordsWheelAxis).getRotationMatrix() * rb->meshTransformations[meshIndex].R;
+				}
+			}
+		}
 		robot->bFrame->updateStateInformation();
 	}
 

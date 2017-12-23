@@ -14,7 +14,7 @@ public:
 		coords = p;
 		featureSize = fSize;
 	}
-	//in some cases we may want to know which mesh is associated with the end effectors (e.g. if they are wheels that must rotate about their axis)
+	//in some cases we may want to know which mesh of the parent RB is associated with this feature (e.g. if they are wheels that must rotate about their axis)
 	int meshIndex = -1;
 };
 
@@ -43,6 +43,9 @@ public:
 	//if this is a wheel, we keep track of its axis of rotation, expressed in local coordinates...
 	V3D localCoordsWheelAxis;
 	//the radius is stored in feature size...
+	
+	//this represents desired instantaneous speed for the wheel EEs
+	double rotationSpeed = 0;
 };
 
 /*================================================================================================================*

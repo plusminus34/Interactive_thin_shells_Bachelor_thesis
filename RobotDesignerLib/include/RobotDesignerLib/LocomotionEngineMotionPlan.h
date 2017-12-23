@@ -42,7 +42,7 @@ public:
 	//this is the limb the end effector trajectory belongs to
 	GenericLimb* theLimb;
 	//and this is the index of the end effector contact point that it represents
-	int CPIndex;
+	int CPIndex = -1;
 
 public:
 	LocomotionEngine_EndEffectorTrajectory(int nPos);
