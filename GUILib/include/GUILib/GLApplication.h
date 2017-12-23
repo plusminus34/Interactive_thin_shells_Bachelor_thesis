@@ -10,12 +10,14 @@
 #include "GLContentManager.h"
 #include "GlobalMouseState.h"
 
+#include "Canvas3D.h"
+
 #pragma warning( disable : 4005)
 
 /**
  * All Apps will instantiate this base class...
  */
-class GLApplication : public InteractiveWidget {
+class GLApplication : public InteractiveWidget, public Canvas3D {
 public:
 	static GLApplication *getGLAppInstance();
 	static void setGLAppInstance(GLApplication* instance);
@@ -41,23 +43,13 @@ protected:
 	Timer processTimer;
 	// Console window
 	GLConsole* consoleWindow;
-	// interactive camera
-	GLCamera* camera;
-
-	float cameraRot[4] = { 0, 0, 0, 1 };
 
 	//this is the desired frame rate, specified in FPS
 	double desiredFrameRate = 30;
 	double animationSpeedupFactor = 1.0;
 
-	// Background color
-	float bgColor[3] = { 0.5f, 0.5f, 0.5f };
-
 	// Sets up various settings for OpenGL
 	void setupOpenGL();
-
-	// Set up lights
-	virtual void setupLights();
 
 	// Main draw function - draws app content, shadows, reflections, etc...
 	virtual void draw();
@@ -71,9 +63,6 @@ protected:
 	bool showMenus = true;
 	bool showFPS = true;
 	bool showConsole = true;
-	bool showGroundPlane = true;
-	bool showDesignEnvironmentBox = false;
-	bool followCameraTarget = false;
 
 public:
 	// constructors

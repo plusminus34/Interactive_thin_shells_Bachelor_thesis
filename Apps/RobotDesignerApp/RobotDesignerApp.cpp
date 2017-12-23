@@ -7,10 +7,8 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-
-
 RobotDesignerApp::RobotDesignerApp(){
-	bgColor[0] = bgColor[1] = bgColor[2] = 1;
+	bgColorR = bgColorG = bgColorB = bgColorA = 1;
 	setWindowTitle("RobotDesigner");
 
 	showGroundPlane = false;
@@ -93,7 +91,7 @@ RobotDesignerApp::RobotDesignerApp(){
 	simWindow->addMenuItems();
 
 	showGroundPlane = false;
-	bgColor[0] = bgColor[1] = bgColor[2] = 0.75;
+	bgColorR = bgColorG = bgColorB = 0.75;
 
 #ifdef START_WITH_VISUAL_DESIGNER
 	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
@@ -502,7 +500,7 @@ void RobotDesignerApp::drawAuxiliarySceneInfo() {
 
 	if(motionPlanAnalysis->window->visible())
 	{
-		motionPlanAnalysis->setTimeAt(moptWindow->ffpViewer->cursorPosition);
+		motionPlanAnalysis->setTimeAt((float)moptWindow->ffpViewer->cursorPosition);
 	}
 }
 

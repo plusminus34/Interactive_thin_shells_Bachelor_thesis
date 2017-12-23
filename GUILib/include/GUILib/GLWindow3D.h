@@ -3,33 +3,25 @@
 #include <Utils/Logger.h>
 #include <Utils/Timer.h>
 #include "GLWindow2D.h"
-#include "GLCamera.h"
 #include <GUILib/GLMesh.h>
 #include <GLFW/glfw3.h>
+#include <GUILib/Canvas3D.h>
 
 /**
 * Used for any window that needs to be displayed in the OpenGL window
 */
-class GLWindow3D : public GLWindow {
+class GLWindow3D : public GLWindow, public Canvas3D {
 protected:
-	//have a flag that shows if this window is active or not, as indicated by a mouse hovering over it
-	double bgColorR = 1, bgColorG = 1, bgColorB = 1, bgColorA = 0.5;
-
-	// interactive camera
-	GLCamera* camera;
 
 	// sets up the window for drawing
 	virtual void preDraw();
-
-	virtual void setupLights();
 
 	// clean up
 	virtual void postDraw();
 
 	void init();
 
-	bool showReflections = false;
-	bool showGroundPlane = true;
+	virtual void drawScene() {};
 
 public:
 
@@ -42,10 +34,9 @@ public:
 
 	// Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
 	virtual void draw();
-	virtual void drawReflections();
-	virtual void drawGround();
 
-	//input callbacks...
+
+	//IO callbacks...
 
 	//all these methods should returns true if the event is processed, false otherwise...
 	//triggered when mouse buttons are pressed
@@ -55,8 +46,4 @@ public:
 
 	//triggered when using the mouse wheel
 	virtual bool onMouseWheelScrollEvent(double xOffset, double yOffset);
-
-	virtual void drawScene() {};
-	GLCamera* getCamera() { return camera; }
 };
-

@@ -102,8 +102,6 @@ public:
 	virtual void saveFile(const char* fName);
 	virtual void loadFile(const char* fName);
 
-	virtual void setupLights();
-
 	void removeRMCRobot(RMCRobot* robot);
 
 	void drawRefAxis(const P3D& pos);

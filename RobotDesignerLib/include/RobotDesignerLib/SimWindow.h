@@ -55,7 +55,6 @@ public:
 
 	virtual void drawScene();
 	virtual void drawAuxiliarySceneInfo();
-	virtual void setupLights();
 
 	virtual bool onMouseMoveEvent(double xPos, double yPos);
 	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
