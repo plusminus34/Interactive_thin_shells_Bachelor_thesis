@@ -589,23 +589,13 @@ void GLApplication::draw(){
 
 	setupLights();
 
-	if (showDesignEnvironmentBox) {
-		glColor4d(1, 1, 1, 1);
-		glDisable(GL_LIGHTING);
-		drawDesignEnvironmentBox(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
-	}
+	if (showDesignEnvironmentBox)
+		drawDesignEnvironment();
 
-	if (showGroundPlane){
-		glColor4d(1,1,1,1);
-		glDisable(GL_LIGHTING);
-		drawTexturedGround(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
-	}
+	if (showGroundPlane)
+		drawGroundAndReflections();
 
 	glEnable(GL_COLOR_MATERIAL);
-
-
-	if (showReflections && showGroundPlane) 
-		drawReflections();
 	drawScene();
 
 	drawAuxiliarySceneInfo();

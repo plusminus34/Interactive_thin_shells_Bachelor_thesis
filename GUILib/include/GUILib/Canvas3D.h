@@ -13,7 +13,7 @@ public:
 	~Canvas3D() {}
 
 	//background color
-	double bgColorR = 1, bgColorG = 1, bgColorB = 1, bgColorA = 0.5;
+	double bgColorR = 0.75, bgColorG = 0.75, bgColorB = 0.75, bgColorA = 0.5;
 	//camera
 	GLCamera* camera;
 
@@ -79,7 +79,7 @@ public:
 		glStencilFunc(GL_ALWAYS, 1, 1); //Make the stencil test always pass
 										//Make pixels in the stencil buffer be set to 1 when the stencil test passes
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-//		glEnable(GL_CULL_FACE);
+		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		drawGround();
 		glDisable(GL_CULL_FACE);
@@ -105,14 +105,28 @@ public:
 		glPopMatrix();
 
 		glDisable(GL_CLIP_PLANE0);
-
 		glDisable(GL_STENCIL_TEST);
+	}
+
+	virtual void drawGroundAndReflections() {
+		if (showReflections) {
+			drawReflections();
+			glColor4f(1, 1, 1, 0.85f);
+		}
+		else
+			glColor4d(1, 1, 1, 1);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
 		glDisable(GL_LIGHTING);
-		glColor4f(1, 1, 1, 0.85f);
 		drawGround();
+		glDisable(GL_BLEND);
+	}
+
+	virtual void drawDesignEnvironment() {
+		glColor4d(1, 1, 1, 1);
+		glDisable(GL_LIGHTING);
+		drawDesignEnvironmentBox(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
 	}
 
 	virtual void drawGround() {
