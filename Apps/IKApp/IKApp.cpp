@@ -28,7 +28,8 @@ IKApp::IKApp() {
 
 	menuScreen->performLayout();
 
-	showGroundPlane = false;
+	showGroundPlane = true;
+	showReflections = true;
 }
 
 void IKApp::loadRobot(const char* fName) {

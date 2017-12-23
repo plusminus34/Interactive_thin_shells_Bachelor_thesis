@@ -219,6 +219,7 @@ void GLApplication::setupMainMenu() {
 	mainMenu->addVariable("Wait For Framerate", waitForFrameRate);
 	mainMenu->addVariable("Show Console", showConsole);
 	mainMenu->addVariable("Show FPS", showFPS);
+	mainMenu->addVariable("Show Reflections", showReflections);
 	mainMenu->addVariable("Show Ground Plane", showGroundPlane);
 	mainMenu->addVariable("Show Env Box", showDesignEnvironmentBox);
 
@@ -601,6 +602,10 @@ void GLApplication::draw(){
 	}
 
 	glEnable(GL_COLOR_MATERIAL);
+
+
+	if (showReflections && showGroundPlane) 
+		drawReflections();
 	drawScene();
 
 	drawAuxiliarySceneInfo();

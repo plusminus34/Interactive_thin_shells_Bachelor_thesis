@@ -79,7 +79,7 @@ public:
 		glStencilFunc(GL_ALWAYS, 1, 1); //Make the stencil test always pass
 										//Make pixels in the stencil buffer be set to 1 when the stencil test passes
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-		glEnable(GL_CULL_FACE);
+//		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		drawGround();
 		glDisable(GL_CULL_FACE);
