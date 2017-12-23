@@ -752,7 +752,7 @@ void drawDesignEnvironmentBox(GLTexture* texture, double designEnvironmentScale)
 	glDisable(GL_TEXTURE_2D);
 }
 
-void drawGround(GLTexture* texture) {
+void drawTexturedGround(GLTexture* texture) {
 	V3D t1, t2;
 	Globals::groundPlane.n.getOrthogonalVectors(t1, t2);
 	if (texture) {

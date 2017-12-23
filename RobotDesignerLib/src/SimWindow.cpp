@@ -122,7 +122,7 @@ void SimWindow::loadMotionPlan(LocomotionEngineMotionPlan* mp) {
 void SimWindow::drawScene() {
 	glColor3d(1, 1, 1);
 	glDisable(GL_LIGHTING);
-	drawGround(GLContentManager::getTexture("../data/textures/grid.bmp"));
+	drawGround();
 	glEnable(GL_LIGHTING);
 
 	int flags = 0;

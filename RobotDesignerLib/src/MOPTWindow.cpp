@@ -317,7 +317,7 @@ void MOPTWindow::loadFFPFromFile(const char* fName){
 void MOPTWindow::drawScene() {
 	glColor3d(1, 1, 1);
 	glDisable(GL_LIGHTING);
-	drawGround(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
+	drawGround();
 	glEnable(GL_LIGHTING);
 
 	if (locomotionManager){

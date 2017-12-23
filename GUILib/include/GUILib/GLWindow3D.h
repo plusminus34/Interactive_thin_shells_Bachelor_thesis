@@ -27,6 +27,10 @@ protected:
 	virtual void postDraw();
 
 	void init();
+
+	bool showReflections = false;
+	bool showGroundPlane = true;
+
 public:
 
 	// constructors
@@ -38,7 +42,8 @@ public:
 
 	// Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
 	virtual void draw();
-
+	virtual void drawReflections();
+	virtual void drawGround();
 
 	//input callbacks...
 
