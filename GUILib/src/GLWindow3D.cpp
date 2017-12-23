@@ -22,7 +22,9 @@ GLWindow3D::GLWindow3D() : GLWindow() {
 
 void GLWindow3D::draw() {
 	preDraw();
-	if (showReflections && showGroundPlane) drawReflections();
+
+	if (showGroundPlane)
+		drawGroundAndReflections();
 
 	drawScene();
 	drawBorders();

@@ -20,7 +20,7 @@ public:
 	GLCamera* getCamera() { return camera; }
 
 	bool showReflections = false;
-	bool showGroundPlane = true;
+	bool showGroundPlane = false;
 	bool followCameraTarget = false;
 	bool showDesignEnvironmentBox = false;
 
@@ -96,15 +96,14 @@ public:
 
 		glScalef((float)scale[0], (float)scale[1], (float)scale[2]);
 
-		glEnable(GL_CLIP_PLANE0);
-
-		double plane[4];
-		Globals::groundPlane.getCartesianEquationCoefficients(plane[0], plane[1], plane[2], plane[3]);
-		glClipPlane(GL_CLIP_PLANE0, plane);
+//		glEnable(GL_CLIP_PLANE0);
+//		double plane[4];
+//		Globals::groundPlane.getCartesianEquationCoefficients(plane[0], plane[1], plane[2], plane[3]);
+//		glClipPlane(GL_CLIP_PLANE0, plane);
 		drawScene();
 		glPopMatrix();
 
-		glDisable(GL_CLIP_PLANE0);
+//		glDisable(GL_CLIP_PLANE0);
 		glDisable(GL_STENCIL_TEST);
 	}
 

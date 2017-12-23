@@ -19,6 +19,7 @@ SimWindow::SimWindow(int x, int y, int w, int h, GLApplication* glApp) : GLWindo
 	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -1.5;
 
 	showReflections = true;
+	showGroundPlane = true;
 }
 
 void SimWindow::addMenuItems() {
@@ -125,9 +126,6 @@ void SimWindow::loadMotionPlan(LocomotionEngineMotionPlan* mp) {
 }
 
 void SimWindow::drawScene() {
-	glColor3d(1, 1, 1);
-	glDisable(GL_LIGHTING);
-	drawGround();
 	glEnable(GL_LIGHTING);
 
 	int flags = 0;

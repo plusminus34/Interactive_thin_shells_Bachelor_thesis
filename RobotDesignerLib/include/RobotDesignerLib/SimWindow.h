@@ -60,5 +60,10 @@ public:
 	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
+
+	virtual void drawGround() {
+		drawTexturedGround(GLContentManager::getTexture("../data/textures/grid.bmp"));
+	}
+
 };
 
