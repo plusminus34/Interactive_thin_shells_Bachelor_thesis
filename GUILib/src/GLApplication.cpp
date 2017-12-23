@@ -632,7 +632,7 @@ void GLApplication::draw(){
 	if (showGroundPlane){
 		glColor4d(1,1,1,1);
 		glDisable(GL_LIGHTING);
-		drawGround(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
+		drawTexturedGround(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
 	}
 
 	glEnable(GL_COLOR_MATERIAL);

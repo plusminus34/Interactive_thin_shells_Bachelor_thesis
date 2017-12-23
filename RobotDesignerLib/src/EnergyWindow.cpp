@@ -166,7 +166,7 @@ void EnergyWindow::updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFun
 		for (ObjectiveFunction *obj : objGroup.second){
 			if(obj->isActive)
 			{
-				float value = values[index];
+				float value = (float)values[index];
 				std::vector<float> &eValues = energyHist[obj->description];
 				eValues.push_back(value);
 
