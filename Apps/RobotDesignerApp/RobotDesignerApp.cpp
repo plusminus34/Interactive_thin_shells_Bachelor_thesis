@@ -101,7 +101,7 @@ RobotDesignerApp::RobotDesignerApp(){
     loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
 //	loadToSim();
 	loadToSim(false);
-    loadFile("../data/robotsAndMotionPlans/spotMini/trot4.p");
+    loadFile("../data/robotsAndMotionPlans/spotMini/trot3.p");
 #endif
 
 	menuScreen->performLayout();
