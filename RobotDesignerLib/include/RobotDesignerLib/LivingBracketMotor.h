@@ -8,8 +8,9 @@
 
 using namespace std;
 
-struct PinInfo 
-{
+//TODO: could have alternate body brackets that get instantiated based on which one of the pins is chosen...
+
+struct PinInfo {
 	Transformation trans;
 	string name;
 	vector<P3D> featurePoints;
@@ -23,53 +24,31 @@ struct PinInfo
 
 class LivingHornBracket;
 
-class LivingBracketMotor{
+class LivingMotorBodyBracket{
 public:
-	LivingBracketMotor();
-	~LivingBracketMotor(void);
+	LivingMotorBodyBracket();
+	~LivingMotorBodyBracket(void);
 
-	//range of motion of the bracket relative to the motor it will connect to
-	double rotAngleMin = -1.4;
-	double rotAngleMax = 1.4;
-
-	double rotAngle = 0;
-
-	//We assume that the motor is enclosed into an axis-aligned box - this will be used to figure out the geometry of the bracket...
-	AxisAlignedBoundingBox boundingBox = AxisAlignedBoundingBox(P3D(-0.2, -0.5, -0.2), P3D(0.2, 0.2, 0.2));
-
-	GLMesh* motorBodyMesh = NULL;
-	GLMesh* motorHornMesh = NULL;
 	GLMesh* bodyBracketMesh = NULL;
 
 	vector<PinInfo> pinInfos;
 
 	LivingHornBracket* hornBracket = NULL;
 
-	GLShaderMaterial bodyMaterial;
-	GLShaderMaterial hornMaterial;
 	GLShaderMaterial bodyBracketMaterial;
 
 	virtual void draw();
 	virtual void setColor(const Vector4d& color = Vector4d(0, 0, 0, 0));
 
-	virtual void generateBodyBracketMeshes() {};
+	virtual void generateBracketMesh() {};
 };
 
-class LivingBracketMotor_XM430 : public LivingBracketMotor {
+class LivingMotorBodyBracket_XM430 : public LivingMotorBodyBracket {
 public:
 
 public:
-	LivingBracketMotor_XM430();
-	~LivingBracketMotor_XM430(void);
+	LivingMotorBodyBracket_XM430();
+	~LivingMotorBodyBracket_XM430(void);
 
-	void generateBodyBracketMeshes();
+	void generateBracketMesh();
 };
-
-class LivingBracketMotor_XM430V2 : public LivingBracketMotor {
-public:
-	LivingBracketMotor_XM430V2();
-	~LivingBracketMotor_XM430V2(void);
-
-	void generateBodyBracketMeshes();
-};
-

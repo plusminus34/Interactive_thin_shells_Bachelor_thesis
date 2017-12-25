@@ -4,7 +4,7 @@
 #include <RobotDesignerLib/RMCPin.h>
 #include <BulletCollision/btBulletCollisionCommon.h>
 #include <RobotDesignerLib/RMCBulletObject.h>
-#include <RobotDesignerLib/LivingHornBracket.h>
+
 
 #define SHOW_PINS 0x0080
 
@@ -30,17 +30,13 @@ enum RMCType
 
 };
 
-class RMC : public RigidBody
-{
+class RMC : public RigidBody{
 public:
 	vector<RMCPin> pins;
 	RMCType type = BRACKET_RMC;
 	V3D motorAxis;
 	double motorAngle = 0;
 	double backupMotorAngle = 0;
-
-	GLMesh* carveMesh = NULL;
-	GLMesh* carveMeshEx = NULL;
 
 	RMCPin* pickedPin = NULL;
 

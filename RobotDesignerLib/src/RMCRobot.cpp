@@ -302,12 +302,10 @@ void RMCRobot::draw(int flags, const Vector4d& root_color, const Vector4d& highl
 		
 }
 
-void RMCRobot::exportMeshes(const char* fName, const char* carvefName)
+void RMCRobot::exportMeshes(const char* fName)
 {
 	FILE* fp1 = fopen(fName, "w+");
-	FILE* fp2 = fopen(carvefName, "w+");
 	uint fpIndex1 = 0;
-	uint fpIndex2 = 0;
 
 	for (uint i = 0; i < jointList.size(); i++)
 	{
@@ -317,18 +315,13 @@ void RMCRobot::exportMeshes(const char* fName, const char* carvefName)
 
 		if (childRMC->type == PLATE_RMC) continue;
 
-		if (childRMC->type == MOTOR_RMC && parentRMC->type == PLATE_RMC && childRMC->carveMesh)
-		{
-			childRMC->carveMesh->renderToObjFile(fp2, fpIndex2, childRMC->state.orientation, childRMC->state.position);
-			fpIndex2 += childRMC->carveMesh->getVertexCount();
+		for (uint k=0;k<childRMC->meshes.size();k++){
+			childRMC->meshes[k]->renderToObjFile(fp1, fpIndex1, childRMC->state.orientation, childRMC->state.position);
+			fpIndex1 += childRMC->meshes[k]->getVertexCount();
 		}
-		
-		childRMC->meshes[0]->renderToObjFile(fp1, fpIndex1, childRMC->state.orientation, childRMC->state.position);
-		fpIndex1 += childRMC->meshes[0]->getVertexCount();
 	}
 
 	fclose(fp1);
-	fclose(fp2);
 }
 
 void RMCRobot::saveToFile(const char* fName)
@@ -366,8 +359,10 @@ void RMCRobot::saveToFile(FILE* fp)
 			LivingMotor* livingRMC = dynamic_cast<LivingMotor*>(rmc);
 			
 			fprintf(fp, "LivingMotor %s ", rmc->getName().c_str());
-			fprintf(fp, "%lf %lf %lf %lf %lf ", rmc->motorAngle, livingRMC->motor->rotAngleMax,
-				livingRMC->motor->rotAngleMin, livingRMC->bracket->bracketInitialAngle, livingRMC->bracket->bracketConnectorAngle);
+//			fprintf(fp, "%lf %lf %lf %lf %lf ", rmc->motorAngle, livingRMC->motor->rotAngleMax,
+//				livingRMC->motor->rotAngleMin, livingRMC->bracket->bracketInitialAngle, livingRMC->bracket->bracketConnectorAngle);
+			fprintf(fp, "%lf %lf %lf %lf %lf ", rmc->motorAngle, 0.0,
+				0.0, livingRMC->hornBracket->bracketMountingAngle, 0.0);
 			fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf", q[0], q[1], q[2], q[3], pos[0], pos[1], pos[2]);
 		}
 		else if (rmc->type == LIVING_SPHERE_EE)
@@ -492,9 +487,11 @@ void RMCRobot::loadFromFile(FILE* fp, map<string, RMC*>& rmcNameMap)
 
 			P3D pos;
 			Quaternion q;
-
-			int num = sscanf(line + strlen(keyword) + strlen(name) + 1, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &livingRMC->motorAngle, &livingRMC->motor->rotAngleMax,
-				&livingRMC->motor->rotAngleMin, &livingRMC->bracket->bracketInitialAngle, &livingRMC->bracket->bracketConnectorAngle, &q[0], &q[1], &q[2], &q[3], &pos[0], &pos[1], &pos[2]);
+			double dummyTmp = 0;
+//			int num = sscanf(line + strlen(keyword) + strlen(name) + 1, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &livingRMC->motorAngle, &livingRMC->motor->rotAngleMax,
+//				&livingRMC->motor->rotAngleMin, &livingRMC->bracket->bracketInitialAngle, &livingRMC->bracket->bracketConnectorAngle, &q[0], &q[1], &q[2], &q[3], &pos[0], &pos[1], &pos[2]);
+			int num = sscanf(line + strlen(keyword) + strlen(name) + 1, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &livingRMC->motorAngle, &dummyTmp,
+				&dummyTmp, &livingRMC->hornBracket->bracketMountingAngle, &dummyTmp, &q[0], &q[1], &q[2], &q[3], &pos[0], &pos[1], &pos[2]);
 			livingRMC->update();
 
 			posMap[livingRMC] = pos;
@@ -730,13 +727,17 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 			if (bracketConnectedRMC)
 			{
 				RigidBody& bracketConnectedRB = tmpRBs[RBIndexMap[bracketConnectedRMC]];
-				bracketConnectedRB.meshes.push_back(livingRMC->bracket->outputMesh);
+				bracketConnectedRB.meshes.push_back(livingRMC->hornBracket->bracketMesh);
 				Transformation trans;
 				trans.R = rmc->state.orientation.getRotationMatrix();
 				trans.T = rmc->state.position - bracketConnectedRB.state.position;
 				bracketConnectedRB.meshTransformations.push_back(trans);
 				jointName = isParent ? rb.name + "_" + bracketConnectedRB.name :
 					bracketConnectedRB.name + "_" + rb.name;
+				bracketConnectedRB.meshDescriptions.push_back(jointName);
+
+				bracketConnectedRB.meshes.push_back(livingRMC->motorHornMesh);
+				bracketConnectedRB.meshTransformations.push_back(trans);
 				bracketConnectedRB.meshDescriptions.push_back(jointName);
 			}
 
@@ -745,15 +746,11 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 				trans.R = rmc->state.orientation.getRotationMatrix();
 				trans.T = rmc->state.position - rb.state.position;
 
-				rb.meshes.push_back(livingRMC->motor->motorBodyMesh);
+				rb.meshes.push_back(livingRMC->motorBodyMesh);
 				rb.meshTransformations.push_back(trans);
 				rb.meshDescriptions.push_back(jointName);
 
-				rb.meshes.push_back(livingRMC->motor->motorHornMesh);
-				rb.meshTransformations.push_back(trans);
-				rb.meshDescriptions.push_back(jointName);
-
-				rb.meshes.push_back(livingRMC->motor->bodyBracketMesh);
+				rb.meshes.push_back(livingRMC->bodyBracket->bodyBracketMesh);
 				rb.meshTransformations.push_back(trans);
 				rb.meshDescriptions.push_back(jointName);
 			}

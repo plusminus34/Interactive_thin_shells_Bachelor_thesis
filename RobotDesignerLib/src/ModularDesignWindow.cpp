@@ -13,6 +13,14 @@
 #include <RobotDesignerLib/LivingConnector.h>
 #include <RobotDesignerLib/LivingSphereEE.h>
 
+/*
+To test:
+- can we still export the entire mesh for a robot?
+- have two kinds of wheels, one active (e.g. with a motor) and one passive (e.g. as it is now)
+- finally get a design file for servomotors
+- add eyes...
+*/
+
 /* 
 pick an RMCRobot by clicking on it, translation and rotation widgets will show on its root.
 	And its picked RMC will be painted in orange. (Root is painted in green)
@@ -20,7 +28,6 @@ pick an RMCRobot by clicking on it, translation and rotation widgets will show o
 Once you select an RMCRobot:
 key 'Q': clone the RMCRobot
 key 'V': save the picked RMCRobot to ../out/tmpRMCRobot.mrb
-key 'F': switch the parent joint of the picked RMC to the next relative transformation.
 key 'D': delete the subtree from the selected RMC
 
 key 'S': save the whole design to ../out/tmpModularDesign.dsn
@@ -627,44 +634,20 @@ bool ModularDesignWindow::onMouseWheelScrollEvent(double xOffset, double yOffset
 bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 	if (componentLibrary->onKeyEvent(key, action, mods)) return true;
 
-	// switch to the next joint transformation
-	if (key == GLFW_KEY_F && action == GLFW_PRESS)
-	{
-		if (selectedRobot && selectedRobot->selectedRMC)
-		{
-			RMCJoint* pJoint = selectedRobot->selectedRMC->getParentJoint();
-			if (pJoint)
-				pJoint->switchToNextTransformation();
-			selectedRobot->fixJointConstraints();
-
-			buildRMCMirrorMap();
-		}
-	}
-
-	if (key == GLFW_KEY_E && action == GLFW_PRESS)
-	{
+	if (key == GLFW_KEY_E && action == GLFW_PRESS){
+		Logger::consolePrint("Saving robot to \'../out/tmpRobot.rbs\'...\n");
 		saveToRBSFile("../out/tmpRobot.rbs");
 	}
 
-	if (key == GLFW_KEY_K && action == GLFW_PRESS)
-	{
+	if (key == GLFW_KEY_K && action == GLFW_PRESS){
+		Logger::consolePrint("Exporting meshes to \'../out/tmpModularRobotMeshes.obj\'...\n");
 		exportMeshes();
 	}
 
-	if (key == GLFW_KEY_V && action == GLFW_PRESS)
-	{
-		if (selectedRobot && selectedRobot->selectedRMC)
-		{
-			Logger::consolePrint("Save picked RMCRobot to file '../out/tmpRMCRobot.mrb'");
-			selectedRobot->saveToFile("../out/tmpRMCRobot.mrb");
-		}
-	}
-
 	// clone the picked robot
-	if (key == GLFW_KEY_Q && action == GLFW_PRESS)
-	{
-		if (selectedRobot && selectedRobot->selectedRMC)
-		{
+	if (key == GLFW_KEY_Q && action == GLFW_PRESS){
+		Logger::consolePrint("Cloning selected robot...\n");
+		if (selectedRobot && selectedRobot->selectedRMC){
 			RMCRobot* newRobot = selectedRobot->cloneSubTree(selectedRobot->selectedRMC);
 			rmcRobots.push_back(newRobot);	
 
@@ -700,8 +683,8 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 	}
 
 	// delete the sub tree structure from the selected RMC
-	if (key == GLFW_KEY_D && action == GLFW_PRESS)
-	{
+	if (key == GLFW_KEY_D && action == GLFW_PRESS){
+		Logger::consolePrint("Deleting selected robot...\n");
 		if (selectedFP)
 		{
 			for (uint i = 0; i < bodyFeaturePts.size(); i++)
@@ -744,21 +727,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 			buildRMCMirrorMap();
 		}
 	}
-	
-	if (key == GLFW_KEY_A && action == GLFW_PRESS)
-	{
-		if (selectedRobot && selectedRobot->selectedRMC)
-		{
-			if (selectedRobot->selectedRMC != selectedRobot->root) {
-				RMCRobot* newRobot = selectedRobot->cloneSubTree(selectedRobot->selectedRMC);
-				rmcRobots.push_back(newRobot);
-				newRobot->root->state.position = V3D(0, 0.05, 0);
-				newRobot->fixJointConstraints();
-				selectedRobot->deleteSubTree(selectedRobot->selectedRMC->getParentJoint());
-				buildRMCMirrorMap();
-			}
-		}
-	}
+
 
 	if (key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
@@ -791,8 +760,9 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		}
 	}
 
+
 	if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS) {
-		if (selectedFP){
+		if (selectedFP) {
 			selectedFP->featureSize = selectedFP->featureSize + 0.005;
 			createBodyMesh3D();
 		}
@@ -811,6 +781,24 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 			}
 		}
 	}
+
+
+	if (selectedRobot && selectedRobot->selectedRMC && action == GLFW_PRESS) {
+		if (LivingMotor* selectedMotor = dynamic_cast<LivingMotor*> (selectedRobot->selectedRMC)) {
+			if (key == GLFW_KEY_LEFT_BRACKET){
+				selectedMotor->hornBracket->goToNextMountingPosition();
+				Logger::consolePrint("horn bracket mounting angle: %lf\n", selectedMotor->hornBracket->bracketMountingAngle);
+			}
+			if (key == GLFW_KEY_RIGHT_BRACKET){
+				selectedMotor->hornBracket->goToPreviousMountingPosition();
+				Logger::consolePrint("horn bracket moounting angle: %lf\n", selectedMotor->hornBracket->bracketMountingAngle);
+			}
+
+			selectedMotor->update();
+			updateLivingBracket();
+		}
+	}
+
 
 
 	if (key == GLFW_KEY_Z && action == GLFW_PRESS)
@@ -1567,9 +1555,7 @@ PossibleConnection* ModularDesignWindow::getClosestConnnection(Ray& ray, vector<
 	return closestConnection;
 }
 
-void ModularDesignWindow::exportMeshes()
-{
-	Logger::consolePrint("Export design meshes!");
+void ModularDesignWindow::exportMeshes(){
 	RMCRobot* robot = new RMCRobot(new RMC(), transformationMap);
 
 	FILE* fp = fopen(bodyMesh->path.c_str(), "w+");
@@ -1583,7 +1569,7 @@ void ModularDesignWindow::exportMeshes()
 			robot->connectRMCRobotDirectly(rmcRobots[i]->clone(), robot->getRoot());
 		}
 	}
-	robot->exportMeshes("../out/tmpModularRobotMeshes.obj", "../out/tmpModularRobotCarveMeshes.obj");
+	robot->exportMeshes("../out/tmpModularRobotMeshes.obj");
 
 	delete robot;
 }
@@ -1743,7 +1729,7 @@ void ModularDesignWindow::loadParametersForLivingBracket()
 {
 	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_MOTOR)
 	{
-		LivingHornBracket* lbh = ((LivingMotor*)selectedRobot->selectedRMC)->bracket;
+//		LivingHornBracket* lbh = ((LivingMotor*)selectedRobot->selectedRMC)->hornBracket;
 //		TwAddVarRW(glApp->mainMenuBar, "initial angle", TW_TYPE_DOUBLE, &lbh->bracketInitialAngle, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
 //		TwAddVarRW(glApp->mainMenuBar, "motor angle min", TW_TYPE_DOUBLE, &lbh->motor->rotAngleMin, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
 //		TwAddVarRW(glApp->mainMenuBar, "motor angle max", TW_TYPE_DOUBLE, &lbh->motor->rotAngleMax, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");

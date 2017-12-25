@@ -5,165 +5,57 @@
 #include <MathLib/Quaternion.h>
 #include <RobotDesignerLib/LivingHornBracket.h>
 
-LivingBracketMotor::LivingBracketMotor() {
+LivingMotorBodyBracket::LivingMotorBodyBracket() {
 }
 
-LivingBracketMotor::~LivingBracketMotor() {
+LivingMotorBodyBracket::~LivingMotorBodyBracket() {
 
 }
 
-void LivingBracketMotor::draw() {
-	glEnable(GL_LIGHTING);
-	if (motorBodyMesh)
-		motorBodyMesh->drawMesh();
-	glDisable(GL_LIGHTING);
-
-	double hornOffset = boundingBox.halfSides().z();
-
-	glPushMatrix();
-	glRotated(DEG(rotAngle), 0, 0, 1);
-	if (hornBracket)
-		hornBracket->draw();
-	glEnable(GL_LIGHTING);
-	if (motorHornMesh)
-		motorHornMesh->drawMesh();
+void LivingMotorBodyBracket::draw() {
 	if (bodyBracketMesh)
 		bodyBracketMesh->drawMesh();
-	glDisable(GL_LIGHTING);
-	glPopMatrix();
 }
 
-void LivingBracketMotor::setColor(const Vector4d& color /*= Vector4d(0, 0, 0, 0)*/)
-{
-	if (color.isZero())
-	{
-		motorBodyMesh->setMaterial(bodyMaterial);
-		motorHornMesh->setMaterial(hornMaterial);
+void LivingMotorBodyBracket::setColor(const Vector4d& color /*= Vector4d(0, 0, 0, 0)*/){
+	if (color.isZero()){
 		bodyBracketMesh->setMaterial(bodyBracketMaterial);
 	}
 	else {
 		GLShaderMaterial defaultMat;
 		defaultMat.setColor(color[0], color[1], color[2], color[3]);
-		motorBodyMesh->setMaterial(defaultMat);
-		motorHornMesh->setMaterial(defaultMat);
 		bodyBracketMesh->setMaterial(defaultMat);
 	}
 }
 
-LivingBracketMotor_XM430::LivingBracketMotor_XM430() {
-	motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
-	motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
-	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_basicBodyBracket.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+LivingMotorBodyBracket_XM430::LivingMotorBodyBracket_XM430() {
+	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_bodyBracket_w.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
 
-	bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
-	hornMaterial.setColor(0.7, 0.7, 0.7, 1.0);
 	string whiteMat = "../data/textures/matcap/whitefluff2.bmp";
 	bodyBracketMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
 	bodyBracketMaterial.setTextureParam(whiteMat.c_str(), GLContentManager::getTexture(whiteMat.c_str()));
 
-	boundingBox = AxisAlignedBoundingBox(P3D(-0.0143, -0.0353, -0.0172), P3D(0.0143, 0.0113, 0.0172));
-
-	generateBodyBracketMeshes();
+	generateBracketMesh();
 }
 
-LivingBracketMotor_XM430::~LivingBracketMotor_XM430() {
+LivingMotorBodyBracket_XM430::~LivingMotorBodyBracket_XM430() {
 
 }
 
-void LivingBracketMotor_XM430::generateBodyBracketMeshes()
-{
+void LivingMotorBodyBracket_XM430::generateBracketMesh(){
 	pinInfos.clear();
 
+	P3D center = P3D(0, -0.038, 0);
+	double lenX = 0.0175;
+	double lenZ = 0.0205;
 
-	double clearance = 0.0005;
+	Transformation pinTrans(getRotationQuaternion(RAD(180), V3D(1, 0, 0)).getRotationMatrix(), V3D(center));
 
-	{
-		P3D p1 = boundingBox.bmin();
-		P3D p2 = boundingBox.bmax();
-		p1[1] -= clearance;
-		p2[1] = p1[1];
+	vector<P3D> FPs;
+	FPs.push_back(center + P3D(lenX, 0, lenZ));
+	FPs.push_back(center + P3D(-lenX, 0, lenZ));
+	FPs.push_back(center + P3D(-lenX, 0, -lenZ));
+	FPs.push_back(center + P3D(lenX, 0, -lenZ));
 
-		P3D center = (p1 + p2) * 0.5;
-		Transformation pinTrans(getRotationQuaternion(RAD(180), V3D(1, 0, 0)).getRotationMatrix(), V3D(center));
-
-		vector<P3D> FPs;
-		FPs.push_back(p1);
-		FPs.push_back(P3D(p2[0], p1[1], p1[2]));
-		FPs.push_back(P3D(p2[0], p1[1], p2[2]));
-		FPs.push_back(P3D(p1[0], p1[1], p2[2]));
-
-		pinInfos.push_back(PinInfo(pinTrans, "BottomBracketPin", FPs, center, V3D(0, -1, 0)));
-	}
-
-	{
-		P3D p1 = boundingBox.bmin();
-		P3D p2 = boundingBox.bmax();
-		p1[0] -= clearance;
-		p2[0] = p1[0];
-		P3D center = (p1 + p2) * 0.5;
-		Transformation pinTrans(getRotationQuaternion(RAD(90), V3D(0, 0, 1)).getRotationMatrix(), V3D(center));
-
-		vector<P3D> FPs;
-		FPs.push_back(p1);
-		FPs.push_back(P3D(p1[0], p2[1], p1[2]));
-		FPs.push_back(P3D(p1[0], p2[1], p2[2]));
-		FPs.push_back(P3D(p1[0], p1[1], p2[2]));
-		
-		pinInfos.push_back(PinInfo(pinTrans, "LeftBracketPin", FPs, center, V3D(-1, 0, 0)));
-	}
-
-	{
-		P3D p1 = boundingBox.bmin();
-		P3D p2 = boundingBox.bmax();
-		p2[0] += clearance;
-		p1[0] = p2[0];
-		P3D center = (p1 + p2) * 0.5;
-		Transformation pinTrans(getRotationQuaternion(RAD(-90), V3D(0, 0, 1)).getRotationMatrix(), V3D(center));
-
-		vector<P3D> FPs;
-		FPs.push_back(p2);
-		FPs.push_back(P3D(p2[0], p2[1], p1[2]));
-		FPs.push_back(P3D(p2[0], p1[1], p1[2]));
-		FPs.push_back(P3D(p2[0], p1[1], p2[2]));
-
-		pinInfos.push_back(PinInfo(pinTrans, "RightBracketPin", FPs, center, V3D(1, 0, 0)));
-	}
-
-	/*{
-		P3D p1 = boundingBox.bmin();
-		P3D p2 = boundingBox.bmax();
-		p1[2] -= clearance;
-		p2[2] = p1[2];
-		P3D center = (p1 + p2) * 0.5;
-		Transformation pinTrans(getRotationQuaternion(RAD(-90), V3D(1, 0, 0)).getRotationMatrix(), V3D(center));
-
-		vector<P3D> FPs;
-		FPs.push_back(p1);
-		FPs.push_back(P3D(p2[0], p1[1], p1[2]));
-		FPs.push_back(P3D(p2[0], p2[1], p1[2]));
-		FPs.push_back(P3D(p1[0], p2[1], p1[2]));
-
-		pinInfos.push_back(PinInfo(pinTrans, "BackBracketPin", FPs, center, V3D(0, 0, -1)));
-		
-		bracketCarvingMeshes.push_back(NULL);
-	}
-
-	{
-		P3D p1 = boundingBox.bmin();
-		P3D p2 = boundingBox.bmax();
-		p2[2] += clearance;
-		p1[2] = p2[2];
-		P3D center = (p1 + p2) * 0.5;
-		Transformation pinTrans(getRotationQuaternion(RAD(90), V3D(1, 0, 0)).getRotationMatrix(), V3D(center));
-
-		vector<P3D> FPs;
-		FPs.push_back(p2);
-		FPs.push_back(P3D(p2[0], p1[1], p2[2]));
-		FPs.push_back(P3D(p1[0], p1[1], p2[2]));
-		FPs.push_back(P3D(p1[0], p2[1], p2[2]));
-
-		pinInfos.push_back(PinInfo(pinTrans, "FrontBracketPin", FPs, center, V3D(0, 0, 1)));
-	
-		bracketCarvingMeshes.push_back(NULL);
-	}*/
+	pinInfos.push_back(PinInfo(pinTrans, "BottomBracketPin", FPs, center, V3D(0, -1, 0)));
 }
