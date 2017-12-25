@@ -359,29 +359,36 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 					dofs[11].v = &betajm1;
 					dofs[11].i = theMotionPlan->getWheelTiltAngleIndex(i, j-1);
 
+					MatrixNxM localH(numDOFsWheel, numDOFsWheel);
 					for (int k = 0; k < numDOFsWheel; ++k) {
-
 						dofs[k].v->deriv().value() = 1.0;
-
 						for (int l = 0; l <= k; ++l) {
 							dofs[l].v->value().deriv() = 1.0;
-
 							ScalarDiffDiff energy = computeEnergyWheel(eePosj, eePosjm1, dt,
 																	   rho, wheelAxisAD,
 																	   wheelYawAxis, alphaj, alphajm1,
 																	   wheelTiltAxis, betaj, betajm1,
 																	   speedj, speedjm1, c, weight);
-
-							ADD_HES_ELEMENT(hessianEntries,
-											dofs[k].i,
-											dofs[l].i,
-											energy.deriv().deriv(),
-											1.0);
-
+							localH(k,l) = energy.deriv().deriv();
 							dofs[l].v->value().deriv() = 0.0;
 						}
-
 						dofs[k].v->deriv().value() = 0.0;
+					}
+
+					Eigen::SelfAdjointEigenSolver<MatrixNxM> es(localH);
+					Eigen::VectorXd D = es.eigenvalues();
+					Eigen::MatrixXd U = es.eigenvectors();
+					D = D.unaryExpr([](double x) {return (x < 1e-4) ? 1e-4 : x; });
+					localH = U * D.asDiagonal()*U.transpose();
+
+					for (int k = 0; k < numDOFsWheel; ++k) {
+						for (int l = 0; l <= k; ++l) {
+							ADD_HES_ELEMENT(hessianEntries,
+								dofs[k].i,
+								dofs[l].i,
+								localH(k,l),
+								1.0);
+						}
 					}
 				}
 				if (j<theMotionPlan->nSamplePoints-1){
@@ -425,29 +432,36 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 					dofs[11].v = &betajp1;
 					dofs[11].i = theMotionPlan->getWheelTiltAngleIndex(i, j+1);
 
+					MatrixNxM localH(numDOFsWheel, numDOFsWheel);
 					for (int k = 0; k < numDOFsWheel; ++k) {
-
 						dofs[k].v->deriv().value() = 1.0;
-
 						for (int l = 0; l <= k; ++l) {
 							dofs[l].v->value().deriv() = 1.0;
-
 							ScalarDiffDiff energy = computeEnergyWheel(eePosjp1, eePosj, dt,
 																	   rho, wheelAxisAD,
 																	   wheelYawAxis, alphaj, alphajp1,
 																	   wheelTiltAxis, betaj, betajp1,
 																	   speedj, speedjp1, c, weight);
-
-							ADD_HES_ELEMENT(hessianEntries,
-											dofs[k].i,
-											dofs[l].i,
-											energy.deriv().deriv(),
-											1.0);
-
+							localH(k, l) = energy.deriv().deriv(),
 							dofs[l].v->value().deriv() = 0.0;
 						}
-
 						dofs[k].v->deriv().value() = 0.0;
+					}
+
+					Eigen::SelfAdjointEigenSolver<MatrixNxM> es(localH);
+					Eigen::VectorXd D = es.eigenvalues();
+					Eigen::MatrixXd U = es.eigenvectors();
+					D = D.unaryExpr([](double x) {return (x < 1e-4) ? 1e-4 : x; });
+					localH = U * D.asDiagonal()*U.transpose();
+
+					for (int k = 0; k < numDOFsWheel; ++k) {
+						for (int l = 0; l <= k; ++l) {
+							ADD_HES_ELEMENT(hessianEntries,
+								dofs[k].i,
+								dofs[l].i,
+								localH(k,l),
+								1.0);
+						}
 					}
 				}
 			}

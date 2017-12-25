@@ -116,7 +116,8 @@ void MPO_RobotWheelAxisObjective::addHessianEntriesTo(DynamicArray<MTriplet>& he
 	// size of robot state `q` as DOFs
 	if (theMotionPlan->robotStatesParamsStartIndex >= 0)
 		numDOFs += theMotionPlan->robotRepresentation->getDimensionCount();
-
+	if (numDOFs == 0)
+		return;
 	int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 	for (int j=0; j<theMotionPlan->nSamplePoints; j++){
 		dVector qd;
@@ -130,7 +131,7 @@ void MPO_RobotWheelAxisObjective::addHessianEntriesTo(DynamicArray<MTriplet>& he
 
 			if(ee.isWheel)
 			{
-
+				
 				V3T<ScalarDiffDiff> eePosLocal = ee.endEffectorLocalCoords;
 				V3T<ScalarDiffDiff> wheelAxis = ee.wheelAxis;
 
@@ -157,6 +158,8 @@ void MPO_RobotWheelAxisObjective::addHessianEntriesTo(DynamicArray<MTriplet>& he
 					}
 				}
 
+				MatrixNxM localH(numDOFs, numDOFs);
+
 				for (int k = 0; k < numDOFs; ++k) {
 					dofs[k].v->deriv().value() = 1.0;
 					for (int l = 0; l <= k; ++l) {
@@ -165,13 +168,25 @@ void MPO_RobotWheelAxisObjective::addHessianEntriesTo(DynamicArray<MTriplet>& he
 															  ee.endEffectorRB, q,
 															  yawAxis, yawAngle,
 															  tiltAxis, tiltAngle);
-						ADD_HES_ELEMENT(hessianEntries,
-										dofs[k].i,
-										dofs[l].i,
-										energy.deriv().deriv(), 1.0);
+						localH(k, l) = energy.deriv().deriv();
 						dofs[l].v->value().deriv() = 0.0;
 					}
 					dofs[k].v->deriv().value() = 0.0;
+				}
+
+				Eigen::SelfAdjointEigenSolver<MatrixNxM> es(localH);
+				Eigen::VectorXd D = es.eigenvalues();
+				Eigen::MatrixXd U = es.eigenvectors();
+				D = D.unaryExpr([](double x) {return (x < 1e-4) ? 1e-4 : x; });
+				localH = U * D.asDiagonal()*U.transpose();
+
+				for (int k = 0; k < numDOFs; ++k) {
+					for (int l = 0; l <= k; ++l) {
+						ADD_HES_ELEMENT(hessianEntries,
+							dofs[k].i,
+							dofs[l].i,
+							localH(k,l), 1.0);
+					}
 				}
 			}
 		}
