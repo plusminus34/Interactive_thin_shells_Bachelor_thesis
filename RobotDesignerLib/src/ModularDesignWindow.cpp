@@ -791,6 +791,24 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		}
 	}
 
+
+	if (selectedRobot && selectedRobot->selectedRMC && action == GLFW_PRESS) {
+		if (LivingMotor* selectedMotor = dynamic_cast<LivingMotor*> (selectedRobot->selectedRMC)) {
+			if (key == GLFW_KEY_LEFT_BRACKET){
+				selectedMotor->hornBracket->goToNextMountingPosition();
+				Logger::consolePrint("horn bracket mounting angle: %lf\n", selectedMotor->hornBracket->bracketMountingAngle);
+			}
+			if (key == GLFW_KEY_RIGHT_BRACKET){
+				selectedMotor->hornBracket->goToPreviousMountingPosition();
+				Logger::consolePrint("horn bracket moounting angle: %lf\n", selectedMotor->hornBracket->bracketMountingAngle);
+			}
+
+			selectedMotor->update();
+			updateLivingBracket();
+		}
+	}
+
+
 	if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS) {
 		if (selectedFP){
 			selectedFP->featureSize = selectedFP->featureSize + 0.005;
@@ -1743,7 +1761,7 @@ void ModularDesignWindow::loadParametersForLivingBracket()
 {
 	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_MOTOR)
 	{
-		LivingHornBracket* lbh = ((LivingMotor*)selectedRobot->selectedRMC)->bracket;
+//		LivingHornBracket* lbh = ((LivingMotor*)selectedRobot->selectedRMC)->hornBracket;
 //		TwAddVarRW(glApp->mainMenuBar, "initial angle", TW_TYPE_DOUBLE, &lbh->bracketInitialAngle, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
 //		TwAddVarRW(glApp->mainMenuBar, "motor angle min", TW_TYPE_DOUBLE, &lbh->motor->rotAngleMin, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
 //		TwAddVarRW(glApp->mainMenuBar, "motor angle max", TW_TYPE_DOUBLE, &lbh->motor->rotAngleMax, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
