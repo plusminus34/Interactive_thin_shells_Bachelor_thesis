@@ -67,7 +67,7 @@ public:
 	RMCRobot* clone();
 	RMCRobot* cloneSubTree(RMC* rmc);
 
-	void exportMeshes(const char* fName, const char* carvefName);
+	void exportMeshes(const char* fName);
 
 	// save to file (different from save to .rbs file)
 	void saveToFile(const char* fName);

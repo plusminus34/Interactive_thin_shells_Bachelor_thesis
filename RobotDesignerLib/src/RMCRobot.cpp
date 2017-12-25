@@ -302,12 +302,10 @@ void RMCRobot::draw(int flags, const Vector4d& root_color, const Vector4d& highl
 		
 }
 
-void RMCRobot::exportMeshes(const char* fName, const char* carvefName)
+void RMCRobot::exportMeshes(const char* fName)
 {
 	FILE* fp1 = fopen(fName, "w+");
-	FILE* fp2 = fopen(carvefName, "w+");
 	uint fpIndex1 = 0;
-	uint fpIndex2 = 0;
 
 	for (uint i = 0; i < jointList.size(); i++)
 	{
@@ -316,13 +314,14 @@ void RMCRobot::exportMeshes(const char* fName, const char* carvefName)
 		RMC* parentRMC = joint->getParent();
 
 		if (childRMC->type == PLATE_RMC) continue;
-		
-		childRMC->meshes[0]->renderToObjFile(fp1, fpIndex1, childRMC->state.orientation, childRMC->state.position);
-		fpIndex1 += childRMC->meshes[0]->getVertexCount();
+
+		for (uint k=0;k<childRMC->meshes.size();k++){
+			childRMC->meshes[k]->renderToObjFile(fp1, fpIndex1, childRMC->state.orientation, childRMC->state.position);
+			fpIndex1 += childRMC->meshes[k]->getVertexCount();
+		}
 	}
 
 	fclose(fp1);
-	fclose(fp2);
 }
 
 void RMCRobot::saveToFile(const char* fName)
