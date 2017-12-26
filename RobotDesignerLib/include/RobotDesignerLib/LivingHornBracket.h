@@ -87,3 +87,19 @@ public:
 
 };
 
+
+/*
+Horn brackets whose geometry is determined by several parameters that indicate how it will move.
+*/
+class LivingHornBracket_TGY306G : public LivingHornBracket {
+public:
+	LivingHornBracket_TGY306G();
+
+	virtual ~LivingHornBracket_TGY306G(void);
+
+	virtual void setDefaultFeaturePointList();
+
+	virtual void goToNextMountingPosition() { bracketMountingAngle += RAD(15.0); shouldRegenerateBracketMesh = true; }
+
+	virtual void goToPreviousMountingPosition() { bracketMountingAngle -= RAD(15.0); shouldRegenerateBracketMesh = true; }
+};

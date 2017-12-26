@@ -83,3 +83,24 @@ void LivingHornBracket_XM430::setDefaultFeaturePointList() {
 	featurePoints.push_back(P3D(-0.017, 0.022, -0.023));
 	featurePoints.push_back(P3D(-0.017, 0.022, 0.023));
 }
+
+
+/* ---------------------------------------------------------------------------- */
+LivingHornBracket_TGY306G::LivingHornBracket_TGY306G() : LivingHornBracket() {
+	this->bracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_hornBracket_w.obj")->clone();
+
+	generateBracketMesh();
+	bracketMesh->setMaterial(shaderMaterial);
+}
+
+LivingHornBracket_TGY306G::~LivingHornBracket_TGY306G(void) {
+	delete bracketMesh;
+}
+
+void LivingHornBracket_TGY306G::setDefaultFeaturePointList() {
+	featurePoints.clear();
+	featurePoints.push_back(P3D(0.008, 0.02, 0.019));
+	featurePoints.push_back(P3D(0.008, 0.02, -0.019));
+	featurePoints.push_back(P3D(-0.008, 0.02, -0.019));
+	featurePoints.push_back(P3D(-0.008, 0.02, 0.019));
+}

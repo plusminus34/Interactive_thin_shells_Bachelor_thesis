@@ -6,9 +6,9 @@
 LivingMotor::LivingMotor(const char* LMType){
 	this->LMType = string(LMType);
 
-	if (strcmp(trim((char*)LMType), "TGY306G")) {
-		bodyBracket = new LivingMotorBodyBracket_XM430();
-		hornBracket = new LivingHornBracket_XM430();
+	if (strcmp(trim((char*)LMType), "TGY306G") == 0) {
+		bodyBracket = new LivingMotorBodyBracket_TGY306G();
+		hornBracket = new LivingHornBracket_TGY306G();
 
 		motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
 		motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
