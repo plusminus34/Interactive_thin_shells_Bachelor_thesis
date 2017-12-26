@@ -3,16 +3,31 @@
 //#include <MathLib/MeshBoolean.h>
 
 
-LivingMotor::LivingMotor(){
-	bodyBracket = new LivingMotorBodyBracket_XM430();
-	hornBracket = new LivingHornBracket_XM430();
+LivingMotor::LivingMotor(const char* LMType){
+	this->LMType = string(LMType);
 
-	motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
-	motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
-	bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
-	hornMaterial.setColor(0.7, 0.7, 0.7, 1.0);
+	if (strcmp(trim((char*)LMType), "TGY306G")) {
+		bodyBracket = new LivingMotorBodyBracket_XM430();
+		hornBracket = new LivingHornBracket_XM430();
 
+		motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
+		motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
 
+		bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
+		hornMaterial.setColor(0.7, 0.7, 0.7, 1.0);
+	}
+	else {
+		//default for XM430 motors
+		bodyBracket = new LivingMotorBodyBracket_XM430();
+		hornBracket = new LivingHornBracket_XM430();
+
+		motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
+		motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+
+		bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
+		hornMaterial.setColor(0.7, 0.7, 0.7, 1.0);
+
+	}
 
 	type = LIVING_MOTOR;
 
@@ -41,9 +56,8 @@ void LivingMotor::setColor(const Vector4d& color/* = Vector4d(0, 0, 0, 0)*/) {
 }
 
 
-LivingMotor* LivingMotor::clone()
-{
-	LivingMotor* new_rmc = new LivingMotor();
+LivingMotor* LivingMotor::clone(){
+	LivingMotor* new_rmc = new LivingMotor(LMType.c_str());
 
 	new_rmc->hornBracket->copyBracketProperties(this->hornBracket, false);
 

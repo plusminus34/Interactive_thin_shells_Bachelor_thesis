@@ -16,8 +16,10 @@ public:
 	vector<RMCPin> candidatePins;
 	int activeBodyPinID = -1;
 
+	string LMType;
+
 public:
-	LivingMotor();
+	LivingMotor(const char* LMType);
 	~LivingMotor();
 
 	virtual LivingMotor* clone();

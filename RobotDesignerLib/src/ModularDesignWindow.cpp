@@ -1173,9 +1173,9 @@ void ModularDesignWindow::loadConfig(const char* fName)
 				rmcPinNameMap[rmc->pins[i].name] = &rmc->pins[i];
 			}
 		}
-		else if (strcmp(keyword, "LivingMotor") == 0)
+		else if (strncmp(keyword, "LivingMotor", strlen("LivingMotor")) == 0)
 		{
-			RMC* rmc = new LivingMotor();
+			RMC* rmc = new LivingMotor(keyword + strlen("LivingMotor"));
 			rmcWarehouse.push_back(rmc);
 			rmcWarehouse.back()->loadFromFile(fp);
 			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;

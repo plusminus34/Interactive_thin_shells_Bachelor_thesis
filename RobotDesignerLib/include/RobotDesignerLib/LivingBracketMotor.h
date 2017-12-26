@@ -52,3 +52,13 @@ public:
 
 	void generateBracketMesh();
 };
+
+class LivingMotorBodyBracket_TGY306G : public LivingMotorBodyBracket {
+public:
+
+public:
+	LivingMotorBodyBracket_TGY306G();
+	~LivingMotorBodyBracket_TGY306G(void);
+
+	void generateBracketMesh();
+};
