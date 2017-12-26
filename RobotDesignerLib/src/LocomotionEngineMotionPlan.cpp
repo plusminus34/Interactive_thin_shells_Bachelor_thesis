@@ -471,15 +471,11 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 		endEffectorTrajectories[index].wheelYawAxis = V3D(0, 1, 0);
 
 		// set tilt axis
-		endEffectorTrajectories[index].wheelTiltAxis = wheelAxisWorld.cross(endEffectorTrajectories[index].wheelYawAxis);
+		endEffectorTrajectories[index].wheelTiltAxis = (wheelAxisWorld.cross(endEffectorTrajectories[index].wheelYawAxis)).normalized();
 
 		// set wheel angles
 		endEffectorTrajectories[index].wheelYawAngle = DynamicArray<double>(nSamplingPoints, 0);
 		endEffectorTrajectories[index].wheelTiltAngle = DynamicArray<double>(nSamplingPoints, 0);
-
-		// contact point to ground
-		Vector3d rho = endEffectorTrajectories[index].wheelTiltAxis.cross(endEffectorTrajectories[index].wheelAxis);
-		rho = rho.normalized() * endEffectorTrajectories[index].wheelRadius;
 
 		// output some info
 		Logger::consolePrint("Wheel radius %d: %f", index, endEffectorTrajectories[index].wheelRadius);
