@@ -4,7 +4,7 @@
 #include "GLUtils.h"
 #include "GLCamera.h"
 #include "GLContentManager.h"
-#include <Utils/utils.h>
+#include <Utils/Utils.h>
 
 class Canvas3D {
 public:
