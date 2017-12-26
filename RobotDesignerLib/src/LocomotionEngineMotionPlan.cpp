@@ -1246,14 +1246,7 @@ P3D LocomotionEngineMotionPlan::getCenterOfRotationAt(double t, Eigen::VectorXd 
 }
 
 void LocomotionEngineMotionPlan::getVelocityTimeIndicesFor(int tIndex, int &tm, int &tp, bool wrapAround) const {
-	tp = tIndex; tm = tIndex-1;
-	if (tm < 0){
-		if (wrapAroundBoundaryIndex==0 && wrapAround)
-			tm = nSamplePoints-2;
-		else
-			tm = -1;
-	}
-
+	tp = tIndex+1; tm = tIndex;
 	if (tp == nSamplePoints-1){
 		if (wrapAroundBoundaryIndex >= 0 && wrapAround){
 			tp = wrapAroundBoundaryIndex;

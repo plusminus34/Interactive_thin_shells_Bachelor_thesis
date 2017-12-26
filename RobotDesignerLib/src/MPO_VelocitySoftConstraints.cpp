@@ -28,11 +28,10 @@ double MPO_VelocitySoftBoundConstraints::computeValue(const dVector& s) {
 		for (int j=0; j<nSamplePoints; j++){
 
 			int jm, jp;
-
 			theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
 			if (jm == -1 || jp == -1) continue;
 
-			double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
+			double dt = theMotionPlan->motionPlanDuration / (theMotionPlan->nSamplePoints-1);
 
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
@@ -58,11 +57,10 @@ void MPO_VelocitySoftBoundConstraints::addGradientTo(dVector& grad, const dVecto
 		for (int j=0; j<nSamplePoints; j++){
 
 			int jm, jp;
-
 			theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
 			if (jm == -1 || jp == -1) continue;
 
-			double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
+			double dt = theMotionPlan->motionPlanDuration / (nSamplePoints-1);
 
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
@@ -88,40 +86,34 @@ void MPO_VelocitySoftBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet
 		for (int j=0; j<nSamplePoints; j++){
 
 			int jm, jp;
-
 			theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
 			if (jm == -1 || jp == -1) continue;
 
-			double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
+			double dt = theMotionPlan->motionPlanDuration / (nSamplePoints-1);
 
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
 
-				if (theMotionPlan->robotStatesParamsStartIndex >= 0){
-
-					// lower bound hessian
-					// d_jm_jm
-					addMTripletToList_reflectUpperElements(
-								hessianEntries,
-								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								weight * constraintSymmetricBound->computeSecondDerivative(velocity) / (dt*dt));
-					// d_jp_jp
-					addMTripletToList_reflectUpperElements(
-								hessianEntries,
-								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								weight * constraintSymmetricBound->computeSecondDerivative(velocity) / (dt*dt));
-					// d_jm_jp
-					addMTripletToList_reflectUpperElements(
-								hessianEntries,
-								theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
-								- weight * constraintSymmetricBound->computeSecondDerivative(velocity) / (dt*dt));
-				}
+				// lower bound hessian
+				// d_jm_jm
+				addMTripletToList_reflectUpperElements(
+							hessianEntries,
+							theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
+							theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
+							weight * constraintSymmetricBound->computeSecondDerivative(velocity) / (dt*dt));
+				// d_jp_jp
+				addMTripletToList_reflectUpperElements(
+							hessianEntries,
+							theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
+							theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
+							weight * constraintSymmetricBound->computeSecondDerivative(velocity) / (dt*dt));
+				// d_jm_jp
+				addMTripletToList_reflectUpperElements(
+							hessianEntries,
+							theMotionPlan->robotStatesParamsStartIndex + jm * theMotionPlan->robotStateTrajectory.nStateDim + i,
+							theMotionPlan->robotStatesParamsStartIndex + jp * theMotionPlan->robotStateTrajectory.nStateDim + i,
+							- weight * constraintSymmetricBound->computeSecondDerivative(velocity) / (dt*dt));
 			}
 		}
 	}
 }
-
-
