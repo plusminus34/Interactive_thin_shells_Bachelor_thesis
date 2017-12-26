@@ -37,8 +37,6 @@ LivingConnector* LivingConnector::clone()
 	new_rmc->type = type;
 	new_rmc->motorAxis = motorAxis;
 	new_rmc->motorAngle = motorAngle;
-	new_rmc->carveMesh = carveMesh;
-	new_rmc->carveMeshEx = carveMeshEx;
 
 	new_rmc->material = material;
 

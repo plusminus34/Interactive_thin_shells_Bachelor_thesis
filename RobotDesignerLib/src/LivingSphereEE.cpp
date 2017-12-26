@@ -1,5 +1,6 @@
 #include <RobotDesignerLib/LivingSphereEE.h>
 #include <GUILib/GLContentManager.h>
+#include <GUILib/GLUtils.h>
 
 LivingSphereEE::LivingSphereEE()
 {
@@ -34,8 +35,6 @@ LivingSphereEE* LivingSphereEE::clone()
 	new_rmc->type = type;
 	new_rmc->motorAxis = motorAxis;
 	new_rmc->motorAngle = motorAngle;
-	new_rmc->carveMesh = carveMesh;
-	new_rmc->carveMeshEx = carveMeshEx;
 
 	new_rmc->material = material;
 
@@ -194,8 +193,6 @@ LivingWheelEE* LivingWheelEE::clone()
 	new_rmc->type = type;
 	new_rmc->motorAxis = motorAxis;
 	new_rmc->motorAngle = motorAngle;
-	new_rmc->carveMesh = carveMesh;
-	new_rmc->carveMeshEx = carveMeshEx;
 
 	new_rmc->material = material;
 

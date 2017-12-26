@@ -315,6 +315,9 @@ public:
 	//path
 	std::string path;
 
+	//tmp transformation, for easy undoing...
+	Quaternion tmpAppliedRotation;
+
 public:
 	/**
 		this is the default constructor

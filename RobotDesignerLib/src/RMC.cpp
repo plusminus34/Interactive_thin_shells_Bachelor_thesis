@@ -28,8 +28,6 @@ RMC* RMC::clone()
 	new_rmc->type = type;
 	new_rmc->motorAxis = motorAxis;
 	new_rmc->motorAngle = motorAngle;
-	new_rmc->carveMesh = carveMesh;
-	new_rmc->carveMeshEx = carveMeshEx;
 
 	new_rmc->material = material;
 
@@ -210,16 +208,6 @@ void RMC::loadFromFile(FILE* fp)
 //			mesh->translate(-mesh->getCenterOfMass());
 			mesh->getMaterial().setColor(1.0, 1.0, 1.0, 0.8);
 			meshes.push_back(mesh);
-		}
-		else if (strcmp(keyword, "CarveMesh") == 0)
-		{
-			sscanf(line + strlen(keyword), "%s", content);
-			carveMesh = GLContentManager::getGLMesh(content);
-		}
-		else if (strcmp(keyword, "CarveMeshEx") == 0)
-		{
-			sscanf(line + strlen(keyword), "%s", content);
-			carveMeshEx = GLContentManager::getGLMesh(content);
 		}
 		else if (strcmp(keyword, "Material") == 0)
 		{
