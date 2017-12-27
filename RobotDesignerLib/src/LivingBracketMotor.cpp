@@ -86,8 +86,8 @@ void LivingMotorBodyBracket_TGY306G::generateBracketMesh() {
 	Transformation pinTrans(getRotationQuaternion(RAD(180), V3D(1, 0, 0)).getRotationMatrix(), V3D(center));
 
 	vector<P3D> FPs;
-	FPs.push_back(center + P3D(lenX, 0, lenZ / 2));
-	FPs.push_back(center + P3D(-lenX, 0, lenZ / 2));
+	FPs.push_back(center + P3D(lenX, 0, lenZ /*/ 2*/));
+	FPs.push_back(center + P3D(-lenX, 0, lenZ /*/ 2*/));
 	FPs.push_back(center + P3D(-lenX, 0, -lenZ));
 	FPs.push_back(center + P3D(lenX, 0, -lenZ));
 
