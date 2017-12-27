@@ -200,9 +200,13 @@ void LivingMotor::exportMeshes(const char* dirName, int index){
 	// *************************** Horn Bracket Mesh ***************************
 	string bracketFileName = dirName + string("LivingBracketMesh") + to_string(index) + string(".obj");
 
-	hornBracket->bracketMesh->path = bracketFileName;
-	GLContentManager::addMeshFileMapping(hornBracket->bracketMesh, bracketFileName.c_str());
-	hornBracket->bracketMesh->writeTriangulatedMeshToObj(bracketFileName.c_str());
+	//tmpMesh will from now on be managed by the content manager...
+	hornBracket->bracketMesh->setMaterial(hornBracket->shaderMaterial);
+	GLMesh* tmpMesh = hornBracket->bracketMesh->clone();
+	tmpMesh->path = bracketFileName;
+	tmpMesh->setMaterial(hornBracket->shaderMaterial);
+	GLContentManager::addMeshFileMapping(tmpMesh, bracketFileName.c_str());
+	tmpMesh->writeTriangulatedMeshToObj(bracketFileName.c_str());
 }
 
 void LivingMotor::syncSymmParameters(LivingMotor* refMotor){

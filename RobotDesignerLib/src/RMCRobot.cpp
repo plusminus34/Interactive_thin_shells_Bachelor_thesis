@@ -790,6 +790,19 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 			trans.T = rmc->state.position - rb.state.position;
 			rb.meshTransformations.push_back(trans);
 			rb.meshDescriptions.push_back("skeleton");
+
+			if (wheelEE->motorMesh) {
+				rb.meshes.push_back(wheelEE->motorMesh);
+				rb.meshTransformations.push_back(trans);
+				rb.meshDescriptions.push_back("skeleton");
+			}
+
+			if (wheelEE->motorBracketMesh) {
+				rb.meshes.push_back(wheelEE->motorBracketMesh);
+				rb.meshTransformations.push_back(trans);
+				rb.meshDescriptions.push_back("skeleton");
+			}
+
 		}
 
 		if (!rmc->meshes.empty()) {
