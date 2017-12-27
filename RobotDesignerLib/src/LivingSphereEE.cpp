@@ -234,7 +234,11 @@ bool LivingWheelEE::pickMesh(Ray& ray, double* closestDist /*= NULL*/){
 	Transformation invTrans = Transformation(state.orientation.getRotationMatrix(), state.position).inverse();
 	Ray newRay(invTrans.transform(ray.origin), invTrans.transform(ray.direction));
 
-	return wheelMesh->getDistanceToRayOriginIfHit(newRay, closestDist);;
+	return (wheelMesh->getDistanceToRayOriginIfHit(newRay, closestDist)
+		|| (motorMesh && motorMesh->getDistanceToRayOriginIfHit(newRay, closestDist))
+		|| (motorBracketMesh && motorBracketMesh->getDistanceToRayOriginIfHit(newRay, closestDist))
+		);
+
 }
 
 void LivingWheelEE::draw(int flags, const Vector4d& color /*= Vector4d(0, 0, 0, 0)*/)
