@@ -4,9 +4,11 @@
 #include <MathLib/ConvexHull3D.h>
 
 
-LivingConnector::LivingConnector()
+LivingConnector::LivingConnector(char* argument)
 {
 	type = LIVING_CONNECTOR;
+
+	sscanf(argument, "%lf", &scale);
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -27,9 +29,11 @@ LivingConnector::~LivingConnector()
 
 LivingConnector* LivingConnector::clone()
 {
-	LivingConnector* new_rmc = new LivingConnector();
+	LivingConnector* new_rmc = new LivingConnector((char*)to_string(scale).c_str());
 	new_rmc->state = state;
 	new_rmc->rbProperties = rbProperties;
+
+	new_rmc->scale = scale;
 
 	new_rmc->meshes = meshes;
 	new_rmc->name = name;
@@ -130,15 +134,18 @@ bool LivingConnector::isFullyConnected()
 	return true;
 }
 
-void LivingConnector::updateMeshAndPinByDefault()
-{
+void LivingConnector::updateMeshAndPinByDefault(){
 	delete connectorMesh;
-	connectorMesh = OBJReader::loadOBJFile("../data/3dModels/cube.obj");
+	connectorMesh = OBJReader::loadOBJFile("../data/robotDesigner/meshes/cube.obj");
 	
+	for (int i = 0; i < connectorMesh->getVertexCount() * 3; i++) {
+		connectorMesh->getVertexArray()[i] *= scale;
+	}
+
 	Transformation trans1, trans2;
 	trans1.R = getRotationQuaternion(RAD(180), V3D(1, 0, 0)).getRotationMatrix();
-	trans1.T[1] = 0.015;
-	trans2.T[1] = -0.015;
+	trans1.T[1] = 0.015 * scale;
+	trans2.T[1] = -0.015 * scale;
 
 	pins[0].transformation = trans1;
 	pins[1].transformation = trans2;

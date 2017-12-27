@@ -741,12 +741,12 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 
 	if (key == GLFW_KEY_MINUS && action == GLFW_PRESS) {
 		if (selectedFP){
-			selectedFP->featureSize = max(0.01, selectedFP->featureSize - 0.005);
+			selectedFP->featureSize = max(0.005, selectedFP->featureSize - 0.005);
 			createBodyMesh3D();
 		}
 		if (selectedRobot && selectedRobot->selectedRMC) {
 			if (LivingSphereEE* selectedSphere = dynamic_cast<LivingSphereEE*> (selectedRobot->selectedRMC)) {
-				selectedSphere->sphereRadius = max(0.01, selectedSphere->sphereRadius - 0.005);
+				selectedSphere->sphereRadius = max(0.005, selectedSphere->sphereRadius - 0.005);
 				selectedSphere->update();
 				updateLivingBracket();
 			}
@@ -1175,7 +1175,7 @@ void ModularDesignWindow::loadConfig(const char* fName)
 		}
 		else if (strncmp(keyword, "LivingMotor", strlen("LivingMotor")) == 0)
 		{
-			RMC* rmc = new LivingMotor(line + strlen("LivingMotor"));
+			RMC* rmc = new LivingMotor(line + strlen(keyword));
 			rmcWarehouse.push_back(rmc);
 			rmcWarehouse.back()->loadFromFile(fp);
 			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;
@@ -1187,7 +1187,7 @@ void ModularDesignWindow::loadConfig(const char* fName)
 		}
 		else if (strcmp(keyword, "LivingConnector") == 0)
 		{
-			RMC* rmc = new LivingConnector();
+			RMC* rmc = new LivingConnector(line + strlen(keyword));
 			rmcWarehouse.push_back(rmc);
 			rmcWarehouse.back()->loadFromFile(fp);
 			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;
@@ -1211,7 +1211,7 @@ void ModularDesignWindow::loadConfig(const char* fName)
 		}
 		else if (strcmp(keyword, "LivingWheelEE") == 0)
 		{
-			RMC* rmc = new LivingWheelEE();
+			RMC* rmc = new LivingWheelEE(line + strlen(keyword));
 			rmcWarehouse.push_back(rmc);
 			rmcWarehouse.back()->loadFromFile(fp);
 			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;

@@ -38,6 +38,7 @@ public:
 	double motorAngle = 0;
 	double backupMotorAngle = 0;
 
+
 	RMCPin* pickedPin = NULL;
 
 	GLShaderMaterial material;
