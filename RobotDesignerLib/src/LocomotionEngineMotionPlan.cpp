@@ -424,7 +424,7 @@ void LocomotionEngineMotionPlan::addIKInitEE(RigidBody* rb, IK_Plan* ikPlan) {
 
 		if (rb->rbProperties.endEffectorPoints[j].isWheel()){
 			Vector3d rho = rb->rbProperties.endEffectorPoints[j].getWheelRho(rb);
-			eeWorldCoords[1] += rho[1];
+			eeWorldCoords += rho;
 		}
 
 		ikPlan->endEffectors.push_back(IK_EndEffector());
@@ -438,16 +438,17 @@ void LocomotionEngineMotionPlan::addIKInitEE(RigidBody* rb, IK_Plan* ikPlan) {
 void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody* rb, int eeIndex, int nSamplingPoints) {
 	P3D eeLocalCoords = rb->rbProperties.getEndEffectorPoint(eeIndex);
 	P3D eeWorldCoords = rb->getWorldCoordinates(eeLocalCoords);
-	eeWorldCoords[1] = 0;
 
 	endEffectorTrajectories.push_back(LocomotionEngine_EndEffectorTrajectory(nSamplingPoints));
 	int index = endEffectorTrajectories.size() - 1;
-	endEffectorTrajectories[index].CPIndex = eeIndex;
-	endEffectorTrajectories[index].targetOffsetFromCOM = V3D(this->robot->getRoot()->getCMPosition(), eeWorldCoords);
+	LocomotionEngine_EndEffectorTrajectory &eeTraj = endEffectorTrajectories[index];
 
-	endEffectorTrajectories[index].theLimb = theLimb;
-	endEffectorTrajectories[index].endEffectorRB = rb;
-	endEffectorTrajectories[index].endEffectorLocalCoords = eeLocalCoords;
+	eeTraj.CPIndex = eeIndex;
+	eeTraj.targetOffsetFromCOM = V3D(this->robot->getRoot()->getCMPosition(), eeWorldCoords);
+
+	eeTraj.theLimb = theLimb;
+	eeTraj.endEffectorRB = rb;
+	eeTraj.endEffectorLocalCoords = eeLocalCoords;
 
 	// is end effector a wheel?
 	const RBProperties &rbProperties = rb->rbProperties;
@@ -459,37 +460,68 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 		eeToWheelIndex[index] = nWheels;
 		nWheels++;
 
-		endEffectorTrajectories[index].isWheel = true;
+		eeTraj.isWheel = true;
 
 		// set wheel radius from rb properties
-		endEffectorTrajectories[index].wheelRadius = rbEndEffector.featureSize;
+		eeTraj.wheelRadius = rbEndEffector.featureSize;
 
 		// set wheel axis
-		endEffectorTrajectories[index].wheelAxis = rbEndEffector.getWheelAxis(rb);
+		eeTraj.wheelAxis = rbEndEffector.getWheelAxis(rb);
 
 		// set yaw axis (always going to be y-axis)
-		endEffectorTrajectories[index].wheelYawAxis = rbEndEffector.getWheelYawAxis(rb);
+		eeTraj.wheelYawAxis = rbEndEffector.getWheelYawAxis(rb);
 
 		// set tilt axis
-		endEffectorTrajectories[index].wheelTiltAxis = rbEndEffector.getWheelTiltAxis(rb);
+		eeTraj.wheelTiltAxis = rbEndEffector.getWheelTiltAxis(rb);
+
+		// this is the wheel axis from the robot point of view
+		V3D axisRobot = rb->getWorldCoordinates(eeTraj.wheelAxis);
+
+		// first adjust yaw angle to match wheel axis from robot (order is always tilt then yaw):
+		// wheel axis in tilt plane
+		V3D axisWheelTilt = eeTraj.wheelAxis - eeTraj.wheelAxis.getProjectionOn(eeTraj.wheelTiltAxis);
+		// robot wheel axis in tilt plane
+		V3D axisRBTilt = axisRobot - axisRobot.getProjectionOn(eeTraj.wheelTiltAxis);
+		// and now compute the angle
+		double tiltAngle = axisWheelTilt.angleWith(axisRBTilt, eeTraj.wheelTiltAxis);
+
+		// same for yaw angle, but with wheel axis rotated by tilt angle
+		V3D axisWheelRot = rotateVec(eeTraj.wheelAxis, tiltAngle, eeTraj.wheelTiltAxis);
+		V3D axisWheelYaw = axisWheelRot - axisWheelRot.getProjectionOn(eeTraj.wheelYawAxis);
+		V3D axisRBYaw = axisRobot - axisRobot.getProjectionOn(eeTraj.wheelYawAxis);
+		double yawAngle = axisWheelYaw.angleWith(axisRBYaw, eeTraj.wheelYawAxis);
+
+		// verify if it worked:
+//		V3D axisVer = eeTraj.getRotatedWheelAxis(yawAngle, tiltAngle);
+//		std::cout << "yawAngle  = " << yawAngle << std::endl;
+//		std::cout << "tiltAngle = " << tiltAngle << std::endl;
+//		std::cout << "axisWheel = " << eeTraj.wheelAxis.transpose() << std::endl;
+//		std::cout << "axisRB    = " << axisRB.transpose() << std::endl;
+//		std::cout << "axisVer   = " << axisVer.transpose() << std::endl;
 
 		// set wheel angles
-		endEffectorTrajectories[index].wheelYawAngle = DynamicArray<double>(nSamplingPoints, 0);
-		endEffectorTrajectories[index].wheelTiltAngle = DynamicArray<double>(nSamplingPoints, 0);
+		eeTraj.wheelYawAngle = DynamicArray<double>(nSamplingPoints, yawAngle);
+		eeTraj.wheelTiltAngle = DynamicArray<double>(nSamplingPoints, tiltAngle);
+
+		eeWorldCoords -= eeTraj.getWheelRho();
 
 		// output some info
-		Logger::consolePrint("Wheel radius %d: %f", index, endEffectorTrajectories[index].wheelRadius);
+		Logger::consolePrint("Wheel radius %d: %f", index, eeTraj.wheelRadius);
+
 	}
 	else if (rbEndEffector.isWeldedWheel())
 		Logger::consolePrint("Warning: Welded wheels have not been tested!");
 	else if (rbEndEffector.isFreeToMoveWheel())
 		Logger::consolePrint("Warning: Free-to-move wheels are not working! (yet...)");
-
+	else // foot
+	{
+		eeWorldCoords[1] = 0;
+	}
 
 	for (int k = 0; k<nSamplingPoints; k++) {
-		endEffectorTrajectories[index].EEPos[k] = eeWorldCoords;
-		endEffectorTrajectories[index].defaultEEPos[k] = endEffectorTrajectories[index].EEPos[k];
-		endEffectorTrajectories[index].contactFlag[k] = 1.0;
+		eeTraj.EEPos[k] = eeWorldCoords;
+		eeTraj.defaultEEPos[k] = eeTraj.EEPos[k];
+		eeTraj.contactFlag[k] = 1.0;
 	}
 }
 
