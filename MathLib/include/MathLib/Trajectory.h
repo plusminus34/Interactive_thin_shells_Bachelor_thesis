@@ -13,10 +13,10 @@
 	can evaluate the trajectory at any t through interpolation. Outside the range of the data, the closest stored value is returned.
  *==============================================================================================================================================*/
 template <class T> class GenericTrajectory{
-private:
+protected:
 	// A caching variable to optimize searching for knots
 	int lastIndex;
-private:
+protected:
 	DynamicArray<double> tValues;
 	DynamicArray<T> values;
 
@@ -122,8 +122,8 @@ public:
 		if (getKnotCount() < 2) return T();
 
 		if (index == 0 || index == getKnotCount() - 1) {
-			T startSlope = (values[1] - values[0]) / (tValues[1] - tValues[0]);
-			T endSlope = (values[getKnotCount() - 1] - values[getKnotCount() - 2]) / (tValues[getKnotCount() - 1] - tValues[getKnotCount() - 2]);
+			T startSlope = static_cast<T>((values[1] - values[0]) / (tValues[1] - tValues[0]));
+			T endSlope = static_cast<T>((values[getKnotCount() - 1] - values[getKnotCount() - 2]) / (tValues[getKnotCount() - 1] - tValues[getKnotCount() - 2]));
 
 			if (equalEndpointSlopes)
 				return (startSlope + endSlope) / 2.0;
@@ -133,8 +133,8 @@ public:
 			return endSlope;
 		}
 
-		T slopeBefore = (values[index] - values[index - 1]) / (tValues[index] - tValues[index - 1]);
-		T slopeAfter = (values[index + 1] - values[index]) / (tValues[index + 1] - tValues[index]);
+		T slopeBefore = static_cast<T>((values[index] - values[index - 1]) / (tValues[index] - tValues[index - 1]));
+		T slopeAfter = static_cast<T>((values[index + 1] - values[index]) / (tValues[index + 1] - tValues[index]));
 
 		return (slopeBefore + slopeAfter) / 2.0;
 	}
@@ -165,7 +165,7 @@ public:
 	/**
 		Evaluate using catmull rom interpolation
 	*/
-	T evaluate_catmull_rom(double t){
+	T evaluate_catmull_rom(double t, bool equalEndpointSlopes = true){
 		int size = (int)tValues.size();
 		if (t<=tValues[0]) return values[0];
 		if (t>=tValues[size-1])	return values[size-1];
@@ -179,8 +179,8 @@ public:
 		T p1 = values[index-1];
 		T p2 = values[index];
 
-		T m1 = getSlopeEstimateAtKnot(index-1) * (tValues[index]-tValues[index-1]);
-		T m2 = getSlopeEstimateAtKnot(index) * (tValues[index]-tValues[index-1]);
+		T m1 = getSlopeEstimateAtKnot(index-1, equalEndpointSlopes) * (tValues[index]-tValues[index-1]);
+		T m2 = getSlopeEstimateAtKnot(index, equalEndpointSlopes) * (tValues[index]-tValues[index-1]);
 
 		double t2, t3;
 		t2 = t*t;

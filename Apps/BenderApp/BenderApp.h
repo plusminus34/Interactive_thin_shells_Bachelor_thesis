@@ -8,6 +8,7 @@
 #include "OptimizationLib/GradientBasedFunctionMinimizer.h"
 #include "NodePositionObjectiveFunction.h"
 #include "BenderSimulationMesh2D.h"
+#include "Trajectory3D.h"
 
 
 /**
@@ -16,6 +17,8 @@
 class BenderApp : public GLApplication {
 public:
 	BenderSimulationMesh2D* femMesh;
+
+	Trajectory3Dplus targetTrajectory;
 	
 	dVector xi;
 

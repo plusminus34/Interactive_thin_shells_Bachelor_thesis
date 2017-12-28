@@ -8,6 +8,7 @@
 #include <FEMSimLib/CSTSimulationMesh3D.h>
 #include <FEMSimLib/MassSpringSimulationMesh3D.h>
 #include <GUILib/GLUtils.h>
+
 #include "OptimizationLib/GradientDescentFunctionMinimizer.h"
 #include "OptimizationLib/BFGSFunctionMinimizer.h"
 
@@ -39,6 +40,7 @@ BenderApp::BenderApp()
 
 
 	// set some curve to "uppermost" column
+	/*
 	{
 		auto curve_normalized = [](double z) -> double 
 		{
@@ -61,6 +63,13 @@ BenderApp::BenderApp()
 			femMesh->setNodePositionObjective(id, pt + d);
 		}
 	}
+	*/
+
+	// draw some target trjectory
+	targetTrajectory.addKnotInteractive(P3D(-1.0, 0.2, 0.0));
+	targetTrajectory.addKnotInteractive(P3D( 0.0, 0.4, 0.0));
+	targetTrajectory.addKnotInteractive(P3D( 1.0, 0.2, 0.0));
+
 
 
 	showGroundPlane = false;
@@ -90,10 +99,6 @@ BenderApp::BenderApp()
 	}
 	pullXi();
 
-
-	// prepare minimizer and objective funciton
-	//minimizer = new GradientDescentFunctionMinimizer();
-	
 	minimizers.push_back(new GradientDescentFunctionMinimizer(maxIterations, solveResidual, maxLineSearchIterations, false));
 	minimizers.push_back(new BFGSFunctionMinimizer           (maxIterations, solveResidual, maxLineSearchIterations, false));
 
@@ -817,6 +822,9 @@ void BenderApp::drawScene() {
 	glVertex3d(p0[0], p0[1], p0[2]);
 	glVertex3d(pz[0], pz[1], pz[2]);
 	glEnd();
+
+	// draw target trajectory
+	targetTrajectory.draw();
 }
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
