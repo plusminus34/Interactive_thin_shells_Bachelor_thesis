@@ -282,7 +282,7 @@ void MotionPlanAnalysis::updatePlotScaling()
 
 		// set min/max of plot
 		// Note: we don't use `plot->updateMinMax()`, because "time" will mess it up
-		float range = std::max(1e-10f, dataMax[1] - dataMin[1]);
+		float range = std::max(1e-6f, dataMax[1] - dataMin[1]);
 		dataMin[1] -= 0.1*range;
 		dataMax[1] += 0.1*range;
 		plot->setDataMin(dataMin);

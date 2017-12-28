@@ -106,7 +106,8 @@ void Plot::draw(NVGcontext *ctx) {
 			start = std::floor(start/tickStep)*tickStep;
 
 			float vy = mPos.y() + mSize.y();
-			for (float x = start; x <= mDataMax(0); x+=tickStep) {
+			int i=0;
+			for (float x = start; x <= mDataMax(0) && i<100; x+=tickStep) {
 				float vx = mPos.x() + scaledXValue(x) * mSize.x();
 				nvgBeginPath(ctx);
 				nvgMoveTo(ctx, vx, vy);
@@ -117,6 +118,8 @@ void Plot::draw(NVGcontext *ctx) {
 				std::sprintf(c, "%g", x);
 				nvgFillColor(ctx, mForegroundColor);
 				nvgText(ctx, vx, vy-mTickHeight, c, NULL);
+
+				i++;
 			}
 		}
 
@@ -131,7 +134,8 @@ void Plot::draw(NVGcontext *ctx) {
 			start = std::floor(start/tickStep)*tickStep;
 
 			float vx = mPos.x();
-			for (float y = start; y <= mDataMax(1); y+=tickStep) {
+			int i = 0;
+			for (float y = start; y <= mDataMax(1) && i<100; y+=tickStep) {
 				float vy = mPos.y() + (1-scaledYValue(y)) * mSize.y();
 				nvgBeginPath(ctx);
 				nvgMoveTo(ctx, vx, vy);
@@ -142,6 +146,8 @@ void Plot::draw(NVGcontext *ctx) {
 				std::sprintf(c, "%g", y);
 				nvgFillColor(ctx, mForegroundColor);
 				nvgText(ctx, vx+mTickHeight+4, vy, c, NULL);
+
+				i++;
 			}
 		}
 
