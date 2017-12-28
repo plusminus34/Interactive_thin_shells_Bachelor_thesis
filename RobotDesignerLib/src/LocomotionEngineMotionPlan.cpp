@@ -1562,6 +1562,8 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 				V3D v = ee.getRotatedWheelAxis(alpha, beta);
 //				V3D vWorld = endEffectorTrajectories[i].endEffectorRB->getWorldCoordinates(v);
 
+				v[1] = 0;
+
 				P3D a = wheelCenter + v*10;
 				P3D b = wheelCenter - v*10;
 

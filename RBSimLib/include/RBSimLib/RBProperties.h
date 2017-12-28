@@ -42,10 +42,10 @@ public:
 
 	void setMode(END_EFFECTOR_TYPE eet) { this->eeType = eet; }
 
-	Vector3d getWheelAxis(RigidBody *rb);
-	Vector3d getWheelYawAxis(RigidBody *rb);
-	Vector3d getWheelTiltAxis(RigidBody *rb);
-	Vector3d getWheelRho(RigidBody *rb);
+	Vector3d getWheelAxis(const RigidBody *rb) const;
+	Vector3d getWheelYawAxis(const RigidBody *rb) const;
+	Vector3d getWheelTiltAxis(const RigidBody *rb) const;
+	Vector3d getWheelRho(const RigidBody *rb) const;
 
 
 	//if this is a wheel, we keep track of its axis of rotation, expressed in local coordinates...
