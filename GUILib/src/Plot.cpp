@@ -6,6 +6,21 @@
 
 using namespace nanogui;
 
+int PlotData::getClosestDataPointIndex(float x) const
+{
+	int di = -1;
+	float dmin = HUGE_VAL;
+	for (int i = 0; i < mXValues.size(); ++i) {
+		float d = std::abs(mXValues[i]-x);
+		if(d < dmin)
+		{
+			dmin = d;
+			di = i;
+		}
+	}
+	return di;
+}
+
 void PlotData::updateMinMax()
 {
 	mMinVal(0) = mXValues.minCoeff();
@@ -153,7 +168,6 @@ void Plot::draw(NVGcontext *ctx) {
 
 	}
 
-
 	if (!mCaption.empty()) {
 		nvgFontSize(ctx, 14.0f);
 		nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
@@ -173,6 +187,47 @@ void Plot::draw(NVGcontext *ctx) {
 		nvgTextAlign(ctx, NVG_ALIGN_RIGHT | NVG_ALIGN_BOTTOM);
 		nvgFillColor(ctx, mTextColor);
 		nvgText(ctx, mPos.x() + mSize.x() - 3, mPos.y() + mSize.y() - 1, mFooter.c_str(), NULL);
+	}
+
+	// draw highlighted points
+	if(mMouseFocus)
+	{
+//		Color bgColor = mTextColor.contrastingColor();
+//		bgColor[3] = 0.5f;
+
+		for (const auto &highlight : mDataHighlight) {
+			int index = highlight.second;
+			const PlotData &data = mDataColl[highlight.first];
+			float x = data.mXValues[index];
+			float y = data.mYValues[index];
+			float vx = mPos.x() + scaledXValue(x) * mSize.x();
+			float vy = mPos.y() + (1-scaledYValue(y)) * mSize.y();
+
+			char c[100];
+			std::sprintf(c, "%g", y);
+			nvgFontSize(ctx, 14.0f);
+			nvgTextAlign(ctx, NVG_ALIGN_MIDDLE | NVG_ALIGN_TOP);
+			float bounds[4];
+			nvgTextBounds(ctx, vx, vy, c, nullptr, bounds);
+			float tWidth = bounds[2]-bounds[0];
+			float tHeight = bounds[3]-bounds[1];
+
+			float tx = std::min(vx, mSize.x()-tWidth);
+			float ty = std::min(vy+5.f, mSize.y() - tHeight);
+
+			nvgBeginPath(ctx);
+			nvgRect(ctx, tx, ty, tWidth, tHeight);
+			nvgFillColor(ctx, mBackgroundColor);
+			nvgFill(ctx);
+
+			nvgFillColor(ctx, mTextColor);
+			nvgText(ctx, tx, ty, c, NULL);
+
+			nvgBeginPath(ctx);
+			nvgCircle(ctx, vx, vy, 3);
+			nvgStrokeColor(ctx, data.mColor);
+			nvgStroke(ctx);
+		}
 	}
 
 	nvgBeginPath(ctx);
@@ -217,7 +272,7 @@ void Plot::updateMinMax()
 		}
 	}
 
-	float range = (mDataMax[1] - mDataMin[1]);
+	float range = std::max(1e-10f, mDataMax[1] - mDataMin[1]);
 	mDataMin[1] -= 0.1*range;
 	mDataMax[1] += 0.1*range;
 
@@ -225,7 +280,19 @@ void Plot::updateMinMax()
 //		float range = (mDataMax[i] - mDataMin[i]);
 //		mDataMin[i] -= 0.1*range;
 //		mDataMax[i] += 0.1*range;
-//	}
+	//	}
+}
+
+bool Plot::mouseMotionEvent(const Eigen::Vector2i &p, const Eigen::Vector2i &rel, int button, int modifiers)
+{
+	float tx = (float)(p.x()-mPos.x()) / (float)mSize.x();
+	float x = mDataMin(0) + tx*(mDataMax(0)-mDataMin(0));
+
+	mDataHighlight.clear();
+
+	for (const auto &data : mDataColl) {
+		mDataHighlight[data.first] = data.second.getClosestDataPointIndex(x);
+	}
 }
 
 float Plot::computeTickStep(int dim) const
