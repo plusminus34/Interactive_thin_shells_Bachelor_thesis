@@ -25,6 +25,8 @@ enum END_EFFECTOR_TYPE {
 	EE_WELDED_WHEEL
 };
 
+class RigidBody;
+
 class RBEndEffector : public RBFeaturePoint {
 public:
 	RBEndEffector(const P3D& p, double fSize = 0.01) : RBFeaturePoint(p, fSize) {
@@ -39,6 +41,12 @@ public:
 	bool isFreeToMoveWheel() const { return eeType == EE_PASSIVE_WHEEL; }
 
 	void setMode(END_EFFECTOR_TYPE eet) { this->eeType = eet; }
+
+	Vector3d getWheelAxis(RigidBody *rb);
+	Vector3d getWheelYawAxis(RigidBody *rb);
+	Vector3d getWheelTiltAxis(RigidBody *rb);
+	Vector3d getWheelRho(RigidBody *rb);
+
 
 	//if this is a wheel, we keep track of its axis of rotation, expressed in local coordinates...
 	V3D localCoordsWheelAxis;
@@ -111,6 +119,3 @@ public:
 		return endEffectorPoints.size();
 	}
 };
-
-
-

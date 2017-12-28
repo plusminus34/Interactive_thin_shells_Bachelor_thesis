@@ -422,8 +422,10 @@ void LocomotionEngineMotionPlan::addIKInitEE(RigidBody* rb, IK_Plan* ikPlan) {
 		P3D eeWorldCoords = rb->getWorldCoordinates(eeLocalCoords);
 		eeWorldCoords[1] = 0;
 
-		if (rb->rbProperties.endEffectorPoints[j].isWheel())
-			eeWorldCoords[1] += rb->rbProperties.endEffectorPoints[j].featureSize;
+		if (rb->rbProperties.endEffectorPoints[j].isWheel()){
+			Vector3d rho = rb->rbProperties.endEffectorPoints[j].getWheelRho(rb);
+			eeWorldCoords[1] += rho[1];
+		}
 
 		ikPlan->endEffectors.push_back(IK_EndEffector());
 		ikPlan->endEffectors.back().endEffectorLocalCoords = eeLocalCoords;
@@ -463,15 +465,13 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 		endEffectorTrajectories[index].wheelRadius = rbEndEffector.featureSize;
 
 		// set wheel axis
-		V3D wheelAxisLocal = rbEndEffector.localCoordsWheelAxis;
-		V3D wheelAxisWorld = rb->getWorldCoordinates(wheelAxisLocal).normalized();
-		endEffectorTrajectories[index].wheelAxis = wheelAxisWorld;
+		endEffectorTrajectories[index].wheelAxis = rbEndEffector.getWheelAxis(rb);
 
 		// set yaw axis (always going to be y-axis)
-		endEffectorTrajectories[index].wheelYawAxis = V3D(0, 1, 0);
+		endEffectorTrajectories[index].wheelYawAxis = rbEndEffector.getWheelYawAxis(rb);
 
 		// set tilt axis
-		endEffectorTrajectories[index].wheelTiltAxis = (wheelAxisWorld.cross(endEffectorTrajectories[index].wheelYawAxis)).normalized();
+		endEffectorTrajectories[index].wheelTiltAxis = rbEndEffector.getWheelTiltAxis(rb);
 
 		// set wheel angles
 		endEffectorTrajectories[index].wheelYawAngle = DynamicArray<double>(nSamplingPoints, 0);
