@@ -119,17 +119,18 @@ LocomotionEngine_COMTrajectory::LocomotionEngine_COMTrajectory(){
 
 }
 
-void LocomotionEngine_COMTrajectory::initialize(int nPoints, const P3D &desComPos, const V3D &axis_0, const V3D &axis_1, const V3D &axis_2){
+void LocomotionEngine_COMTrajectory::initialize(int nPoints, const P3D &desComPos, const V3D& comRotationAngles, const V3D &axis_0, const V3D &axis_1, const V3D &axis_2){
 	this->nPoints = nPoints;
 	pos[0] = dVector(nPoints); pos[1] = dVector(nPoints); pos[2] = dVector(nPoints);
 	orientation[0] = dVector(nPoints); orientation[1] = dVector(nPoints); orientation[2] = dVector(nPoints);
-	orientation[0].setZero(); orientation[1].setZero(); orientation[2].setZero();
 	axis[0] = axis_0; axis[1] = axis_1; axis[2] = axis_2;
 
 	//note - fixed parameterization!
 	for (int i=0;i<nPoints;i++)
-		for (int j=0;j<3;j++)
+		for (int j = 0; j < 3; j++) {
 			pos[j][i] = desComPos[j];
+			orientation[j][i] = comRotationAngles[j];
+		}
 }
 
 V3D LocomotionEngine_COMTrajectory::getAxis(int i) {
@@ -385,7 +386,6 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	robot->setState(&rs);
 */
 
-
 	//and now proceed to initialize everything else...
 	this->robotRepresentation = new GeneralizedCoordinatesRobotRepresentation(robot);
 	robotRepresentation->getQ(initialRobotState);
@@ -407,7 +407,9 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	robotStateTrajectory.robotRepresentation = this->robotRepresentation;
 	robotStateTrajectory.initialize(nSamplingPoints);
 
-	COMTrajectory.initialize(nSamplePoints, defaultCOMPosition, robotRepresentation->getQAxis(3),
+	V3D comRotationAngles(initialRobotState[3], initialRobotState[4], initialRobotState[5]);
+
+	COMTrajectory.initialize(nSamplePoints, defaultCOMPosition, comRotationAngles, robotRepresentation->getQAxis(3),
 		robotRepresentation->getQAxis(4), robotRepresentation->getQAxis(5));
 
 	verticalGRFLowerBoundVal = fabs(totalMass * Globals::g / endEffectorTrajectories.size() / 5.0) * 2;
@@ -424,7 +426,7 @@ void LocomotionEngineMotionPlan::addIKInitEE(RigidBody* rb, IK_Plan* ikPlan) {
 
 		if (rb->rbProperties.endEffectorPoints[j].isWheel()){
 			Vector3d rho = rb->rbProperties.endEffectorPoints[j].getWheelRho(rb);
-			eeWorldCoords += rho;
+			eeWorldCoords[1] += rho[1];
 		}
 
 		ikPlan->endEffectors.push_back(IK_EndEffector());
@@ -492,12 +494,14 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 		double yawAngle = axisWheelYaw.angleWith(axisRBYaw, eeTraj.wheelYawAxis);
 
 		// verify if it worked:
-//		V3D axisVer = eeTraj.getRotatedWheelAxis(yawAngle, tiltAngle);
-//		std::cout << "yawAngle  = " << yawAngle << std::endl;
-//		std::cout << "tiltAngle = " << tiltAngle << std::endl;
-//		std::cout << "axisWheel = " << eeTraj.wheelAxis.transpose() << std::endl;
+		V3D axisVer = eeTraj.getRotatedWheelAxis(yawAngle, tiltAngle);
+		std::cout << "yawAngle  = " << yawAngle << std::endl;
+		std::cout << "tiltAngle = " << tiltAngle << std::endl;
+		std::cout << "axisWheel = " << eeTraj.wheelAxis.transpose() << std::endl;
 //		std::cout << "axisRB    = " << axisRB.transpose() << std::endl;
-//		std::cout << "axisVer   = " << axisVer.transpose() << std::endl;
+		std::cout << "axisVer   = " << axisVer.transpose() << std::endl;
+		std::cout << "err   = " << (axisVer - eeTraj.wheelAxis).transpose() << std::endl;
+
 
 		// set wheel angles
 		eeTraj.wheelYawAngle = DynamicArray<double>(nSamplingPoints, yawAngle);
@@ -1024,7 +1028,7 @@ void LocomotionEngineMotionPlan::readParamsFromFile(FILE *fp) {
 	robotStateTrajectory.initialize(nSamplePoints);
 	for (uint i = 0; i < endEffectorTrajectories.size(); i++)
 		endEffectorTrajectories[i].initialize(nSamplePoints);
-	COMTrajectory.initialize(nSamplePoints, P3D(), robotRepresentation->getQAxis(3),
+	COMTrajectory.initialize(nSamplePoints, P3D(), V3D(), robotRepresentation->getQAxis(3),
 							 robotRepresentation->getQAxis(4), robotRepresentation->getQAxis(5));
 
 	for (int i = 0; i < nSamplePoints; i++)

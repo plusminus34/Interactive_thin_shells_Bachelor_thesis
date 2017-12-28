@@ -299,6 +299,7 @@ bool Plot::mouseMotionEvent(const Eigen::Vector2i &p, const Eigen::Vector2i &rel
 	for (const auto &data : mDataColl) {
 		mDataHighlight[data.first] = data.second.getClosestDataPointIndex(x);
 	}
+	return false;
 }
 
 float Plot::computeTickStep(int dim) const

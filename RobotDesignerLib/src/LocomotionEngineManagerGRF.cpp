@@ -91,14 +91,14 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 	motionPlan->desDistanceToTravel.z() = 0;
 	motionPlan->desTurningAngle = 0;
 
-
 	for (int iT = 0; iT < motionPlan->nSamplePoints; iT++)
 		for (uint iEE = 0; iEE < motionPlan->endEffectorTrajectories.size(); iEE++) {
 			motionPlan->endEffectorTrajectories[iEE].verticalGRFUpperBoundValues[iT] = 1000.0;
 			motionPlan->endEffectorTrajectories[iEE].tangentGRFBoundValues[iT] = 1000.0;
 		}
 
-	for (int i = 0; i < 2; i++) {
+	energyFunction->regularizer = 0.1;
+	for (int i = 0; i < 10; i++) {
 		runMOPTStep(OPT_GRFS);
 #ifdef DEBUG_WARMSTART
 		Logger::consolePrint("WARM START prestep %d: equal force distribution...\n", i);
@@ -108,6 +108,8 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 		}
 #endif
 	}
+
+	energyFunction->regularizer = 1;
 
 	energyFunction->objectives.push_back(new MPO_COMTrajectoryObjective(motionPlan, "intermediate periodic COM trajectory plan", 10000.0, motionPlan->nSamplePoints - 1, 0));
 	motionPlan->syncMotionPlanWithFootFallPattern(*footFallPattern);
@@ -346,7 +348,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 	//GRF constraints
 	ef->addObjectiveFunction(new MPO_GRFSwingRegularizer(ef->theMotionPlan, "GRF swing regularizer", 10000.0), "Regularizers");
-	ef->addObjectiveFunction(new MPO_GRFStanceRegularizer(ef->theMotionPlan, "GRF stance regularizer", 1e-4), "Regularizers");
+	ef->addObjectiveFunction(new MPO_GRFStanceRegularizer(ef->theMotionPlan, "GRF stance regularizer", 1e-5), "Regularizers");
 	ef->addObjectiveFunction(new MPO_GRFSoftBoundConstraints(ef->theMotionPlan, "GRF bound constraints", 10000.0), "Bound Constraints");
 
 	//consistancy constraints (between robot states and other auxiliary variables)

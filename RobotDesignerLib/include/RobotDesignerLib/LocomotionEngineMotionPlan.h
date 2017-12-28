@@ -109,7 +109,7 @@ public:
 public:
 	LocomotionEngine_COMTrajectory();
 
-	void initialize(int nPoints, const P3D& desComPos, const V3D& axis_0, const V3D& axis_1, const V3D& axis_2);
+	void initialize(int nPoints, const P3D& desComPos, const V3D& comRotationAngles, const V3D& axis_0, const V3D& axis_1, const V3D& axis_2);
 
 	V3D getAxis(int i);
 
