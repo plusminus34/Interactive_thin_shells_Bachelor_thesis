@@ -17,12 +17,12 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 
 	double retVal = 0;
 
-	int nSamplePoints = theMotionPlan->nSamplePoints;
-	if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1;
+	int end = theMotionPlan->nSamplePoints;
+	if (theMotionPlan->wrapAroundBoundaryIndex >= 0) end -= 1;
 
-	const double dt = theMotionPlan->motionPlanDuration / (nSamplePoints-1);
+	const double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
 
-	for (int j=0; j<nSamplePoints; j++){
+	for (int j=0; j<end-1; j++){
 
 		int jm, jp;
 		theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
@@ -84,12 +84,12 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 
 	const int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 
-	int nSamplePoints = theMotionPlan->nSamplePoints;
-	if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1;
+	int end = theMotionPlan->nSamplePoints;
+	if (theMotionPlan->wrapAroundBoundaryIndex >= 0) end -= 1;
 
-	const double dt = theMotionPlan->motionPlanDuration / (nSamplePoints-1);
+	const double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
 
-	for (int j=0; j<nSamplePoints; j++){
+	for (int j=0; j<end-1; j++){
 
 		int jm, jp;
 		theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
@@ -119,7 +119,7 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 
 				double c = ee.contactFlag[j];
 
-				int iEEjp1 = theMotionPlan->feetPositionsParamsStartIndex + (j+1) * nLimbs * 3 + i * 3;
+				int iEEjp1 = theMotionPlan->feetPositionsParamsStartIndex + (jp) * nLimbs * 3 + i * 3;
 				V3T<ScalarDiff> eePosjp1;
 				for (int k = 0; k < 3; ++k)
 					eePosjp1(k) = p[iEEjp1 + k];
@@ -237,12 +237,12 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 
 	const int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 
-	int nSamplePoints = theMotionPlan->nSamplePoints;
-	if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1;
+	int end = theMotionPlan->nSamplePoints;
+	if (theMotionPlan->wrapAroundBoundaryIndex >= 0) end -= 1;
 
-	const double dt = theMotionPlan->motionPlanDuration / (nSamplePoints-1);
+	const double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
 
-	for (int j=0; j<nSamplePoints; j++){
+	for (int j=0; j<end-1; j++){
 
 		int jm, jp;
 		theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
