@@ -54,15 +54,15 @@ P3D LocomotionEngine_EndEffectorTrajectory::getEEPositionAt(double t) const {
 	return P3D() + traj.evaluate_linear(t);
 }
 
-V3D LocomotionEngine_EndEffectorTrajectory::getWheelRho() const
+V3D LocomotionEngine_EndEffectorTrajectory::getWheelRhoLocal() const
 {
-	Vector3d rho = wheelTiltAxis.cross(wheelAxis).normalized() * wheelRadius;
-	return rho;
+	Vector3d rhoLocal = wheelTiltAxis.cross(wheelAxisLocal).normalized() * wheelRadius;
+	return rhoLocal;
 }
 
 P3D LocomotionEngine_EndEffectorTrajectory::getWheelCenterPositionAt(double t) const
 {
-	V3D rho = getWheelRho();
+	V3D rho = getWheelRhoLocal();
 	double yawAngle = getWheelYawAngleAt(t);
 	double tiltAngle = getWheelTiltAngleAt(t);
 	rho = rotateWheelAxisWith(rho, wheelYawAxis, yawAngle, wheelTiltAxis, tiltAngle);
@@ -425,7 +425,7 @@ void LocomotionEngineMotionPlan::addIKInitEE(RigidBody* rb, IK_Plan* ikPlan) {
 		eeWorldCoords[1] = 0;
 
 		if (rb->rbProperties.endEffectorPoints[j].isWheel()){
-			Vector3d rho = rb->rbProperties.endEffectorPoints[j].getWheelRho(rb);
+			Vector3d rho = rb->rbProperties.endEffectorPoints[j].getWheelRho();
 			eeWorldCoords[1] += rho[1];
 		}
 
@@ -468,27 +468,27 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 		eeTraj.wheelRadius = rbEndEffector.featureSize;
 
 		// set wheel axis
-		eeTraj.wheelAxis = rbEndEffector.getWheelAxis(rb);
+		eeTraj.wheelAxisLocal = rbEndEffector.getWheelAxis();
 
 		// set yaw axis (always going to be y-axis)
-		eeTraj.wheelYawAxis = rbEndEffector.getWheelYawAxis(rb);
+		eeTraj.wheelYawAxis = rbEndEffector.getWheelYawAxis();
 
 		// set tilt axis
-		eeTraj.wheelTiltAxis = rbEndEffector.getWheelTiltAxis(rb);
+		eeTraj.wheelTiltAxis = rbEndEffector.getWheelTiltAxis();
 
 		// this is the wheel axis from the robot point of view
-		V3D axisRobot = rb->getWorldCoordinates(eeTraj.wheelAxis);
+		V3D axisRobot = rb->getWorldCoordinates(eeTraj.wheelAxisLocal);
 
 		// first adjust yaw angle to match wheel axis from robot (order is always tilt then yaw):
 		// wheel axis in tilt plane
-		V3D axisWheelTilt = eeTraj.wheelAxis - eeTraj.wheelAxis.getProjectionOn(eeTraj.wheelTiltAxis);
+		V3D axisWheelTilt = eeTraj.wheelAxisLocal - eeTraj.wheelAxisLocal.getProjectionOn(eeTraj.wheelTiltAxis);
 		// robot wheel axis in tilt plane
 		V3D axisRBTilt = axisRobot - axisRobot.getProjectionOn(eeTraj.wheelTiltAxis);
 		// and now compute the angle
 		double tiltAngle = axisWheelTilt.angleWith(axisRBTilt, eeTraj.wheelTiltAxis);
 
 		// same for yaw angle, but with wheel axis rotated by tilt angle
-		V3D axisWheelRot = rotateVec(eeTraj.wheelAxis, tiltAngle, eeTraj.wheelTiltAxis);
+		V3D axisWheelRot = rotateVec(eeTraj.wheelAxisLocal, tiltAngle, eeTraj.wheelTiltAxis);
 		V3D axisWheelYaw = axisWheelRot - axisWheelRot.getProjectionOn(eeTraj.wheelYawAxis);
 		V3D axisRBYaw = axisRobot - axisRobot.getProjectionOn(eeTraj.wheelYawAxis);
 		double yawAngle = axisWheelYaw.angleWith(axisRBYaw, eeTraj.wheelYawAxis);
@@ -497,17 +497,19 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 		V3D axisVer = eeTraj.getRotatedWheelAxis(yawAngle, tiltAngle);
 		std::cout << "yawAngle  = " << yawAngle << std::endl;
 		std::cout << "tiltAngle = " << tiltAngle << std::endl;
-		std::cout << "axisWheel = " << eeTraj.wheelAxis.transpose() << std::endl;
-//		std::cout << "axisRB    = " << axisRB.transpose() << std::endl;
+		std::cout << "axisWheel = " << eeTraj.wheelAxisLocal.transpose() << std::endl;
+		std::cout << "axisRobot = " << axisRobot.transpose() << std::endl;
 		std::cout << "axisVer   = " << axisVer.transpose() << std::endl;
-		std::cout << "err   = " << (axisVer - eeTraj.wheelAxis).transpose() << std::endl;
+		std::cout << "err   = " << (axisVer - axisRobot).transpose() << std::endl;
 
 
 		// set wheel angles
 		eeTraj.wheelYawAngle = DynamicArray<double>(nSamplingPoints, yawAngle);
 		eeTraj.wheelTiltAngle = DynamicArray<double>(nSamplingPoints, tiltAngle);
 
-		eeWorldCoords -= eeTraj.getWheelRho();
+		eeWorldCoords -= LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(eeTraj.getWheelRhoLocal(), eeTraj.wheelYawAxis, yawAngle, eeTraj.wheelYawAxis, tiltAngle);
+
+		std::cout << "eeWorldCoors = " << eeWorldCoords.transpose() << std::endl;
 
 		// output some info
 		Logger::consolePrint("Wheel radius %d: %f", index, eeTraj.wheelRadius);
@@ -1242,7 +1244,7 @@ P3D LocomotionEngineMotionPlan::getCenterOfRotationAt(double t, Eigen::VectorXd 
 	for (const auto &ee : endEffectorTrajectories) {
 		double alpha = ee.getWheelYawAngleAt(t);
 		double beta = ee.getWheelTiltAngleAt(t);
-		V3D wheelAxis = ee.wheelAxis;
+		V3D wheelAxis = ee.wheelAxisLocal;
 		V3D yawAxis = ee.wheelYawAxis;
 		V3D tiltAxis = ee.wheelTiltAxis;
 		P3D p3 = ee.getEEPositionAt(t);
@@ -1641,7 +1643,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 			drawArrow(wheelCenter, wheelCenter + ee.wheelTiltAxis*radius*2.0, 0.003);
 
 			glColor4d(0, 0, 0.5, 0.8);
-			drawArrow(wheelCenter, wheelCenter + ee.wheelAxis*radius*2.0, 0.003);
+			drawArrow(wheelCenter, wheelCenter + ee.wheelAxisLocal*radius*2.0, 0.003);
 
 			glColor4d(0.2, 0.6, 0.8, 0.8);
 			drawArrow(wheelCenter, wheelCenter + axis*0.05, 0.005);

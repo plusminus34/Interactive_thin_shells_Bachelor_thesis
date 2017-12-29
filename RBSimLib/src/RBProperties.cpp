@@ -1,21 +1,21 @@
 #include <RBSimLib/RBProperties.h>
 #include <RBSimLib/RigidBody.h>
 
-Vector3d RBEndEffector::getWheelAxis(const RigidBody *rb) const {
-	return rb->getWorldCoordinates(localCoordsWheelAxis).normalized();
+Vector3d RBEndEffector::getWheelAxis() const {
+	return localCoordsWheelAxis.normalized();
 }
 
-Vector3d RBEndEffector::getWheelYawAxis(const RigidBody *rb) const {
+Vector3d RBEndEffector::getWheelYawAxis() const {
 	return Vector3d(0, 1, 0);
 }
 
-Vector3d RBEndEffector::getWheelTiltAxis(const RigidBody *rb) const {
-	return getWheelAxis(rb).cross(getWheelYawAxis(rb)).normalized();
+Vector3d RBEndEffector::getWheelTiltAxis() const {
+	return getWheelAxis().cross(getWheelYawAxis()).normalized();
 }
 
-Vector3d RBEndEffector::getWheelRho(const RigidBody *rb) const {
+Vector3d RBEndEffector::getWheelRho() const {
 	double wheelRadius = featureSize;
-	return getWheelTiltAxis(rb).cross(getWheelAxis(rb)).normalized() * wheelRadius;
+	return getWheelTiltAxis().cross(getWheelAxis()).normalized() * wheelRadius;
 }
 
 /**

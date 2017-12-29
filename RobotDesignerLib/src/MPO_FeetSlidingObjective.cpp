@@ -33,8 +33,8 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 			Vector3d eePosj = ee.EEPos[j];
 
 			if(ee.isWheel){
-				Vector3d rho = ee.getWheelRho();
-				Vector3d axis = ee.wheelAxis;
+				Vector3d rhoLocal = ee.getWheelRhoLocal();
+				Vector3d axisLocal = ee.wheelAxisLocal;
 				Vector3d axisYaw = ee.wheelYawAxis;
 				Vector3d axisTilt = ee.wheelTiltAxis;
 
@@ -50,7 +50,7 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 				double betajp1 = ee.wheelTiltAngle[jp];
 
 				retVal += computeEnergyWheel(eePosjp1, eePosj, dt,
-											 rho, axis,
+											 rhoLocal, axisLocal,
 											 axisYaw, alphaj, alphajp1,
 											 axisTilt, betaj, betajp1,
 											 speedj, speedjp1, c, weight);
@@ -107,8 +107,8 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 
 			if(ee.isWheel){
 				// get wheel axes
-				V3T<ScalarDiff> rho = ee.getWheelRho();
-				V3T<ScalarDiff> wheelAxisAD(ee.wheelAxis);
+				V3T<ScalarDiff> rhoLocal = ee.getWheelRhoLocal();
+				V3T<ScalarDiff> wheelAxisLocal(ee.wheelAxisLocal);
 				V3T<ScalarDiff> wheelYawAxis(ee.wheelYawAxis);
 				V3T<ScalarDiff> wheelTiltAxis(ee.wheelTiltAxis);
 
@@ -160,7 +160,7 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 				for (int k = 0; k < numDOFsWheel; ++k) {
 					dofs[k].v->deriv() = 1.0;
 					ScalarDiff energy = computeEnergyWheel(eePosjp1, eePosj, dt,
-														   rho, wheelAxisAD,
+														   rhoLocal, wheelAxisLocal,
 														   wheelYawAxis, alphaj, alphajp1,
 														   wheelTiltAxis,betaj, betajp1,
 														   speedj, speedjp1, c, weight);
@@ -260,8 +260,8 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 			if(ee.isWheel)
 			{
 				// get wheel axes
-				V3T<ScalarDiffDiff> rho = ee.getWheelRho();
-				V3T<ScalarDiffDiff> wheelAxisAD(ee.wheelAxis);
+				V3T<ScalarDiffDiff> rhoLocal = ee.getWheelRhoLocal();
+				V3T<ScalarDiffDiff> wheelAxisLocal(ee.wheelAxisLocal);
 				V3T<ScalarDiffDiff> wheelYawAxis(ee.wheelYawAxis);
 				V3T<ScalarDiffDiff> wheelTiltAxis(ee.wheelTiltAxis);
 
@@ -318,7 +318,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 						dofs[l].v->value().deriv() = 1.0;
 
 						ScalarDiffDiff energy = computeEnergyWheel(eePosjp1, eePosj, dt,
-																   rho, wheelAxisAD,
+																   rhoLocal, wheelAxisLocal,
 																   wheelYawAxis, alphaj, alphajp1,
 																   wheelTiltAxis, betaj, betajp1,
 																   speedj, speedjp1, c, weight);

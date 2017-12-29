@@ -23,7 +23,7 @@ double MPO_RobotEndEffectorsObjective::computeValue(const dVector& p){
 		for (int i=0;i<nLimbs;i++){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 			if(ee.isWheel){
-				retVal += computeEnergyWheel<double>(ee.EEPos[j], ee.getWheelRho(),
+				retVal += computeEnergyWheel<double>(ee.EEPos[j], ee.getWheelRhoLocal(),
 													 ee.wheelYawAxis, ee.wheelYawAngle[j],
 													 ee.wheelTiltAxis, ee.wheelTiltAngle[j],
 													 ee.endEffectorLocalCoords, q_t, ee.endEffectorRB);
@@ -79,7 +79,7 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 			V3T<ScalarDiff> eePos = ee.EEPos[j];
 
 			if(ee.isWheel){
-				V3T<ScalarDiff> rho = ee.getWheelRho();
+				V3T<ScalarDiff> rho = ee.getWheelRhoLocal();
 				V3T<ScalarDiff> yawAxis = ee.wheelYawAxis;
 				V3T<ScalarDiff> tiltAxis = ee.wheelTiltAxis;
 				ScalarDiff yawAngle = ee.wheelYawAngle[j];
@@ -178,7 +178,7 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 			V3T<ScalarDiffDiff> eePos = ee.EEPos[j];
 
 			if(ee.isWheel){
-				V3T<ScalarDiffDiff> rho = ee.getWheelRho();
+				V3T<ScalarDiffDiff> rho = ee.getWheelRhoLocal();
 				V3T<ScalarDiffDiff> yawAxis = ee.wheelYawAxis;
 				V3T<ScalarDiffDiff> tiltAxis = ee.wheelTiltAxis;
 				ScalarDiffDiff yawAngle = ee.wheelYawAngle[j];
