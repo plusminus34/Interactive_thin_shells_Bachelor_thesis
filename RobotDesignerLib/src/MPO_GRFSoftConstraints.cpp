@@ -272,3 +272,72 @@ void MPO_GRFVerticalLowerBoundConstraints::addHessianEntriesTo(DynamicArray<MTri
 			}
 		}
 }
+
+/*****************************************************************************************************
+***************************** Upper bound on GRFs ****************************************************
+******************************************************************************************************/
+
+MPO_GRFVerticalUpperBoundConstraints::MPO_GRFVerticalUpperBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
+	theMotionPlan = mp;
+	this->description = objectiveDescription;
+	this->weight = weight;
+}
+
+MPO_GRFVerticalUpperBoundConstraints::~MPO_GRFVerticalUpperBoundConstraints(void) {
+}
+
+double MPO_GRFVerticalUpperBoundConstraints::computeValue(const dVector& s) {
+	//assume the parameters of the motion plan have been set already by the collection of objective functions class
+	//theMotionPlan->setMPParametersFromList(s);
+
+	double retVal = 0;
+	for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
+		for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
+
+			// we want the vertical component of the GRF to be > 0
+			double fVertical = theMotionPlan->endEffectorTrajectories[i].contactForce[j](1);
+			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
+
+			SoftUnilateralConstraint sucVerticalUpperBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].verticalGRFUpperBoundValues[j], 10, theMotionPlan->GRFEpsilon);
+			retVal += sucVerticalUpperBound.computeValue(-fVertical) * c;
+		}
+	}
+
+	return retVal * weight;
+}
+
+
+void MPO_GRFVerticalUpperBoundConstraints::addGradientTo(dVector& grad, const dVector& p) {
+	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
+	//	theMotionPlan->setMPParametersFromList(p);
+
+	if (theMotionPlan->contactForcesParamsStartIndex >= 0)
+		for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
+			for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
+
+				// we want the vertical component of the GRF to be > 0
+				double fVertical = theMotionPlan->endEffectorTrajectories[i].contactForce[j](1);
+				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
+
+				SoftUnilateralConstraint sucVerticalUpperBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].verticalGRFUpperBoundValues[j], 10, theMotionPlan->GRFEpsilon);
+				grad[theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1] += -1 * sucVerticalUpperBound.computeDerivative(-fVertical) * c * weight;
+			}
+		}
+}
+
+void MPO_GRFVerticalUpperBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
+	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
+	//	theMotionPlan->setMPParametersFromList(p);
+	if (theMotionPlan->contactForcesParamsStartIndex >= 0)
+		for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
+			for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
+
+				// we want the vertical component of the GRF to be > 0
+				double fVertical = theMotionPlan->endEffectorTrajectories[i].contactForce[j](1);
+				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
+
+				SoftUnilateralConstraint sucVerticalUpperBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].verticalGRFUpperBoundValues[j], 10, theMotionPlan->GRFEpsilon);
+				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1, theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1, sucVerticalUpperBound.computeSecondDerivative(-fVertical) * c, weight);
+			}
+		}
+}

@@ -66,3 +66,18 @@ private:
 	//the energy function operates on a motion plan...
 	LocomotionEngineMotionPlan* theMotionPlan;
 };
+
+class MPO_GRFVerticalUpperBoundConstraints : public ObjectiveFunction {
+public:
+	MPO_GRFVerticalUpperBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
+	virtual ~MPO_GRFVerticalUpperBoundConstraints(void);
+
+	virtual double computeValue(const dVector& p);
+
+	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
+	virtual void addGradientTo(dVector& grad, const dVector& p);
+
+private:
+	//the energy function operates on a motion plan...
+	LocomotionEngineMotionPlan* theMotionPlan;
+};
