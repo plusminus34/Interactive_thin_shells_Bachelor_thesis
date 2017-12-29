@@ -102,6 +102,10 @@ void MOPTWindow::addMenuItems() {
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 	{
+		auto tmpVar = glApp->mainMenu->addVariable("friction coeff", moptParams.frictionCoeff);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
 		glApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
 	}
 
@@ -211,6 +215,8 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.wheelAccelLimit = locomotionManager->motionPlan->wheelAccelLimit;
 	moptParams.wheelAccelEpsilon = locomotionManager->motionPlan->wheelAccelEpsilon;
 
+	moptParams.frictionCoeff = locomotionManager->motionPlan->frictionCoeff;
+
 	moptParams.writeJointVelocityProfile = locomotionManager->writeVelocityProfileToFile;
 	moptParams.motionPlanDuration = locomotionManager->motionPlan->motionPlanDuration;
 	moptParams.checkDerivatives = locomotionManager->checkDerivatives;
@@ -235,6 +241,8 @@ void MOPTWindow::syncMotionPlanParameters(){
 
 	locomotionManager->motionPlan->wheelAccelLimit = moptParams.wheelAccelLimit;
 	locomotionManager->motionPlan->wheelAccelEpsilon = moptParams.wheelAccelEpsilon;
+
+	locomotionManager->motionPlan->frictionCoeff = moptParams.frictionCoeff;
 
 	locomotionManager->writeVelocityProfileToFile = moptParams.writeJointVelocityProfile;
 	locomotionManager->motionPlan->motionPlanDuration = moptParams.motionPlanDuration;

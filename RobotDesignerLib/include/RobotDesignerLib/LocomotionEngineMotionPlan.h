@@ -185,6 +185,7 @@ public:
 	double verticalGRFLowerBoundVal = 0;
 	double GRFEpsilon = 0.4;				// for SoftUnilateralConstraint
 	double pseudoLimbEpsilon = 0.1;
+	double frictionEpsilon = 0.4;				// for SoftUnilateralConstraint
 
 	// Parameters for joint motor velocity constraint
 	double jointVelocityLimit = 0;
