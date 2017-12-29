@@ -14,6 +14,7 @@
 #include <RobotDesignerLib/MPO_DefaultRobotStateConstraint.h>
 #include <RobotDesignerLib/MPO_VelocityL0Regularization.h>
 #include <RobotDesignerLib/MPO_StateMatchObjective.h>
+#include <RobotDesignerLib/MPO_GRFFrictionConstraints.h>
 
 
 //#define DEBUG_WARMSTART
@@ -360,12 +361,16 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	//constraints ensuring feet don't slide...
 	ef->addObjectiveFunction(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0), "Kinematic Constraints");
 	ef->addObjectiveFunction(new MPO_EndEffectorGroundObjective(ef->theMotionPlan, "EE ground objective", 10000.0), "Kinematic Constraints");
+
 	// constraint ensuring the y component of the EE position follows the swing motion
 	ef->addObjectiveFunction(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0), "Objectives");
 
 	//dynamics constraints
 	ef->addObjectiveFunction(new MPO_ForceAccelObjective(ef->theMotionPlan, "force acceleration objective", 1.0), "Dynamics Constraints");
 	ef->addObjectiveFunction(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 1.0), "Dynamics Constraints");
+	ef->addObjectiveFunction(new MPO_GRFFrictionConstraints(ef->theMotionPlan, "GRF friction constraints", 1.0), "Dynamic Constraints");
+	ef->objectives.back()->isActive = false;
+
 
 	//range of motion/speed/acceleration constraints
 	ef->addObjectiveFunction(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, dimCount - 1), "Bound Constraints");
