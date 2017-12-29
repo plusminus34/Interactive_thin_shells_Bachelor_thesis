@@ -34,7 +34,7 @@ double MPO_GRFSwingRegularizer::computeValue(const dVector& s){
 
 void MPO_GRFSwingRegularizer::addGradientTo(dVector& grad, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
-//	theMotionPlan->setMPParametersFromList(p);
+	//	theMotionPlan->setMPParametersFromList(p);
 
 
 	if (theMotionPlan->contactForcesParamsStartIndex >= 0)
@@ -65,8 +65,6 @@ void MPO_GRFSwingRegularizer::addHessianEntriesTo(DynamicArray<MTriplet>& hessia
 /*****************************************************************************************************
 ***************************** GRF Regularizer when in stance *****************************************
 ******************************************************************************************************/
-
-//if a GRF is not used/useful (e.g. the leg is in swing), then we should encourage a small value for it...
 
 MPO_GRFStanceRegularizer::MPO_GRFStanceRegularizer(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
 	theMotionPlan = mp;
@@ -124,37 +122,29 @@ void MPO_GRFStanceRegularizer::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 }
 
 /*****************************************************************************************************
-***************************** Lower bound on GRFs - want pushing-only forces *************************
+***************************** Bound on tangential GRFs ***********************************************
 ******************************************************************************************************/
 
-MPO_GRFSoftBoundConstraints::MPO_GRFSoftBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
+MPO_GRFTangentialBoundConstraints::MPO_GRFTangentialBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
 	theMotionPlan = mp;
 	this->description = objectiveDescription;
 	this->weight = weight;
 }
 
-MPO_GRFSoftBoundConstraints::~MPO_GRFSoftBoundConstraints(void) {
+MPO_GRFTangentialBoundConstraints::~MPO_GRFTangentialBoundConstraints(void) {
 }
 
-double MPO_GRFSoftBoundConstraints::computeValue(const dVector& s) {
+double MPO_GRFTangentialBoundConstraints::computeValue(const dVector& s) {
 	//assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//theMotionPlan->setMPParametersFromList(s);
 
 	double retVal = 0;
 	for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
 		for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
-			//we want the vertical component of the GRF to be > 0
-			double fVertical = theMotionPlan->endEffectorTrajectories[i].contactForce[j](1);
-			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
-			SoftUnilateralConstraint sucVerticalLowerBound = SoftUnilateralConstraint(theMotionPlan->verticalGRFLowerBoundVal, 10, theMotionPlan->GRFEpsilon);
-			SoftUnilateralConstraint sucVerticalUpperBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].verticalGRFUpperBoundValues[j], 10, theMotionPlan->GRFEpsilon);
 
-			retVal += sucVerticalLowerBound.computeValue(fVertical) * c;
-			retVal += sucVerticalUpperBound.computeValue(-fVertical) * c;
+			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
 
 			SoftUnilateralConstraint sucVerticalTangentLowerBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].tangentGRFBoundValues[j], 10, theMotionPlan->GRFEpsilon);
-
-			// TODO: this is not any different from the lower bound. shouldn't it be '+' instead of '-' ?
 			SoftUnilateralConstraint sucVerticalTangentUpperBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].tangentGRFBoundValues[j], 10, theMotionPlan->GRFEpsilon);
 
 			retVal += sucVerticalTangentLowerBound.computeValue(theMotionPlan->endEffectorTrajectories[i].contactForce[j](0)) * c;
@@ -169,22 +159,15 @@ double MPO_GRFSoftBoundConstraints::computeValue(const dVector& s) {
 }
 
 
-void MPO_GRFSoftBoundConstraints::addGradientTo(dVector& grad, const dVector& p) {
+void MPO_GRFTangentialBoundConstraints::addGradientTo(dVector& grad, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
 	if (theMotionPlan->contactForcesParamsStartIndex >= 0)
 		for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
 			for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
-				//we want the vertical component of the GRF to be > 0
-				double fVertical = theMotionPlan->endEffectorTrajectories[i].contactForce[j](1);
+
 				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
-
-				SoftUnilateralConstraint sucVerticalUpperBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].verticalGRFUpperBoundValues[j], 10, theMotionPlan->GRFEpsilon);
-				SoftUnilateralConstraint sucVerticalLowerBound = SoftUnilateralConstraint(theMotionPlan->verticalGRFLowerBoundVal, 10, theMotionPlan->GRFEpsilon);
-
-				grad[theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1] += -1 * sucVerticalUpperBound.computeDerivative(-fVertical) * c * weight;
-				grad[theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1] += sucVerticalLowerBound.computeDerivative(fVertical) * c * weight;
 
 				SoftUnilateralConstraint sucVerticalTangentLowerBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].tangentGRFBoundValues[j], 10, theMotionPlan->GRFEpsilon);
 				SoftUnilateralConstraint sucVerticalTangentUpperBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].tangentGRFBoundValues[j], 10, theMotionPlan->GRFEpsilon);
@@ -199,21 +182,14 @@ void MPO_GRFSoftBoundConstraints::addGradientTo(dVector& grad, const dVector& p)
 		}
 }
 
-void MPO_GRFSoftBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
+void MPO_GRFTangentialBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 	if (theMotionPlan->contactForcesParamsStartIndex >= 0)
 		for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
 			for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
-				//we want the vertical component of the GRF to be > 0
-				double fVertical = theMotionPlan->endEffectorTrajectories[i].contactForce[j](1);
+
 				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
-				SoftUnilateralConstraint sucVerticalUpperBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].verticalGRFUpperBoundValues[j], 10, theMotionPlan->GRFEpsilon);
-				SoftUnilateralConstraint sucVerticalLowerBound = SoftUnilateralConstraint(theMotionPlan->verticalGRFLowerBoundVal, 10, theMotionPlan->GRFEpsilon);
-
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1, theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1, sucVerticalUpperBound.computeSecondDerivative(-fVertical) * c, weight);
-				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1, theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1, sucVerticalLowerBound.computeSecondDerivative(fVertical) * c, weight);
-
 
 				SoftUnilateralConstraint sucVerticalTangentLowerBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].tangentGRFBoundValues[j], 10, theMotionPlan->GRFEpsilon);
 				SoftUnilateralConstraint sucVerticalTangentUpperBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].tangentGRFBoundValues[j], 10, theMotionPlan->GRFEpsilon);
@@ -228,3 +204,140 @@ void MPO_GRFSoftBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet>& he
 }
 
 
+/*****************************************************************************************************
+***************************** Lower bound on GRFs - want pushing-only forces *************************
+******************************************************************************************************/
+
+MPO_GRFVerticalLowerBoundConstraints::MPO_GRFVerticalLowerBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
+	theMotionPlan = mp;
+	this->description = objectiveDescription;
+	this->weight = weight;
+}
+
+MPO_GRFVerticalLowerBoundConstraints::~MPO_GRFVerticalLowerBoundConstraints(void) {
+}
+
+double MPO_GRFVerticalLowerBoundConstraints::computeValue(const dVector& s) {
+	//assume the parameters of the motion plan have been set already by the collection of objective functions class
+	//theMotionPlan->setMPParametersFromList(s);
+
+	double retVal = 0;
+	for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
+		for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
+
+			// we want the vertical component of the GRF to be > 0
+			double fVertical = theMotionPlan->endEffectorTrajectories[i].contactForce[j](1);
+			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
+
+			SoftUnilateralConstraint sucVerticalLowerBound = SoftUnilateralConstraint(theMotionPlan->verticalGRFLowerBoundVal, 10, theMotionPlan->GRFEpsilon);
+			retVal += sucVerticalLowerBound.computeValue(fVertical) * c;
+		}
+	}
+
+	return retVal * weight;
+}
+
+
+void MPO_GRFVerticalLowerBoundConstraints::addGradientTo(dVector& grad, const dVector& p) {
+	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
+	//	theMotionPlan->setMPParametersFromList(p);
+
+	if (theMotionPlan->contactForcesParamsStartIndex >= 0)
+		for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
+			for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
+
+				// we want the vertical component of the GRF to be > 0
+				double fVertical = theMotionPlan->endEffectorTrajectories[i].contactForce[j](1);
+				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
+
+				SoftUnilateralConstraint sucVerticalLowerBound = SoftUnilateralConstraint(theMotionPlan->verticalGRFLowerBoundVal, 10, theMotionPlan->GRFEpsilon);
+				grad[theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1] += sucVerticalLowerBound.computeDerivative(fVertical) * c * weight;
+			}
+		}
+}
+
+void MPO_GRFVerticalLowerBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
+	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
+	//	theMotionPlan->setMPParametersFromList(p);
+	if (theMotionPlan->contactForcesParamsStartIndex >= 0)
+		for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
+			for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
+
+				// we want the vertical component of the GRF to be > 0
+				double fVertical = theMotionPlan->endEffectorTrajectories[i].contactForce[j](1);
+				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
+
+				SoftUnilateralConstraint sucVerticalLowerBound = SoftUnilateralConstraint(theMotionPlan->verticalGRFLowerBoundVal, 10, theMotionPlan->GRFEpsilon);
+				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1, theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1, sucVerticalLowerBound.computeSecondDerivative(fVertical) * c, weight);
+			}
+		}
+}
+
+/*****************************************************************************************************
+***************************** Upper bound on GRFs ****************************************************
+******************************************************************************************************/
+
+MPO_GRFVerticalUpperBoundConstraints::MPO_GRFVerticalUpperBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
+	theMotionPlan = mp;
+	this->description = objectiveDescription;
+	this->weight = weight;
+}
+
+MPO_GRFVerticalUpperBoundConstraints::~MPO_GRFVerticalUpperBoundConstraints(void) {
+}
+
+double MPO_GRFVerticalUpperBoundConstraints::computeValue(const dVector& s) {
+	//assume the parameters of the motion plan have been set already by the collection of objective functions class
+	//theMotionPlan->setMPParametersFromList(s);
+
+	double retVal = 0;
+	for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
+		for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
+
+			// we want the vertical component of the GRF to be > 0
+			double fVertical = theMotionPlan->endEffectorTrajectories[i].contactForce[j](1);
+			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
+
+			SoftUnilateralConstraint sucVerticalUpperBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].verticalGRFUpperBoundValues[j], 10, theMotionPlan->GRFEpsilon);
+			retVal += sucVerticalUpperBound.computeValue(-fVertical) * c;
+		}
+	}
+
+	return retVal * weight;
+}
+
+
+void MPO_GRFVerticalUpperBoundConstraints::addGradientTo(dVector& grad, const dVector& p) {
+	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
+	//	theMotionPlan->setMPParametersFromList(p);
+
+	if (theMotionPlan->contactForcesParamsStartIndex >= 0)
+		for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
+			for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
+
+				// we want the vertical component of the GRF to be > 0
+				double fVertical = theMotionPlan->endEffectorTrajectories[i].contactForce[j](1);
+				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
+
+				SoftUnilateralConstraint sucVerticalUpperBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].verticalGRFUpperBoundValues[j], 10, theMotionPlan->GRFEpsilon);
+				grad[theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1] += -1 * sucVerticalUpperBound.computeDerivative(-fVertical) * c * weight;
+			}
+		}
+}
+
+void MPO_GRFVerticalUpperBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
+	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
+	//	theMotionPlan->setMPParametersFromList(p);
+	if (theMotionPlan->contactForcesParamsStartIndex >= 0)
+		for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
+			for (uint i = 0; i<theMotionPlan->endEffectorTrajectories.size(); i++) {
+
+				// we want the vertical component of the GRF to be > 0
+				double fVertical = theMotionPlan->endEffectorTrajectories[i].contactForce[j](1);
+				double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
+
+				SoftUnilateralConstraint sucVerticalUpperBound = SoftUnilateralConstraint(-theMotionPlan->endEffectorTrajectories[i].verticalGRFUpperBoundValues[j], 10, theMotionPlan->GRFEpsilon);
+				ADD_HES_ELEMENT(hessianEntries, theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1, theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i) + 1, sucVerticalUpperBound.computeSecondDerivative(-fVertical) * c, weight);
+			}
+		}
+}

@@ -350,7 +350,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	//GRF constraints
 	ef->addObjectiveFunction(new MPO_GRFSwingRegularizer(ef->theMotionPlan, "GRF swing regularizer", 10000.0), "Regularizers");
 	ef->addObjectiveFunction(new MPO_GRFStanceRegularizer(ef->theMotionPlan, "GRF stance regularizer", 1e-5), "Regularizers");
-	ef->addObjectiveFunction(new MPO_GRFSoftBoundConstraints(ef->theMotionPlan, "GRF bound constraints", 10000.0), "Bound Constraints");
+	ef->addObjectiveFunction(new MPO_GRFVerticalLowerBoundConstraints(ef->theMotionPlan, "GRF vertical lower bound constraints", 10000.0), "Bound Constraints");
 
 	//consistancy constraints (between robot states and other auxiliary variables)
 	ef->addObjectiveFunction(new MPO_RobotEndEffectorsObjective(ef->theMotionPlan, "robot EE objective", 10000.0), "Kinematic Constraints");
