@@ -15,6 +15,7 @@
 #include <RobotDesignerLib/MPO_VelocityL0Regularization.h>
 #include <RobotDesignerLib/MPO_StateMatchObjective.h>
 #include <RobotDesignerLib/MPO_GRFFrictionConstraints.h>
+#include <RobotDesignerLib/MPO_PassiveWheelsGRFConstraints.h>
 
 
 //#define DEBUG_WARMSTART
@@ -370,6 +371,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->addObjectiveFunction(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 1.0), "Dynamics Constraints");
 	ef->addObjectiveFunction(new MPO_GRFFrictionConstraints(ef->theMotionPlan, "GRF friction constraints", 1.0), "Dynamic Constraints");
 	ef->objectives.back()->isActive = false;
+	ef->addObjectiveFunction(new MPO_PassiveWheelsGRFConstraints(ef->theMotionPlan, "Passive wheels constraints", 1.0), "Dynamic Constraints");
 
 
 	//range of motion/speed/acceleration constraints

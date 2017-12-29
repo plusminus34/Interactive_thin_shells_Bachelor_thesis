@@ -25,6 +25,7 @@ public:
 	DynamicArray<double> tangentGRFBoundValues;
 
 	bool isWheel = false;
+	bool isPassiveWheel = false;
 	double wheelRadius = 0.1;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
 	V3D wheelAxisLocal;						// wheel axis in world coords.
