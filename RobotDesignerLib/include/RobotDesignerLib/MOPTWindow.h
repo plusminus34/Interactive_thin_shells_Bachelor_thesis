@@ -31,6 +31,8 @@ struct MOPTParams {
 	double wheelAccelLimit = 20;
 	double wheelAccelEpsilon = 1.0;
 
+	double frictionCoeff = 0.5;
+
 	bool writeJointVelocityProfile = false;
 	double motionPlanDuration = 0.8;
 	bool checkDerivatives = false;
