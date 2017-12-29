@@ -24,6 +24,8 @@ double MPO_EndEffectorGroundObjective::computeValue(const dVector& p){
 			double eePosY = theMotionPlan->endEffectorTrajectories[i].EEPos[j](1);
 			double c = theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
 
+//			Logger::consolePrint("ee pos height: %lf, energy: %lf\n", eePosY, 0.5 * eePosY*eePosY * c * weight);
+
 			retVal += computeEnergy(eePosY, c, weight);
 		}
 	}

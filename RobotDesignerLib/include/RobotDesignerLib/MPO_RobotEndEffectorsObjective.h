@@ -30,12 +30,15 @@ private:
 		Vector3T<T> robotEEPos = theMotionPlan->robotRepresentation->getWorldCoordinatesForT(eePosLocal, rb, q_t);
 
 		// `eePos` is at the contact point, thus we need the vector connecting wheel center and contact point
-		Vector3T<T> rhoRot = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
+		Vector3T<T> rhoRot = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
 
 
 		Vector3T<T> err;
 		err = robotEEPos - eePos - rhoRot;
 		T error = (T)0.5 * err.squaredNorm() * (T)weight;
+
+//		Logger::consolePrint("EE error: %lf %lf %lf (norm: %lf)\n", err[0], err[1], err[2], err.norm());
+
 		return error;
 	}
 

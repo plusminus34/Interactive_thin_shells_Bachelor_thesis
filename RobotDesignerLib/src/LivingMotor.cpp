@@ -21,8 +21,11 @@ LivingMotor::LivingMotor(const char* LMType){
 		bodyBracket = new LivingMotorBodyBracket_XM430();
 		hornBracket = new LivingHornBracket_XM430();
 
-		motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
-		motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+//		motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
+//		motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+
+		motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_parent_lo.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
+		motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_child_lo.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
 
 		bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
 		hornMaterial.setColor(0.7, 0.7, 0.7, 1.0);

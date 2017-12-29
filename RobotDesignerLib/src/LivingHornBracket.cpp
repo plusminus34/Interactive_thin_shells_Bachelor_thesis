@@ -66,7 +66,8 @@ void LivingHornBracket::draw() {
 /* ---------------------------------------------------------------------------- */
 
 LivingHornBracket_XM430::LivingHornBracket_XM430() : LivingHornBracket() {
-	this->bracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_hornBracket_w.obj")->clone();
+//	this->bracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_hornBracket_w.obj")->clone();
+	this->bracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_hornBracket_lo.obj")->clone();
 
 	generateBracketMesh();
 	bracketMesh->setMaterial(shaderMaterial);

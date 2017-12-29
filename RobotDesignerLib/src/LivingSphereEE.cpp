@@ -177,7 +177,7 @@ LivingWheelEE::LivingWheelEE(const char* LMType){
 		isActive = false;
 	} 
 	else {
-		originalWheelMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-wheel2.obj");
+		originalWheelMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-wheel3.obj");
 		radius = 0.05;
 		isActive = true;
 	}

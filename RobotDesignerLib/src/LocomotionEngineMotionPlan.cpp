@@ -65,7 +65,7 @@ P3D LocomotionEngine_EndEffectorTrajectory::getWheelCenterPositionAt(double t) c
 	V3D rho = getWheelRhoLocal();
 	double yawAngle = getWheelYawAngleAt(t);
 	double tiltAngle = getWheelTiltAngleAt(t);
-	rho = rotateWheelAxisWith(rho, wheelYawAxis, yawAngle, wheelTiltAxis, tiltAngle);
+	rho = rotateVectorUsingWheelAngles(rho, wheelYawAxis, yawAngle, wheelTiltAxis, tiltAngle);
 	return getEEPositionAt(t) + rho;
 }
 
@@ -494,26 +494,25 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 		double yawAngle = axisWheelYaw.angleWith(axisRBYaw, eeTraj.wheelYawAxis);
 
 		// verify if it worked:
-		V3D axisVer = eeTraj.getRotatedWheelAxis(yawAngle, tiltAngle);
-		std::cout << "yawAngle  = " << yawAngle << std::endl;
-		std::cout << "tiltAngle = " << tiltAngle << std::endl;
-		std::cout << "axisWheel = " << eeTraj.wheelAxisLocal.transpose() << std::endl;
-		std::cout << "axisRobot = " << axisRobot.transpose() << std::endl;
-		std::cout << "axisVer   = " << axisVer.transpose() << std::endl;
-		std::cout << "err   = " << (axisVer - axisRobot).transpose() << std::endl;
+//		V3D axisVer = eeTraj.getRotatedWheelAxis(yawAngle, tiltAngle);
+//		std::cout << "yawAngle  = " << yawAngle << std::endl;
+//		std::cout << "tiltAngle = " << tiltAngle << std::endl;
+//		std::cout << "axisWheel = " << eeTraj.wheelAxisLocal.transpose() << std::endl;
+//		std::cout << "axisRobot = " << axisRobot.transpose() << std::endl;
+//		std::cout << "axisVer   = " << axisVer.transpose() << std::endl;
+//		std::cout << "err   = " << (axisVer - axisRobot).transpose() << std::endl;
 
 
 		// set wheel angles
 		eeTraj.wheelYawAngle = DynamicArray<double>(nSamplingPoints, yawAngle);
 		eeTraj.wheelTiltAngle = DynamicArray<double>(nSamplingPoints, tiltAngle);
 
-		eeWorldCoords -= LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(eeTraj.getWheelRhoLocal(), eeTraj.wheelYawAxis, yawAngle, eeTraj.wheelYawAxis, tiltAngle);
+		eeWorldCoords -= LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(eeTraj.getWheelRhoLocal(), eeTraj.wheelYawAxis, yawAngle, eeTraj.wheelTiltAxis, tiltAngle);
 
-		std::cout << "eeWorldCoors = " << eeWorldCoords.transpose() << std::endl;
+//		std::cout << "eeWorldCoors = " << eeWorldCoords.transpose() << std::endl;
 
 		// output some info
-		Logger::consolePrint("Wheel radius %d: %f", index, eeTraj.wheelRadius);
-
+//		Logger::consolePrint("Wheel radius %d: %f", index, eeTraj.wheelRadius);
 	}
 	else if (rbEndEffector.isWeldedWheel())
 		Logger::consolePrint("Warning: Welded wheels have not been tested!");
@@ -525,7 +524,6 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 	}
 
 	eeTraj.targetOffsetFromCOM = V3D(this->robot->getRoot()->getCMPosition(), eeWorldCoords);
-
 
 	for (int k = 0; k<nSamplingPoints; k++) {
 		eeTraj.EEPos[k] = eeWorldCoords;
@@ -1252,7 +1250,7 @@ P3D LocomotionEngineMotionPlan::getCenterOfRotationAt(double t, Eigen::VectorXd 
 		V3D tiltAxis = ee.wheelTiltAxis;
 		P3D p3 = ee.getEEPositionAt(t);
 
-		V3D v3 = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(wheelAxis, yawAxis, alpha, tiltAxis, beta);
+		V3D v3 = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(wheelAxis, yawAxis, alpha, tiltAxis, beta);
 
 		Eigen::Vector3d p = p3;
 		p[1] = 0;

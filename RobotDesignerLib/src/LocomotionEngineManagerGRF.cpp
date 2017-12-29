@@ -360,10 +360,10 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 	//constraints ensuring feet don't slide...
 	ef->addObjectiveFunction(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0), "Kinematic Constraints");
-	ef->addObjectiveFunction(new MPO_EndEffectorGroundObjective(ef->theMotionPlan, "EE ground objective", 10000.0), "Kinematic Constraints");
+	ef->addObjectiveFunction(new MPO_EndEffectorGroundObjective(ef->theMotionPlan, "EE height objective (stance)", 10000.0), "Kinematic Constraints");
 
 	// constraint ensuring the y component of the EE position follows the swing motion
-	ef->addObjectiveFunction(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0), "Objectives");
+	ef->addObjectiveFunction(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE height objective (swing)", 10000.0), "Objectives");
 
 	//dynamics constraints
 	ef->addObjectiveFunction(new MPO_ForceAccelObjective(ef->theMotionPlan, "force acceleration objective", 1.0), "Dynamics Constraints");
