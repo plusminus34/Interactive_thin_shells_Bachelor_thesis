@@ -54,7 +54,7 @@ RobotDesignerApp::RobotDesignerApp(){
 	{
 		using namespace nanogui;
 
-		mainMenu->addGroup("Toggle Windows");
+		mainMenu->addGroup("Analysis");
 
 		Widget *widget = new Widget(mainMenu->window());
 		mainMenu->addWidget("", widget);
@@ -80,6 +80,18 @@ RobotDesignerApp::RobotDesignerApp(){
 					energyWindow->createEnergyMenu(moptWindow->locomotionManager->energyFunction, menuScreen);
 				energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
 				energyWindow->setVisible(state);
+			}
+		});
+
+		// button to check energy
+		button = new Button(widget, "Update");
+		button->setIcon(ENTYPO_ICON_PUBLISH);
+		button->setFontSize(14);
+		button->setCallback([this](){
+			if(moptWindow->locomotionManager->energyFunction){
+				LocomotionEngineMotionPlan * motionPlan = moptWindow->locomotionManager->motionPlan;
+				energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, motionPlan->getMPParameters());
+				motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
 			}
 		});
 	}

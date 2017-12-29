@@ -26,7 +26,7 @@ double MPO_RobotWheelAxisObjective::computeValue(const dVector& p){
 
 			if(ee.isWheel)
 			{
-				retVal += computeEnergy(ee.wheelAxis, ee.endEffectorLocalCoords,
+				retVal += computeEnergy(ee.wheelAxisLocal, ee.endEffectorLocalCoords,
 										ee.endEffectorRB, q_t,
 										ee.wheelYawAxis, ee.wheelYawAngle[j],
 										ee.wheelTiltAxis, ee.wheelTiltAngle[j]);
@@ -65,7 +65,7 @@ void MPO_RobotWheelAxisObjective::addGradientTo(dVector& grad, const dVector& p)
 			{
 
 				V3T<ScalarDiff> eePosLocal = ee.endEffectorLocalCoords;
-				V3T<ScalarDiff> wheelAxis = ee.wheelAxis;
+				V3T<ScalarDiff> wheelAxisLocal = ee.wheelAxisLocal;
 
 				ScalarDiff yawAngle = ee.wheelYawAngle[j];
 				V3T<ScalarDiff> yawAxis = ee.wheelYawAxis;
@@ -92,7 +92,7 @@ void MPO_RobotWheelAxisObjective::addGradientTo(dVector& grad, const dVector& p)
 
 				for (int k = 0; k < numDOFs; ++k) {
 					dofs[k].v->deriv() = 1.0;
-					ScalarDiff energy = computeEnergy(wheelAxis, eePosLocal,
+					ScalarDiff energy = computeEnergy(wheelAxisLocal, eePosLocal,
 													  ee.endEffectorRB, q,
 													  yawAxis, yawAngle,
 													  tiltAxis, tiltAngle);
@@ -132,7 +132,7 @@ void MPO_RobotWheelAxisObjective::addHessianEntriesTo(DynamicArray<MTriplet>& he
 			{
 
 				V3T<ScalarDiffDiff> eePosLocal = ee.endEffectorLocalCoords;
-				V3T<ScalarDiffDiff> wheelAxis = ee.wheelAxis;
+				V3T<ScalarDiffDiff> wheelAxisLocal = ee.wheelAxisLocal;
 
 				ScalarDiffDiff yawAngle = ee.wheelYawAngle[j];
 				V3T<ScalarDiffDiff> yawAxis = ee.wheelYawAxis;
@@ -161,7 +161,7 @@ void MPO_RobotWheelAxisObjective::addHessianEntriesTo(DynamicArray<MTriplet>& he
 					dofs[k].v->deriv().value() = 1.0;
 					for (int l = 0; l <= k; ++l) {
 						dofs[l].v->value().deriv() = 1.0;
-						ScalarDiffDiff energy = computeEnergy(wheelAxis, eePosLocal,
+						ScalarDiffDiff energy = computeEnergy(wheelAxisLocal, eePosLocal,
 															  ee.endEffectorRB, q,
 															  yawAxis, yawAngle,
 															  tiltAxis, tiltAngle);

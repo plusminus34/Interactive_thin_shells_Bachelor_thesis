@@ -27,7 +27,7 @@ public:
 	bool isWheel = false;
 	double wheelRadius = 0.1;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
-	V3D wheelAxis;						// wheel axis in world coords.
+	V3D wheelAxisLocal;						// wheel axis in world coords.
 	V3D wheelYawAxis;					// yaw axis in world coords.
 	V3D wheelTiltAxis;					// tilt axis in world coords.
 	DynamicArray<double> wheelYawAngle;	// rotation around yaw axis
@@ -57,7 +57,7 @@ public:
 	P3D getEEPositionAt(double t) const;
 
 	// TODO: maybe we can store rho alongside with wheelAxis etc.
-	V3D getWheelRho() const;
+	V3D getWheelRhoLocal() const;
 
 	P3D getWheelCenterPositionAt(double t) const;
 
@@ -80,7 +80,7 @@ public:
 	template<class T>
 	Vector3T<T> getRotatedWheelAxis(T angleYaw, T angleTilt) const
 	{
-		Vector3T<T> axis(wheelAxis);
+		Vector3T<T> axis(wheelAxisLocal);
 		Vector3T<T> axisYaw(wheelYawAxis);
 		Vector3T<T> axisTilt(wheelTiltAxis);
 
