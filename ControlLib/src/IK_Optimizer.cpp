@@ -24,7 +24,8 @@ double IK_Optimizer::optimizePlan(int maxIterNum){
 		}
 
 		minimizer.minimize(energyFunction, params, val);
-		Logger::consolePrint("IK energy val: %lf\n", val);
+		if (minimizer.printOutput)
+			Logger::consolePrint("Final IK energy val: %lf\n", val);
 	}
 
 	return val;

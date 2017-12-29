@@ -21,8 +21,6 @@ public:
 	DynamicArray<double> contactFlag;
 	DynamicArray<double> EEWeights;
 	DynamicArray<P3D> defaultEEPos;
-	DynamicArray<double> verticalGRFUpperBoundValues;
-	DynamicArray<double> tangentGRFBoundValues;
 
 	bool isWheel = false;
 	double wheelRadius = 0.1;			// wheel radius

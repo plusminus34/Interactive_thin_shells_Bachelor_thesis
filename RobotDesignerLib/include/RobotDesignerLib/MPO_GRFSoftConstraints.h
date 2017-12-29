@@ -37,20 +37,6 @@ private:
 	LocomotionEngineMotionPlan* theMotionPlan;
 };
 
-class MPO_GRFTangentialBoundConstraints : public ObjectiveFunction {
-public:
-	MPO_GRFTangentialBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
-	virtual ~MPO_GRFTangentialBoundConstraints(void);
-
-	virtual double computeValue(const dVector& p);
-
-	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
-	virtual void addGradientTo(dVector& grad, const dVector& p);
-
-private:
-	//the energy function operates on a motion plan...
-	LocomotionEngineMotionPlan* theMotionPlan;
-};
 
 class MPO_GRFVerticalLowerBoundConstraints : public ObjectiveFunction {
 public:
@@ -76,6 +62,27 @@ public:
 
 	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
 	virtual void addGradientTo(dVector& grad, const dVector& p);
+
+	DynamicArray<DynamicArray<double>> verticalGRFUpperBoundValues;
+
+private:
+	//the energy function operates on a motion plan...
+	LocomotionEngineMotionPlan* theMotionPlan;
+};
+
+
+class MPO_GRFTangentialBoundConstraints : public ObjectiveFunction {
+public:
+	MPO_GRFTangentialBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
+	virtual ~MPO_GRFTangentialBoundConstraints(void);
+
+	virtual double computeValue(const dVector& p);
+
+	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
+	virtual void addGradientTo(dVector& grad, const dVector& p);
+
+
+	DynamicArray<DynamicArray<double>> tangentGRFBoundValues;
 
 private:
 	//the energy function operates on a motion plan...

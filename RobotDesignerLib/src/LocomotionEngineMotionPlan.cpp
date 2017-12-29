@@ -31,8 +31,6 @@ void LocomotionEngine_EndEffectorTrajectory::initialize(int nPos){
 	defaultEEPos.resize(nPos);
 	contactFlag.resize(nPos, 0);
 	EEWeights.resize(nPos, 0.05);
-	verticalGRFUpperBoundValues.resize(nPos, 1000.0);
-	tangentGRFBoundValues.resize(nPos, 1000.0);
 }
 
 V3D LocomotionEngine_EndEffectorTrajectory::getContactForceAt(double t) {
@@ -404,7 +402,6 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	for (int j = 0; j<nEEs; j++)
 		addEndEffector(NULL, robot->root, j, nSamplingPoints);
 
-
 	robotStateTrajectory.robotRepresentation = this->robotRepresentation;
 	robotStateTrajectory.initialize(nSamplingPoints);
 
@@ -413,9 +410,11 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	COMTrajectory.initialize(nSamplePoints, defaultCOMPosition, comRotationAngles, robotRepresentation->getQAxis(3),
 		robotRepresentation->getQAxis(4), robotRepresentation->getQAxis(5));
 
-	verticalGRFLowerBoundVal = fabs(totalMass * Globals::g / endEffectorTrajectories.size() / 5.0) * 2;
-//	verticalGRFLowerBoundVal = fabs(totalMass * Globals::g / robot->bFrame->limbs.size() / 5.0) * 2;
-//	minVerticalGRFEpsilon = fabs(totalMass * Globals::g / robot->bFrame->limbs.size() / 5.0) * 0.5;
+	verticalGRFLowerBoundVal = fabs(totalMass * Globals::g / endEffectorTrajectories.size() / 5.0);
+	GRFEpsilon = verticalGRFLowerBoundVal;
+	for (uint i = 0; i < endEffectorTrajectories.size(); i++)
+		for (uint j = 0; j < endEffectorTrajectories[i].contactForce.size(); j++)
+			endEffectorTrajectories[i].contactForce[j].y() = verticalGRFLowerBoundVal + GRFEpsilon;
 }
 
 void LocomotionEngineMotionPlan::addIKInitEE(RigidBody* rb, IK_Plan* ikPlan) {

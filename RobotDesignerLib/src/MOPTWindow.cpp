@@ -273,9 +273,10 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 
 	syncMotionPlanParameters();
 
-//	locomotionManager->setDefaultOptimizationFlags();
-//	dVector params = locomotionManager->motionPlan->getMPParameters();
-//	locomotionManager->energyFunction->setCurrentBestSolution(params);
+	locomotionManager->setDefaultOptimizationFlags();
+	dVector params = locomotionManager->motionPlan->getMPParameters();
+	locomotionManager->energyFunction->setCurrentBestSolution(params);
+	Logger::consolePrint("Initial MOPT objective function: %lf\n", locomotionManager->energyFunction->computeValue(params));
 
 	if (doWarmStart)
 		locomotionManager->warmStartMOpt();

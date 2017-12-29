@@ -7,6 +7,10 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
+//save/load
+//fix parameterized robot design model...
+
+
 RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
 	setWindowTitle("RobotDesigner");
@@ -371,10 +375,12 @@ void RobotDesignerApp::loadToSim(bool initializeMOPT){
 //now, start MOPT...
 	Logger::consolePrint("MoptWindow loading robot...\n");
 	moptWindow->loadRobot(robot);
-	Logger::consolePrint("..... successful.\n Warmstarting...\n");
+	if (initializeMOPT)
+		Logger::consolePrint("..... successful.\n Warmstarting...\n");
 	warmStartMOPT(initializeMOPT);
-	Logger::consolePrint("Warmstart successful...\n");
-	Logger::consolePrint("The robot has %d legs, weighs %lfkgs and is %lfm tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
+	if (initializeMOPT)
+		Logger::consolePrint("Warmstart successful...\n");
+	Logger::consolePrint("The robot has %d legs, weighs %lf kgs and is %lf m tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
 
 //	CreateParametersDesignWindow();
 }
