@@ -22,7 +22,7 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 
 	const double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
 
-	for (int j=0; j<end-1; j++){
+	for (int j=0; j<end; j++){
 
 		int jm, jp;
 		theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
@@ -89,7 +89,7 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 
 	const double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
 
-	for (int j=0; j<end-1; j++){
+	for (int j=0; j<end; j++){
 
 		int jm, jp;
 		theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
@@ -242,7 +242,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 
 	const double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
 
-	for (int j=0; j<end-1; j++){
+	for (int j=0; j<end; j++){
 
 		int jm, jp;
 		theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
