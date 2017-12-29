@@ -336,6 +336,7 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	ikSolver.ikEnergyFunction->setupSubObjectives_EEMatch();
 	ikSolver.ikEnergyFunction->regularizer = 10;
 //	ikSolver.ikOptimizer->checkDerivatives = true;
+//	ikSolver.ikEnergyFunction->printDebugInfo = true;
 	ikSolver.solve(20);
 
 	//first off, compute the current position of the COM, and ensure the whole robot lies on the ground
@@ -446,7 +447,6 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 	LocomotionEngine_EndEffectorTrajectory &eeTraj = endEffectorTrajectories[index];
 
 	eeTraj.CPIndex = eeIndex;
-	eeTraj.targetOffsetFromCOM = V3D(this->robot->getRoot()->getCMPosition(), eeWorldCoords);
 
 	eeTraj.theLimb = theLimb;
 	eeTraj.endEffectorRB = rb;
@@ -521,6 +521,9 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 	{
 		eeWorldCoords[1] = 0;
 	}
+
+	eeTraj.targetOffsetFromCOM = V3D(this->robot->getRoot()->getCMPosition(), eeWorldCoords);
+
 
 	for (int k = 0; k<nSamplingPoints; k++) {
 		eeTraj.EEPos[k] = eeWorldCoords;

@@ -53,7 +53,7 @@ public:
 
 
 	Robot* robot = NULL;
-	ReducedRobotState* initialRobotState = NULL;
+	ReducedRobotState startingRobotState = ReducedRobotState(13);
 
 	bool drawMotionPlan = false;
 

@@ -297,8 +297,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		Logger::consolePrint("Load robot state from '%s'\n", fName);
 		if (robot) {
 			robot->loadReducedStateFromFile(fName);
-			delete initialRobotState;
-			initialRobotState = new ReducedRobotState(robot);
+			startingRobotState = ReducedRobotState(robot);
 			if (prd)
 				prd->updateMorphology();
 		}
@@ -310,13 +309,8 @@ void RobotDesignerApp::loadFile(const char* fName) {
 
 		delete prd;
 		prd = new SymmetricParameterizedRobotDesign(robot);
-//		CreateParametersDesignWindow();
-//		menuScreen->performLayout();
-//		slidervalues.resize(prd->getNumberOfParameters());
-//		slidervalues.setZero();
 
-		delete initialRobotState;
-		initialRobotState = new ReducedRobotState(robot);
+		startingRobotState = ReducedRobotState(robot);
 		return;
 	}
 
@@ -348,10 +342,9 @@ void RobotDesignerApp::createRobotFromCurrentDesign() {
 	if (designWindow) {
 		designWindow->saveToRBSFile("../out/tmpRobot.rbs");
 		loadFile("../out/tmpRobot.rbs");
-		delete initialRobotState;
-		initialRobotState = new ReducedRobotState(robot);
-		robot->populateState(initialRobotState, true);
-		robot->setState(initialRobotState);
+		startingRobotState = ReducedRobotState(robot);
+		robot->populateState(&startingRobotState, true);
+		robot->setState(&startingRobotState);
 		if (prd)
 			prd->updateMorphology();
 	}
@@ -365,7 +358,7 @@ void RobotDesignerApp::loadToSim(bool initializeMOPT){
 
 //now, start MOPT...
 	Logger::consolePrint("MoptWindow loading robot...\n");
-	moptWindow->loadRobot(robot, initialRobotState);
+	moptWindow->loadRobot(robot);
 	Logger::consolePrint("..... successful.\n Warmstarting...\n");
 	warmStartMOPT(initializeMOPT);
 	Logger::consolePrint("Warmstart successful...\n");
@@ -375,6 +368,9 @@ void RobotDesignerApp::loadToSim(bool initializeMOPT){
 }
 
 void RobotDesignerApp::warmStartMOPT(bool initializeMotionPlan) {
+	//reset the state of the robot, to make sure we're always starting from the same configuration
+	robot->setState(&startingRobotState);
+
 	moptWindow->initializeNewMP(initializeMotionPlan);
 	simWindow->loadMotionPlan(moptWindow->locomotionManager->motionPlan);
 	motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);

@@ -172,12 +172,11 @@ void MOPTWindow::clear()
 
 }
 
-void MOPTWindow::loadRobot(Robot* robot, ReducedRobotState* startState){
+void MOPTWindow::loadRobot(Robot* robot){
 	clear();
 
 	initialized = true;
 	this->robot = robot;
-	this->startState = *startState;
 
 	int nLegs = robot->bFrame->limbs.size();
 
@@ -249,9 +248,6 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 
 	footFallPattern.writeToFile("../out/tmpFFP.ffp");
 
-	/* ----------- Reset the state of the robot ------------ */
-	robot->setState(&startState);
-
 	/* ---------- Set up the motion plan ---------- */
 	switch (optimizeOption)
 	{
@@ -268,6 +264,10 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	}
 
 	syncMotionPlanParameters();
+
+//	locomotionManager->setDefaultOptimizationFlags();
+//	dVector params = locomotionManager->motionPlan->getMPParameters();
+//	locomotionManager->energyFunction->setCurrentBestSolution(params);
 
 	if (doWarmStart)
 		locomotionManager->warmStartMOpt();

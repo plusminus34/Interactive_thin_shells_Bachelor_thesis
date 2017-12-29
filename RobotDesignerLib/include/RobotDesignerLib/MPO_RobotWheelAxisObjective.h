@@ -36,6 +36,7 @@ private:
 		Vector3T<T> axis = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(wheelAxis, yawAxis, yawAngle, tiltAxis, tiltAngle);
 		Vector3T<T> err = axis - currentAxis;
 
+//		Logger::consolePrint("target: %lf %lf %lf, err: %lf %lf %lf, angles: %lf %lf\n", axis[0], axis[1], axis[2], err[0], err[1], err[2], yawAngle, tiltAngle);
 		return (T)0.5 * err.squaredNorm() * (T)weight;
 	}
 

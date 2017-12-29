@@ -57,7 +57,6 @@ public:
 	MOPTParams moptParams;
 
 	Robot* robot = nullptr;
-	ReducedRobotState startState = ReducedRobotState(13);
 
 	FootFallPattern footFallPattern;
 	FootFallPatternViewer* ffpViewer = nullptr;
@@ -81,7 +80,7 @@ public:
 	~MOPTWindow();
 
 	void clear();
-	void loadRobot(Robot* robot, ReducedRobotState* startState);
+	void loadRobot(Robot* robot);
 	void syncMotionPlanParameters();
 	void syncMOPTWindowParameters();
 
