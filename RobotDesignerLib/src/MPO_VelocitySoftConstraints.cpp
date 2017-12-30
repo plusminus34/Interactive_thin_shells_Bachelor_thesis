@@ -25,13 +25,14 @@ double MPO_VelocitySoftBoundConstraints::computeValue(const dVector& s) {
 		int nSamplePoints = theMotionPlan->nSamplePoints;
 		if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1; //don't double count... the last robot pose is already the same as the first one, which means that COM and feet locations are in correct locations relative to each other, so no need to ask for that again explicitely...
 
+		double dt = theMotionPlan->motionPlanDuration / (theMotionPlan->nSamplePoints - 1);
+
 		for (int j=0; j<nSamplePoints; j++){
 
 			int jm, jp;
 			theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
 			if (jm == -1 || jp == -1) continue;
 
-			double dt = theMotionPlan->motionPlanDuration / (theMotionPlan->nSamplePoints-1);
 
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
@@ -54,13 +55,15 @@ void MPO_VelocitySoftBoundConstraints::addGradientTo(dVector& grad, const dVecto
 		int nSamplePoints = theMotionPlan->nSamplePoints;
 		if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1; //don't double count... the last robot pose is already the same as the first one, which means that COM and feet locations are in correct locations relative to each other, so no need to ask for that again explicitely...
 
+		double dt = theMotionPlan->motionPlanDuration / (nSamplePoints - 1);
+
+
 		for (int j=0; j<nSamplePoints; j++){
 
 			int jm, jp;
 			theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
 			if (jm == -1 || jp == -1) continue;
 
-			double dt = theMotionPlan->motionPlanDuration / (nSamplePoints-1);
 
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;
@@ -82,14 +85,13 @@ void MPO_VelocitySoftBoundConstraints::addHessianEntriesTo(DynamicArray<MTriplet
 
 		int nSamplePoints = theMotionPlan->nSamplePoints;
 		if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1; //don't double count... the last robot pose is already the same as the first one, which means that COM and feet locations are in correct locations relative to each other, so no need to ask for that again explicitely...
+		double dt = theMotionPlan->motionPlanDuration / (nSamplePoints - 1);
 
 		for (int j=0; j<nSamplePoints; j++){
 
 			int jm, jp;
 			theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
 			if (jm == -1 || jp == -1) continue;
-
-			double dt = theMotionPlan->motionPlanDuration / (nSamplePoints-1);
 
 			for (int i=startQIndex; i<=endQIndex; i++){
 				double velocity = (theMotionPlan->robotStateTrajectory.qArray[jp][i] - theMotionPlan->robotStateTrajectory.qArray[jm][i]) / dt;

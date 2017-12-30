@@ -92,6 +92,47 @@ double LocomotionEngine_EndEffectorTrajectory::getWheelSpeedAt(double t) const
 	return traj.evaluate_linear(t);
 }
 
+Vector3d LocomotionEngine_EndEffectorTrajectory::drotateVectorUsingWheelAngles_dTiltAngle(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta)
+{
+	// First tilt the axis ...
+	Vector3d axisRot = drotateVec_dalpha(axis, beta, axisTilt);
+// 	// debug
+// 	double xP = axisTilt(0);
+// 	double yP = axisTilt(1);
+// 	double zP = axisTilt(2);
+// 
+// 	Matrix3x3 s;
+// 	s << 0, -zP, yP,
+// 		zP, 0, -xP,
+// 		-yP, xP, 0;
+// 	Vector3d axisRot = s*rotateVec(axis, beta, axisTilt);
+// 	cout << axisRot << endl << axisRot1;
+
+	// ... and then yaw
+	axisRot = rotateVec(axisRot, alpha, axisYaw);
+	return axisRot;
+}
+
+Vector3d LocomotionEngine_EndEffectorTrajectory::drotateVectorUsingWheelAngles_dYawAngle(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta)
+{
+	// First tilt the axis ...
+	Vector3d axisRot = rotateVec(axis, beta, axisTilt);
+	// ... and then yaw
+	axisRot = drotateVec_dalpha(axisRot, alpha, axisYaw);
+
+// 	double xP = axisYaw(0);
+// 	double yP = axisYaw(1);
+// 	double zP = axisYaw(2);
+// 
+// 	Matrix3x3 s;
+// 	s << 0, -zP, yP,
+// 		zP, 0, -xP,
+// 		-yP, xP, 0;
+// 	axisRot = s*rotateVec(axisRot, alpha, axisYaw);
+
+	return axisRot;
+}
+
 double LocomotionEngine_EndEffectorTrajectory::getContactFlagAt(double t){
 	boundToRange(&t, 0, 1);
 	int tIndex = (int)(t * (double)(contactFlag.size()-1));
