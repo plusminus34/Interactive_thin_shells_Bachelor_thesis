@@ -23,15 +23,14 @@ public:
 private:
 
 	template<class T>
-	T computeEnergy(const Vector3T<T> &wheelAxisLocal, const Vector3T<T> &yawAxis, T yawAngle, const Vector3T<T> &tiltAxis, T tiltAngle,
+	T computeForceForward(const Vector3T<T> &wheelAxisLocal, const Vector3T<T> &yawAxis, T yawAngle, const Vector3T<T> &tiltAxis, T tiltAngle,
 					const Vector3T<T> &contactForce) const
 	{
 		Vector3T<T> forward = yawAxis.cross(wheelAxisLocal);
 		Vector3T<T> forwardWorld = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(forward, yawAxis, yawAngle, tiltAxis, tiltAngle);
 
-		T constraint = forwardWorld.dot(contactForce);
-
-		return (T)0.5 * constraint*constraint * (T)weight;
+		T forceForward = forwardWorld.dot(contactForce);
+		return forceForward;
 	}
 
 private:

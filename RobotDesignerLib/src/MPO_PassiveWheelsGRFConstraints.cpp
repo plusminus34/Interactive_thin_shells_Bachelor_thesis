@@ -1,5 +1,5 @@
 #include <RobotDesignerLib/MPO_PassiveWheelsGRFConstraints.h>
-
+#include <OptimizationLib/SoftUnilateralConstraint.h>
 #include <MathLib/AutoDiff.h>
 
 MPO_PassiveWheelsGRFConstraints::MPO_PassiveWheelsGRFConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
@@ -15,6 +15,8 @@ double MPO_PassiveWheelsGRFConstraints::computeValue(const dVector& p){
 	//assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
+	double frictionCoeff = theMotionPlan->frictionCoeff;
+
 	double retVal = 0;
 	int nEEs = theMotionPlan->endEffectorTrajectories.size();
 	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
@@ -23,17 +25,18 @@ double MPO_PassiveWheelsGRFConstraints::computeValue(const dVector& p){
 
 		for (int i=0; i<nEEs; i++){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
-
-			const V3D &wheelAxisLocal = ee.wheelAxisLocal;
-			double yawAngle = ee.wheelYawAngle[j];
-			const V3D &yawAxis = ee.wheelYawAxis;
-			double tiltAngle = ee.wheelTiltAngle[j];
-			const V3D &tiltAxis = ee.wheelTiltAxis;
-			const V3D &grf = ee.contactForce[j];
-
 			if(ee.isPassiveWheel)
 			{
-				retVal += computeEnergy(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle, grf);
+				const V3D &wheelAxisLocal = ee.wheelAxisLocal;
+				double yawAngle = ee.wheelYawAngle[j];
+				const V3D &yawAxis = ee.wheelYawAxis;
+				double tiltAngle = ee.wheelTiltAngle[j];
+				const V3D &tiltAxis = ee.wheelTiltAxis;
+				const V3D &grf = ee.contactForce[j];
+
+				double fr = fabs(computeForceForward(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle, grf));
+				SoftUnilateralUpperConstraintT<double> upperBound = SoftUnilateralUpperConstraintT<double>(0, 10, theMotionPlan->frictionEpsilon);
+				retVal += upperBound.computeValue(fr-frictionCoeff*grf(1)) * weight;
 			}
 		}
 	}
@@ -53,6 +56,8 @@ void MPO_PassiveWheelsGRFConstraints::addGradientTo(dVector& grad, const dVector
 	// 3 DOFs for contact force
 	if (theMotionPlan->contactForcesParamsStartIndex >= 0)
 		numDOFs += 3;
+
+	ScalarDiff frictionCoeff = theMotionPlan->frictionCoeff;
 
 	int nEEs = theMotionPlan->endEffectorTrajectories.size();
 	for (int j=0; j<theMotionPlan->nSamplePoints; j++){
@@ -90,7 +95,11 @@ void MPO_PassiveWheelsGRFConstraints::addGradientTo(dVector& grad, const dVector
 
 				for (int k = 0; k < numDOFs; ++k) {
 					dofs[k].v->deriv() = 1.0;
-					ScalarDiff energy = computeEnergy(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle, grf);
+
+					ScalarDiff fr = fabs(computeForceForward(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle, grf));
+					SoftUnilateralUpperConstraintT<ScalarDiff> upperBound = SoftUnilateralUpperConstraintT<ScalarDiff>(0, 10, theMotionPlan->frictionEpsilon);
+					ScalarDiff energy = upperBound.computeValue(fr-frictionCoeff*grf(1)) * weight;
+
 					grad[dofs[k].i] += energy.deriv();
 					dofs[k].v->deriv() = 0.0;
 				}
@@ -111,6 +120,8 @@ void MPO_PassiveWheelsGRFConstraints::addHessianEntriesTo(DynamicArray<MTriplet>
 	// 3 DOFs for contact force
 	if (theMotionPlan->contactForcesParamsStartIndex >= 0)
 		numDOFs += 3;
+
+	ScalarDiffDiff frictionCoeff = theMotionPlan->frictionCoeff;
 
 	int nEEs = theMotionPlan->endEffectorTrajectories.size();
 	for (int j=0; j<theMotionPlan->nSamplePoints; j++){
@@ -150,7 +161,13 @@ void MPO_PassiveWheelsGRFConstraints::addHessianEntriesTo(DynamicArray<MTriplet>
 					dofs[k].v->deriv().value() = 1.0;
 					for (int l = 0; l <= k; ++l) {
 						dofs[l].v->value().deriv() = 1.0;
-						ScalarDiffDiff energy = computeEnergy(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle, grf);
+
+//						ScalarDiffDiff energy = computeForceForward(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle, grf);
+
+						ScalarDiffDiff fr = fabs(computeForceForward(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle, grf));
+						SoftUnilateralUpperConstraintT<ScalarDiffDiff> upperBound = SoftUnilateralUpperConstraintT<ScalarDiffDiff>(0, 10, theMotionPlan->frictionEpsilon);
+						ScalarDiffDiff energy = upperBound.computeValue(fr-frictionCoeff*grf(1)) * weight;
+
 						ADD_HES_ELEMENT(hessianEntries,
 										dofs[k].i,
 										dofs[l].i,
