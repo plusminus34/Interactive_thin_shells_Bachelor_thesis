@@ -28,7 +28,6 @@ void LocomotionEngine_EndEffectorTrajectory::initialize(int nPos){
 	wheelYawAngle.resize(nPos);
 	wheelTiltAngle.resize(nPos, 0/*M_PI*0.25*/);
 
-	defaultEEPos.resize(nPos);
 	contactFlag.resize(nPos, 0);
 	EEWeights.resize(nPos, 0.05);
 }
@@ -501,7 +500,6 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 //		std::cout << "axisVer   = " << axisVer.transpose() << std::endl;
 //		std::cout << "err   = " << (axisVer - axisRobot).transpose() << std::endl;
 
-
 		// set wheel angles
 		eeTraj.wheelYawAngle = DynamicArray<double>(nSamplingPoints, yawAngle);
 		eeTraj.wheelTiltAngle = DynamicArray<double>(nSamplingPoints, tiltAngle);
@@ -522,15 +520,11 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 		eeWorldCoords[1] = 0;
 	}
 
-	eeTraj.targetOffsetFromCOM = V3D(this->robot->getRoot()->getCMPosition(), eeWorldCoords);
-
 	for (int k = 0; k<nSamplingPoints; k++) {
 		eeTraj.EEPos[k] = eeWorldCoords;
-		eeTraj.defaultEEPos[k] = eeTraj.EEPos[k];
 		eeTraj.contactFlag[k] = 1.0;
 	}
 }
-
 
 //syncs the footfall pattern with the current motion plan
 void LocomotionEngineMotionPlan::syncFootFallPatternWithMotionPlan(FootFallPattern& ffp) {
@@ -996,6 +990,13 @@ void LocomotionEngineMotionPlan::writeParamsToFile(FILE *fp) {
 
 	fprintf(fp, "\n\n");
 
+	for (int j = 0; j < nSamplePoints; j++)
+		for (uint i = 0; i < endEffectorTrajectories.size(); i++)
+			if (endEffectorTrajectories[i].isWheel)
+				fprintf(fp, "%10.10lf %10.10lf %10.10lf\n", endEffectorTrajectories[i].wheelSpeed[j], endEffectorTrajectories[i].wheelYawAngle[j], endEffectorTrajectories[i].wheelTiltAngle[j]);
+
+	fprintf(fp, "\n\n");
+
 	for (int i = 0; i < nSamplePoints; i++)
 		for (int j = 0; j < robotStateTrajectory.nStateDim; j++)
 			fprintf(fp, "%10.10lf\n", robotStateTrajectory.qArray[i][j]);
@@ -1003,8 +1004,11 @@ void LocomotionEngineMotionPlan::writeParamsToFile(FILE *fp) {
 	fprintf(fp, "\n\n%10.10lf %10.10lf %10.10lf %10.10lf %10.10lf %10.10lf %10.10lf\n", swingFootHeight, desDistanceToTravel[0], desDistanceToTravel[2], desTurningAngle,
 			motionPlanDuration, verticalGRFLowerBoundVal, GRFEpsilon);
 
-
 	fprintf(fp, "\n\n%d\n", wrapAroundBoundaryIndex);
+
+//	for (int i = 0; i < nSamplePoints; i++)
+//		for (int j = 0; j < robotStateTrajectory.nStateDim; j++)
+//			fprintf(fp, "%10.10lf\n", robotStateTrajectory.defaultRobotStates[i][j]);
 
 	fprintf(fp, "\n\n");
 }
@@ -1016,7 +1020,6 @@ void LocomotionEngineMotionPlan::writeParamsToFile(const char *fName){
 }
 
 void LocomotionEngineMotionPlan::readParamsFromFile(FILE *fp) {
-
 	int nSamplePoints_, eeCount_, robotDim_;
 
 	fscanf(fp, "%d %d %d %lf\n", &nSamplePoints_, &eeCount_, &robotDim_, &motionPlanDuration);
@@ -1027,11 +1030,18 @@ void LocomotionEngineMotionPlan::readParamsFromFile(FILE *fp) {
 	}
 
 	nSamplePoints = nSamplePoints_;
+
+
+	robotRepresentation->setQ(initialRobotState);
 	robotStateTrajectory.initialize(nSamplePoints);
+
 	for (uint i = 0; i < endEffectorTrajectories.size(); i++)
 		endEffectorTrajectories[i].initialize(nSamplePoints);
-	COMTrajectory.initialize(nSamplePoints, P3D(), V3D(), robotRepresentation->getQAxis(3),
-							 robotRepresentation->getQAxis(4), robotRepresentation->getQAxis(5));
+
+	V3D comRotationAngles(initialRobotState[3], initialRobotState[4], initialRobotState[5]);
+	COMTrajectory.initialize(nSamplePoints, defaultCOMPosition, comRotationAngles, robotRepresentation->getQAxis(3),
+		robotRepresentation->getQAxis(4), robotRepresentation->getQAxis(5));
+
 
 	for (int i = 0; i < nSamplePoints; i++)
 		fscanf(fp, "%lf %lf %lf", &COMTrajectory.pos[0][i], &COMTrajectory.pos[1][i], &COMTrajectory.pos[2][i]);
@@ -1051,6 +1061,11 @@ void LocomotionEngineMotionPlan::readParamsFromFile(FILE *fp) {
 		for (uint i = 0; i < endEffectorTrajectories.size(); i++)
 			fscanf(fp, "%lf %lf %lf", &endEffectorTrajectories[i].contactForce[j][0],
 					&endEffectorTrajectories[i].contactForce[j][1], &endEffectorTrajectories[i].contactForce[j][2]);
+
+	for (int j = 0; j < nSamplePoints; j++)
+		for (uint i = 0; i < endEffectorTrajectories.size(); i++)
+			if (endEffectorTrajectories[i].isWheel)
+				fscanf(fp, "%lf %lf %lf", &endEffectorTrajectories[i].wheelSpeed[j], &endEffectorTrajectories[i].wheelYawAngle[j], &endEffectorTrajectories[i].wheelTiltAngle[j]);
 
 	for (int i = 0; i < nSamplePoints; i++)
 		for (int j = 0; j < robotStateTrajectory.nStateDim; j++)
