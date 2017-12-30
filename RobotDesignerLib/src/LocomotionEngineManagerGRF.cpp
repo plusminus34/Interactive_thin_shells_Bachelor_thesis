@@ -371,8 +371,10 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->addObjectiveFunction(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 1.0), "Dynamics Constraints");
 	ef->addObjectiveFunction(new MPO_GRFFrictionConstraints(ef->theMotionPlan, "GRF friction constraints", 1.0), "Dynamic Constraints");
 	ef->objectives.back()->isActive = false;
-	ef->addObjectiveFunction(new MPO_PassiveWheelsGRFConstraints(ef->theMotionPlan, "Passive wheels constraints", 1.0), "Dynamic Constraints");
-
+	ef->addObjectiveFunction(new MPO_PassiveWheelsGRFConstraints(ef->theMotionPlan, "Passive wheels (w/o friction)", 1.0), "Dynamic Constraints");
+	ef->objectives.back()->isActive = false;
+	ef->addObjectiveFunction(new MPO_PassiveWheelsGRFFrictionConstraints(ef->theMotionPlan, "Passive wheels constraints (w/ friction)", 1.0), "Dynamic Constraints");
+	ef->objectives.back()->isActive = false;
 
 	//range of motion/speed/acceleration constraints
 	ef->addObjectiveFunction(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, dimCount - 1), "Bound Constraints");
