@@ -20,7 +20,6 @@ public:
 	DynamicArray<V3D> contactForce;
 	DynamicArray<double> contactFlag;
 	DynamicArray<double> EEWeights;
-	DynamicArray<P3D> defaultEEPos;
 
 	bool isWheel = false;
 	double wheelRadius = 0.1;			// wheel radius
@@ -31,7 +30,6 @@ public:
 	DynamicArray<double> wheelYawAngle;	// rotation around yaw axis
 	DynamicArray<double> wheelTiltAngle;// rotation around tilt axis
 
-	V3D targetOffsetFromCOM;
 	RigidBody* endEffectorRB;
 	P3D endEffectorLocalCoords;
 
@@ -265,7 +263,6 @@ public:
 	void syncFootFallPatternWithMotionPlan(FootFallPattern& ffp);
 	//syncs the current motion plan with the footfall pattern
 	void syncMotionPlanWithFootFallPattern(FootFallPattern& ffp);
-	void syncMotionPlanWithFootFallPattern(FootFallPattern& ffp, const std::vector<std::vector<double> > &yPositions);
 
 	//if minV is equal to maxV, then there are no bounds for that variable...
 	virtual void getParameterMinValues(dVector& minV);

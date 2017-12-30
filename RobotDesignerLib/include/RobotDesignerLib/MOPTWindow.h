@@ -90,6 +90,13 @@ public:
 
 	double runMOPTStep();
 
+	void printCurrentObjectiveValues() {
+		locomotionManager->setDefaultOptimizationFlags();
+		dVector params = locomotionManager->motionPlan->getMPParameters();
+		locomotionManager->energyFunction->setCurrentBestSolution(params);
+		Logger::consolePrint("Current MOPT objective function: %lf\n", locomotionManager->energyFunction->computeValue(params));
+	}
+
 	void reset();
 
 	void setAnimationParams(double f, int animationCycle);

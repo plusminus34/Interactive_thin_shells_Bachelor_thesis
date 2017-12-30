@@ -7,9 +7,9 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-//save/load
 //fix parameterized robot design model...
-
+//the wheel speed is in world coordinates! In integrating the wheel speed for visualization/playback, as well as for control, we need to compensate for what the leg is doing!!!!! This is potentially a source of bugs otherwise!
+//when in MOPT, mouse over robot changes pose in sim (probably because picking sets the state but then doesn't restore it?).
 
 RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
@@ -79,7 +79,7 @@ RobotDesignerApp::RobotDesignerApp(){
 		button->setFontSize(14);
 		button->setFlags(Button::Flags::ToggleButton);
 		button->setChangeCallback([this](bool state){
-			if(moptWindow->locomotionManager->energyFunction){
+			if(moptWindow->locomotionManager->energyFunction && doMotionAnalysis){
 				if(state)
 					energyWindow->createEnergyMenu(moptWindow->locomotionManager->energyFunction, menuScreen);
 				energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
@@ -92,7 +92,7 @@ RobotDesignerApp::RobotDesignerApp(){
 		button->setIcon(ENTYPO_ICON_PUBLISH);
 		button->setFontSize(14);
 		button->setCallback([this](){
-			if(moptWindow->locomotionManager->energyFunction){
+			if(moptWindow->locomotionManager->energyFunction && doMotionAnalysis){
 				LocomotionEngineMotionPlan * motionPlan = moptWindow->locomotionManager->motionPlan;
 				energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, motionPlan->getMPParameters());
 				motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
@@ -342,6 +342,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 			moptWindow->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
 			moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
 			moptWindow->syncMOPTWindowParameters();
+			moptWindow->printCurrentObjectiveValues();
 		}
 		return;
 	}
@@ -391,10 +392,10 @@ void RobotDesignerApp::warmStartMOPT(bool initializeMotionPlan) {
 
 	moptWindow->initializeNewMP(initializeMotionPlan);
 	simWindow->loadMotionPlan(moptWindow->locomotionManager->motionPlan);
-	motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
 
-	if(moptWindow->locomotionManager->energyFunction)
+	if(moptWindow->locomotionManager->energyFunction && doMotionAnalysis)
 	{
+		motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
 		energyWindow->createEnergyMenu(moptWindow->locomotionManager->energyFunction, menuScreen);
 		energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
 	}
@@ -450,9 +451,9 @@ void RobotDesignerApp::process() {
 
 	auto DoMOPTStep = [&]() {
 		runMOPTStep();
-		if (motionPlanAnalysis->window->visible())
+		if (motionPlanAnalysis->window->visible() && doMotionAnalysis)
 			motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
-		if(moptWindow->locomotionManager->energyFunction)
+		if(moptWindow->locomotionManager->energyFunction && doMotionAnalysis)
 			energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
 	};
 
