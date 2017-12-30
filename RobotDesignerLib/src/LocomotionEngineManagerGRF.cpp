@@ -14,14 +14,12 @@
 #include <RobotDesignerLib/MPO_DefaultRobotStateConstraint.h>
 #include <RobotDesignerLib/MPO_VelocityL0Regularization.h>
 #include <RobotDesignerLib/MPO_StateMatchObjective.h>
+#include <RobotDesignerLib/MPO_GRFFrictionConstraints.h>
 
 
 //#define DEBUG_WARMSTART
 //#define CHECK_DERIVATIVES_AFTER_WARMSTART
 
-//- stance leg regularizer should ensure average pose is the same as default pose
-//- add objectives that mimic legs in their absence, for when we're optimizing just the motion plan, without any robot...
-//- different parts of the parameter state should probably have different regularizers...
 
 LocomotionEngineManagerGRF::LocomotionEngineManagerGRF() {
 }
@@ -70,6 +68,14 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 			smoothCOMMotionObj = obj;
 	}
 
+	//add tmp objectives which will be released later on during the warmstart procedure...
+	MPO_COMTrajectoryObjective* tmpCOMTrajectoryObjective = new MPO_COMTrajectoryObjective(motionPlan, "intermediate periodic COM trajectory plan", 10000.0, motionPlan->nSamplePoints - 1, 0);
+	energyFunction->objectives.push_back(tmpCOMTrajectoryObjective);
+	MPO_GRFVerticalUpperBoundConstraints* tmpGRFVerticalForceConstraint = new MPO_GRFVerticalUpperBoundConstraints(motionPlan, "tmpGRFVerticalForceConstraint", 10000.0);
+	MPO_GRFTangentialBoundConstraints* tmpGRFTangentForceConstraint = new MPO_GRFTangentialBoundConstraints(motionPlan, "tmpGRFTangentForceConstraint", 10000.0);
+	energyFunction->objectives.push_back(tmpGRFVerticalForceConstraint);
+	energyFunction->objectives.push_back(tmpGRFTangentForceConstraint);
+
 	double robotEEWeight = robotEEObj->weight;
 	double robotCOMWeight = robotCOMObj->weight;
 	double smoothCOMMotionWeight = smoothCOMMotionObj->weight;
@@ -91,25 +97,32 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 	motionPlan->desDistanceToTravel.z() = 0;
 	motionPlan->desTurningAngle = 0;
 
-
 	for (int iT = 0; iT < motionPlan->nSamplePoints; iT++)
 		for (uint iEE = 0; iEE < motionPlan->endEffectorTrajectories.size(); iEE++) {
-			motionPlan->endEffectorTrajectories[iEE].verticalGRFUpperBoundValues[iT] = 1000.0;
-			motionPlan->endEffectorTrajectories[iEE].tangentGRFBoundValues[iT] = 1000.0;
+			tmpGRFVerticalForceConstraint->verticalGRFUpperBoundValues[iEE][iT] = 1000.0;
+			tmpGRFTangentForceConstraint->tangentGRFBoundValues[iEE][iT] = 1000.0;
 		}
 
-	for (int i = 0; i < 2; i++) {
+	energyFunction->regularizer = 0.1;
+	for (int i = 0; i < 10; i++) {
 		runMOPTStep(OPT_GRFS);
 #ifdef DEBUG_WARMSTART
 		Logger::consolePrint("WARM START prestep %d: equal force distribution...\n", i);
 		if (tmpWSIndex <= wsLimit++) {
 			*footFallPattern = originalFootFallPattern;
+			energyFunction->objectives.pop_back();
+			energyFunction->objectives.pop_back();
+			delete tmpGRFVerticalForceConstraint;
+			delete tmpGRFTangentForceConstraint;
+			energyFunction->objectives.pop_back();
+			delete tmpCOMTrajectoryObjective;
 			return;
 		}
 #endif
 	}
 
-	energyFunction->objectives.push_back(new MPO_COMTrajectoryObjective(motionPlan, "intermediate periodic COM trajectory plan", 10000.0, motionPlan->nSamplePoints - 1, 0));
+	energyFunction->regularizer = 1;
+
 	motionPlan->syncMotionPlanWithFootFallPattern(*footFallPattern);
 	double fLimit = 0;
 	for (int iT = 0; iT < motionPlan->nSamplePoints; iT++)
@@ -123,6 +136,12 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 	Logger::consolePrint("WARM START final prestep of equal force distribution...\n");
 	if (tmpWSIndex <= wsLimit++) {
 		*footFallPattern = originalFootFallPattern;
+		energyFunction->objectives.pop_back();
+		energyFunction->objectives.pop_back();
+		delete tmpGRFVerticalForceConstraint;
+		delete tmpGRFTangentForceConstraint;
+		energyFunction->objectives.pop_back();
+		delete tmpCOMTrajectoryObjective;
 		return;
 	}
 #endif
@@ -136,8 +155,8 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 			for (uint iEE = 0; iEE < motionPlan->endEffectorTrajectories.size(); iEE++) {
 				if (!originalFootFallPattern.isInStance(motionPlan->endEffectorTrajectories[iEE].theLimb, iT)) {
 					//if the limb is in swing mode, it should not be able to apply GRFs, but get there gradually...
-					motionPlan->endEffectorTrajectories[iEE].verticalGRFUpperBoundValues[iT] = fLimit * factor + -motionPlan->verticalGRFLowerBoundVal * (1 - factor);
-					motionPlan->endEffectorTrajectories[iEE].tangentGRFBoundValues[iT] = fLimit * factor;
+					tmpGRFVerticalForceConstraint->verticalGRFUpperBoundValues[iEE][iT] = fLimit * factor + -motionPlan->verticalGRFLowerBoundVal * (1 - factor);
+					tmpGRFTangentForceConstraint->tangentGRFBoundValues[iEE][iT] = fLimit * factor;
 				}
 			}
 		}
@@ -150,17 +169,22 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 		if (i % 10 == 0)
 			if (tmpWSIndex <= wsLimit++) {
 				*footFallPattern = originalFootFallPattern;
+				energyFunction->objectives.pop_back();
+				energyFunction->objectives.pop_back();
+				delete tmpGRFVerticalForceConstraint;
+				delete tmpGRFTangentForceConstraint;
+				energyFunction->objectives.pop_back();
+				delete tmpCOMTrajectoryObjective;
 				return;
 			}
 #endif
 	}
 	*footFallPattern = originalFootFallPattern;
 
-	for (int iT = 0; iT < motionPlan->nSamplePoints; iT++)
-		for (uint iEE = 0; iEE < motionPlan->endEffectorTrajectories.size(); iEE++) {
-			motionPlan->endEffectorTrajectories[iEE].verticalGRFUpperBoundValues[iT] = 1000.0;
-			motionPlan->endEffectorTrajectories[iEE].tangentGRFBoundValues[iT] = 1000.0;
-		}
+	energyFunction->objectives.pop_back();
+	energyFunction->objectives.pop_back();
+	delete tmpGRFVerticalForceConstraint;
+	delete tmpGRFTangentForceConstraint;
 
 	energyFunction->regularizer = 0.001;
 	double lastVal = 0;
@@ -171,8 +195,11 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 		lastVal = val;
 #ifdef DEBUG_WARMSTART
 		Logger::consolePrint("WARM START, no more GRFs for swing legs, proper footfall pattern set now...\n");
-		if (tmpWSIndex <= wsLimit++)
+		if (tmpWSIndex <= wsLimit++) {
+			energyFunction->objectives.pop_back();
+			delete tmpCOMTrajectoryObjective;
 			return;
+		}
 #endif
 	}
 
@@ -202,10 +229,10 @@ void LocomotionEngineManagerGRF::warmStartMOpt() {
 #endif
 
 	energyFunction->objectives.pop_back();
+	delete tmpCOMTrajectoryObjective;
 	robotEEObj->weight = robotEEWeight;
 	robotCOMObj->weight = robotCOMWeight;
 	smoothCOMMotionObj->weight = smoothCOMMotionWeight;
-
 
 	energyFunction->regularizer = 0.5;
 
@@ -346,8 +373,8 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 	//GRF constraints
 	ef->addObjectiveFunction(new MPO_GRFSwingRegularizer(ef->theMotionPlan, "GRF swing regularizer", 10000.0), "Regularizers");
-	ef->addObjectiveFunction(new MPO_GRFStanceRegularizer(ef->theMotionPlan, "GRF stance regularizer", 1e-4), "Regularizers");
-	ef->addObjectiveFunction(new MPO_GRFSoftBoundConstraints(ef->theMotionPlan, "GRF bound constraints", 10000.0), "Bound Constraints");
+	ef->addObjectiveFunction(new MPO_GRFStanceRegularizer(ef->theMotionPlan, "GRF stance regularizer", 1e-5), "Regularizers");
+	ef->addObjectiveFunction(new MPO_GRFVerticalLowerBoundConstraints(ef->theMotionPlan, "GRF vertical lower bound constraints", 10000.0), "Bound Constraints");
 
 	//consistancy constraints (between robot states and other auxiliary variables)
 	ef->addObjectiveFunction(new MPO_RobotEndEffectorsObjective(ef->theMotionPlan, "robot EE objective", 10000.0), "Kinematic Constraints");
@@ -357,13 +384,17 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 	//constraints ensuring feet don't slide...
 	ef->addObjectiveFunction(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0), "Kinematic Constraints");
-	ef->addObjectiveFunction(new MPO_EndEffectorGroundObjective(ef->theMotionPlan, "EE ground objective", 10000.0), "Kinematic Constraints");
+	ef->addObjectiveFunction(new MPO_EndEffectorGroundObjective(ef->theMotionPlan, "EE height objective (stance)", 10000.0), "Kinematic Constraints");
+
 	// constraint ensuring the y component of the EE position follows the swing motion
-	ef->addObjectiveFunction(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE pos swing objective", 10000.0), "Objectives");
+	ef->addObjectiveFunction(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE height objective (swing)", 10000.0), "Objectives");
 
 	//dynamics constraints
 	ef->addObjectiveFunction(new MPO_ForceAccelObjective(ef->theMotionPlan, "force acceleration objective", 1.0), "Dynamics Constraints");
 	ef->addObjectiveFunction(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 1.0), "Dynamics Constraints");
+	ef->addObjectiveFunction(new MPO_GRFFrictionConstraints(ef->theMotionPlan, "GRF friction constraints", 1.0), "Dynamic Constraints");
+	ef->objectives.back()->isActive = false;
+
 
 	//range of motion/speed/acceleration constraints
 	ef->addObjectiveFunction(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, dimCount - 1), "Bound Constraints");

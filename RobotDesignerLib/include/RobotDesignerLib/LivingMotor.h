@@ -1,16 +1,25 @@
 #pragma once
 #include <RobotDesignerLib/RMC.h>
+#include <RobotDesignerLib/LivingHornBracket.h>
+#include <RobotDesignerLib/LivingBracketMotor.h>
 
-class LivingMotor : public RMC
-{
+class LivingMotor : public RMC{
 public:
-	LivingBracketMotor* motor = NULL;
-	LivingHornBracket* bracket = NULL;
+	LivingMotorBodyBracket* bodyBracket = NULL;
+	LivingHornBracket* hornBracket = NULL;
+
+	GLMesh* motorBodyMesh = NULL;
+	GLMesh* motorHornMesh = NULL;
+	GLShaderMaterial bodyMaterial;
+	GLShaderMaterial hornMaterial;
+
 	vector<RMCPin> candidatePins;
 	int activeBodyPinID = -1;
 
+	string LMType;
+
 public:
-	LivingMotor(LivingHornBracket* lbh = NULL);
+	LivingMotor(const char* LMType);
 	~LivingMotor();
 
 	virtual LivingMotor* clone();
@@ -23,5 +32,8 @@ public:
 	void exportMeshes(const char* dirName, int index);
 	void syncSymmParameters(LivingMotor* refMotor);
 	void switchToBestBodyPin();
+
+	void setColor(const Vector4d& color = Vector4d(0, 0, 0, 0));
+
 };
 

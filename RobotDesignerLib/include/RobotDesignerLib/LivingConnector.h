@@ -5,9 +5,9 @@ class LivingConnector : public RMC
 {
 public:
 	GLMesh* connectorMesh = NULL;
-
+	double scale = 1.0;
 public:
-	LivingConnector();
+	LivingConnector(char* argument);
 	~LivingConnector();
 
 	virtual LivingConnector* clone();

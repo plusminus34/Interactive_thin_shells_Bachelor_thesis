@@ -9,15 +9,15 @@ RigidBody
 	frictionCoefficient 0.800000
 	restitutionCoefficient 0.200000
 	thickness 0.030000
-	mesh ../data/RobotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/RobotDesigner/meshes/XM-430.obj
 	mesh ../data/motionPlans/spotMini/meshes/BodyMesh.obj
-	mesh ../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj
-	mesh ../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj
-	mesh ../data/RobotDesigner/motorMeshes/XM-430.obj
-	mesh ../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj
-	mesh ../data/RobotDesigner/motorMeshes/XM-430.obj
-	mesh ../data/RobotDesigner/motorMeshes/XM-430.obj
-	mesh ../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj
+	mesh ../data/robotDesigner/meshes/XM-430-MotorPlate.obj
+	mesh ../data/robotDesigner/meshes/XM-430-MotorPlate.obj
+	mesh ../data/RobotDesigner/meshes/XM-430.obj
+	mesh ../data/robotDesigner/meshes/XM-430-MotorPlate.obj
+	mesh ../data/RobotDesigner/meshes/XM-430.obj
+	mesh ../data/RobotDesigner/meshes/XM-430.obj
+	mesh ../data/robotDesigner/meshes/XM-430-MotorPlate.obj
 	carveMesh None
 	carveMesh None
 	carveMesh None
@@ -53,7 +53,7 @@ RigidBody
 	restitutionCoefficient 0.200000
 	thickness 0.030000
 	mesh ../data/motionPlans/spotMini/meshes/LivingConnectorMesh0.obj
-	mesh ../data/RobotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/RobotDesigner/meshes/XM-430.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingMotorMesh0.obj
 	carveMesh None
 	carveMesh None
@@ -78,7 +78,7 @@ RigidBody
 	thickness 0.030000
 	mesh ../data/motionPlans/spotMini/meshes/LivingMotorMesh1.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingConnectorMesh1.obj
-	mesh ../data/RobotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/RobotDesigner/meshes/XM-430.obj
 	carveMesh None
 	carveMesh None
 	carveMesh None
@@ -101,7 +101,7 @@ RigidBody
 	restitutionCoefficient 0.200000
 	thickness 0.030000
 	mesh ../data/motionPlans/spotMini/meshes/LivingMotorMesh2.obj
-	mesh ../data/robotDesigner/motorMeshes/3DP-PointEE2.obj
+	mesh ../data/robotDesigner/meshes/3DP-PointEE2.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingConnectorMesh2.obj
 	carveMesh None
 	carveMesh None
@@ -127,7 +127,7 @@ RigidBody
 	restitutionCoefficient 0.200000
 	thickness 0.030000
 	mesh ../data/motionPlans/spotMini/meshes/LivingMotorMesh3.obj
-	mesh ../data/RobotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/RobotDesigner/meshes/XM-430.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingConnectorMesh3.obj
 	carveMesh None
 	carveMesh None
@@ -150,7 +150,7 @@ RigidBody
 	frictionCoefficient 0.800000
 	restitutionCoefficient 0.200000
 	thickness 0.030000
-	mesh ../data/RobotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/RobotDesigner/meshes/XM-430.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingConnectorMesh4.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingMotorMesh4.obj
 	carveMesh None
@@ -174,7 +174,7 @@ RigidBody
 	frictionCoefficient 0.800000
 	restitutionCoefficient 0.200000
 	thickness 0.030000
-	mesh ../data/robotDesigner/motorMeshes/3DP-PointEE2.obj
+	mesh ../data/robotDesigner/meshes/3DP-PointEE2.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingMotorMesh5.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingConnectorMesh5.obj
 	carveMesh None
@@ -201,7 +201,7 @@ RigidBody
 	restitutionCoefficient 0.200000
 	thickness 0.030000
 	mesh ../data/motionPlans/spotMini/meshes/LivingConnectorMesh6.obj
-	mesh ../data/RobotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/RobotDesigner/meshes/XM-430.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingMotorMesh6.obj
 	carveMesh None
 	carveMesh None
@@ -225,7 +225,7 @@ RigidBody
 	restitutionCoefficient 0.200000
 	thickness 0.030000
 	mesh ../data/motionPlans/spotMini/meshes/LivingConnectorMesh7.obj
-	mesh ../data/RobotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/RobotDesigner/meshes/XM-430.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingMotorMesh7.obj
 	carveMesh None
 	carveMesh None
@@ -249,7 +249,7 @@ RigidBody
 	restitutionCoefficient 0.200000
 	thickness 0.030000
 	mesh ../data/motionPlans/spotMini/meshes/LivingConnectorMesh8.obj
-	mesh ../data/robotDesigner/motorMeshes/3DP-PointEE2.obj
+	mesh ../data/robotDesigner/meshes/3DP-PointEE2.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingMotorMesh8.obj
 	carveMesh None
 	carveMesh None
@@ -275,7 +275,7 @@ RigidBody
 	restitutionCoefficient 0.200000
 	thickness 0.030000
 	mesh ../data/motionPlans/spotMini/meshes/LivingConnectorMesh9.obj
-	mesh ../data/RobotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/RobotDesigner/meshes/XM-430.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingMotorMesh9.obj
 	carveMesh None
 	carveMesh None
@@ -300,7 +300,7 @@ RigidBody
 	thickness 0.030000
 	mesh ../data/motionPlans/spotMini/meshes/LivingMotorMesh10.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingConnectorMesh10.obj
-	mesh ../data/RobotDesigner/motorMeshes/XM-430.obj
+	mesh ../data/RobotDesigner/meshes/XM-430.obj
 	carveMesh None
 	carveMesh None
 	carveMesh None
@@ -323,7 +323,7 @@ RigidBody
 	restitutionCoefficient 0.200000
 	thickness 0.030000
 	mesh ../data/motionPlans/spotMini/meshes/LivingMotorMesh11.obj
-	mesh ../data/robotDesigner/motorMeshes/3DP-PointEE2.obj
+	mesh ../data/robotDesigner/meshes/3DP-PointEE2.obj
 	mesh ../data/motionPlans/spotMini/meshes/LivingConnectorMesh11.obj
 	carveMesh None
 	carveMesh None

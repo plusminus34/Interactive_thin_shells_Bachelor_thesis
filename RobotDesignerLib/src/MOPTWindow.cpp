@@ -102,6 +102,10 @@ void MOPTWindow::addMenuItems() {
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 	{
+		auto tmpVar = glApp->mainMenu->addVariable("friction coeff", moptParams.frictionCoeff);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
 		glApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
 	}
 
@@ -172,12 +176,11 @@ void MOPTWindow::clear()
 
 }
 
-void MOPTWindow::loadRobot(Robot* robot, ReducedRobotState* startState){
+void MOPTWindow::loadRobot(Robot* robot){
 	clear();
 
 	initialized = true;
 	this->robot = robot;
-	this->startState = *startState;
 
 	int nLegs = robot->bFrame->limbs.size();
 
@@ -211,6 +214,8 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.wheelAccelLimit = locomotionManager->motionPlan->wheelAccelLimit;
 	moptParams.wheelAccelEpsilon = locomotionManager->motionPlan->wheelAccelEpsilon;
 
+	moptParams.frictionCoeff = locomotionManager->motionPlan->frictionCoeff;
+
 	moptParams.writeJointVelocityProfile = locomotionManager->writeVelocityProfileToFile;
 	moptParams.motionPlanDuration = locomotionManager->motionPlan->motionPlanDuration;
 	moptParams.checkDerivatives = locomotionManager->checkDerivatives;
@@ -236,6 +241,8 @@ void MOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->motionPlan->wheelAccelLimit = moptParams.wheelAccelLimit;
 	locomotionManager->motionPlan->wheelAccelEpsilon = moptParams.wheelAccelEpsilon;
 
+	locomotionManager->motionPlan->frictionCoeff = moptParams.frictionCoeff;
+
 	locomotionManager->writeVelocityProfileToFile = moptParams.writeJointVelocityProfile;
 	locomotionManager->motionPlan->motionPlanDuration = moptParams.motionPlanDuration;
 	locomotionManager->checkDerivatives = moptParams.checkDerivatives;
@@ -248,9 +255,6 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	delete locomotionManager;
 
 	footFallPattern.writeToFile("../out/tmpFFP.ffp");
-
-	/* ----------- Reset the state of the robot ------------ */
-	robot->setState(&startState);
 
 	/* ---------- Set up the motion plan ---------- */
 	switch (optimizeOption)
@@ -268,6 +272,11 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	}
 
 	syncMotionPlanParameters();
+
+	locomotionManager->setDefaultOptimizationFlags();
+	dVector params = locomotionManager->motionPlan->getMPParameters();
+	locomotionManager->energyFunction->setCurrentBestSolution(params);
+	Logger::consolePrint("Initial MOPT objective function: %lf\n", locomotionManager->energyFunction->computeValue(params));
 
 	if (doWarmStart)
 		locomotionManager->warmStartMOpt();

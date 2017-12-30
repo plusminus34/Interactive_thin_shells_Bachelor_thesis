@@ -22,7 +22,7 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 
 	// make energy panel
 	VScrollPanel *vscroll = new VScrollPanel(window);
-	vscroll->setFixedHeight(screen->height()-200);
+	vscroll->setHeight(screen->height()-200);
 
 	Widget *energyPanel;
 	{

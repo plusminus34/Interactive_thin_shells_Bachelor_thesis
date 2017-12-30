@@ -7,6 +7,10 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
+//save/load
+//fix parameterized robot design model...
+
+
 RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
 	setWindowTitle("RobotDesigner");
@@ -54,7 +58,7 @@ RobotDesignerApp::RobotDesignerApp(){
 	{
 		using namespace nanogui;
 
-		mainMenu->addGroup("Toggle Windows");
+		mainMenu->addGroup("Analysis");
 
 		Widget *widget = new Widget(mainMenu->window());
 		mainMenu->addWidget("", widget);
@@ -82,6 +86,18 @@ RobotDesignerApp::RobotDesignerApp(){
 				energyWindow->setVisible(state);
 			}
 		});
+
+		// button to check energy
+		button = new Button(widget, "Update");
+		button->setIcon(ENTYPO_ICON_PUBLISH);
+		button->setFontSize(14);
+		button->setCallback([this](){
+			if(moptWindow->locomotionManager->energyFunction){
+				LocomotionEngineMotionPlan * motionPlan = moptWindow->locomotionManager->motionPlan;
+				energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, motionPlan->getMPParameters());
+				motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
+			}
+		});
 	}
 
 	mainMenu->addGroup("MOPT Options");
@@ -95,13 +111,14 @@ RobotDesignerApp::RobotDesignerApp(){
 
 #ifdef START_WITH_VISUAL_DESIGNER
 	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
+//	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configTGY306G.cfg");
 	
 #else
     loadFile("../data/robotsAndMotionPlans/spotMini/robot2.rbs");
     loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
 //	loadToSim();
 	loadToSim(false);
-    loadFile("../data/robotsAndMotionPlans/spotMini/trot4.p");
+    loadFile("../data/robotsAndMotionPlans/spotMini/trot3.p");
 #endif
 
 	menuScreen->performLayout();
@@ -296,8 +313,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		Logger::consolePrint("Load robot state from '%s'\n", fName);
 		if (robot) {
 			robot->loadReducedStateFromFile(fName);
-			delete initialRobotState;
-			initialRobotState = new ReducedRobotState(robot);
+			startingRobotState = ReducedRobotState(robot);
 			if (prd)
 				prd->updateMorphology();
 		}
@@ -309,13 +325,8 @@ void RobotDesignerApp::loadFile(const char* fName) {
 
 		delete prd;
 		prd = new SymmetricParameterizedRobotDesign(robot);
-//		CreateParametersDesignWindow();
-//		menuScreen->performLayout();
-//		slidervalues.resize(prd->getNumberOfParameters());
-//		slidervalues.setZero();
 
-		delete initialRobotState;
-		initialRobotState = new ReducedRobotState(robot);
+		startingRobotState = ReducedRobotState(robot);
 		return;
 	}
 
@@ -347,10 +358,9 @@ void RobotDesignerApp::createRobotFromCurrentDesign() {
 	if (designWindow) {
 		designWindow->saveToRBSFile("../out/tmpRobot.rbs");
 		loadFile("../out/tmpRobot.rbs");
-		delete initialRobotState;
-		initialRobotState = new ReducedRobotState(robot);
-		robot->populateState(initialRobotState, true);
-		robot->setState(initialRobotState);
+		startingRobotState = ReducedRobotState(robot);
+		robot->populateState(&startingRobotState, true);
+		robot->setState(&startingRobotState);
 		if (prd)
 			prd->updateMorphology();
 	}
@@ -364,16 +374,21 @@ void RobotDesignerApp::loadToSim(bool initializeMOPT){
 
 //now, start MOPT...
 	Logger::consolePrint("MoptWindow loading robot...\n");
-	moptWindow->loadRobot(robot, initialRobotState);
-	Logger::consolePrint("..... successful.\n Warmstarting...\n");
+	moptWindow->loadRobot(robot);
+	if (initializeMOPT)
+		Logger::consolePrint("..... successful.\n Warmstarting...\n");
 	warmStartMOPT(initializeMOPT);
-	Logger::consolePrint("Warmstart successful...\n");
-	Logger::consolePrint("The robot has %d legs, weighs %lfkgs and is %lfm tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
+	if (initializeMOPT)
+		Logger::consolePrint("Warmstart successful...\n");
+	Logger::consolePrint("The robot has %d legs, weighs %lf kgs and is %lf m tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
 
 //	CreateParametersDesignWindow();
 }
 
 void RobotDesignerApp::warmStartMOPT(bool initializeMotionPlan) {
+	//reset the state of the robot, to make sure we're always starting from the same configuration
+	robot->setState(&startingRobotState);
+
 	moptWindow->initializeNewMP(initializeMotionPlan);
 	simWindow->loadMotionPlan(moptWindow->locomotionManager->motionPlan);
 	motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);

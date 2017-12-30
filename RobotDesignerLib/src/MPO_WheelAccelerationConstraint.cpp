@@ -31,7 +31,7 @@ double MPO_WheelAccelerationConstraints::computeValue(const dVector& s) {
 	// so no need to ask for that again explicitely...
 	if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1;
 
-	double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
+	double dt = theMotionPlan->motionPlanDuration / (nSamplePoints-1);
 
 	for (int j=0; j<nSamplePoints; j++){
 
@@ -70,7 +70,7 @@ void MPO_WheelAccelerationConstraints::addGradientTo(dVector& grad, const dVecto
 		// so no need to ask for that again explicitely...
 		if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1;
 
-		double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
+		double dt = theMotionPlan->motionPlanDuration / (nSamplePoints-1);
 
 		for (int j=0; j<theMotionPlan->nSamplePoints; j++){
 
@@ -115,7 +115,7 @@ void MPO_WheelAccelerationConstraints::addHessianEntriesTo(DynamicArray<MTriplet
 		// so no need to ask for that again explicitely...
 		if (theMotionPlan->wrapAroundBoundaryIndex >= 0) nSamplePoints -= 1;
 
-		double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
+		double dt = theMotionPlan->motionPlanDuration / (nSamplePoints-1);
 
 		for (int j=0; j<theMotionPlan->nSamplePoints; j++){
 

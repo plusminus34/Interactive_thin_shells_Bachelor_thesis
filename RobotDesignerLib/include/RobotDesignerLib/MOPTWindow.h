@@ -31,6 +31,8 @@ struct MOPTParams {
 	double wheelAccelLimit = 20;
 	double wheelAccelEpsilon = 1.0;
 
+	double frictionCoeff = 0.5;
+
 	bool writeJointVelocityProfile = false;
 	double motionPlanDuration = 0.8;
 	bool checkDerivatives = false;
@@ -57,7 +59,6 @@ public:
 	MOPTParams moptParams;
 
 	Robot* robot = nullptr;
-	ReducedRobotState startState = ReducedRobotState(13);
 
 	FootFallPattern footFallPattern;
 	FootFallPatternViewer* ffpViewer = nullptr;
@@ -81,7 +82,7 @@ public:
 	~MOPTWindow();
 
 	void clear();
-	void loadRobot(Robot* robot, ReducedRobotState* startState);
+	void loadRobot(Robot* robot);
 	void syncMotionPlanParameters();
 	void syncMOPTWindowParameters();
 
