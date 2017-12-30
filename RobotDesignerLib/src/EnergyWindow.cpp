@@ -27,7 +27,7 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 	Widget *energyPanel;
 	{
 		energyPanel = new Widget(vscroll);
-		GridLayout *layout = new GridLayout(Orientation::Horizontal, 5, Alignment::Fill);
+		GridLayout *layout = new GridLayout(Orientation::Horizontal, 6, Alignment::Fill);
 		layout->setColAlignment({ Alignment::Minimum, Alignment::Fill });
 		layout->setSpacing(0, 10);
 		energyPanel->setLayout(layout);
@@ -54,16 +54,23 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 			new Label(energyPanel, "", "");
 			new Label(energyPanel, "", "");
 			new Label(energyPanel, "", "");
+			new Label(energyPanel, "", "");
 
 			for (ObjectiveFunction *obj : objGroup.second) {
 
 				EnergyUIElement el;
 
 				el.label = new Label(energyPanel, obj->description, "sans");
+
 				CheckBox *checkBox = new CheckBox(energyPanel,"");
 				checkBox->setChecked(obj->isActive);
 				checkBox->setCallback([obj](bool value){obj->isActive = value; });
-				el.checkBox = checkBox;
+				el.checkBoxEnergyActive = checkBox;
+
+				checkBox = new CheckBox(energyPanel, "");
+				checkBox->setChecked(obj->hackHessian);
+				checkBox->setCallback([obj](bool value) {obj->hackHessian = value; });
+				el.checkBoxHackHessian = checkBox;
 
 				Slider *slider = new Slider(energyPanel);
 				slider->setValue(0);
@@ -196,7 +203,8 @@ void EnergyWindow::hideEnergyGroup(bool visible, const std::string &groupName)
 {
 	for (EnergyUIElement &el : energyUIRows[groupName]) {
 		el.label->setVisible(visible);
-		el.checkBox->setVisible(visible);
+		el.checkBoxEnergyActive->setVisible(visible);
+		el.checkBoxHackHessian->setVisible(visible);
 		el.slider->setVisible(visible);
 		el.textbox->setVisible(visible);
 		el.weightTextbox->setVisible(visible);

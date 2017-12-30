@@ -44,20 +44,6 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 
 	MatrixNxM dEndEffectordq;
 
-	// number of DOFs for an end effector at one time sample
-	int numDOFs = 0;
-	// 3 DOFs for eePos
-	if (theMotionPlan->feetPositionsParamsStartIndex >= 0)
-		numDOFs += 3;
-	// size of robot state `q` as DOFs
-	if (theMotionPlan->robotStatesParamsStartIndex >= 0)
-		numDOFs += theMotionPlan->robotRepresentation->getDimensionCount();
-
-	// 2 DOFs for yaw and tilt angle
-	int numDOFsWheel = numDOFs;
-	if(theMotionPlan->wheelParamsStartIndex >= 0)
-		numDOFsWheel += 2;
-
 	int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
 
@@ -65,11 +51,6 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 		dVector q_t;
 		theMotionPlan->robotStateTrajectory.getQAtTimeIndex(j, q_t);
 		theMotionPlan->robotRepresentation->setQ(q_t);
-
-
-		VectorXT<ScalarDiff> qAD(q_t.size());
-		for (int k = 0; k < q_t.size(); ++k)
-			qAD[k] = q_t[k];
 
 		for (int i=0;i<nLimbs;i++){
 
@@ -137,20 +118,6 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 	//	theMotionPlan->setMPParametersFromList(p);
 	MatrixNxM dEndEffectordq, ddEndEffectordq_dqi;
 
-	// number of DOFs for an end effector at one time sample
-	int numDOFs = 0;
-	// 3 DOFs for eePos
-	if (theMotionPlan->feetPositionsParamsStartIndex >= 0)
-		numDOFs += 3;
-	// size of robot state `q` as DOFs
-	if (theMotionPlan->robotStatesParamsStartIndex >= 0)
-		numDOFs += theMotionPlan->robotRepresentation->getDimensionCount();
-
-	// 2 DOFs for yaw and tilt angle
-	int numDOFsWheel = numDOFs;
-	if(theMotionPlan->wheelParamsStartIndex >= 0)
-		numDOFsWheel += 2;
-
 	int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
 		dVector q_t;
@@ -180,6 +147,7 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 					theMotionPlan->robotRepresentation->compute_dpdq(ee.endEffectorLocalCoords, ee.endEffectorRB, dEndEffectordq);
 					int I = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim;
 
+					////////////  Taken out for majorization ///////////////////
 					// 					for (int k = 0; k < theMotionPlan->robotRepresentation->getDimensionCount(); k++) {
 					// 						bool hasNonZeros = theMotionPlan->robotRepresentation->compute_ddpdq_dqi(ee.endEffectorLocalCoords, ee.endEffectorRB, ddEndEffectordq_dqi, k);
 					// 						if (hasNonZeros == false) continue;
@@ -187,6 +155,7 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 					// 						for (int l = k; l < theMotionPlan->robotRepresentation->getDimensionCount(); l++)
 					// 								ADD_HES_ELEMENT(hessianEntries, I + k, I + l, V(l), weight);
 					// 					}
+					///////////////////////////////////////////////////////////
 
 					//now add the outer product of the jacobians...
 					MatrixNxM outerProd = dEndEffectordq.row(0).transpose()*dEndEffectordq.row(0) +
@@ -223,14 +192,19 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 				if (theMotionPlan->robotStatesParamsStartIndex >= 0) {
 					theMotionPlan->robotRepresentation->compute_dpdq(ee.endEffectorLocalCoords, ee.endEffectorRB, dEndEffectordq);
 					int I = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim;
+					
+					if (!hackHessian) {
 
-					// 					for (int k = 0; k < theMotionPlan->robotRepresentation->getDimensionCount(); k++) {
-					// 						bool hasNonZeros = theMotionPlan->robotRepresentation->compute_ddpdq_dqi(ee.endEffectorLocalCoords, ee.endEffectorRB, ddEndEffectordq_dqi, k);
-					// 						if (hasNonZeros == false) continue;
-					// 						dVector V = ddEndEffectordq_dqi.transpose()*err;
-					// 						for (int l = k; l < theMotionPlan->robotRepresentation->getDimensionCount(); l++)
-					// 								ADD_HES_ELEMENT(hessianEntries, I + k, I + l, V(l), weight);
-					// 					}
+						for (int k = 0; k < theMotionPlan->robotRepresentation->getDimensionCount(); k++) {
+							Vector3d err(ee.EEPos[j] - theMotionPlan->robotRepresentation->getWorldCoordinatesForT(ee.endEffectorLocalCoords, ee.endEffectorRB, q_t));
+							bool hasNonZeros = theMotionPlan->robotRepresentation->compute_ddpdq_dqi(ee.endEffectorLocalCoords, ee.endEffectorRB, ddEndEffectordq_dqi, k);
+							if (hasNonZeros == false) continue;
+							dVector V = ddEndEffectordq_dqi.transpose()*err;
+							for (int l = k; l < theMotionPlan->robotRepresentation->getDimensionCount(); l++)
+								ADD_HES_ELEMENT(hessianEntries, I + k, I + l, V(l), weight);
+						}
+					}
+
 
 					//now add the outer product of the jacobians...
 					MatrixNxM outerProd = dEndEffectordq.row(0).transpose()*dEndEffectordq.row(0) +
