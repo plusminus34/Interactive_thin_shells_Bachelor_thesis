@@ -46,7 +46,7 @@ public:
 	MotionPlanAnalysis *motionPlanAnalysis = nullptr;
 	EnergyWindow *energyWindow = nullptr;
 
-	bool doMotionAnalysis = false;
+	bool doMotionAnalysis = true;
 
 	bool shouldShowSimWindow();
 	bool shouldShowMOPTWindow();

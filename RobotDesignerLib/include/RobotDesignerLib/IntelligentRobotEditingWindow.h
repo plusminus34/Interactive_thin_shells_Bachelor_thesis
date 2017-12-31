@@ -31,6 +31,10 @@ public:
 	void updateParamsAndMotion(dVector p);
 	virtual void drawAuxiliarySceneInfo();
 
+	void setParamsAndUpdateMOPT(const dVector& p);
+	void setParamsAndUpdateMOPT(const std::vector<double>& p);
+
+
 	virtual bool onMouseMoveEvent(double xPos, double yPos);
 	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
 	//triggered when using the mouse wheel
