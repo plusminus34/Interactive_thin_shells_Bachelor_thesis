@@ -22,6 +22,7 @@ public:
 	DynamicArray<double> EEWeights;
 
 	bool isWheel = false;
+	bool isPassiveWheel = false;
 	double wheelRadius = 0.1;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
 	V3D wheelAxisLocal;						// wheel axis in world coords.
@@ -184,7 +185,7 @@ public:
 	double verticalGRFLowerBoundVal = 0;
 	double GRFEpsilon = 0.4;				// for SoftUnilateralConstraint
 	double pseudoLimbEpsilon = 0.1;
-	double frictionEpsilon = 0.4;				// for SoftUnilateralConstraint
+	double frictionEpsilon = 0.05;				// for SoftUnilateralConstraint
 
 	// Parameters for joint motor velocity constraint
 	double jointVelocityLimit = 0;
