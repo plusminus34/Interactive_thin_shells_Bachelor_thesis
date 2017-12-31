@@ -86,6 +86,9 @@ void IKApp::process() {
 	ikSolver->ikEnergyFunction->regularizer = 100;
 	ikSolver->ikOptimizer->checkDerivatives = true;
 	ikSolver->solve();
+
+
+	testGeneralizedCoordinateRepresentation(robot);
 }
 
 //triggered when mouse moves

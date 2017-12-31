@@ -27,7 +27,7 @@ private:
 		//            This is to prevent a dependency of `robotEEPos` on the orientation of the wheel
 
 		// end effector position according to robot pose (/robot state)
-		Vector3T<T> robotEEPos = theMotionPlan->robotRepresentation->getWorldCoordinatesForT(eePosLocal, rb, q_t);
+		Vector3T<T> robotEEPos = theMotionPlan->robotRepresentation->getWorldCoordinatesForPointT(eePosLocal, rb, q_t);
 
 		// `eePos` is at the contact point, thus we need the vector connecting wheel center and contact point
 		Vector3T<T> rhoRot = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
@@ -46,7 +46,7 @@ private:
 	T computeEnergyFoot(const Vector3T<T> &eePos, const Vector3T<T> &eePosLocal, const VectorXT<T> &q_t, const RigidBody *rb) const {
 
 		// end effector position according to robot pose (/robot state)
-		Vector3T<T> robotEEPos = theMotionPlan->robotRepresentation->getWorldCoordinatesForT(eePosLocal, rb, q_t);
+		Vector3T<T> robotEEPos = theMotionPlan->robotRepresentation->getWorldCoordinatesForPointT(eePosLocal, rb, q_t);
 
 		Vector3T<T> err;
 		err = robotEEPos - eePos;
