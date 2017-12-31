@@ -2,3 +2,4 @@ build*
 out/
 
 /.vs/SCP/v14/.suo
+/CMakeLists.txt.user

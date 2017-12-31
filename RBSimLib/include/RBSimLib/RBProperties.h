@@ -14,6 +14,8 @@ public:
 		coords = p;
 		featureSize = fSize;
 	}
+	//in some cases we may want to know which mesh of the parent RB is associated with this feature (e.g. if they are wheels that must rotate about their axis)
+	int meshIndex = -1;
 };
 
 enum END_EFFECTOR_TYPE {
@@ -22,6 +24,8 @@ enum END_EFFECTOR_TYPE {
 	EE_PASSIVE_WHEEL,
 	EE_WELDED_WHEEL
 };
+
+class RigidBody;
 
 class RBEndEffector : public RBFeaturePoint {
 public:
@@ -38,9 +42,18 @@ public:
 
 	void setMode(END_EFFECTOR_TYPE eet) { this->eeType = eet; }
 
+	Vector3d getWheelAxis() const;
+	Vector3d getWheelYawAxis() const;
+	Vector3d getWheelTiltAxis() const;
+	Vector3d getWheelRho() const;
+
+
 	//if this is a wheel, we keep track of its axis of rotation, expressed in local coordinates...
 	V3D localCoordsWheelAxis;
 	//the radius is stored in feature size...
+	
+	//this represents desired instantaneous speed for the wheel EEs
+	double rotationSpeed = 0;
 };
 
 /*================================================================================================================*
@@ -106,6 +119,3 @@ public:
 		return endEffectorPoints.size();
 	}
 };
-
-
-

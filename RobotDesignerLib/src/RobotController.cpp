@@ -9,7 +9,6 @@ RobotController::RobotController(Robot* robot, LocomotionEngineMotionPlan *motio
 	initialize();
 }
 
-
 RobotController::~RobotController(){
 }
 
@@ -46,5 +45,11 @@ void RobotController::applyControlSignals() {
 
 void RobotController::computeDesiredState() {
 	motionPlan->robotStateTrajectory.getRobotPoseAt(stridePhase, desiredState);
+
+	//we now have the pose of the robot, and we should also read off the wheel speed...
+	for (uint i = 0; i < motionPlan->endEffectorTrajectories.size(); i++)
+		if (motionPlan->endEffectorTrajectories[i].isWheel)
+			motionPlan->endEffectorTrajectories[i].endEffectorRB->rbProperties.endEffectorPoints[motionPlan->endEffectorTrajectories[i].CPIndex].rotationSpeed = motionPlan->endEffectorTrajectories[i].getWheelSpeedAt(stridePhase);
+
 }
 

@@ -27,6 +27,18 @@ void IK_EnergyFunction::setupSubObjectives(){
 	objectives.push_back(new IK_RobotStateRegularizer(IKPlan, 6, IKPlan->gcRobotRepresentation->getDimensionCount() - 1, "joint angles regularizer", 1 ));
 }
 
+void IK_EnergyFunction::setupSubObjectives_EEMatch() {
+	for (uint i = 0; i<objectives.size(); i++)
+		delete objectives[i];
+
+	objectives.clear();
+
+	objectives.push_back(new IK_EndEffectorsObjective(IKPlan, "end effector targets", 100));
+//	objectives.push_back(new IK_RobotStateRegularizer(IKPlan, 0, 5, "root state regularizer", 1));
+	objectives.push_back(new IK_RobotStateRegularizer(IKPlan, 6, IKPlan->gcRobotRepresentation->getDimensionCount() - 1, "joint angles regularizer", 1));
+}
+
+
 double IK_EnergyFunction::computeValue(const dVector& p){
 	//assert(s.size() == theMotionPlan->paramCount);
 

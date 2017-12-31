@@ -37,8 +37,6 @@ public:
 	GLWindow();
 	virtual ~GLWindow() {}
 
-	virtual void setupLights() {}
-
 	//sets viewport parameters
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
 

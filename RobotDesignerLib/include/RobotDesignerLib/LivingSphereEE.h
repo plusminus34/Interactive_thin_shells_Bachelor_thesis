@@ -28,10 +28,16 @@ public:
 	GLMesh* originalWheelMesh = NULL;
 	GLMesh* wheelMesh = NULL;
 
+	GLShaderMaterial bodyMaterial;
+	GLMesh* motorMesh = NULL;
+	GLMesh* motorBracketMesh = NULL;
+
 	double radius = 0.05; // the radius is specified in meters
+	bool isActive = true;
+	string LMType;
 
 public:
-	LivingWheelEE();
+	LivingWheelEE(const char* LMType);
 	~LivingWheelEE();
 
 	virtual LivingWheelEE* clone();

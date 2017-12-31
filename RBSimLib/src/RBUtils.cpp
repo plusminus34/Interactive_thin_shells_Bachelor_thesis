@@ -37,7 +37,6 @@ KeyWord RBkeywords[] = {
 	{ "motorID", RB_MOTOR_ID },
 	{ "flipMotorAxis", RB_FLIPMOTORAXISDIR },
 	{ "meshTransformation", RB_MESH_TRANSFORMATION },
-	{ "carveMesh", RB_CARVE_MESH_NAME},
 	{ "mappingInfo", RB_MAPPING_INFO},
 	{ "meshDescription", RB_MESH_DESCRIPTION},
 	{ "defaultAngle", RB_DEFAULT_ANGLE }

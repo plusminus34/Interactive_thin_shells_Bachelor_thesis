@@ -67,8 +67,6 @@ public:
 
 	virtual bool processCommandLine(const std::string& cmdLine);
 
-	virtual void setupLights();
-
 	void loadRobot(const char* fName);
 	virtual void loadFile(const char* fName);
 	virtual void saveFile(const char* fName);

@@ -8,7 +8,7 @@
 
 class MPO_VelocityL0Regularization : public ObjectiveFunction {
 public:
-	MPO_VelocityL0Regularization(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int startQIndex, int endQIndex);
+	MPO_VelocityL0Regularization(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int startQIndex, int endQIndex, bool mode);
 	virtual ~MPO_VelocityL0Regularization(void);
 
 	virtual double computeValue(const dVector& p);
@@ -21,4 +21,6 @@ private:
 	LocomotionEngineMotionPlan* theMotionPlan;
 
 	int startQIndex, endQIndex;
+public:
+	bool mode;
 };

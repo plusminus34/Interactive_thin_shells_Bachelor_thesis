@@ -7,9 +7,12 @@
 
 //maybe this editing window should just extend mopt, and then we create it directly (or not for "normal" execution...)
 
+//TODO: add also parameterization for rotation axis of joints/wheels?!?
 
+
+//clicking on joints/end effectors adds a translate widget. Right click to make it go away
 //move joints. When ALT is down (or the one that is same as in design window!) then move just joint and/or everything lower down in hierarchy
-//resize bones. When ALT is down, move only child. Otherwise move both the child and parent joints...
+//resize bones via mouse scroll. When ALT is down, move only child. Otherwise move both the child and parent joints...
 
 IntelligentRobotEditingWindow::IntelligentRobotEditingWindow(int x, int y, int w, int h, RobotDesignerApp* rdApp) : GLWindow3D(x, y, w, h) {
 	this->rdApp = rdApp;
@@ -78,51 +81,65 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 				//scale the selected bone by moving just the child... and propagate all changes throughout the offspring hierarchy...
 	
 				//adapt the child coords of the parent joint
-				int pStartIndex = rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].index;
+				int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].index;
+				V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].xModifier, 1, 1);
+
 				for (int i = 0; i < 3; i++)
-					currentDesignParameters[pStartIndex + 3 + i] += offset1[i];
+					currentDesignParameters[pStartIndex + 3 + i] += offset1[i] * modifier[i];
 
 				//and now, the parent coords of the child joint
 				if (highlightedRigidBody->cJoints.size() == 1) {
-					int pStartIndex = rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
+					int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
+					V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].xModifier, 1, 1);
+
 					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + i] += offset2[i];
+						currentDesignParameters[pStartIndex + i] += offset2[i] * modifier[i];
 				}
 				else {
-					int pStartIndex = rdApp->prd->eeParamMap[highlightedRigidBody].index;
-					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + i] += offset2[i];
+					for (uint i=0;i<highlightedRigidBody->rbProperties.endEffectorPoints.size();i++){
+						int pStartIndex =  rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].index;
+						V3D modifier = V3D(rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].xModifier, 1, 1);
+
+						for (int j = 0; j < 3; j++)
+							currentDesignParameters[pStartIndex + j] += offset2[j] * modifier[j];
+					}
 				}
 			}
 			else {
 				//rescaling the bone with as few global changes as possible
 
-				int pStartIndex = rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].index;
+				int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].index;
+				V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].xModifier, 1, 1);
 
 				//for the parent joint, adjust its coordinates in the child (e.g. highlighted) rigid body frame
 				for (int i = 0; i < 3;i++)
-					currentDesignParameters[pStartIndex + 3 + i] += offset1[i];
+					currentDesignParameters[pStartIndex + 3 + i] += offset1[i] * modifier[i];
 
 				//and then, for the same joint, adjust its coordinates in the frame of the parent rigid body...
 				V3D offset1P = highlightedRigidBody->pJoints[0]->parent->getLocalCoordinates(highlightedRigidBody->getWorldCoordinates(offset1));
 				for (int i = 0; i < 3; i++)
-					currentDesignParameters[pStartIndex + i] += offset1P[i];
+					currentDesignParameters[pStartIndex + i] += offset1P[i] * modifier[i];
 
 				if (highlightedRigidBody->cJoints.size() == 1){
 
 					//adjust the coordinates of the child joint, both in coord frame of its parent and child rigid bodies...
-					int pStartIndex = rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
+					int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
+					V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].xModifier, 1, 1);
+
 					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + i] += offset2[i];
+						currentDesignParameters[pStartIndex + i] += offset2[i] * modifier[i];
 
 					V3D offset2P = highlightedRigidBody->cJoints[0]->child->getLocalCoordinates(highlightedRigidBody->getWorldCoordinates(offset2));
 					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + 3 + i] += offset2P[i];
+						currentDesignParameters[pStartIndex + 3 + i] += offset2P[i] * modifier[i];
 				}
 				else {
-					int pStartIndex = rdApp->prd->eeParamMap[highlightedRigidBody].index;
-					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + i] += offset2[i];
+					for (uint i = 0; i<highlightedRigidBody->rbProperties.endEffectorPoints.size(); i++) {
+						int pStartIndex =  rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].index;
+						V3D modifier = V3D(rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].xModifier, 1, 1);
+						for (int j = 0; j < 3; j++)
+							currentDesignParameters[pStartIndex + j] += offset2[j] * modifier[j];
+					}
 				}
 			}
 
@@ -152,13 +169,17 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 
 				P3D pOriginal;
 				int pStartIndex = -1;
+				V3D modifier = V3D(1, 1, 1);
+
 				if (highlightedEE){
 					pOriginal = highlightedEEParent->getWorldCoordinates(highlightedEE->coords);
-					pStartIndex = rdApp->prd->eeParamMap[highlightedEEParent].index;
+					pStartIndex =  rdApp->prd->eeParamMap[highlightedEE].index;
+					modifier.x() = rdApp->prd->eeParamMap[highlightedEE].xModifier;
 				}
 				else {
 					pOriginal = highlightedJoint->getWorldPosition();
-					pStartIndex = rdApp->prd->jointParamMap[highlightedJoint].index;
+					pStartIndex =  rdApp->prd->jointParamMap[highlightedJoint].index;
+					modifier.x() = rdApp->prd->jointParamMap[highlightedJoint].xModifier;
 				}
 
 				V3D offset(pOriginal, tWidget->pos);
@@ -170,22 +191,21 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 				if (highlightedEE) {
 					offset = highlightedEEParent->getLocalCoordinates(offset);
 					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + i] += offset[i];
+						currentDesignParameters[pStartIndex + i] += offset[i] * modifier[i];
 				}
 				else {
 					if (glfwGetKey(this->rdApp->glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
 						offset = highlightedJoint->parent->getLocalCoordinates(offset);
 						for (int i = 0; i < 3; i++)
-							currentDesignParameters[pStartIndex + i] += offset[i];
+							currentDesignParameters[pStartIndex + i] += offset[i] * modifier[i];
 					}
 					else {
 						V3D offsetP = highlightedJoint->parent->getLocalCoordinates(offset);
 						for (int i = 0; i < 3; i++)
-							currentDesignParameters[pStartIndex + i] += offsetP[i];
+							currentDesignParameters[pStartIndex + i] += offsetP[i] * modifier[i];
 						V3D offsetC = highlightedJoint->child->getLocalCoordinates(offset);
 						for (int i = 0; i < 3; i++)
-							currentDesignParameters[pStartIndex + 3 + i] += offsetC[i];
-
+							currentDesignParameters[pStartIndex + 3 + i] += offsetC[i] * modifier[i];
 					}
 
 				}
@@ -340,7 +360,7 @@ void IntelligentRobotEditingWindow::resetParams()
 {
 	dVector p;	rdApp->prd->getCurrentSetOfParameters(p);
 	p.setZero();
-	rdApp->prd->setParameters(p);
+	setParamsAndUpdateMOPT(p);
 	syncSliders();
 }
 
@@ -391,13 +411,13 @@ void IntelligentRobotEditingWindow::updateJacobian()
 
 			double pVal = p[i];
 			p[i] = pVal + dp;
-			rdApp->prd->setParameters(p);
+			setParamsAndUpdateMOPT(p);
 			rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_p, m);
 			p[i] = pVal - dp;
-			rdApp->prd->setParameters(p);
+			setParamsAndUpdateMOPT(p);
 			rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_m, m);
 			p[i] = pVal;
-			rdApp->prd->setParameters(p);
+			setParamsAndUpdateMOPT(p);
 
 			dgdp.col(i) = (g_p - g_m) / (2 * dp);
 		}
@@ -444,7 +464,7 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 
 		double pVal = p[i];
 		p[i] = pVal + dp;
-		rdApp->prd->setParameters(p);
+		setParamsAndUpdateMOPT(p);
 		//now we must solve this thing a loooot...
 
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
@@ -453,7 +473,7 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 
 		rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_m);
 		p[i] = pVal - dp;
-		rdApp->prd->setParameters(p);
+		setParamsAndUpdateMOPT(p);
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
 		for (int j = 0; j < 300; j++)
 			rdApp->moptWindow->runMOPTStep();
@@ -461,7 +481,7 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
 		p[i] = pVal;
-		rdApp->prd->setParameters(p);
+		setParamsAndUpdateMOPT(p);
 
 		dmdp_FD.col(i) = (m_p - m_m) / (2 * dp);
 	}
@@ -586,6 +606,18 @@ void IntelligentRobotEditingWindow::updateParamsUsingSliders(int paramIndex, dou
 	}
 	updateParamsAndMotion(p);
 }
+
+void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const dVector& p) {
+	rdApp->prd->setParameters(p);
+	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
+}
+
+void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const std::vector<double>& p) {
+	rdApp->prd->setParameters(p);
+	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
+}
+
+
 void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 {
 	if (updateJacobiancontinuously)
@@ -594,7 +626,7 @@ void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 		updateJacobian();
 		Logger::consolePrint("Total time to compute J: %lf\n", timerN.timeEllapsed());
 	}
-	rdApp->prd->setParameters(p);
+	setParamsAndUpdateMOPT(p);
 	if (updateMotionBasedOnJacobian) {
 		dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
 		m = m0 + dmdp*(p - p0);
@@ -645,53 +677,6 @@ void IntelligentRobotEditingWindow::drawScene() {
 */
 
 	rdApp->robot->setState(&rs);
-}
-
-void IntelligentRobotEditingWindow::setupLights() {
-	GLfloat bright[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-	GLfloat mediumbright[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, bright);
-	glLightfv(GL_LIGHT2, GL_DIFFUSE, mediumbright);
-	glLightfv(GL_LIGHT3, GL_DIFFUSE, mediumbright);
-	glLightfv(GL_LIGHT4, GL_DIFFUSE, mediumbright);
-
-
-	GLfloat light0_position[] = { 0.0f, 10000.0f, 10000.0f, 0.0f };
-	GLfloat light0_direction[] = { 0.0f, -10000.0f, -10000.0f, 0.0f };
-
-	GLfloat light1_position[] = { 0.0f, 10000.0f, -10000.0f, 0.0f };
-	GLfloat light1_direction[] = { 0.0f, -10000.0f, 10000.0f, 0.0f };
-
-	GLfloat light2_position[] = { 0.0f, -10000.0f, 0.0f, 0.0f };
-	GLfloat light2_direction[] = { 0.0f, 10000.0f, -0.0f, 0.0f };
-
-	GLfloat light3_position[] = { 10000.0f, -10000.0f, 0.0f, 0.0f };
-	GLfloat light3_direction[] = { -10000.0f, 10000.0f, -0.0f, 0.0f };
-
-	GLfloat light4_position[] = { -10000.0f, -10000.0f, 0.0f, 0.0f };
-	GLfloat light4_direction[] = { 10000.0f, 10000.0f, -0.0f, 0.0f };
-
-
-	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
-	glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
-	glLightfv(GL_LIGHT2, GL_POSITION, light2_position);
-	glLightfv(GL_LIGHT3, GL_POSITION, light3_position);
-	glLightfv(GL_LIGHT4, GL_POSITION, light4_position);
-
-
-	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light0_direction);
-	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light1_direction);
-	glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, light2_direction);
-	glLightfv(GL_LIGHT3, GL_SPOT_DIRECTION, light3_direction);
-	glLightfv(GL_LIGHT4, GL_SPOT_DIRECTION, light4_direction);
-
-
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glEnable(GL_LIGHT2);
-	glEnable(GL_LIGHT3);
-	glEnable(GL_LIGHT4);
 }
 
 

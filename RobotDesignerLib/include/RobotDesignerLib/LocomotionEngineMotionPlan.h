@@ -10,6 +10,7 @@
 #include <RobotDesignerLib/FootFallPattern.h>
 #include <vector>
 #include <RBSimLib/HingeJoint.h>
+#include <ControlLib/IK_Solver.h>
 
 class LocomotionEngine_EndEffectorTrajectory{
 public:
@@ -19,20 +20,16 @@ public:
 	DynamicArray<V3D> contactForce;
 	DynamicArray<double> contactFlag;
 	DynamicArray<double> EEWeights;
-	DynamicArray<P3D> defaultEEPos;
-	DynamicArray<double> verticalGRFUpperBoundValues;
-	DynamicArray<double> tangentGRFBoundValues;
 
 	bool isWheel = false;
 	double wheelRadius = 0.1;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
-	V3D wheelAxis;						// wheel axis in world coords.
+	V3D wheelAxisLocal;						// wheel axis in world coords.
 	V3D wheelYawAxis;					// yaw axis in world coords.
 	V3D wheelTiltAxis;					// tilt axis in world coords.
 	DynamicArray<double> wheelYawAngle;	// rotation around yaw axis
 	DynamicArray<double> wheelTiltAngle;// rotation around tilt axis
 
-	V3D targetOffsetFromCOM;
 	RigidBody* endEffectorRB;
 	P3D endEffectorLocalCoords;
 
@@ -41,7 +38,7 @@ public:
 	//this is the limb the end effector trajectory belongs to
 	GenericLimb* theLimb;
 	//and this is the index of the end effector contact point that it represents
-	int CPIndex;
+	int CPIndex = -1;
 
 public:
 	LocomotionEngine_EndEffectorTrajectory(int nPos);
@@ -56,7 +53,7 @@ public:
 	P3D getEEPositionAt(double t) const;
 
 	// TODO: maybe we can store rho alongside with wheelAxis etc.
-	V3D getWheelRho() const;
+	V3D getWheelRhoLocal() const;
 
 	P3D getWheelCenterPositionAt(double t) const;
 
@@ -68,7 +65,7 @@ public:
 	double getWheelSpeedAt(double t) const;
 
 	template<class T>
-	static Vector3T<T> rotateWheelAxisWith(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {
+	static Vector3T<T> rotateVectorUsingWheelAngles(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {
 		// First tilt the axis ...
 		Vector3T<T> axisRot = rotateVec(axis, beta, axisTilt);
 		// ... and then yaw
@@ -79,11 +76,11 @@ public:
 	template<class T>
 	Vector3T<T> getRotatedWheelAxis(T angleYaw, T angleTilt) const
 	{
-		Vector3T<T> axis(wheelAxis);
+		Vector3T<T> axis(wheelAxisLocal);
 		Vector3T<T> axisYaw(wheelYawAxis);
 		Vector3T<T> axisTilt(wheelTiltAxis);
 
-		return rotateWheelAxisWith(axis, axisYaw, angleYaw, axisTilt, angleTilt);
+		return rotateVectorUsingWheelAngles(axis, axisYaw, angleYaw, axisTilt, angleTilt);
 	}
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
@@ -108,7 +105,7 @@ public:
 public:
 	LocomotionEngine_COMTrajectory();
 
-	void initialize(int nPoints, const P3D& desComPos, const V3D& axis_0, const V3D& axis_1, const V3D& axis_2);
+	void initialize(int nPoints, const P3D& desComPos, const V3D& comRotationAngles, const V3D& axis_0, const V3D& axis_1, const V3D& axis_2);
 
 	V3D getAxis(int i);
 
@@ -184,6 +181,7 @@ public:
 	double verticalGRFLowerBoundVal = 0;
 	double GRFEpsilon = 0.4;				// for SoftUnilateralConstraint
 	double pseudoLimbEpsilon = 0.1;
+	double frictionEpsilon = 0.4;				// for SoftUnilateralConstraint
 
 	// Parameters for joint motor velocity constraint
 	double jointVelocityLimit = 0;
@@ -242,6 +240,10 @@ public:
 
 	void addEndEffector(GenericLimb* theLimb, RigidBody* rb, int eeIndex, int nSamplingPoints);
 
+	void addIKInitEE(RigidBody* rb, IK_Plan* ikPlan);
+
+	void updateEEs();
+
 public:
 	int getWheelSpeedIndex(int i, int j) const;
 	int getWheelYawAngleIndex(int i, int j) const;
@@ -263,13 +265,14 @@ public:
 	void syncFootFallPatternWithMotionPlan(FootFallPattern& ffp);
 	//syncs the current motion plan with the footfall pattern
 	void syncMotionPlanWithFootFallPattern(FootFallPattern& ffp);
-	void syncMotionPlanWithFootFallPattern(FootFallPattern& ffp, const std::vector<std::vector<double> > &yPositions);
 
 	//if minV is equal to maxV, then there are no bounds for that variable...
 	virtual void getParameterMinValues(dVector& minV);
 
 	//if minV is equal to maxV, then there are no bounds for that variable...
 	virtual void getParameterMaxValues(dVector& maxV);
+
+	virtual dVector getMPParameters();
 
 	virtual void writeMPParametersToList(dVector& p);
 

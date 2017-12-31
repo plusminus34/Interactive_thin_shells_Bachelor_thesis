@@ -22,6 +22,8 @@ public:
 		updateMinMax();
 	}
 
+	int getClosestDataPointIndex(float x) const;
+
 	void updateMinMax();
 
 	Eigen::VectorXf mXValues;
@@ -62,6 +64,8 @@ public:
 	PlotData &plotData(const std::string &name) { return mDataColl[name]; }
 	void setPlotData(const std::string &name, const PlotData &data);
 
+	void clearPlotData();
+
 	const std::map<std::string, PlotData> &dataColl() { return mDataColl; }
 
 	// TODO: come up with better names
@@ -76,6 +80,8 @@ public:
 
 	const Eigen::Vector2i &numTicks() const { return mNumTicks; }
 	void setNumTicks(const Eigen::Vector2i &numTicks) { mNumTicks = numTicks; }
+
+	virtual bool mouseMotionEvent(const Eigen::Vector2i &p, const Eigen::Vector2i &rel, int button, int modifiers);
 
 	// TODO: should we rather override `preferredSize` or use `setSize` from `Widget`?
 	//	virtual Eigen::Vector2i preferredSize(NVGcontext *ctx) const override;
@@ -100,6 +106,9 @@ protected:
 
 	std::map<std::string, PlotData> mDataColl;
 	Eigen::Vector2f mDataMin, mDataMax;
+
+	std::map<std::string, int> mDataHighlight;
+
 public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

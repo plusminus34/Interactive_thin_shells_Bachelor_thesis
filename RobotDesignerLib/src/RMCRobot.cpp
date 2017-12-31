@@ -302,12 +302,10 @@ void RMCRobot::draw(int flags, const Vector4d& root_color, const Vector4d& highl
 		
 }
 
-void RMCRobot::exportMeshes(const char* fName, const char* carvefName)
+void RMCRobot::exportMeshes(const char* fName)
 {
 	FILE* fp1 = fopen(fName, "w+");
-	FILE* fp2 = fopen(carvefName, "w+");
 	uint fpIndex1 = 0;
-	uint fpIndex2 = 0;
 
 	for (uint i = 0; i < jointList.size(); i++)
 	{
@@ -317,18 +315,13 @@ void RMCRobot::exportMeshes(const char* fName, const char* carvefName)
 
 		if (childRMC->type == PLATE_RMC) continue;
 
-		if (childRMC->type == MOTOR_RMC && parentRMC->type == PLATE_RMC && childRMC->carveMesh)
-		{
-			childRMC->carveMesh->renderToObjFile(fp2, fpIndex2, childRMC->state.orientation, childRMC->state.position);
-			fpIndex2 += childRMC->carveMesh->getVertexCount();
+		for (uint k=0;k<childRMC->meshes.size();k++){
+			childRMC->meshes[k]->renderToObjFile(fp1, fpIndex1, childRMC->state.orientation, childRMC->state.position);
+			fpIndex1 += childRMC->meshes[k]->getVertexCount();
 		}
-		
-		childRMC->meshes[0]->renderToObjFile(fp1, fpIndex1, childRMC->state.orientation, childRMC->state.position);
-		fpIndex1 += childRMC->meshes[0]->getVertexCount();
 	}
 
 	fclose(fp1);
-	fclose(fp2);
 }
 
 void RMCRobot::saveToFile(const char* fName)
@@ -366,8 +359,10 @@ void RMCRobot::saveToFile(FILE* fp)
 			LivingMotor* livingRMC = dynamic_cast<LivingMotor*>(rmc);
 			
 			fprintf(fp, "LivingMotor %s ", rmc->getName().c_str());
-			fprintf(fp, "%lf %lf %lf %lf %lf ", rmc->motorAngle, livingRMC->motor->rotAngleMax,
-				livingRMC->motor->rotAngleMin, livingRMC->bracket->bracketInitialAngle, livingRMC->bracket->bracketConnectorAngle);
+//			fprintf(fp, "%lf %lf %lf %lf %lf ", rmc->motorAngle, livingRMC->motor->rotAngleMax,
+//				livingRMC->motor->rotAngleMin, livingRMC->bracket->bracketInitialAngle, livingRMC->bracket->bracketConnectorAngle);
+			fprintf(fp, "%lf %lf %lf %lf %lf ", rmc->motorAngle, 0.0,
+				0.0, livingRMC->hornBracket->bracketMountingAngle, 0.0);
 			fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf", q[0], q[1], q[2], q[3], pos[0], pos[1], pos[2]);
 		}
 		else if (rmc->type == LIVING_SPHERE_EE)
@@ -492,9 +487,11 @@ void RMCRobot::loadFromFile(FILE* fp, map<string, RMC*>& rmcNameMap)
 
 			P3D pos;
 			Quaternion q;
-
-			int num = sscanf(line + strlen(keyword) + strlen(name) + 1, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &livingRMC->motorAngle, &livingRMC->motor->rotAngleMax,
-				&livingRMC->motor->rotAngleMin, &livingRMC->bracket->bracketInitialAngle, &livingRMC->bracket->bracketConnectorAngle, &q[0], &q[1], &q[2], &q[3], &pos[0], &pos[1], &pos[2]);
+			double dummyTmp = 0;
+//			int num = sscanf(line + strlen(keyword) + strlen(name) + 1, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &livingRMC->motorAngle, &livingRMC->motor->rotAngleMax,
+//				&livingRMC->motor->rotAngleMin, &livingRMC->bracket->bracketInitialAngle, &livingRMC->bracket->bracketConnectorAngle, &q[0], &q[1], &q[2], &q[3], &pos[0], &pos[1], &pos[2]);
+			int num = sscanf(line + strlen(keyword) + strlen(name) + 1, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &livingRMC->motorAngle, &dummyTmp,
+				&dummyTmp, &livingRMC->hornBracket->bracketMountingAngle, &dummyTmp, &q[0], &q[1], &q[2], &q[3], &pos[0], &pos[1], &pos[2]);
 			livingRMC->update();
 
 			posMap[livingRMC] = pos;
@@ -584,7 +581,7 @@ void RMCRobot::loadFromFile(FILE* fp, map<string, RMC*>& rmcNameMap)
 }
 
 
-void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robot* templateRobot, bool freezeRoot, bool mergeMeshes, bool forFabrication){
+void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robot* templateRobot, bool freezeRoot){
 	map<RMC*, double> jointMotorAngleMap;
 	for (uint i = 0; i < jointList.size(); i++){
 		RMCJoint* joint = jointList[i];
@@ -610,7 +607,7 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 		RMC* rmc = getJoint(i)->getChild();
 		if (rmc->type == LIVING_MOTOR)
 		{
-			dynamic_cast<LivingMotor*>(rmc)->exportMeshes(robotMeshDir.c_str(), motorID, mergeMeshes);
+			dynamic_cast<LivingMotor*>(rmc)->exportMeshes(robotMeshDir.c_str(), motorID);
 			motorID++;
 		}
 		else if (rmc->type == LIVING_CONNECTOR)
@@ -730,8 +727,7 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 			if (bracketConnectedRMC)
 			{
 				RigidBody& bracketConnectedRB = tmpRBs[RBIndexMap[bracketConnectedRMC]];
-				bracketConnectedRB.meshes.push_back(livingRMC->bracket->outputMesh);
-				bracketConnectedRB.carveMeshes.push_back(NULL);
+				bracketConnectedRB.meshes.push_back(livingRMC->hornBracket->bracketMesh);
 				Transformation trans;
 				trans.R = rmc->state.orientation.getRotationMatrix();
 				trans.T = rmc->state.position - bracketConnectedRB.state.position;
@@ -740,38 +736,23 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 					bracketConnectedRB.name + "_" + rb.name;
 				bracketConnectedRB.meshDescriptions.push_back(jointName);
 
-				// horn carving mesh
-				if (mergeMeshes)
-				{
-					bracketConnectedRB.meshes.push_back(livingRMC->motor->hornCarvingMesh);
-					bracketConnectedRB.carveMeshes.push_back(NULL);
-					bracketConnectedRB.meshTransformations.push_back(trans);
-					bracketConnectedRB.meshDescriptions.push_back("carving");
-				}
+				bracketConnectedRB.meshes.push_back(livingRMC->motorHornMesh);
+				bracketConnectedRB.meshTransformations.push_back(trans);
+				bracketConnectedRB.meshDescriptions.push_back(jointName);
 			}
 
 			{
-				rb.meshes.push_back(livingRMC->motor->motorWholeMesh);
-				rb.carveMeshes.push_back(NULL);
 				Transformation trans;
 				trans.R = rmc->state.orientation.getRotationMatrix();
 				trans.T = rmc->state.position - rb.state.position;
+
+				rb.meshes.push_back(livingRMC->motorBodyMesh);
 				rb.meshTransformations.push_back(trans);
 				rb.meshDescriptions.push_back(jointName);
 
-				rb.meshes.push_back(livingRMC->motor->bodyBracketMesh);
-				rb.carveMeshes.push_back(NULL);
+				rb.meshes.push_back(livingRMC->bodyBracket->bodyBracketMesh);
 				rb.meshTransformations.push_back(trans);
 				rb.meshDescriptions.push_back(jointName);
-
-				// body carving mesh
-				if (mergeMeshes)
-				{
-					rb.meshes.push_back(livingRMC->motor->bodyCarvingMesh);
-					rb.carveMeshes.push_back(NULL);
-					rb.meshTransformations.push_back(trans);
-					rb.meshDescriptions.push_back("carving");
-				}
 			}
 		}
 
@@ -779,7 +760,6 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 		{
 			LivingConnector* livingConnector = dynamic_cast<LivingConnector*>(rmc);
 			rb.meshes.push_back(livingConnector->connectorMesh);
-			rb.carveMeshes.push_back(NULL);
 			Transformation trans;
 			trans.R = rmc->state.orientation.getRotationMatrix();
 			trans.T = rmc->state.position - rb.state.position;
@@ -791,7 +771,6 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 		{
 			LivingSphereEE* sphereEE = dynamic_cast<LivingSphereEE*>(rmc);
 			rb.meshes.push_back(sphereEE->eeMesh);
-			rb.carveMeshes.push_back(NULL);
 			Transformation trans;
 			trans.R = rmc->state.orientation.getRotationMatrix();
 			trans.T = rmc->state.position - rb.state.position;
@@ -801,19 +780,33 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 
 		if (rmc->type == LIVING_WHEEL_EE)
 		{
+
 			LivingWheelEE* wheelEE = dynamic_cast<LivingWheelEE*>(rmc);
 			rb.meshes.push_back(wheelEE->wheelMesh);
-			rb.carveMeshes.push_back(NULL);
+			//keep track of the mesh associated with this end effector - we will need to keep track of it such as to be able to spin it appropriately... 
+			rb.rbProperties.endEffectorPoints.back().meshIndex = rb.meshes.size() - 1;
 			Transformation trans;
 			trans.R = rmc->state.orientation.getRotationMatrix();
 			trans.T = rmc->state.position - rb.state.position;
 			rb.meshTransformations.push_back(trans);
 			rb.meshDescriptions.push_back("skeleton");
+
+			if (wheelEE->motorMesh) {
+				rb.meshes.push_back(wheelEE->motorMesh);
+				rb.meshTransformations.push_back(trans);
+				rb.meshDescriptions.push_back("skeleton");
+			}
+
+			if (wheelEE->motorBracketMesh) {
+				rb.meshes.push_back(wheelEE->motorBracketMesh);
+				rb.meshTransformations.push_back(trans);
+				rb.meshDescriptions.push_back("skeleton");
+			}
+
 		}
 
 		if (!rmc->meshes.empty()) {
 			rb.meshes.push_back(rmc->meshes[0]);
-			rb.carveMeshes.push_back(rmc->carveMeshEx);
 			Transformation trans;
 			trans.R = rmc->state.orientation.getRotationMatrix();
 			trans.T = rmc->state.position - rb.state.position;
@@ -822,97 +815,6 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 		}
 	}
 
-	if (mergeMeshes)
-	{
-        throw std::runtime_error("This functionality is not available.");
-//		set<string> motorMeshFiles = {
-//			"../data/robotDesigner/motorMeshes/XM-430.obj"
-//		};
-
-//		set<string> junkMeshFiles = {
-//			"../data/robotDesigner/motorMeshes/XM-430-MotorPlate.obj"
-//		};
-
-//		for (auto& rb : tmpRBs)
-//		{
-//			vector<GLMesh*> motorMeshes;
-//			vector<Transformation> motorTrans;
-//			vector<GLMesh*> motorCarveMeshes;
-//			vector<string> motorDescritions;
-//			GLMesh* rbMesh = NULL;
-//			for (int i = 0; i < (int)rb.meshes.size(); i++)
-//			{
-//				if (motorMeshFiles.count(rb.meshes[i]->path)) {
-//					motorMeshes.push_back(rb.meshes[i]);
-//					motorTrans.push_back(rb.meshTransformations[i]);
-//					motorCarveMeshes.push_back(NULL);
-//					motorDescritions.push_back("motor");
-
-//					motorMeshes.push_back(rb.meshes[i]);
-//					motorTrans.push_back(rb.meshTransformations[i]);
-//					motorCarveMeshes.push_back(NULL);
-//					motorDescritions.push_back(rb.meshDescriptions[i]);
-//				}
-//				else {
-//					if (junkMeshFiles.count(rb.meshes[i]->path)) continue;
-
-//					if (rb.meshDescriptions[i] != "carving")
-//					{
-//						GLMesh* tMesh = rb.meshes[i]->clone();
-//						tMesh->transform(rb.meshTransformations[i]);
-//						tMesh->scale(1.0001, tMesh->getCenterOfMass());
-//						if (rbMesh)
-//						{
-//							meshBooleanIntrusive(rbMesh, tMesh, "Union");
-//							delete tMesh;
-//						}
-//						else {
-//							rbMesh = tMesh;
-//						}
-//					}
-
-//					if (rb.meshDescriptions[i] != "skeleton") {
-//						motorMeshes.push_back(rb.meshes[i]);
-//						motorTrans.push_back(rb.meshTransformations[i]);
-//						motorCarveMeshes.push_back(NULL);
-//						motorDescritions.push_back(rb.meshDescriptions[i]);
-//					}
-//				}
-//			}
-
-//			if (forFabrication)
-//			{
-//				for (int i = 0; i < (int)rb.meshes.size(); i++)
-//				{
-//					if (!rbMesh || motorMeshFiles.count(rb.meshes[i]->path)) continue;
-//					if (junkMeshFiles.count(rb.meshes[i]->path)) continue;
-
-//					if (rb.meshDescriptions[i] == "carving")
-//					{
-//						GLMesh* tMesh = rb.meshes[i]->clone();
-//						tMesh->transform(rb.meshTransformations[i]);
-//						meshBooleanIntrusive(rbMesh, tMesh, "Minus");
-//						delete tMesh;
-//					}
-//				}
-//			}
-
-//			if (!rbMesh) continue;
-
-//			rbMesh->path = "../out/" + rb.name + "_merge.obj";
-//			rbMesh->writeTriangulatedMeshToObj(rbMesh->path.c_str());
-//			GLContentManager::addMeshFileMapping(rbMesh, rbMesh->path.c_str());
-//			rb.meshes = motorMeshes;
-//			rb.meshTransformations = motorTrans;
-//			rb.carveMeshes = motorCarveMeshes;
-//			rb.meshDescriptions = motorDescritions;
-//			rb.meshes.push_back(rbMesh);
-//			rb.meshTransformations.push_back(Transformation());
-//			rb.carveMeshes.push_back(NULL);
-//			rb.meshDescriptions.push_back("skeleton");
-//		}
-	}
-	else {
 		// not merging meshes
 		for (auto& rb : tmpRBs)
 		{
@@ -922,7 +824,6 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 					description = "motor";
 			}
 		}
-	}
 
 	//make a collision primitive for the root as well...
 	bool first = true;

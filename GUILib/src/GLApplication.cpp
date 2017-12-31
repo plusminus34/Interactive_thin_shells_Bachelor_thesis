@@ -219,6 +219,7 @@ void GLApplication::setupMainMenu() {
 	mainMenu->addVariable("Wait For Framerate", waitForFrameRate);
 	mainMenu->addVariable("Show Console", showConsole);
 	mainMenu->addVariable("Show FPS", showFPS);
+	mainMenu->addVariable("Show Reflections", showReflections);
 	mainMenu->addVariable("Show Ground Plane", showGroundPlane);
 	mainMenu->addVariable("Show Env Box", showDesignEnvironmentBox);
 
@@ -465,41 +466,6 @@ void GLApplication::drawFPS(double timeSinceLastUpdate, double percentageOfTimeS
 	glPopMatrix();
 }
 
-
-//this method is used to set up the lights (position, direction, etc), relative to the camera position
-void GLApplication::setupLights(){
-	GLfloat bright[] = { 0.8f, 0.8f, 0.8f, 1.0f }; 
-	GLfloat mediumbright[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, bright);
-	glLightfv(GL_LIGHT2, GL_DIFFUSE, mediumbright);
-
-	GLfloat light0_position[] = { 0.0f, 10000.0f, 10000.0f, 0.0f };
-	GLfloat light0_direction[] = { 0.0f, -10000.0f, -10000.0f, 0.0f };
-
-	GLfloat light1_position[] = { 0.0f, 10000.0f, -10000.0f, 0.0f };
-	GLfloat light1_direction[] = { 0.0f, -10000.0f, 10000.0f, 0.0f };
-
-	GLfloat light2_position[] = { 0.0f, -10000.0f, 0.0f, 0.0f };
-	GLfloat light2_direction[] = { 0.0f, 10000.0f, -0.0f, 0.0f };
-
-	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
-	glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
-	glLightfv(GL_LIGHT2, GL_POSITION, light2_position);
-
-	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light0_direction);
-	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light1_direction);
-	glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, light2_direction);
-
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glEnable(GL_LIGHT2);
-
-	glDisable(GL_LIGHT3);
-	glDisable(GL_LIGHT4);
-
-}
-
 // Run the App tasks
 void GLApplication::process() {
 	//do the work here...
@@ -600,7 +566,7 @@ void GLApplication::setupOpenGL(){
  */
 void GLApplication::draw(){
 	//clear the screen
-	glClearColor(bgColor[0], bgColor[1], bgColor[2], 1);
+	glClearColor((GLfloat)bgColorR, (GLfloat)bgColorG, (GLfloat)bgColorB, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	//setup the viewport and the perspective transformation matrix
 	int viewportWidth, viewportHeight;
@@ -623,33 +589,14 @@ void GLApplication::draw(){
 
 	setupLights();
 
-	if (showDesignEnvironmentBox) {
-		glColor4d(1, 1, 1, 1);
-		glDisable(GL_LIGHTING);
-		drawDesignEnvironmentBox(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
-	}
+	if (showDesignEnvironmentBox)
+		drawDesignEnvironment();
 
-	if (showGroundPlane){
-		glColor4d(1,1,1,1);
-		glDisable(GL_LIGHTING);
-		drawGround(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
-	}
+	if (showGroundPlane)
+		drawGroundAndReflections();
 
 	glEnable(GL_COLOR_MATERIAL);
 	drawScene();
-
-	if (showMenus) {
-		//update the orientation of the camera orientation visualized in the menu...
-		if (camera) {
-			//transformation goes from world to camera to openGL coordinate system
-			Quaternion glRelativeCamRot = camera->getRotationToOpenGLCoordinateSystem() * camera->getCameraRotation().getComplexConjugate();
-
-			cameraRot[0] = (float)glRelativeCamRot.v[0];
-			cameraRot[1] = (float)glRelativeCamRot.v[1];
-			cameraRot[2] = (float)glRelativeCamRot.v[2];
-			cameraRot[3] = (float)glRelativeCamRot.s;
-		}
-	}
 
 	drawAuxiliarySceneInfo();
 

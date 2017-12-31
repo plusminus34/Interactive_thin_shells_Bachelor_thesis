@@ -11,7 +11,7 @@
 #include <RobotDesignerLib/MPO_StanceLegMotionRegularizer.h>
 #include <RobotDesignerLib/MPO_COMTravelObjective.h>
 #include <RobotDesignerLib/MPO_FeetSlidingObjective.h>
-#include <RobotDesignerLib/MPO_WheelGroundObjective.h>
+#include <RobotDesignerLib/MPO_EndEffectorGroundObjective.h>
 #include <RobotDesignerLib/MPO_FeetPathSmoothnessObjective.h>
 #include <RobotDesignerLib/MPO_BarycentricWeightsRegularizerObjective.h>
 #include <RobotDesignerLib/MPO_RobotStateRegularizer.h>
@@ -57,6 +57,8 @@ public:
 	bool useBFGS = false;
 	bool printDebugInfo = true;
 	bool checkDerivatives = false;
+	bool checkHessianPSD = false;
+
 	bool locked = false; // once locked, cannot do further optimization
 	bool writeVelocityProfileToFile = false;
 
@@ -68,6 +70,7 @@ public:
 	ConstrainedObjectiveFunction* constrainedObjectiveFunction;
 	bool useObjectivesOnly = false;
 	bool writeParamsToFile = true;
+	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod;
 public:
 	LocomotionEngineManager();
 	virtual ~LocomotionEngineManager() = 0;
@@ -91,6 +94,5 @@ public:
 	}
 
 	virtual void drawMotionPlan(double f, int animationCycle = 0, bool drawRobot = true, bool drawSkeleton = false, bool drawPlanDetails = false, bool drawContactForces = false, bool drawOrientation = false);
-
 };
 

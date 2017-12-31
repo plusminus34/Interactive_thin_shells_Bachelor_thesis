@@ -43,19 +43,12 @@ void MOPTWindow::addMenuItems() {
 		tmpVar->setSpinnable(true);
 	}
 
+	glApp->mainMenu->addVariable("Allow Dynamic regularization", moptParams.hessCorrectionMethod)->setItems({ "None", "DynamicRegularization", "Projection"});
+
 	{
 		auto tmpVar = glApp->mainMenu->addVariable("globalMOPTRegularizer", globalMOPTRegularizer);
 		tmpVar->setSpinnable(false); tmpVar->setMinValue(0); tmpVar->setMaxValue(100);
 	}
-
-	
-
-	glApp->mainMenu->addVariable<bool>("Show energies menu",
-		[this](bool value) {
-			showWeightsAndEnergyValues = value;
-			ToggleEnergyMenu();
-		},
-		[this]() {return showWeightsAndEnergyValues; });
 
 	{
 		auto tmpVar = glApp->mainMenu->addVariable("swingFootHeight", moptParams.swingFootHeight);
@@ -109,22 +102,35 @@ void MOPTWindow::addMenuItems() {
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 	{
+		auto tmpVar = glApp->mainMenu->addVariable("friction coeff", moptParams.frictionCoeff);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
 		glApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
 	}
 
-	glApp->mainMenu->addVariable("check derivatives", moptParams.checkDerivatives);
+	glApp->mainMenu->addButton("Check Derivatives", [this]() {
+		bool temp = moptParams.checkDerivatives; moptParams.checkDerivatives = true;
+		runMOPTStep();
+		moptParams.checkDerivatives = temp;
+	});
+
+	glApp->mainMenu->addButton("Check Hessians PSD", [this]() {
+		bool temp = moptParams.checkHessianPSD; moptParams.checkHessianPSD = true;
+		runMOPTStep();
+		moptParams.checkHessianPSD = temp;
+	});
+
 	glApp->mainMenu->addVariable<bool>("Log data",
 		[this](bool val) {if (locomotionManager) locomotionManager->printDebugInfo = val; },
 		[this] { if (locomotionManager) return locomotionManager->printDebugInfo; else return false; });
 	glApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "IPv1", "IPv2" });
 
-
-
 	{
 		using namespace nanogui;
 
-		Window *window = new Window(glApp->menuScreen, "Wheel Control");
-		window->setPosition(Eigen::Vector2i(300, 0));
+		Window *window = new Window(glApp->menuScreen, "MOPT Energy");
+		window->setPosition(Eigen::Vector2i(900, 0));
 		window->setWidth(300);
 		window->setLayout(new GroupLayout());
 
@@ -170,12 +176,11 @@ void MOPTWindow::clear()
 
 }
 
-void MOPTWindow::loadRobot(Robot* robot, ReducedRobotState* startState){
+void MOPTWindow::loadRobot(Robot* robot){
 	clear();
 
 	initialized = true;
 	this->robot = robot;
-	this->startState = *startState;
 
 	int nLegs = robot->bFrame->limbs.size();
 
@@ -201,7 +206,7 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.jointVelocityLimit = locomotionManager->motionPlan->jointVelocityLimit;
 	moptParams.jointVelocityEpsilon = locomotionManager->motionPlan->jointVelocityEpsilon;
 
-	moptParams.jointVelocityEpsilon = locomotionManager->motionPlan->jointL0Delta;
+	moptParams.jointL0Delta = locomotionManager->motionPlan->jointL0Delta;
 
 	moptParams.wheelSpeedLimit = locomotionManager->motionPlan->wheelSpeedLimit;
 	moptParams.wheelSpeedEpsilon = locomotionManager->motionPlan->wheelSpeedEpsilon;
@@ -209,9 +214,14 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.wheelAccelLimit = locomotionManager->motionPlan->wheelAccelLimit;
 	moptParams.wheelAccelEpsilon = locomotionManager->motionPlan->wheelAccelEpsilon;
 
+	moptParams.frictionCoeff = locomotionManager->motionPlan->frictionCoeff;
+
 	moptParams.writeJointVelocityProfile = locomotionManager->writeVelocityProfileToFile;
 	moptParams.motionPlanDuration = locomotionManager->motionPlan->motionPlanDuration;
 	moptParams.checkDerivatives = locomotionManager->checkDerivatives;
+	moptParams.checkHessianPSD = locomotionManager->checkHessianPSD;
+	moptParams.hessCorrectionMethod = locomotionManager->hessCorrectionMethod;
+
 }
 
 void MOPTWindow::syncMotionPlanParameters(){
@@ -223,24 +233,28 @@ void MOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->motionPlan->jointVelocityLimit = moptParams.jointVelocityLimit;
 	locomotionManager->motionPlan->jointVelocityEpsilon = moptParams.jointVelocityEpsilon;
 
+	locomotionManager->motionPlan->jointL0Delta = moptParams.jointL0Delta;
+
 	locomotionManager->motionPlan->wheelSpeedLimit = moptParams.wheelSpeedLimit;
 	locomotionManager->motionPlan->wheelSpeedEpsilon = moptParams.wheelSpeedEpsilon;
 
 	locomotionManager->motionPlan->wheelAccelLimit = moptParams.wheelAccelLimit;
 	locomotionManager->motionPlan->wheelAccelEpsilon = moptParams.wheelAccelEpsilon;
 
+	locomotionManager->motionPlan->frictionCoeff = moptParams.frictionCoeff;
+
 	locomotionManager->writeVelocityProfileToFile = moptParams.writeJointVelocityProfile;
 	locomotionManager->motionPlan->motionPlanDuration = moptParams.motionPlanDuration;
 	locomotionManager->checkDerivatives = moptParams.checkDerivatives;
+	locomotionManager->checkHessianPSD = moptParams.checkHessianPSD;
+	locomotionManager->hessCorrectionMethod = moptParams.hessCorrectionMethod;
+
 }
 
 LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	delete locomotionManager;
 
 	footFallPattern.writeToFile("../out/tmpFFP.ffp");
-
-	/* ----------- Reset the state of the robot ------------ */
-	robot->setState(&startState);
 
 	/* ---------- Set up the motion plan ---------- */
 	switch (optimizeOption)
@@ -259,6 +273,8 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 
 	syncMotionPlanParameters();
 
+	printCurrentObjectiveValues();
+
 	if (doWarmStart)
 		locomotionManager->warmStartMOpt();
 
@@ -266,10 +282,6 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 
 	locomotionManager->setDefaultOptimizationFlags();
 	locomotionManager->energyFunction->regularizer = globalMOPTRegularizer;
-
-	CreateEnergyMenu();
-
-
 
 	return locomotionManager;
 }
@@ -311,7 +323,7 @@ void MOPTWindow::loadFFPFromFile(const char* fName){
 void MOPTWindow::drawScene() {
 	glColor3d(1, 1, 1);
 	glDisable(GL_LIGHTING);
-	drawGround(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
+	drawGround();
 	glEnable(GL_LIGHTING);
 
 	if (locomotionManager){
@@ -323,8 +335,6 @@ void MOPTWindow::drawScene() {
 			       locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(startIndex);
 			
 	}
-	if (showWeightsAndEnergyValues)
-		updateSliders();
 }
 
 void MOPTWindow::drawAuxiliarySceneInfo(){
@@ -347,7 +357,10 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	Ray ray = getRayFromScreenCoords(xPos, yPos);
 	postDraw();
 
-	ReducedRobotState rs(robot);
+	ReducedRobotState oldState(robot);
+	ReducedRobotState robotState(robot);
+	locomotionManager->motionPlan->robotStateTrajectory.getRobotPoseAt(moptParams.phase, robotState);
+	robot->setState(&robotState);
 
 	Joint* joint;
 	dVector velocity;
@@ -388,7 +401,7 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	velocityProfileGraph->setValues(velocity.cast<float>());
 	
 	glApp->menuScreen->performLayout();
-
+	robot->setState(&oldState);
 	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 }
 
@@ -406,131 +419,3 @@ void MOPTWindow::setViewportParameters(int posX, int posY, int sizeX, int sizeY)
 	GLWindow3D::setViewportParameters(posX, posY, sizeX, sizeY);
 	ffpViewer->setViewportParameters(posX, (int)(sizeY * 3.0 / 4), sizeX, (int)(sizeY / 4.0));
 }
-
-void MOPTWindow::ToggleEnergyMenu()
-{
-	energyMenu->setVisible(showWeightsAndEnergyValues);
-}
-
-void MOPTWindow::CreateEnergyMenu()
-{
-	if (energyMenu)
-		energyMenu->dispose();
-	nanogui::Window* mainwindow = glApp->mainMenu->window();
-	energyMenu = glApp->mainMenu->addWindow(Eigen::Vector2i(viewportX, viewportY), "Energy values and weights");
-
-	using namespace nanogui;
-
-	Widget *panel = new Widget(glApp->mainMenu->window());
-	GridLayout *layout =
-		new GridLayout(Orientation::Horizontal, 5,
-			Alignment::Middle);
-	layout->setColAlignment(
-	{ Alignment::Maximum, Alignment::Fill });
-	layout->setSpacing(0, 10);
-	panel->setLayout(layout);
-
-	int NE = locomotionManager->energyFunction->objectives.size();
-	energySliders.resize(NE);
-	energyTextboxes.resize(NE);
-	weightTextboxes.resize(NE);
-
-	for (int i = 0; i < NE; i++)
-	{
-		double value = 0;
-		new Label(panel, locomotionManager->energyFunction->objectives[i]->description , "sans-bold");
-		CheckBox *chkBox = new CheckBox(panel,"");
-		chkBox->setChecked(locomotionManager->energyFunction->objectives[i]->isActive);
-		chkBox->setCallback([this, i](bool value){locomotionManager->energyFunction->objectives[i]->isActive = value; });
-		Slider *slider = new Slider(panel);
-		slider->setValue(0);
-		slider->setRange({ 0.0,1.0 });
-		slider->setFixedWidth(50);
-		energySliders[i] = slider;
-
-		FloatBox<double> *textBox = new FloatBox<double>(panel);
-		textBox->setFixedWidth(80);
-		textBox->setEditable(false);
-		textBox->setFixedHeight(18);
-		energyTextboxes[i] = textBox;
-
-		textBox = new FloatBox<double>(panel);
-		textBox->setFixedWidth(80);
-		textBox->setFixedHeight(18);
-		textBox->setEditable(true);
-		textBox->setValue(locomotionManager->energyFunction->objectives[i]->weight);
-		textBox->setCallback([this, i](double value){locomotionManager->energyFunction->objectives[i]->weight=value; });
-		weightTextboxes[i] = textBox;
-	}
-	energyMenu->setVisible(false);
-	glApp->mainMenu->addWidget("", panel);
-	glApp->mainMenu->setWindow(mainwindow);
-	glApp->menuScreen->performLayout();
-}
-
-void MOPTWindow::updateSliders()
-{
-	int NE = locomotionManager->energyFunction->objectives.size();
-	dVector params;
-	locomotionManager->motionPlan->writeMPParametersToList(params);
-	auto double2string = [](double val) {
-		ostringstream s;
-		s.precision(2);
-		s << val;
-		return s.str(); };
-	
-	for (int i = 0; i < NE; i++)
-	{
-		double value = locomotionManager->energyFunction->objectives[i]->computeValue(params);
-		energySliders[i]->setValue((float)value);
-		energyTextboxes[i]->TextBox::setValue(double2string(value));
-	}
-}
-
-void MOPTWindow::setupLights() {
-	GLfloat bright[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-	GLfloat mediumbright[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, bright);
-	glLightfv(GL_LIGHT2, GL_DIFFUSE, mediumbright);
-	glLightfv(GL_LIGHT3, GL_DIFFUSE, mediumbright);
-	glLightfv(GL_LIGHT4, GL_DIFFUSE, mediumbright);
-
-
-	GLfloat light0_position[] = { 0.0f, 10000.0f, 10000.0f, 0.0f };
-	GLfloat light0_direction[] = { 0.0f, -10000.0f, -10000.0f, 0.0f };
-
-	GLfloat light1_position[] = { 0.0f, 10000.0f, -10000.0f, 0.0f };
-	GLfloat light1_direction[] = { 0.0f, -10000.0f, 10000.0f, 0.0f };
-
-	GLfloat light2_position[] = { 0.0f, -10000.0f, 0.0f, 0.0f };
-	GLfloat light2_direction[] = { 0.0f, 10000.0f, -0.0f, 0.0f };
-
-	GLfloat light3_position[] = { 10000.0f, -10000.0f, 0.0f, 0.0f };
-	GLfloat light3_direction[] = { -10000.0f, 10000.0f, -0.0f, 0.0f };
-
-	GLfloat light4_position[] = { -10000.0f, -10000.0f, 0.0f, 0.0f };
-	GLfloat light4_direction[] = { 10000.0f, 10000.0f, -0.0f, 0.0f };
-
-
-	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
-	glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
-	glLightfv(GL_LIGHT2, GL_POSITION, light2_position);
-	glLightfv(GL_LIGHT3, GL_POSITION, light3_position);
-	glLightfv(GL_LIGHT4, GL_POSITION, light4_position);
-
-
-	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light0_direction);
-	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light1_direction);
-	glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, light2_direction);
-	glLightfv(GL_LIGHT3, GL_SPOT_DIRECTION, light3_direction);
-	glLightfv(GL_LIGHT4, GL_SPOT_DIRECTION, light4_direction);
-
-
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glEnable(GL_LIGHT2);
-	glEnable(GL_LIGHT3);
-	glEnable(GL_LIGHT4);
-}
-

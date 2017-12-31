@@ -24,7 +24,6 @@ public:
 	virtual ~ModuleDisplayWindow() {};
 
 	virtual void drawScene();
-	virtual void setupLights();
 
 };
 

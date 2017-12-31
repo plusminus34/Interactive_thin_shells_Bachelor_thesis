@@ -37,6 +37,7 @@ double LocomotionEngineManager::optimizeMoptionPlan(int maxIterations) {
 //		GradientDescentFunctionMinimizer minimizer;
 		minimizer.maxLineSearchIterations = 12;
 		minimizer.printOutput = energyFunction->printDebugInfo;
+		minimizer.hessCorrectionMethod = hessCorrectionMethod;
 		minimizer.minimize(energyFunction, params, val);
 	}
 	else {
@@ -64,6 +65,13 @@ double LocomotionEngineManager::runMOPTStep() {
 		energyFunction->testIndividualGradient(params);
 		energyFunction->testIndividualHessian(params);
 	}
+	if (checkHessianPSD)
+	{
+		dVector params;
+		motionPlan->writeMPParametersToList(params);
+		energyFunction->testIndividualHessianPSD(params);
+	}
+
 	energyFunction->printDebugInfo = printDebugInfo;
 
 	double energyVal = optimizeMoptionPlan();

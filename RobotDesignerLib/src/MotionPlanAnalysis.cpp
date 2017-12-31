@@ -5,7 +5,7 @@
 #include <GUILib/ColorMaps.h>
 
 using namespace nanogui;
-using namespace Eigen;
+//using namespace Eigen;
 
 MotionPlanAnalysis::MotionPlanAnalysis(nanogui::Screen *screen){
 
@@ -15,9 +15,13 @@ MotionPlanAnalysis::MotionPlanAnalysis(nanogui::Screen *screen){
 	window->setPosition({1200, 0});
 
 	Widget *buttons = new Widget(window);
-	buttons->setLayout(new GridLayout(Orientation::Horizontal, 10, Alignment::Minimum, 0, 5));
+	buttons->setLayout(new GridLayout(Orientation::Horizontal, 5, Alignment::Minimum, 0, 5));
 
-	Widget *widgetPlots = new Widget(window);
+	VScrollPanel *vscroll = new VScrollPanel(window);
+	vscroll->setFixedHeight(std::min(1000, screen->height()-200));
+//	screen->setResizeCallback();
+
+	Widget *widgetPlots = new Widget(vscroll);
 	widgetPlots->setLayout(new GridLayout(Orientation::Vertical, 4, Alignment::Minimum, 0, 5));
 
 	// create a EE plots
@@ -25,17 +29,21 @@ MotionPlanAnalysis::MotionPlanAnalysis(nanogui::Screen *screen){
 	plots[WHEEL_TILT_ANGLE] = makePlotWidget(widgetPlots, "Wheel Tilt Angle");
 	plots[WHEEL_YAW_ANGLE] = makePlotWidget(widgetPlots, "Wheel Yaw Angle");
 	plots[EE_POS_Y] = makePlotWidget(widgetPlots, "EE pos y");
+	plots[GRF_FORCES] = makePlotWidget(widgetPlots, "GRF Forces");
 
 	// create robot state plots
 	plots[JOINT_ANGLES] = makePlotWidget(widgetPlots, "Joint Angles");
 	plots[COM_POSITION] = makePlotWidget(widgetPlots, "COM Position");
 	plots[COM_ORIENTATION] = makePlotWidget(widgetPlots, "COM Orientation");
 
+
+
 	// create show/hide toggle buttons
 	for (auto &plotWidget : plots) {
 		Button *b = new Button(buttons, plotWidget.second.plot->caption());
 		b->setPushed(true);
 		b->setFlags(Button::ToggleButton);
+		b->setFontSize(14);
 		Widget *widget = plotWidget.second.widget;
 		b->setChangeCallback([screen,widget](bool state){
 			widget->setVisible(state);
@@ -112,6 +120,20 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 
 			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)index/(float)nEEs, 0.2f), 1.f));
 			plots[EE_POS_Y].plot->setPlotData("ee " + std::to_string(index), data);
+		}
+
+		// GRF forces
+		{
+			int nTimeSteps = eeTraj.contactForce.size();
+			VectorXf x(nTimeSteps);
+			VectorXf y(nTimeSteps);
+			for (int i = 0; i < nTimeSteps; ++i){
+				x[i] = (float)i/((float)nTimeSteps-1);
+				y[i] = eeTraj.contactForce[i].norm();
+			}
+
+			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)index/(float)nEEs, 0.2f), 1.f));
+			plots[GRF_FORCES].plot->setPlotData("ee " + std::to_string(index), data);
 		}
 
 		index++;
@@ -260,7 +282,7 @@ void MotionPlanAnalysis::updatePlotScaling()
 
 		// set min/max of plot
 		// Note: we don't use `plot->updateMinMax()`, because "time" will mess it up
-		float range = (dataMax[1] - dataMin[1]);
+		float range = std::max(1e-6f, dataMax[1] - dataMin[1]);
 		dataMin[1] -= 0.1*range;
 		dataMax[1] += 0.1*range;
 		plot->setDataMin(dataMin);
