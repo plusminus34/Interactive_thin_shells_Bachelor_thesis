@@ -25,10 +25,10 @@ private:
 					const Vector3T<T> &tiltAxis, T tiltAngle) const
 	{
 		// point at center of wheel in world coordinates
-		Vector3T<T> pO = theMotionPlan->robotRepresentation->getWorldCoordinatesForT(eePosLocal, rb, q);
+		Vector3T<T> pO = theMotionPlan->robotRepresentation->getWorldCoordinatesForPointT(eePosLocal, rb, q);
 		// point at 'end' of wheel axis in world coordinates
 		Vector3T<T> tmp = eePosLocal+wheelAxisLocal;
-		Vector3T<T> pW = theMotionPlan->robotRepresentation->getWorldCoordinatesForT(tmp, rb, q);
+		Vector3T<T> pW = theMotionPlan->robotRepresentation->getWorldCoordinatesForPointT(tmp, rb, q);
 		// wheel axis in world coordinates, according to robot pose
 		Vector3T<T> currentAxis = pW-pO;
 
