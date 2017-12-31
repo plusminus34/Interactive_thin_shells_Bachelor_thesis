@@ -7,8 +7,12 @@
 
 //maybe this editing window should just extend mopt, and then we create it directly (or not for "normal" execution...)
 
+//TODO: add also parameterization for rotation axis of joints/wheels?!?
+
+
+//clicking on joints/end effectors adds a translate widget. Right click to make it go away
 //move joints. When ALT is down (or the one that is same as in design window!) then move just joint and/or everything lower down in hierarchy
-//resize bones. When ALT is down, move only child. Otherwise move both the child and parent joints...
+//resize bones via mouse scroll. When ALT is down, move only child. Otherwise move both the child and parent joints...
 
 IntelligentRobotEditingWindow::IntelligentRobotEditingWindow(int x, int y, int w, int h, RobotDesignerApp* rdApp) : GLWindow3D(x, y, w, h) {
 	this->rdApp = rdApp;
@@ -356,7 +360,7 @@ void IntelligentRobotEditingWindow::resetParams()
 {
 	dVector p;	rdApp->prd->getCurrentSetOfParameters(p);
 	p.setZero();
-	rdApp->prd->setParameters(p);
+	setParamsAndUpdateMOPT(p);
 	syncSliders();
 }
 
@@ -407,13 +411,13 @@ void IntelligentRobotEditingWindow::updateJacobian()
 
 			double pVal = p[i];
 			p[i] = pVal + dp;
-			rdApp->prd->setParameters(p);
+			setParamsAndUpdateMOPT(p);
 			rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_p, m);
 			p[i] = pVal - dp;
-			rdApp->prd->setParameters(p);
+			setParamsAndUpdateMOPT(p);
 			rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_m, m);
 			p[i] = pVal;
-			rdApp->prd->setParameters(p);
+			setParamsAndUpdateMOPT(p);
 
 			dgdp.col(i) = (g_p - g_m) / (2 * dp);
 		}
@@ -460,7 +464,7 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 
 		double pVal = p[i];
 		p[i] = pVal + dp;
-		rdApp->prd->setParameters(p);
+		setParamsAndUpdateMOPT(p);
 		//now we must solve this thing a loooot...
 
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
@@ -469,7 +473,7 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 
 		rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_m);
 		p[i] = pVal - dp;
-		rdApp->prd->setParameters(p);
+		setParamsAndUpdateMOPT(p);
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
 		for (int j = 0; j < 300; j++)
 			rdApp->moptWindow->runMOPTStep();
@@ -477,7 +481,7 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
 		p[i] = pVal;
-		rdApp->prd->setParameters(p);
+		setParamsAndUpdateMOPT(p);
 
 		dmdp_FD.col(i) = (m_p - m_m) / (2 * dp);
 	}
@@ -602,6 +606,18 @@ void IntelligentRobotEditingWindow::updateParamsUsingSliders(int paramIndex, dou
 	}
 	updateParamsAndMotion(p);
 }
+
+void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const dVector& p) {
+	rdApp->prd->setParameters(p);
+	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
+}
+
+void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const std::vector<double>& p) {
+	rdApp->prd->setParameters(p);
+	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
+}
+
+
 void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 {
 	if (updateJacobiancontinuously)
@@ -610,7 +626,7 @@ void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 		updateJacobian();
 		Logger::consolePrint("Total time to compute J: %lf\n", timerN.timeEllapsed());
 	}
-	rdApp->prd->setParameters(p);
+	setParamsAndUpdateMOPT(p);
 	if (updateMotionBasedOnJacobian) {
 		dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
 		m = m0 + dmdp*(p - p0);

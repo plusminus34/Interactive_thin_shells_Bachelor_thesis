@@ -416,6 +416,12 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 			endEffectorTrajectories[i].contactForce[j].y() = verticalGRFLowerBoundVal + GRFEpsilon;
 }
 
+void LocomotionEngineMotionPlan::updateEEs() {
+	for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
+		endEffectorTrajectories[i].endEffectorLocalCoords = endEffectorTrajectories[i].endEffectorRB->rbProperties.endEffectorPoints[endEffectorTrajectories[i].CPIndex].coords;
+	}
+}
+
 void LocomotionEngineMotionPlan::addIKInitEE(RigidBody* rb, IK_Plan* ikPlan) {
 	int nEEs = rb->rbProperties.getEndEffectorPointCount();
 	for (int j = 0; j < nEEs; j++) {

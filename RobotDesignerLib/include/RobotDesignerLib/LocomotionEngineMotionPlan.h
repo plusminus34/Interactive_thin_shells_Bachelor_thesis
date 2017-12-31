@@ -242,6 +242,8 @@ public:
 
 	void addIKInitEE(RigidBody* rb, IK_Plan* ikPlan);
 
+	void updateEEs();
+
 public:
 	int getWheelSpeedIndex(int i, int j) const;
 	int getWheelYawAngleIndex(int i, int j) const;
