@@ -29,7 +29,9 @@ void LivingMotorBodyBracket::setColor(const Vector4d& color /*= Vector4d(0, 0, 0
 }
 
 LivingMotorBodyBracket_XM430::LivingMotorBodyBracket_XM430() {
-	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_bodyBracket_w.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+//	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_bodyBracket_w.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_bodyBracket_lo.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+
 
 	string whiteMat = "../data/textures/matcap/whitefluff2.bmp";
 	bodyBracketMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));

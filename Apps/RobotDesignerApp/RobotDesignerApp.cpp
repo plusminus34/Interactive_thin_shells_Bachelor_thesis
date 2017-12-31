@@ -7,6 +7,13 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
+//the wheel speed is in world coordinates! In integrating the wheel speed for visualization/playback, as well as for control, we need to compensate for what the leg is doing!!!!! This is potentially a source of bugs otherwise!
+//when in MOPT, mouse over robot changes pose in sim (probably because picking sets the state but then doesn't restore it?).
+//WarmStart with no periodic boundary conditions does not work well... - test the design from Moritz, but some of the others too (periodic and non-periodic).
+//debug joint velocity limits some more...
+//work out the math for fixed wheel...
+//add the option to start non-periodic mopt from zero or from two other motion plans...
+
 RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
 	setWindowTitle("RobotDesigner");
@@ -75,7 +82,7 @@ RobotDesignerApp::RobotDesignerApp(){
 		button->setFontSize(14);
 		button->setFlags(Button::Flags::ToggleButton);
 		button->setChangeCallback([this](bool state){
-			if(moptWindow->locomotionManager->energyFunction){
+			if(moptWindow->locomotionManager->energyFunction && doMotionAnalysis){
 				if(state)
 					energyWindow->createEnergyMenu(moptWindow->locomotionManager->energyFunction, menuScreen);
 				energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
@@ -88,7 +95,7 @@ RobotDesignerApp::RobotDesignerApp(){
 		button->setIcon(ENTYPO_ICON_PUBLISH);
 		button->setFontSize(14);
 		button->setCallback([this](){
-			if(moptWindow->locomotionManager->energyFunction){
+			if(moptWindow->locomotionManager->energyFunction && doMotionAnalysis){
 				LocomotionEngineMotionPlan * motionPlan = moptWindow->locomotionManager->motionPlan;
 				energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, motionPlan->getMPParameters());
 				motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
@@ -309,8 +316,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		Logger::consolePrint("Load robot state from '%s'\n", fName);
 		if (robot) {
 			robot->loadReducedStateFromFile(fName);
-			delete initialRobotState;
-			initialRobotState = new ReducedRobotState(robot);
+			startingRobotState = ReducedRobotState(robot);
 			if (prd)
 				prd->updateMorphology();
 		}
@@ -322,13 +328,8 @@ void RobotDesignerApp::loadFile(const char* fName) {
 
 		delete prd;
 		prd = new SymmetricParameterizedRobotDesign(robot);
-//		CreateParametersDesignWindow();
-//		menuScreen->performLayout();
-//		slidervalues.resize(prd->getNumberOfParameters());
-//		slidervalues.setZero();
 
-		delete initialRobotState;
-		initialRobotState = new ReducedRobotState(robot);
+		startingRobotState = ReducedRobotState(robot);
 		return;
 	}
 
@@ -344,6 +345,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 			moptWindow->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
 			moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
 			moptWindow->syncMOPTWindowParameters();
+			moptWindow->printCurrentObjectiveValues();
 		}
 		return;
 	}
@@ -360,10 +362,9 @@ void RobotDesignerApp::createRobotFromCurrentDesign() {
 	if (designWindow) {
 		designWindow->saveToRBSFile("../out/tmpRobot.rbs");
 		loadFile("../out/tmpRobot.rbs");
-		delete initialRobotState;
-		initialRobotState = new ReducedRobotState(robot);
-		robot->populateState(initialRobotState, true);
-		robot->setState(initialRobotState);
+		startingRobotState = ReducedRobotState(robot);
+		robot->populateState(&startingRobotState, true);
+		robot->setState(&startingRobotState);
 		if (prd)
 			prd->updateMorphology();
 	}
@@ -377,22 +378,27 @@ void RobotDesignerApp::loadToSim(bool initializeMOPT){
 
 //now, start MOPT...
 	Logger::consolePrint("MoptWindow loading robot...\n");
-	moptWindow->loadRobot(robot, initialRobotState);
-	Logger::consolePrint("..... successful.\n Warmstarting...\n");
+	moptWindow->loadRobot(robot);
+	if (initializeMOPT)
+		Logger::consolePrint("..... successful.\n Warmstarting...\n");
 	warmStartMOPT(initializeMOPT);
-	Logger::consolePrint("Warmstart successful...\n");
-	Logger::consolePrint("The robot has %d legs, weighs %lfkgs and is %lfm tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
+	if (initializeMOPT)
+		Logger::consolePrint("Warmstart successful...\n");
+	Logger::consolePrint("The robot has %d legs, weighs %lf kgs and is %lf m tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
 
 //	CreateParametersDesignWindow();
 }
 
 void RobotDesignerApp::warmStartMOPT(bool initializeMotionPlan) {
+	//reset the state of the robot, to make sure we're always starting from the same configuration
+	robot->setState(&startingRobotState);
+
 	moptWindow->initializeNewMP(initializeMotionPlan);
 	simWindow->loadMotionPlan(moptWindow->locomotionManager->motionPlan);
-	motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
 
-	if(moptWindow->locomotionManager->energyFunction)
+	if(moptWindow->locomotionManager->energyFunction && doMotionAnalysis)
 	{
+		motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
 		energyWindow->createEnergyMenu(moptWindow->locomotionManager->energyFunction, menuScreen);
 		energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
 	}
@@ -448,9 +454,9 @@ void RobotDesignerApp::process() {
 
 	auto DoMOPTStep = [&]() {
 		runMOPTStep();
-		if (motionPlanAnalysis->window->visible())
+		if (motionPlanAnalysis->window->visible() && doMotionAnalysis)
 			motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
-		if(moptWindow->locomotionManager->energyFunction)
+		if(moptWindow->locomotionManager->energyFunction && doMotionAnalysis)
 			energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
 	};
 

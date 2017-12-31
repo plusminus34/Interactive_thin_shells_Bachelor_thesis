@@ -46,6 +46,8 @@ public:
 	MotionPlanAnalysis *motionPlanAnalysis = nullptr;
 	EnergyWindow *energyWindow = nullptr;
 
+	bool doMotionAnalysis = true;
+
 	bool shouldShowSimWindow();
 	bool shouldShowMOPTWindow();
 	bool shouldShowIEditWindow();
@@ -53,7 +55,7 @@ public:
 
 
 	Robot* robot = NULL;
-	ReducedRobotState* initialRobotState = NULL;
+	ReducedRobotState startingRobotState = ReducedRobotState(13);
 
 	bool drawMotionPlan = false;
 

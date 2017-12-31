@@ -33,9 +33,10 @@ private:
 		Vector3T<T> currentAxis = pW-pO;
 
 		// wheel axis from wheel angles
-		Vector3T<T> wheelAxisWorld = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
+		Vector3T<T> wheelAxisWorld = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
 		Vector3T<T> err = wheelAxisWorld - currentAxis;
 
+//		Logger::consolePrint("target: %lf %lf %lf, err: %lf %lf %lf, angles: %lf %lf\n", axis[0], axis[1], axis[2], err[0], err[1], err[2], yawAngle, tiltAngle);
 		return (T)0.5 * err.squaredNorm() * (T)weight;
 	}
 

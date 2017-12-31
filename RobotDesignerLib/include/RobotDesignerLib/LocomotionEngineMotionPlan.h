@@ -20,9 +20,6 @@ public:
 	DynamicArray<V3D> contactForce;
 	DynamicArray<double> contactFlag;
 	DynamicArray<double> EEWeights;
-	DynamicArray<P3D> defaultEEPos;
-	DynamicArray<double> verticalGRFUpperBoundValues;
-	DynamicArray<double> tangentGRFBoundValues;
 
 	bool isWheel = false;
 	bool isPassiveWheel = false;
@@ -34,7 +31,6 @@ public:
 	DynamicArray<double> wheelYawAngle;	// rotation around yaw axis
 	DynamicArray<double> wheelTiltAngle;// rotation around tilt axis
 
-	V3D targetOffsetFromCOM;
 	RigidBody* endEffectorRB;
 	P3D endEffectorLocalCoords;
 
@@ -70,7 +66,7 @@ public:
 	double getWheelSpeedAt(double t) const;
 
 	template<class T>
-	static Vector3T<T> rotateWheelAxisWith(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {
+	static Vector3T<T> rotateVectorUsingWheelAngles(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {
 		// First tilt the axis ...
 		Vector3T<T> axisRot = rotateVec(axis, beta, axisTilt);
 		// ... and then yaw
@@ -85,7 +81,7 @@ public:
 		Vector3T<T> axisYaw(wheelYawAxis);
 		Vector3T<T> axisTilt(wheelTiltAxis);
 
-		return rotateWheelAxisWith(axis, axisYaw, angleYaw, axisTilt, angleTilt);
+		return rotateVectorUsingWheelAngles(axis, axisYaw, angleYaw, axisTilt, angleTilt);
 	}
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
@@ -247,6 +243,8 @@ public:
 
 	void addIKInitEE(RigidBody* rb, IK_Plan* ikPlan);
 
+	void updateEEs();
+
 public:
 	int getWheelSpeedIndex(int i, int j) const;
 	int getWheelYawAngleIndex(int i, int j) const;
@@ -268,7 +266,6 @@ public:
 	void syncFootFallPatternWithMotionPlan(FootFallPattern& ffp);
 	//syncs the current motion plan with the footfall pattern
 	void syncMotionPlanWithFootFallPattern(FootFallPattern& ffp);
-	void syncMotionPlanWithFootFallPattern(FootFallPattern& ffp, const std::vector<std::vector<double> > &yPositions);
 
 	//if minV is equal to maxV, then there are no bounds for that variable...
 	virtual void getParameterMinValues(dVector& minV);
