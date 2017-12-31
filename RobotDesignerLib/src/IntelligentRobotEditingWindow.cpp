@@ -7,7 +7,6 @@
 
 //maybe this editing window should just extend mopt, and then we create it directly (or not for "normal" execution...)
 
-
 //move joints. When ALT is down (or the one that is same as in design window!) then move just joint and/or everything lower down in hierarchy
 //resize bones. When ALT is down, move only child. Otherwise move both the child and parent joints...
 
@@ -78,51 +77,65 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 				//scale the selected bone by moving just the child... and propagate all changes throughout the offspring hierarchy...
 	
 				//adapt the child coords of the parent joint
-				int pStartIndex = rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].index;
+				int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].index;
+				V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].xModifier, 1, 1);
+
 				for (int i = 0; i < 3; i++)
-					currentDesignParameters[pStartIndex + 3 + i] += offset1[i];
+					currentDesignParameters[pStartIndex + 3 + i] += offset1[i] * modifier[i];
 
 				//and now, the parent coords of the child joint
 				if (highlightedRigidBody->cJoints.size() == 1) {
-					int pStartIndex = rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
+					int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
+					V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].xModifier, 1, 1);
+
 					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + i] += offset2[i];
+						currentDesignParameters[pStartIndex + i] += offset2[i] * modifier[i];
 				}
 				else {
-					int pStartIndex = rdApp->prd->eeParamMap[highlightedRigidBody].index;
-					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + i] += offset2[i];
+					for (uint i=0;i<highlightedRigidBody->rbProperties.endEffectorPoints.size();i++){
+						int pStartIndex =  rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].index;
+						V3D modifier = V3D(rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].xModifier, 1, 1);
+
+						for (int j = 0; j < 3; j++)
+							currentDesignParameters[pStartIndex + j] += offset2[j] * modifier[j];
+					}
 				}
 			}
 			else {
 				//rescaling the bone with as few global changes as possible
 
-				int pStartIndex = rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].index;
+				int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].index;
+				V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].xModifier, 1, 1);
 
 				//for the parent joint, adjust its coordinates in the child (e.g. highlighted) rigid body frame
 				for (int i = 0; i < 3;i++)
-					currentDesignParameters[pStartIndex + 3 + i] += offset1[i];
+					currentDesignParameters[pStartIndex + 3 + i] += offset1[i] * modifier[i];
 
 				//and then, for the same joint, adjust its coordinates in the frame of the parent rigid body...
 				V3D offset1P = highlightedRigidBody->pJoints[0]->parent->getLocalCoordinates(highlightedRigidBody->getWorldCoordinates(offset1));
 				for (int i = 0; i < 3; i++)
-					currentDesignParameters[pStartIndex + i] += offset1P[i];
+					currentDesignParameters[pStartIndex + i] += offset1P[i] * modifier[i];
 
 				if (highlightedRigidBody->cJoints.size() == 1){
 
 					//adjust the coordinates of the child joint, both in coord frame of its parent and child rigid bodies...
-					int pStartIndex = rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
+					int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
+					V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].xModifier, 1, 1);
+
 					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + i] += offset2[i];
+						currentDesignParameters[pStartIndex + i] += offset2[i] * modifier[i];
 
 					V3D offset2P = highlightedRigidBody->cJoints[0]->child->getLocalCoordinates(highlightedRigidBody->getWorldCoordinates(offset2));
 					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + 3 + i] += offset2P[i];
+						currentDesignParameters[pStartIndex + 3 + i] += offset2P[i] * modifier[i];
 				}
 				else {
-					int pStartIndex = rdApp->prd->eeParamMap[highlightedRigidBody].index;
-					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + i] += offset2[i];
+					for (uint i = 0; i<highlightedRigidBody->rbProperties.endEffectorPoints.size(); i++) {
+						int pStartIndex =  rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].index;
+						V3D modifier = V3D(rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].xModifier, 1, 1);
+						for (int j = 0; j < 3; j++)
+							currentDesignParameters[pStartIndex + j] += offset2[j] * modifier[j];
+					}
 				}
 			}
 
@@ -152,13 +165,17 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 
 				P3D pOriginal;
 				int pStartIndex = -1;
+				V3D modifier = V3D(1, 1, 1);
+
 				if (highlightedEE){
 					pOriginal = highlightedEEParent->getWorldCoordinates(highlightedEE->coords);
-					pStartIndex = rdApp->prd->eeParamMap[highlightedEEParent].index;
+					pStartIndex =  rdApp->prd->eeParamMap[highlightedEE].index;
+					modifier.x() = rdApp->prd->eeParamMap[highlightedEE].xModifier;
 				}
 				else {
 					pOriginal = highlightedJoint->getWorldPosition();
-					pStartIndex = rdApp->prd->jointParamMap[highlightedJoint].index;
+					pStartIndex =  rdApp->prd->jointParamMap[highlightedJoint].index;
+					modifier.x() = rdApp->prd->jointParamMap[highlightedJoint].xModifier;
 				}
 
 				V3D offset(pOriginal, tWidget->pos);
@@ -170,22 +187,21 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 				if (highlightedEE) {
 					offset = highlightedEEParent->getLocalCoordinates(offset);
 					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + i] += offset[i];
+						currentDesignParameters[pStartIndex + i] += offset[i] * modifier[i];
 				}
 				else {
 					if (glfwGetKey(this->rdApp->glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
 						offset = highlightedJoint->parent->getLocalCoordinates(offset);
 						for (int i = 0; i < 3; i++)
-							currentDesignParameters[pStartIndex + i] += offset[i];
+							currentDesignParameters[pStartIndex + i] += offset[i] * modifier[i];
 					}
 					else {
 						V3D offsetP = highlightedJoint->parent->getLocalCoordinates(offset);
 						for (int i = 0; i < 3; i++)
-							currentDesignParameters[pStartIndex + i] += offsetP[i];
+							currentDesignParameters[pStartIndex + i] += offsetP[i] * modifier[i];
 						V3D offsetC = highlightedJoint->child->getLocalCoordinates(offset);
 						for (int i = 0; i < 3; i++)
-							currentDesignParameters[pStartIndex + 3 + i] += offsetC[i];
-
+							currentDesignParameters[pStartIndex + 3 + i] += offsetC[i] * modifier[i];
 					}
 
 				}

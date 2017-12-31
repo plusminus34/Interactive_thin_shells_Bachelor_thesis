@@ -92,6 +92,24 @@ struct ModifiableParam {
 
 };
 
+class TMPEEInfo {
+public:
+	TMPEEInfo() {
+	}
+
+	TMPEEInfo(RigidBody* parentRB, int eeIndex) {
+		this->parentRB = parentRB;
+		this->eeIndex = eeIndex;
+		this->ee = &parentRB->rbProperties.endEffectorPoints[eeIndex];
+		worldPosition = parentRB->getWorldCoordinates(ee->coords);
+	}
+
+	RBEndEffector* ee = NULL;
+	P3D worldPosition;
+	RigidBody* parentRB = NULL;
+	int eeIndex = 0;
+};
+
 /*
 	This class will parameterize the position of each joint, as well as the length of each bone (body not included). Symmetry is taken into account (based on a plane of symmetry)
 
@@ -103,9 +121,11 @@ struct ModifiableParam {
 class SymmetricParameterizedRobotDesign : public ParameterizedRobotDesign {
 private:
 	DynamicArray<double> currentParams;
+	DynamicArray<TMPEEInfo> listOfAllEEs;
 
 	map<Joint*, Joint*> jointMirrorMap;
 	map<RigidBody*, RigidBody*> boneMirrorMap;
+	map<RBEndEffector*, RBEndEffector*> eeMirrorMap;
 
 	//we will use the two maps below both to figure out how to interpret the parameters (e.g. which parameters mean what) as well as to know, for a selected bone or joint, where to write parameters that might be input in an indirect way via a GUI
 
@@ -113,7 +133,7 @@ public:
 	//tells you where in the parameter list can we find the params for each joint (translational offsets per joint)
 	map<Joint*, ModifiableParam> jointParamMap;
 	//tells you where in the parameter list can we find the params that control the end effector placements (translational offsets)
-	map<RigidBody*, ModifiableParam> eeParamMap;
+	map<RBEndEffector*, ModifiableParam> eeParamMap;
 
 	using ParameterizedRobotDesign::getCurrentSetOfParameters;
 	using ParameterizedRobotDesign::setParameters;
@@ -139,6 +159,8 @@ public:
 
 		//we'll compute mirror maps in a naive way... but it only has to be done once...
 		for (int i = 0; i < robot->getRigidBodyCount(); i++) {
+			for (uint k = 0; k < robot->getRigidBody(i)->rbProperties.endEffectorPoints.size(); k++)
+				listOfAllEEs.push_back(TMPEEInfo(robot->getRigidBody(i), k));
 			P3D pos1 = robot->getRigidBody(i)->getWorldCoordinates(P3D());
 			for (int j = i + 1; j < robot->getRigidBodyCount(); j++) {
 				P3D pos2 = robot->getRigidBody(j)->getWorldCoordinates(P3D());
@@ -152,26 +174,40 @@ public:
 			}
 		}
 
-		//for every rigid body that has at least one end effector, add parameters that control its location in local coordinates
-		for (int i = 1; i < robot->getRigidBodyCount(); i++) {
-			if (robot->getRigidBody(i)->rbProperties.endEffectorPoints.size() == 0)
-				continue;
-
-			if (boneMirrorMap.count(robot->getRigidBody(i))) {
-				RigidBody* mirrorBone = boneMirrorMap[robot->getRigidBody(i)];
-				//if we've already pushed a parameter for this bone's mirror, then make sure we're using the same index
-				if (eeParamMap.count(mirrorBone))
-					eeParamMap[robot->getRigidBody(i)] = eeParamMap[mirrorBone];
+		//now find mirroring info for all the end effectors...
+		for (uint i = 0; i < listOfAllEEs.size(); i++) {
+			P3D pos1 = listOfAllEEs[i].worldPosition;
+			for (uint j = i+1; j < listOfAllEEs.size(); j++) {
+				P3D pos2 = listOfAllEEs[j].worldPosition;
+				pos2.x() *= -1;
+				if (IS_ZERO(V3D(pos1, pos2).length())) {
+					Logger::print("EEs %d and %d are symmetric...\n", i, j);
+					//we found a symmetric pair...
+					eeMirrorMap[listOfAllEEs[i].ee] = listOfAllEEs[j].ee;
+					eeMirrorMap[listOfAllEEs[j].ee] = listOfAllEEs[i].ee;
+				}
 			}
-			if (!eeParamMap.count(robot->getRigidBody(i))) {
+		}
+
+		//for every end effector in the robot, add parameters that control its location in the parent's coordinate frame
+		for (uint i = 0; i < listOfAllEEs.size(); i++) {
+			//if this ee has a mirror, we need to see if its mirror has gotten an index, and if yes, copy it...
+			if (eeMirrorMap.count(listOfAllEEs[i].ee)) {
+				RBEndEffector* mirrorEE = eeMirrorMap[listOfAllEEs[i].ee];
+				//if we've already pushed a parameter for this EE's mirror, then make sure we're using the same index
+				if (eeParamMap.count(mirrorEE))
+					eeParamMap[listOfAllEEs[i].ee] = eeParamMap[mirrorEE];
+			}
+			//if this ee still has not been processed, do it now...
+			if (!eeParamMap.count(listOfAllEEs[i].ee)) {
 				//create a new set of parameters for this joint specifically, and point to it...
-				eeParamMap[robot->getRigidBody(i)] = ModifiableParam(currentParams.size(), 1);
+				eeParamMap[listOfAllEEs[i].ee] = ModifiableParam(currentParams.size(), 1);
 				currentParams.push_back(0);	currentParams.push_back(0); currentParams.push_back(0);
 			}
-			if (robot->getRigidBody(i)->getWorldCoordinates(P3D()).x() < 0)
-				eeParamMap[robot->getRigidBody(i)].xModifier = -1;
+			if (listOfAllEEs[i].worldPosition.x() < 0)
+				eeParamMap[listOfAllEEs[i].ee].xModifier = -1;
 			else
-				eeParamMap[robot->getRigidBody(i)].xModifier = 1;
+				eeParamMap[listOfAllEEs[i].ee].xModifier = 1;
 		}
 
 		//now, for every joint we will have 3 parameters that correspond to its offset...
@@ -213,17 +249,13 @@ public:
 		robot->setState(&defaultRobotState);
 
 		// go through each joint and apply its offset as specified in the param list...
-		for (int i = 0; i < robot->getRigidBodyCount(); i++) {
-			if (!eeParamMap.count(robot->getRigidBody(i)))
-				continue;
+		for (uint i = 0; i < listOfAllEEs.size(); i++) {
 
-			int pIndex = eeParamMap[robot->getRigidBody(i)].index;
+			int pIndex = eeParamMap[listOfAllEEs[i].ee].index;
 
-			V3D eeOffset(params[pIndex + 0] * eeParamMap[robot->getRigidBody(i)].xModifier, params[pIndex + 1], params[pIndex + 2]);
+			V3D eeOffset(params[pIndex + 0] * eeParamMap[listOfAllEEs[i].ee].xModifier, params[pIndex + 1], params[pIndex + 2]);
 
-			for (uint j = 0; j < robot->getRigidBody(i)->rbProperties.endEffectorPoints.size(); j++) {
-				robot->getRigidBody(i)->rbProperties.endEffectorPoints[j].coords = initialEEMorphology[&robot->getRigidBody(i)->rbProperties.endEffectorPoints[j]].initialCoords + eeOffset;
-			}
+			listOfAllEEs[i].parentRB->rbProperties.endEffectorPoints[listOfAllEEs[i].eeIndex].coords = initialEEMorphology[listOfAllEEs[i].ee].initialCoords + eeOffset;
 		}
 
 		for (int i = 0; i < robot->getJointCount(); i++) {
