@@ -196,7 +196,7 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 					if (!hackHessian) {
 
 						for (int k = 0; k < theMotionPlan->robotRepresentation->getDimensionCount(); k++) {
-							Vector3d err(ee.EEPos[j] - theMotionPlan->robotRepresentation->getWorldCoordinatesForT(ee.endEffectorLocalCoords, ee.endEffectorRB, q_t));
+							Vector3d err(ee.EEPos[j] - theMotionPlan->robotRepresentation->getWorldCoordinatesFor(ee.endEffectorLocalCoords, ee.endEffectorRB));
 							bool hasNonZeros = theMotionPlan->robotRepresentation->compute_ddpdq_dqi(ee.endEffectorLocalCoords, ee.endEffectorRB, ddEndEffectordq_dqi, k);
 							if (hasNonZeros == false) continue;
 							dVector V = ddEndEffectordq_dqi.transpose()*err;

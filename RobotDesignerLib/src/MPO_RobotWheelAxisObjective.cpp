@@ -174,11 +174,14 @@ void MPO_RobotWheelAxisObjective::addHessianEntriesTo(DynamicArray<MTriplet>& he
 					dofs[k].v->deriv().value() = 0.0;
 				}
 
-				Eigen::SelfAdjointEigenSolver<MatrixNxM> es(localH);
-				Eigen::VectorXd D = es.eigenvalues();
-				Eigen::MatrixXd U = es.eigenvectors();
-				D = D.unaryExpr([](double x) {return (x < 1e-4) ? 1e-4 : x; });
-				localH = U * D.asDiagonal()*U.transpose();
+				if (hackHessian)
+				{
+					Eigen::SelfAdjointEigenSolver<MatrixNxM> es(localH);
+					Eigen::VectorXd D = es.eigenvalues();
+					Eigen::MatrixXd U = es.eigenvectors();
+					D = D.unaryExpr([](double x) {return (x < 1e-4) ? 1e-4 : x; });
+					localH = U * D.asDiagonal()*U.transpose();
+				}
 
 				for (int k = 0; k < numDOFs; ++k) {
 					for (int l = 0; l <= k; ++l) {
