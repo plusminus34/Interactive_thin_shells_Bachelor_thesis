@@ -460,13 +460,17 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 	const RBProperties &rbProperties = rb->rbProperties;
 	const RBEndEffector &rbEndEffector = rbProperties.endEffectorPoints[eeIndex];
 
-	if (rbEndEffector.isActiveWheel())
+	if (rbEndEffector.isWheel())
 	{
+		if (rbEndEffector.isWeldedWheel())
+				Logger::consolePrint("Warning: Welded wheels have not been tested!");
+
 		wheelToEEIndex[nWheels] = index;
 		eeToWheelIndex[index] = nWheels;
 		nWheels++;
 
 		eeTraj.isWheel = true;
+		eeTraj.isPassiveWheel = rbEndEffector.isFreeToMoveWheel();
 
 		// set wheel radius from rb properties
 		eeTraj.wheelRadius = rbEndEffector.featureSize;
@@ -517,10 +521,6 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 		// output some info
 //		Logger::consolePrint("Wheel radius %d: %f", index, eeTraj.wheelRadius);
 	}
-	else if (rbEndEffector.isWeldedWheel())
-		Logger::consolePrint("Warning: Welded wheels have not been tested!");
-	else if (rbEndEffector.isFreeToMoveWheel())
-		Logger::consolePrint("Warning: Free-to-move wheels are not working! (yet...)");
 	else // foot
 	{
 		eeWorldCoords[1] = 0;
