@@ -57,14 +57,12 @@ void KinematicRobotController::advanceInTime(double timeStep) {
 }
 
 void KinematicRobotController::computeDesiredState() {
-//	ReducedRobotState currentRobotState(robot);
-	motionPlan->robotStateTrajectory.getRobotPoseAt(stridePhase, desiredState);
+	RobotController::computeDesiredState();
 
 	desiredState.setHeading(overallHeading.getRotationAngle(V3D(0,1,0)));
 	P3D pos = P3D() + posInPlane;
 	pos.y() = desiredState.getPosition().y();
 	desiredState.setPosition(pos);
-
 }
 
 void KinematicRobotController::loadMotionPlan(LocomotionEngineMotionPlan* motionPlan, double phase){
