@@ -16,6 +16,7 @@
 #include <RobotDesignerLib/MPO_StateMatchObjective.h>
 #include <RobotDesignerLib/MPO_GRFFrictionConstraints.h>
 #include <RobotDesignerLib/MPO_PassiveWheelsGRFConstraints.h>
+#include <RobotDesignerLib/MPO_FixedWheelObjective.h>
 
 
 //#define DEBUG_WARMSTART
@@ -381,6 +382,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->addObjectiveFunction(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0), "Consistency Constraints (Kinematics)");
 	ef->addObjectiveFunction(new MPO_EndEffectorGroundObjective(ef->theMotionPlan, "EE height objective (stance)", 10000.0), "Consistency Constraints (Kinematics)");
 	ef->addObjectiveFunction(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE height objective (swing)", 10000.0), "Consistency Constraints (Kinematics)");
+	ef->addObjectiveFunction(new MPO_FixedWheelObjective(ef->theMotionPlan, "Fixed wheels objective", 1.0), "Consistency Constraints (Kinematics)");
 
 	//consistancy constraints (dynamics, F=ma, GRF feasibility, etc)
 	ef->addObjectiveFunction(new MPO_GRFSwingRegularizer(ef->theMotionPlan, "GRF 0 in swing constraint", 10000.0), "Consistency Constraints (Dynamics)");
@@ -388,11 +390,9 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->addObjectiveFunction(new MPO_ForceAccelObjective(ef->theMotionPlan, "force acceleration objective", 1.0), "Consistency Constraints (Dynamics)");
 	ef->addObjectiveFunction(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 1.0), "Consistency Constraints (Dynamics)");
 	ef->addObjectiveFunction(new MPO_GRFFrictionConstraints(ef->theMotionPlan, "GRF friction constraints", 1.0), "Consistency Constraints (Dynamics)");
-	ef->objectives.back()->isActive = false;
-	ef->addObjectiveFunction(new MPO_PassiveWheelsGRFConstraints(ef->theMotionPlan, "Passive wheels (w/o friction)", 1.0), "Dynamic Constraints");
-	ef->objectives.back()->isActive = false;
-	ef->addObjectiveFunction(new MPO_PassiveWheelsGRFFrictionConstraints(ef->theMotionPlan, "Passive wheels constraints (w/ friction)", 1.0), "Dynamic Constraints");
-	ef->objectives.back()->isActive = false;
+	ef->addObjectiveFunction(new MPO_PassiveWheelsGRFConstraints(ef->theMotionPlan, "Passive wheels (w/o friction)", 1.0), "Consistency Constraints (Dynamics)");
+//	ef->addObjectiveFunction(new MPO_PassiveWheelsGRFFrictionConstraints(ef->theMotionPlan, "Passive wheels constraints (w/ friction)", 1.0), "Consistency Constraints (Dynamics)");
+
 
 	//range of motion/speed/acceleration constraints
 	ef->addObjectiveFunction(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, dimCount - 1), "Bound Constraints");
