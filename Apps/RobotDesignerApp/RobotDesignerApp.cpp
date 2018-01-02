@@ -7,12 +7,9 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-//when in MOPT, mouse over robot changes pose in sim (probably because picking sets the state but then doesn't restore it?).
 //WarmStart with no periodic boundary conditions does not work well... - test the design from Moritz, but some of the others too (periodic and non-periodic).
 //debug joint velocity limits some more...
 //add the option to start non-periodic mopt from zero or from two other motion plans...
-
-
 
 RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
@@ -43,20 +40,27 @@ RobotDesignerApp::RobotDesignerApp(){
 	button = new nanogui::Button(tools, "");
 	button->setIcon(ENTYPO_ICON_SAVE);
 	button->setCallback([this]() { if (designWindow) designWindow->saveFile("../out/tmpModularRobotDesign.dsn"); });
-	button->setTooltip("Quick Save");
+	button->setTooltip("Quick Save (S)");
 
 	button = new nanogui::Button(tools, "");
 	button->setIcon(ENTYPO_ICON_DOWNLOAD);
 	button->setCallback([this]() { if (designWindow) designWindow->loadDesignFromFile("../out/tmpModularRobotDesign.dsn"); });
-	button->setTooltip("Quick Load");
+	button->setTooltip("Quick Load (R)");
 
-	button = new nanogui::Button(tools, "ToSim");
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_GITHUB);
+	button->setCallback([this]() { exportMeshes(); });
+	button->setTooltip("Export Meshes (K)");
+
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_LOG_OUT);
 	button->setCallback([this]() { createRobotFromCurrentDesign(); });
-	button->setTooltip("Load Robot Design To Sim");
+	button->setTooltip("Load Robot Design To Sim (T)");
 
-	button = new nanogui::Button(tools, "GoMOPT");
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_BAIDU);
 	button->setCallback([this]() { warmStartMOPT(true); });
-	button->setTooltip("Warmstart MOPT");
+	button->setTooltip("Warmstart MOPT (M)");
 
 	{
 		using namespace nanogui;
@@ -407,7 +411,14 @@ void RobotDesignerApp::exportMeshes() {
 		Logger::consolePrint("A robot must first be loaded before meshes can be exported...\n");
 		return;
 	}
+
+	ReducedRobotState rs(robot);
+
+	robot->setState(&startingRobotState);
 	robot->renderMeshesToFile("..\\out\\robotMeshes.obj");
+	Logger::consolePrint("Exported robot meshes to \'..\\out\\robotMeshes.obj\'\n");
+
+	robot->setState(&rs);
 }
 
 void RobotDesignerApp::warmStartMOPT(bool initializeMotionPlan) {
