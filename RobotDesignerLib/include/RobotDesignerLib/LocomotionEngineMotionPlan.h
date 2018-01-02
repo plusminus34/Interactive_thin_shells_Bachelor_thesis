@@ -22,6 +22,8 @@ public:
 	DynamicArray<double> EEWeights;
 
 	bool isWheel = false;
+	bool isFixedWheel = false;
+	bool isPassiveWheel = false;
 	double wheelRadius = 0.1;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
 	V3D wheelAxisLocal;						// wheel axis in world coords.
@@ -155,6 +157,14 @@ public:
 
 	void getQAtTimeIndex(int j, dVector& q_t);
 
+	template<class T>
+	void getQAtTimeIndex(int j, VectorXT<T> &q_t){
+		q_t.resize(qArray[j].size());
+		for (int i = 0; i < qArray[j].size(); ++i) {
+			q_t[i] = qArray[j][i];
+		}
+	}
+
 	P3D getBodyPositionAtTimeIndex(int j);
 };
 
@@ -181,7 +191,7 @@ public:
 	double verticalGRFLowerBoundVal = 0;
 	double GRFEpsilon = 0.4;				// for SoftUnilateralConstraint
 	double pseudoLimbEpsilon = 0.1;
-	double frictionEpsilon = 0.4;				// for SoftUnilateralConstraint
+	double frictionEpsilon = 0.05;				// for SoftUnilateralConstraint
 
 	// Parameters for joint motor velocity constraint
 	double jointVelocityLimit = 0;

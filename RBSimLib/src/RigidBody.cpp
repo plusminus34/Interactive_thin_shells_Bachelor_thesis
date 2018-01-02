@@ -275,8 +275,21 @@ Matrix3x3 RigidBody::getWorldMOI(const Quaternion& orientation) {
 */
 uint RigidBody::renderToObjFile(FILE* fp, uint vertexIdxOffset) {
 	int retVal = 0;
-	for (uint i=0;i<meshes.size();i++)
-		retVal += meshes[i]->renderToObjFile( fp, vertexIdxOffset+retVal, state.orientation, state.position);
+	for (uint i = 0; i < meshes.size(); i++) {
+		Quaternion rot = state.orientation;
+		P3D pos = state.position;
+
+		if (i < meshTransformations.size()){
+			Quaternion q;
+			q.setRotationFrom(meshTransformations[i].R);
+
+			rot = rot * q;
+			pos = pos + meshTransformations[i].T;
+		}
+
+		retVal += meshes[i]->renderToObjFile(fp, vertexIdxOffset + retVal, rot, pos);
+	}
+
 	return retVal;
 }
 

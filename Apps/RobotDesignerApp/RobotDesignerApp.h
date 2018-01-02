@@ -128,6 +128,7 @@ public:
 	void loadToSim(bool initializeMOPT = true);
 	void createRobotFromCurrentDesign();
 
+	void exportMeshes();
 
 	SymmetricParameterizedRobotDesign* prd = NULL;
 

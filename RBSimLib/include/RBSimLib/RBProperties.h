@@ -52,8 +52,10 @@ public:
 	V3D localCoordsWheelAxis;
 	//the radius is stored in feature size...
 	
-	//this represents desired instantaneous speed for the wheel EEs
-	double rotationSpeed = 0;
+	//this represents desired instantaneous speed for the wheel EEs, expressed in world (e.g. values computed in MOPT)
+	double wheelSpeed_w = 0;
+	//and this is the same quantity, but now expressed relative to the parent rigid body - this is what's needed as a control signal for the motor that drives the wheel, for example, unless there is some global coordinate frame that the control is relative to...
+	double wheelSpeed_rel = 0;
 };
 
 /*================================================================================================================*

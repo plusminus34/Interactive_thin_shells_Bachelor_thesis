@@ -7,12 +7,12 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-//the wheel speed is in world coordinates! In integrating the wheel speed for visualization/playback, as well as for control, we need to compensate for what the leg is doing!!!!! This is potentially a source of bugs otherwise!
 //when in MOPT, mouse over robot changes pose in sim (probably because picking sets the state but then doesn't restore it?).
 //WarmStart with no periodic boundary conditions does not work well... - test the design from Moritz, but some of the others too (periodic and non-periodic).
 //debug joint velocity limits some more...
-//work out the math for fixed wheel...
 //add the option to start non-periodic mopt from zero or from two other motion plans...
+
+
 
 RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
@@ -113,8 +113,8 @@ RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = 0.75;
 
 #ifdef START_WITH_VISUAL_DESIGNER
-	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
-//	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configTGY306G.cfg");
+//	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
+	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configTGY306G.cfg");
 	
 #else
     loadFile("../data/robotsAndMotionPlans/spotMini/robot2.rbs");
@@ -282,6 +282,18 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 			moptWindow->locomotionManager->motionPlan->writeRobotMotionAnglesToFile("../out/tmpMPAngles.mpa");
 	}
 
+	if (key == GLFW_KEY_T && action == GLFW_PRESS) {
+		createRobotFromCurrentDesign();
+	}
+
+	if (key == GLFW_KEY_M && action == GLFW_PRESS) {
+		warmStartMOPT(true);
+	}
+
+	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
+		exportMeshes();
+	}
+
 	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
 		runOption = MOTION_PLAN_OPTIMIZATION;
 	if (key == GLFW_KEY_2 && action == GLFW_PRESS)
@@ -389,7 +401,24 @@ void RobotDesignerApp::loadToSim(bool initializeMOPT){
 //	CreateParametersDesignWindow();
 }
 
+
+void RobotDesignerApp::exportMeshes() {
+	if (!robot) {
+		Logger::consolePrint("A robot must first be loaded before meshes can be exported...\n");
+		return;
+	}
+	robot->renderMeshesToFile("..\\out\\robotMeshes.obj");
+}
+
 void RobotDesignerApp::warmStartMOPT(bool initializeMotionPlan) {
+	if (!robot) {
+		Logger::consolePrint("Please load a robot first...\n");
+		return;
+	}
+
+	if (!moptWindow || !simWindow)
+		return;
+
 	//reset the state of the robot, to make sure we're always starting from the same configuration
 	robot->setState(&startingRobotState);
 
