@@ -22,6 +22,7 @@ public:
 	DynamicArray<double> EEWeights;
 
 	bool isWheel = false;
+	bool isFixedWheel = false;
 	bool isPassiveWheel = false;
 	double wheelRadius = 0.1;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
@@ -155,6 +156,14 @@ public:
 	void loadRobotMotionTrajectoriesToFile(const char* fName);
 
 	void getQAtTimeIndex(int j, dVector& q_t);
+
+	template<class T>
+	void getQAtTimeIndex(int j, VectorXT<T> &q_t){
+		q_t.resize(qArray[j].size());
+		for (int i = 0; i < qArray[j].size(); ++i) {
+			q_t[i] = qArray[j][i];
+		}
+	}
 
 	P3D getBodyPositionAtTimeIndex(int j);
 };
