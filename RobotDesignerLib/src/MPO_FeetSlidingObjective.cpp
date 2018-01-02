@@ -32,7 +32,7 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 
 			Vector3d eePosj = ee.EEPos[j];
 
-			if(ee.isWheel){
+			if(ee.isWheel && !ee.isFixedWheel){
 				Vector3d rhoLocal = ee.getWheelRhoLocal();
 				Vector3d axisLocal = ee.wheelAxisLocal;
 				Vector3d axisYaw = ee.wheelYawAxis;
@@ -105,7 +105,7 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 			for (int k = 0; k < 3; ++k)
 				eePosj(k) = p[iEEj + k];
 
-			if(ee.isWheel){
+			if(ee.isWheel && !ee.isFixedWheel){
 				// get wheel axes
 				V3T<ScalarDiff> rhoLocal = ee.getWheelRhoLocal();
 				V3T<ScalarDiff> wheelAxisLocal(ee.wheelAxisLocal);
@@ -257,7 +257,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 			for (int k = 0; k < 3; ++k)
 				eePosj(k) = p[iEEj + k];
 
-			if(ee.isWheel)
+			if(ee.isWheel && !ee.isFixedWheel)
 			{
 				// get wheel axes
 				V3T<ScalarDiffDiff> rhoLocal = ee.getWheelRhoLocal();

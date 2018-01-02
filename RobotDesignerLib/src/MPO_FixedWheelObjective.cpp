@@ -63,9 +63,9 @@ void MPO_FixedWheelObjective::addGradientTo(dVector& grad, const dVector& p) {
 
 	// number of DOFs for an end effector at one time sample
 	int numDOFs = 0;
-	// 2 DOFs for yaw and tilt angle, 2 time steps
+	// 3 DOFs for yaw, tilt and speed, 2 time steps
 	if (theMotionPlan->wheelParamsStartIndex >= 0)
-		numDOFs += 2+2;
+		numDOFs += 3*2;
 	// size of robot state `q` as DOFs, 2 time steps
 	if (theMotionPlan->robotStatesParamsStartIndex >= 0)
 		numDOFs += theMotionPlan->robotRepresentation->getDimensionCount()*2;
@@ -154,9 +154,9 @@ void MPO_FixedWheelObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessia
 
 	// number of DOFs for an end effector at one time sample
 	int numDOFs = 0;
-	// 2 DOFs for yaw and tilt angle, 2 time steps
+	// 3 DOFs for yaw, tilt and speed, 2 time steps
 	if (theMotionPlan->wheelParamsStartIndex >= 0)
-		numDOFs += 2+2;
+		numDOFs += 3*2;
 	// size of robot state `q` as DOFs, 2 time steps
 	if (theMotionPlan->robotStatesParamsStartIndex >= 0)
 		numDOFs += theMotionPlan->robotRepresentation->getDimensionCount()*2;
