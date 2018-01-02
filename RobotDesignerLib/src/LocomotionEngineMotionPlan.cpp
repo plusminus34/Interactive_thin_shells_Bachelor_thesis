@@ -462,16 +462,13 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 
 	if (rbEndEffector.isWheel())
 	{
-		if (rbEndEffector.isWeldedWheel())
-				Logger::consolePrint("Warning: Welded wheels have not been tested!");
-
 		wheelToEEIndex[nWheels] = index;
 		eeToWheelIndex[index] = nWheels;
 		nWheels++;
 
 		eeTraj.isWheel = true;
-//		eeTraj.isPassiveWheel = rbEndEffector.isFreeToMoveWheel();
-		eeTraj.isFixedWheel = rbEndEffector.isFreeToMoveWheel();
+		eeTraj.isPassiveWheel = rbEndEffector.isFreeToMoveWheel();
+		eeTraj.isFixedWheel = rbEndEffector.isWeldedWheel();
 
 		// set wheel radius from rb properties
 		eeTraj.wheelRadius = rbEndEffector.featureSize;
