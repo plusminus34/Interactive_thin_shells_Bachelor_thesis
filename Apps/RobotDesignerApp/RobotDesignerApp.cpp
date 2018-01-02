@@ -282,6 +282,18 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 			moptWindow->locomotionManager->motionPlan->writeRobotMotionAnglesToFile("../out/tmpMPAngles.mpa");
 	}
 
+	if (key == GLFW_KEY_T && action == GLFW_PRESS) {
+		createRobotFromCurrentDesign();
+	}
+
+	if (key == GLFW_KEY_M && action == GLFW_PRESS) {
+		warmStartMOPT(true);
+	}
+
+	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
+		exportMeshes();
+	}
+
 	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
 		runOption = MOTION_PLAN_OPTIMIZATION;
 	if (key == GLFW_KEY_2 && action == GLFW_PRESS)
@@ -389,7 +401,24 @@ void RobotDesignerApp::loadToSim(bool initializeMOPT){
 //	CreateParametersDesignWindow();
 }
 
+
+void RobotDesignerApp::exportMeshes() {
+	if (!robot) {
+		Logger::consolePrint("A robot must first be loaded before meshes can be exported...\n");
+		return;
+	}
+	robot->renderMeshesToFile("..\\out\\robotMeshes.obj");
+}
+
 void RobotDesignerApp::warmStartMOPT(bool initializeMotionPlan) {
+	if (!robot) {
+		Logger::consolePrint("Please load a robot first...\n");
+		return;
+	}
+
+	if (!moptWindow || !simWindow)
+		return;
+
 	//reset the state of the robot, to make sure we're always starting from the same configuration
 	robot->setState(&startingRobotState);
 

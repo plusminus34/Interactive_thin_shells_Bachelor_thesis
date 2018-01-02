@@ -49,6 +49,26 @@ public:
 	*/
 	~Robot(void);
 
+	/**
+		This method renders all the rigid bodies as a set of vertices
+		and faces that will be appended to the passed OBJ file.
+
+		vertexIdxOffset indicates the index of the first vertex for this object, this makes it possible to render
+		multiple different meshes to the same OBJ file
+
+		Returns the number of vertices written to the file
+	*/
+	void renderMeshesToFile(char* fName) {
+		FILE* fp = fopen(fName, "w");
+		uint vertexIdxOffset = 0;
+
+		uint nbVerts = 0;
+		for (int i = 0; i<getRigidBodyCount(); i++)
+			nbVerts += getRigidBody(i)->renderToObjFile(fp, vertexIdxOffset + nbVerts);
+
+		fclose(fp);
+	}
+
 	
 	/**
 		This method is used to populate the relative orientation of the parent and child bodies of joint i.

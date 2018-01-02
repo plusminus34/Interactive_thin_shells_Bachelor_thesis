@@ -120,8 +120,6 @@ public:
 
 	void saveToRBSFile(const char* fName, Robot* templateRobot = NULL);
 
-	void exportMeshes();
-
 	// transform the child RMC to get a preview.
 	bool previewConnectRMCRobot(RMCPin* parentPin, RMCPin* childPin, RMCRobot* childRobot, bool rotationOnly);
 
