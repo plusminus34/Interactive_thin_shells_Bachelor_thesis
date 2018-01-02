@@ -118,9 +118,12 @@ public:
 	//returns the world coordinates for point p, which is specified in the local coordinates of rb (relative to its COM). I.e. p(q)
 	P3D getWorldCoordinatesFor(const P3D& p, RigidBody* rb);
 
+	//returns the world coordinates for vector b, which is specified in the local coordinates of rb
+	V3D getWorldCoordinatesFor(const V3D& v, RigidBody* rb);
+
 	//returns the world coordinates for point p, which is specified in the local coordinates of rb (relative to its COM). I.e. p(q)
 	template<class T>
-	Vector3T<T> getWorldCoordinatesForT(const Vector3T<T>& p, const RigidBody* rb, const VectorXT<T> &q) const
+	Vector3T<T> getWorldCoordinatesForPointT(const Vector3T<T>& p, const RigidBody* rb, const VectorXT<T> &q) const
 	{
 		Vector3T<T> offset(p);
 		int qIndex = 5;
@@ -141,6 +144,27 @@ public:
 
 		return (V3T<T>(getQAxis(0)) * q[0] + V3T<T>(getQAxis(1)) * q[1] + V3T<T>(getQAxis(2)) * q[2] + offset);
 	}
+
+	//returns the world coordinates for vector v, which is specified in the local coordinates of rb
+	template<class T>
+	Vector3T<T> getWorldCoordinatesForVectorT(const Vector3T<T>& v, const RigidBody* rb, const VectorXT<T> &q) const
+	{
+		Vector3T<T> theVector(v);
+		int qIndex = 5;
+		if (rb->pJoints.size() != 0) {
+			qIndex = jointCoordStartIndex[rb->pJoints[0]->jIndex] + jointCoordsDimSize[rb->pJoints[0]->jIndex] - 1;
+		}
+
+		//2 here is the index of the first translational DOF of the root
+		while (qIndex > 2) {
+			V3T<T> qAxis = getQAxis(qIndex);
+			theVector = rotateVec(theVector, q[qIndex], qAxis);
+			qIndex = qParentIndex[qIndex];
+		}
+
+		return theVector;
+	}
+
 
 	//returns the velocity (world coordinates) of the point p, which is specified in the local coordinates of rb (relative to its COM). I.e. p(q)
 	V3D getVelocityFor(const P3D& p, RigidBody* rb);
@@ -251,6 +275,25 @@ inline void testGeneralizedCoordinateRepresentation(Robot* robot) {
 		P3D wc2 = gcrrNew.getWorldCoordinatesFor(point, robot->getJoint(i)->child);
 		if (V3D(wc1, wc2).length() > TINY)
 			Logger::consolePrint("TESTING GENERALIZED COORDINATES: world coordinates of point on rigid body do not match up... error: %2.20lf\n", V3D(wc1, wc2).length());
+
+		wc1 = robot->getJoint(i)->parent->getWorldCoordinates(point);
+		wc2 = gcrrNew.getWorldCoordinatesFor(point, robot->getJoint(i)->parent);
+		if (V3D(wc1, wc2).length() > TINY)
+			Logger::consolePrint("TESTING GENERALIZED COORDINATES: world coordinates of point on rigid body do not match up... error: %2.20lf\n", V3D(wc1, wc2).length());
+
+
+		V3D vec = getRandomUnitVector() * 0.2;
+		V3D vc1 = robot->getJoint(i)->child->getWorldCoordinates(vec);
+		V3D vc2 = gcrrNew.getWorldCoordinatesFor(vec, robot->getJoint(i)->child);
+
+		if ((vc1 - vc2).length() > TINY)
+			Logger::consolePrint("TESTING GENERALIZED COORDINATES: world coordinates of vectors on rigid body do not match up... error: %2.20lf\n", (vc1 - vc2).length());
+
+		vc1 = robot->getJoint(i)->parent->getWorldCoordinates(vec);
+		vc2 = gcrrNew.getWorldCoordinatesFor(vec, robot->getJoint(i)->parent);
+
+		if ((vc1 - vc2).length() > TINY)
+			Logger::consolePrint("TESTING GENERALIZED COORDINATES: world coordinates of vectors on rigid body do not match up... error: %2.20lf\n", (vc1 - vc2).length());
 
 		V3D wv1 = robot->getJoint(i)->child->getAbsoluteVelocityForLocalPoint(point);
 		V3D wv2 = gcrrNew.getVelocityFor(point, robot->getJoint(i)->child);

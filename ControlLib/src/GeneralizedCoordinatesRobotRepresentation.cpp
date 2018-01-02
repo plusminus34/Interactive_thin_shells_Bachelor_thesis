@@ -445,7 +445,14 @@ void GeneralizedCoordinatesRobotRepresentation::projectWorldCoordsValuesIntoGene
 
 //returns the world coordinates for point p, which is specified in the local coordinates of rb (relative to its COM).
 P3D GeneralizedCoordinatesRobotRepresentation::getWorldCoordinatesFor(const P3D& p, RigidBody* rb) {
-	return P3D(getWorldCoordinatesForT(p, rb, q));
+	return P3D(getWorldCoordinatesForPointT(p, rb, q));
+}
+
+//TODO: we will also want derivatives of v(q) (vector to world) e.g. dv/dq and d2v/dqq2s
+
+//returns the world coordinates for vector b, which is specified in the local coordinates of rb
+V3D GeneralizedCoordinatesRobotRepresentation::getWorldCoordinatesFor(const V3D& v, RigidBody* rb) {
+	return V3D(getWorldCoordinatesForVectorT(v, rb, q));
 }
 
 //returns the velocity (world coordinates) of the point p, which is specified in the local coordinates of rb (relative to its COM). I.e. p(q)
