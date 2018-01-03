@@ -194,6 +194,31 @@ void Trajectory3Dplus::addKnotBack(P3D const & pt)
 }
 
 
+void Trajectory3Dplus::removeKnotInteractive(int knotID)
+{
+	if(values.size() > 2 && knotID >= 0 && knotID < values.size()) {
+		removeKnot(knotID);
+		setTValueToLength();
+	}
+}
+
+int Trajectory3Dplus::getSelectedKnotID(Ray const & ray){
+	int ID = -1;
+	double dis = 2e9;
+	for (uint i = 0; i < values.size(); i++) {
+		P3D tp = values[i];
+		tp.z() = 0;
+		double tDis = ray.getDistanceToPoint(tp) / (sqrt((tp-ray.origin).dot(tp - ray.origin)));
+		//Logger::consolePrint("%lf %lf %lf %lf\n", tp.x(), tp.y(), tp.z(), tDis);
+		if (tDis < 0.01 && tDis < dis) {
+			dis = tDis;
+			ID = i;
+		}
+	}
+	return ID;
+}
+
+
 
 void Trajectory3Dplus::draw(V3D lineColor, int lineWidth, V3D knotColor, double knotSize) {
 	
@@ -201,32 +226,13 @@ void Trajectory3Dplus::draw(V3D lineColor, int lineWidth, V3D knotColor, double 
 	if(lineWidth > 0) {
 		drawPointTrajectory(values, lineColor, lineWidth);
 	}
+	// draw points
 	if(knotSize > 0.0) {
 		glColor3d(knotColor(0), knotColor(1), knotColor(2));
 		for(P3D & pt : values) {
 			drawSphere(pt, knotSize);
 		}	
 	}
-
-	// draw points
-	/*
-	glColor3d(0, 0.8, 0);
-	for(P3D & pt : values) {
-		drawSphere(pt, 0.005);
-	}
-	*/
-
-	/*
-	// draw Spline
-	if(discreteSpline != NULL) {
-		drawPointTrajectory(discreteSpline->values, V3D(0.0, 0.0, 0.0), 2);
-		glColor3d(1.0, 1.0, 1.0);
-		for(P3D & pt : discreteSpline->values) {
-			drawSphere(pt, 0.003);
-		}	
-	}
-	*/
-
 }
 
 

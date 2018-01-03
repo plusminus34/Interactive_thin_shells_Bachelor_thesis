@@ -58,6 +58,8 @@ public:
 	bool checkDerivatives = false;
 
 	// states
+	enum InteractionObject {MOUNTS, OBJECTIVE};
+	InteractionObject interactionObject = OBJECTIVE;
 	enum InteractionMode {VIEW, SELECT, DRAG, DRAW};
 	InteractionMode interactionMode = VIEW;
 	enum ToolMode {PICK_NODE, BRUSH};
@@ -73,6 +75,7 @@ public:
 	Ray lastMovedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
 	Ray currentRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
 	int selectedNodeID = -1;
+	int selectedKnotID = -1;
 	double shearModulus = 50, bulkModulus = 50;
 	bool autoUpdateShearModulusAndBulkModulus = false;
 
@@ -134,6 +137,7 @@ public:
 	virtual void saveFile(const char* fName);
 	virtual void loadFile(const char* fName);
 
+	void pushInputTrajectory(Trajectory3Dplus & trajInput);
 
 	void initInteractionMenu(nanogui::FormHelper* menu);
 	void updateMountSelectionBox();
