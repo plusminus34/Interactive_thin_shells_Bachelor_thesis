@@ -29,9 +29,9 @@ private:
 						   const T &speedj, const T &speedjp1, double c,
 						   double weight) {
 
-		Vector3T<T> wheelAxisWorld = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(wheelAxisLocal, axisYaw, (T)0.5*(alphaj+alphajp1), axisTilt, (T)0.5*(betaj+betajp1));
+		Vector3T<T> wheelAxisWorld = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(wheelAxisLocal, axisYaw, (T)0.5*(alphaj+alphajp1), axisTilt, (T)0.5*(betaj+betajp1));
 
-		Vector3T<T> rhoWorld = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(rhoLocal, axisYaw, (T)0.5*(alphaj+alphajp1), axisTilt, (T)0.5*(betaj+betajp1));
+		Vector3T<T> rhoWorld = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(rhoLocal, axisYaw, (T)0.5*(alphaj+alphajp1), axisTilt, (T)0.5*(betaj+betajp1));
 		// interpolate (average) wheel speed
 		Vector3T<T> omega = wheelAxisWorld*(speedj+speedjp1)*0.5;
 		Vector3T<T> constraint = computeConstraintWheel(eePosjp1, eePosj, dt, omega, rhoWorld);

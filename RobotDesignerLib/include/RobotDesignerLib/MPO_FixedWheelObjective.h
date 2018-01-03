@@ -46,9 +46,9 @@ private:
 		Vector3T<T> rhoRobotj = theMotionPlan->robotRepresentation->getWorldCoordinatesForVectorT(rhoLocal, rb, qj);
 		Vector3T<T> rhoRobotjp = theMotionPlan->robotRepresentation->getWorldCoordinatesForVectorT(rhoLocal, rb, qjp);
 		// wheel axis from wheel angles
-		Vector3T<T> rhoWheelj = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(rhoLocal, yawAxis, yawAnglej, tiltAxis, tiltAnglej);
+		Vector3T<T> rhoWheelj = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(rhoLocal, yawAxis, yawAnglej, tiltAxis, tiltAnglej);
 		Vector3T<T> rhoWheelLocalRotjp = rotateVec(rhoLocal, (wheelSpeedj+wheelSpeedjp)*(T)0.5*dt, wheelAxisLocal);
-		Vector3T<T> rhoWheelRotjp = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(rhoWheelLocalRotjp, yawAxis, yawAnglejp, tiltAxis, tiltAnglejp);
+		Vector3T<T> rhoWheelRotjp = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(rhoWheelLocalRotjp, yawAxis, yawAnglejp, tiltAxis, tiltAnglejp);
 		Vector3T<T> err = rhoRobotj.cross(rhoRobotjp) - rhoWheelj.cross(rhoWheelRotjp);
 
 		return (T)0.5 * err.squaredNorm() * (T)weight;

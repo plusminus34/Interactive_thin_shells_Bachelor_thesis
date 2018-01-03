@@ -62,7 +62,7 @@ P3D LocomotionEngine_EndEffectorTrajectory::getWheelCenterPositionAt(double t) c
 	V3D rho = getWheelRhoLocal();
 	double yawAngle = getWheelYawAngleAt(t);
 	double tiltAngle = getWheelTiltAngleAt(t);
-	rho = rotateVectorUsingWheelAngles(rho, wheelYawAxis, yawAngle, wheelTiltAxis, tiltAngle);
+	rho = rotVecByYawTilt(rho, wheelYawAxis, yawAngle, wheelTiltAxis, tiltAngle);
 	return getEEPositionAt(t) + rho;
 }
 
@@ -91,7 +91,7 @@ double LocomotionEngine_EndEffectorTrajectory::getWheelSpeedAt(double t) const
 	return traj.evaluate_linear(t);
 }
 
-Vector3d LocomotionEngine_EndEffectorTrajectory::drotateVectorUsingWheelAngles_dTiltAngle(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta)
+Vector3d LocomotionEngine_EndEffectorTrajectory::drotVecByYawTilt_dTilt(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta)
 {
 	// First tilt the axis ...
 	Vector3d axisRot = drotateVec_dalpha(axis, beta, axisTilt);
@@ -112,7 +112,7 @@ Vector3d LocomotionEngine_EndEffectorTrajectory::drotateVectorUsingWheelAngles_d
 	return axisRot;
 }
 
-Vector3d LocomotionEngine_EndEffectorTrajectory::drotateVectorUsingWheelAngles_dYawAngle(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta)
+Vector3d LocomotionEngine_EndEffectorTrajectory::drotVecByYawTilt_dYaw(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta)
 {
 	// First tilt the axis ...
 	Vector3d axisRot = rotateVec(axis, beta, axisTilt);
@@ -553,7 +553,7 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 		eeTraj.wheelYawAngle = DynamicArray<double>(nSamplingPoints, yawAngle);
 		eeTraj.wheelTiltAngle = DynamicArray<double>(nSamplingPoints, tiltAngle);
 
-		eeWorldCoords -= LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(eeTraj.getWheelRhoLocal(), eeTraj.wheelYawAxis, yawAngle, eeTraj.wheelTiltAxis, tiltAngle);
+		eeWorldCoords -= LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(eeTraj.getWheelRhoLocal(), eeTraj.wheelYawAxis, yawAngle, eeTraj.wheelTiltAxis, tiltAngle);
 
 //		std::cout << "eeWorldCoors = " << eeWorldCoords.transpose() << std::endl;
 
@@ -1309,7 +1309,7 @@ P3D LocomotionEngineMotionPlan::getCenterOfRotationAt(double t, Eigen::VectorXd 
 		V3D tiltAxis = ee.wheelTiltAxis;
 		P3D p3 = ee.getEEPositionAt(t);
 
-		V3D v3 = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(wheelAxis, yawAxis, alpha, tiltAxis, beta);
+		V3D v3 = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(wheelAxis, yawAxis, alpha, tiltAxis, beta);
 
 		Eigen::Vector3d p = p3;
 		p[1] = 0;

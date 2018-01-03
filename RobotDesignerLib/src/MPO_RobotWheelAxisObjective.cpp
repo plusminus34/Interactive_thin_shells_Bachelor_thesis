@@ -67,7 +67,7 @@ void MPO_RobotWheelAxisObjective::addGradientTo(dVector& grad, const dVector& p)
 				// wheel axis from robot
 				Vector3d wheelAxisRobot = theMotionPlan->robotRepresentation->getWorldCoordinatesForVectorT(wheelAxisLocal, ee.endEffectorRB, q);
 				// wheel axis from wheel angles
-				Vector3d wheelAxisWorld = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
+				Vector3d wheelAxisWorld = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
 				Vector3d err = wheelAxisWorld - wheelAxisRobot;
 
 				//compute the gradient with respect to the robot q's
@@ -78,10 +78,10 @@ void MPO_RobotWheelAxisObjective::addGradientTo(dVector& grad, const dVector& p)
 				grad.segment(ind, dvdq.cols()) -= weight*dvdq.transpose()*err;
 
 				//compute the gradient with respect yaw and tilt angle
-				Vector3d drhoRotdYawAngle = LocomotionEngine_EndEffectorTrajectory::drotateVectorUsingWheelAngles_dYawAngle(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
+				Vector3d drhoRotdYawAngle = LocomotionEngine_EndEffectorTrajectory::drotVecByYawTilt_dYaw(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
 				grad(theMotionPlan->getWheelYawAngleIndex(i, j)) += weight*drhoRotdYawAngle.transpose()*err;
 
-				Vector3d drhoRotdTiltAngle = LocomotionEngine_EndEffectorTrajectory::drotateVectorUsingWheelAngles_dTiltAngle(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
+				Vector3d drhoRotdTiltAngle = LocomotionEngine_EndEffectorTrajectory::drotVecByYawTilt_dTilt(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
 				grad(theMotionPlan->getWheelTiltAngleIndex(i, j)) += weight*drhoRotdTiltAngle.transpose()*err;
 			}
 		}

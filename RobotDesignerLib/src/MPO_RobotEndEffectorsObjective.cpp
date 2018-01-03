@@ -66,7 +66,7 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 				if (theMotionPlan->feetPositionsParamsStartIndex < 0 || theMotionPlan->wheelParamsStartIndex < 0)
 					continue;
 				
-				Vector3d rhoRot = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
+				Vector3d rhoRot = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
 				Vector3d robotEEPos = theMotionPlan->robotRepresentation->getWorldCoordinatesForPointT(ee.endEffectorLocalCoords, ee.endEffectorRB, q_t);
 				Vector3d err(robotEEPos-ee.EEPos[j] - rhoRot);
 				//compute the gradient with respect to the feet locations
@@ -82,10 +82,10 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 				grad.segment(ind, dEndEffectordq.cols()) += weight*dEndEffectordq.transpose()*err;
 
 				//compute the gradient with respect yaw and tilt angle
-				Vector3d drhoRotdYawAngle = LocomotionEngine_EndEffectorTrajectory::drotateVectorUsingWheelAngles_dYawAngle(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
+				Vector3d drhoRotdYawAngle = LocomotionEngine_EndEffectorTrajectory::drotVecByYawTilt_dYaw(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
 				grad(theMotionPlan->getWheelYawAngleIndex(i, j)) -= weight*drhoRotdYawAngle.transpose()*err;
 
-				Vector3d drhoRotdTiltAngle = LocomotionEngine_EndEffectorTrajectory::drotateVectorUsingWheelAngles_dTiltAngle(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
+				Vector3d drhoRotdTiltAngle = LocomotionEngine_EndEffectorTrajectory::drotVecByYawTilt_dTilt(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
 				grad(theMotionPlan->getWheelTiltAngleIndex(i, j)) -= weight*drhoRotdTiltAngle.transpose()*err;
 			}
 			else
@@ -131,10 +131,13 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 		for (int i=0;i<nLimbs;i++){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 
-			V3T<ScalarDiffDiff> eePosLocal = ee.endEffectorLocalCoords;
-			V3T<ScalarDiffDiff> eePos = ee.EEPos[j];
-
 			if (ee.isWheel) {
+				V3D rho = ee.getWheelRhoLocal();
+				V3D yawAxis = ee.wheelYawAxis;
+				V3D tiltAxis = ee.wheelTiltAxis;
+				double yawAngle = ee.wheelYawAngle[j];
+				double tiltAngle = ee.wheelTiltAngle[j];
+
 				//compute the gradient with respect to the feet locations
 				if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
 					int I = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
@@ -147,15 +150,20 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 					theMotionPlan->robotRepresentation->compute_dpdq(ee.endEffectorLocalCoords, ee.endEffectorRB, dEndEffectordq);
 					int I = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim;
 
-					////////////  Taken out for majorization ///////////////////
-					// 					for (int k = 0; k < theMotionPlan->robotRepresentation->getDimensionCount(); k++) {
-					// 						bool hasNonZeros = theMotionPlan->robotRepresentation->compute_ddpdq_dqi(ee.endEffectorLocalCoords, ee.endEffectorRB, ddEndEffectordq_dqi, k);
-					// 						if (hasNonZeros == false) continue;
-					// 						dVector V = ddEndEffectordq_dqi.transpose()*err;
-					// 						for (int l = k; l < theMotionPlan->robotRepresentation->getDimensionCount(); l++)
-					// 								ADD_HES_ELEMENT(hessianEntries, I + k, I + l, V(l), weight);
-					// 					}
-					///////////////////////////////////////////////////////////
+					if (!hackHessian) {
+
+						for (int k = 0; k < theMotionPlan->robotRepresentation->getDimensionCount(); k++) {
+
+							Vector3d rhoRot = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
+							Vector3d robotEEPos = theMotionPlan->robotRepresentation->getWorldCoordinatesForPointT(ee.endEffectorLocalCoords, ee.endEffectorRB, q_t);
+							Vector3d err(robotEEPos - ee.EEPos[j] - rhoRot);
+							bool hasNonZeros = theMotionPlan->robotRepresentation->compute_ddpdq_dqi(ee.endEffectorLocalCoords, ee.endEffectorRB, ddEndEffectordq_dqi, k);
+							if (hasNonZeros == false) continue;
+							dVector V = ddEndEffectordq_dqi.transpose()*err;
+							for (int l = k; l < theMotionPlan->robotRepresentation->getDimensionCount(); l++)
+								ADD_HES_ELEMENT(hessianEntries, I + k, I + l, V(l), weight);
+						}
+					}
 
 					//now add the outer product of the jacobians...
 					MatrixNxM outerProd = dEndEffectordq.row(0).transpose()*dEndEffectordq.row(0) +
@@ -177,6 +185,21 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 							ADD_HES_ELEMENT(hessianEntries, I + 1, J, -dEndEffectordq(1, k), weight);
 							ADD_HES_ELEMENT(hessianEntries, I + 2, J, -dEndEffectordq(2, k), weight);
 						}
+					}
+
+					// Angles part
+					if (theMotionPlan->wheelParamsStartIndex >= 0)
+					{
+						Vector3d dYaw= LocomotionEngine_EndEffectorTrajectory::drotVecByYawTilt_dYaw(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
+						Vector3d dTilt = LocomotionEngine_EndEffectorTrajectory::drotVecByYawTilt_dTilt(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
+
+//						grad(theMotionPlan->getWheelYawAngleIndex(i, j)) -= weight*drhoRotdYawAngle.transpose()*err;
+
+						int Iyaw = theMotionPlan->getWheelYawAngleIndex(i, j);
+						int Itilt = theMotionPlan->getWheelTiltAngleIndex(i, j);
+						ADD_HES_ELEMENT(hessianEntries, Iyaw, Iyaw, dYaw.dot(dYaw), weight);
+						ADD_HES_ELEMENT(hessianEntries, Iyaw, Itilt, dYaw.dot(dTilt), weight);
+						ADD_HES_ELEMENT(hessianEntries, Itilt, Itilt, dTilt.dot(dTilt), weight);
 					}
 				}
 			}

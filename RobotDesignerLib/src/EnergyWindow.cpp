@@ -50,8 +50,9 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 			});
 			buttonHideGroup->setFontSize(14);
 
-			new Label(energyPanel, "", "");
-			new Label(energyPanel, "", "");
+
+			new Label(energyPanel, "Is Active", "sans");
+			new Label(energyPanel, "Hack Hessian", "sans");
 			new Label(energyPanel, "", "");
 			new Label(energyPanel, "", "");
 			new Label(energyPanel, "", "");
