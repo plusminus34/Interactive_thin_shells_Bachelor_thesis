@@ -18,6 +18,7 @@
 
 #include "RotationMount.h"
 #include "MountedPointSpring2D.h"
+#include "MatchScaledTrajObjective.h"
 
 #define EDIT_BOUNDARY_CONDITIONS
 
@@ -39,7 +40,7 @@ BenderApp::BenderApp()
 	femMesh->addGravityForces(V3D(0, 0, 0));
 
 
-	// set some curve to "uppermost" column
+	// set some curve as objective to "uppermost" column
 	/*
 	{
 		auto curve_normalized = [](double z) -> double 
@@ -66,10 +67,23 @@ BenderApp::BenderApp()
 	*/
 
 	// draw some target trjectory
-	targetTrajectory.addKnotInteractive(P3D(-1.0, 0.2, 0.0));
-	targetTrajectory.addKnotInteractive(P3D( 0.0, 0.4, 0.0));
-	targetTrajectory.addKnotInteractive(P3D( 1.0, 0.2, 0.0));
+	targetTrajectory_input.addKnotBack(P3D(-1.0, 0.2, 0.0));
+	targetTrajectory_input.addKnotBack(P3D( 0.0, 0.4, 0.0));
+	targetTrajectory_input.addKnotBack(P3D( 1.0, 0.2, 0.0));
 
+	targetTrajectory_input.createDiscreteSpline(nRows, targetTrajectory);
+	targetTrajectory.setTValueToLength();
+
+	// add a fiber in Mesh to match
+	matchedFiber.resize(0);
+	for(int i = 0; i < nRows; ++i) {
+		int id = i*nCols + nCols-1;
+		matchedFiber.push_back(femMesh->nodes[id]);
+	}
+	//matchedTrajectory.createFromNodes(matchedFiber, femMesh->x);
+
+	// add a "MatchScaledTrajObjective"
+	femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory));
 
 
 	showGroundPlane = false;
@@ -824,7 +838,20 @@ void BenderApp::drawScene() {
 	glEnd();
 
 	// draw target trajectory
-	targetTrajectory.draw();
+	Trajectory3Dplus targetTrajectoryDiscreteSpline;
+	targetTrajectory.createDiscreteSpline(60, targetTrajectoryDiscreteSpline);
+
+	targetTrajectory_input        .draw(V3D(0.3, 0.3, 0.3), 2, V3D(0, 0.8, 0), 0.005);
+
+	targetTrajectory              .draw(V3D(0.3, 0.3, 0.3), 2, V3D(0, 0.8, 0), -0.003);
+	targetTrajectoryDiscreteSpline.draw(V3D(0.0, 0.0, 0.0), 2, V3D(1.0, 1.0, 1.0), -0.003);
+
+	matchedTrajectory.createFromNodes(matchedFiber, femMesh->x);
+	matchedTrajectory             .draw(V3D(0.3, 0.3, 0.3), 2, V3D(0, 0.8, 0), -1.0);
+	
+	// draw objective
+	dynamic_cast<MatchScaledTrajObjective *>(femMesh->objectives[0])->draw(femMesh->x);
+
 }
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function

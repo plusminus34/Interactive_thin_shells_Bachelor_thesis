@@ -165,7 +165,7 @@ public:
 	/**
 		Evaluate using catmull rom interpolation
 	*/
-	T evaluate_catmull_rom(double t, bool equalEndpointSlopes = true){
+	T evaluate_catmull_rom(double t, bool equalEndpointSlopes = true) {
 		int size = (int)tValues.size();
 		if (t<=tValues[0]) return values[0];
 		if (t>=tValues[size-1])	return values[size-1];

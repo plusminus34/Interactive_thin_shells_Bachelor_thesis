@@ -120,7 +120,7 @@ void BenderSimulationMesh2D::clearObjectives()
 double BenderSimulationMesh2D::computeO()
 {
 	double o = 0;
-	for(MeshObjective const * obj : objectives)
+	for(MeshObjective * obj : objectives)
 	{
 		obj->addO(x, X, o);
 	}
@@ -129,7 +129,7 @@ double BenderSimulationMesh2D::computeO()
 
 double BenderSimulationMesh2D::computeOofx(dVector const & x_in) {
 	double o = 0;
-	for(MeshObjective const * obj : objectives)
+	for(MeshObjective * obj : objectives)
 	{
 		obj->addO(x_in, X, o);
 	}
@@ -142,7 +142,7 @@ void BenderSimulationMesh2D::computeDoDx(dVector & dodx)
 {
 	dodx.resize(x.size());
 	dodx.setZero();
-	for(MeshObjective const * obj : objectives)
+	for(MeshObjective * obj : objectives)
 	{
 		obj->addDoDx(x, X, dodx);
 	}
@@ -153,7 +153,7 @@ double BenderSimulationMesh2D::computeTargetPositionError()
 {
 	double e = 0;
 	int n_obj = 0;
-	for(MeshObjective const * obj : objectives)
+	for(MeshObjective * obj : objectives)
 	{
 		obj->addError(x, e);
 		++n_obj;
@@ -168,7 +168,7 @@ void BenderSimulationMesh2D::drawSimulationMesh()
 {
 	SimulationMesh::drawSimulationMesh();
 
-	for(MeshObjective * obj : objectives) {
-		dynamic_cast<NodePositionObjective *>(obj)->draw(x);
-	}
+	//for(MeshObjective * obj : objectives) {
+	//	dynamic_cast<NodePositionObjective *>(obj)->draw(x);
+	//}
 }

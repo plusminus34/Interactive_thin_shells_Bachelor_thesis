@@ -14,14 +14,14 @@ NodePositionObjective::NodePositionObjective(Node * node, P3D const & targetPosi
 }
 
 
-void NodePositionObjective::addO(const dVector & x, const dVector & X, double & o) const
+void NodePositionObjective::addO(const dVector & x, const dVector & X, double & o)
 {
 	V3D d = node->getCoordinates(x) - targetPosition;
 	o += 0.5 * d.dot(d);
 }
 
 
-void NodePositionObjective::addDoDx(const dVector & x, const dVector & X, dVector & dodx) const
+void NodePositionObjective::addDoDx(const dVector & x, const dVector & X, dVector & dodx)
 {
 	for(int i = 0; i < node->dimSize; ++i) {
 		dodx[node->dataStartIndex + i] += x[node->dataStartIndex + i] - targetPosition[i];
@@ -29,7 +29,7 @@ void NodePositionObjective::addDoDx(const dVector & x, const dVector & X, dVecto
 }
 
 
-void NodePositionObjective::addError(const dVector & x, double & e) const
+void NodePositionObjective::addError(const dVector & x, double & e)
 {
 	V3D d = node->getCoordinates(x) - targetPosition;
 	e += sqrt(d.dot(d));

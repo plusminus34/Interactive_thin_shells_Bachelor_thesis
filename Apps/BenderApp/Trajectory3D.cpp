@@ -1,15 +1,63 @@
 
 
 #include <GUILib/GLUtils.h>
+#include <FEMSimLib/Node.h>
 
 #include "Trajectory3D.h"
 
 
 
-
+/*
 Trajectory3Dplus::~Trajectory3Dplus() {
-		delete discreteSpline;
+	delete discreteSpline;
 }
+*/
+
+
+void Trajectory3Dplus::createFromNodes(DynamicArray<Node *> const & nodes, dVector const & x)
+{
+	int n = nodes.size();
+	values.resize(n);
+
+	for(int i = 0; i < n; ++i) {
+		values[i] = nodes[i]->getCoordinates(x);
+	}
+
+	setTValueToLength();
+}
+
+V3D Trajectory3Dplus::evaluate_gradient_catmull_rom(double t, bool equalEndpointSlopes)
+{
+	using T = V3D;
+
+	int size = (int)tValues.size();
+	if (t<=tValues[0]) return values[0];
+	if (t>=tValues[size-1])	return values[size-1];
+	int index = getFirstLargerIndex(t);
+
+	//now that we found the interval, get a value that indicates how far we are along it
+	t = (t-tValues[index-1]) / (tValues[index]-tValues[index-1]);
+
+	//approximate the derivatives at the two ends
+
+	T p1 = values[index-1];
+	T p2 = values[index];
+
+	T m1 = getSlopeEstimateAtKnot(index-1, equalEndpointSlopes) * (tValues[index]-tValues[index-1]);
+	T m2 = getSlopeEstimateAtKnot(index, equalEndpointSlopes) * (tValues[index]-tValues[index-1]);
+
+	double t2;//, t3;
+	t2 = t*t;
+	//t3 = t2*t;
+
+	// compute the gradient (derivative of the catmull rom interpolation performed in evaluate_catmull_rom() of base class
+	// value = p1*(2*t3-3*t2+1) + m1*(t3  -2*t2+t) + p2*(-2*t3+3*t2) + m2*(t3  -  t2);
+	T   grad = p1*(6*t2-6*t   ) + m1*(3*t2-4*t +1) + p2*(-6*t2+6*t ) + m2*(3*t2-2*t );
+	
+	return(grad);
+
+}
+
 
 
 void Trajectory3Dplus::getMinDistanceLinear(P3D const & pt, double & d, int & i, bool & within_segment) const
@@ -62,7 +110,7 @@ void Trajectory3Dplus::getMinDistanceLinear(P3D const & pt, double & d, int & i,
 }
 
 
-void Trajectory3Dplus::updateTvalues() {
+void Trajectory3Dplus::setTValueToLength() {
 	
 	tValues.resize(values.size());
 
@@ -76,6 +124,7 @@ void Trajectory3Dplus::updateTvalues() {
 	}
 }
 
+/*
 void Trajectory3Dplus::updateDiscreteSpline() {
 
 	if(discreteSpline == NULL) {
@@ -85,7 +134,7 @@ void Trajectory3Dplus::updateDiscreteSpline() {
 	createDiscreteSpline(50, *discreteSpline);
 
 }
-
+*/
 
 void Trajectory3Dplus::createDiscreteSpline(int n, Trajectory3Dplus & spline) {
 	
@@ -97,12 +146,12 @@ void Trajectory3Dplus::createDiscreteSpline(int n, Trajectory3Dplus & spline) {
 	spline.values.resize(n);
 	spline.tValues.resize(n);
 	// first and last knot of spline
-	spline.tValues.front() = this->getMinPosition();
-	spline.tValues.back() = this->getMaxPosition();
-	spline.values.front() = this->values.front();
-	spline.values.back() = this->values.back();
+	//spline.tValues.front() = this->getMinPosition();
+	//spline.tValues.back() = this->getMaxPosition();
+	//spline.values.front() = this->values.front();
+	//spline.values.back() = this->values.back();
 	// rest
-	for(int i = 1; i < n-1; ++i) {
+	for(int i = 0; i < n; ++i) {
 		spline.tValues[i] = this->getMinPosition() + dt * static_cast<double>(i);
 		spline.values[i] = this->evaluate_catmull_rom(spline.tValues[i], false);
 	}
@@ -132,17 +181,32 @@ void Trajectory3Dplus::addKnotInteractive(P3D const & pt) {
 		values.push_back(pt);
 	}
 
-	updateTvalues();
-	updateDiscreteSpline();
+	setTValueToLength();
+	//updateDiscreteSpline();
 
+}
+
+void Trajectory3Dplus::addKnotBack(P3D const & pt)
+{
+	values.push_back(pt);
+
+	setTValueToLength();
 }
 
 
 
-void Trajectory3Dplus::draw() {
+void Trajectory3Dplus::draw(V3D lineColor, int lineWidth, V3D knotColor, double knotSize) {
 	
 	// draw line
-	drawPointTrajectory(values, V3D(0.3, 0.3, 0.3), 1);
+	if(lineWidth > 0) {
+		drawPointTrajectory(values, lineColor, lineWidth);
+	}
+	if(knotSize > 0.0) {
+		glColor3d(knotColor(0), knotColor(1), knotColor(2));
+		for(P3D & pt : values) {
+			drawSphere(pt, knotSize);
+		}	
+	}
 
 	// draw points
 	/*
@@ -152,12 +216,49 @@ void Trajectory3Dplus::draw() {
 	}
 	*/
 
+	/*
 	// draw Spline
 	if(discreteSpline != NULL) {
-		drawPointTrajectory(discreteSpline->values, V3D(0.0, 0.0, 0.0), 1);
+		drawPointTrajectory(discreteSpline->values, V3D(0.0, 0.0, 0.0), 2);
+		glColor3d(1.0, 1.0, 1.0);
+		for(P3D & pt : discreteSpline->values) {
+			drawSphere(pt, 0.003);
+		}	
 	}
-	glColor3d(1.0, 1.0, 1.0);
-	for(P3D & pt : discreteSpline->values) {
-		drawSphere(pt, 0.003);
+	*/
+
+}
+
+
+
+double Trajectory3Dplus::distanceSquaredFromTo(Trajectory3Dplus const & traj1, Trajectory3Dplus const & traj2)
+{
+
+	int n = traj1.values.size();
+	assert(n > 1);
+
+	double d2 = 0.0;
+	double w_sum = 0.0;
+
+	for(int i = 0; i < n; ++i) {
+		// find distance
+		double d;
+		int i_traj2;
+		bool within_segment;
+		traj2.getMinDistanceLinear(traj1.values[i], d, i_traj2, within_segment);
+		// find weight
+		double w;
+		if(i == 0)        {w = traj1.tValues[1] - traj1.tValues[0];}
+		else if(i == n-1) {w = traj1.tValues[n-1] - traj1.tValues[n-2];}
+		else {
+			w = 0.5*(traj1.tValues[i+1] - traj1.tValues[i-1]);
+		}
+		// sum
+		d2 += d*d * w;
+		w_sum += w;
 	}
+
+	d2 /= w_sum;
+
+	return(d2);
 }

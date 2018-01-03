@@ -16,12 +16,19 @@
  */
 class BenderApp : public GLApplication {
 public:
+	// Geometry & physics
 	BenderSimulationMesh2D* femMesh;
 
+	Trajectory3Dplus targetTrajectory_input;
 	Trajectory3Dplus targetTrajectory;
+	Trajectory3Dplus matchedTrajectory;
+	DynamicArray<Node * > matchedFiber;
+
 	
+	// Optimization Parameters
 	dVector xi;
 
+	// helpers for optimization
 	dVector dOdxi;
 	dVector dOdx;
 	std::vector<dVector> deltaFdeltaxi;
@@ -29,6 +36,7 @@ public:
 
 	dVector x_approx;
 
+	// Optimization Algorithm
 	std::vector<GradientBasedFunctionMinimizer*> minimizers;
 	GradientBasedFunctionMinimizer * minimizer;
 	NodePositionObjectiveFunction * objectiveFunction;
@@ -42,27 +50,12 @@ public:
 	double o_last = 0.0;	// last result for mesh objective function
 	double e_last = 0.0; // last result for error of mesh objective
 
-	// state of the app
+	// state of the app 
 	bool computeStaticSolution = true;
 	bool optimizeObjective = true;
 	bool approxLineSearch = true;
 
 	bool checkDerivatives = false;
-
-	double simTimeStep = 1/100.0;
-	double simulationTime;
-	double maxRunningTime;
-
-	Ray lastClickedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
-	Ray lastMovedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
-	Ray currentRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
-	int selectedNodeID = -1;
-	double shearModulus = 50, bulkModulus = 50;
-	bool autoUpdateShearModulusAndBulkModulus = false;
-
-	// Interaction Menu
-	//nanogui::Screen *interactionMenuScreen = nullptr;
-	//nanogui::FormHelper *interactionMenu = nullptr;
 
 	// states
 	enum InteractionMode {VIEW, SELECT, DRAG, DRAW};
@@ -70,10 +63,23 @@ public:
 	enum ToolMode {PICK_NODE, BRUSH};
 	ToolMode toolMode = PICK_NODE;
 
+	// app parameters
+	double simTimeStep = 1/100.0;
+	double simulationTime;
+	double maxRunningTime;
+
+	// Interaction
+	Ray lastClickedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
+	Ray lastMovedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
+	Ray currentRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
+	int selectedNodeID = -1;
+	double shearModulus = 50, bulkModulus = 50;
+	bool autoUpdateShearModulusAndBulkModulus = false;
+
+
 	// menu elements
 	nanogui::ComboBox * comboBoxMountSelection;
 	std::array<nanogui::Button *, 4> buttonsInteractionMode;
-
 	nanogui::ComboBox * comboBoxOptimizationAlgorithm;
 
 public:
