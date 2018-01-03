@@ -178,6 +178,8 @@ public:
 	//computes the jacobian dp/dq that tells you how the world coordinates of p change with q. p is expressed in the local coordinates of rb
 	void compute_dpdq(const P3D& p, RigidBody* rb, MatrixNxM &dpdq);
 
+	void compute_dvdq(const V3D& v, RigidBody* rb, MatrixNxM &dvdq);
+
 
 	//computes dpdq_dot, dpdq_dot = sigma(dpdq_dqi * qiDot) : JDot = dJ/dq * qDot
 	void compute_dpdq_dot(const P3D& p, RigidBody* rb, MatrixNxM &dpdq_dot);
@@ -188,7 +190,11 @@ public:
 	//estimates the jacobian dp/dq using finite differences
 	void estimate_linear_jacobian(const P3D& p, RigidBody* rb, MatrixNxM &dpdq);
 
+	//estimates the jacobian dv/dq using finite differences
+	void estimate_linear_jacobian(const V3D& v, RigidBody* rb, MatrixNxM &dvdq);
+
 	bool test_linear_jacobian(const P3D& p, RigidBody* rb);
+	bool test_linear_jacobian(const V3D& v, RigidBody* rb);
 
 	//computes the angular part of the jacobian, that, roughly speaking, relates changes in the orientation of a link to changes in q
 	void compute_angular_jacobian(RigidBody* rb, MatrixNxM &dRdq);
@@ -201,10 +207,17 @@ public:
 	//computes the matrix that tells you how the jacobian dp/dq changes with respect to q_i. Returns true if it contains non-zero elements, false otherwise
 	bool compute_ddpdq_dqi(const P3D& p, RigidBody* rb, MatrixNxM &ddpdq_dqi, int q_i);
 
+	//computes the matrix that tells you how the jacobian dv/dq changes with respect to q_i. Returns true if it contains non-zero elements, false otherwise
+	bool compute_ddvdq_dqi(const V3D& v, RigidBody* rb, MatrixNxM &ddvdq_dqi, int q_i);
+
 	//estimates the change of dp/dq with respect to q_i
 	void estimate_ddpdq_dqi(const P3D& p, RigidBody* rb, MatrixNxM &ddpdq_dqi, int q_i);
 
+	//estimates the change of dv/dq with respect to q_i
+	void estimate_ddvdq_dqi(const V3D& v, RigidBody* rb, MatrixNxM &ddvdq_dqi, int q_i);
+
 	bool test_linear_jacobian_derivatives(const P3D& p, RigidBody* rb);
+	bool test_linear_jacobian_derivatives(const V3D& p, RigidBody* rb);
 
 	//computes the d(Jw)/dqi. Returns true if it contains non-zero elements, false otherwise
 	bool compute_dangular_jacobian_dqi(RigidBody* rb, MatrixNxM &ddRdqdqi, int q_i);
@@ -317,12 +330,30 @@ inline void testGeneralizedCoordinateRepresentation(Robot* robot) {
 		}
 
 		if (!gcrrNew.test_linear_jacobian(point, robot->getJoint(i)->child))
-			Logger::consolePrint("TESTING GENERALIZED COORDINATES: linear jacobian does not match FD...\n");
+			Logger::consolePrint("TESTING GENERALIZED COORDINATES: linear jacobian (P3D) does not match FD...\n");
+
+		if (!gcrrNew.test_linear_jacobian(point, robot->getJoint(i)->parent))
+			Logger::consolePrint("TESTING GENERALIZED COORDINATES: linear jacobian (P3D) does not match FD...\n");
+
+		if (!gcrrNew.test_linear_jacobian(vec, robot->getJoint(i)->child))
+			Logger::consolePrint("TESTING GENERALIZED COORDINATES: linear jacobian (V3D) does not match FD...\n");
+
+		if (!gcrrNew.test_linear_jacobian(vec, robot->getJoint(i)->parent))
+			Logger::consolePrint("TESTING GENERALIZED COORDINATES: linear jacobian (V3D) does not match FD...\n");
 
 		if (!gcrrNew.test_angular_jacobian(robot->getJoint(i)->child))
 			Logger::consolePrint("TESTING GENERALIZED COORDINATES: angular jacobian does not match FD...\n");
 
 		if (!gcrrNew.test_linear_jacobian_derivatives(point, robot->getJoint(i)->child))
+			Logger::consolePrint("TESTING GENERALIZED COORDINATES: linear jacobian derivatives do not match FD...\n");
+
+		if (!gcrrNew.test_linear_jacobian_derivatives(vec, robot->getJoint(i)->child))
+			Logger::consolePrint("TESTING GENERALIZED COORDINATES: linear jacobian derivatives do not match FD...\n");
+
+		if (!gcrrNew.test_linear_jacobian_derivatives(point, robot->getJoint(i)->parent))
+			Logger::consolePrint("TESTING GENERALIZED COORDINATES: linear jacobian derivatives do not match FD...\n");
+
+		if (!gcrrNew.test_linear_jacobian_derivatives(vec, robot->getJoint(i)->parent))
 			Logger::consolePrint("TESTING GENERALIZED COORDINATES: linear jacobian derivatives do not match FD...\n");
 
 		if (!gcrrNew.test_angular_jacobian_derivatives(robot->getJoint(i)->child))
