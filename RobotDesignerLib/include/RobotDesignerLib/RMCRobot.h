@@ -67,7 +67,7 @@ public:
 	RMCRobot* clone();
 	RMCRobot* cloneSubTree(RMC* rmc);
 
-	void exportMeshes(const char* fName, const char* carvefName);
+	void exportMeshes(const char* fName);
 
 	// save to file (different from save to .rbs file)
 	void saveToFile(const char* fName);
@@ -77,7 +77,7 @@ public:
 	void restoreAllMotorAngles();
 
 	// save to .rbs file
-	void saveToRBSFile(const char* fName, const string& robotMeshDir, Robot* templateRobot = NULL, bool freezeRoot = false, bool mergeMeshes = false, bool forFabrication = false);
+	void saveToRBSFile(const char* fName, const string& robotMeshDir, Robot* templateRobot = NULL, bool freezeRoot = false);
 	void getRMCToRBIndexMap(RMC* node, int curIndex, int& RBIndex, map<RMC*, int>& RBIndexMap);
 
 	// load from file, rmcNameMap is for cloning RMC from the rmcWarehouse

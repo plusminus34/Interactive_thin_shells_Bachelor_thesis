@@ -20,6 +20,7 @@ double MPO_StanceLegMotionRegularizer::computeValue(const dVector& s){
 
 	int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 	for (int j=0;j<nLimbs;j++){
+		if (theMotionPlan->endEffectorTrajectories[j].theLimb == NULL) continue;
 		DynamicArray<Joint*> *limbJointList = theMotionPlan->endEffectorTrajectories[j].theLimb->getJointList();
 		for (uint k=0;k<limbJointList->size();k++){
 			int jIndex = theMotionPlan->robotRepresentation->getQIndexForJoint(limbJointList->at(k));
@@ -46,6 +47,7 @@ void MPO_StanceLegMotionRegularizer::addGradientTo(dVector& grad, const dVector&
 	if (theMotionPlan->robotStatesParamsStartIndex >= 0){
 		int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 		for (int j=0;j<nLimbs;j++){
+			if (theMotionPlan->endEffectorTrajectories[j].theLimb == NULL) continue;
 			DynamicArray<Joint*> *limbJointList = theMotionPlan->endEffectorTrajectories[j].theLimb->getJointList();
 			for (uint k=0;k<limbJointList->size();k++){
 				int jIndex = theMotionPlan->robotRepresentation->getQIndexForJoint(limbJointList->at(k));
@@ -69,6 +71,7 @@ void MPO_StanceLegMotionRegularizer::addHessianEntriesTo(DynamicArray<MTriplet>&
 	if (theMotionPlan->robotStatesParamsStartIndex >= 0){
 		int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 		for (int j=0;j<nLimbs;j++){
+			if (theMotionPlan->endEffectorTrajectories[j].theLimb == NULL) continue;
 			DynamicArray<Joint*> *limbJointList = theMotionPlan->endEffectorTrajectories[j].theLimb->getJointList();
 			for (uint k=0;k<limbJointList->size();k++){
 				int jIndex = theMotionPlan->robotRepresentation->getQIndexForJoint(limbJointList->at(k));

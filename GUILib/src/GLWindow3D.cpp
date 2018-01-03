@@ -22,6 +22,10 @@ GLWindow3D::GLWindow3D() : GLWindow() {
 
 void GLWindow3D::draw() {
 	preDraw();
+
+	if (showGroundPlane)
+		drawGroundAndReflections();
+
 	drawScene();
 	drawBorders();
 	postDraw();
@@ -29,36 +33,6 @@ void GLWindow3D::draw() {
 
 void GLWindow3D::init() {
 	camera = new GLTrackingCamera();
-}
-
-void GLWindow3D::setupLights() {
-
-	GLfloat bright[] = { 0.8f, 0.8f, 0.8f, 1.0f };
-	GLfloat mediumbright[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, bright);
-	glLightfv(GL_LIGHT2, GL_DIFFUSE, mediumbright);
-
-	GLfloat light0_position[] = { 0.0f, 10000.0f, 10000.0f, 0.0f };
-	GLfloat light0_direction[] = { 0.0f, -10000.0f, -10000.0f, 0.0f };
-
-	GLfloat light1_position[] = { 0.0f, 10000.0f, -10000.0f, 0.0f };
-	GLfloat light1_direction[] = { 0.0f, -10000.0f, 10000.0f, 0.0f };
-
-	GLfloat light2_position[] = { 0.0f, -10000.0f, 0.0f, 0.0f };
-	GLfloat light2_direction[] = { 0.0f, 10000.0f, -0.0f, 0.0f };
-
-	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
-	glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
-	glLightfv(GL_LIGHT2, GL_POSITION, light2_position);
-
-	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light0_direction);
-	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light1_direction);
-	glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, light2_direction);
-
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glEnable(GL_LIGHT2);
 }
 
 void GLWindow3D::preDraw() {

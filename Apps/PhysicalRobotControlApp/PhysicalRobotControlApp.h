@@ -10,7 +10,7 @@
 #include <GUILib/GLWindow3DWithMesh.h>
 #include <GUILib/GLWindowContainer.h>
 #include <ControlLib/IK_Solver.h>
-#include "RobotControlInterface.h"
+#include <ControlLib/RobotControlInterface.h>
 
 using namespace	std;
 
@@ -76,8 +76,6 @@ public:
 	virtual bool onMouseWheelScrollEvent(double xOffset, double yOffset);
 
 	virtual bool processCommandLine(const std::string& cmdLine);
-
-	virtual void setupLights();
 
 	void loadRobot(const char* fName);
 	virtual void loadFile(const char* fName);

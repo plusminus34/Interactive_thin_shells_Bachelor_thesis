@@ -7,70 +7,12 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-/*
-should take a look at convergence rates
-- global regularizer makes a huge difference, it seems.
-	- we may want it to be adaptive (use small value unless system solving fails)
-	- we quite likely want it to be different for different types of params (joint angles vs cartesian dimensions vs ground reaction forces)
-	- should at least add the global regulaizer as a menu parameter such that it can be easily changed
-
-- set up MOPT also for non-periodic motions
-- start and end on a different motion plan? What happens then when the design changes? Impose constraints only on the start and end states (joint angles only)?
-*/
-
-//fixed vs active vs passive wheels vs point feet
-//mechanical coupling via linkages
-//proper friction cones
-
-
-//create a few first designs that have wheels
-//write out a flag in the rbs file, to indicate that the end effector is a wheel and that it has some radius (and later, that it is passive or active), also, its rotation axis in the local coordinate frame of the parent RB
-//have the method that draws rigid bodies change the way the wheel EE mesh is visualized and make it look like it is spinning...
-
-//need to think of rigid bodies that are not part of the state of the robot, but they have equivalents in ODE: wheels and linkages are examples of this...
-
-//want:
-// passive wheels, active wheels
-// point feet, ball feet (equivalent to an end effector wheel whose orientation is frozen to the foot)!!
-
-//add some wheels to the designer
-//add body volume via shape features stuffs
-//add other accents, like eyes and antennas
-
-
-//need a proper save/load routine: design, an entire robot, motion plan...
-
-//make a bunch of robot templates:
-//cassie
-//three legged robot
-//a strider robot
-//a dog robot
-//hexa-like robot
-//probably need to work a bit on body shape/body characteristics
-
-//can we go all the way to creating 3d printable geometry?
-
-//can we update the nanogui extensions easily?!?
-
-//tangentGRFBoundValues is useful for warmstarting to incrementally bound tangential forces. But need to implement proper friction, methinks...
-//perhaps make the non-mesh version of the renderer prettier... it will allow us to test the code before (or even if it wont happen that) the visual designer part is integrated.
-//everything needs to happen via rbs files. The visual designer will output an rbs file which gets loaded the normal way, then it knows how to sync back changes with the rbs, and that's all...
-//the constraint system should be much more modular, with each type of MOPT adding its own constraints to a global list
-//will need to add the option to save/load ffps, mopt, rbs/robotdesigner files, etc
-//the wheel type model can also play a key role in removing the assumption of point feet. Can we model a human-like foot rolling? The COP can travel around during walking, and this can be modeled by having a wheel-like foot. Can this then, in conjunction with a MOPT QP tracker lead to natural toe-off motions?
-//wheels can be locked to the feet (then you ask that the whole orientation of the foot matches that of the upper leg), or they can be moving independently, passive (GRF straight up only) or active...
-
-//try a flying trot gait for the robot. Try also to match the new robot gait capabilities (Laikago) maybe with a slightly more conservative gait (some overlap in stance for all 4) as well as shorter gait duration overall
-//make a Cassie model and simulation, especially once limb collision are enabled. A little cassie-like robot could also be a good target for Siggraph, maybe...
-//make a base robot design window class that does nothing, only loads rbs and returns it
-//have a bool display design window, such that when it ain't, it shows full screen robot
-//fix all the old Tw references, lots of them around
-//create a robot parameterization + add option to do one design step optimization, as a test, like in the old app I once wrote...
-//add collision objectives both to IK solver and to MOPT
-//add velocity limit objective to MOPT
+//WarmStart with no periodic boundary conditions does not work well... - test the design from Moritz, but some of the others too (periodic and non-periodic).
+//debug joint velocity limits some more...
+//add the option to start non-periodic mopt from zero or from two other motion plans...
 
 RobotDesignerApp::RobotDesignerApp(){
-	bgColor[0] = bgColor[1] = bgColor[2] = 1;
+	bgColorR = bgColorG = bgColorB = bgColorA = 1;
 	setWindowTitle("RobotDesigner");
 
 	showGroundPlane = false;
@@ -78,6 +20,8 @@ RobotDesignerApp::RobotDesignerApp(){
 	moptWindow = new MOPTWindow(0, 0, 100, 100, this);
 	simWindow = new SimWindow(0, 0, 100, 100, this);
 	iEditWindow = new IntelligentRobotEditingWindow(0, 0, 100, 100, this);
+	motionPlanAnalysis = new MotionPlanAnalysis(menuScreen);
+	energyWindow = new EnergyWindow();
 
 	mainMenu->addGroup("RobotDesigner Options");
 	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
@@ -96,20 +40,72 @@ RobotDesignerApp::RobotDesignerApp(){
 	button = new nanogui::Button(tools, "");
 	button->setIcon(ENTYPO_ICON_SAVE);
 	button->setCallback([this]() { if (designWindow) designWindow->saveFile("../out/tmpModularRobotDesign.dsn"); });
-	button->setTooltip("Quick Save");
+	button->setTooltip("Quick Save (S)");
 
 	button = new nanogui::Button(tools, "");
 	button->setIcon(ENTYPO_ICON_DOWNLOAD);
 	button->setCallback([this]() { if (designWindow) designWindow->loadDesignFromFile("../out/tmpModularRobotDesign.dsn"); });
-	button->setTooltip("Quick Load");
+	button->setTooltip("Quick Load (R)");
 
-	button = new nanogui::Button(tools, "ToSim");
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_GITHUB);
+	button->setCallback([this]() { exportMeshes(); });
+	button->setTooltip("Export Meshes (K)");
+
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_LOG_OUT);
 	button->setCallback([this]() { createRobotFromCurrentDesign(); });
-	button->setTooltip("Load Robot Design To Sim");
+	button->setTooltip("Load Robot Design To Sim (T)");
 
-	button = new nanogui::Button(tools, "GoMOPT");
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_BAIDU);
 	button->setCallback([this]() { warmStartMOPT(true); });
-	button->setTooltip("Warmstart MOPT");
+	button->setTooltip("Warmstart MOPT (M)");
+
+	{
+		using namespace nanogui;
+
+		mainMenu->addGroup("Analysis");
+
+		Widget *widget = new Widget(mainMenu->window());
+		mainMenu->addWidget("", widget);
+		widget->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Middle, 0, 4));
+
+		// button to toggle motion plan analysis
+		Button *mpaButton = new Button(widget, "Motion Plan Analysis");
+		mpaButton->setFontSize(14);
+		mpaButton->setFlags(Button::Flags::ToggleButton);
+		mpaButton->setChangeCallback([this](bool state){
+			motionPlanAnalysis->window->setVisible(state);
+			if(moptWindow->locomotionManager->motionPlan)
+				motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
+		});
+
+		// button to toggle energy window
+		Button *button = new Button(widget, "Energy Window");
+		button->setFontSize(14);
+		button->setFlags(Button::Flags::ToggleButton);
+		button->setChangeCallback([this](bool state){
+			if(moptWindow->locomotionManager->energyFunction && doMotionAnalysis){
+				if(state)
+					energyWindow->createEnergyMenu(moptWindow->locomotionManager->energyFunction, menuScreen);
+				energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
+				energyWindow->setVisible(state);
+			}
+		});
+
+		// button to check energy
+		button = new Button(widget, "Update");
+		button->setIcon(ENTYPO_ICON_PUBLISH);
+		button->setFontSize(14);
+		button->setCallback([this](){
+			if(moptWindow->locomotionManager->energyFunction && doMotionAnalysis){
+				LocomotionEngineMotionPlan * motionPlan = moptWindow->locomotionManager->motionPlan;
+				energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, motionPlan->getMPParameters());
+				motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
+			}
+		});
+	}
 
 	mainMenu->addGroup("MOPT Options");
 	moptWindow->addMenuItems();
@@ -118,10 +114,11 @@ RobotDesignerApp::RobotDesignerApp(){
 	simWindow->addMenuItems();
 
 	showGroundPlane = false;
-	bgColor[0] = bgColor[1] = bgColor[2] = 0.75;
+	bgColorR = bgColorG = bgColorB = 0.75;
 
 #ifdef START_WITH_VISUAL_DESIGNER
-	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
+//	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
+	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configTGY306G.cfg");
 	
 #else
     loadFile("../data/robotsAndMotionPlans/spotMini/robot2.rbs");
@@ -282,11 +279,23 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 		if (key == GLFW_KEY_SLASH && action == GLFW_PRESS)
 			moptWindow->moptParams.desTurningAngle -= 0.1;
 
-		boundToRange(&moptWindow->moptParams.desTravelDistZ, -0.5, 0.5);
-		boundToRange(&moptWindow->moptParams.desTravelDistX, -0.5, 0.5);
-		boundToRange(&moptWindow->moptParams.desTurningAngle, -0.5, 0.5);
+		boundToRange(&moptWindow->moptParams.desTravelDistZ, -1.5, 1.5);
+		boundToRange(&moptWindow->moptParams.desTravelDistX, -1.5, 1.5);
+		boundToRange(&moptWindow->moptParams.desTurningAngle, -1.5, 1.5);
 		if (key == GLFW_KEY_O && action == GLFW_PRESS)
 			moptWindow->locomotionManager->motionPlan->writeRobotMotionAnglesToFile("../out/tmpMPAngles.mpa");
+	}
+
+	if (key == GLFW_KEY_T && action == GLFW_PRESS) {
+		createRobotFromCurrentDesign();
+	}
+
+	if (key == GLFW_KEY_M && action == GLFW_PRESS) {
+		warmStartMOPT(true);
+	}
+
+	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
+		exportMeshes();
 	}
 
 	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
@@ -298,6 +307,8 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 	if (key == GLFW_KEY_4 && action == GLFW_PRESS)
 		runOption = PHYSICS_SIMULATION_WITH_TORQUE_CONTROL;
 
+	if (key == GLFW_KEY_A && action == GLFW_PRESS)
+		optimizeWhileAnimating = !optimizeWhileAnimating;
 	mainMenu->refresh();
 
 	if (GLApplication::onKeyEvent(key, action, mods)) return true;
@@ -321,8 +332,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		Logger::consolePrint("Load robot state from '%s'\n", fName);
 		if (robot) {
 			robot->loadReducedStateFromFile(fName);
-			delete initialRobotState;
-			initialRobotState = new ReducedRobotState(robot);
+			startingRobotState = ReducedRobotState(robot);
 			if (prd)
 				prd->updateMorphology();
 		}
@@ -334,13 +344,8 @@ void RobotDesignerApp::loadFile(const char* fName) {
 
 		delete prd;
 		prd = new SymmetricParameterizedRobotDesign(robot);
-//		CreateParametersDesignWindow();
-//		menuScreen->performLayout();
-//		slidervalues.resize(prd->getNumberOfParameters());
-//		slidervalues.setZero();
 
-		delete initialRobotState;
-		initialRobotState = new ReducedRobotState(robot);
+		startingRobotState = ReducedRobotState(robot);
 		return;
 	}
 
@@ -356,6 +361,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 			moptWindow->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
 			moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
 			moptWindow->syncMOPTWindowParameters();
+			moptWindow->printCurrentObjectiveValues();
 		}
 		return;
 	}
@@ -372,10 +378,9 @@ void RobotDesignerApp::createRobotFromCurrentDesign() {
 	if (designWindow) {
 		designWindow->saveToRBSFile("../out/tmpRobot.rbs");
 		loadFile("../out/tmpRobot.rbs");
-		delete initialRobotState;
-		initialRobotState = new ReducedRobotState(robot);
-		robot->populateState(initialRobotState, true);
-		robot->setState(initialRobotState);
+		startingRobotState = ReducedRobotState(robot);
+		robot->populateState(&startingRobotState, true);
+		robot->setState(&startingRobotState);
 		if (prd)
 			prd->updateMorphology();
 	}
@@ -389,18 +394,54 @@ void RobotDesignerApp::loadToSim(bool initializeMOPT){
 
 //now, start MOPT...
 	Logger::consolePrint("MoptWindow loading robot...\n");
-	moptWindow->loadRobot(robot, initialRobotState);
-	Logger::consolePrint("..... successful.\n Warmstarting...\n");
+	moptWindow->loadRobot(robot);
+	if (initializeMOPT)
+		Logger::consolePrint("..... successful.\n Warmstarting...\n");
 	warmStartMOPT(initializeMOPT);
-	Logger::consolePrint("Warmstart successful...\n");
-	Logger::consolePrint("The robot has %d legs, weighs %lfkgs and is %lfm tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
+	if (initializeMOPT)
+		Logger::consolePrint("Warmstart successful...\n");
+	Logger::consolePrint("The robot has %d legs, weighs %lf kgs and is %lf m tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
 
 //	CreateParametersDesignWindow();
 }
 
+
+void RobotDesignerApp::exportMeshes() {
+	if (!robot) {
+		Logger::consolePrint("A robot must first be loaded before meshes can be exported...\n");
+		return;
+	}
+
+	ReducedRobotState rs(robot);
+
+	robot->setState(&startingRobotState);
+	robot->renderMeshesToFile("..\\out\\robotMeshes.obj");
+	Logger::consolePrint("Exported robot meshes to \'..\\out\\robotMeshes.obj\'\n");
+
+	robot->setState(&rs);
+}
+
 void RobotDesignerApp::warmStartMOPT(bool initializeMotionPlan) {
+	if (!robot) {
+		Logger::consolePrint("Please load a robot first...\n");
+		return;
+	}
+
+	if (!moptWindow || !simWindow)
+		return;
+
+	//reset the state of the robot, to make sure we're always starting from the same configuration
+	robot->setState(&startingRobotState);
+
 	moptWindow->initializeNewMP(initializeMotionPlan);
 	simWindow->loadMotionPlan(moptWindow->locomotionManager->motionPlan);
+
+	if(moptWindow->locomotionManager->energyFunction && doMotionAnalysis)
+	{
+		motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
+		energyWindow->createEnergyMenu(moptWindow->locomotionManager->energyFunction, menuScreen);
+		energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
+	}
 }
 
 void RobotDesignerApp::saveFile(const char* fName) {
@@ -420,7 +461,7 @@ void RobotDesignerApp::runMOPTStep() {
 }
 
 P3D RobotDesignerApp::getCameraTarget() {
-	if (runOption != MOTION_PLAN_OPTIMIZATION)
+	if (robot)
 		return robot->root->getCMPosition();
 	else
 		return P3D(0, 1, 0);
@@ -451,12 +492,26 @@ void RobotDesignerApp::process() {
 
 	lastRunOptionSelected = runOption;
 
+	auto DoMOPTStep = [&]() {
+		runMOPTStep();
+		if (motionPlanAnalysis->window->visible() && doMotionAnalysis)
+			motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
+		if(moptWindow->locomotionManager->energyFunction && doMotionAnalysis)
+			energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
+	};
+
 	if (runOption != MOTION_PLAN_OPTIMIZATION && simWindow->getActiveController()) {
+		if (optimizeWhileAnimating)
+			DoMOPTStep();
+
 		double simulationTime = 0;
 		double maxRunningTime = 1.0 / desiredFrameRate;
 
 		while (simulationTime / maxRunningTime < animationSpeedupFactor) {
 			simulationTime += simWindow->simTimeStep;
+
+//			update wheel rotations here...
+
 			simWindow->step();
 
 			if (slowMo)
@@ -464,9 +519,9 @@ void RobotDesignerApp::process() {
 		}
 
 	}
-	else if (runOption == MOTION_PLAN_OPTIMIZATION) {
-		runMOPTStep();
-	}
+	else if (runOption == MOTION_PLAN_OPTIMIZATION)
+		DoMOPTStep();
+
 	if (simWindow->getActiveController())
 		moptWindow->ffpViewer->cursorPosition = simWindow->getActiveController()->stridePhase;
 }
@@ -500,6 +555,11 @@ void RobotDesignerApp::drawAuxiliarySceneInfo() {
 	if (shouldShowIEditWindow()) {
 		iEditWindow->draw();
 		iEditWindow->drawAuxiliarySceneInfo();
+	}
+
+	if(motionPlanAnalysis->window->visible())
+	{
+		motionPlanAnalysis->setTimeAt((float)moptWindow->ffpViewer->cursorPosition);
 	}
 }
 

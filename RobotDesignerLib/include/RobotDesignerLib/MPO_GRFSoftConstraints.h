@@ -5,10 +5,11 @@
 #include <RobotDesignerLib/LocomotionEngineMotionPlan.h>
 #include <OptimizationLib/SoftUnilateralConstraint.h>
 
-class MPO_GRFRegularizer : public ObjectiveFunction {	
+// This regularizer enforces GRF to vanish in swing (contactFlag = 0)
+class MPO_GRFSwingRegularizer : public ObjectiveFunction {
 public:
-	MPO_GRFRegularizer(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
-	virtual ~MPO_GRFRegularizer(void);
+	MPO_GRFSwingRegularizer(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
+	virtual ~MPO_GRFSwingRegularizer(void);
 
 	virtual double computeValue(const dVector& p);
 
@@ -20,15 +21,68 @@ private:
 	LocomotionEngineMotionPlan* theMotionPlan;
 };
 
-class MPO_GRFSoftBoundConstraints : public ObjectiveFunction {
+// This regularizer encourages GRF to be small in stance (contactFlag = 1)
+class MPO_GRFStanceRegularizer : public ObjectiveFunction {
 public:
-	MPO_GRFSoftBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
-	virtual ~MPO_GRFSoftBoundConstraints(void);
+	MPO_GRFStanceRegularizer(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
+	virtual ~MPO_GRFStanceRegularizer(void);
 
 	virtual double computeValue(const dVector& p);
 
 	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
 	virtual void addGradientTo(dVector& grad, const dVector& p);
+
+private:
+	//the energy function operates on a motion plan...
+	LocomotionEngineMotionPlan* theMotionPlan;
+};
+
+
+class MPO_GRFVerticalLowerBoundConstraints : public ObjectiveFunction {
+public:
+	MPO_GRFVerticalLowerBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
+	virtual ~MPO_GRFVerticalLowerBoundConstraints(void);
+
+	virtual double computeValue(const dVector& p);
+
+	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
+	virtual void addGradientTo(dVector& grad, const dVector& p);
+
+private:
+	//the energy function operates on a motion plan...
+	LocomotionEngineMotionPlan* theMotionPlan;
+};
+
+class MPO_GRFVerticalUpperBoundConstraints : public ObjectiveFunction {
+public:
+	MPO_GRFVerticalUpperBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
+	virtual ~MPO_GRFVerticalUpperBoundConstraints(void);
+
+	virtual double computeValue(const dVector& p);
+
+	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
+	virtual void addGradientTo(dVector& grad, const dVector& p);
+
+	DynamicArray<DynamicArray<double>> verticalGRFUpperBoundValues;
+
+private:
+	//the energy function operates on a motion plan...
+	LocomotionEngineMotionPlan* theMotionPlan;
+};
+
+
+class MPO_GRFTangentialBoundConstraints : public ObjectiveFunction {
+public:
+	MPO_GRFTangentialBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
+	virtual ~MPO_GRFTangentialBoundConstraints(void);
+
+	virtual double computeValue(const dVector& p);
+
+	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
+	virtual void addGradientTo(dVector& grad, const dVector& p);
+
+
+	DynamicArray<DynamicArray<double>> tangentGRFBoundValues;
 
 private:
 	//the energy function operates on a motion plan...

@@ -19,22 +19,15 @@ private:
 
 	// TODO: do we need a local wheel axis and a global??
 	template<class T>
-	T computeEnergy(const Vector3T<T> &wheelAxis, const Vector3T<T> &eePosLocal,
-					const RigidBody *rb, const VectorXT<T> &q,
+	T computeEnergy(const Vector3T<T> &wheelAxisLocal, const RigidBody *rb, const VectorXT<T> &q,
 					const Vector3T<T> &yawAxis, T yawAngle,
 					const Vector3T<T> &tiltAxis, T tiltAngle) const
 	{
-		// point at center of wheel in world coordinates
-		Vector3T<T> pO = theMotionPlan->robotRepresentation->getWorldCoordinatesForT(eePosLocal, rb, q);
-		// point at 'end' of wheel axis in world coordinates
-		Vector3T<T> tmp = eePosLocal+wheelAxis;
-		Vector3T<T> pW = theMotionPlan->robotRepresentation->getWorldCoordinatesForT(tmp, rb, q);
-		// wheel axis in world coordinates, according to robot pose
-		Vector3T<T> currentAxis = pW-pO;
-
+		// wheel axis from robot
+		Vector3T<T> wheelAxisRobot = theMotionPlan->robotRepresentation->getWorldCoordinatesForVectorT(wheelAxisLocal, rb, q);
 		// wheel axis from wheel angles
-		Vector3T<T> axis = LocomotionEngine_EndEffectorTrajectory::rotateWheelAxisWith(wheelAxis, yawAxis, yawAngle, tiltAxis, tiltAngle);
-		Vector3T<T> err = axis - currentAxis;
+		Vector3T<T> wheelAxisWorld = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
+		Vector3T<T> err = wheelAxisWorld - wheelAxisRobot;
 
 		return (T)0.5 * err.squaredNorm() * (T)weight;
 	}

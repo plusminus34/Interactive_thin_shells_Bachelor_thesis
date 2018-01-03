@@ -17,7 +17,7 @@ public:
 
 	Robot* robot = NULL;
 
-	bool drawMeshes = false, drawMOIs = false, drawCDPs = false, drawSkeletonView = true, drawContactForces = true, drawOrientation = true;
+	bool drawMeshes = true, drawMOIs = false, drawCDPs = false, drawSkeletonView = true, drawContactForces = true, drawOrientation = true;
 
 	void addMenuItems();
 
@@ -55,11 +55,15 @@ public:
 
 	virtual void drawScene();
 	virtual void drawAuxiliarySceneInfo();
-	virtual void setupLights();
 
 	virtual bool onMouseMoveEvent(double xPos, double yPos);
 	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
+
+	virtual void drawGround() {
+		drawTexturedGround(GLContentManager::getTexture("../data/textures/grid.bmp"));
+	}
+
 };
 

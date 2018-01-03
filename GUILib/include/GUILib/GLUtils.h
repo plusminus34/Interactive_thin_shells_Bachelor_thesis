@@ -77,7 +77,7 @@ void checkOGLErrors();
 void drawDesignEnvironmentBox(GLTexture* texture, double designEnvironmentScale = 1);
 
 // draws the ground plane
-void drawGround(GLTexture* texture);
+void drawTexturedGround(GLTexture* texture);
 
 void gl_Vertex3d(const P3D& p);
 

@@ -57,24 +57,12 @@ void KinematicRobotController::advanceInTime(double timeStep) {
 }
 
 void KinematicRobotController::computeDesiredState() {
-//	ReducedRobotState currentRobotState(robot);
-	motionPlan->robotStateTrajectory.getRobotPoseAt(stridePhase, desiredState);
+	RobotController::computeDesiredState();
 
 	desiredState.setHeading(overallHeading.getRotationAngle(V3D(0,1,0)));
 	P3D pos = P3D() + posInPlane;
 	pos.y() = desiredState.getPosition().y();
 	desiredState.setPosition(pos);
-
-//	Quaternion currentHeading = computeHeading(currentRobotState.getOrientation(), V3D(0, 1, 0));
-//	Quaternion actualHeading = computeHeading(qRel * currentRobotState.getOrientation(), V3D(0, 1, 0));
-//	Quaternion mpDesiredHeading = computeHeading(desiredState.getOrientation(), V3D(0, 1, 0));
-//	Quaternion mpWithoutHeading = mpDesiredHeading.getInverse() * desiredState.getOrientation();
-
-	//we'll do all the computation in a coordinate frame that is aligned with the robot...
-	// desiredPose.setOrientation(qRel * desiredPose.getOrientation());
-//	desiredState.setOrientation(actualHeading * mpWithoutHeading);
-//	desiredState.setPosition(currentRobotState.getPosition() + currentHeading.rotate(vRel));
-
 }
 
 void KinematicRobotController::loadMotionPlan(LocomotionEngineMotionPlan* motionPlan, double phase){

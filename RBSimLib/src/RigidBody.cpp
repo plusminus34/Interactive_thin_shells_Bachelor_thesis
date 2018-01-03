@@ -275,8 +275,21 @@ Matrix3x3 RigidBody::getWorldMOI(const Quaternion& orientation) {
 */
 uint RigidBody::renderToObjFile(FILE* fp, uint vertexIdxOffset) {
 	int retVal = 0;
-	for (uint i=0;i<meshes.size();i++)
-		retVal += meshes[i]->renderToObjFile( fp, vertexIdxOffset+retVal, state.orientation, state.position);
+	for (uint i = 0; i < meshes.size(); i++) {
+		Quaternion rot = state.orientation;
+		P3D pos = state.position;
+
+		if (i < meshTransformations.size()){
+			Quaternion q;
+			q.setRotationFrom(meshTransformations[i].R);
+
+			rot = rot * q;
+			pos = pos + meshTransformations[i].T;
+		}
+
+		retVal += meshes[i]->renderToObjFile(fp, vertexIdxOffset + retVal, rot, pos);
+	}
+
 	return retVal;
 }
 
@@ -312,10 +325,6 @@ void RigidBody::writeToFile(FILE* fp){
 	for (uint i = 0; i < meshes.size(); i++)
 		fprintf(fp, "\t%s %s\n", getRBString(RB_MESH_NAME), meshes[i]->path.empty() ? "None" : meshes[i]->path.c_str());
 
-	for (uint i = 0; i < carveMeshes.size(); i++) {
-		fprintf(fp, "\t%s %s\n", getRBString(RB_CARVE_MESH_NAME), carveMeshes[i] ? carveMeshes[i]->path.c_str() : "None");
-	}
-
 	for (uint i = 0; i < meshDescriptions.size(); i++) {
 		fprintf(fp, "\t%s %s\n", getRBString(RB_MESH_DESCRIPTION), meshDescriptions[i].c_str());
 	}
@@ -332,7 +341,7 @@ void RigidBody::writeToFile(FILE* fp){
 		fprintf(fp, "\t%s %lf %lf %lf %lf\n", getRBString(RB_BODY_POINT_FEATURE), rbProperties.bodyPointFeatures[i].coords[0], rbProperties.bodyPointFeatures[i].coords[1], rbProperties.bodyPointFeatures[i].coords[2], rbProperties.bodyPointFeatures[i].featureSize);
 
 	for (uint i = 0;i<rbProperties.endEffectorPoints.size();i++)
-		fprintf(fp, "\t%s %lf %lf %lf %lf %d %lf %lf %lf\n", getRBString(RB_END_EFFECTOR), rbProperties.endEffectorPoints[i].coords[0], rbProperties.endEffectorPoints[i].coords[1], rbProperties.endEffectorPoints[i].coords[2], rbProperties.endEffectorPoints[i].featureSize, rbProperties.endEffectorPoints[i].eeType, rbProperties.endEffectorPoints[i].localCoordsWheelAxis[0], rbProperties.endEffectorPoints[i].localCoordsWheelAxis[1], rbProperties.endEffectorPoints[i].localCoordsWheelAxis[2]);
+		fprintf(fp, "\t%s %lf %lf %lf %lf %d %lf %lf %lf %d\n", getRBString(RB_END_EFFECTOR), rbProperties.endEffectorPoints[i].coords[0], rbProperties.endEffectorPoints[i].coords[1], rbProperties.endEffectorPoints[i].coords[2], rbProperties.endEffectorPoints[i].featureSize, rbProperties.endEffectorPoints[i].eeType, rbProperties.endEffectorPoints[i].localCoordsWheelAxis[0], rbProperties.endEffectorPoints[i].localCoordsWheelAxis[1], rbProperties.endEffectorPoints[i].localCoordsWheelAxis[2], rbProperties.endEffectorPoints[i].meshIndex);
 
 	fprintf(fp, "\t%s %d %d\n", getRBString(RB_MAPPING_INFO), mappingInfo.index1, mappingInfo.index2);
 
@@ -384,21 +393,6 @@ void RigidBody::loadFromFile(FILE* fp){
 					}					
 				}
 				break;
-			case RB_CARVE_MESH_NAME: {
-				char tmpStr[200];
-				sscanf(line, "%s", tmpStr);
-				std::string str(tmpStr);
-				if (str == "None"){
-					carveMeshes.push_back(NULL);
-				}
-				else {
-					tmpMesh = GLContentManager::getGLMesh(tmpStr);
-					tmpMesh->computeNormals();
-					tmpMesh->computeTangents();
-					carveMeshes.push_back(tmpMesh);
-				}				
-			}
-			break;
 			case RB_MATERIAL:
 				if (meshes.size() > 0) {
 					char tmpStr[200];
@@ -468,7 +462,7 @@ void RigidBody::loadFromFile(FILE* fp){
 				break;
 			case RB_END_EFFECTOR:{
 					RBEndEffector tmpEE(P3D(), 0.01);
-					sscanf(line, "%lf %lf %lf %lf %d %lf %lf %lf", &tmpEE.coords[0], &tmpEE.coords[1], &tmpEE.coords[2], &tmpEE.featureSize, &tmpEE.eeType, &tmpEE.localCoordsWheelAxis[0], &tmpEE.localCoordsWheelAxis[1], &tmpEE.localCoordsWheelAxis[2]);
+					sscanf(line, "%lf %lf %lf %lf %d %lf %lf %lf %d", &tmpEE.coords[0], &tmpEE.coords[1], &tmpEE.coords[2], &tmpEE.featureSize, &tmpEE.eeType, &tmpEE.localCoordsWheelAxis[0], &tmpEE.localCoordsWheelAxis[1], &tmpEE.localCoordsWheelAxis[2], &tmpEE.meshIndex);
 					rbProperties.endEffectorPoints.push_back(tmpEE);
 				}
 				break;

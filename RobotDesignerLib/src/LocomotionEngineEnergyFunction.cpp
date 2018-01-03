@@ -60,6 +60,37 @@ void LocomotionEngine_EnergyFunction::testIndividualHessian(dVector& params){
 	}
 }
 
+void LocomotionEngine_EnergyFunction::testIndividualHessianPSD(dVector& params) {
+	DynamicArray<double> origWeights;
+	double origRegularizer = regularizer;
+	regularizer = 0;
+	for (auto obj : objectives) {
+		origWeights.push_back(obj->weight);
+		obj->weight = 0;
+	}
+
+	for (int i = 0; i < (int)objectives.size(); i++) {
+		if (i > 0)
+			objectives[i - 1]->weight = 0;
+		objectives[i]->weight = origWeights[i];
+
+		Logger::print("\n----------- Testing objective %s -------------\n", objectives[i]->description.c_str());
+		Logger::logPrint("\n----------- Testing objective %s -------------\n", objectives[i]->description.c_str());
+		testHessianPSD(params);
+	}
+
+	for (int i = 0; i < (int)objectives.size(); i++) {
+		objectives[i]->weight = origWeights[i];
+	}
+	regularizer = origRegularizer;
+}
+
+void LocomotionEngine_EnergyFunction::addObjectiveFunction(ObjectiveFunction *obj, string groupName)
+{
+	objectives.push_back(obj);
+	objGroups[groupName].push_back(obj);
+}
+
 double LocomotionEngine_EnergyFunction::computeValue(const dVector& p){
 	assert(p.size() == theMotionPlan->paramCount);
 
@@ -68,7 +99,7 @@ double LocomotionEngine_EnergyFunction::computeValue(const dVector& p){
 	double totalEnergy = 0;
 
 	for (uint i=0; i<objectives.size(); i++)
-		if (objectives[i]->isActive)
+		if (objectives[i]->isActive && objectives[i]->weight!=0.0)
 			totalEnergy += objectives[i]->computeValue(p);
 
 	//add the regularizer contribution
@@ -103,7 +134,7 @@ void LocomotionEngine_EnergyFunction::addHessianEntriesTo(DynamicArray<MTriplet>
 
 	// Sequential version
 	for (uint i = 0; i < objectives.size(); i++)
-		if (objectives[i]->isActive)
+		if (objectives[i]->isActive && objectives[i]->weight != 0.0)
 			objectives[i]->addHessianEntriesTo(hessianEntries, p);
 
 	// Parallel version
@@ -142,7 +173,7 @@ void LocomotionEngine_EnergyFunction::addGradientTo(dVector& grad, const dVector
 
 	//and now the contributions of the individual objectives
 	for (uint i=0; i<objectives.size(); i++)
-		if(objectives[i]->isActive)
+		if(objectives[i]->isActive && objectives[i]->weight != 0.0)
 			objectives[i]->addGradientTo(grad, p);
 }
 

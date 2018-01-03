@@ -57,10 +57,12 @@ sudo make
 # copy or symlink libgtest.a and libgtest_main.a to your /usr/local/lib folder
 sudo cp *.a /usr/local/lib
 ```
+
 ##### MA27
 1. Get MA27 from http://www.hsl.rl.ac.uk/download/MA27/1.0.0/a/
 2. Build it:
-```
+
+```bash
 ./configure
 make 
 sudo make install
@@ -73,7 +75,7 @@ sudo make install
    2. Apply patch to OOQP folder: `patch -p0 < OOQP_hash.patch`
 3. Build OOQP:
 
-```
+```bash
 MA27LIB=/usr/local/lib/libma27.a ./configure
 make
 sudo make install
@@ -82,9 +84,12 @@ sudo make install
 ##### ODE
 1. Get ode-0.13 from https://sourceforge.net/projects/opende/files/ODE/0.13/.
 2. 	Build it:
+
+```bash
  	CXXFLAGS=-fpermissive ./configure
    	make
    	sudo make install
+```
 
 ##### FreeType  (https://www.freetype.org/):
 `sudo apt install libfreetype6 libfreetype6-dev`
@@ -94,7 +99,7 @@ sudo make install
 2. Run `git submodule update --init --recursive`
 3. Generate build files. In the cloned folder do:
 
-```
+```bash
 mkdir build && cd build
 cmake -DNANOGUI_USE_GLAD=1 ..
 ```
@@ -102,8 +107,9 @@ cmake -DNANOGUI_USE_GLAD=1 ..
 `NANOGUI_USE_GLAD` makes sure we use glad.
 
 4. Compile
-```
-make
+
+```bash
+make -j12
 ```
 
 > Notes: If your GPU driver can't create a OpenGL context in compatability mode, run CMake with `SCP_GUI_TWO_WINDOWS=1 cmake ..`

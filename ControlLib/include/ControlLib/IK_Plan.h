@@ -18,6 +18,9 @@ public:
 	RigidBody* endEffectorRB;
 	P3D endEffectorLocalCoords;
 
+//if we want to control just the x,y or z component of the end effector, use this mask...
+	V3D mask = V3D(1,1,1);
+
 	IK_EndEffector(){
 		endEffectorRB = NULL;
 	}

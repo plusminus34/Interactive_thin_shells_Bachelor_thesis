@@ -102,8 +102,6 @@ public:
 	virtual void saveFile(const char* fName);
 	virtual void loadFile(const char* fName);
 
-	virtual void setupLights();
-
 	void removeRMCRobot(RMCRobot* robot);
 
 	void drawRefAxis(const P3D& pos);
@@ -120,9 +118,7 @@ public:
 	void saveDesignToFile(const char* fName);
 	void loadDesignFromFile(const char* fName);
 
-	void saveToRBSFile(const char* fName, Robot* templateRobot = NULL, bool mergeMeshes = false, bool forFabrication = false);
-
-	void exportMeshes();
+	void saveToRBSFile(const char* fName, Robot* templateRobot = NULL);
 
 	// transform the child RMC to get a preview.
 	bool previewConnectRMCRobot(RMCPin* parentPin, RMCPin* childPin, RMCRobot* childRobot, bool rotationOnly);
@@ -141,7 +137,7 @@ public:
 	bool isSelectedRMCMovable();
 
 	void matchDesignWithRobot(Robot* tRobot, ReducedRobotState* initialRobotState);
-	void transferMeshes(Robot* tRobot, ReducedRobotState* initialRobotState, bool mergeMeshes = false);
+	void transferMeshes(Robot* tRobot, ReducedRobotState* initialRobotState);
 
 	void buildRMCMirrorMap();
 	void makeSelectedRMCSymmtry();

@@ -31,9 +31,14 @@ struct MOPTParams {
 	double wheelAccelLimit = 20;
 	double wheelAccelEpsilon = 1.0;
 
+	double frictionCoeff = 0.5;
+
 	bool writeJointVelocityProfile = false;
 	double motionPlanDuration = 0.8;
 	bool checkDerivatives = false;
+	bool useDynamicRegularization = true;
+	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod = NewtonFunctionMinimizer::DynamicRegularization;
+	bool checkHessianPSD = false;
 };
 
 
@@ -44,15 +49,16 @@ public:
 
 	bool startWithEmptyFFP = true;
 	int nTimeSteps = 12;
-	double globalMOPTRegularizer = 0.0001;
+	double globalMOPTRegularizer = 0.01;
 
-	nanogui::Graph* energyGraph;
+	nanogui::Graph* energyGraph = NULL;
 	std::vector<float> energyGraphValues;
+
+	nanogui::Graph* velocityProfileGraph;
 
 	MOPTParams moptParams;
 
 	Robot* robot = nullptr;
-	ReducedRobotState startState = ReducedRobotState(13);
 
 	FootFallPattern footFallPattern;
 	FootFallPatternViewer* ffpViewer = nullptr;
@@ -69,18 +75,27 @@ public:
 	bool printDebugInfo;
 	void addMenuItems();
 
+	bool periodicMotion = true;
+
 public:
 	MOPTWindow(int x, int y, int w, int h, GLApplication* glApp);
 	~MOPTWindow();
 
 	void clear();
-	void loadRobot(Robot* robot, ReducedRobotState* startState);
+	void loadRobot(Robot* robot);
 	void syncMotionPlanParameters();
 	void syncMOPTWindowParameters();
 
 	LocomotionEngineManager* initializeNewMP(bool doWarmStart = true);
 
 	double runMOPTStep();
+
+	void printCurrentObjectiveValues() {
+		locomotionManager->setDefaultOptimizationFlags();
+		dVector params = locomotionManager->motionPlan->getMPParameters();
+		locomotionManager->energyFunction->setCurrentBestSolution(params);
+		Logger::consolePrint("Current MOPT objective function: %lf\n", locomotionManager->energyFunction->computeValue(params));
+	}
 
 	void reset();
 
@@ -90,21 +105,14 @@ public:
 
 	virtual void drawScene();
 	virtual void drawAuxiliarySceneInfo();
-	virtual void setupLights();
 
 	virtual bool onMouseMoveEvent(double xPos, double yPos);
 	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
-private:
-	bool showWeightsAndEnergyValues;
-	void ToggleEnergyMenu();
-	void CreateEnergyMenu();
-	nanogui::Window * energyMenu = nullptr;
-	std::vector<nanogui::Slider*> energySliders;
-	std::vector<nanogui::FloatBox<double>*> energyTextboxes;
-	std::vector<nanogui::FloatBox<double>*> weightTextboxes;
-	void updateSliders();
-	V3D COMSpeed;
-};
 
+private:
+
+	V3D COMSpeed;
+	nanogui::Window* velocityProfileWindow=nullptr;
+};

@@ -52,8 +52,8 @@ void make_dlist(FT_Face face, char ch, uint list_base, uint * tex_base) {
 	//We use the ?: operator so that value which we use
 	//will be 0 if we are in the padding zone, and whatever
 	//is the the Freetype bitmap otherwise.
-	for (uint j = 0; j < (uint)height;j++) {
-		for (uint i = 0; i < (uint)width; i++) {
+	for (int j = 0; j < (int)height;j++) {
+		for (int i = 0; i < (int)width; i++) {
 			expanded_data[2 * (i + j*width)] = 255;
 			expanded_data[2 * (i + j*width) + 1] =
 				(i >= bitmap.width || j >= bitmap.rows) ?

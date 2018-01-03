@@ -65,22 +65,6 @@ void AbstractRBEngine::drawRBs(int flags){
 		rbs[i]->draw(flags);
 }
 
-/**
-	This method renders all the rigid bodies as a set of vertices 
-	and faces that will be appended to the passed OBJ file.
-
-	vertexIdxOffset indicates the index of the first vertex for this object, this makes it possible to render
-	multiple different meshes to the same OBJ file
-	
-	Returns the number of vertices written to the file
-*/
-uint AbstractRBEngine::renderRBsToObjFile(FILE* fp, uint vertexIdxOffset){
-	uint nbVerts = 0;
-	for (uint i=0;i<rbs.size();i++)
-		nbVerts += rbs[i]->renderToObjFile(fp, vertexIdxOffset + nbVerts);
-
-	return nbVerts;
-}
 
 /**
 	This method returns the reference to the rigid body with the given name, or NULL if it is not found

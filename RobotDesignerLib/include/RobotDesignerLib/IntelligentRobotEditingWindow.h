@@ -30,7 +30,10 @@ public:
 	void updateParamsUsingSliders(int paramIndex, double value);
 	void updateParamsAndMotion(dVector p);
 	virtual void drawAuxiliarySceneInfo();
-	virtual void setupLights();
+
+	void setParamsAndUpdateMOPT(const dVector& p);
+	void setParamsAndUpdateMOPT(const std::vector<double>& p);
+
 
 	virtual bool onMouseMoveEvent(double xPos, double yPos);
 	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);

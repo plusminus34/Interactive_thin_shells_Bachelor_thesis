@@ -10,6 +10,7 @@
 #include <RobotDesignerLib/FootFallPattern.h>
 #include <vector>
 #include <RBSimLib/HingeJoint.h>
+#include <ControlLib/IK_Solver.h>
 
 class LocomotionEngine_EndEffectorTrajectory{
 public:
@@ -19,20 +20,18 @@ public:
 	DynamicArray<V3D> contactForce;
 	DynamicArray<double> contactFlag;
 	DynamicArray<double> EEWeights;
-	DynamicArray<P3D> defaultEEPos;
-	DynamicArray<double> verticalGRFUpperBoundValues;
-	DynamicArray<double> tangentGRFBoundValues;
 
 	bool isWheel = false;
+	bool isFixedWheel = false;
+	bool isPassiveWheel = false;
 	double wheelRadius = 0.1;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
-	V3D wheelAxis;						// wheel axis in world coords.
+	V3D wheelAxisLocal;						// wheel axis in world coords.
 	V3D wheelYawAxis;					// yaw axis in world coords.
 	V3D wheelTiltAxis;					// tilt axis in world coords.
 	DynamicArray<double> wheelYawAngle;	// rotation around yaw axis
 	DynamicArray<double> wheelTiltAngle;// rotation around tilt axis
 
-	V3D targetOffsetFromCOM;
 	RigidBody* endEffectorRB;
 	P3D endEffectorLocalCoords;
 
@@ -41,7 +40,7 @@ public:
 	//this is the limb the end effector trajectory belongs to
 	GenericLimb* theLimb;
 	//and this is the index of the end effector contact point that it represents
-	int CPIndex;
+	int CPIndex = -1;
 
 public:
 	LocomotionEngine_EndEffectorTrajectory(int nPos);
@@ -56,7 +55,7 @@ public:
 	P3D getEEPositionAt(double t) const;
 
 	// TODO: maybe we can store rho alongside with wheelAxis etc.
-	V3D getWheelRho() const;
+	V3D getWheelRhoLocal() const;
 
 	P3D getWheelCenterPositionAt(double t) const;
 
@@ -65,8 +64,10 @@ public:
 
 	double getWheelTiltAngleAt(double t) const;
 
+	double getWheelSpeedAt(double t) const;
+
 	template<class T>
-	static Vector3T<T> rotateWheelAxisWith(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {
+	static Vector3T<T> rotateVectorUsingWheelAngles(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {
 		// First tilt the axis ...
 		Vector3T<T> axisRot = rotateVec(axis, beta, axisTilt);
 		// ... and then yaw
@@ -77,11 +78,11 @@ public:
 	template<class T>
 	Vector3T<T> getRotatedWheelAxis(T angleYaw, T angleTilt) const
 	{
-		Vector3T<T> axis(wheelAxis);
+		Vector3T<T> axis(wheelAxisLocal);
 		Vector3T<T> axisYaw(wheelYawAxis);
 		Vector3T<T> axisTilt(wheelTiltAxis);
 
-		return rotateWheelAxisWith(axis, axisYaw, angleYaw, axisTilt, angleTilt);
+		return rotateVectorUsingWheelAngles(axis, axisYaw, angleYaw, axisTilt, angleTilt);
 	}
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
@@ -106,7 +107,7 @@ public:
 public:
 	LocomotionEngine_COMTrajectory();
 
-	void initialize(int nPoints, const P3D& desComPos, const V3D& axis_0, const V3D& axis_1, const V3D& axis_2);
+	void initialize(int nPoints, const P3D& desComPos, const V3D& comRotationAngles, const V3D& axis_0, const V3D& axis_1, const V3D& axis_2);
 
 	V3D getAxis(int i);
 
@@ -156,6 +157,14 @@ public:
 
 	void getQAtTimeIndex(int j, dVector& q_t);
 
+	template<class T>
+	void getQAtTimeIndex(int j, VectorXT<T> &q_t){
+		q_t.resize(qArray[j].size());
+		for (int i = 0; i < qArray[j].size(); ++i) {
+			q_t[i] = qArray[j][i];
+		}
+	}
+
 	P3D getBodyPositionAtTimeIndex(int j);
 };
 
@@ -182,10 +191,13 @@ public:
 	double verticalGRFLowerBoundVal = 0;
 	double GRFEpsilon = 0.4;				// for SoftUnilateralConstraint
 	double pseudoLimbEpsilon = 0.1;
+	double frictionEpsilon = 0.05;				// for SoftUnilateralConstraint
 
 	// Parameters for joint motor velocity constraint
 	double jointVelocityLimit = 0;
 	double jointVelocityEpsilon = 0.4;		// for SoftUnilateralConstraint
+
+	dVector initialRobotState;
 	
 	// Parameters for wheel motor speed constraint
 	double wheelSpeedLimit = 0;
@@ -229,24 +241,18 @@ public:
 	int paramCount;
 
 	//points to the point that, in joint angle space, should correspond to the last time index, for boundary conditions...
-	int wrapAroundBoundaryIndex;
-
-	// the time index that transition starts
-	int transitionStartIndex = -1;
-	// the time index that transition ends
-	int transitionEndIndex = -1;
-	// the stride phase that transition starts
-	double transitionStartPhase = -1.0;
-	// the time index that transition ends
-	double transitionEndPhase = -1.0;
-	// the motion plan that the transition starts from
-	LocomotionEngineMotionPlan* transitionStartPlan = NULL;
-	// the motion plan that the transition ends with
-	LocomotionEngineMotionPlan* transitionEndPlan = NULL;
+	int wrapAroundBoundaryIndex = -1;
 
 	double totalMass;
 	double totalInertia;
 	double frictionCoeff = -1.0;     // when frictionCoeff < 0, friction cone constraints are disabled.
+
+
+	void addEndEffector(GenericLimb* theLimb, RigidBody* rb, int eeIndex, int nSamplingPoints);
+
+	void addIKInitEE(RigidBody* rb, IK_Plan* ikPlan);
+
+	void updateEEs();
 
 public:
 	int getWheelSpeedIndex(int i, int j) const;
@@ -269,13 +275,14 @@ public:
 	void syncFootFallPatternWithMotionPlan(FootFallPattern& ffp);
 	//syncs the current motion plan with the footfall pattern
 	void syncMotionPlanWithFootFallPattern(FootFallPattern& ffp);
-	void syncMotionPlanWithFootFallPattern(FootFallPattern& ffp, const std::vector<std::vector<double> > &yPositions);
 
 	//if minV is equal to maxV, then there are no bounds for that variable...
 	virtual void getParameterMinValues(dVector& minV);
 
 	//if minV is equal to maxV, then there are no bounds for that variable...
 	virtual void getParameterMaxValues(dVector& maxV);
+
+	virtual dVector getMPParameters();
 
 	virtual void writeMPParametersToList(dVector& p);
 
@@ -312,4 +319,5 @@ public:
 		double t; int qIndex; double velocity;
 	};
 	bool getJointAngleVelocityProfile(std::vector<JointVelocity> &velocityProfile, std::string &error) const;
+	bool getJointAngleVelocityProfile(dVector &velocityProfile, int jointIndex) const;
 };
