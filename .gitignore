@@ -2,4 +2,7 @@ build*
 out/
 
 /.vs/SCP/v14/.suo
+
+data/FEM/2d/triMeshTMP.tri2d
 /CMakeLists.txt.user
+
