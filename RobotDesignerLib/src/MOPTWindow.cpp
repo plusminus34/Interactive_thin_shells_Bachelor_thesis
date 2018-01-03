@@ -387,6 +387,7 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 			velocityProfileWindow->dispose();
 			velocityProfileWindow = nullptr;
 		}
+		robot->setState(&oldState);
 		return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 	}
 	

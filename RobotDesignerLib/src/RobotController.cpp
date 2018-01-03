@@ -44,12 +44,55 @@ void RobotController::applyControlSignals() {
 }
 
 void RobotController::computeDesiredState() {
-	motionPlan->robotStateTrajectory.getRobotPoseAt(stridePhase, desiredState);
+	motionPlan->robotStateTrajectory.getRobotStateAt(stridePhase, motionPlan->motionPlanDuration, desiredState);
+
+	ReducedRobotState rs(robot);
+	robot->setState(&desiredState);
 
 	//we now have the pose of the robot, and we should also read off the wheel speed...
-	for (uint i = 0; i < motionPlan->endEffectorTrajectories.size(); i++)
-		if (motionPlan->endEffectorTrajectories[i].isWheel)
-			motionPlan->endEffectorTrajectories[i].endEffectorRB->rbProperties.endEffectorPoints[motionPlan->endEffectorTrajectories[i].CPIndex].rotationSpeed = motionPlan->endEffectorTrajectories[i].getWheelSpeedAt(stridePhase);
+	for (uint i = 0; i < motionPlan->endEffectorTrajectories.size(); i++) {
+		LocomotionEngine_EndEffectorTrajectory* eeTraj = &motionPlan->endEffectorTrajectories[i];
+		if (eeTraj->isWheel) {
+			RigidBody* rb = eeTraj->endEffectorRB;
+			int eeIndex = eeTraj->CPIndex;
+			RBEndEffector* ee = &rb->rbProperties.endEffectorPoints[eeIndex];
+			
+			//NOTE: due to interpolation artifacts, this is not a very good estimate... compute it instead based on a no-slip assumption...
+//			ee->wheelSpeed_w = -eeTraj->getWheelSpeedAt(stridePhase);
 
+			RBEndEffector worldEE = *ee;		//tmpEE holds all quantities of the wheel in world coordinates, placed according to its parent RB
+			worldEE.localCoordsWheelAxis = rb->getWorldCoordinates(ee->getWheelAxis());
+			worldEE.coords = rb->getWorldCoordinates(ee->coords);
+
+			//due to the speed of the wheel, the point at rho (i.e. bottom of the wheel) should have zero speed relative to the ground... but first remove the contribution that is not in the direction the wheel is moving on
+			V3D wheelCenterSpeed = rb->getAbsoluteVelocityForLocalPoint(ee->coords).getProjectionOn(worldEE.getWheelTiltAxis());
+
+			//We know we want it to lead to zero velocity at the contact point...
+			//i.e.: wheelCenterSpeed + (rotAxis_w).cross(V3D(tmpEE.getWheelRho()) * -1) * ee->wheelSpeed_w = 0;
+			ee->wheelSpeed_w = wheelCenterSpeed.dot(worldEE.getWheelTiltAxis()) / worldEE.getWheelRho().norm();
+
+			//now, to compute the speed of the wheel relative to the parent RB, we need to know how much of this rigid body's angular velocity aligns with the rotation axis, this is the part that we need to factor out... 
+			V3D rbAngVelocity = rb->state.angularVelocity;
+			double rbSpeed = rbAngVelocity.dot(worldEE.localCoordsWheelAxis);
+
+			ee->wheelSpeed_rel = ee->wheelSpeed_w - rbSpeed;
+
+			//now, check if we've succeeded...
+			V3D contactPointVelocity = wheelCenterSpeed + (worldEE.localCoordsWheelAxis * ee->wheelSpeed_w).cross(V3D(worldEE.getWheelRho()) * -1);
+			if (!IS_ZERO(contactPointVelocity.norm()))
+				Logger::consolePrint("velocity @ contact point:\t%lf\t%lf\t%lf\t%lf\n", contactPointVelocity.x(), contactPointVelocity.y(), contactPointVelocity.z(), contactPointVelocity.norm());
+
+			V3D wheelAngularVelocity = rbAngVelocity + V3D(worldEE.getWheelAxis()) * ee->wheelSpeed_rel;
+			V3D tmpCPVel_global = rb->getAbsoluteVelocityForLocalPoint(ee->coords) - wheelAngularVelocity.cross(worldEE.getWheelRho());
+			tmpCPVel_global = tmpCPVel_global.getProjectionOn(worldEE.getWheelTiltAxis());
+
+			if (!IS_ZERO(tmpCPVel_global.norm()))
+				Logger::consolePrint("velocity @ contact point:\t%lf\t%lf\t%lf\t%lf\n", tmpCPVel_global.x(), tmpCPVel_global.y(), tmpCPVel_global.z(), tmpCPVel_global.norm());
+
+//			test it one more way, basically by creating another wheel rigid body, set the state as it comes from the parent RB + fix constraints... still doesn't look good...
+
+		}
+	}
+	robot->setState(&rs);
 }
 

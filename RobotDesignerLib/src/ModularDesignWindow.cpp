@@ -639,11 +639,6 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		saveToRBSFile("../out/tmpRobot.rbs");
 	}
 
-	if (key == GLFW_KEY_K && action == GLFW_PRESS){
-		Logger::consolePrint("Exporting meshes to \'../out/tmpModularRobotMeshes.obj\'...\n");
-		exportMeshes();
-	}
-
 	// clone the picked robot
 	if (key == GLFW_KEY_Q && action == GLFW_PRESS){
 		Logger::consolePrint("Cloning selected robot...\n");
@@ -727,7 +722,6 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 			buildRMCMirrorMap();
 		}
 	}
-
 
 	if (key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
@@ -1555,24 +1549,6 @@ PossibleConnection* ModularDesignWindow::getClosestConnnection(Ray& ray, vector<
 	return closestConnection;
 }
 
-void ModularDesignWindow::exportMeshes(){
-	RMCRobot* robot = new RMCRobot(new RMC(), transformationMap);
-
-	FILE* fp = fopen(bodyMesh->path.c_str(), "w+");
-	bodyMesh->renderToObjFile(fp, 0, Quaternion(), P3D());
-	fclose(fp);
-
-	for (uint i = 0; i < rmcRobots.size(); i++)
-	{
-		if (rmcRobots[i]->getRoot()->type == PLATE_RMC)
-		{
-			robot->connectRMCRobotDirectly(rmcRobots[i]->clone(), robot->getRoot());
-		}
-	}
-	robot->exportMeshes("../out/tmpModularRobotMeshes.obj");
-
-	delete robot;
-}
 
 
 /**

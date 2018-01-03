@@ -183,9 +183,8 @@ void SimWindow::step() {
 				RigidBody* rb = eeTraj->endEffectorRB;
 				int eeIndex = eeTraj->CPIndex;
 				int meshIndex = rb->rbProperties.endEffectorPoints[eeIndex].meshIndex;
-				rb->rbProperties.endEffectorPoints[eeIndex].rotationSpeed = -eeTraj->getWheelSpeedAt(activeController->stridePhase);
 				if (meshIndex >= 0)
-					rb->meshTransformations[meshIndex].R = getRotationQuaternion(simTimeStep * rb->rbProperties.endEffectorPoints[eeIndex].rotationSpeed, rb->rbProperties.endEffectorPoints[eeIndex].localCoordsWheelAxis).getRotationMatrix() * rb->meshTransformations[meshIndex].R;
+					rb->meshTransformations[meshIndex].R = getRotationQuaternion(simTimeStep * rb->rbProperties.endEffectorPoints[eeIndex].wheelSpeed_rel, rb->rbProperties.endEffectorPoints[eeIndex].localCoordsWheelAxis).getRotationMatrix() * rb->meshTransformations[meshIndex].R;
 			}
 		}
 	}
