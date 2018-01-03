@@ -191,8 +191,8 @@ void PololuServoControlInterface::sendControlInputsToPhysicalRobot() {
 		//if we're not to make any assumption about the order in which the motorID's are assigned, then we have to search for each contiguous block, send those commands and then start over...
 
 		for (uint i = 0; i < multiTargetCommands.size(); i++) {
-			for (uint j = 0; j < multiTargetCommands[i].robotJointID.size(); j++) {
-				HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(multiTargetCommands[i].robotJointID[j]));
+			for (uint j = 0; j < multiTargetCommands[i].robotJoints.size(); j++) {
+				HingeJoint* hj = multiTargetCommands[i].robotJoints[j];
 				multiTargetCommands[i].targetVals[j] = getMaestroSignalFromAngle(hj->motor.targetMotorAngle, hj->motor);
 			}
 			maestroSetMultipleTargets(multiTargetCommands[i].motorStartID, multiTargetCommands[i].targetVals);
@@ -343,11 +343,9 @@ PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotCo
 
 
 
-
-
-
-
 //set up the information required for multi-motor commands. Each list should be a continuous set of motor ids
+//TODO: outer loop should be over max motor ID found
+//TODO: make a list of all joints, both normal and auxiliary (or better yet, robot should have a way of returning this list directly), and iterate over that...
 
 	for (int j = 0; j < robot->getJointCount(); j++) {
 		ServoMotorCommandBlock smcb;
@@ -358,7 +356,7 @@ PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotCo
 			if (!hj) continue;
 			if (hj->motor.motorID == j) {
 				smcb.targetVals.push_back(0);
-				smcb.robotJointID.push_back(i);
+				smcb.robotJoints.push_back(hj);
 				j++;	//now look for the next motor to add to the list...
 				i = -1; //this is so that we start looking for the next motor id starting from the very first motor in the robot joint list
 			}
@@ -374,8 +372,8 @@ PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotCo
 	for (uint i = 0; i < multiTargetCommands.size(); i++) {
 		string cmd;
 		cmd = "Start: " + to_string(multiTargetCommands[i].motorStartID) + ". Motor id list: ";
-		for (uint j = 0; j < multiTargetCommands[i].robotJointID.size(); j++) {
-			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(multiTargetCommands[i].robotJointID[j]));
+		for (uint j = 0; j < multiTargetCommands[i].robotJoints.size(); j++) {
+			HingeJoint* hj = multiTargetCommands[i].robotJoints[j];
 			cmd += to_string(hj->motor.motorID) + " ";
 		}
 		Logger::consolePrint(cmd.c_str());
@@ -394,7 +392,7 @@ PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotCo
 				Logger::consolePrint("Warning: current motor ID is not properly separated from the last motor ID: lastMotorID = %f, currentMotorID = %d\n", lastMotorID, currentMotorID);
 		}
 		for (uint j = 0; j < multiTargetCommands[i].targetVals.size(); j++) {
-			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(multiTargetCommands[i].robotJointID[j]));
+			HingeJoint* hj = multiTargetCommands[i].robotJoints[j];
 			if (hj->motor.motorID != multiTargetCommands[i].motorStartID + j)
 				Logger::consolePrint("Warning: robot joints are not consistently ordered to match up with motor IDs...\n");
 		}

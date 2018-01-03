@@ -10,7 +10,7 @@ class ServoMotorCommandBlock {
 public:
 	int motorStartID;
 	DynamicArray<unsigned short> targetVals;
-	DynamicArray<int> robotJointID;
+	DynamicArray<HingeJoint*> robotJoints;
 };
 
 /**
