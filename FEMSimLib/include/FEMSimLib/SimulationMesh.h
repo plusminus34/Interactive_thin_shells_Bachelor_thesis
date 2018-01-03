@@ -17,6 +17,7 @@ class SimulationMesh{
 	friend class CSTElement2D;
 	friend class CSTElement3D;
 	friend class BilateralSpring3D;
+	friend class BenderApp;
 
 protected:
 	//this is the list of nodes in the structure
