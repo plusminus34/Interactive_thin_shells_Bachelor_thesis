@@ -12,16 +12,6 @@ void KinematicRobotController::draw() {
 
 }
 
-void KinematicRobotController::computeMotionPlanPeriodDistAndHeading(){
-	ReducedRobotState startRobotState(robot);
-	ReducedRobotState endRobotState(robot);
-
-//	motionPlan->robotStateTrajectory.getRobotPoseAt(0, startRobotState);
-//	motionPlan->robotStateTrajectory.getRobotPoseAt(1, endRobotState);
-//	mpTravelDist = endRobotState.getPosition() - startRobotState.getPosition();
-//	mpTravelHeading = computeHeading(endRobotState.getOrientation() * startRobotState.getOrientation().getInverse(), V3D(0, 1, 0));
-}
-
 void KinematicRobotController::advanceInTime(double timeStep) {
 //	vRel = V3D();
 //	qRel = Quaternion();
@@ -48,12 +38,6 @@ void KinematicRobotController::advanceInTime(double timeStep) {
 	posInPlane += overallHeading * computeHeading(currentMPState.getOrientation(), V3D(0, 1, 0)).getInverse() * posOffset;
 	overallHeading = qHeadingOffset * overallHeading;
 
-//	motionPlan->robotStateTrajectory.getRobotPoseAt(stridePhase, nextMPState);
-//	qRel = nextMPState.getOrientation() * qRel * currentMPState.getOrientation().getInverse();
-//	vRel += nextMPState.getPosition() - currentMPState.getPosition();
-//	vRel = computeHeading(currentMPState.getOrientation(), V3D(0, 1, 0)).getInverse().rotate(vRel);
-//	qRel = nextMPState.getPosition() - currentMPState.getPosition();
-
 }
 
 void KinematicRobotController::computeDesiredState() {
@@ -69,7 +53,7 @@ void KinematicRobotController::loadMotionPlan(LocomotionEngineMotionPlan* motion
 	stridePhase = phase;
 
 	this->motionPlan = motionPlan;
-	computeMotionPlanPeriodDistAndHeading();
+
 	ReducedRobotState startRobotState(robot);
 	ReducedRobotState currentRobotState(robot);
 	motionPlan->robotStateTrajectory.getRobotPoseAt(phase, startRobotState);

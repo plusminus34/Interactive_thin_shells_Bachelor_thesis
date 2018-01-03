@@ -166,17 +166,26 @@ void SimWindow::step() {
 
 	activeController->computeControlSignals(simTimeStep);
 
-	for (int i = 0; i < nPhysicsStepsPerControlStep; i++) {
+	if (activeController == torqueController){
+		for (int i = 0; i < nPhysicsStepsPerControlStep; i++) {
+			activeController->applyControlSignals();
+			rbEngine->applyForceTo(robot->root, perturbationForce * forceScale, P3D());
+			rbEngine->step(simTimeStep / nPhysicsStepsPerControlStep);
+			robot->bFrame->updateStateInformation();
+		}
+	}
+	
+	if (activeController == positionController) {
 		activeController->applyControlSignals();
 		rbEngine->applyForceTo(robot->root, perturbationForce * forceScale, P3D());
-		if (activeController != kinematicController)
-			rbEngine->step(simTimeStep / nPhysicsStepsPerControlStep);
+		rbEngine->step(simTimeStep);
 		robot->bFrame->updateStateInformation();
 	}
 
 
 	//do the integration of wheel motions here...
 	if (activeController == kinematicController) {
+		activeController->applyControlSignals();
 		for (uint j = 0; j < activeController->motionPlan->endEffectorTrajectories.size(); j++) {
 			LocomotionEngine_EndEffectorTrajectory* eeTraj = &activeController->motionPlan->endEffectorTrajectories[j];
 			if (eeTraj->isWheel) {
@@ -190,6 +199,5 @@ void SimWindow::step() {
 	}
 
 	activeController->advanceInTime(simTimeStep);
-
 }
 
