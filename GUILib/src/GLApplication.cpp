@@ -216,12 +216,44 @@ void GLApplication::setupMainMenu() {
 
 	mainMenu->addWindow(Eigen::Vector2i(0, 0), "Main Menu");
 	mainMenu->addGroup("Visualization");
-	mainMenu->addVariable("Wait For Framerate", waitForFrameRate);
-	mainMenu->addVariable("Show Console", showConsole);
-	mainMenu->addVariable("Show FPS", showFPS);
-	mainMenu->addVariable("Show Reflections", showReflections);
-	mainMenu->addVariable("Show Ground Plane", showGroundPlane);
-	mainMenu->addVariable("Show Env Box", showDesignEnvironmentBox);
+
+	nanogui::Widget *visTools = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", visTools);
+	visTools->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+	nanogui::Button* button;
+
+//	button = new nanogui::Button(tools, "");
+//	button->setFlags(nanogui::Button::ToggleButton);
+//	button->setChangeCallback([this, button](bool val) {  waitForFrameRate = val; });
+//	button->setIcon(ENTYPO_ICON_SAVE);
+//	button->setTooltip("Wait For Framerate");
+
+	button = new nanogui::Button(visTools, ">>_");
+	button->setFlags(nanogui::Button::ToggleButton);
+	button->setChangeCallback([this, button](bool val) {  showConsole = val; });
+	button->setPushed(showConsole);
+	button->setTooltip("Toggle console");
+
+	button = new nanogui::Button(visTools, "FPS");
+	button->setFlags(nanogui::Button::ToggleButton);
+	button->setChangeCallback([this, button](bool val) {  showFPS = val; });
+	button->setPushed(showFPS);
+	button->setTooltip("Show FPS");
+
+	button = new nanogui::Button(visTools, "");
+	button->setFlags(nanogui::Button::ToggleButton);
+	button->setChangeCallback([this, button](bool val) {  showReflections = val; });
+	button->setPushed(showReflections);
+	button->setIcon(ENTYPO_ICON_SLIDESHARE);
+	button->setTooltip("Show Reflections");
+
+	button = new nanogui::Button(visTools, "");
+	button->setFlags(nanogui::Button::ToggleButton);
+	button->setChangeCallback([this, button](bool val) {  showGroundPlane = val; });
+	button->setIcon(ENTYPO_ICON_LOCATION);
+	button->setPushed(showGroundPlane);
+	button->setTooltip("Show Ground Plane");
 
 	mainMenu->addGroup("Playback Controls                          ");
 
@@ -230,7 +262,7 @@ void GLApplication::setupMainMenu() {
 	tools->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 		nanogui::Alignment::Middle, 0, 4));
 
-	nanogui::Button* button = new nanogui::Button(tools, "");
+	button = new nanogui::Button(tools, "");
 	button->setCallback([this]() { restart(); });
 	button->setIcon(ENTYPO_ICON_CCW);
 	button->setTooltip("Restart");
