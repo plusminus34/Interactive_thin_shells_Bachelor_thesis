@@ -40,63 +40,49 @@ void MPO_RobotWheelAxisObjective::addGradientTo(dVector& grad, const dVector& p)
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
-	// number of DOFs for an end effector at one time sample
-	int numDOFs = 0;
-	// 2 DOFs for yaw and tilt angle
-	if (theMotionPlan->wheelParamsStartIndex >= 0)
-		numDOFs += 2;
-	// size of robot state `q` as DOFs
-	if (theMotionPlan->robotStatesParamsStartIndex >= 0)
-		numDOFs += theMotionPlan->robotRepresentation->getDimensionCount();
+	MatrixNxM dvdq;
 
 	int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 	for (int j=0; j<theMotionPlan->nSamplePoints; j++){
-		dVector qd;
-		theMotionPlan->robotStateTrajectory.getQAtTimeIndex(j, qd);
-		VectorXT<ScalarDiff> q(qd.size());
-		for (int k = 0; k < qd.size(); ++k)
-			q[k] = qd[k];
+		dVector q;
+		theMotionPlan->robotStateTrajectory.getQAtTimeIndex(j, q);
+
 
 		for (int i=0;i<nLimbs;i++){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 
 			if(ee.isWheel)
 			{
+				if (theMotionPlan->wheelParamsStartIndex < 0)
+					continue;
 
-				V3T<ScalarDiff> eePosLocal = ee.endEffectorLocalCoords;
-				V3T<ScalarDiff> wheelAxisLocal = ee.wheelAxisLocal;
+				Vector3d eePosLocal = ee.endEffectorLocalCoords;
+				Vector3d wheelAxisLocal = ee.wheelAxisLocal;
 
-				ScalarDiff yawAngle = ee.wheelYawAngle[j];
-				V3T<ScalarDiff> yawAxis = ee.wheelYawAxis;
-				ScalarDiff tiltAngle = ee.wheelTiltAngle[j];
-				V3T<ScalarDiff> tiltAxis = ee.wheelTiltAxis;
+				double yawAngle = ee.wheelYawAngle[j];
+				Vector3d yawAxis = ee.wheelYawAxis;
+				double tiltAngle = ee.wheelTiltAngle[j];
+				Vector3d tiltAxis = ee.wheelTiltAxis;
 
-				std::vector<DOF<ScalarDiff>> dofs(numDOFs);
-				int index = 0;
-				if (theMotionPlan->wheelParamsStartIndex >= 0){
-					dofs[index].v = &yawAngle;
-					dofs[index].i = theMotionPlan->getWheelYawAngleIndex(i, j);
-					index++;
-					dofs[index].v = &tiltAngle;
-					dofs[index].i = theMotionPlan->getWheelTiltAngleIndex(i, j);
-					index++;
-				}
-				if (theMotionPlan->robotStatesParamsStartIndex >= 0){
-					for (int k = 0; k < q.size(); ++k){
-						dofs[index].v = &q[k];
-						dofs[index].i = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k;
-						index++;
-					}
-				}
+				// wheel axis from robot
+				Vector3d wheelAxisRobot = theMotionPlan->robotRepresentation->getWorldCoordinatesForVectorT(wheelAxisLocal, ee.endEffectorRB, q);
+				// wheel axis from wheel angles
+				Vector3d wheelAxisWorld = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
+				Vector3d err = wheelAxisWorld - wheelAxisRobot;
 
-				for (int k = 0; k < numDOFs; ++k) {
-					dofs[k].v->deriv() = 1.0;
-					ScalarDiff energy = computeEnergy(wheelAxisLocal, ee.endEffectorRB, q,
-													  yawAxis, yawAngle,
-													  tiltAxis, tiltAngle);
-					grad[dofs[k].i] += energy.deriv();
-					dofs[k].v->deriv() = 0.0;
-				}
+				//compute the gradient with respect to the robot q's
+				theMotionPlan->robotRepresentation->compute_dvdq(wheelAxisLocal, ee.endEffectorRB, dvdq);
+				
+				//dEdee * deedq = dEdq
+				int ind = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim;
+				grad.segment(ind, dvdq.cols()) -= weight*dvdq.transpose()*err;
+
+				//compute the gradient with respect yaw and tilt angle
+				Vector3d drhoRotdYawAngle = LocomotionEngine_EndEffectorTrajectory::drotateVectorUsingWheelAngles_dYawAngle(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
+				grad(theMotionPlan->getWheelYawAngleIndex(i, j)) += weight*drhoRotdYawAngle.transpose()*err;
+
+				Vector3d drhoRotdTiltAngle = LocomotionEngine_EndEffectorTrajectory::drotateVectorUsingWheelAngles_dTiltAngle(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
+				grad(theMotionPlan->getWheelTiltAngleIndex(i, j)) += weight*drhoRotdTiltAngle.transpose()*err;
 			}
 		}
 	}

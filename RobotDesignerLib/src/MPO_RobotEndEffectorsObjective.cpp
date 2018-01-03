@@ -67,7 +67,7 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 					continue;
 				
 				Vector3d rhoRot = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
-				Vector3d robotEEPos = theMotionPlan->robotRepresentation->getWorldCoordinatesForT(ee.endEffectorLocalCoords, ee.endEffectorRB, q_t);
+				Vector3d robotEEPos = theMotionPlan->robotRepresentation->getWorldCoordinatesForPointT(ee.endEffectorLocalCoords, ee.endEffectorRB, q_t);
 				Vector3d err(robotEEPos-ee.EEPos[j] - rhoRot);
 				//compute the gradient with respect to the feet locations
 
@@ -93,7 +93,7 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 				if (theMotionPlan->feetPositionsParamsStartIndex < 0)
 					continue;
 
-				Vector3d err(ee.EEPos[j] - theMotionPlan->robotRepresentation->getWorldCoordinatesForT(ee.endEffectorLocalCoords, ee.endEffectorRB,q_t));
+				Vector3d err(ee.EEPos[j] - theMotionPlan->robotRepresentation->getWorldCoordinatesForPointT(ee.endEffectorLocalCoords, ee.endEffectorRB,q_t));
 				//compute the gradient with respect to the feet locations
 				if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
 					int ind = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
