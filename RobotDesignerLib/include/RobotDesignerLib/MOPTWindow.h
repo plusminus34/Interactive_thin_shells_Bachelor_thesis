@@ -51,7 +51,7 @@ public:
 	int nTimeSteps = 12;
 	double globalMOPTRegularizer = 0.01;
 
-	nanogui::Graph* energyGraph;
+	nanogui::Graph* energyGraph = NULL;
 	std::vector<float> energyGraphValues;
 
 	nanogui::Graph* velocityProfileGraph;

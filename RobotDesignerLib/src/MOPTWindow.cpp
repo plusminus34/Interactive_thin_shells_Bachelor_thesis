@@ -130,7 +130,7 @@ void MOPTWindow::addMenuItems() {
 		using namespace nanogui;
 
 		Window *window = new Window(glApp->menuScreen, "MOPT Energy");
-		window->setPosition(Eigen::Vector2i(900, 0));
+		window->setPosition(Eigen::Vector2i(0, 0));
 		window->setWidth(300);
 		window->setLayout(new GroupLayout());
 

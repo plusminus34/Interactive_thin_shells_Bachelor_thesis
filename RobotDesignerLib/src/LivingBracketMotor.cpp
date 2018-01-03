@@ -81,9 +81,9 @@ LivingMotorBodyBracket_TGY306G::~LivingMotorBodyBracket_TGY306G() {
 void LivingMotorBodyBracket_TGY306G::generateBracketMesh() {
 	pinInfos.clear();
 
-	P3D center = P3D(0, -0.022, 0);
+	P3D center = P3D(0, -0.024, 0);
 	double lenX = 0.008;
-	double lenZ = 0.015;
+	double lenZ = 0.012;
 
 	Transformation pinTrans(getRotationQuaternion(RAD(180), V3D(1, 0, 0)).getRotationMatrix(), V3D(center));
 
