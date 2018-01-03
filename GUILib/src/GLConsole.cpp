@@ -25,7 +25,8 @@ void GLConsole::draw() {
 	}
 
 	// TODO: use CMake to copy resource files to build dir (https://stackoverflow.com/a/18047175)
-	FreeTypeFont* font = GLContentManager::getFont("../data/fonts/arial.ttf 14");
+	//FreeTypeFont* font = GLContentManager::getFont("../data/fonts/arial.ttf 14");
+	FreeTypeFont* font = GLContentManager::getFont("../data/fonts/DroidSansMono.ttf 14");
 	//we want to get the last line to end at the bottom of the console window, so figure out where the first one should start then...
 	double startHeight = font->getLineHeight() * (Logger::consoleOutput.size() + 1.5);
 

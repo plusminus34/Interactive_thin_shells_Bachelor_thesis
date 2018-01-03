@@ -100,8 +100,11 @@ LivingHornBracket_TGY306G::~LivingHornBracket_TGY306G(void) {
 
 void LivingHornBracket_TGY306G::setDefaultFeaturePointList() {
 	featurePoints.clear();
-	featurePoints.push_back(P3D(0.008, 0.02, 0.019));
-	featurePoints.push_back(P3D(0.008, 0.02, -0.019));
-	featurePoints.push_back(P3D(-0.008, 0.02, -0.019));
-	featurePoints.push_back(P3D(-0.008, 0.02, 0.019));
+	double lenX = 0.008;
+	double lenZ = 0.012;
+
+	featurePoints.push_back(P3D(lenX, 0.02, lenZ));
+	featurePoints.push_back(P3D(lenX, 0.02, -lenZ));
+	featurePoints.push_back(P3D(-lenX, 0.02, -lenZ));
+	featurePoints.push_back(P3D(-lenX, 0.02, lenZ));
 }

@@ -88,7 +88,7 @@ void ObjectiveFunction::testGradientWithFD(const dVector& p){
 			Logger::print("Mismatch element %d: Analytic val: %lf, FD val: %lf. Error: %lf(%lf%%)\n", i, analyticGradient[i], FDGradient[i], absErr, relError*100);
 		}
 	}
-}
+}	
 
 void ObjectiveFunction::testHessianWithFD(const dVector& p){
 	double tol = 1e-4;
