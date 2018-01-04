@@ -118,7 +118,7 @@ Vector3d LocomotionEngine_EndEffectorTrajectory::ddrotVecByYawTilt_dYaw2(const V
 	return axisRot;
 }
 
-Vector3d LocomotionEngine_EndEffectorTrajectory::drotVecByYawTilt_dYawdTilt(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta)
+Vector3d LocomotionEngine_EndEffectorTrajectory::ddrotVecByYawTilt_dYawdTilt(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta)
 {
 	// First tilt the axis ...
 	Vector3d axisRot = drotateVec_dalpha(axis, beta, axisTilt);

@@ -79,7 +79,7 @@ public:
 	static Vector3d drotVecByYawTilt_dYaw(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
 
 	static Vector3d ddrotVecByYawTilt_dYaw2(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
-	static Vector3d drotVecByYawTilt_dYawdTilt(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
+	static Vector3d ddrotVecByYawTilt_dYawdTilt(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
 	static Vector3d ddrotVecByYawTilt_dTilt2(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
 	template<class T>
 	Vector3T<T> getRotatedWheelAxis(T angleYaw, T angleTilt) const
