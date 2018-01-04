@@ -248,7 +248,7 @@ void LocomotionEngine_RobotStateTrajectory::getRobotStateAt(double t, double mot
 	double dStridePhase = 0.01;
 	double dt = dStridePhase * motionPlanDuration;
 
-	ReducedRobotState futureRobotState(robotState.getStateSize());
+	ReducedRobotState futureRobotState(robotState.getJointCount());
 
 	if (t+dStridePhase < 1){
 		getRobotPoseAt(t, robotState);

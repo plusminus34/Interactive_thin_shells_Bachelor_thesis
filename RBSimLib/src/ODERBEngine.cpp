@@ -694,6 +694,13 @@ void ODERBEngine::step(double deltaT) {
 				Logger::consolePrint("Warning: control mode for joint %d requires a motor, but none has been created...\n");
 		}
 
+		if (joints[j]->controlMode == PASSIVE) {
+			int motorID = getODEMotorForJoint(joints[j]);
+			//we need to place the motor in limbo, such that it does not interfere with torque controller...
+			if (motorID >= 0)
+				dJointAttach(motorToJointmap[motorID].motorID, 0, 0);
+		}
+
 		if (joints[j]->controlMode == TORQUE_MODE) {
 			int motorID = getODEMotorForJoint(joints[j]);
 			//we need to place the motor in limbo, such that it does not interfere with torque controller...

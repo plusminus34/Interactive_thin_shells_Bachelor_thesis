@@ -19,7 +19,7 @@ public:
 	//keep a list of the joints of the virtual robot, for easy access
 	DynamicArray<Joint*> jointList;
 
-	//this is a list of auxiliary joints, connecting things like wheels to the robot
+	//this is a list of auxiliary joints, created on demand. They can be used, for example, to create wheels or other specific function accessories for the robot...
 	DynamicArray<Joint*> auxiliaryJointList;
 
 	double		mass = 0;
@@ -30,16 +30,13 @@ public:
 	V3D			forward = V3D(1, 0, 0);
 	V3D			right = V3D(0, 0, 1);
 
-	///< Assuming hinge joints !
-	int getDim() { return getJointCount() + 6; }
-
 	/**
-	This method is used to compute the center of mass of the robot.
+		This method is used to compute the center of mass of the robot.
 	*/
 	P3D computeCOM();
 
 	/**
-	This method is used to compute the velocity of the center of mass of the articulated figure.
+		This method is used to compute the velocity of the center of mass of the articulated figure.
 	*/
 	V3D computeCOMVelocity();
 
@@ -72,27 +69,50 @@ public:
 
 		fclose(fp);
 	}
-
 	
 	/**
 		This method is used to populate the relative orientation of the parent and child bodies of joint i.
 	*/
-	void getRelativeOrientationForJoint(int i, Quaternion* qRel);
+	Quaternion getRelativeOrientationForJoint(Joint* joint) {
+		return joint->computeRelativeOrientation();
+	}
 
 	/**
 		This method is used to get the relative angular velocities of the parent and child bodies of joint i,
 		expressed in parent's local coordinates. 
 	*/
-	void getRelativeAngularVelocityForJoint(int i, V3D* wRel);
+	V3D getRelativeAngularVelocityForJoint(Joint* joint) {
+		//we will store wRel in the parent's coordinates, to get an orientation invariant expression for it
+		return joint->parent->getLocalCoordinates(joint->child->state.angularVelocity - joint->parent->state.angularVelocity);
+	}
 
+	void setRelativeOrientationForJoint(Joint* joint, const Quaternion& qRel) {
+		joint->child->state.orientation = joint->parent->state.orientation * qRel;
+	}
 
-	/**
-		Returns a pointer to the ith joint of the virtual robot
-	*/
+	void setRelativeAngularVelocityForJoint(Joint* joint, const V3D& relAngVel) {
+		//assume relAngVel is stored in the parent's coordinate frame, to get an orientation invariant expression for it
+		joint->child->state.angularVelocity = joint->parent->state.angularVelocity + joint->parent->getWorldCoordinates(relAngVel);
+	}
+
+	inline int getJointCount() {
+		return (int)jointList.size();
+	}
+
+	inline int getAuxiliaryJointCount() {
+		return (int)auxiliaryJointList.size();
+	}
+
 	Joint* getJoint(int i) const{
 		if (i < 0 || i > (int)jointList.size()-1)
 			return NULL;
 		return jointList[i];
+	}
+
+	Joint* getAuxiliaryJoint(int i) const {
+		if (i < 0 || i >(int)auxiliaryJointList.size() - 1)
+			return NULL;
+		return auxiliaryJointList[i];
 	}
 
 	int getRigidBodyCount() {
@@ -155,12 +175,6 @@ public:
 	*/
 	void setHeading(double val);
 
-	/**
-		This method is used to return the number of joints of the robot.
-	*/
-	inline int getJointCount(){
-		return (int)jointList.size();
-	}
 
 	/**
 		this method is used to return a reference to the joint whose name is passed as a parameter, or NULL
@@ -189,14 +203,6 @@ public:
 	*/
 	RigidBody* getRBByName(const char* jName);
 
-	std::vector<RigidBody*> getEndEffectorRBs();
-
-	int getEndEffectorCount();
-
-	P3D getEndEffectorWorldPosition(int _i);
-
-	double getEndEffectorRadius(int _i);
-
 	/**
 		returns the root of the current articulated figure.
 	*/
@@ -208,70 +214,48 @@ public:
 		return mass;
 	}
 
-	/**
-		This method returns the dimension of the state.
-	*/
-	inline int getReducedStateDimension() {
-		//13 (x, v, theta, d_theta/dt for the root, and 7 for every other body (and each body is introduced by a joint).
-		return 13 + 7 * (int)jointList.size();
-	}
-
-	/**
-		This method is used to save the RBS corresponding to a virtual robot to file.
-	*/
-	void saveRBSToFile(char* fName);
-
-	double getApproxBodyFrameHeight();
-
 	virtual void addWheelsAsAuxiliaryRBs(AbstractRBEngine* rbEngine);
 
 };
 
+class JointState {
+public:
+	Quaternion qRel;
+	V3D angVelRel;
+};
+
 class ReducedRobotState{
 private:
-	DynamicArray<double> state;
-	//to compute headings, we need to know which axis defines it (the yaw)
-	V3D headingAxis;
+	Quaternion rootQ;
+	P3D rootPos;
+	V3D rootVel;
+	V3D rootAngVel;
 
-	int getOffsetForJoint(int jIndex) const{
-		return 13 + 7 * jIndex;
-	}
+	//to compute headings, we need to know which axis defines it (the yaw)
+	V3D headingAxis = V3D(0, 1, 0);
+
+	DynamicArray<JointState> joints;
+	DynamicArray<JointState> auxiliaryJoints;
 
 public:
-
 	~ReducedRobotState() {
-		state.clear();
 	}
 
-	ReducedRobotState(int stateSize){
-		state = DynamicArray<double>(stateSize);
-		setPosition(P3D());
-		setVelocity(V3D());
-		setOrientation(Quaternion());
-		setAngularVelocity(V3D());
-		int jCount = getJointCount();
-		for (int i = 0; i < jCount; i++){
-			setJointRelativeAngVelocity(V3D(), i);
-			setJointRelativeOrientation(Quaternion(), i);
-		}
-		headingAxis = V3D(0,1,0);
-	}
-
-	int getStateSize() const{
-		return state.size();
+	ReducedRobotState(int jCount = 0, int aJCount = 0){
+		joints.resize(jCount);
+		auxiliaryJoints.resize(aJCount);
 	}
 
 	ReducedRobotState(Robot* robot, bool useDefaultAngles = false){
-		state = DynamicArray<double>(robot->getReducedStateDimension());
 		robot->populateState(this, useDefaultAngles);
 	}
 
-	ReducedRobotState(ReducedRobotState* start, ReducedRobotState* end, double t);
+	void setJointCount(int jCount) {
+		joints.resize(jCount);
+	}
 
-	void setJointsToZero()
-	{
-		for (int i = 0; i < getJointCount(); ++i)
-			setJointRelativeOrientation(Quaternion::ExpMap(V3D(0, 0, 0)), i);
+	void setAuxiliarJointCount(int jCount) {
+		auxiliaryJoints.resize(jCount);
 	}
 
 	void setHeadingAxis(V3D v){
@@ -282,157 +266,263 @@ public:
 		return headingAxis;
 	}
 
-	int getJointCount(){
-		return (getStateSize() - 13) / 7;
+	int getJointCount() const{
+		return joints.size();
 	}
 
-	DynamicArray<double>& getState(){
-		return state;
+	int getAuxiliaryJointCount() const {
+		return auxiliaryJoints.size();
 	}
 
-	void getState(dVector& _state) {
-		if (_state.size() != state.size())
-			_state.resize(state.size());
-
-		for (int i = 0; i < _state.size(); ++i)
-			_state[i] = state[i];
-
-	}	
-
-	void setState(const DynamicArray<double>& otherState){
-		if ((int)otherState.size() != getStateSize())
-			throwError("incompatible state sizes");
-		for (int i=0;i<getStateSize();i++)
-			state[i] = otherState[i];
-	}
-
-	void setState(const dVector& otherState) {
-		if ((int)otherState.size() != getStateSize())
-			throwError("incompatible state sizes");
-		for (int i = 0; i<getStateSize(); i++)
-			state[i] = otherState[i];
-	}
-
-	/**
-	 *		 gets the root position.
-	 */
 	P3D getPosition() const{
-		return P3D(state[0], state[1], state[2]);
+		return rootPos;
 	}
 
-	/**
-	 *		 sets the root position.
-	 */
 	void setPosition(P3D p){
-		state[0] = p[0];
-		state[1] = p[1];
-		state[2] = p[2];
+		rootPos = p;
 	}
 
-	/**
-	 *		 gets the root orientation.
-	 */
 	Quaternion getOrientation() const{
-		return Quaternion(state[3], state[4], state[5], state[6]);
+		return rootQ;
 	}
 
-	/**
-	 *		 sets the root orientation.
-	 */
 	void setOrientation(Quaternion q){
-		state[3] = q.s;
-		state[4] = q.v[0];
-		state[5] = q.v[1];
-		state[6] = q.v[2];
+		rootQ = q;
 	}
 
-	/**
-	 *		 gets the root velocity.
-	 */
 	V3D getVelocity() const{
-		return V3D(state[7], state[8], state[9]);
+		return rootVel;
 	}
 
-	/**
-	 *		 sets the root velocity.
-	 */
 	void setVelocity(V3D v){
-		state[7] = v[0];
-		state[8] = v[1];
-		state[9] = v[2];
+		rootVel = v;
 	}
 
-	/**
-	 *		 gets the root angular velocity.
-	*/
 	V3D getAngularVelocity() const{
-		return V3D(state[10], state[11], state[12]);
+		return rootAngVel;
 	}
 
-	/**
-	 *		 sets the root angular velocity.
-	 */
 	void setAngularVelocity(V3D v){
-		state[10] = v[0];
-		state[11] = v[1];
-		state[12] = v[2];
+		rootAngVel = v;
 	}
 	
-	/**
-	 *		 gets the relative orientation for joint jIndex
-	 */
 	Quaternion getJointRelativeOrientation(int jIndex) const{
-		int offset = getOffsetForJoint(jIndex);
-		return Quaternion(state[0 + offset], state[1 + offset], state[2 + offset], state[3 + offset]);
+		if ((uint)jIndex < joints.size())
+			return joints[jIndex].qRel;
+		return Quaternion();
 	}
 
+	V3D getJointRelativeAngVelocity(int jIndex) const {
+		if ((uint)jIndex < joints.size())
+			return joints[jIndex].angVelRel;
+		return V3D();
+	}
 
-	/**
-	 *		 sets the orientation for joint jIndex
-	 */
 	void setJointRelativeOrientation(Quaternion q, int jIndex){
-		int offset = getOffsetForJoint(jIndex);
-		state[0 + offset] = q.s;
-		state[1 + offset] = q.v[0];
-		state[2 + offset] = q.v[1];
-		state[3 + offset] = q.v[2];
+		if ((uint)jIndex < joints.size())
+			joints[jIndex].qRel = q;
 	}
 
-	/**
-	 *		 gets the relative angular velocity for joint jIndex
-	 */
-	V3D getJointRelativeAngVelocity(int jIndex) const{
-		int offset = getOffsetForJoint(jIndex);
-		return V3D(state[4 + offset], state[5 + offset], state[6 + offset]);
+	void setJointRelativeAngVelocity(V3D w, int jIndex) {
+		if ((uint)jIndex < joints.size())
+			joints[jIndex].angVelRel = w;
 	}
 
-	/**
-	 *		 sets the orientation for joint jIndex
-	 */
-	void setJointRelativeAngVelocity(V3D w, int jIndex){
-		int offset = getOffsetForJoint(jIndex);
-		state[4 + offset] = w[0];
-		state[5 + offset] = w[1];
-		state[6 + offset] = w[2];
+	Quaternion getAuxiliaryJointRelativeOrientation(int jIndex) const {
+		if ((uint)jIndex < auxiliaryJoints.size())
+			return auxiliaryJoints[jIndex].qRel;
+		return Quaternion();
 	}
 
-	void clearVelocities() {
-		setVelocity(V3D(0, 0, 0));
-		setAngularVelocity(V3D(0, 0, 0));
-		for (int i = 0; i < getJointCount(); i++)
-			setJointRelativeAngVelocity(V3D(0, 0, 0), i);
+	V3D getAuxiliaryJointRelativeAngVelocity(int jIndex) const {
+		if ((uint)jIndex < auxiliaryJoints.size())
+			return auxiliaryJoints[jIndex].angVelRel;
+		return V3D();
 	}
 
-	void writeToFile	(const char* fName, Robot* robot = NULL);
-	bool isSameAs		(const ReducedRobotState& other);
-	void readFromFile	(const char* fName);
+	void setAuxiliaryJointRelativeOrientation(Quaternion q, int jIndex) {
+		if ((uint)jIndex < auxiliaryJoints.size())
+			auxiliaryJoints[jIndex].qRel = q;
+	}
+
+	void setAuxiliaryJointRelativeAngVelocity(V3D w, int jIndex) {
+		if ((uint)jIndex < auxiliaryJoints.size())
+			auxiliaryJoints[jIndex].angVelRel = w;
+	}
+
+	void writeToFile(const char* fName, Robot* robot = NULL) {
+		if (fName == NULL)
+			throwError("cannot write to a file whose name is NULL!");
+
+		FILE* fp = fopen(fName, "w");
+
+		if (fp == NULL)
+			throwError("cannot open the file \'%s\' for reading...", fName);
+
+		V3D velocity = getVelocity();
+		Quaternion orientation = getOrientation();
+		V3D angVelocity = getAngularVelocity();
+		P3D position = getPosition();
+
+		double heading = getHeading();
+		//setHeading(0);
+
+		fprintf(fp, "# order is:\n# Heading Axis\n# Heading\n# Position\n# Orientation\n# Velocity\n# AngularVelocity\n\n# Relative Orientation\n# Relative Angular Velocity\n#----------------\n\n# Heading Axis\n %lf %lf %lf\n# Heading\n%lf\n\n", headingAxis[0], headingAxis[1], headingAxis[2], heading);
+
+		if (robot != NULL)
+			fprintf(fp, "# Root(%s)\n", robot->root->name.c_str());
+
+		fprintf(fp, "%lf %lf %lf\n", position[0], position[1], position[2]);
+		fprintf(fp, "%lf %lf %lf %lf\n", orientation.s, orientation.v[0], orientation.v[1], orientation.v[2]);
+		fprintf(fp, "%lf %lf %lf\n", velocity[0], velocity[1], velocity[2]);
+		fprintf(fp, "%lf %lf %lf\n\n", angVelocity[0], angVelocity[1], angVelocity[2]);
+
+		fprintf(fp, "# number of joints\n%d\n\n", getJointCount());
+
+		for (int i = 0; i < getJointCount(); i++) {
+			orientation = getJointRelativeOrientation(i);
+			angVelocity = getJointRelativeAngVelocity(i);
+			if (robot != NULL)
+				fprintf(fp, "# %s\n", robot->jointList[i]->name.c_str());
+			fprintf(fp, "%lf %lf %lf %lf\n", orientation.s, orientation.v[0], orientation.v[1], orientation.v[2]);
+			fprintf(fp, "%lf %lf %lf\n\n", angVelocity[0], angVelocity[1], angVelocity[2]);
+		}
+
+		fprintf(fp, "# number of auxiliary joints\n%d\n\n", getAuxiliaryJointCount());
+
+		for (int i = 0; i < getAuxiliaryJointCount(); i++) {
+			orientation = getAuxiliaryJointRelativeOrientation(i);
+			angVelocity = getAuxiliaryJointRelativeAngVelocity(i);
+			if (robot != NULL)
+				fprintf(fp, "# %s\n", robot->auxiliaryJointList[i]->name.c_str());
+			fprintf(fp, "%lf %lf %lf %lf\n", orientation.s, orientation.v[0], orientation.v[1], orientation.v[2]);
+			fprintf(fp, "%lf %lf %lf\n\n", angVelocity[0], angVelocity[1], angVelocity[2]);
+		}
+
+		fclose(fp);
+		//now restore the state of this reduced state...
+		//setHeading(heading);
+	}
+
+
+	void readFromFile	(const char* fName) {
+		if (fName == NULL)
+			throwError("cannot read a file whose name is NULL!");
+
+		FILE* fp = fopen(fName, "r");
+		if (fp == NULL)
+			throwError("cannot open the file \'%s\' for reading...", fName);
+
+		double temp1, temp2, temp3, temp4;
+
+		char line[100];
+
+		//read the heading first...
+		double heading;
+		readValidLine(line, 100, fp);
+		sscanf(line, "%lf %lf %lf", &headingAxis[0], &headingAxis[1], &headingAxis[2]);
+
+		readValidLine(line, 100, fp);
+		sscanf(line, "%lf", &heading);
+
+		readValidLine(line, 100, fp);
+		sscanf(line, "%lf %lf %lf", &temp1, &temp2, &temp3);
+		setPosition(P3D(temp1, temp2, temp3));
+		readValidLine(line, 100, fp);
+		sscanf(line, "%lf %lf %lf %lf", &temp1, &temp2, &temp3, &temp4);
+		setOrientation(Quaternion(temp1, temp2, temp3, temp4).toUnit());
+		readValidLine(line, 100, fp);
+		sscanf(line, "%lf %lf %lf", &temp1, &temp2, &temp3);
+		setVelocity(V3D(temp1, temp2, temp3));
+		readValidLine(line, 100, fp);
+		sscanf(line, "%lf %lf %lf", &temp1, &temp2, &temp3);
+		setAngularVelocity(V3D(temp1, temp2, temp3));
+
+		int jCount = 0;
+
+		readValidLine(line, 100, fp);
+		sscanf(line, "%d", &jCount);
+		joints.resize(jCount);
+
+		for (int i = 0; i<jCount; i++) {
+			readValidLine(line, 100, fp);
+			sscanf(line, "%lf %lf %lf %lf", &temp1, &temp2, &temp3, &temp4);
+			setJointRelativeOrientation(Quaternion(temp1, temp2, temp3, temp4).toUnit(), i);
+			readValidLine(line, 100, fp);
+			sscanf(line, "%lf %lf %lf", &temp1, &temp2, &temp3);
+			setJointRelativeAngVelocity(V3D(temp1, temp2, temp3), i);
+		}
+
+		int auxJCount = 0;
+
+		readValidLine(line, 100, fp);
+		sscanf(line, "%d", &auxJCount);
+		auxiliaryJoints.resize(auxJCount);
+
+		for (int i = 0; i<auxJCount; i++) {
+			readValidLine(line, 100, fp);
+			sscanf(line, "%lf %lf %lf %lf", &temp1, &temp2, &temp3, &temp4);
+			setAuxiliaryJointRelativeOrientation(Quaternion(temp1, temp2, temp3, temp4).toUnit(), i);
+			readValidLine(line, 100, fp);
+			sscanf(line, "%lf %lf %lf", &temp1, &temp2, &temp3);
+			setAuxiliaryJointRelativeAngVelocity(V3D(temp1, temp2, temp3), i);
+		}
+
+		//now set the heading...
+		setHeading(heading);
+
+		fclose(fp);
+	}
 
 	//setting the heading...
-	void setHeading		(double heading);
+	void setHeading(double heading) {
+		//this means we must rotate the angular and linear velocities of the COM, and augment the orientation
+		Quaternion oldHeading, newHeading, qRoot;
+		//get the current root orientation, that contains information regarding the current heading
+		qRoot = getOrientation();
+		//get the twist about the vertical axis...
+		oldHeading = computeHeading(qRoot, headingAxis);
+		//now we cancel the initial twist and add a new one of our own choosing
+		newHeading = getRotationQuaternion(heading, headingAxis) * oldHeading.getComplexConjugate();
+		//add this component to the root.
+		setOrientation(newHeading * qRoot);
+		//and also update the root velocity and angular velocity
+		setVelocity(newHeading.rotate(getVelocity()));
+		setAngularVelocity(newHeading.rotate(getAngularVelocity()));
+	}
 
 	double getHeading(){
 		//first we need to get the current heading of the robot. 
 		return computeHeading(getOrientation(), headingAxis).getRotationAngle(headingAxis);
+	}
+
+	bool ReducedRobotState::isSameAs(const ReducedRobotState& other) {
+		if (getJointCount() != other.getJointCount())
+			return false;
+
+		if (V3D(getPosition(), other.getPosition()).length() > TINY)
+			return false;
+
+		if ((getVelocity() - other.getVelocity()).length() > TINY)
+			return false;
+
+		if ((getAngularVelocity() - other.getAngularVelocity()).length() > TINY)
+			return false;
+
+		for (int i = 0; i < getJointCount(); i++) {
+			if ((getJointRelativeAngVelocity(i) - other.getJointRelativeAngVelocity(i)).length() > TINY)
+				return false;
+
+			Quaternion q1 = getJointRelativeOrientation(i);
+			Quaternion q2 = other.getJointRelativeOrientation(i);
+
+			if (q1 != q2 && q1 != (q2 * -1)) {
+				//				Logger::consolePrint("%lf %lf %lf %lf <-> %lf %lf %lf %lf\n", q1.s, q1.v.x(), q1.v.y(), q1.v.z(), q2.s, q2.v.x(), q2.v.y(), q2.v.z());
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 };

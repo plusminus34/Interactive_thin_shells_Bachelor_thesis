@@ -19,7 +19,7 @@ public:
 	/**
 		constructor
 	*/
-	SimpleLimb(const char *limbName, Joint *_rootJoint);
+	SimpleLimb(const char *limbName, RigidBody* eeRB, RigidBody* root);
 
 	/**
 		destructor
