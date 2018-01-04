@@ -169,6 +169,18 @@ Vector3T<T> drotateVec_dalpha(const Vector3T<T> &v, T alpha, const Vector3T<T> &
 	return result;
 }
 
+template<class T>
+Vector3T<T> ddrotateVec_dalpha2(const Vector3T<T> &v, T alpha, const Vector3T<T> &axis)
+{
+	assert(IS_EQUAL(axis.squaredNorm(), 1));
+
+	T cosa = cos(alpha);
+	T sina = sin(alpha);
+
+	Vector3T<T> result = -v*cosa - axis.cross(v)*sina - axis*(axis.dot(v))*cosa;
+	return result;
+}
+
 // Returns a new vector obtained by rotating v. Alpha is specified in radians, and axis is assumed to be a unit vector
 template<class T>
 Vector3T<T> rotateVec2(const Vector3T<T> &v, T alpha, const Vector3T<T> &axis)

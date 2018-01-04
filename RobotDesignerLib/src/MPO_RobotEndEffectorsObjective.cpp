@@ -190,21 +190,20 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 							ADD_HES_ELEMENT(hessianEntries, I + 2, J, -dEndEffectordq(2, k), weight);
 						}
 					}
+				}
+				// Angles part
+				if (theMotionPlan->wheelParamsStartIndex >= 0)
+				{
+					Vector3d dYaw = LocomotionEngine_EndEffectorTrajectory::drotVecByYawTilt_dYaw(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
+					Vector3d dTilt = LocomotionEngine_EndEffectorTrajectory::drotVecByYawTilt_dTilt(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
 
-					// Angles part
-					if (theMotionPlan->wheelParamsStartIndex >= 0)
-					{
-						Vector3d dYaw = LocomotionEngine_EndEffectorTrajectory::drotVecByYawTilt_dYaw(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
-						Vector3d dTilt = LocomotionEngine_EndEffectorTrajectory::drotVecByYawTilt_dTilt(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
+					// grad(theMotionPlan->getWheelYawAngleIndex(i, j)) -= weight*drhoRotdYawAngle.transpose()*err;
 
-						// grad(theMotionPlan->getWheelYawAngleIndex(i, j)) -= weight*drhoRotdYawAngle.transpose()*err;
-
-						int Iyaw = theMotionPlan->getWheelYawAngleIndex(i, j);
-						int Itilt = theMotionPlan->getWheelTiltAngleIndex(i, j);
-						ADD_HES_ELEMENT(hessianEntries, Iyaw, Iyaw, dYaw.dot(dYaw), weight);
-						ADD_HES_ELEMENT(hessianEntries, Iyaw, Itilt, dYaw.dot(dTilt), weight);
-						ADD_HES_ELEMENT(hessianEntries, Itilt, Itilt, dTilt.dot(dTilt), weight);
-					}
+					int Iyaw = theMotionPlan->getWheelYawAngleIndex(i, j);
+					int Itilt = theMotionPlan->getWheelTiltAngleIndex(i, j);
+					ADD_HES_ELEMENT(hessianEntries, Iyaw, Iyaw, dYaw.dot(dYaw), weight);
+					ADD_HES_ELEMENT(hessianEntries, Iyaw, Itilt, dYaw.dot(dTilt), weight);
+					ADD_HES_ELEMENT(hessianEntries, Itilt, Itilt, dTilt.dot(dTilt), weight);
 				}
 			}
 			else {
