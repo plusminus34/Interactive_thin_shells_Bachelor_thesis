@@ -23,8 +23,12 @@ public:
 
 	virtual void draw();
 
+
+
 public:
 	V3D posInPlane;
 	Quaternion overallHeading;
+
+	double timeStep = 0;
 };
 

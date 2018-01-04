@@ -544,7 +544,6 @@ void ODERBEngine::addJointToEngine(Joint* j) {
 	}
 	else
 		throwError("Ooops.... Only BallAndSocket, Hinge and Universal joints are currently supported.\n");
-
 }
 
 /**
@@ -680,12 +679,12 @@ void ODERBEngine::step(double deltaT) {
 					dJointSetAMotorParam(motorToJointmap[motorID].motorID, dParamVel, desSpeed);
 				} else {
 					//the desired relative angular velocity needs to be expressed in world coordinates...
-					V3D rotAxis = joints[j]->desiredRelativeAngVelocityAxis;
+					V3D rotAxis = joints[j]->parent->getWorldCoordinates(joints[j]->desiredRelativeAngularVelocity.unit());
 					rotAxis.toUnit(); if (rotAxis.length() < 0.9) rotAxis = V3D(1,0,0);
-					double angVelocity = joints[j]->desiredRelativeAngVelocity;
+					double angVelocity = joints[j]->desiredRelativeAngularVelocity.length();
 					dJointSetAMotorNumAxes(motorToJointmap[motorID].motorID, 1);
 					dJointSetAMotorAxis(motorToJointmap[motorID].motorID, 0, 1, rotAxis[0], rotAxis[1], rotAxis[2]);
-					dJointSetAMotorParam(motorToJointmap[motorID].motorID, dParamVel, angVelocity);
+					dJointSetAMotorParam(motorToJointmap[motorID].motorID, dParamVel, -angVelocity);
 				}
 				//setup the feedback structure so that we can read off the torques that were applied
 				if (j < MAX_AMOTOR_FEEDBACK)

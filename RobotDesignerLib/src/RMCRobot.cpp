@@ -685,7 +685,7 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 				rb.rbProperties.endEffectorPoints.back().setMode((wheelEE->isActive) ? EE_ACTIVE_WHEEL : EE_PASSIVE_WHEEL);
 				rb.rbProperties.endEffectorPoints.back().featureSize = wheelEE->radius;
 				rb.rbProperties.endEffectorPoints.back().localCoordsWheelAxis = rb.getLocalCoordinates(rmc->getWorldCoordinates(V3D(0, -1, 0)));
-				rb.cdps.push_back(new SphereCDP(endEffectorPos, wheelEE->radius));
+				//rb.cdps.push_back(new SphereCDP(endEffectorPos, wheelEE->radius));
 			}
 			else if (LivingSphereEE* sphereEE = dynamic_cast <LivingSphereEE*>(rmc)) {
 				rb.rbProperties.endEffectorPoints.back().setMode(EE_WELDED_WHEEL);

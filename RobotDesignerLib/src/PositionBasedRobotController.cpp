@@ -19,6 +19,20 @@ void PositionBasedRobotController::initialize() {
 	ReducedRobotState moptRobotState(robot);
 	motionPlan->robotStateTrajectory.getRobotStateAt(stridePhase, motionPlan->motionPlanDuration, moptRobotState);
 	robot->setState(&moptRobotState);
+
+	for (int i = 0; i < robot->getRigidBodyCount(); i++) {
+		RigidBody* rb = robot->getRigidBody(i);
+		for (uint j = 0; j < rb->rbProperties.endEffectorPoints.size(); j++) {
+			RBEndEffector* ee = &(rb->rbProperties.endEffectorPoints[j]);
+			if (ee->wheelJoint && (ee->isActiveWheel() || ee->isFreeToMoveWheel())) {
+				if (ee->isActiveWheel())
+					ee->wheelJoint->controlMode = VELOCITY_MODE;
+				else
+					ee->wheelJoint->controlMode = PASSIVE;
+			}
+		}
+	}
+
 }
 
 PositionBasedRobotController::~PositionBasedRobotController(void){
@@ -36,4 +50,16 @@ void PositionBasedRobotController::applyControlSignals() {
 		HingeJoint* joint = dynamic_cast<HingeJoint*> (robot->getJoint(i));
 		joint->desiredRelativeOrientation = desiredState.getJointRelativeOrientation(joint->jIndex);
 	}
+
+	for (int i = 0; i < robot->getRigidBodyCount(); i++) {
+		RigidBody* rb = robot->getRigidBody(i);
+		for (uint j = 0; j < rb->rbProperties.endEffectorPoints.size(); j++) {
+			RBEndEffector* ee = &(rb->rbProperties.endEffectorPoints[j]);
+			if (ee->wheelJoint && (ee->isActiveWheel() || ee->isFreeToMoveWheel()))
+				ee->wheelJoint->desiredRelativeAngularVelocity = ee->localCoordsWheelAxis * ee->wheelSpeed_rel;
+		}
+	}
+
 }
+
+

@@ -75,11 +75,24 @@ void KinematicRobotController::loadMotionPlan(LocomotionEngineMotionPlan* motion
 }
 
 void KinematicRobotController::computeControlSignals(double simTimeStep) {
+	timeStep = simTimeStep;
 	computeDesiredState();
 }
 
 void KinematicRobotController::applyControlSignals() {
 	robot->setState(&desiredState);
+
+	//integrate forward in time the motion of the weels...
+	for (uint j = 0; j < motionPlan->endEffectorTrajectories.size(); j++) {
+		LocomotionEngine_EndEffectorTrajectory* eeTraj = &motionPlan->endEffectorTrajectories[j];
+		if (eeTraj->isWheel) {
+			RigidBody* rb = eeTraj->endEffectorRB;
+			int eeIndex = eeTraj->CPIndex;
+			int meshIndex = rb->rbProperties.endEffectorPoints[eeIndex].meshIndex;
+			if (meshIndex >= 0)
+				rb->meshTransformations[meshIndex].R = getRotationQuaternion(timeStep * rb->rbProperties.endEffectorPoints[eeIndex].wheelSpeed_rel, rb->rbProperties.endEffectorPoints[eeIndex].localCoordsWheelAxis).getRotationMatrix() * rb->meshTransformations[meshIndex].R;
+		}
+	}
 }
 
 void KinematicRobotController::drawDebugInfo() {
@@ -91,6 +104,20 @@ void KinematicRobotController::initialize() {
 	ReducedRobotState moptRobotState(robot);
 	motionPlan->robotStateTrajectory.getRobotStateAt(stridePhase, motionPlan->motionPlanDuration, moptRobotState);
 	robot->setState(&moptRobotState);
+
+	//reset the orientation of the wheels to their initial values
+	for (uint j = 0; j < motionPlan->endEffectorTrajectories.size(); j++) {
+		LocomotionEngine_EndEffectorTrajectory* eeTraj = &motionPlan->endEffectorTrajectories[j];
+		if (eeTraj->isWheel) {
+			RigidBody* rb = eeTraj->endEffectorRB;
+			int eeIndex = eeTraj->CPIndex;
+			int meshIndex = rb->rbProperties.endEffectorPoints[eeIndex].meshIndex;
+			Joint* wheelJoint = rb->rbProperties.endEffectorPoints[eeIndex].wheelJoint;
+
+			if (meshIndex >= 0 && wheelJoint)
+				rb->meshTransformations[meshIndex].R = rb->rbProperties.endEffectorPoints[eeIndex].initialMeshTransformation.R;
+		}
+	}
 
 	posInPlane = V3D();
 	overallHeading = Quaternion();
