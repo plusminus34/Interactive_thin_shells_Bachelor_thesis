@@ -467,8 +467,9 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 		nWheels++;
 
 		eeTraj.isWheel = true;
+		eeTraj.isFixedWheel = false;
 		eeTraj.isPassiveWheel = rbEndEffector.isFreeToMoveWheel();
-		eeTraj.isFixedWheel = rbEndEffector.isWeldedWheel();
+		eeTraj.isWeldedWheel = rbEndEffector.isWeldedWheel();
 
 		// set wheel radius from rb properties
 		eeTraj.wheelRadius = rbEndEffector.featureSize;
