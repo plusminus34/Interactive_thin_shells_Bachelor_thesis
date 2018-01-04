@@ -6,6 +6,7 @@
 #include <RBSimLib/HingeJoint.h>
 #include <RBSimLib/UniversalJoint.h>
 #include <RBSimLib/BallAndSocketJoint.h>
+#include <RBSimLib/AbstractRBEngine.h>
 
 /**
 	the constructor
@@ -169,16 +170,22 @@ void Robot::setState(ReducedRobotState* state){
 		//and now set the linear position and velocity
 		jointList[j]->fixJointConstraints(true, true, true, true);
 	}
+
+//TODO: what should we do with the wheels here? Set them to zero angular speed? Or same as their parent?
+
+	for (size_t j = 0; j<auxiliaryJointList.size(); j++)
+		auxiliaryJointList[j]->fixJointConstraints(true, true, true, true);
 }
 
 /**
 	makes sure the state of the robot is consistent with all the joint types...
 */
 void Robot::fixJointConstraints() {
-	for (size_t j = 0; j<jointList.size(); j++) {
-		//and now set the linear position and velocity
+	for (size_t j = 0; j<jointList.size(); j++)
 		jointList[j]->fixJointConstraints(true, true, true, true);
-	}
+
+	for (size_t j = 0; j<auxiliaryJointList.size(); j++)
+		auxiliaryJointList[j]->fixJointConstraints(true, true, true, true);
 }
 
 
@@ -328,7 +335,51 @@ double Robot::getEndEffectorRadius(int _i)
 	//return eeBodies[_i]->rbProperties.endEffectorPoints[0].featureSize;
 }
 
+void Robot::addWheelsAsAuxiliaryRBs(AbstractRBEngine* rbEngine) {
+	for (int i = 0; i < getRigidBodyCount(); i++) {
+		RigidBody* rb = getRigidBody(i);
+		for (uint j = 0; j < rb->rbProperties.endEffectorPoints.size(); j++) {
+			RBEndEffector* ee = &(rb->rbProperties.endEffectorPoints[j]);
+			if (ee->isActiveWheel() || ee->isFreeToMoveWheel()) {
+				//must create a new joint and a new rigid body...
+				RigidBody* wheelRB = new RigidBody();
+				double radius = ee->featureSize;
+				V3D axis = ee->localCoordsWheelAxis;
+				double volume = 2 * PI * radius * radius * 0.01;
+				wheelRB->rbProperties.mass = volume * 500;
+				wheelRB->rbProperties.MOI_local.coeffRef(0, 0) = wheelRB->rbProperties.MOI_local.coeffRef(1, 1) = wheelRB->rbProperties.MOI_local.coeffRef(2, 2) = 2.0/5.0 * wheelRB->rbProperties.mass * radius * radius;
+				wheelRB->name = rb->name + "_wheel_" + std::to_string(j);
+				wheelRB->cdps.push_back(new SphereCDP(P3D(), radius));
+				wheelRB->state.orientation = rb->state.orientation;
 
+				HingeJoint* newJoint = new HingeJoint();
+				newJoint->rotationAxis = ee->localCoordsWheelAxis;
+				newJoint->child = wheelRB;
+				newJoint->cJPos = P3D();
+				newJoint->parent = rb;
+				newJoint->pJPos = ee->coords;
+				newJoint->child->pJoints.push_back(newJoint);
+				newJoint->parent->cJoints.push_back(newJoint);
+				newJoint->name = newJoint->child->name + "_" + newJoint->parent->name;
+
+				newJoint->fixJointConstraints(true, false, false, false);
+
+				if (ee->isActiveWheel())
+					newJoint->controlMode = VELOCITY_MODE;
+				else
+					newJoint->controlMode = PASSIVE;
+
+				rbEngine->addRigidBodyToEngine(wheelRB);
+				rbEngine->addJointToEngine(newJoint);
+
+				auxiliaryJointList.push_back(newJoint);
+				ee->wheelJoint = newJoint;
+				if (ee->meshIndex >= 0)
+					ee->initialMeshTransformation = rb->meshTransformations[ee->meshIndex];
+			}
+		}
+	}
+}
 
 ReducedRobotState::ReducedRobotState(ReducedRobotState* start, ReducedRobotState* end, double t) {
 	state = DynamicArray<double>(start->getStateSize());

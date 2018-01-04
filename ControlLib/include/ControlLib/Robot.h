@@ -18,6 +18,10 @@ public:
 	RigidBody*	root = NULL;
 	//keep a list of the joints of the virtual robot, for easy access
 	DynamicArray<Joint*> jointList;
+
+	//this is a list of auxiliary joints, connecting things like wheels to the robot
+	DynamicArray<Joint*> auxiliaryJointList;
+
 	double		mass = 0;
 
 	BodyFrame*	bFrame=NULL;
@@ -218,6 +222,8 @@ public:
 	void saveRBSToFile(char* fName);
 
 	double getApproxBodyFrameHeight();
+
+	virtual void addWheelsAsAuxiliaryRBs(AbstractRBEngine* rbEngine);
 
 };
 

@@ -77,6 +77,9 @@ void RobotController::computeDesiredState() {
 
 			ee->wheelSpeed_rel = ee->wheelSpeed_w - rbSpeed;
 
+			if (ee->isWeldedWheel())
+				ee->wheelSpeed_rel = 0;
+
 			//now, check if we've succeeded...
 			V3D contactPointVelocity = wheelCenterSpeed + (worldEE.localCoordsWheelAxis * ee->wheelSpeed_w).cross(V3D(worldEE.getWheelRho()) * -1);
 			if (!IS_ZERO(contactPointVelocity.norm()))
