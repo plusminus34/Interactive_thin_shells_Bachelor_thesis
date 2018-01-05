@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(MathLib)
+project(YuMiLib)
 
 # add source files
 file(GLOB sources
@@ -10,17 +10,15 @@ file(GLOB sources
 
 add_library(${PROJECT_NAME} STATIC ${sources})
 
-include_directories("${EIGEN3_INCLUDE_DIR}")
-
 target_link_libraries(
 	${PROJECT_NAME}
-	Utils
+	PUBLIC
+
+	PRIVATE
 )
 
 target_include_directories(
 	${PROJECT_NAME} 
 	PUBLIC
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/include
-		${EIGEN3_INCLUDE_DIR}
-		# $<INSTALL_INTERFACE:include/${PROJECT_NAME}> # TODO
 )

@@ -17,7 +17,7 @@ private:
 	AbstractRBEngine* rbEngine = NULL;
     bool haveTested = false;
 
-	bool drawMeshes = true, drawMOIs = false, drawCDPs = false, drawSkeletonView = false, drawJoints = false, drawContactForces = true;
+    bool drawMeshes = false, drawMOIs = false, drawCDPs = true, drawSkeletonView = false, drawJoints = false, drawContactForces = false;
 	double simTimeStep;
 	WorldOracle* worldOracle;
 

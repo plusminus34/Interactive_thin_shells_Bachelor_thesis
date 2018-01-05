@@ -13,7 +13,7 @@ FireworksApp::FireworksApp() {
 	camera->setCameraTarget(P3D(0, 0, 0));
 	showGroundPlane = false;
 	showConsole = false;
-	bgColor[0] = bgColor[1] = bgColor[2] = 0;
+    //bgColor[0] = bgColor[1] = bgColor[2] = 0;
 }
 
 FireworksApp::~FireworksApp(void){

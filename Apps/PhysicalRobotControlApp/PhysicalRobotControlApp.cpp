@@ -7,14 +7,16 @@
 #include <RBSimLib/ODERBEngine.h>
 #include <ControlLib/SimpleLimb.h>
 #include <ControlLib/PololuServoControlInterface.h>
+#include <ControlLib/YuMiControlInterface.h>
 
 PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	setWindowTitle("Physical Robot Control");
 
 //	loadFile("../data/rbs/robotArm1DOF.rbs");
 //	loadFile("../data/rbs/robotArm2DOF.rbs");
+//	loadFile("../data/rbs/robotArm3DOF.rbs");
 
-	loadFile("../data/rbs/robotArm3DOF.rbs");
+    loadFile("../data/rbs/yumi/yumi.rbs");
 
 	showMesh = false;
 	showRotationAxes = true;
@@ -80,7 +82,8 @@ void PhysicalRobotControlApp::loadRobot(const char* fName) {
 	ikSolver = new IK_Solver(robot, true);
 
 	delete rci;
-	rci = new PololuServoControlInterface(robot);
+    //rci = new PololuServoControlInterface(robot);
+    rci = new YuMiControlInterface(robot);
 }
 
 void PhysicalRobotControlApp::loadFile(const char* fName) {

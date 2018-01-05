@@ -39,5 +39,6 @@ add_subdirectory(FEMSimLib)
 add_subdirectory(BulletCollision)
 add_subdirectory(RobotDesignerLib)
 add_subdirectory(Apps)
+add_subdirectory(YuMiLib)
 
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "_CMakeTargets")

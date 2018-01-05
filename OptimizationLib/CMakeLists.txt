@@ -32,18 +32,3 @@ target_include_directories(
 	    ${CMAKE_SOURCE_DIR}/thirdparty
 )
 
-# Tests
-enable_testing()
-find_package(GTest REQUIRED)
-include_directories(${GTEST_INCLUDE_DIRS})
-
-file(GLOB test_sources
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.h
-    )
-add_executable(${PROJECT_NAME}_test ${test_sources})
-target_link_libraries(${PROJECT_NAME}_test
-    ${PROJECT_NAME}
-    ${GTEST_BOTH_LIBRARIES}
-    -lpthread) # need pthread for google test. TODO: does this link on Windows?
-add_test(${PROJECT_NAME}_test ${PROJECT_NAME}_test)
