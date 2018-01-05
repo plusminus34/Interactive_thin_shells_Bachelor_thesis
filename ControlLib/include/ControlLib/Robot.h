@@ -81,7 +81,7 @@ public:
 		This method is used to get the relative angular velocities of the parent and child bodies of joint i,
 		expressed in parent's local coordinates. 
 	*/
-	V3D getRelativeAngularVelocityForJoint(Joint* joint) {
+	V3D getRelativeLocalCoordsAngularVelocityForJoint(Joint* joint) {
 		//we will store wRel in the parent's coordinates, to get an orientation invariant expression for it
 		return joint->parent->getLocalCoordinates(joint->child->state.angularVelocity - joint->parent->state.angularVelocity);
 	}
@@ -90,7 +90,7 @@ public:
 		joint->child->state.orientation = joint->parent->state.orientation * qRel;
 	}
 
-	void setRelativeAngularVelocityForJoint(Joint* joint, const V3D& relAngVel) {
+	void setRelativeLocalCoordsAngularVelocityForJoint(Joint* joint, const V3D& relAngVel) {
 		//assume relAngVel is stored in the parent's coordinate frame, to get an orientation invariant expression for it
 		joint->child->state.angularVelocity = joint->parent->state.angularVelocity + joint->parent->getWorldCoordinates(relAngVel);
 	}
@@ -254,7 +254,7 @@ public:
 		joints.resize(jCount);
 	}
 
-	void setAuxiliarJointCount(int jCount) {
+	void setAuxiliaryJointCount(int jCount) {
 		auxiliaryJoints.resize(jCount);
 	}
 

@@ -41,11 +41,11 @@ PositionBasedRobotController::~PositionBasedRobotController(void){
 void PositionBasedRobotController::drawDebugInfo() {
 }
 
-void PositionBasedRobotController::computeControlSignals(double simTimeStep){
+void PositionBasedRobotController::computeControlSignals(double timeStep){
 	computeDesiredState();
 }
 
-void PositionBasedRobotController::applyControlSignals() {
+void PositionBasedRobotController::applyControlSignals(double timeStep) {
 	for (int i = 0; i<robot->getJointCount(); i++) {
 		HingeJoint* joint = dynamic_cast<HingeJoint*> (robot->getJoint(i));
 		joint->desiredRelativeOrientation = desiredState.getJointRelativeOrientation(joint->jIndex);
@@ -56,7 +56,7 @@ void PositionBasedRobotController::applyControlSignals() {
 		for (uint j = 0; j < rb->rbProperties.endEffectorPoints.size(); j++) {
 			RBEndEffector* ee = &(rb->rbProperties.endEffectorPoints[j]);
 			if (ee->wheelJoint && (ee->isActiveWheel() || ee->isFreeToMoveWheel()))
-				ee->wheelJoint->desiredRelativeAngularVelocity = ee->localCoordsWheelAxis * ee->wheelSpeed_rel;
+				ee->wheelJoint->desiredRelativeAngularVelocity = desiredState.getAuxiliaryJointRelativeAngVelocity(ee->wheelJoint->jIndex);
 		}
 	}
 

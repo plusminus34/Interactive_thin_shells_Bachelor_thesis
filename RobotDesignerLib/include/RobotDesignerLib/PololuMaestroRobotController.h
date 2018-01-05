@@ -1,20 +1,17 @@
 #pragma once
 
-#include <RBSimLib/AbstractRBEngine.h>
-#include <RBSimLib/WorldOracle.h>
 #include <RobotDesignerLib/LocomotionEngineMotionPlan.h>
 #include <RobotDesignerLib/LocomotionEngine.h>
 #include <RobotDesignerLib/FootFallPatternViewer.h>
 #include <RobotDesignerLib/LocomotionEngineManagerGRF.h>
 #include <RobotDesignerLib/LocomotionEngineManagerIP.h>
+#include <RobotDesignerLib/KinematicRobotController.h>
+#include <ControlLib/PololuServoControlInterface.h>
 
-class RobotController {
+class PololuMaestroRobotController : public KinematicRobotController {
 public:
-	RobotController(Robot *robot, LocomotionEngineMotionPlan *motionPlan);
-	virtual ~RobotController(void);
-
-	//advance the phase of the motion by timeStep...
-	virtual void advanceInTime(double timeStep);
+	PololuMaestroRobotController(Robot* robot, LocomotionEngineMotionPlan *motionPlan);
+	~PololuMaestroRobotController(void);
 
 	//timeStep indicates the time that will take until the next call to this function, esentially how long do we expect the current control signals to be constant for...
 	virtual void applyControlSignals(double timeStep);
@@ -22,19 +19,19 @@ public:
 	//compute the control signals based on the current stride phase. timeStep indicates the planning horizon...
 	virtual void computeControlSignals(double timeStep);
 
-	//compute the desired state of the robot at the current stride phase
-	virtual void computeDesiredState();
-
 	virtual void drawDebugInfo();
 	virtual void initialize();
-	virtual void setDebugMode(bool doDebug) {}
+
+	virtual void loadMotionPlan(LocomotionEngineMotionPlan* motionPlan, double phase = 0);
+
+	virtual void draw();
+
+	PololuServoControlInterface* rci = NULL;
 
 public:
-	double totalTime = 0;
-	double stridePhase = 0;
-	Robot *robot;
-	LocomotionEngineMotionPlan *motionPlan;
-	//this is the pose that the virtual agent is aiming to achieve
-	RobotState desiredState;
+	V3D posInPlane;
+	Quaternion overallHeading;
+
+	double timeStep = 0;
 };
 

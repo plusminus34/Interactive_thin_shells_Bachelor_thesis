@@ -282,15 +282,16 @@ void PololuServoControlInterface::toggleMotorPower() {
 void PololuServoControlInterface::setTargetMotorValuesFromSimRobotState(double dt) {
 	readPhysicalRobotMotorPositions();
 
-	//given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot... 
 	RobotState rs(robot);
 
 	for (int i = 0; i < robot->getJointCount(); i++) {
 		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
 		if (!hj) continue;
 		Quaternion q = rs.getJointRelativeOrientation(i);
-		V3D w = rs.getJointRelativeAngVelocity(i);
+
 		hj->motor.targetMotorAngle = q.getRotationAngle(hj->rotationAxis);
+
+		//set the speed limit for the motor based on the difference between the current motor value and the target value
 
 		//we expect we have dt time to go from the current position to the target position... we ideally want to ensure that the motor gets there exactly dt time from now, so we must limit its velocity...
 		double speedLimit = fabs(hj->motor.targetMotorAngle - hj->motor.currentMotorAngle) / dt;
@@ -298,51 +299,7 @@ void PololuServoControlInterface::setTargetMotorValuesFromSimRobotState(double d
 	}
 }
 
-
 PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotControlInterface(robot) {
-
-	//TODO: we will need a much better way of setting motor parameters...
-	for (int i = 0; i < robot->getJointCount(); i++) {
-		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-		if (!hj) continue;
-
-		hj->motor.motorID = i;
-
-		if (i == 0) {
-			//settings for the BK DS-3002HV
-			hj->motor.pwmMin = 910;//depends on the type of servomotor
-			hj->motor.pwmMax = 2090;//depends on type of servomotor
-			hj->motor.pwmFor0Deg = 1430; //this depends on how the horn is mounted...
-			hj->motor.pwmFor45Deg = 1870; //this depends on how the horn is mounted...
-		}
-
-		if (i == 1) {
-			//settings for the TURNIGY S306G-HV
-			hj->motor.pwmMin = 910;//depends on the type of servomotor
-			hj->motor.pwmMax = 2100;//depends on type of servomotor
-			hj->motor.pwmFor0Deg = 1430; //this depends on how the horn is mounted...
-			hj->motor.pwmFor45Deg = 1865; //this depends on how the horn is mounted...
-										  //			hj->motor.flipMotorAxis = true;
-		}
-
-		if (i == 2) {
-			//settings for the MKS DS95
-			hj->motor.pwmMin = 800;//depends on the type of servomotor
-			hj->motor.pwmMax = 2160;//depends on type of servomotor
-			hj->motor.pwmFor0Deg = 1390; //this depends on how the horn is mounted...
-			hj->motor.pwmFor45Deg = 1935; //this depends on how the horn is mounted...
-										  //			hj->motor.flipMotorAxis = true;
-		}
-
-	}
-
-
-
-
-
-
-
-
 //set up the information required for multi-motor commands. Each list should be a continuous set of motor ids
 //TODO: outer loop should be over max motor ID found
 //TODO: make a list of all joints, both normal and auxiliary (or better yet, robot should have a way of returning this list directly), and iterate over that...
