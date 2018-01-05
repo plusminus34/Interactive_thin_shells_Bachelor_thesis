@@ -56,7 +56,7 @@ void PositionBasedRobotController::applyControlSignals() {
 		for (uint j = 0; j < rb->rbProperties.endEffectorPoints.size(); j++) {
 			RBEndEffector* ee = &(rb->rbProperties.endEffectorPoints[j]);
 			if (ee->wheelJoint && (ee->isActiveWheel() || ee->isFreeToMoveWheel()))
-				ee->wheelJoint->desiredRelativeAngularVelocity = ee->localCoordsWheelAxis * ee->wheelSpeed_rel;
+				ee->wheelJoint->desiredRelativeAngularVelocity = desiredState.getAuxiliaryJointRelativeAngVelocity(ee->wheelJoint->jIndex);
 		}
 	}
 

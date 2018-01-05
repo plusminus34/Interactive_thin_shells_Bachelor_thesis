@@ -36,6 +36,9 @@ Robot::Robot(RigidBody* root){
 	for (uint i = 0;i<jointList.size();i++)
 		jointList[i]->jIndex = i;
 
+	for (uint i = 0; i<auxiliaryJointList.size(); i++)
+		auxiliaryJointList[i]->jIndex = i;
+
 	//compute the mass of the robot
 	mass = root->rbProperties.mass;
 	for (uint i = 0; i < jointList.size(); i++)
@@ -63,7 +66,7 @@ void Robot::populateState(RobotState* state, bool useDefaultAngles) {
 	state->setHeadingAxis(Globals::worldUp);
 
 	state->setJointCount(jointList.size());
-	state->setAuxiliarJointCount(auxiliaryJointList.size());
+	state->setAuxiliaryJointCount(auxiliaryJointList.size());
 
 	//now each joint introduces one more rigid body, so we'll only record its state relative to its parent.
 	//we are assuming here that each joint is revolute!!!
@@ -71,7 +74,7 @@ void Robot::populateState(RobotState* state, bool useDefaultAngles) {
 	for (uint i=0;i<jointList.size();i++){
 		if (!useDefaultAngles){
 			state->setJointRelativeOrientation(getRelativeOrientationForJoint(jointList[i]), i);
-			state->setJointRelativeAngVelocity(getRelativeAngularVelocityForJoint(jointList[i]), i);
+			state->setJointRelativeAngVelocity(getRelativeLocalCoordsAngularVelocityForJoint(jointList[i]), i);
 		}
 		else {
 			state->setJointRelativeOrientation(Quaternion(), i);
@@ -85,7 +88,7 @@ void Robot::populateState(RobotState* state, bool useDefaultAngles) {
 	for (uint i = 0; i<auxiliaryJointList.size(); i++) {
 		if (!useDefaultAngles) {
 			state->setAuxiliaryJointRelativeOrientation(getRelativeOrientationForJoint(auxiliaryJointList[i]), i);
-			state->setAuxiliaryJointRelativeAngVelocity(getRelativeAngularVelocityForJoint(auxiliaryJointList[i]), i);
+			state->setAuxiliaryJointRelativeAngVelocity(getRelativeLocalCoordsAngularVelocityForJoint(auxiliaryJointList[i]), i);
 		}
 		else {
 			state->setAuxiliaryJointRelativeOrientation(Quaternion(), i);
@@ -110,14 +113,14 @@ void Robot::setState(RobotState* state){
 	//we are assuming here that each joint is revolute!!!
 	for (uint j=0;j<jointList.size();j++){
 		setRelativeOrientationForJoint(jointList[j], state->getJointRelativeOrientation((int)j).toUnit());
-		setRelativeAngularVelocityForJoint(jointList[j], state->getJointRelativeAngVelocity((int)j));
+		setRelativeLocalCoordsAngularVelocityForJoint(jointList[j], state->getJointRelativeAngVelocity((int)j));
 		//and now set the linear position and velocity
 		jointList[j]->fixJointConstraints(true, true, true, true);
 	}
 
 	for (uint j = 0; j<auxiliaryJointList.size(); j++) {
 		setRelativeOrientationForJoint(auxiliaryJointList[j], state->getAuxiliaryJointRelativeOrientation((int)j).toUnit());
-		setRelativeAngularVelocityForJoint(auxiliaryJointList[j], state->getAuxiliaryJointRelativeAngVelocity((int)j));
+		setRelativeLocalCoordsAngularVelocityForJoint(auxiliaryJointList[j], state->getAuxiliaryJointRelativeAngVelocity((int)j));
 		//and now set the linear position and velocity
 		auxiliaryJointList[j]->fixJointConstraints(true, true, true, true);
 	}
@@ -237,6 +240,9 @@ void Robot::addWheelsAsAuxiliaryRBs(AbstractRBEngine* rbEngine) {
 				wheelRB->state.orientation = rb->state.orientation;
 
 				HingeJoint* newJoint = new HingeJoint();
+
+				newJoint->jIndex = auxiliaryJointList.size();
+
 				newJoint->rotationAxis = ee->localCoordsWheelAxis;
 				newJoint->child = wheelRB;
 				newJoint->cJPos = P3D();

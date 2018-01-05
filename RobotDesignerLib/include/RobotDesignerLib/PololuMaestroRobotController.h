@@ -5,12 +5,12 @@
 #include <RobotDesignerLib/FootFallPatternViewer.h>
 #include <RobotDesignerLib/LocomotionEngineManagerGRF.h>
 #include <RobotDesignerLib/LocomotionEngineManagerIP.h>
-#include <RobotDesignerLib/RobotController.h>
+#include <RobotDesignerLib/KinematicRobotController.h>
 
-class KinematicRobotController : public RobotController {
+class PololuMaestroRobotController : KinematicRobotController {
 public:
-	KinematicRobotController(Robot* robot, LocomotionEngineMotionPlan *motionPlan);
-	~KinematicRobotController(void);
+	PololuMaestroRobotController(Robot* robot, LocomotionEngineMotionPlan *motionPlan);
+	~PololuMaestroRobotController(void);
 
 	virtual void advanceInTime(double timeStep);
 	virtual void computeDesiredState();
@@ -22,8 +22,6 @@ public:
 	virtual void loadMotionPlan(LocomotionEngineMotionPlan* motionPlan, double phase = 0);
 
 	virtual void draw();
-
-
 
 public:
 	V3D posInPlane;

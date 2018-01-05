@@ -69,23 +69,25 @@ void RobotController::computeDesiredState() {
 
 			//We know we want it to lead to zero velocity at the contact point...
 			//i.e.: wheelCenterSpeed + (rotAxis_w).cross(V3D(tmpEE.getWheelRho()) * -1) * ee->wheelSpeed_w = 0;
-			ee->wheelSpeed_w = wheelCenterSpeed.dot(worldEE.getWheelTiltAxis()) / worldEE.getWheelRho().norm();
+			double wheelSpeed_w = wheelCenterSpeed.dot(worldEE.getWheelTiltAxis()) / worldEE.getWheelRho().norm();
 
 			//now, to compute the speed of the wheel relative to the parent RB, we need to know how much of this rigid body's angular velocity aligns with the rotation axis, this is the part that we need to factor out... 
 			V3D rbAngVelocity = rb->state.angularVelocity;
 			double rbSpeed = rbAngVelocity.dot(worldEE.localCoordsWheelAxis);
 
-			ee->wheelSpeed_rel = ee->wheelSpeed_w - rbSpeed;
+			double wheelSpeed_rel = wheelSpeed_w - rbSpeed;
 
 			if (ee->isWeldedWheel())
-				ee->wheelSpeed_rel = 0;
+				wheelSpeed_rel = 0;
+
+			desiredState.setAuxiliaryJointRelativeAngVelocity(ee->wheelJoint->rotationAxis * wheelSpeed_rel, ee->wheelJoint->jIndex);
 
 			//now, check if we've succeeded...
-			V3D contactPointVelocity = wheelCenterSpeed + (worldEE.localCoordsWheelAxis * ee->wheelSpeed_w).cross(V3D(worldEE.getWheelRho()) * -1);
+			V3D contactPointVelocity = wheelCenterSpeed + (worldEE.localCoordsWheelAxis * wheelSpeed_w).cross(V3D(worldEE.getWheelRho()) * -1);
 			if (!IS_ZERO(contactPointVelocity.norm()))
 				Logger::consolePrint("velocity @ contact point:\t%lf\t%lf\t%lf\t%lf\n", contactPointVelocity.x(), contactPointVelocity.y(), contactPointVelocity.z(), contactPointVelocity.norm());
 
-			V3D wheelAngularVelocity = rbAngVelocity + V3D(worldEE.getWheelAxis()) * ee->wheelSpeed_rel;
+			V3D wheelAngularVelocity = rbAngVelocity + V3D(worldEE.getWheelAxis()) * wheelSpeed_rel;
 			V3D tmpCPVel_global = rb->getAbsoluteVelocityForLocalPoint(ee->coords) - wheelAngularVelocity.cross(worldEE.getWheelRho());
 			tmpCPVel_global = tmpCPVel_global.getProjectionOn(worldEE.getWheelTiltAxis());
 

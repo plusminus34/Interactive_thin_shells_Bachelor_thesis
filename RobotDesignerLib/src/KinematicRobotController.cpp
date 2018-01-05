@@ -88,9 +88,14 @@ void KinematicRobotController::applyControlSignals() {
 		if (eeTraj->isWheel) {
 			RigidBody* rb = eeTraj->endEffectorRB;
 			int eeIndex = eeTraj->CPIndex;
+			double wheelSpeed = 0;
+
+			if (rb->rbProperties.endEffectorPoints[eeIndex].wheelJoint)
+				wheelSpeed = robot->getRelativeLocalCoordsAngularVelocityForJoint(rb->rbProperties.endEffectorPoints[eeIndex].wheelJoint).dot(rb->rbProperties.endEffectorPoints[eeIndex].wheelJoint->rotationAxis);
+			
 			int meshIndex = rb->rbProperties.endEffectorPoints[eeIndex].meshIndex;
 			if (meshIndex >= 0)
-				rb->meshTransformations[meshIndex].R = getRotationQuaternion(timeStep * rb->rbProperties.endEffectorPoints[eeIndex].wheelSpeed_rel, rb->rbProperties.endEffectorPoints[eeIndex].localCoordsWheelAxis).getRotationMatrix() * rb->meshTransformations[meshIndex].R;
+				rb->meshTransformations[meshIndex].R = getRotationQuaternion(timeStep * wheelSpeed, rb->rbProperties.endEffectorPoints[eeIndex].localCoordsWheelAxis).getRotationMatrix() * rb->meshTransformations[meshIndex].R;
 		}
 	}
 }
@@ -112,9 +117,8 @@ void KinematicRobotController::initialize() {
 			RigidBody* rb = eeTraj->endEffectorRB;
 			int eeIndex = eeTraj->CPIndex;
 			int meshIndex = rb->rbProperties.endEffectorPoints[eeIndex].meshIndex;
-			Joint* wheelJoint = rb->rbProperties.endEffectorPoints[eeIndex].wheelJoint;
 
-			if (meshIndex >= 0 && wheelJoint)
+			if (meshIndex >= 0)
 				rb->meshTransformations[meshIndex].R = rb->rbProperties.endEffectorPoints[eeIndex].initialMeshTransformation.R;
 		}
 	}
