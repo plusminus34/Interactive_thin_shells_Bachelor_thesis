@@ -9,6 +9,8 @@
 #include <RobotDesignerLib/PositionBasedRobotController.h>
 #include <RobotDesignerLib/TorqueBasedRobotController.h>
 #include <RobotDesignerLib/KinematicRobotController.h>
+#include <RobotDesignerLib/PololuMaestroRobotController.h>
+
 
 
 class SimWindow : public GLWindow3D {
@@ -30,6 +32,7 @@ public:
 	PositionBasedRobotController* positionController = NULL;
 	TorqueBasedRobotController* torqueController = NULL;
 	KinematicRobotController* kinematicController = NULL;
+	PololuMaestroRobotController* pololuMaestroController = NULL;
 
 	RobotController* activeController = NULL;
 
@@ -51,7 +54,7 @@ public:
 	Robot* loadRobot(const char*);
 	void loadMotionPlan(LocomotionEngineMotionPlan* mp);
 
-	void step();
+	void advanceSimulation(double dt);
 
 	void reset();
 

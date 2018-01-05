@@ -27,13 +27,13 @@ void TorqueBasedRobotController::drawDebugInfo() {
 	controller->draw();
 }
 
-void TorqueBasedRobotController::computeControlSignals(double simTimeStep){
+void TorqueBasedRobotController::computeControlSignals(double timeStep){
 	robot->bFrame->updateLimbGroundContactInformation();
 	robot->bFrame->updateStateInformation();
-	controller->computeControlSignals(motionPlan, stridePhase, simTimeStep);
+	controller->computeControlSignals(motionPlan, stridePhase, timeStep);
 }
 
-void TorqueBasedRobotController::applyControlSignals() {
+void TorqueBasedRobotController::applyControlSignals(double timeStep) {
 	GeneralizedCoordinatesRobotRepresentation gcrr(robot);
 	gcrr.computeWorldCoordinateTorquesFromU(controller->qpPlan->u);
 }

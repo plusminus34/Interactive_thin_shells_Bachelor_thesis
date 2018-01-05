@@ -74,12 +74,11 @@ void KinematicRobotController::loadMotionPlan(LocomotionEngineMotionPlan* motion
 	robot->setState(&currentRobotState);
 }
 
-void KinematicRobotController::computeControlSignals(double simTimeStep) {
-	timeStep = simTimeStep;
+void KinematicRobotController::computeControlSignals(double timeStep) {
 	computeDesiredState();
 }
 
-void KinematicRobotController::applyControlSignals() {
+void KinematicRobotController::applyControlSignals(double timeStep) {
 	robot->setState(&desiredState);
 
 	//integrate forward in time the motion of the weels...

@@ -41,11 +41,11 @@ PositionBasedRobotController::~PositionBasedRobotController(void){
 void PositionBasedRobotController::drawDebugInfo() {
 }
 
-void PositionBasedRobotController::computeControlSignals(double simTimeStep){
+void PositionBasedRobotController::computeControlSignals(double timeStep){
 	computeDesiredState();
 }
 
-void PositionBasedRobotController::applyControlSignals() {
+void PositionBasedRobotController::applyControlSignals(double timeStep) {
 	for (int i = 0; i<robot->getJointCount(); i++) {
 		HingeJoint* joint = dynamic_cast<HingeJoint*> (robot->getJoint(i));
 		joint->desiredRelativeOrientation = desiredState.getJointRelativeOrientation(joint->jIndex);
