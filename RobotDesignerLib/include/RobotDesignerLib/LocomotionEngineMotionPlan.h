@@ -148,10 +148,10 @@ public:
 	void getQ(double t, dVector& q_t);
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
-	void getRobotPoseAt(double t, ReducedRobotState& robotPose);
+	void getRobotPoseAt(double t, RobotState& robotPose);
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
-	void getRobotStateAt(double t, double motionPlanDuration, ReducedRobotState& robotState);
+	void getRobotStateAt(double t, double motionPlanDuration, RobotState& robotState);
 
 	void writeRobotMotionTrajectoriesToFile(const char* fName);
 

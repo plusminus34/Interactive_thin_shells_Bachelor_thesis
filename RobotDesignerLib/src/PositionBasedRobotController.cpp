@@ -16,7 +16,7 @@ void PositionBasedRobotController::initialize() {
 	for (uint i = 0; i < robot->jointList.size(); i++)
 		robot->jointList[i]->controlMode = POSITION_MODE;
 	stridePhase = 0;
-	ReducedRobotState moptRobotState(robot);
+	RobotState moptRobotState(robot);
 	motionPlan->robotStateTrajectory.getRobotStateAt(stridePhase, motionPlan->motionPlanDuration, moptRobotState);
 	robot->setState(&moptRobotState);
 

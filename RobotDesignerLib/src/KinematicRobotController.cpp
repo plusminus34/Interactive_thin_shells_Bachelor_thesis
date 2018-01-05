@@ -18,8 +18,8 @@ void KinematicRobotController::advanceInTime(double timeStep) {
 	V3D posOffset;
 	Quaternion qHeadingOffset = Quaternion();
 
-	ReducedRobotState currentMPState(robot);
-	ReducedRobotState nextMPState(robot);
+	RobotState currentMPState(robot);
+	RobotState nextMPState(robot);
 
 	motionPlan->robotStateTrajectory.getRobotPoseAt(stridePhase, currentMPState);
 
@@ -54,8 +54,8 @@ void KinematicRobotController::loadMotionPlan(LocomotionEngineMotionPlan* motion
 
 	this->motionPlan = motionPlan;
 
-	ReducedRobotState startRobotState(robot);
-	ReducedRobotState currentRobotState(robot);
+	RobotState startRobotState(robot);
+	RobotState currentRobotState(robot);
 	motionPlan->robotStateTrajectory.getRobotPoseAt(phase, startRobotState);
 
 	// position
@@ -101,7 +101,7 @@ void KinematicRobotController::drawDebugInfo() {
 
 void KinematicRobotController::initialize() {
 	stridePhase = 0;
-	ReducedRobotState moptRobotState(robot);
+	RobotState moptRobotState(robot);
 	motionPlan->robotStateTrajectory.getRobotStateAt(stridePhase, motionPlan->motionPlanDuration, moptRobotState);
 	robot->setState(&moptRobotState);
 

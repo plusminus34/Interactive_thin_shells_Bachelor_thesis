@@ -54,7 +54,7 @@ Robot::~Robot(void){
 /**
 	uses the state of the robot to populate the input
 */
-void Robot::populateState(ReducedRobotState* state, bool useDefaultAngles) {
+void Robot::populateState(RobotState* state, bool useDefaultAngles) {
 	//we'll push the root's state information - ugly code....
 	state->setPosition(root->state.position);
 	state->setOrientation(root->state.orientation);
@@ -98,7 +98,7 @@ void Robot::populateState(ReducedRobotState* state, bool useDefaultAngles) {
 	This method populates the state of the current robot with the values that are passed
 	in the dynamic array. The same conventions as for the getState() method are assumed.
 */
-void Robot::setState(ReducedRobotState* state){
+void Robot::setState(RobotState* state){
 	//kinda ugly code....
 	root->state.position = state->getPosition();
 	root->state.orientation = state->getOrientation();
@@ -170,7 +170,7 @@ V3D Robot::computeCOMVelocity(){
 	about the vertical axis, so that it's default heading has the value that is given as a parameter
 */
 void Robot::setHeading(double val){
-	ReducedRobotState state(this);
+	RobotState state(this);
 	populateState(&state);
 	state.setHeading(val);
 	setState(&state);
@@ -180,7 +180,7 @@ void Robot::setHeading(double val){
 	this method is used to read the reduced state of the robot from the file
 */
 void Robot::loadReducedStateFromFile(const char* fName){
-	ReducedRobotState state(this);
+	RobotState state(this);
 	state.readFromFile(fName);
 	setState(&state);
 }
@@ -189,7 +189,7 @@ void Robot::loadReducedStateFromFile(const char* fName){
 	this method is used to write the reduced state of the robot to a file
 */
 void Robot::saveReducedStateToFile(const char* fName){
-	ReducedRobotState state(this);
+	RobotState state(this);
 	state.writeToFile(fName, this);
 }
 

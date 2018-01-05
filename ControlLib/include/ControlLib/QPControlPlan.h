@@ -336,11 +336,11 @@ public:
 		}
 	}
 
-	virtual void setJointAngleTargets(const ReducedRobotState& targetState, double kp, double kd) {
+	virtual void setJointAngleTargets(const RobotState& targetState, double kp, double kd) {
 		GeneralizedCoordinatesRobotRepresentation qcrr(robot);
 		dVector qTarget, qDotTarget;
 		qcrr.getQAndQDotFromReducedState(targetState, qTarget, qDotTarget);
-		ReducedRobotState currentState(robot);
+		RobotState currentState(robot);
 		dVector qCurrent, qDotCurrent;
 		qcrr.getQAndQDotFromReducedState(currentState, qCurrent, qDotCurrent);
 

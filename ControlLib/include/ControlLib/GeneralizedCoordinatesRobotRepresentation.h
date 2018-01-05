@@ -3,7 +3,7 @@
 #include <ControlLib/Robot.h>
 #include <MathLib/Matrix.h>
 
-class ReducedRobotState;
+class RobotState;
 
 //TODO: it's not ideal that the robot and its reduced representation can have different states...
 
@@ -86,7 +86,7 @@ public:
 	}
 
 	//given the current state of the generalized representation, output the reduced state of the robot
-	void getReducedRobotState(ReducedRobotState& state);
+	void getReducedRobotState(RobotState& state);
 
 	//updates robot state given current q and qDot values...
 	void syncRobotStateWithGeneralizedCoordinates();
@@ -112,8 +112,8 @@ public:
     //gets the current qDot values
     void getQDot(dVector& qDot_copy);
 
-	void getQFromReducedState(const ReducedRobotState& rs, dVector& q_copy);
-	void getQAndQDotFromReducedState(const ReducedRobotState& rs, dVector& q_copy, dVector& qDot_copy);
+	void getQFromReducedState(const RobotState& rs, dVector& q_copy);
+	void getQAndQDotFromReducedState(const RobotState& rs, dVector& q_copy, dVector& qDot_copy);
 
 	//returns the world coordinates for point p, which is specified in the local coordinates of rb (relative to its COM). I.e. p(q)
 	P3D getWorldCoordinatesFor(const P3D& p, RigidBody* rb);
@@ -251,16 +251,16 @@ inline void testGeneralizedCoordinateRepresentation(Robot* robot) {
 	GeneralizedCoordinatesRobotRepresentation gcrrNew(robot);
 
 	//test out projections between robot state and generalized coordinates...
-	ReducedRobotState robotState1(robot);
+	RobotState robotState1(robot);
 
 	dVector q1, q1Dot;
 	gcrrNew.getQ(q1);
 	gcrrNew.getQDot(q1Dot);
 
 	gcrrNew.syncRobotStateWithGeneralizedCoordinates();
-	ReducedRobotState robotState2(robot);
+	RobotState robotState2(robot);
 
-	ReducedRobotState robotState3(robot);
+	RobotState robotState3(robot);
 	gcrrNew.getReducedRobotState(robotState3);
 	robot->setState(&robotState3);
 	gcrrNew.syncGeneralizedCoordinatesWithRobotState();

@@ -5,13 +5,13 @@
 #include <Utils/Utils.h>
 #include <ControlLib/BodyFrame.h>
 
-class ReducedRobotState;
+class RobotState;
 
 /**
 	Robots are articulated figures (i.e. tree structures starting at a root).
 */
 class Robot {
-	friend class ReducedRobotState;
+	friend class RobotState;
 	friend class LocomotionEngineMotionPlan;
 	friend class GeneralizedCoordinatesRobotRepresentation;
 public:
@@ -143,12 +143,12 @@ public:
 	/**
 		uses the state of the robot to populate the input
 	*/
-	void populateState(ReducedRobotState* state, bool useDefaultAngles = false);
+	void populateState(RobotState* state, bool useDefaultAngles = false);
 
 	/**
 		sets the state of the robot using the input
 	*/
-	void setState(ReducedRobotState* state);
+	void setState(RobotState* state);
 
 	/**
 		makes sure the state of the robot is consistent with all the joint types...
@@ -224,7 +224,7 @@ public:
 	V3D angVelRel;
 };
 
-class ReducedRobotState{
+class RobotState{
 private:
 	Quaternion rootQ;
 	P3D rootPos;
@@ -238,15 +238,15 @@ private:
 	DynamicArray<JointState> auxiliaryJoints;
 
 public:
-	~ReducedRobotState() {
+	~RobotState() {
 	}
 
-	ReducedRobotState(int jCount = 0, int aJCount = 0){
+	RobotState(int jCount = 0, int aJCount = 0){
 		joints.resize(jCount);
 		auxiliaryJoints.resize(aJCount);
 	}
 
-	ReducedRobotState(Robot* robot, bool useDefaultAngles = false){
+	RobotState(Robot* robot, bool useDefaultAngles = false){
 		robot->populateState(this, useDefaultAngles);
 	}
 
@@ -496,7 +496,7 @@ public:
 		return computeHeading(getOrientation(), headingAxis).getRotationAngle(headingAxis);
 	}
 
-	bool ReducedRobotState::isSameAs(const ReducedRobotState& other) {
+	bool RobotState::isSameAs(const RobotState& other) {
 		if (getJointCount() != other.getJointCount())
 			return false;
 

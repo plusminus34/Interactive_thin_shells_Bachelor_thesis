@@ -32,7 +32,7 @@ public:
 
 	virtual void setSimRobotStateFromCurrentMotorValues() {
 		//given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot... 
-		ReducedRobotState rs(robot);
+		RobotState rs(robot);
 
 		for (int i = 0; i < robot->getJointCount(); i++) {
 			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
@@ -47,7 +47,7 @@ public:
 
 	virtual void setTargetMotorValuesFromSimRobotState(double dt) {
 		//given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot... 
-		ReducedRobotState rs(robot);
+		RobotState rs(robot);
 
 		for (int i = 0; i < robot->getJointCount(); i++) {
 			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));

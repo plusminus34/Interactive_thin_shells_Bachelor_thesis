@@ -40,7 +40,7 @@ void IKApp::loadRobot(const char* fName) {
 	rbEngine = new ODERBEngine();
 	rbEngine->loadRBsFromFile(fName);
 	robot = new Robot(rbEngine->rbs[0]);
-	startState = ReducedRobotState(robot);
+	startState = RobotState(robot);
 	setupSimpleRobotStructure(robot);
 
 	delete ikSolver;
@@ -64,7 +64,7 @@ void IKApp::loadFile(const char* fName) {
 	if (fNameExt.compare("rs") == 0) {
 		if (robot) {
 			robot->loadReducedStateFromFile(fName);
-			startState = ReducedRobotState(robot);
+			startState = RobotState(robot);
 			ikSolver->ikPlan->setTargetIKStateFromRobot();
 		}
 	}

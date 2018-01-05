@@ -24,7 +24,7 @@ void RobotController::initialize() {
 	for (uint i = 0; i < robot->jointList.size(); i++)
 		robot->jointList[i]->controlMode = POSITION_MODE;
 	stridePhase = 0;
-	ReducedRobotState moptRobotState(robot);
+	RobotState moptRobotState(robot);
 	motionPlan->robotStateTrajectory.getRobotStateAt(stridePhase, motionPlan->motionPlanDuration, moptRobotState);
 	robot->setState(&moptRobotState);
 }
@@ -46,7 +46,7 @@ void RobotController::applyControlSignals() {
 void RobotController::computeDesiredState() {
 	motionPlan->robotStateTrajectory.getRobotStateAt(stridePhase, motionPlan->motionPlanDuration, desiredState);
 
-	ReducedRobotState rs(robot);
+	RobotState rs(robot);
 	robot->setState(&desiredState);
 
 	//we now have the pose of the robot, and we should also read off the wheel speed...

@@ -1594,7 +1594,7 @@ void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot)
 	robot->saveToRBSFile(fName, robotMeshDir, templateRobot, freezeRobotRoot);
 
 	//saverbs should also save an rs file, right after having restored the joint angles... I think it's cleaner that way...
-//	ReducedRobotState tmpState = robot->getReducedRobotState(rbRobot);
+//	RobotState tmpState = robot->getReducedRobotState(rbRobot);
 //	tmpState.writeToFile(fName);
 
 	delete robot;
@@ -1804,10 +1804,10 @@ bool ModularDesignWindow::isSelectedRMCMovable(){
 	return selectedRobot->selectedRMC->isMovable();
 }
 
-void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot, ReducedRobotState* initialRobotState){
+void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot, RobotState* initialRobotState){
 	bool incompatible = false;
 
-	ReducedRobotState currentRobotState(tRobot);
+	RobotState currentRobotState(tRobot);
 	tRobot->setState(initialRobotState);
 
 	for (auto joint : tRobot->jointList){
@@ -1885,7 +1885,7 @@ void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot, ReducedRobotState*
 
 
 
-void ModularDesignWindow::transferMeshes(Robot* tRobot, ReducedRobotState* initialRobotState){
+void ModularDesignWindow::transferMeshes(Robot* tRobot, RobotState* initialRobotState){
 	// adjust design
 	matchDesignWithRobot(tRobot, initialRobotState);
 

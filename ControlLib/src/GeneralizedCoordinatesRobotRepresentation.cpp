@@ -173,7 +173,7 @@ void GeneralizedCoordinatesRobotRepresentation::computeWorldCoordinateTorquesFro
 //updates q and qDot given current state of robot
 void GeneralizedCoordinatesRobotRepresentation::syncGeneralizedCoordinatesWithRobotState() {
 	//write out the position of the root...
-	ReducedRobotState state(robot);
+	RobotState state(robot);
 	P3D pos = state.getPosition();
 	Quaternion orientation = state.getOrientation();
 
@@ -297,13 +297,13 @@ P3D GeneralizedCoordinatesRobotRepresentation::getPivotPointLocalPosition(RigidB
 }
 
 void GeneralizedCoordinatesRobotRepresentation::syncRobotStateWithGeneralizedCoordinates() {
-	ReducedRobotState rs(robot);
+	RobotState rs(robot);
 	getReducedRobotState(rs);
 	robot->setState(&rs);
 }
 
 //given the current state of the generalized representation, output the reduced state of the robot
-void GeneralizedCoordinatesRobotRepresentation::getReducedRobotState(ReducedRobotState& state) {
+void GeneralizedCoordinatesRobotRepresentation::getReducedRobotState(RobotState& state) {
 	//set the position, velocity, rotation and angular velocity for the root
 	state.setPosition(P3D() + getQAxis(0) * q[0] + getQAxis(1) * q[1] + getQAxis(2) * q[2]);
 	state.setVelocity(V3D(getQAxis(0) * qDot[0] + getQAxis(1) * qDot[1] + getQAxis(2) * qDot[2]));
@@ -355,12 +355,12 @@ void GeneralizedCoordinatesRobotRepresentation::getQDot(dVector& qDot_copy) {
 //	return getQAxis(qIndex);
 //}
 
-void GeneralizedCoordinatesRobotRepresentation::getQAndQDotFromReducedState(const ReducedRobotState& rs, dVector& q_copy, dVector& qDot_copy) {
+void GeneralizedCoordinatesRobotRepresentation::getQAndQDotFromReducedState(const RobotState& rs, dVector& q_copy, dVector& qDot_copy) {
 	dVector q_old = q;
 	dVector qDot_old = qDot;
 
-	ReducedRobotState oldState(robot);
-	robot->setState((ReducedRobotState*)&rs);
+	RobotState oldState(robot);
+	robot->setState((RobotState*)&rs);
 	syncGeneralizedCoordinatesWithRobotState();
 	getQ(q_copy);
 	getQDot(qDot_copy);
@@ -371,12 +371,12 @@ void GeneralizedCoordinatesRobotRepresentation::getQAndQDotFromReducedState(cons
 }
 
 
-void GeneralizedCoordinatesRobotRepresentation::getQFromReducedState(const ReducedRobotState& rs, dVector& q_copy) {
+void GeneralizedCoordinatesRobotRepresentation::getQFromReducedState(const RobotState& rs, dVector& q_copy) {
 	dVector q_old = q;
 	dVector qDot_old = qDot;
 
-	ReducedRobotState oldState(robot);
-	robot->setState((ReducedRobotState*)&rs);
+	RobotState oldState(robot);
+	robot->setState((RobotState*)&rs);
 	syncGeneralizedCoordinatesWithRobotState();
 	getQ(q_copy);
 	robot->setState(&oldState);

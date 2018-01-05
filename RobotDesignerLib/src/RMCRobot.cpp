@@ -919,7 +919,7 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 	ODERBEngine rbEngine;
 	rbEngine.loadRBsFromFile(fName);
 	Robot robot(rbEngine.rbs[0]);
-	ReducedRobotState tmpState(&robot);
+	RobotState tmpState(&robot);
 	tmpState.setPosition(tmpRBs[0].state.position);
 	tmpState.setOrientation(tmpRBs[0].state.orientation);
 

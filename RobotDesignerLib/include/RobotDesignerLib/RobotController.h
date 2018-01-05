@@ -27,6 +27,6 @@ public:
 	Robot *robot;
 	LocomotionEngineMotionPlan *motionPlan;
 	//this is the pose that the virtual agent is aiming to achieve
-	ReducedRobotState desiredState;
+	RobotState desiredState;
 };
 

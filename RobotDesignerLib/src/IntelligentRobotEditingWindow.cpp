@@ -49,7 +49,7 @@ void IntelligentRobotEditingWindow::drawAuxiliarySceneInfo(){
 bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	if (highlightedRigidBody) {
 		if (highlightedRigidBody->pJoints.size() == 1 && (highlightedRigidBody->cJoints.size() > 0 || highlightedRigidBody->rbProperties.endEffectorPoints.size() > 0)){
-			ReducedRobotState rs(rdApp->robot);
+			RobotState rs(rdApp->robot);
 			rdApp->robot->setState(&rdApp->prd->defaultRobotState);
 
 			P3D p1 = highlightedRigidBody->pJoints[0]->getWorldPosition();
@@ -164,7 +164,7 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 			preDraw();
 			bool clickProcessed = false;
 			if ((clickProcessed = tWidget->onMouseMoveEvent(xPos, yPos)) == true) {
-				ReducedRobotState rs(robot);
+				RobotState rs(robot);
 				robot->setState(&rdApp->prd->defaultRobotState);
 
 				P3D pOriginal;
@@ -219,7 +219,7 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 				return true;
 		}
 		else {
-			ReducedRobotState rs(robot);
+			RobotState rs(robot);
 			robot->setState(&rdApp->prd->defaultRobotState);
 
 			//check if any of the joints are highlighted...
@@ -332,7 +332,7 @@ bool IntelligentRobotEditingWindow::onMouseButtonEvent(int button, int action, i
 	if (GlobalMouseState::lButtonPressed) {
 		tWidget->visible = false;
 
-		ReducedRobotState rs(rdApp->robot);
+		RobotState rs(rdApp->robot);
 		rdApp->robot->setState(&rdApp->prd->defaultRobotState);
 
 
@@ -647,7 +647,7 @@ void IntelligentRobotEditingWindow::drawScene() {
 
 	int flags = SHOW_ABSTRACT_VIEW | SHOW_BODY_FRAME | SHOW_JOINTS | HIGHLIGHT_SELECTED;
 
-	ReducedRobotState rs(rdApp->robot);
+	RobotState rs(rdApp->robot);
 	rdApp->robot->setState(&rdApp->prd->defaultRobotState);
 
 	glEnable(GL_LIGHTING);
