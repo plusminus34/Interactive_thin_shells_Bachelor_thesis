@@ -43,7 +43,7 @@ double MPO_FixedWheelObjective::computeValue(const dVector& p){
 			double wheelSpeedj =  ee.wheelSpeed[j];
 			double wheelSpeedjp =  ee.wheelSpeed[jp];
 
-			if(ee.isFixedWheel)
+			if(ee.isFixedWheel || ee.isWeldedWheel)
 			{
 				retVal += computeEnergy(ee.getWheelRhoLocal(), ee.wheelAxisLocal,
 										ee.endEffectorRB, qi, qip,
@@ -89,7 +89,7 @@ void MPO_FixedWheelObjective::addGradientTo(dVector& grad, const dVector& p) {
 		for (int i=0;i<nEEs;i++){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 
-			if(ee.isFixedWheel)
+			if(ee.isFixedWheel || ee.isWeldedWheel)
 			{
 				ScalarDiff yawAnglej =  ee.wheelYawAngle[j];
 				ScalarDiff yawAnglejp =  ee.wheelYawAngle[jp];
@@ -180,7 +180,7 @@ void MPO_FixedWheelObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessia
 		for (int i=0;i<nEEs;i++){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 
-			if(ee.isFixedWheel)
+			if(ee.isFixedWheel || ee.isWeldedWheel)
 			{
 				ScalarDiffDiff yawAnglej =  ee.wheelYawAngle[j];
 				ScalarDiffDiff yawAnglejp =  ee.wheelYawAngle[jp];

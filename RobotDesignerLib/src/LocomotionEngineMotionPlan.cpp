@@ -236,19 +236,19 @@ void LocomotionEngine_RobotStateTrajectory::getQ(double t, dVector &q_t) {
 	}
 }
 
-void LocomotionEngine_RobotStateTrajectory::getRobotPoseAt(double t, ReducedRobotState &robotPose){
+void LocomotionEngine_RobotStateTrajectory::getRobotPoseAt(double t, RobotState &robotPose){
 	if (robotRepresentation == NULL) return;
 	dVector q; getQ(t, q);
 	robotRepresentation->setQ(q);
 	robotRepresentation->getReducedRobotState(robotPose);
 }
 
-void LocomotionEngine_RobotStateTrajectory::getRobotStateAt(double t, double motionPlanDuration, ReducedRobotState &robotState) {
+void LocomotionEngine_RobotStateTrajectory::getRobotStateAt(double t, double motionPlanDuration, RobotState &robotState) {
 	if (t > 1) t -= 1.0;
 	double dStridePhase = 0.01;
 	double dt = dStridePhase * motionPlanDuration;
 
-	ReducedRobotState futureRobotState(robotState.getStateSize());
+	RobotState futureRobotState(robotState.getJointCount());
 
 	if (t+dStridePhase < 1){
 		getRobotPoseAt(t, robotState);
@@ -321,7 +321,7 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	/**
 		we must set up the robot such that its feet are all on the ground...
 	*/
-	ReducedRobotState startState = ReducedRobotState(robot);
+	RobotState startState = RobotState(robot);
 	IK_Solver ikSolver(robot);
 	ikSolver.ikPlan->setTargetIKStateFromRobot();
 
@@ -377,7 +377,7 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	}
 	if (totalNEEs > 0) eeY /= totalNEEs;
 	//move the whole robot so that the feet are on the ground
-	ReducedRobotState rs(robot);
+	RobotState rs(robot);
 	P3D rootPos = rs.getPosition();
 	rootPos.addOffsetToComponentAlong(V3D(0, 1, 0), -eeY);
 	rs.setPosition(rootPos);
@@ -467,8 +467,9 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 		nWheels++;
 
 		eeTraj.isWheel = true;
+		eeTraj.isFixedWheel = false;
 		eeTraj.isPassiveWheel = rbEndEffector.isFreeToMoveWheel();
-		eeTraj.isFixedWheel = rbEndEffector.isWeldedWheel();
+		eeTraj.isWeldedWheel = rbEndEffector.isWeldedWheel();
 
 		// set wheel radius from rb properties
 		eeTraj.wheelRadius = rbEndEffector.featureSize;
@@ -1507,13 +1508,13 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 
 
 	if (robot && (drawRobot || drawSkeleton)){
-		ReducedRobotState oldState(robot);
+		RobotState oldState(robot);
 		////draw the robot's COM trajectory
 		//glLineWidth(5);
 		//glColor3d(0.3, 0.5, 0.3);
 		//glBegin(GL_LINE_STRIP);
 		//	for (double j=0;j<=1; j+=0.01){
-		//		ReducedRobotState robotState(robot);
+		//		RobotState robotState(robot);
 		//		robotStateTrajectory.getRobotStateAt(j, robotState);
 		//		robot->setState(&robotState);
 		//		P3D p = robot->bFrame->bodyState.position;
@@ -1521,7 +1522,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 		//	}
 		//glEnd();
 		//------------------------------------
-		ReducedRobotState robotState(robot);
+		RobotState robotState(robot);
 		robotStateTrajectory.getRobotPoseAt(f, robotState);
 
 		dVector q; 
@@ -1719,8 +1720,8 @@ void LocomotionEngineMotionPlan::drawMotionPlan2(double f, int animationCycle, b
 
 	//draw the robot in a neutral stance
 	if (animationCycle == 0 && f < 0.95) {
-		ReducedRobotState oldState(robot);
-		ReducedRobotState robotState(robot);
+		RobotState oldState(robot);
+		RobotState robotState(robot);
 		robotStateTrajectory.getRobotPoseAt(0, robotState);
 		robotState.setOrientation(Quaternion());
 		P3D pos = (COMTrajectory.getCOMPositionAt(1) + COMTrajectory.getCOMPositionAt(0)) / 2;
@@ -1817,8 +1818,8 @@ void LocomotionEngineMotionPlan::drawMotionPlan2(double f, int animationCycle, b
 	}
 
 	if (animationCycle >= 5) {
-		ReducedRobotState oldState(robot);
-		ReducedRobotState robotState(robot);
+		RobotState oldState(robot);
+		RobotState robotState(robot);
 		robotStateTrajectory.getRobotPoseAt(f, robotState);
 		V3D val = robotStateTrajectory.getBodyPositionAt(1) - robotStateTrajectory.getBodyPositionAt(0);
 		robotState.setPosition(robotState.getPosition() + val * (animationCycle-5));

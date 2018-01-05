@@ -332,7 +332,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		Logger::consolePrint("Load robot state from '%s'\n", fName);
 		if (robot) {
 			robot->loadReducedStateFromFile(fName);
-			startingRobotState = ReducedRobotState(robot);
+			startingRobotState = RobotState(robot);
 			if (prd)
 				prd->updateMorphology();
 		}
@@ -345,7 +345,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		delete prd;
 		prd = new SymmetricParameterizedRobotDesign(robot);
 
-		startingRobotState = ReducedRobotState(robot);
+		startingRobotState = RobotState(robot);
 		return;
 	}
 
@@ -378,7 +378,7 @@ void RobotDesignerApp::createRobotFromCurrentDesign() {
 	if (designWindow) {
 		designWindow->saveToRBSFile("../out/tmpRobot.rbs");
 		loadFile("../out/tmpRobot.rbs");
-		startingRobotState = ReducedRobotState(robot);
+		startingRobotState = RobotState(robot);
 		robot->populateState(&startingRobotState, true);
 		robot->setState(&startingRobotState);
 		if (prd)
@@ -412,7 +412,7 @@ void RobotDesignerApp::exportMeshes() {
 		return;
 	}
 
-	ReducedRobotState rs(robot);
+	RobotState rs(robot);
 
 	robot->setState(&startingRobotState);
 	robot->renderMeshesToFile("..\\out\\robotMeshes.obj");

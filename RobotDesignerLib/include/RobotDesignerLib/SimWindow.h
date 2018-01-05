@@ -41,6 +41,8 @@ public:
 
 	void setPerturbationForceFromMouseInput(double xPos, double yPos);
 
+	void doPhysicsStep(double simStep);
+
 public:
 	SimWindow(int x, int y, int w, int h, GLApplication* glApp);
 	~SimWindow();

@@ -190,27 +190,12 @@ void PololuServoControlInterface::sendControlInputsToPhysicalRobot() {
 		//this mode needs a contiguous block of motor ids that are stored in ascending order... 
 		//if we're not to make any assumption about the order in which the motorID's are assigned, then we have to search for each contiguous block, send those commands and then start over...
 
-		DynamicArray<unsigned short> targetVals;
-		int startID = 0;
-
-		for (int j = startID; j < robot->getJointCount(); j++) {
-			bool foundID = false;
-			for (int i = 0; i < robot->getJointCount(); i++) {
-				HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-				if (!hj) continue;
-				if (hj->motor.motorID == j){
-					targetVals.push_back(getMaestroSignalFromAngle(hj->motor.targetMotorAngle, hj->motor));
-					foundID = true;
-					break;
-				}
+		for (uint i = 0; i < multiTargetCommands.size(); i++) {
+			for (uint j = 0; j < multiTargetCommands[i].robotJoints.size(); j++) {
+				HingeJoint* hj = multiTargetCommands[i].robotJoints[j];
+				multiTargetCommands[i].targetVals[j] = getMaestroSignalFromAngle(hj->motor.targetMotorAngle, hj->motor);
 			}
-			if (foundID == false || j == robot->getJointCount()-1) {
-				//we should now send off all the information...
-				if (targetVals.size() > 0)
-					maestroSetMultipleTargets(startID, targetVals);
-				targetVals.clear();
-				startID = j;
-			}
+			maestroSetMultipleTargets(multiTargetCommands[i].motorStartID, multiTargetCommands[i].targetVals);
 		}
 	}
 }
@@ -298,7 +283,7 @@ void PololuServoControlInterface::setTargetMotorValuesFromSimRobotState(double d
 	readPhysicalRobotMotorPositions();
 
 	//given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot... 
-	ReducedRobotState rs(robot);
+	RobotState rs(robot);
 
 	for (int i = 0; i < robot->getJointCount(); i++) {
 		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
@@ -315,8 +300,8 @@ void PololuServoControlInterface::setTargetMotorValuesFromSimRobotState(double d
 
 
 PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotControlInterface(robot) {
-	//TODO: we will need a much better way of setting motor parameters...
 
+	//TODO: we will need a much better way of setting motor parameters...
 	for (int i = 0; i < robot->getJointCount(); i++) {
 		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
 		if (!hj) continue;
@@ -337,7 +322,7 @@ PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotCo
 			hj->motor.pwmMax = 2100;//depends on type of servomotor
 			hj->motor.pwmFor0Deg = 1430; //this depends on how the horn is mounted...
 			hj->motor.pwmFor45Deg = 1865; //this depends on how the horn is mounted...
-//			hj->motor.flipMotorAxis = true;
+										  //			hj->motor.flipMotorAxis = true;
 		}
 
 		if (i == 2) {
@@ -346,9 +331,78 @@ PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotCo
 			hj->motor.pwmMax = 2160;//depends on type of servomotor
 			hj->motor.pwmFor0Deg = 1390; //this depends on how the horn is mounted...
 			hj->motor.pwmFor45Deg = 1935; //this depends on how the horn is mounted...
- //			hj->motor.flipMotorAxis = true;
+										  //			hj->motor.flipMotorAxis = true;
 		}
 
 	}
+
+
+
+
+
+
+
+
+//set up the information required for multi-motor commands. Each list should be a continuous set of motor ids
+//TODO: outer loop should be over max motor ID found
+//TODO: make a list of all joints, both normal and auxiliary (or better yet, robot should have a way of returning this list directly), and iterate over that...
+
+	for (int j = 0; j < robot->getJointCount(); j++) {
+		ServoMotorCommandBlock smcb;
+		smcb.motorStartID = j; //this is the index of the motor we're starting from. We'll be looking for this motor and a continuous block from thereon in the list of robot joints...
+
+		for (int i = 0; i < robot->getJointCount(); i++) {
+			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+			if (!hj) continue;
+			if (hj->motor.motorID == j) {
+				smcb.targetVals.push_back(0);
+				smcb.robotJoints.push_back(hj);
+				j++;	//now look for the next motor to add to the list...
+				i = -1; //this is so that we start looking for the next motor id starting from the very first motor in the robot joint list
+			}
+		}
+
+		if (smcb.targetVals.size() > 0)
+			multiTargetCommands.push_back(smcb);
+		//j is now the first motor we could not find, so increasing it in the upper loop means we give up on it and try to find the one right after
+	}
+
+	//now test it out...
+
+	for (uint i = 0; i < multiTargetCommands.size(); i++) {
+		string cmd;
+		cmd = "Start: " + to_string(multiTargetCommands[i].motorStartID) + ". Motor id list: ";
+		for (uint j = 0; j < multiTargetCommands[i].robotJoints.size(); j++) {
+			HingeJoint* hj = multiTargetCommands[i].robotJoints[j];
+			cmd += to_string(hj->motor.motorID) + " ";
+		}
+		Logger::consolePrint(cmd.c_str());
+	}
+
+	if (robot->getJointCount() == multiTargetCommands.size())
+		Logger::consolePrint("ServoMotorController: found %d blocks of servos...\n", multiTargetCommands.size());
+	int mCount = 0;
+	for (uint i = 0; i < multiTargetCommands.size(); i++) {
+		mCount += multiTargetCommands[i].targetVals.size();
+		if (i > 0) {
+			int lastMotorID = multiTargetCommands[i-1].motorStartID + multiTargetCommands[i-1].targetVals.size() - 1;
+			int currentMotorID = multiTargetCommands[i].motorStartID;
+
+			if (currentMotorID < lastMotorID + 1)
+				Logger::consolePrint("Warning: current motor ID is not properly separated from the last motor ID: lastMotorID = %f, currentMotorID = %d\n", lastMotorID, currentMotorID);
+		}
+		for (uint j = 0; j < multiTargetCommands[i].targetVals.size(); j++) {
+			HingeJoint* hj = multiTargetCommands[i].robotJoints[j];
+			if (hj->motor.motorID != multiTargetCommands[i].motorStartID + j)
+				Logger::consolePrint("Warning: robot joints are not consistently ordered to match up with motor IDs...\n");
+		}
+	}
+
+	if (mCount != robot->getJointCount()) {
+		Logger::consolePrint("Warning: robot joints are not consistently ordered to match up with motor IDs...\n");
+	}
+
+
+
 }
 

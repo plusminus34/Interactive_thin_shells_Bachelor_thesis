@@ -3,9 +3,11 @@
 /**
 	constructor
 */
-SimpleLimb::SimpleLimb(const char *limbName, Joint *_rootJoint) {
+SimpleLimb::SimpleLimb(const char *limbName, RigidBody* eeRB, RigidBody* root) {
 	name.assign(limbName);
-	this->rootJoint = _rootJoint;
+	while (eeRB->pJoints[0]->parent != root)
+		eeRB = eeRB->pJoints[0]->parent;
+	this->rootJoint = eeRB->pJoints[0];
 	origin = rootJoint->parent;
 	initializeJointList();
 }

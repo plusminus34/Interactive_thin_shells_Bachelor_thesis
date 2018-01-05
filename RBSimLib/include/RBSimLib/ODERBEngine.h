@@ -162,10 +162,9 @@ public:
 	*/
 	virtual ~ODERBEngine(void);
 
-	/**
-		This method reads a list of rigid bodies from the specified file.
-	*/
-	virtual void loadRBsFromFile(const char* fName);
+	virtual void addRigidBodyToEngine(RigidBody* rb);
+
+	virtual void addJointToEngine(Joint* j);
 
 	/**
 		This method is used to integrate the simulation forward in time.

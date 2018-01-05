@@ -44,7 +44,7 @@ Given a set of parameters, instances of this class will output new robot morphol
 class ParameterizedRobotDesign {
 public:
 	Robot* robot;
-	ReducedRobotState defaultRobotState;
+	RobotState defaultRobotState;
 
 	//the morphology of the design is given by the parameterization of each joint (e.g. position in child and parent coords, rotation axis, etc).
 	//we will store the initial morphology here
@@ -245,7 +245,7 @@ public:
 	virtual void setParameters(const DynamicArray<double>& params) {
 		currentParams = params;
 
-		ReducedRobotState rs(robot);
+		RobotState rs(robot);
 		robot->setState(&defaultRobotState);
 
 		// go through each joint and apply its offset as specified in the param list...

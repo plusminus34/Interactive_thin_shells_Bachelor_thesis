@@ -73,7 +73,7 @@ void PhysicalRobotControlApp::loadRobot(const char* fName) {
 	rbEngine = new ODERBEngine();
 	rbEngine->loadRBsFromFile(fName);
 	robot = new Robot(rbEngine->rbs[0]);
-	startState = ReducedRobotState(robot);
+	startState = RobotState(robot);
 	setupSimpleRobotStructure(robot);
 
 	delete ikSolver;
@@ -95,7 +95,7 @@ void PhysicalRobotControlApp::loadFile(const char* fName) {
 	if (fNameExt.compare("rs") == 0) {
 		if (robot) {
 			robot->loadReducedStateFromFile(fName);
-			startState = ReducedRobotState(robot);
+			startState = RobotState(robot);
 			ikSolver->ikPlan->setTargetIKStateFromRobot();
 		}
 	}
@@ -122,7 +122,7 @@ void PhysicalRobotControlApp::process() {
 		ikSolver->solve();
 	}
 	else {
-		ReducedRobotState rs(robot);
+		RobotState rs(robot);
 
 		double nextTrajPhase = trajPhase;
 		nextTrajPhase += dt / trajDuration;
@@ -255,7 +255,7 @@ void PhysicalRobotControlApp::drawScene() {
 
 	rbEngine->drawRBs(flags);
 
-	ReducedRobotState rs(robot);
+	RobotState rs(robot);
 	if (rci) 
 		rci->syncSimRobotWithPhysicalRobot();
 	glTranslated(0.2, 0, 0);

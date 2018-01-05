@@ -23,14 +23,12 @@ public:
 
 	virtual void draw();
 
-	void computeMotionPlanPeriodDistAndHeading();
-public:
-//	Quaternion qRel;
-//	V3D vRel;
-//	V3D mpTravelDist;
-//	Quaternion mpTravelHeading;
 
+
+public:
 	V3D posInPlane;
 	Quaternion overallHeading;
+
+	double timeStep = 0;
 };
 

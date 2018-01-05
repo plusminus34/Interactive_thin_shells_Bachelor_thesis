@@ -18,7 +18,7 @@ SimWindow::SimWindow(int x, int y, int w, int h, GLApplication* glApp) : GLWindo
 	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutUpAxis = 0.95;
 	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -1.5;
 
-	showReflections = true;
+//	showReflections = true;
 	showGroundPlane = true;
 }
 
@@ -109,7 +109,11 @@ Robot* SimWindow::loadRobot(const char* fName) {
 	worldOracle = new WorldOracle(Globals::worldUp, Globals::groundPlane);
 	rbEngine->loadRBsFromFile(fName);
 	robot = new Robot(rbEngine->rbs[0]);
+
 	setupSimpleRobotStructure(robot);
+
+	robot->addWheelsAsAuxiliaryRBs(rbEngine);
+
 	worldOracle->writeRBSFile("../out/tmpEnvironment.rbs");
 	rbEngine->loadRBsFromFile("../out/tmpEnvironment.rbs");
 	return robot;
@@ -160,36 +164,44 @@ void SimWindow::setPerturbationForceFromMouseInput(double xPos, double yPos) {
 	forceScale = robot->getMass() * 1.5;
 }
 
+void SimWindow::doPhysicsStep(double simStep) {
+	activeController->applyControlSignals();
+	rbEngine->applyForceTo(robot->root, perturbationForce * forceScale, P3D());
+	rbEngine->step(simStep);
+	robot->bFrame->updateStateInformation();
+
+	//integrate forward in time the motion of the weels...
+	for (uint j = 0; j < activeController->motionPlan->endEffectorTrajectories.size(); j++) {
+		LocomotionEngine_EndEffectorTrajectory* eeTraj = &activeController->motionPlan->endEffectorTrajectories[j];
+		if (eeTraj->isWheel) {
+			RigidBody* rb = eeTraj->endEffectorRB;
+			int eeIndex = eeTraj->CPIndex;
+			int meshIndex = rb->rbProperties.endEffectorPoints[eeIndex].meshIndex;
+			Joint* wheelJoint = rb->rbProperties.endEffectorPoints[eeIndex].wheelJoint;
+
+			if (meshIndex >= 0 && wheelJoint)
+				rb->meshTransformations[meshIndex].R = wheelJoint->computeRelativeOrientation().getRotationMatrix() * rb->rbProperties.endEffectorPoints[eeIndex].initialMeshTransformation.R;
+		}
+	}
+}
+
 void SimWindow::step() {
 	if (!activeController)
 		return;
 
 	activeController->computeControlSignals(simTimeStep);
 
-	for (int i = 0; i < nPhysicsStepsPerControlStep; i++) {
-		activeController->applyControlSignals();
-		rbEngine->applyForceTo(robot->root, perturbationForce * forceScale, P3D());
-		if (activeController != kinematicController)
-			rbEngine->step(simTimeStep / nPhysicsStepsPerControlStep);
-		robot->bFrame->updateStateInformation();
-	}
-
+	if (activeController == torqueController)
+		for (int i = 0; i < nPhysicsStepsPerControlStep; i++) 
+			doPhysicsStep(simTimeStep / nPhysicsStepsPerControlStep);
+	
+	if (activeController == positionController)
+		doPhysicsStep(simTimeStep);
 
 	//do the integration of wheel motions here...
-	if (activeController == kinematicController) {
-		for (uint j = 0; j < activeController->motionPlan->endEffectorTrajectories.size(); j++) {
-			LocomotionEngine_EndEffectorTrajectory* eeTraj = &activeController->motionPlan->endEffectorTrajectories[j];
-			if (eeTraj->isWheel) {
-				RigidBody* rb = eeTraj->endEffectorRB;
-				int eeIndex = eeTraj->CPIndex;
-				int meshIndex = rb->rbProperties.endEffectorPoints[eeIndex].meshIndex;
-				if (meshIndex >= 0)
-					rb->meshTransformations[meshIndex].R = getRotationQuaternion(simTimeStep * rb->rbProperties.endEffectorPoints[eeIndex].wheelSpeed_rel, rb->rbProperties.endEffectorPoints[eeIndex].localCoordsWheelAxis).getRotationMatrix() * rb->meshTransformations[meshIndex].R;
-			}
-		}
-	}
+	if (activeController == kinematicController)
+		activeController->applyControlSignals();
 
 	activeController->advanceInTime(simTimeStep);
-
 }
 

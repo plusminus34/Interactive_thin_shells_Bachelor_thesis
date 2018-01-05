@@ -172,7 +172,7 @@ LivingWheelEE::LivingWheelEE(const char* LMType){
 		radius = 0.03;
 	}
 	else if (strcmp(trim((char*)LMType), "TGY306GPassiveWheel") == 0) {
-		originalWheelMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-wheel3.obj");
+		originalWheelMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-wheelPassive_w.obj");
 		radius = 0.03;
 		isActive = false;
 	} 

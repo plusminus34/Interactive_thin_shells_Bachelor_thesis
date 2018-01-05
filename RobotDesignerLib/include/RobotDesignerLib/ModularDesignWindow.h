@@ -136,8 +136,8 @@ public:
 	void updateLivingBracket();
 	bool isSelectedRMCMovable();
 
-	void matchDesignWithRobot(Robot* tRobot, ReducedRobotState* initialRobotState);
-	void transferMeshes(Robot* tRobot, ReducedRobotState* initialRobotState);
+	void matchDesignWithRobot(Robot* tRobot, RobotState* initialRobotState);
+	void transferMeshes(Robot* tRobot, RobotState* initialRobotState);
 
 	void buildRMCMirrorMap();
 	void makeSelectedRMCSymmtry();

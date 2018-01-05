@@ -357,8 +357,8 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	Ray ray = getRayFromScreenCoords(xPos, yPos);
 	postDraw();
 
-	ReducedRobotState oldState(robot);
-	ReducedRobotState robotState(robot);
+	RobotState oldState(robot);
+	RobotState robotState(robot);
 	locomotionManager->motionPlan->robotStateTrajectory.getRobotPoseAt(moptParams.phase, robotState);
 	robot->setState(&robotState);
 

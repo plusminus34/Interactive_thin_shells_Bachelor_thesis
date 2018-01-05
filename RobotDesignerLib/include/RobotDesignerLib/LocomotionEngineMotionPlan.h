@@ -21,9 +21,11 @@ public:
 	DynamicArray<double> contactFlag;
 	DynamicArray<double> EEWeights;
 
-	bool isWheel = false;
-	bool isFixedWheel = false;
-	bool isPassiveWheel = false;
+	bool isWheel = false;				// true for any wheel type
+	bool isFixedWheel = false;			// true for a temporary fixed wheel
+	bool isWeldedWheel = false;			// true for a permanently fixed wheel
+	bool isPassiveWheel = false;		// true if passive wheel
+
 	double wheelRadius = 0.1;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
 	V3D wheelAxisLocal;						// wheel axis in world coords.
@@ -146,10 +148,10 @@ public:
 	void getQ(double t, dVector& q_t);
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
-	void getRobotPoseAt(double t, ReducedRobotState& robotPose);
+	void getRobotPoseAt(double t, RobotState& robotPose);
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
-	void getRobotStateAt(double t, double motionPlanDuration, ReducedRobotState& robotState);
+	void getRobotStateAt(double t, double motionPlanDuration, RobotState& robotState);
 
 	void writeRobotMotionTrajectoriesToFile(const char* fName);
 

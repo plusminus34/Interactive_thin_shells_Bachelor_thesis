@@ -16,7 +16,7 @@ void TorqueBasedRobotController::initialize() {
 	for (uint i = 0; i < robot->jointList.size(); i++)
 		robot->jointList[i]->controlMode = TORQUE_MODE;
 	stridePhase = 0;
-	ReducedRobotState rs = controller->getTargetRobotState(motionPlan, stridePhase);
+	RobotState rs = controller->getTargetRobotState(motionPlan, stridePhase);
 	robot->setState(&rs);
 }
 

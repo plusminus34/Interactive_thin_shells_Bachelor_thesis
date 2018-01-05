@@ -12,24 +12,14 @@ void KinematicRobotController::draw() {
 
 }
 
-void KinematicRobotController::computeMotionPlanPeriodDistAndHeading(){
-	ReducedRobotState startRobotState(robot);
-	ReducedRobotState endRobotState(robot);
-
-//	motionPlan->robotStateTrajectory.getRobotPoseAt(0, startRobotState);
-//	motionPlan->robotStateTrajectory.getRobotPoseAt(1, endRobotState);
-//	mpTravelDist = endRobotState.getPosition() - startRobotState.getPosition();
-//	mpTravelHeading = computeHeading(endRobotState.getOrientation() * startRobotState.getOrientation().getInverse(), V3D(0, 1, 0));
-}
-
 void KinematicRobotController::advanceInTime(double timeStep) {
 //	vRel = V3D();
 //	qRel = Quaternion();
 	V3D posOffset;
 	Quaternion qHeadingOffset = Quaternion();
 
-	ReducedRobotState currentMPState(robot);
-	ReducedRobotState nextMPState(robot);
+	RobotState currentMPState(robot);
+	RobotState nextMPState(robot);
 
 	motionPlan->robotStateTrajectory.getRobotPoseAt(stridePhase, currentMPState);
 
@@ -48,12 +38,6 @@ void KinematicRobotController::advanceInTime(double timeStep) {
 	posInPlane += overallHeading * computeHeading(currentMPState.getOrientation(), V3D(0, 1, 0)).getInverse() * posOffset;
 	overallHeading = qHeadingOffset * overallHeading;
 
-//	motionPlan->robotStateTrajectory.getRobotPoseAt(stridePhase, nextMPState);
-//	qRel = nextMPState.getOrientation() * qRel * currentMPState.getOrientation().getInverse();
-//	vRel += nextMPState.getPosition() - currentMPState.getPosition();
-//	vRel = computeHeading(currentMPState.getOrientation(), V3D(0, 1, 0)).getInverse().rotate(vRel);
-//	qRel = nextMPState.getPosition() - currentMPState.getPosition();
-
 }
 
 void KinematicRobotController::computeDesiredState() {
@@ -69,9 +53,9 @@ void KinematicRobotController::loadMotionPlan(LocomotionEngineMotionPlan* motion
 	stridePhase = phase;
 
 	this->motionPlan = motionPlan;
-	computeMotionPlanPeriodDistAndHeading();
-	ReducedRobotState startRobotState(robot);
-	ReducedRobotState currentRobotState(robot);
+
+	RobotState startRobotState(robot);
+	RobotState currentRobotState(robot);
 	motionPlan->robotStateTrajectory.getRobotPoseAt(phase, startRobotState);
 
 	// position
@@ -91,11 +75,24 @@ void KinematicRobotController::loadMotionPlan(LocomotionEngineMotionPlan* motion
 }
 
 void KinematicRobotController::computeControlSignals(double simTimeStep) {
+	timeStep = simTimeStep;
 	computeDesiredState();
 }
 
 void KinematicRobotController::applyControlSignals() {
 	robot->setState(&desiredState);
+
+	//integrate forward in time the motion of the weels...
+	for (uint j = 0; j < motionPlan->endEffectorTrajectories.size(); j++) {
+		LocomotionEngine_EndEffectorTrajectory* eeTraj = &motionPlan->endEffectorTrajectories[j];
+		if (eeTraj->isWheel) {
+			RigidBody* rb = eeTraj->endEffectorRB;
+			int eeIndex = eeTraj->CPIndex;
+			int meshIndex = rb->rbProperties.endEffectorPoints[eeIndex].meshIndex;
+			if (meshIndex >= 0)
+				rb->meshTransformations[meshIndex].R = getRotationQuaternion(timeStep * rb->rbProperties.endEffectorPoints[eeIndex].wheelSpeed_rel, rb->rbProperties.endEffectorPoints[eeIndex].localCoordsWheelAxis).getRotationMatrix() * rb->meshTransformations[meshIndex].R;
+		}
+	}
 }
 
 void KinematicRobotController::drawDebugInfo() {
@@ -104,9 +101,23 @@ void KinematicRobotController::drawDebugInfo() {
 
 void KinematicRobotController::initialize() {
 	stridePhase = 0;
-	ReducedRobotState moptRobotState(robot);
+	RobotState moptRobotState(robot);
 	motionPlan->robotStateTrajectory.getRobotStateAt(stridePhase, motionPlan->motionPlanDuration, moptRobotState);
 	robot->setState(&moptRobotState);
+
+	//reset the orientation of the wheels to their initial values
+	for (uint j = 0; j < motionPlan->endEffectorTrajectories.size(); j++) {
+		LocomotionEngine_EndEffectorTrajectory* eeTraj = &motionPlan->endEffectorTrajectories[j];
+		if (eeTraj->isWheel) {
+			RigidBody* rb = eeTraj->endEffectorRB;
+			int eeIndex = eeTraj->CPIndex;
+			int meshIndex = rb->rbProperties.endEffectorPoints[eeIndex].meshIndex;
+			Joint* wheelJoint = rb->rbProperties.endEffectorPoints[eeIndex].wheelJoint;
+
+			if (meshIndex >= 0 && wheelJoint)
+				rb->meshTransformations[meshIndex].R = rb->rbProperties.endEffectorPoints[eeIndex].initialMeshTransformation.R;
+		}
+	}
 
 	posInPlane = V3D();
 	overallHeading = Quaternion();

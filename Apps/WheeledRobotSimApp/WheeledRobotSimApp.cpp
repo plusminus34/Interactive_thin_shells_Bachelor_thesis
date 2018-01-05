@@ -193,18 +193,6 @@ void WheeledRobotSimApp::loadFile(const char* fName) {
 			menuScreen->performLayout();
 		}
 
-		// Set wheel axis
-		for(Joint* j : rbEngine->joints)
-		{
-			HingeJoint *hingeJoint = dynamic_cast<HingeJoint*>(j);
-			if(hingeJoint != nullptr)
-			{
-				V3D rotAxis = hingeJoint->rotationAxis.unit();
-				if(j->controlMode == JOINT_MODE::VELOCITY_MODE)
-					j->desiredRelativeAngVelocityAxis = rotAxis;
-			}
-		}
-
 		// create the ground plane rigid body
 		worldOracle->writeRBSFile("../out/tmpRB.rbs");
 		rbEngine->loadRBsFromFile("../out/tmpRB.rbs");
@@ -299,7 +287,7 @@ void WheeledRobotSimApp::updateRBSimParams()
 
 			if(j->controlMode == JOINT_MODE::VELOCITY_MODE)
 			{
-				j->desiredRelativeAngVelocity = wheelSpeeds[j->name]/180*M_PI;
+				j->desiredRelativeAngularVelocity = hingeJoint->rotationAxis * wheelSpeeds[j->name]/180*M_PI;
 			}
 			else if(j->controlMode == JOINT_MODE::POSITION_MODE)
 			{
