@@ -65,6 +65,8 @@ int PololuServoControlInterface::maestroGetPosition(Motor& mp){
 	//or scripts running on the Maestro. It is not the actual position recorded by the servomotor's 
 	//potentiometer
 
+	if (!connected || mp.motorID < 0) return 0;
+
 	if (!connected) return (int)mp.pwmFor0Deg * 4;
 	unsigned char command[2] = { 0x90, 1};
 	command[1] = (unsigned char)mp.motorID;
@@ -86,7 +88,7 @@ int PololuServoControlInterface::maestroGetPosition(Motor& mp){
 // See the "Serial Servo Commands" section of the user's guide.
 // The units of 'target' are quarter-microseconds. If 0, the motor will no longer receive pulses
 int PololuServoControlInterface::maestroSetTargetPosition(Motor& mp, unsigned short target) {
-	if (!connected) return 0;
+	if (!connected || mp.motorID < 0) return 0;
 
 	unsigned char command[] = {0x84, 1, (unsigned short)(target & 0x7F), (unsigned short)(target >> 7 & 0x7F)};
 	command[1] = (unsigned char)mp.motorID;
@@ -126,7 +128,7 @@ int PololuServoControlInterface::maestroSetMultipleTargets(int startID, const Dy
 // See the "Serial Servo Commands" section of the user's guide.
 // The units of 'target' are (0.25 micros)/(10 ms). If 0, the motor will have no speed limit
 int PololuServoControlInterface::maestroSetTargetSpeed(Motor& mp, unsigned short target) {
-	if (!connected) return 0;
+	if (!connected || mp.motorID < 0) return 0;
 	if (controlPositionsOnly) target = 0;
 
 	unsigned char command[] = { 0x87, 0, (unsigned short) (target & 0x7F), (unsigned short)(target >> 7 & 0x7F) };
@@ -303,7 +305,7 @@ PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotCo
 //set up the information required for multi-motor commands. Each list should be a continuous set of motor ids
 //TODO: outer loop should be over max motor ID found
 //TODO: make a list of all joints, both normal and auxiliary (or better yet, robot should have a way of returning this list directly), and iterate over that...
-
+//TODO: put this in a different function so that it can be executed whenever desired...
 	for (int j = 0; j < robot->getJointCount(); j++) {
 		ServoMotorCommandBlock smcb;
 		smcb.motorStartID = j; //this is the index of the motor we're starting from. We'll be looking for this motor and a continuous block from thereon in the list of robot joints...

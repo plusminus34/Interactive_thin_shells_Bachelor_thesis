@@ -7,6 +7,9 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
+//why does the torque controller for spotmini work not as well now?!?
+//if design window has no design, then we should ignore it...
+//make a script file also for spot mini...
 //add a little script file, that can do: load design file, load it to sim, load mopt plan, load robot-motor calibration file...
 //debug joint velocity limits some more...
 //add the option to start non-periodic mopt from zero or from two other motion plans...
@@ -290,12 +293,34 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 		createRobotFromCurrentDesign();
 	}
 
+	if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
+		loadFile("..\\data\\RobotDesigner\\TGYDemo1.batch");
+//		loadFile("..\\data\\RobotDesigner\\SpotMiniDemo.batch");
+	}
+
 	if (key == GLFW_KEY_M && action == GLFW_PRESS) {
 		warmStartMOPT(true);
 	}
 
 	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
 		exportMeshes();
+	}
+
+	if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
+		viewOptions = SIM_WINDOW_ONLY;
+		setupWindows();
+	}
+	if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
+		viewOptions = SIM_AND_MOPT;
+		setupWindows();
+	}
+	if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
+		viewOptions = SIM_AND_DESIGN;
+		setupWindows();
+	}
+	if (key == GLFW_KEY_F4 && action == GLFW_PRESS) {
+		viewOptions = MOPT_AND_IEDIT;
+		setupWindows();
 	}
 
 	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
@@ -329,6 +354,32 @@ void RobotDesignerApp::loadFile(const char* fName) {
 	fileName.assign(fName);
 
 	std::string fNameExt = fileName.substr(fileName.find_last_of('.') + 1);
+
+	if (fNameExt.compare("batch") == 0) {
+		Logger::consolePrint("Batch loading from \'%s\'\n", fName);
+		FILE* fp = fopen(fName, "r");
+
+		while (!feof(fp)){
+			char line[200];
+			readValidLine(line, 200, fp);
+			char token[100], argument[100];
+			sscanf(line, "%s %s", &token, &argument);
+			if (strcmp(token, "load") == 0)
+				loadFile(argument);
+			if (strcmp(token, "toSim") == 0)
+				createRobotFromCurrentDesign();
+			if (strcmp(token, "end") == 0)
+				break;
+		}
+		fclose(fp);
+	}
+
+	if (fNameExt.compare("pololu") == 0) {
+		Logger::consolePrint("Loading servomotor mapping/calibration file '%s'\n", fName);
+		if (simWindow && simWindow->pololuMaestroController)
+			simWindow->pololuMaestroController->readRobotMappingParametersFromFile(fName);
+		return;
+	}
 
 	if (fNameExt.compare("rs") == 0) {
 		Logger::consolePrint("Load robot state from '%s'\n", fName);
@@ -369,7 +420,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 	}
 
 	if (fNameExt.compare("dsn") == 0 && designWindow) {
-		Logger::consolePrint("Load robot state from '%s'\n", fName);
+		Logger::consolePrint("Load robot design from '%s'\n", fName);
 		designWindow->loadFile(fName);
 		return;
 	}
@@ -377,7 +428,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 }
 
 void RobotDesignerApp::createRobotFromCurrentDesign() {
-	if (designWindow) {
+	if (designWindow && designWindow->hasDesign()) {
 		designWindow->saveToRBSFile("../out/tmpRobot.rbs");
 		loadFile("../out/tmpRobot.rbs");
 		startingRobotState = RobotState(robot);

@@ -28,6 +28,8 @@ public:
 
 	PololuServoControlInterface* rci = NULL;
 
+	void readRobotMappingParametersFromFile(const char* fName);
+
 public:
 	V3D posInPlane;
 	Quaternion overallHeading;

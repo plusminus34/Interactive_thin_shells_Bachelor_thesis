@@ -27,10 +27,7 @@
 //	RUN_IN_MATLAB(x)
 #endif
 
-
-
 #define START_WITH_VISUAL_DESIGNER
-
 
 class IntelligentRobotEditingWindow;
 

@@ -12,13 +12,14 @@ SimWindow::SimWindow(int x, int y, int w, int h, GLApplication* glApp) : GLWindo
 	this->glApp = glApp;
 
 	simTimeStep = 1 / 120.0;
+	nPhysicsStepsPerControlStep = 4;
 	//	Globals::g = 0;
 
 	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutRightAxis = 0.25;
 	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutUpAxis = 0.95;
 	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -1.5;
 
-//	showReflections = true;
+	showReflections = true;
 	showGroundPlane = true;
 }
 

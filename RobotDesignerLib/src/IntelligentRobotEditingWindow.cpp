@@ -25,7 +25,6 @@ IntelligentRobotEditingWindow::IntelligentRobotEditingWindow(int x, int y, int w
 
 	tWidget = new TranslateWidget(AXIS_X | AXIS_Y | AXIS_Z);
 	tWidget->visible = false;
-
 }
 
 void IntelligentRobotEditingWindow::addMenuItems() {
@@ -344,11 +343,14 @@ bool IntelligentRobotEditingWindow::onMouseButtonEvent(int button, int action, i
 		if (highlightedEE) {
 			tWidget->visible = true;
 			tWidget->pos = highlightedEEParent->getWorldCoordinates(highlightedEE->coords);
+			if (highlightedEE->wheelJoint)
+			Logger::consolePrint("Clicked on wheel \'%s\' with ID %d\n", highlightedEE->wheelJoint->name.c_str(), highlightedEE->wheelJoint->jIndex);
 		}
 
 		if (highlightedJoint) {
 			tWidget->visible = true;
 			tWidget->pos = highlightedJoint->getWorldPosition();
+			Logger::consolePrint("Clicked on joint \'%s\' with ID %d\n", highlightedJoint->name.c_str(), highlightedJoint->jIndex);
 		}
 		rdApp->robot->setState(&rs);
 	}

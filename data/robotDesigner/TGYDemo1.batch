@@ -1,0 +1,7 @@
+load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerActive_sym.dsn
+toSim
+load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerActive_sym_roll.p
+load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerActive_sym.pololu
+
+end
+
