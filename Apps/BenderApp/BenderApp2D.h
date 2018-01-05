@@ -9,6 +9,7 @@
 #include "NodePositionObjectiveFunction.h"
 #include "BenderSimulationMesh.h"
 #include "Trajectory3Dplus.h"
+#include "InverseDeformationSolver.h"
 
 
 /**
@@ -21,25 +22,27 @@ public:
 
 	Trajectory3Dplus targetTrajectory_input;
 
+	InverseDeformationSolver inverseDeformationSolver;
+
 	
 	// Optimization Parameters
-	dVector xi;
+//	dVector xi;
 
 	// helpers for optimization
-	dVector dOdxi;
-	dVector dOdx;
-	std::vector<dVector> deltaFdeltaxi;
-	std::vector<dVector> deltaxdeltaxi;
+//	dVector dOdxi;
+//	dVector dOdx;
+//	std::vector<dVector> deltaFdeltaxi;
+//	std::vector<dVector> deltaxdeltaxi;
 
-	dVector x_approx;
+//??	dVector x_approx;
 
 	// Optimization Algorithm
 	std::vector<GradientBasedFunctionMinimizer*> minimizers;
-	GradientBasedFunctionMinimizer * minimizer;
-	NodePositionObjectiveFunction * objectiveFunction;
-	int maxIterations = 10;
-	double solveResidual = 1e-5;
-	int maxLineSearchIterations = 15;
+//	GradientBasedFunctionMinimizer * minimizer;
+//	NodePositionObjectiveFunction * objectiveFunction;
+//	int maxIterations = 10;
+//	double solveResidual = 1e-5;
+//	int maxLineSearchIterations = 15;
 
 	int selected_mount = -1;
 
@@ -111,8 +114,8 @@ public:
 	void computeDoDxi(dVector & dodxi);
 	double peekOofXi(dVector const & xi_in);
 
-	void pullXi();
-	void pushXi();
+//	void pullXi();
+//	void pushXi();
 
 
 	//input callbacks...

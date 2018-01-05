@@ -589,16 +589,22 @@ void BenderApp2D::process() {
 
 		if(optimizeObjective) {
 
-			pullXi();
+			//			pullXi();
 
 			// minimize here
-			minimizer->lineSearchStartValue = 0.1;
-			minimizer->maxIterations = maxIterations;
-			minimizer->solveResidual = solveResidual;
-			minimizer->maxLineSearchIterations = maxLineSearchIterations;
-			
+			//			minimizer->lineSearchStartValue = 0.1;
+			//			minimizer->maxIterations = maxIterations;
+			//			minimizer->solveResidual = solveResidual;
+			//			minimizer->maxLineSearchIterations = maxLineSearchIterations;
+			//			
 			double o_new = 0;
-			minimizer->minimize(objectiveFunction, xi, o_new);
+//			minimizer->minimize(objectiveFunction, xi, o_new);
+			o_new = inverseDeformationSolver.solveOptimization(solveResidual,
+															   maxIterations,
+															   lineSearchStartValue,
+															   maxLineSearchIterations);
+
+
 
 			double e_new = femMesh->computeTargetPositionError();
 			double delta_o = o_new - o_last;
@@ -609,12 +615,13 @@ void BenderApp2D::process() {
 
 		}
 		else {
-			solveMesh();
+			inverseDeformationSolver.solveMesh(computeStaticSolution, simTimeStep);
 		}
 
 	}
 }
 
+/*
 void BenderApp2D::solveMesh() 
 {
 	if (computeStaticSolution)
@@ -627,6 +634,7 @@ void BenderApp2D::solveMesh()
 		simulationTime += simTimeStep;
 	}
 }
+*/
 
 
 
@@ -662,7 +670,7 @@ void BenderApp2D::pushXi()
 	}
 }
 
-
+/*
 void BenderApp2D::computeDoDxi(dVector & dodxi)
 {
 	dodxi.resize(xi.size());
@@ -711,9 +719,9 @@ void BenderApp2D::computeDoDxi(dVector & dodxi)
 	}
 
 }
+*/
 
-
-
+/*
 double BenderApp2D::peekOofXi(dVector const & xi_in) {
 
 	// store the current state of the mesh
@@ -743,7 +751,7 @@ double BenderApp2D::peekOofXi(dVector const & xi_in) {
 
 	return(O);
 }
-
+*/
 
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
