@@ -13,7 +13,7 @@
 
 
 template<int NDim>
-class BenderSimulationMesh : public std::conditional<NDim == 2, CSTSimulationMesh2D, CSTSimulationMesh3D> {
+class BenderSimulationMesh : public std::conditional<NDim == 2, CSTSimulationMesh2D, CSTSimulationMesh3D>::type {
 
 public:
 	std::vector<Mount*> mounts;
@@ -24,7 +24,7 @@ public:
 	~BenderSimulationMesh();
 
 	// mesh manipulation
-	template<typename TMount> void addMount();
+	template<typename TMount> void addMount(){mounts.push_back(new TMount);}
 	void removeMount(int mountID);
 
 	void setMountedNode(int nodeID, const P3D & x0, int mountID);

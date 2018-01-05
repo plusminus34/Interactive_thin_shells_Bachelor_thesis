@@ -1,5 +1,5 @@
 #include <GUILib/GLUtils.h>
-#include "BenderApp.h"
+#include "BenderApp2D.h"
 #include <GUILib/GLMesh.h>
 #include <GUILib/GLContentManager.h>
 #include <MathLib/MathLib.h>
@@ -16,15 +16,15 @@
 #include <cmath>
 #include <cstdio>
 
-#include "RotationMount.h"
-#include "MountedPointSpring2D.h"
+#include "RotationMount2D.h"
+#include "MountedPointSpring.h"
 #include "MatchScaledTrajObjective.h"
 
 #define EDIT_BOUNDARY_CONDITIONS
 
 //#define CONSTRAINED_DYNAMICS_DEMO
 
-BenderApp::BenderApp() 
+BenderApp2D::BenderApp2D() 
 {
 	setWindowTitle("Test FEM Sim Application...");
 
@@ -32,9 +32,9 @@ BenderApp::BenderApp()
 	int nCols = 6;
 	double length = 2.0;
 	double height = 0.1;
-	BenderSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -length/2.0, 0, length/(nRows-1), height/(nCols-1), nRows, nCols);
+	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -length/2.0, 0, length/(nRows-1), height/(nCols-1), nRows, nCols);
 
-	femMesh = new BenderSimulationMesh2D();
+	femMesh = new BenderSimulationMesh<2>();
 	femMesh->readMeshFromFile("../data/FEM/2d/triMeshTMP.tri2d");
 	//femMesh->addGravityForces(V3D(0, -9.8, 0));
 	femMesh->addGravityForces(V3D(0, 0, 0));
@@ -122,12 +122,12 @@ BenderApp::BenderApp()
 }
 
 
-BenderApp::~BenderApp()
+BenderApp2D::~BenderApp2D()
 {
 }
 
 
-void BenderApp::pushInputTrajectory(Trajectory3Dplus & trajInput) 
+void BenderApp2D::pushInputTrajectory(Trajectory3Dplus & trajInput) 
 {
 	trajInput.setTValueToLength();
 	trajInput.createDiscreteSpline(30, targetTrajectory);
@@ -136,7 +136,7 @@ void BenderApp::pushInputTrajectory(Trajectory3Dplus & trajInput)
 
 
 
-void BenderApp::initInteractionMenu(nanogui::FormHelper* menu)
+void BenderApp2D::initInteractionMenu(nanogui::FormHelper* menu)
 {
 
 	// add selection of optimization algorithm
@@ -230,7 +230,7 @@ void BenderApp::initInteractionMenu(nanogui::FormHelper* menu)
 	
 };
 
-void BenderApp::updateMountSelectionBox()
+void BenderApp2D::updateMountSelectionBox()
 {
 	std::vector<std::string> items(femMesh->mounts.size());
 	for(int i = 0; i < femMesh->mounts.size(); ++i) {
@@ -261,7 +261,7 @@ void BenderApp::updateMountSelectionBox()
 }
 
 
-void BenderApp::switchInteractionMode(InteractionMode mode)
+void BenderApp2D::switchInteractionMode(InteractionMode mode)
 {
 	if(mode == InteractionMode::DRAG) {
 		if(interactionMode != InteractionMode::DRAG) {
@@ -272,7 +272,7 @@ void BenderApp::switchInteractionMode(InteractionMode mode)
 	interactionMode = mode;
 }
 
-void BenderApp::setSelectedMount(int mountID)
+void BenderApp2D::setSelectedMount(int mountID)
 {
 	if(mountID >= 0) {
 		selected_mount = mountID;
@@ -282,7 +282,7 @@ void BenderApp::setSelectedMount(int mountID)
 
 
 //triggered when mouse moves
-bool BenderApp::onMouseMoveEvent(double xPos, double yPos) {
+bool BenderApp2D::onMouseMoveEvent(double xPos, double yPos) {
 	//lastClickedRay = getRayFromScreenCoords(xPos, yPos);
 
 	lastMovedRay = currentRay;
@@ -305,7 +305,7 @@ bool BenderApp::onMouseMoveEvent(double xPos, double yPos) {
 				currentRay.getDistanceToPlane(plane,&targetPos);
 				lastMovedRay.getDistanceToPlane(plane, &lastPos);
 				V3D delta = targetPos - lastPos;
-				dynamic_cast<RotationMount*>(femMesh->mounts[selected_mount])->shift(delta);
+				dynamic_cast<RotationMount2D*>(femMesh->mounts[selected_mount])->shift(delta);
 			}
 			return(true);
 		}
@@ -370,7 +370,7 @@ bool BenderApp::onMouseMoveEvent(double xPos, double yPos) {
 }
 
 //triggered when mouse buttons are pressed
-bool BenderApp::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
+bool BenderApp2D::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
 	
 	
 	if (button == GLFW_MOUSE_BUTTON_LEFT) {
@@ -489,7 +489,7 @@ bool BenderApp::onMouseButtonEvent(int button, int action, int mods, double xPos
 }
 
 //triggered when using the mouse wheel
-bool BenderApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
+bool BenderApp2D::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	
 	if(interactionMode == InteractionMode::VIEW) {
 		return(GLApplication::onMouseWheelScrollEvent(xOffset, yOffset));
@@ -505,7 +505,7 @@ bool BenderApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 				Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
 				P3D origin; 
 				currentRay.getDistanceToPlane(plane,&origin);
-				dynamic_cast<RotationMount*>(femMesh->mounts[selected_mount])->rotate(origin, yOffset * 0.05);
+				dynamic_cast<RotationMount2D*>(femMesh->mounts[selected_mount])->rotate(origin, yOffset * 0.05);
 			}
 			return(true);
 		}
@@ -532,14 +532,14 @@ bool BenderApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	}
 }
 
-bool BenderApp::onKeyEvent(int key, int action, int mods) {	
+bool BenderApp2D::onKeyEvent(int key, int action, int mods) {	
 	
 	if (GLApplication::onKeyEvent(key, action, mods)) return true;
 
 	return false;
 }
 
-bool BenderApp::onCharacterPressedEvent(int key, int mods) {
+bool BenderApp2D::onCharacterPressedEvent(int key, int mods) {
 
 	if (!mods) {
 
@@ -572,7 +572,7 @@ bool BenderApp::onCharacterPressedEvent(int key, int mods) {
 }
 
 
-void BenderApp::loadFile(const char* fName) {
+void BenderApp2D::loadFile(const char* fName) {
 	Logger::consolePrint("Loading file \'%s\'...\n", fName);
 	std::string fileName;
 	fileName.assign(fName);
@@ -580,7 +580,7 @@ void BenderApp::loadFile(const char* fName) {
 	std::string fNameExt = fileName.substr(fileName.find_last_of('.') + 1);
 	if (fNameExt == "tri2d") {
 		delete femMesh;
-		femMesh = new BenderSimulationMesh2D;
+		femMesh = new BenderSimulationMesh<2>;
 		femMesh->readMeshFromFile(fName);
 		Logger::consolePrint("...Done!");
 	} else if (fNameExt == "obj") {
@@ -596,13 +596,13 @@ void BenderApp::loadFile(const char* fName) {
 
 }
 
-void BenderApp::saveFile(const char* fName) {
+void BenderApp2D::saveFile(const char* fName) {
 	Logger::consolePrint("SAVE FILE: Do not know what to do with file \'%s\'\n", fName);
 }
 
 
 // Run the App tasks
-void BenderApp::process() {
+void BenderApp2D::process() {
 	//do the work here...
 
 	simulationTime = 0;
@@ -641,7 +641,7 @@ void BenderApp::process() {
 	}
 }
 
-void BenderApp::solveMesh() 
+void BenderApp2D::solveMesh() 
 {
 	if (computeStaticSolution)
 	{
@@ -656,7 +656,7 @@ void BenderApp::solveMesh()
 
 
 
-void BenderApp::pullXi()
+void BenderApp2D::pullXi()
 {
 	int n_parameters = 0;
 	for(Mount const * m: femMesh->mounts) {
@@ -676,7 +676,7 @@ void BenderApp::pullXi()
 	}
 }
 
-void BenderApp::pushXi()
+void BenderApp2D::pushXi()
 {
 	for(Mount * m: femMesh->mounts) {
 		if(m->active && m->parameterOptimization) {
@@ -689,7 +689,7 @@ void BenderApp::pushXi()
 }
 
 
-void BenderApp::computeDoDxi(dVector & dodxi)
+void BenderApp2D::computeDoDxi(dVector & dodxi)
 {
 	dodxi.resize(xi.size());
 
@@ -703,7 +703,7 @@ void BenderApp::computeDoDxi(dVector & dodxi)
 		deltaFdeltaxi[i].setZero();
 	}
 	for(BaseEnergyUnit* pin : femMesh->pinnedNodeElements) {
-		dynamic_cast<MountedPointSpring2D*>(pin)->addDeltaFDeltaXi(deltaFdeltaxi);
+		dynamic_cast<MountedPointSpring<2>*>(pin)->addDeltaFDeltaXi(deltaFdeltaxi);
 	}
 
 	// get dF/dx  (Hessian from FEM simulation)  [lengh(x) x length(x)]
@@ -740,7 +740,7 @@ void BenderApp::computeDoDxi(dVector & dodxi)
 
 
 
-double BenderApp::peekOofXi(dVector const & xi_in) {
+double BenderApp2D::peekOofXi(dVector const & xi_in) {
 
 	// store the current state of the mesh
 	dVector x_temp = femMesh->x;
@@ -773,7 +773,7 @@ double BenderApp::peekOofXi(dVector const & xi_in) {
 
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
-void BenderApp::drawScene() {
+void BenderApp2D::drawScene() {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glColor3d(1,1,1);
@@ -781,7 +781,7 @@ void BenderApp::drawScene() {
 
 	// draw nodes of mounted points
 	for(int i = 0; i < femMesh->pinnedNodeElements.size(); ++i) {
-		MountedPointSpring2D * mp = static_cast<MountedPointSpring2D *>(femMesh->pinnedNodeElements[i]);
+		MountedPointSpring<2> * mp = static_cast<MountedPointSpring<2> *>(femMesh->pinnedNodeElements[i]);
 
 		double size = 0.005;
 		P3D color(0.5, 0.0, 1.0);
@@ -840,23 +840,23 @@ void BenderApp::drawScene() {
 }
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
-void BenderApp::drawAuxiliarySceneInfo() {
+void BenderApp2D::drawAuxiliarySceneInfo() {
 
 }
 
 // Restart the application.
-void BenderApp::restart() {
+void BenderApp2D::restart() {
 
 }
 
-void BenderApp::addRotationMount() 
+void BenderApp2D::addRotationMount() 
 {
-	femMesh->addRotationMount();
+	femMesh->addMount<RotationMount2D>();
 	pullXi();
 	updateMountSelectionBox();
 }
 
-void BenderApp::removeSelectedMount()
+void BenderApp2D::removeSelectedMount()
 {
 	femMesh->removeMount(selected_mount);
 	pullXi();
@@ -864,7 +864,7 @@ void BenderApp::removeSelectedMount()
 }
 
 
-void BenderApp::addMountedNode(int node_id, int mount_id)
+void BenderApp2D::addMountedNode(int node_id, int mount_id)
 {
 	if(node_id < 0) {return;}
 	if(mount_id < 0) {return;}
@@ -877,7 +877,7 @@ void BenderApp::addMountedNode(int node_id, int mount_id)
 	//std::cout << std::endl;
 }
 
-void BenderApp::unmountNode(int node_id, int mount_id)
+void BenderApp2D::unmountNode(int node_id, int mount_id)
 {
 	if(node_id < 0) {return;}
 	if(mount_id < 0) {return;}
@@ -886,7 +886,7 @@ void BenderApp::unmountNode(int node_id, int mount_id)
 }
 
 
-bool BenderApp::processCommandLine(const std::string& cmdLine) {
+bool BenderApp2D::processCommandLine(const std::string& cmdLine) {
 
 	if (GLApplication::processCommandLine(cmdLine)) return true;
 

@@ -87,9 +87,9 @@ public:
 
 public:
 	// constructor
-	BenderApp();
+	BenderApp2D();
 	// destructor
-	virtual ~BenderApp(void);
+	virtual ~BenderApp2D(void);
 	// Run the App tasks
 	virtual void process();
 	// Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method

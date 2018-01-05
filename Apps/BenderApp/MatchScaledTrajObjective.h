@@ -4,7 +4,7 @@
 
 
 #include "MeshObjective.h"
-#include "Trajectory3D.h"
+#include "Trajectory3Dplus.h"
 
 class MatchScaledTrajObjective : public MeshObjective
 {

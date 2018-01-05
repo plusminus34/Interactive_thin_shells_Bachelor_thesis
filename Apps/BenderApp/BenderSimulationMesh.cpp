@@ -1,6 +1,6 @@
 #include "BenderSimulationMesh.h"
 #include "RotationMount2D.h"
-#include "MountedPointSpring2D.h"
+#include "MountedPointSpring.h"
 
 template<int NDim>
 BenderSimulationMesh<NDim>::BenderSimulationMesh()
@@ -18,12 +18,14 @@ BenderSimulationMesh<NDim>::~BenderSimulationMesh()
 	}
 }
 
+/*
 template<int NDim>
 template<typename TMount>
 void BenderSimulationMesh<NDim>::addMount() 
 {
 	mounts.push_back(new TMount);
 }
+*/
 
 template<int NDim>
 void BenderSimulationMesh<NDim>::removeMount(int mountID) 
@@ -35,7 +37,7 @@ void BenderSimulationMesh<NDim>::removeMount(int mountID)
 
 	// remove all pins to the mount
 	for(int i = pinnedNodeElements.size()-1; i >= 0; --i) {
-		if(dynamic_cast<MountedPointSpring<nDim> *>(pinnedNodeElements[i])->mount == mounts[mountID]) {
+		if(dynamic_cast<MountedPointSpring<NDim> *>(pinnedNodeElements[i])->mount == mounts[mountID]) {
 			delete pinnedNodeElements[i];
 			pinnedNodeElements.erase(pinnedNodeElements.begin()+i);
 		}
@@ -51,7 +53,7 @@ void BenderSimulationMesh<NDim>::setMountedNode(int nodeID, const P3D & x0, int 
 {
 	P3D rp = x0;
 	//rp[2] = 0;
-	pinnedNodeElements.push_back(new MountedPointSpring<nDim>(this, nodes[nodeID], rp, mounts[mountID] ));
+	pinnedNodeElements.push_back(new MountedPointSpring<NDim>(this, nodes[nodeID], rp, mounts[mountID] ));
 }
 
 template<int NDim>
@@ -60,7 +62,7 @@ void BenderSimulationMesh<NDim>::unmountNode(int nodeID, int mountID)
 	Node * node = nodes[nodeID];
 	Mount * mount = mounts[mountID];
 	for(int i = pinnedNodeElements.size()-1; i >= 0; --i) {
-		MountedPointSpring<NDim> * pin = dynamic_cast<MountedPointSpring<nDim> *>(pinnedNodeElements[i]);
+		MountedPointSpring<NDim> * pin = dynamic_cast<MountedPointSpring<NDim> *>(pinnedNodeElements[i]);
 		if(pin->node == node && pin->mount == mount) {
 			delete pinnedNodeElements[i];
 			pinnedNodeElements.erase(pinnedNodeElements.begin()+i);
@@ -91,7 +93,7 @@ int BenderSimulationMesh<NDim>::getMountIdOfNode(int nodeID) {
 	int pinnedNodeElementID = -1;
 	for(int j = 0; j < pinnedNodeElements.size(); ++j) {
 		BaseEnergyUnit * pin = pinnedNodeElements[j];
-		if(dynamic_cast<MountedPointSpring<NDim> *>(pin) {	// check if the pinned node is pinned to a mount
+		if(dynamic_cast<MountedPointSpring<NDim> *>(pin)) {	// check if the pinned node is pinned to a mount
 			if(dynamic_cast<MountedPointSpring<NDim> *>(pin)->node == node) {
 				pinnedNodeElementID = j;
 				break;
@@ -179,3 +181,10 @@ void BenderSimulationMesh<NDim>::drawSimulationMesh()
 	//	dynamic_cast<NodePositionObjective *>(obj)->draw(x);
 	//}
 }
+
+
+// instantiation of 2D & 3D
+// ATTENTION: other values for NDim won't work
+
+template class BenderSimulationMesh<2>;
+template class BenderSimulationMesh<3>;

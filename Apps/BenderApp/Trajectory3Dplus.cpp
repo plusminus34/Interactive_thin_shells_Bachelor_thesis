@@ -3,7 +3,7 @@
 #include <GUILib/GLUtils.h>
 #include <FEMSimLib/Node.h>
 
-#include "Trajectory3D.h"
+#include "Trajectory3Dplus.h"
 
 
 

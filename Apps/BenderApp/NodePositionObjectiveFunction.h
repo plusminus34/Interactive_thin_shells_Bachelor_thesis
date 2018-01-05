@@ -2,17 +2,17 @@
 
 #include <OptimizationLib/ObjectiveFunction.h>
 
-class BenderApp;
+class BenderApp2D;
 
 class NodePositionObjectiveFunction : public ObjectiveFunction {
 
 public:
 
-	BenderApp * app;
+	BenderApp2D * app;
 
 
 	NodePositionObjectiveFunction() {};
-	NodePositionObjectiveFunction(BenderApp * app) : app(app) {};
+	NodePositionObjectiveFunction(BenderApp2D * app) : app(app) {};
 
 	virtual double computeValue(const dVector& p);
 
