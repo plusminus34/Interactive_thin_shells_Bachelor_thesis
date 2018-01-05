@@ -27,7 +27,7 @@ private:
 					const Vector3T<T> &contactForce) const
 	{
 		Vector3T<T> forward = yawAxis.cross(wheelAxisLocal);
-		Vector3T<T> forwardWorld = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(forward, yawAxis, yawAngle, tiltAxis, tiltAngle);
+		Vector3T<T> forwardWorld = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(forward, yawAxis, yawAngle, tiltAxis, tiltAngle);
 
 		T constraint = forwardWorld.dot(contactForce);
 
@@ -68,7 +68,7 @@ private:
 					const Vector3T<T> &contactForce) const
 	{
 		Vector3T<T> forward = yawAxis.cross(wheelAxisLocal);
-		Vector3T<T> forwardWorld = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(forward, yawAxis, yawAngle, tiltAxis, tiltAngle);
+		Vector3T<T> forwardWorld = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(forward, yawAxis, yawAngle, tiltAxis, tiltAngle);
 
 		T forceForward = forwardWorld.dot(contactForce);
 		return forceForward;

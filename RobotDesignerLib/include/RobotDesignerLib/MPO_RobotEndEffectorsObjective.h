@@ -13,6 +13,7 @@ public:
 	virtual double computeValue(const dVector& p);
 
 	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
+
 	virtual void addGradientTo(dVector& grad, const dVector& p);
 
 private:
@@ -30,7 +31,7 @@ private:
 		Vector3T<T> robotEEPos = theMotionPlan->robotRepresentation->getWorldCoordinatesForPointT(eePosLocal, rb, q_t);
 
 		// `eePos` is at the contact point, thus we need the vector connecting wheel center and contact point
-		Vector3T<T> rhoRot = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
+		Vector3T<T> rhoRot = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(rho, yawAxis, yawAngle, tiltAxis, tiltAngle);
 
 
 		Vector3T<T> err;

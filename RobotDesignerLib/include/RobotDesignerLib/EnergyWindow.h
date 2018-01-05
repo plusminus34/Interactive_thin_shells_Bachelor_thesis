@@ -24,7 +24,8 @@ private:
 
 	struct EnergyUIElement {
 		nanogui::Label *label;
-		nanogui::CheckBox *checkBox;
+		nanogui::CheckBox *checkBoxEnergyActive;
+		nanogui::CheckBox *checkBoxHackHessian;
 		nanogui::Slider* slider;
 		nanogui::FloatBox<double>* textbox;
 		nanogui::FloatBox<double>* weightTextbox;

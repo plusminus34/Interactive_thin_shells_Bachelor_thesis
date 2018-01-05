@@ -467,8 +467,8 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->addObjectiveFunction(new MPO_RobotStateRegularizer(ef->theMotionPlan, "robot joint angles regularizer objective", 0.0010 * 1, 6, dimCount - 1), "Regularizers");
 
 
-//	ef->addObjectiveFunction(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization (Local)", 1, 6, dimCount - 1,true), "L0 Regularizers"); ef->objectives.back()->isActive = false;
-//	ef->addObjectiveFunction(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization (Global)", 1, 6, dimCount - 1,false), "L0 Regularizers"); ef->objectives.back()->isActive = false;
+	ef->addObjectiveFunction(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization (Local)", 1, 6, dimCount - 1,true), "L0 Regularizers"); ef->objectives.back()->isActive = false;
+	ef->addObjectiveFunction(new MPO_VelocityL0Regularization(ef->theMotionPlan, "joint angle velocity L0 regularization (Global)", 1, 6, dimCount - 1,false), "L0 Regularizers"); ef->objectives.back()->isActive = false;
 }
 
 LocomotionEngineManagerGRFv2::~LocomotionEngineManagerGRFv2(){
