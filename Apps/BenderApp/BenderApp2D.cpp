@@ -40,50 +40,24 @@ BenderApp2D::BenderApp2D()
 	femMesh->addGravityForces(V3D(0, 0, 0));
 
 
-	// set some curve as objective to "uppermost" column
-	/*
-	{
-		auto curve_normalized = [](double z) -> double 
-		{
-			return(std::sin(z*PI));
-		};
-
-		auto curve = [curve_normalized](double z, double lb, double ub) -> double
-		{
-			return(curve_normalized((z-lb)/(ub-lb)) * (ub-lb));
-		};
-
-		double lb = femMesh->nodes[0*nCols + 0]->getWorldPosition().at(0);
-		double ub = femMesh->nodes[(nRows-1)*nCols + 0]->getWorldPosition().at(0);
-		for(int i = 0; i < nRows; ++i) {
-			int id = i*nCols + 0;
-			P3D pt = femMesh->nodes[id]->getWorldPosition();
-			//V3D d(-pt.at(0)*0.2, curve(pt.at(0), lb, ub)*0.2 , 0);
-			V3D d(0, curve(pt.at(0), lb, ub)*0.2 , 0);
-			//V3D d(0, 0.2 , 0);
-			femMesh->setNodePositionObjective(id, pt + d);
-		}
-	}
-	*/
 
 	// draw some target trjectory
 	targetTrajectory_input.addKnotBack(P3D(-1.0, 0.2, 0.0));
 	targetTrajectory_input.addKnotBack(P3D( 0.0, 0.4, 0.0));
 	targetTrajectory_input.addKnotBack(P3D( 1.0, 0.2, 0.0));
-
+	
 	
 
 	// add a fiber in Mesh to match
-	matchedFiber.resize(0);
+	DynamicArray<Node *> matchedFiber(0);
 	for(int i = 0; i < nRows; ++i) {
 		int id = i*nCols + nCols-1;
 		matchedFiber.push_back(femMesh->nodes[id]);
 	}
-	//matchedTrajectory.createFromNodes(matchedFiber, femMesh->x);
 
 	// add a "MatchScaledTrajObjective"
-	femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory));
-	pushInputTrajectory(targetTrajectory_input);
+	targetTrajectory_input.setTValueToLength();
+	femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
 
 	showGroundPlane = false;
 
@@ -130,8 +104,8 @@ BenderApp2D::~BenderApp2D()
 void BenderApp2D::pushInputTrajectory(Trajectory3Dplus & trajInput) 
 {
 	trajInput.setTValueToLength();
-	trajInput.createDiscreteSpline(30, targetTrajectory);
-	dynamic_cast<MatchScaledTrajObjective *>(femMesh->objectives[0])->targetTrajectory = targetTrajectory;
+	dynamic_cast<MatchScaledTrajObjective *>(femMesh->objectives[0])->setTargetTrajectory(trajInput);
+
 }
 
 
@@ -823,16 +797,7 @@ void BenderApp2D::drawScene() {
 	glEnd();
 
 	// draw target trajectory
-	Trajectory3Dplus targetTrajectoryDiscreteSpline;
-	targetTrajectory.createDiscreteSpline(60, targetTrajectoryDiscreteSpline);
-
-	targetTrajectory_input        .draw(V3D(0.3, 0.3, 0.3), 2, V3D(0, 0.8, 0), 0.005);
-
-	targetTrajectory              .draw(V3D(0.3, 0.3, 0.3), 2, V3D(0, 0.8, 0), -0.003);
-	targetTrajectoryDiscreteSpline.draw(V3D(0.0, 0.0, 0.0), 2, V3D(1.0, 1.0, 1.0), -0.003);
-
-	matchedTrajectory.createFromNodes(matchedFiber, femMesh->x);
-	matchedTrajectory             .draw(V3D(0.3, 0.3, 0.3), 2, V3D(0, 0.8, 0), -1.0);
+	targetTrajectory_input.draw(V3D(0.3, 0.3, 0.3), 2, V3D(0, 0.8, 0), 0.005);
 	
 	// draw objective
 	dynamic_cast<MatchScaledTrajObjective *>(femMesh->objectives[0])->draw(femMesh->x);

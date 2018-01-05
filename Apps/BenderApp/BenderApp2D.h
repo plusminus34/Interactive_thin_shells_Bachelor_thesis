@@ -20,9 +20,6 @@ public:
 	BenderSimulationMesh<2>* femMesh;
 
 	Trajectory3Dplus targetTrajectory_input;
-	Trajectory3Dplus targetTrajectory;
-	Trajectory3Dplus matchedTrajectory;
-	DynamicArray<Node * > matchedFiber;
 
 	
 	// Optimization Parameters

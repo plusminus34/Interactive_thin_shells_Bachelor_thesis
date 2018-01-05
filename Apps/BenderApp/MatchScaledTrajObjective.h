@@ -32,8 +32,8 @@ public:
 
 	virtual void addError(const dVector & x, double & e);
 
-	//void draw(dVector const & x);
 
+	void setTargetTrajectory(Trajectory3Dplus & traj, int nKnotsApproxT = 50);
 
 	// helpers
 	void update_tNode(dVector const & x);
