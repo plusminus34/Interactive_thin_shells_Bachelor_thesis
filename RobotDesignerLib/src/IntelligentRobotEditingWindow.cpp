@@ -45,6 +45,10 @@ void IntelligentRobotEditingWindow::drawAuxiliarySceneInfo(){
 	glClear(GL_DEPTH_BUFFER_BIT);
 }
 
+bool isEERB(RigidBody* rb) {
+	return rb->rbProperties.endEffectorPoints.size() > 0 || rb->cJoints.size() == 0;
+}
+
 //triggered when using the mouse wheel
 bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	if (highlightedRigidBody) {
@@ -55,7 +59,7 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 			P3D p1 = highlightedRigidBody->pJoints[0]->getWorldPosition();
 			P3D p2;
 
-			if (highlightedRigidBody->cJoints.size() == 1){
+			if (!isEERB(highlightedRigidBody)){
 				p2 = highlightedRigidBody->cJoints[0]->getWorldPosition();
 			} else {
 				for (auto& eeItr : highlightedRigidBody->rbProperties.endEffectorPoints){
@@ -88,7 +92,7 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 					currentDesignParameters[pStartIndex + 3 + i] += offset1[i] * modifier[i];
 
 				//and now, the parent coords of the child joint
-				if (highlightedRigidBody->cJoints.size() == 1) {
+				if (!isEERB(highlightedRigidBody)) {
 					int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
 					V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].xModifier, 1, 1);
 
@@ -120,7 +124,7 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 				for (int i = 0; i < 3; i++)
 					currentDesignParameters[pStartIndex + i] += offset1P[i] * modifier[i];
 
-				if (highlightedRigidBody->cJoints.size() == 1){
+				if (!isEERB(highlightedRigidBody)){
 
 					//adjust the coordinates of the child joint, both in coord frame of its parent and child rigid bodies...
 					int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
