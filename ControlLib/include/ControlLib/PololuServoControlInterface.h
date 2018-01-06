@@ -17,7 +17,7 @@ public:
 * Implements communication with servomotors via the Pololu Maestro 12/18/24-Channel USB Servo Controller
 */
 class PololuServoControlInterface : public RobotControlInterface{
-private:
+public:
 
 //SOME OF THESE PARAMETERS MUST BE SET WITH THE POLOLU SERVOMOTOR CONTROLLER, INCLUDING THE MAESTRO’S SERIAL MODE WHICH NEEDS TO BE SET TO “USB Dual Port”
 	int comNumber = 4;

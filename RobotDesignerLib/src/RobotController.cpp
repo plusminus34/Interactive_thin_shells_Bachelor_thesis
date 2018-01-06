@@ -29,14 +29,14 @@ void RobotController::initialize() {
 	robot->setState(&moptRobotState);
 }
 
-void RobotController::computeControlSignals(double simTimeStep) {
+void RobotController::computeControlSignals(double timeStep) {
 	computeDesiredState();
 }
 
 void RobotController::drawDebugInfo() {
 }
 
-void RobotController::applyControlSignals() {
+void RobotController::applyControlSignals(double timeStep) {
 	for (int i = 0; i<robot->getJointCount(); i++) {
 		HingeJoint* joint = dynamic_cast<HingeJoint*> (robot->getJoint(i));
 		joint->desiredRelativeOrientation = desiredState.getJointRelativeOrientation(joint->jIndex);

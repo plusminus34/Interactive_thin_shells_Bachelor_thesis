@@ -7,7 +7,7 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-//WarmStart with no periodic boundary conditions does not work well... - test the design from Moritz, but some of the others too (periodic and non-periodic).
+//add a little script file, that can do: load design file, load it to sim, load mopt plan, load robot-motor calibration file...
 //debug joint velocity limits some more...
 //add the option to start non-periodic mopt from zero or from two other motion plans...
 
@@ -24,7 +24,7 @@ RobotDesignerApp::RobotDesignerApp(){
 	energyWindow = new EnergyWindow();
 
 	mainMenu->addGroup("RobotDesigner Options");
-	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
+	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau", "RobotControl"});
 	mainMenu->addVariable<RD_VIEW_OPTIONS>("View Mode",
 		[this](const RD_VIEW_OPTIONS &val) {viewOptions = val; setupWindows(); },
 		[this]() {return viewOptions;},
@@ -306,6 +306,8 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 		runOption = PHYSICS_SIMULATION_WITH_POSITION_CONTROL;
 	if (key == GLFW_KEY_4 && action == GLFW_PRESS)
 		runOption = PHYSICS_SIMULATION_WITH_TORQUE_CONTROL;
+	if (key == GLFW_KEY_5 && action == GLFW_PRESS)
+		runOption = PHYSICAL_ROBOT_CONTROL_VIA_POLOLU_MAESTRO;	
 
 	if (key == GLFW_KEY_A && action == GLFW_PRESS)
 		optimizeWhileAnimating = !optimizeWhileAnimating;
@@ -474,6 +476,8 @@ void RobotDesignerApp::setActiveController() {
 		simWindow->setActiveController(simWindow->torqueController);
 	else if (runOption == MOTION_PLAN_ANIMATION)
 		simWindow->setActiveController(simWindow->kinematicController);
+	else if (runOption == PHYSICAL_ROBOT_CONTROL_VIA_POLOLU_MAESTRO)
+		simWindow->setActiveController(simWindow->pololuMaestroController);
 	else
 		simWindow->setActiveController(NULL);
 }
@@ -504,19 +508,10 @@ void RobotDesignerApp::process() {
 		if (optimizeWhileAnimating)
 			DoMOPTStep();
 
-		double simulationTime = 0;
-		double maxRunningTime = 1.0 / desiredFrameRate;
+		double dt = 1.0 / desiredFrameRate;
+		if (slowMo) dt /= 5.0;
 
-		while (simulationTime / maxRunningTime < animationSpeedupFactor) {
-			simulationTime += simWindow->simTimeStep;
-
-//			update wheel rotations here...
-
-			simWindow->step();
-
-			if (slowMo)
-				break;
-		}
+		simWindow->advanceSimulation(dt);
 
 	}
 	else if (runOption == MOTION_PLAN_OPTIMIZATION)

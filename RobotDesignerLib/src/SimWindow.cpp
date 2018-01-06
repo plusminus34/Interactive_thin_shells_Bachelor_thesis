@@ -123,10 +123,12 @@ void SimWindow::loadMotionPlan(LocomotionEngineMotionPlan* mp) {
 	delete positionController;
 	delete torqueController;
 	delete kinematicController;
+	delete pololuMaestroController;
 
 	positionController = new PositionBasedRobotController(robot, mp);
 	torqueController = new TorqueBasedRobotController(robot, mp);
 	kinematicController = new KinematicRobotController(robot, mp);
+	pololuMaestroController = new PololuMaestroRobotController(robot, mp);
 }
 
 void SimWindow::drawScene() {
@@ -165,7 +167,7 @@ void SimWindow::setPerturbationForceFromMouseInput(double xPos, double yPos) {
 }
 
 void SimWindow::doPhysicsStep(double simStep) {
-	activeController->applyControlSignals();
+	activeController->applyControlSignals(simStep);
 	rbEngine->applyForceTo(robot->root, perturbationForce * forceScale, P3D());
 	rbEngine->step(simStep);
 	robot->bFrame->updateStateInformation();
@@ -185,23 +187,31 @@ void SimWindow::doPhysicsStep(double simStep) {
 	}
 }
 
-void SimWindow::step() {
+void SimWindow::advanceSimulation(double dt) {
 	if (!activeController)
 		return;
 
-	activeController->computeControlSignals(simTimeStep);
+	if (activeController == kinematicController || activeController == pololuMaestroController){
+		activeController->computeControlSignals(dt);
+		activeController->applyControlSignals(dt);
+		activeController->advanceInTime(dt);
+	}
+	else {
+		double simulationTime = 0;
 
-	if (activeController == torqueController)
-		for (int i = 0; i < nPhysicsStepsPerControlStep; i++) 
-			doPhysicsStep(simTimeStep / nPhysicsStepsPerControlStep);
-	
-	if (activeController == positionController)
-		doPhysicsStep(simTimeStep);
+		while (simulationTime < dt) {
+			simulationTime += simTimeStep;
 
-	//do the integration of wheel motions here...
-	if (activeController == kinematicController)
-		activeController->applyControlSignals();
+			activeController->computeControlSignals(simTimeStep);
 
-	activeController->advanceInTime(simTimeStep);
+			if (activeController == torqueController)
+				for (int i = 0; i < nPhysicsStepsPerControlStep; i++)
+					doPhysicsStep(simTimeStep / nPhysicsStepsPerControlStep);
+
+			if (activeController == positionController)
+				doPhysicsStep(simTimeStep);
+
+			activeController->advanceInTime(simTimeStep);
+		}
+	}
 }
-
