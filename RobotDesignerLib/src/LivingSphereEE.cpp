@@ -173,7 +173,8 @@ LivingWheelEE::LivingWheelEE(const char* LMType){
 	}
 	else if (strcmp(trim((char*)LMType), "TGY306GPassiveWheel") == 0) {
 		originalWheelMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-wheelPassive_w.obj");
-		motorBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-passiveWheelBracket_w.obj");
+		// uncomment the following line to show passive wheel brackets
+		// motorBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-passiveWheelBracket_w.obj");
 		radius = 0.03;
 		isActive = false;
 	} 
