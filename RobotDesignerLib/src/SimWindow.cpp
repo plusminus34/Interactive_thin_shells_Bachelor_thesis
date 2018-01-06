@@ -12,7 +12,6 @@ SimWindow::SimWindow(int x, int y, int w, int h, GLApplication* glApp) : GLWindo
 	this->glApp = glApp;
 
 	simTimeStep = 1 / 120.0;
-	nPhysicsStepsPerControlStep = 4;
 	//	Globals::g = 0;
 
 	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutRightAxis = 0.25;
@@ -192,6 +191,16 @@ void SimWindow::advanceSimulation(double dt) {
 	if (!activeController)
 		return;
 
+/*
+	static RobotState lastSimRobotState(robot);
+	RobotState newRobotState(robot);
+
+	if (lastSimRobotState.isSameAs(newRobotState)) {
+		Logger::consolePrint("Robot state has not mysteriously changed, yay!!!\n");
+	}
+	else
+		Logger::consolePrint("Robot state has changed since last sim step :(\n");
+*/
 	if (activeController == kinematicController || activeController == pololuMaestroController){
 		activeController->computeControlSignals(dt);
 		activeController->applyControlSignals(dt);
@@ -204,15 +213,18 @@ void SimWindow::advanceSimulation(double dt) {
 			simulationTime += simTimeStep;
 
 			activeController->computeControlSignals(simTimeStep);
-
-			if (activeController == torqueController)
-				for (int i = 0; i < nPhysicsStepsPerControlStep; i++)
-					doPhysicsStep(simTimeStep / nPhysicsStepsPerControlStep);
-
-			if (activeController == positionController)
-				doPhysicsStep(simTimeStep);
+			doPhysicsStep(simTimeStep);
 
 			activeController->advanceInTime(simTimeStep);
+//			break;
+
 		}
 	}
+
+/*
+	//setting the state of the robot will fix constraints as well. That's why here we read it, set it (project it) and then set it again such that it is clean...
+	lastSimRobotState = RobotState(robot);
+	robot->setState(&lastSimRobotState);
+	lastSimRobotState = RobotState(robot);
+*/
 }

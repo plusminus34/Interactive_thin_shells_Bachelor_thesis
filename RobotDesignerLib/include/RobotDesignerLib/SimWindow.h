@@ -26,8 +26,7 @@ public:
 	AbstractRBEngine* rbEngine = NULL;
 	WorldOracle* worldOracle = NULL;
 
-	double simTimeStep;
-	int nPhysicsStepsPerControlStep = 4;
+	double simTimeStep = 1/120.0;
 
 	PositionBasedRobotController* positionController = NULL;
 	TorqueBasedRobotController* torqueController = NULL;

@@ -709,8 +709,8 @@ void ODERBEngine::step(double deltaT) {
 
 			V3D t = joints[j]->desiredJointTorque;
 			//we will apply to the parent a positive torque, and to the child a negative torque
-			dBodyAddTorque(odeToRbs[joints[j]->parent->id].id, t[0], t[1], t[2]);
-			dBodyAddTorque(odeToRbs[joints[j]->child->id].id, -t[0], -t[1], -t[2]);
+			dBodyAddTorque(odeToRbs[joints[j]->parent->id].id, -t[0], -t[1], -t[2]);
+			dBodyAddTorque(odeToRbs[joints[j]->child->id].id, t[0], t[1], t[2]);
 		}
 	}
 

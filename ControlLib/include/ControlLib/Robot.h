@@ -309,45 +309,59 @@ public:
 	Quaternion getJointRelativeOrientation(int jIndex) const{
 		if ((uint)jIndex < joints.size())
 			return joints[jIndex].qRel;
+	//	exit(0);
 		return Quaternion();
 	}
 
 	V3D getJointRelativeAngVelocity(int jIndex) const {
 		if ((uint)jIndex < joints.size())
 			return joints[jIndex].angVelRel;
+	//	exit(0);
 		return V3D();
 	}
 
 	void setJointRelativeOrientation(Quaternion q, int jIndex){
 		if ((uint)jIndex < joints.size())
 			joints[jIndex].qRel = q;
+	//	else
+	//		exit(0);
+
 	}
 
 	void setJointRelativeAngVelocity(V3D w, int jIndex) {
 		if ((uint)jIndex < joints.size())
 			joints[jIndex].angVelRel = w;
+	//	else
+	//		exit(0);
 	}
 
 	Quaternion getAuxiliaryJointRelativeOrientation(int jIndex) const {
 		if ((uint)jIndex < auxiliaryJoints.size())
 			return auxiliaryJoints[jIndex].qRel;
+	//	exit(0);
 		return Quaternion();
 	}
 
 	V3D getAuxiliaryJointRelativeAngVelocity(int jIndex) const {
 		if ((uint)jIndex < auxiliaryJoints.size())
 			return auxiliaryJoints[jIndex].angVelRel;
+	//	exit(0);
 		return V3D();
 	}
 
 	void setAuxiliaryJointRelativeOrientation(Quaternion q, int jIndex) {
 		if ((uint)jIndex < auxiliaryJoints.size())
 			auxiliaryJoints[jIndex].qRel = q;
+	//	else
+	//		exit(0);
+
 	}
 
 	void setAuxiliaryJointRelativeAngVelocity(V3D w, int jIndex) {
 		if ((uint)jIndex < auxiliaryJoints.size())
 			auxiliaryJoints[jIndex].angVelRel = w;
+	//	else
+	//		exit(0);
 	}
 
 	void writeToFile(const char* fName, Robot* robot = NULL) {
@@ -497,27 +511,55 @@ public:
 	}
 
 	bool RobotState::isSameAs(const RobotState& other) {
-		if (getJointCount() != other.getJointCount())
+		if (getJointCount() != other.getJointCount()) {
+//			Logger::consolePrint("jCount: %d vs %d\n", getJointCount(), other.getJointCount());
 			return false;
+		}
 
-		if (V3D(getPosition(), other.getPosition()).length() > TINY)
+		if (V3D(getPosition(), other.getPosition()).length() > TINY) {
+//			Logger::consolePrint("pos: %lf %lf %lf vs %lf %lf %lf\n", 
+//				getPosition().x(), getPosition().y(), getPosition().z(), 
+//				other.getPosition().x(), other.getPosition().y(), other.getPosition().z());
 			return false;
+		}
 
-		if ((getVelocity() - other.getVelocity()).length() > TINY)
-			return false;
+		Quaternion q1 = getOrientation();
+		Quaternion q2 = other.getOrientation();
 
-		if ((getAngularVelocity() - other.getAngularVelocity()).length() > TINY)
+		if (q1 != q2 && q1 != (q2 * -1)) {
+//			Logger::consolePrint("orientation: %lf %lf %lf %lf vs %lf %lf %lf %lf\n", q1.s, q1.v.x(), q1.v.y(), q1.v.z(), q2.s, q2.v.x(), q2.v.y(), q2.v.z());
 			return false;
+		}
+
+		if ((getVelocity() - other.getVelocity()).length() > TINY) {
+//			Logger::consolePrint("vel: %lf %lf %lf vs %lf %lf %lf\n",
+//				getVelocity().x(), getVelocity().y(), getVelocity().z(),
+//				other.getVelocity().x(), other.getVelocity().y(), other.getVelocity().z());
+			return false;
+		}
+
+		if ((getAngularVelocity() - other.getAngularVelocity()).length() > TINY) {
+//			Logger::consolePrint("ang vel: %lf %lf %lf vs %lf %lf %lf\n",
+//				getAngularVelocity().x(), getAngularVelocity().y(), getAngularVelocity().z(),
+//				other.getAngularVelocity().x(), other.getAngularVelocity().y(), other.getAngularVelocity().z());
+			return false;
+		}
+
+
 
 		for (int i = 0; i < getJointCount(); i++) {
-			if ((getJointRelativeAngVelocity(i) - other.getJointRelativeAngVelocity(i)).length() > TINY)
+			if ((getJointRelativeAngVelocity(i) - other.getJointRelativeAngVelocity(i)).length() > TINY) {
+//				Logger::consolePrint("joint %d ang vel: %lf %lf %lf vs %lf %lf %lf\n", i,
+//					getJointRelativeAngVelocity(i).x(), getJointRelativeAngVelocity(i).y(), getJointRelativeAngVelocity(i).z(),
+//					other.getJointRelativeAngVelocity(i).x(), other.getJointRelativeAngVelocity(i).y(), other.getJointRelativeAngVelocity(i).z());
 				return false;
+			}
 
 			Quaternion q1 = getJointRelativeOrientation(i);
 			Quaternion q2 = other.getJointRelativeOrientation(i);
 
 			if (q1 != q2 && q1 != (q2 * -1)) {
-				//				Logger::consolePrint("%lf %lf %lf %lf <-> %lf %lf %lf %lf\n", q1.s, q1.v.x(), q1.v.y(), q1.v.z(), q2.s, q2.v.x(), q2.v.y(), q2.v.z());
+//				Logger::consolePrint("joint %d orientation: %lf %lf %lf %lf vs %lf %lf %lf %lf\n", i, q1.s, q1.v.x(), q1.v.y(), q1.v.z(), q2.s, q2.v.x(), q2.v.y(), q2.v.z());
 				return false;
 			}
 		}
