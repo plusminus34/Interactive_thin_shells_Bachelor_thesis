@@ -7,11 +7,12 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-//why does the torque controller for spotmini work not as well now?!?
 //debug joint velocity limits some more...
 //add the option to start non-periodic mopt from zero or from two other motion plans...
 //implement velocity control
 //fix the bulk write as well
+//fix ffp == toggle all stance/all swing/normal behavior/delete ffp for legs possible, make reading from file better...
+
 
 RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
