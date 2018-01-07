@@ -70,6 +70,14 @@ void MOPTWindow::addMenuItems() {
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 	{
+		auto tmpVar = glApp->mainMenu->addVariable("Ext force X", moptParams.externalForceX);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("Ext force Z", moptParams.externalForceZ);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
 		auto tmpVar = glApp->mainMenu->addVariable("gait duration", moptParams.motionPlanDuration);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
@@ -203,6 +211,9 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.desTravelDistZ = locomotionManager->motionPlan->desDistanceToTravel.z();
 	moptParams.desTurningAngle = locomotionManager->motionPlan->desTurningAngle;
 
+	moptParams.externalForceX = locomotionManager->motionPlan->externalForce.x();
+	moptParams.externalForceZ = locomotionManager->motionPlan->externalForce.z();
+
 	moptParams.jointVelocityLimit = locomotionManager->motionPlan->jointVelocityLimit;
 	moptParams.jointVelocityEpsilon = locomotionManager->motionPlan->jointVelocityEpsilon;
 
@@ -228,6 +239,10 @@ void MOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->motionPlan->swingFootHeight = moptParams.swingFootHeight;
 	locomotionManager->motionPlan->desDistanceToTravel.x() = moptParams.desTravelDistX;
 	locomotionManager->motionPlan->desDistanceToTravel.z() = moptParams.desTravelDistZ;
+	
+	locomotionManager->motionPlan->externalForce.x() = moptParams.externalForceX;
+	locomotionManager->motionPlan->externalForce.z() = moptParams.externalForceZ;
+
 	locomotionManager->motionPlan->desTurningAngle = moptParams.desTurningAngle;
 
 	locomotionManager->motionPlan->jointVelocityLimit = moptParams.jointVelocityLimit;

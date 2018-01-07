@@ -28,7 +28,7 @@ double MPO_ForceAccelObjective::computeValue(const dVector& p) {
 
 		V3D ma = acceleration * theMotionPlan->totalMass;
 		V3D force = Globals::worldUp * Globals::g * theMotionPlan->totalMass;
-
+		force += theMotionPlan->externalForce;
 		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); i++) {
 			force += theMotionPlan->endEffectorTrajectories[i].contactForce[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j];
 		}
@@ -58,6 +58,7 @@ void MPO_ForceAccelObjective::addGradientTo(dVector& grad, const dVector& p) {
 
 		V3D ma = acceleration * theMotionPlan->totalMass;
 		V3D force = Globals::worldUp * Globals::g * theMotionPlan->totalMass;
+		force += theMotionPlan->externalForce;
 
 		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); i++) {
 			force += theMotionPlan->endEffectorTrajectories[i].contactForce[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j];

@@ -69,7 +69,7 @@ public:
 	double getWheelSpeedAt(double t) const;
 
 	template<class T>
-	static Vector3T<T> rotateVectorUsingWheelAngles(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {
+	static Vector3T<T> rotVecByYawTilt(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {
 		// First tilt the axis ...
 		Vector3T<T> axisRot = rotateVec(axis, beta, axisTilt);
 		// ... and then yaw
@@ -77,6 +77,12 @@ public:
 		return axisRot;
 	}
 
+	static Vector3d drotVecByYawTilt_dTilt(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
+	static Vector3d drotVecByYawTilt_dYaw(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
+
+	static Vector3d ddrotVecByYawTilt_dYaw2(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
+	static Vector3d ddrotVecByYawTilt_dYawdTilt(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
+	static Vector3d ddrotVecByYawTilt_dTilt2(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
 	template<class T>
 	Vector3T<T> getRotatedWheelAxis(T angleYaw, T angleTilt) const
 	{
@@ -84,7 +90,7 @@ public:
 		Vector3T<T> axisYaw(wheelYawAxis);
 		Vector3T<T> axisTilt(wheelTiltAxis);
 
-		return rotateVectorUsingWheelAngles(axis, axisYaw, angleYaw, axisTilt, angleTilt);
+		return rotVecByYawTilt(axis, axisYaw, angleYaw, axisTilt, angleTilt);
 	}
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
@@ -186,6 +192,7 @@ public:
 	double swingFootHeight = 0.02;	
 
 	V3D desDistanceToTravel;
+	V3D externalForce;
 	double desTurningAngle = 0.0;
 	double desCOMHeight = 0.0;
 	P3D defaultCOMPosition;
