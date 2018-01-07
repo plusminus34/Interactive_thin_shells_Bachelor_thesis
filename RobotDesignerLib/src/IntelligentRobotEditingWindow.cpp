@@ -496,7 +496,7 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 	print("../out/dmdp_FD.m", dmdp_FD);
 }
 
-void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep() {
+void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep(ObjectiveFunction* objFunction) {
 	updateJacobian();
 
 	//If we have some objective O, expressed as a function of m, then dO/dp = dO/dm * dm/dp
@@ -505,7 +505,7 @@ void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep() {
 	resize(dOdm, m0.size());
 	resize(dOdp, p0.size());
 
-	rdApp->moptWindow->locomotionManager->energyFunction->objectives[optimizeEnergyNum]->addGradientTo(dOdm, m0);
+	objFunction->addGradientTo(dOdm, m0);
 	
 	dOdp = dmdp.transpose() * dOdm;
 
@@ -550,7 +550,6 @@ void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
 	rdApp->mainMenu->addVariable("Use Jacobian", updateMotionBasedOnJacobian);
 	rdApp->mainMenu->addVariable("Use SVD", useSVD);
 
-	rdApp->mainMenu->addButton("Do Optimization step", [this]() { DoDesignParametersOptimizationStep(); });
 	rdApp->mainMenu->addVariable("Optimize Energy num", optimizeEnergyNum);
 	rdApp->mainMenu->addVariable("Step Size", stepSize);
 
@@ -617,13 +616,10 @@ void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const dVector& p) {
 	rdApp->prd->setParameters(p);
 	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
 }
-
 void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const std::vector<double>& p) {
 	rdApp->prd->setParameters(p);
 	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
 }
-
-
 void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 {
 	if (updateJacobiancontinuously)
@@ -639,7 +635,6 @@ void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m);
 	}
 }
-
 void IntelligentRobotEditingWindow::drawScene() {
 	glColor3d(1, 1, 1);
 	glDisable(GL_LIGHTING);

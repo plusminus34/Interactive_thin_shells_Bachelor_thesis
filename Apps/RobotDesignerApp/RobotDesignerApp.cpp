@@ -24,7 +24,7 @@ RobotDesignerApp::RobotDesignerApp(){
 	simWindow = new SimWindow(0, 0, 100, 100, this);
 	iEditWindow = new IntelligentRobotEditingWindow(0, 0, 100, 100, this);
 	motionPlanAnalysis = new MotionPlanAnalysis(menuScreen);
-	energyWindow = new EnergyWindow();
+	energyWindow = new EnergyWindow(this);
 
 	mainMenu->addGroup("RobotDesigner Options");
 	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau", "RobotControl"});
