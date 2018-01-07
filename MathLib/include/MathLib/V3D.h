@@ -177,7 +177,7 @@ Vector3T<T> ddrotateVec_dalpha2(const Vector3T<T> &v, T alpha, const Vector3T<T>
 	T cosa = cos(alpha);
 	T sina = sin(alpha);
 
-	Vector3T<T> result = -v*cosa - axis.cross(v)*sina - axis*(axis.dot(v))*cosa;
+	Vector3T<T> result = -v*cosa - axis.cross(v)*sina + axis*(axis.dot(v))*cosa;
 	return result;
 }
 
