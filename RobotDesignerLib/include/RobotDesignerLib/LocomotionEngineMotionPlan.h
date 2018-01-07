@@ -192,6 +192,7 @@ public:
 	double swingFootHeight = 0.02;	
 
 	V3D desDistanceToTravel;
+	V3D externalForce;
 	double desTurningAngle = 0.0;
 	double desCOMHeight = 0.0;
 	P3D defaultCOMPosition;
