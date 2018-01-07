@@ -17,7 +17,7 @@
 #include <RobotDesignerLib/MPO_GRFFrictionConstraints.h>
 #include <RobotDesignerLib/MPO_PassiveWheelsGRFConstraints.h>
 #include <RobotDesignerLib/MPO_FixedWheelObjective.h>
-
+#include <RobotDesignerLib/MPO_WheelTiltObjective.h>
 
 //#define DEBUG_WARMSTART
 //#define CHECK_DERIVATIVES_AFTER_WARMSTART
@@ -395,8 +395,8 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 
 	//range of motion/speed/acceleration constraints
-	ef->addObjectiveFunction(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1e4, 6, dimCount - 1), "Bound Constraints");
-	ef->addObjectiveFunction(new MPO_WheelSpeedConstraints(ef->theMotionPlan, "wheel speed bound constraint", 1e4), "Bound Constraints");
+	ef->addObjectiveFunction(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1, 6, dimCount - 1), "Bound Constraints");
+	ef->addObjectiveFunction(new MPO_WheelSpeedConstraints(ef->theMotionPlan, "wheel speed bound constraint", 1), "Bound Constraints");
 
 //	ef->addObjectiveFunction(new MPO_WheelAccelerationConstraints(ef->theMotionPlan, "wheel accel. bound constraint", 1e2), "Bound Constraints");
 //	ef->objectives.back()->isActive = false;
@@ -453,6 +453,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 //	ef->objectives.back()->isActive = false;
 	ef->addObjectiveFunction(new MPO_WheelSpeedSmoothRegularizer(ef->theMotionPlan, "wheel speed smooth regularizer", 1e-4), "Smooth Regularizers");
 	ef->addObjectiveFunction(new MPO_WheelAngleSmoothRegularizer(ef->theMotionPlan, "wheel angle smooth regularizer", 1e-4), "Smooth Regularizers");
+	ef->addObjectiveFunction(new MPO_WheelTiltObjective(ef->theMotionPlan, "Minimize wheel tilt", 1), "Smooth Regularizers"); ef->objectives.back()->isActive = false;
 
 	ef->addObjectiveFunction(new MPO_NonLimbMotionRegularizer(ef->theMotionPlan, "robot joint angles regularizer objective (non-limb)", 0.01), "Smooth Regularizer");
 	ef->addObjectiveFunction(new MPO_SmoothRobotMotionTrajectories(ef->theMotionPlan, "robot smooth joint angle trajectories", 0.01, 6, dimCount - 1), "Smooth Regularizer");

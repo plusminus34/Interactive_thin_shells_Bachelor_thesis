@@ -39,8 +39,8 @@ struct MOPTParams {
 	bool useDynamicRegularization = true;
 	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod = NewtonFunctionMinimizer::DynamicRegularization;
 	bool checkHessianPSD = false;
-	double externalForceX;
-	double externalForceZ;
+	double externalForceX=0;
+	double externalForceZ=0;
 };
 
 
