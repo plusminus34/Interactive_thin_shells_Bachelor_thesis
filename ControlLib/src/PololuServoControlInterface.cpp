@@ -1,4 +1,5 @@
 #include <ControlLib/PololuServoControlInterface.h>
+#include <Utils/Timer.h>
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -200,15 +201,16 @@ void PololuServoControlInterface::sendControlInputsToPhysicalRobot() {
 
 		if (hj.j->controlMode == POSITION_MODE)
 			setServomotorMaxSpeed(hj.j->motor, hj.j->motor.targetMotorVelocity);
-		if (writeAllTargetCommandsAtOnce == false){
+	}
+
+	if (writeAllTargetCommandsAtOnce == false) {
+		for (auto hj : mJoints) {
 			if (hj.j->controlMode == POSITION_MODE)
 				setServomotorAngle(hj.j->motor, hj.j->motor.targetMotorAngle);
 			else if (hj.j->controlMode == VELOCITY_MODE)
 				setServomotorSpeed(hj.j->motor, hj.j->motor.targetMotorVelocity);
 		}
-	}
-
-	if (writeAllTargetCommandsAtOnce) {
+	} else {
 		//this mode needs a contiguous block of motor ids that are stored in ascending order... 
 		//if we're not to make any assumption about the order in which the motorID's are assigned, then we have to search for each contiguous block, send those commands and then start over...
 
@@ -287,14 +289,16 @@ void PololuServoControlInterface::driveMotorPositionsToZero() {
 	for (auto hj : mJoints) {
 		if (hj.j->controlMode == POSITION_MODE) {
 			hj.j->motor.targetMotorAngle = 0;
-			hj.j->motor.targetMotorVelocity = 1.0;//make sure the motors all go to zero slowly...
+			hj.j->motor.targetMotorVelocity = 0.5;//make sure the motors all go to zero slowly...
 		}
 		else if (hj.j->controlMode == VELOCITY_MODE)
 			hj.j->motor.targetMotorVelocity = 0;
 	}
 	sendControlInputsToPhysicalRobot();
 
-	while (servosAreMoving());
+	Timer t;
+	while (t.timeEllapsed() < 1000);
+//	while (servosAreMoving());
 
 	for (auto hj : mJoints)
 		if (hj.j->controlMode == POSITION_MODE)
@@ -383,7 +387,5 @@ PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotCo
 				Logger::consolePrint("Warning: robot joints are not consistently ordered to match up with motor IDs...\n");
 		}
 	}
-
-
 }
 

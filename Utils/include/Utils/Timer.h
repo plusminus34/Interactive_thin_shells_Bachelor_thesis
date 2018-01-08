@@ -17,6 +17,7 @@ private:
 	long long int startTime;
 	//this is the frequency of the performance counter
 	long long int frequency;
+	double countsPerMillisecond;
 #else
 	//! start time of reset
 	struct timeval startTime;

@@ -138,8 +138,12 @@ void PololuMaestroRobotController::initialize() {
 	if (rci == NULL) {
 		rci = new PololuServoControlInterface(robot);
 		rci->comNumber = 4;
+		rci->signalPeriod = 3;//ms - CHECK WITH THE BOARD SETTINGS!!!
 		rci->openCommunicationPort();
-
 	}
+	else
+		rci->driveMotorPositionsToZero();
+
 }
+
 

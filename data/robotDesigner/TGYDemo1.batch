@@ -1,3 +1,4 @@
+load ..\data\robotDesigner\configTGY306G.cfg
 load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerActive_printable.dsn
 toSim
 load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerActive_printable.p

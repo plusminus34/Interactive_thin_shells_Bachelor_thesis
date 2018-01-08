@@ -12,7 +12,7 @@
 //fix the bulk write...
 //fix ffp == toggle all stance/all swing/normal behavior/delete ffp for legs possible, make reading from file better...
 //have the option to create a box (rounded edges) for the body of a robot, as well as an option to rescale the connector cube mesh/faces...
-
+//make cfg file be part of the batch file load
 
 RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
@@ -120,8 +120,8 @@ RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = 0.75;
 
 #ifdef START_WITH_VISUAL_DESIGNER
-//	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
-	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configTGY306G.cfg");
+	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
+//	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configTGY306G.cfg");
 	
 #else
     loadFile("../data/robotsAndMotionPlans/spotMini/robot2.rbs");
@@ -381,6 +381,14 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		return;
 	}
 
+	if (fNameExt.compare("cfg") == 0) {
+		delete designWindow;
+		Logger::consolePrint("Loading robot designer configuration file from '%s'\n", fName);
+		designWindow = new ModularDesignWindow(0, 0, 100, 100, this, fName);
+		setupWindows();
+		return;
+	}
+
 	if (fNameExt.compare("rs") == 0) {
 		Logger::consolePrint("Load robot state from '%s'\n", fName);
 		if (robot) {
@@ -543,9 +551,13 @@ void RobotDesignerApp::process() {
 		Logger::consolePrint("Syncronizing robot state\n");
 		simWindow->getActiveController()->initialize();
 		simWindow->getActiveController()->setDebugMode(doDebug);
-	}
+		lastRunOptionSelected = runOption;
 
-	lastRunOptionSelected = runOption;
+		if (runOption == PHYSICAL_ROBOT_CONTROL_VIA_POLOLU_MAESTRO){
+			GLApplication::getGLAppInstance()->appIsRunning = false;
+			return;
+		}
+	}
 
 	auto DoMOPTStep = [&]() {
 		runMOPTStep();
