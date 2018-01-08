@@ -28,6 +28,7 @@ private:
 	nanogui::Window * window = nullptr;
 	struct EnergyUIElement {
 		nanogui::Label *label;
+		nanogui::Button *optimizeEnergy;
 		nanogui::CheckBox *checkBoxEnergyActive;
 		nanogui::CheckBox *checkBoxHackHessian;
 		nanogui::Slider* slider;
