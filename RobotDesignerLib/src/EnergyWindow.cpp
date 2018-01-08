@@ -51,7 +51,11 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 			});
 			buttonHideGroup->setFontSize(14);
 
-			new Label(energyPanel, "", "");
+			Button *button = new Button(energyPanel, "");
+			button->setIcon(ENTYPO_ICON_CLASSIC_COMPUTER);
+			button->setCallback([&, energyFunction]() {rdApp->iEditWindow->DoDesignParametersOptimizationStep(energyFunction); });
+			button->setFontSize(14);
+
 			new Label(energyPanel, "Is Active", "sans");
 			new Label(energyPanel, "Hack Hessian", "sans");
 			new Label(energyPanel, "", "");
@@ -68,6 +72,7 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 				button->setIcon(ENTYPO_ICON_CLASSIC_COMPUTER);
 				button->setCallback([&,obj]() {rdApp->iEditWindow->DoDesignParametersOptimizationStep(obj); });
 				button->setFontSize(14);
+				el.optimizeEnergy = button;
 
 				CheckBox *checkBox = new CheckBox(energyPanel,"");
 				checkBox->setChecked(obj->isActive);
@@ -210,6 +215,7 @@ void EnergyWindow::hideEnergyGroup(bool visible, const std::string &groupName)
 {
 	for (EnergyUIElement &el : energyUIRows[groupName]) {
 		el.label->setVisible(visible);
+		el.optimizeEnergy->setVisible(visible);
 		el.checkBoxEnergyActive->setVisible(visible);
 		el.checkBoxHackHessian->setVisible(visible);
 		el.slider->setVisible(visible);

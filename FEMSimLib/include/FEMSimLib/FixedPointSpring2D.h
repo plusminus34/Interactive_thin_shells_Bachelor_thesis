@@ -12,7 +12,7 @@ public:
 	Node *node;
 	P3D targetPosition;
 public:
-	FixedPointSpring2D(SimulationMesh* simMesh, Node* n, P3D mousePos);
+	FixedPointSpring2D(SimulationMesh* simMesh, Node* n, P3D targetPosition, double K = 10000);
 	~FixedPointSpring2D();
 	virtual double getEnergy(const dVector& x, const dVector& X);
 	virtual void addEnergyGradientTo(const dVector& x, const dVector& X, dVector& grad);

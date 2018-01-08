@@ -4,7 +4,7 @@
 
 
 #include "MeshObjective.h"
-#include "Trajectory3D.h"
+#include "Trajectory3Dplus.h"
 
 class MatchScaledTrajObjective : public MeshObjective
 {
@@ -32,8 +32,8 @@ public:
 
 	virtual void addError(const dVector & x, double & e);
 
-	//void draw(dVector const & x);
 
+	void setTargetTrajectory(Trajectory3Dplus & traj, int nKnotsApproxT = 50);
 
 	// helpers
 	void update_tNode(dVector const & x);

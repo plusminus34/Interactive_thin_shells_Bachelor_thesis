@@ -3,7 +3,7 @@
 #include <GUILib/GLUtils.h>
 #include <FEMSimLib/Node.h>
 
-#include "Trajectory3D.h"
+#include "Trajectory3Dplus.h"
 
 
 
@@ -136,7 +136,8 @@ void Trajectory3Dplus::updateDiscreteSpline() {
 }
 */
 
-void Trajectory3Dplus::createDiscreteSpline(int n, Trajectory3Dplus & spline) {
+void Trajectory3Dplus::createDiscreteSpline(int n, Trajectory3Dplus & spline)
+{
 	
 	assert(n > 1);
 

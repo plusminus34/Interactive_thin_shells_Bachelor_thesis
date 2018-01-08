@@ -6,46 +6,36 @@
 #include <map>
 
 #include "OptimizationLib/GradientBasedFunctionMinimizer.h"
-#include "NodePositionObjectiveFunction.h"
-#include "BenderSimulationMesh2D.h"
-#include "Trajectory3D.h"
+#include "BenderSimulationMesh.h"
+#include "Trajectory3Dplus.h"
+#include "InverseDeformationSolver.h"
 
 
 /**
  * Test App
  */
-class BenderApp : public GLApplication {
+class BenderApp2D : public GLApplication {
 public:
 	// Geometry & physics
-	BenderSimulationMesh2D* femMesh;
+	BenderSimulationMesh<2>* femMesh;
 
+	// target trajectory for shape of mesh
 	Trajectory3Dplus targetTrajectory_input;
-	Trajectory3Dplus targetTrajectory;
-	Trajectory3Dplus matchedTrajectory;
-	DynamicArray<Node * > matchedFiber;
 
-	
-	// Optimization Parameters
-	dVector xi;
+	// solver for the inverse problem
+	InverseDeformationSolver<2> * inverseDeformationSolver;
 
-	// helpers for optimization
-	dVector dOdxi;
-	dVector dOdx;
-	std::vector<dVector> deltaFdeltaxi;
-	std::vector<dVector> deltaxdeltaxi;
-
-	dVector x_approx;
-
-	// Optimization Algorithm
+	// Optimization Algorithms
 	std::vector<GradientBasedFunctionMinimizer*> minimizers;
-	GradientBasedFunctionMinimizer * minimizer;
-	NodePositionObjectiveFunction * objectiveFunction;
 	int maxIterations = 10;
 	double solveResidual = 1e-5;
 	int maxLineSearchIterations = 15;
+	double lineSearchStartValue = 0.1;
 
-	int selected_mount = -1;
-
+	// mesh properties
+	double shearModulus = 50, bulkModulus = 50;
+	bool autoUpdateShearModulusAndBulkModulus = false;
+	
 	// diagnostics
 	double o_last = 0.0;	// last result for mesh objective function
 	double e_last = 0.0; // last result for error of mesh objective
@@ -54,10 +44,8 @@ public:
 	bool computeStaticSolution = true;
 	bool optimizeObjective = true;
 	bool approxLineSearch = true;
-
 	bool checkDerivatives = false;
-
-	// states
+	
 	enum InteractionObject {MOUNTS, OBJECTIVE};
 	InteractionObject interactionObject = OBJECTIVE;
 	enum InteractionMode {VIEW, SELECT, DRAG, DRAW};
@@ -76,9 +64,7 @@ public:
 	Ray currentRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
 	int selectedNodeID = -1;
 	int selectedKnotID = -1;
-	double shearModulus = 50, bulkModulus = 50;
-	bool autoUpdateShearModulusAndBulkModulus = false;
-
+	int selected_mount = -1;
 
 	// menu elements
 	nanogui::ComboBox * comboBoxMountSelection;
@@ -87,9 +73,9 @@ public:
 
 public:
 	// constructor
-	BenderApp();
+	BenderApp2D();
 	// destructor
-	virtual ~BenderApp(void);
+	virtual ~BenderApp2D(void);
 	// Run the App tasks
 	virtual void process();
 	// Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
@@ -105,17 +91,6 @@ public:
 	// add a node to a mount
 	void addMountedNode(int node_id, int mount_id);
 	void unmountNode(int node_id, int mount_id);
-	//void updateMountEnergy();
-	//int getMountId(int node_id);
-
-
-	// optimization process
-	void solveMesh();
-	void computeDoDxi(dVector & dodxi);
-	double peekOofXi(dVector const & xi_in);
-
-	void pullXi();
-	void pushXi();
 
 
 	//input callbacks...

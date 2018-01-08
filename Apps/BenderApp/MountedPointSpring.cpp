@@ -1,25 +1,36 @@
 #include <GUILib/GLUtils.h>
 
-#include "MountedPointSpring2D.h"
+#include "MountedPointSpring.h"
 
+template <int NDim>
+MountedPointSpring<NDim>::MountedPointSpring(SimulationMesh * simMesh, 
+											 Node * node, 
+											 P3D referencePosition, 
+											 Mount * mount, 
+											 double K)
+	: std::conditional<NDim == 2, FixedPointSpring2D, FixedPointSpring3D>::type(simMesh, node, referencePosition, K), mount(mount)
+{}
 
-MountedPointSpring2D::MountedPointSpring2D(SimulationMesh * simMesh, Node * node, P3D referencePosition, Mount * mount)
-	: FixedPointSpring2D(simMesh, node, referencePosition), mount(mount)
+template <int NDim>
+MountedPointSpring<NDim>::~MountedPointSpring()
 {}
 
 
-MountedPointSpring2D::~MountedPointSpring2D()
-{}
-
-
-double MountedPointSpring2D::getEnergy(const dVector & x, const dVector & X){
-	if(!mount->active) {return(0.0);};
+template <int NDim>
+double MountedPointSpring<NDim>::getEnergy(const dVector & x, 
+										   const dVector & X)
+{
+	if(!mount->active) {return(0.0);}
 	//E = 0.5K xTx
 	P3D mountedTargetPosition = mount->getTransformedX(targetPosition);
 	return 0.5 * K * (node->getCoordinates(x)-mountedTargetPosition).dot(node->getCoordinates(x)-mountedTargetPosition);
 }
 
-void MountedPointSpring2D::addEnergyGradientTo(const dVector& x, const dVector& X, dVector& grad) {
+template <int NDim>
+void MountedPointSpring<NDim>::addEnergyGradientTo(const dVector& x, 
+												   const dVector& X, 
+												   dVector& grad) 
+{
 	if(!mount->active) {return;}
 	//compute the gradient, and write it out
 	//dEdx = Kx
@@ -29,7 +40,11 @@ void MountedPointSpring2D::addEnergyGradientTo(const dVector& x, const dVector& 
 	}
 }
 
-void MountedPointSpring2D::addEnergyHessianTo(const dVector & x, const dVector & X, std::vector<MTriplet>& hesEntries){
+template <int NDim>
+void MountedPointSpring<NDim>::addEnergyHessianTo(const dVector & x, 
+												  const dVector & X, 
+												  std::vector<MTriplet>& hesEntries)
+{
 	if(!mount->active) {return;}
 	//ddEdxdx = I;
 	Matrix2x2 ddEdxdx;
@@ -37,8 +52,8 @@ void MountedPointSpring2D::addEnergyHessianTo(const dVector & x, const dVector &
 	addSparseMatrixDenseBlockToTriplet(hesEntries, node->dataStartIndex, node->dataStartIndex, K * ddEdxdx, true);
 }
 
-
-void MountedPointSpring2D::addDeltaFDeltaXi(std::vector<dVector> & dfdxi)
+template <int NDim>
+void MountedPointSpring<NDim>::addDeltaFDeltaXi(std::vector<dVector> & dfdxi)
 {
 	if(!mount->active) {return;}
 
@@ -64,8 +79,8 @@ void MountedPointSpring2D::addDeltaFDeltaXi(std::vector<dVector> & dfdxi)
 }
 
 
-
-void MountedPointSpring2D::draw(const dVector& x) {
+template <int NDim>
+void MountedPointSpring<NDim>::draw(const dVector& x) {
 	if(mount->active) {
 		// draw line to current position
 		glColor3d(1, 0, 0);
@@ -81,21 +96,17 @@ void MountedPointSpring2D::draw(const dVector& x) {
 	}
 }
 
-void MountedPointSpring2D::draw(const dVector& x, double size, double r, double g, double b) {
-	/*
-	if(mount->active) {
-		// draw line to current position
-		glColor3d(1, 0.5, 0.5);
-		P3D pi =(node->getCoordinates(x));
-		P3D pj = mount->getTransformedX(targetPosition);
-		glBegin(GL_LINES);
-		glVertex3d(pi[0], pi[1], 0);
-		glVertex3d(pj[0], pj[1], 0);
-		glEnd();
-	}
-	*/
+template <int NDim>
+void MountedPointSpring<NDim>::draw(const dVector& x, double size, double r, double g, double b) {
 		// draw node
 		glColor3d(r, g, b);
 		drawSphere(node->getWorldPosition(), size);
 }
 
+
+
+// instantiation of 2D & 3D
+// ATTENTION: other values for NDim won't work
+
+template class MountedPointSpring<2>;
+template class MountedPointSpring<3>;

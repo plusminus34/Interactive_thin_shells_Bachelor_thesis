@@ -508,7 +508,7 @@ void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep(Objective
 	objFunction->addGradientTo(dOdm, m0);
 	
 	dOdp = dmdp.transpose() * dOdm;
-
+	dOdp /= dOdp.maxCoeff();
 	updateParamsAndMotion(p0-stepSize*dOdp);
 }
 

@@ -8,8 +8,9 @@
 
 
 MatchScaledTrajObjective::MatchScaledTrajObjective(DynamicArray<Node * > matchedFiber, Trajectory3Dplus targetTrajectory)
-	: matchedFiber(matchedFiber), targetTrajectory(targetTrajectory)
+	: matchedFiber(matchedFiber)
 {
+	setTargetTrajectory(targetTrajectory);
 }
 
 
@@ -41,8 +42,10 @@ void MatchScaledTrajObjective::addError(const dVector & x, double & e)
 }
 
 
-
-
+void MatchScaledTrajObjective::setTargetTrajectory(Trajectory3Dplus & traj, int nKnotsApproxT) 
+{
+	traj.createDiscreteSpline(nKnotsApproxT, targetTrajectory);
+}
 
 
 
@@ -166,6 +169,7 @@ void MatchScaledTrajObjective::draw(dVector const & x) {
 
 	int n = tNodeTarget.size();
 
+	// draw links
 	for(int i = 0; i < n; ++i) {
 		glColor3d(0, 1, 0);
 		P3D pi = (matchedFiber[i]->getCoordinates(x));
@@ -175,4 +179,19 @@ void MatchScaledTrajObjective::draw(dVector const & x) {
 		glVertex3d(pj[0], pj[1], 0);
 		glEnd();
 	}
+
+	// draw target trajectory
+	targetTrajectory.draw(V3D(0.3, 0.3, 0.3), 2, V3D(0, 0.8, 0), -0.003);
+
+	// draw matched fiber
+	glColor3d(0.3, 0.15, 0.15);
+	glLineWidth((GLfloat)2.0);
+	glBegin(GL_LINE_STRIP);
+	for(Node * node : matchedFiber) {
+		P3D pt = node->getCoordinates(x);
+		glVertex3d(pt[0], pt[1], pt[2]);
+	}
+	glEnd();
+	glLineWidth(1);
 }
+

@@ -1,25 +1,30 @@
 #pragma once
 
 #include <array>
+#include <type_traits>
 
 #include "FEMSimLib/CSTSimulationMesh2D.h"
+#include "FEMSimLib/CSTSimulationMesh3D.h"
 #include "Mount.h"
+
+
 #include "MeshObjective.h"
 #include "NodePositionObjective.h"
 
 
-class BenderSimulationMesh2D : public CSTSimulationMesh2D {
+template<int NDim>
+class BenderSimulationMesh : public std::conditional<NDim == 2, CSTSimulationMesh2D, CSTSimulationMesh3D>::type {
 
 public:
 	std::vector<Mount*> mounts;
 	std::vector<MeshObjective *> objectives;
 
 public:
-	BenderSimulationMesh2D();
-	~BenderSimulationMesh2D();
+	BenderSimulationMesh();
+	~BenderSimulationMesh();
 
 	// mesh manipulation
-	void addRotationMount();
+	template<typename TMount> void addMount(){mounts.push_back(new TMount);}
 	void removeMount(int mountID);
 
 	void setMountedNode(int nodeID, const P3D & x0, int mountID);

@@ -6,11 +6,11 @@
 
 #include "MathLib/P3D.h"
 
-#include "RotationMount.h"
+#include "RotationMount2D.h"
 
 
 
-P3D RotationMount::transformation(P3D const & x0, std::vector<double> const & parameters)
+P3D RotationMount2D::transformation(P3D const & x0, std::vector<double> const & parameters)
 {
 	P3D x;
 
@@ -30,7 +30,7 @@ P3D RotationMount::transformation(P3D const & x0, std::vector<double> const & pa
 
 
 
-void RotationMount::rotate(P3D const & origin, double alpha)
+void RotationMount2D::rotate(P3D const & origin, double alpha)
 {
 	parameters[0] += alpha;
 
@@ -50,14 +50,14 @@ void RotationMount::rotate(P3D const & origin, double alpha)
 	parameters[2] = shift_new[1];
 }
 
-void RotationMount::shift(V3D const & delta)
+void RotationMount2D::shift(V3D const & delta)
 {
 	parameters[1] += delta[0];
 	parameters[2] += delta[1];
 }
 
 
-void RotationMount::dxDpar(P3D const & x0, std::vector<double> const & parameters, std::vector<V3D> & grad)
+void RotationMount2D::dxDpar(P3D const & x0, std::vector<double> const & parameters, std::vector<V3D> & grad)
 {
 	int n_par = parameters.size();
 	grad.resize(n_par);

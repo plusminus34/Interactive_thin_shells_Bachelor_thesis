@@ -2,11 +2,9 @@
 #include <GUILib/GLUtils.h>
 #include <FEMSimLib/SimulationMesh.h>
 
-FixedPointSpring3D::FixedPointSpring3D(SimulationMesh * simMesh, Node * node, P3D targetPosition)
+FixedPointSpring3D::FixedPointSpring3D(SimulationMesh* simMesh, Node* node, P3D targetPosition, double K)
+	: node(node), targetPosition(targetPosition), K(K)
 {
-    this->node = node;
-    this->targetPosition = targetPosition;
-    K = 100;
 }
 
 FixedPointSpring3D::~FixedPointSpring3D()
