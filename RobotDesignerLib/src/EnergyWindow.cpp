@@ -1,8 +1,9 @@
 #include <RobotDesignerLib/EnergyWindow.h>
 #include <GUILib/ColorMaps.h>
 
-EnergyWindow::EnergyWindow()
+EnergyWindow::EnergyWindow(RobotDesignerApp *app)
 {
+	this->rdApp = app;
 	plotXValues.resize(numPlotValues);
 	for (int i = 0; i < numPlotValues; ++i) {
 		plotXValues[i] = (float)i;
@@ -27,7 +28,7 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 	Widget *energyPanel;
 	{
 		energyPanel = new Widget(vscroll);
-		GridLayout *layout = new GridLayout(Orientation::Horizontal, 6, Alignment::Fill);
+		GridLayout *layout = new GridLayout(Orientation::Horizontal, 7, Alignment::Fill);
 		layout->setColAlignment({ Alignment::Minimum, Alignment::Fill });
 		layout->setSpacing(0, 10);
 		energyPanel->setLayout(layout);
@@ -50,7 +51,7 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 			});
 			buttonHideGroup->setFontSize(14);
 
-
+			new Label(energyPanel, "", "");
 			new Label(energyPanel, "Is Active", "sans");
 			new Label(energyPanel, "Hack Hessian", "sans");
 			new Label(energyPanel, "", "");
@@ -62,6 +63,11 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 				EnergyUIElement el;
 
 				el.label = new Label(energyPanel, obj->description, "sans");
+
+				Button *button = new Button(energyPanel, "");
+				button->setIcon(ENTYPO_ICON_CLASSIC_COMPUTER);
+				button->setCallback([&,obj]() {rdApp->iEditWindow->DoDesignParametersOptimizationStep(obj); });
+				button->setFontSize(14);
 
 				CheckBox *checkBox = new CheckBox(energyPanel,"");
 				checkBox->setChecked(obj->isActive);

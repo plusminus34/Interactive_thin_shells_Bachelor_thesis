@@ -30,7 +30,7 @@
 #define START_WITH_VISUAL_DESIGNER
 
 class IntelligentRobotEditingWindow;
-
+class EnergyWindow;
 /**
  * Robot Design and Simulation interface
  */
