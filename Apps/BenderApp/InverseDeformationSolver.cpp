@@ -52,6 +52,7 @@ void InverseDeformationSolver<NDim>::pullXi()
 	}
 }
 
+
 template<int NDim>
 void InverseDeformationSolver<NDim>::pushXi()
 {
@@ -64,7 +65,6 @@ void InverseDeformationSolver<NDim>::pushXi()
 		}
 	}
 }
-
 
 
 template<int NDim>
@@ -90,8 +90,6 @@ double InverseDeformationSolver<NDim>::solveOptimization(double terminationResid
 }
 
 
-
-
 template<int NDim>
 void InverseDeformationSolver<NDim>::solveMesh(bool solveStatic, double dt)
 {
@@ -103,6 +101,7 @@ void InverseDeformationSolver<NDim>::solveMesh(bool solveStatic, double dt)
 		femMesh->solve_dynamics(dt);
 	}
 }
+
 
 template<int NDim>
 void InverseDeformationSolver<NDim>::computeDoDxi(dVector & dodxi)

@@ -27,8 +27,6 @@ public:
 	std::vector<dVector> deltaFdeltaxi;
 	std::vector<dVector> deltaxdeltaxi;
 
-
-
 public:
 
 	InverseDeformationSolver();
@@ -39,7 +37,6 @@ public:
 	// define optimization parameters (free parameters of simulation)
 	void pullXi();
 	void pushXi();
-
 
 	// optimization process
 	void solveMesh(bool solveStatic, double dt = 1.0/30.0);

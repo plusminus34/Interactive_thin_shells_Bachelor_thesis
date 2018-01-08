@@ -69,8 +69,8 @@ BenderApp2D::BenderApp2D()
 	mainMenu->addVariable("Check derivatives", checkDerivatives);
 	mainMenu->addVariable("Approx. line search", approxLineSearch);
 	mainMenu->addButton("set state as target", [this](){
-		                                             femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
-	                                                 });
+														femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
+														});
 	
 	initInteractionMenu(mainMenu);
 
@@ -99,6 +99,7 @@ BenderApp2D::BenderApp2D()
 
 BenderApp2D::~BenderApp2D()
 {
+
 }
 
 
@@ -106,7 +107,6 @@ void BenderApp2D::pushInputTrajectory(Trajectory3Dplus & trajInput)
 {
 	trajInput.setTValueToLength();
 	dynamic_cast<MatchScaledTrajObjective *>(femMesh->objectives[0])->setTargetTrajectory(trajInput);
-
 }
 
 
@@ -132,9 +132,6 @@ void BenderApp2D::initInteractionMenu(nanogui::FormHelper* menu)
 	}
 
 
-
-	
-	
 	menu->addGroup("Mode");
 	// add selection for active interaction object
 	menu->addVariable("Manipulate: ", interactionObject, true) -> setItems({"Mounts", "Target Trajectory"});	
@@ -258,7 +255,6 @@ void BenderApp2D::setSelectedMount(int mountID)
 
 //triggered when mouse moves
 bool BenderApp2D::onMouseMoveEvent(double xPos, double yPos) {
-	//lastClickedRay = getRayFromScreenCoords(xPos, yPos);
 
 	lastMovedRay = currentRay;
 	currentRay = getRayFromScreenCoords(xPos, yPos);
@@ -315,31 +311,6 @@ bool BenderApp2D::onMouseMoveEvent(double xPos, double yPos) {
 			return(false);
 		}
 	}
-
-	/*
-	if (selectedNodeID != -1){
-		int selectedMountID = selected_mount;
-		if (selectedMountID < 0) {
-			//Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
-			//P3D targetPinPos; 
-			//getRayFromScreenCoords(xPos,yPos).getDistanceToPlane(plane,&targetPinPos);
-			//femMesh->setPinnedNode(selectedNodeID,targetPinPos);
-			//return true;
-		}
-		else {
-			Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
-			P3D targetPos;
-			P3D lastPos;
-			currentRay.getDistanceToPlane(plane,&targetPos);
-			lastMovedRay.getDistanceToPlane(plane, &lastPos);
-			V3D delta = targetPos - lastPos;
-			//V3D delta = targetPos - femMesh->nodes[selectedNodeID]->getWorldPosition();
-			dynamic_cast<RotationMount*>(femMesh->mounts[selectedMountID])->shift(delta);
-			//updateMountEnergy();
-			return true;
-		}
-	}
-	*/
 	
 	return false;
 }
@@ -584,28 +555,15 @@ void BenderApp2D::process() {
 	maxRunningTime = 1.0 / desiredFrameRate;
 	femMesh->checkDerivatives = checkDerivatives != 0;
 
-
 	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
 	while (simulationTime < 1.0 * maxRunningTime) {
 
 		if(optimizeObjective) {
-
-			//			pullXi();
-
-			// minimize here
-			//			minimizer->lineSearchStartValue = 0.1;
-			//			minimizer->maxIterations = maxIterations;
-			//			minimizer->solveResidual = solveResidual;
-			//			minimizer->maxLineSearchIterations = maxLineSearchIterations;
-			//			
 			double o_new = 0;
-//			minimizer->minimize(objectiveFunction, xi, o_new);
 			o_new = inverseDeformationSolver->solveOptimization(solveResidual,
 																maxIterations,
 																lineSearchStartValue,
 																maxLineSearchIterations);
-
-
 
 			double e_new = femMesh->computeTargetPositionError();
 			double delta_o = o_new - o_last;
@@ -620,143 +578,8 @@ void BenderApp2D::process() {
 			inverseDeformationSolver->solveMesh(computeStaticSolution, simTimeStep);
 			simulationTime += simTimeStep;
 		}
-
 	}
 }
-
-/*
-void BenderApp2D::solveMesh() 
-{
-	if (computeStaticSolution)
-	{
-		femMesh->solve_statics();
-		simulationTime += maxRunningTime + 1.0;
-	}
-	else {
-		femMesh->solve_dynamics(simTimeStep);
-		simulationTime += simTimeStep;
-	}
-}
-*/
-
-
-/*
-void BenderApp2D::pullXi()
-{
-	int n_parameters = 0;
-	for(Mount const * m: femMesh->mounts) {
-		if(m->active && m->parameterOptimization) {
-			n_parameters += m->parameters.size();
-		}
-	}
-	xi.resize(n_parameters);
-	int i = 0;
-	for(Mount * m: femMesh->mounts) {
-		if(m->active && m->parameterOptimization) {
-			m->parametersStartIndex = i;
-			for(double p : m->parameters) {
-				xi[i++] = p;
-			}
-		}
-	}
-}
-
-void BenderApp2D::pushXi()
-{
-	for(Mount * m: femMesh->mounts) {
-		if(m->active && m->parameterOptimization) {
-			int i = 0;
-			for(double & p : m->parameters) {
-				p = xi[m->parametersStartIndex + (i++)];
-			}
-		}
-	}
-}
-*/
-
-/*
-void BenderApp2D::computeDoDxi(dVector & dodxi)
-{
-	dodxi.resize(xi.size());
-
-	// compute dO/dx [length(x) x 1]
-	femMesh->computeDoDx(dOdx);
-
-	// compute dF/dxi [length(x) x xi]
-	deltaFdeltaxi.resize(xi.size());
-	for(int i = 0; i < xi.size(); ++i) {
-		deltaFdeltaxi[i].resize(femMesh->x.size());
-		deltaFdeltaxi[i].setZero();
-	}
-	for(BaseEnergyUnit* pin : femMesh->pinnedNodeElements) {
-		dynamic_cast<MountedPointSpring<2>*>(pin)->addDeltaFDeltaXi(deltaFdeltaxi);
-	}
-
-	// get dF/dx  (Hessian from FEM simulation)  [lengh(x) x length(x)]
-	SparseMatrix H(femMesh->x.size(), femMesh->x.size());
-	DynamicArray<MTriplet> hessianEntries(0);
-
-	//double regularizer_temp = dynamic_cast<FEMEnergyFunction *>(femMesh->energyFunction)->regularizer;
-	femMesh->energyFunction->setToStaticsMode(0.0);
-	femMesh->energyFunction->addHessianEntriesTo(hessianEntries, femMesh->x);
-	femMesh->energyFunction->setToStaticsMode(0.01);
-
-	H.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
-	
-	// solve dF/dx * y = dF/dxi		(y is dx/dxi)
-	Eigen::SimplicialLDLT<SparseMatrix> solver;
-	H *= -1.0;
-	solver.compute(H);
-	if (solver.info() != Eigen::Success) {
-		std::cerr << "Eigen::SimplicialLDLT decomposition failed." << std::endl;
-		exit(1);
-	}
-	// solve for each parameter xi
-	deltaxdeltaxi.resize(xi.size());
-	for(int i = 0; i < xi.size(); ++i) {
-		deltaxdeltaxi[i] = solver.solve(-deltaFdeltaxi[i]);
-	}
-
-	// do/dxi = do/dx * dx/dxi
-	for(int i = 0; i < xi.size(); ++i) {
-		dodxi[i] = dOdx.transpose() * deltaxdeltaxi[i];
-	}
-
-}
-*/
-
-/*
-double BenderApp2D::peekOofXi(dVector const & xi_in) {
-
-	// store the current state of the mesh
-	dVector x_temp = femMesh->x;
-	dVector v_temp = femMesh->v;
-	dVector m_temp = femMesh->m;
-	dVector f_ext_temp = femMesh->f_ext;
-	dVector xSolver_temp = femMesh->xSolver;
-
-	// store current parameters xi
-	dVector xi_temp = xi;
-
-	// new parameters
-	xi = xi_in;
-	pushXi();
-	femMesh->solve_statics();
-	double O = femMesh->computeO();
-
-	// set mesh to old state
-	xi = xi_temp;
-	pushXi();
-	femMesh->x = x_temp;
-	femMesh->v = v_temp;
-	femMesh->m = m_temp;
-	femMesh->f_ext = f_ext_temp;
-	femMesh->xSolver = xSolver_temp;
-
-	return(O);
-}
-*/
-
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
 void BenderApp2D::drawScene() {
@@ -813,16 +636,17 @@ void BenderApp2D::drawScene() {
 	
 	// draw objective
 	dynamic_cast<MatchScaledTrajObjective *>(femMesh->objectives[0])->draw(femMesh->x);
-
 }
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
-void BenderApp2D::drawAuxiliarySceneInfo() {
+void BenderApp2D::drawAuxiliarySceneInfo() 
+{
 
 }
 
 // Restart the application.
-void BenderApp2D::restart() {
+void BenderApp2D::restart() 
+{
 
 }
 
@@ -845,27 +669,19 @@ void BenderApp2D::addMountedNode(int node_id, int mount_id)
 {
 	if(node_id < 0) {return;}
 	if(mount_id < 0) {return;}
-
 	femMesh->setMountedNode(node_id, femMesh->nodes[node_id]->getCoordinates(femMesh->X), mount_id);
-	//std::cout << "pinned nodes are: ";
-	//for(BaseEnergyUnit* np : femMesh->pinnedNodeElements) {
-	//	std::cout << dynamic_cast<MountedPointSpring2D*>(np)->node->nodeIndex << " ";
-	//}
-	//std::cout << std::endl;
 }
 
 void BenderApp2D::unmountNode(int node_id, int mount_id)
 {
 	if(node_id < 0) {return;}
 	if(mount_id < 0) {return;}
-
 	femMesh->unmountNode(node_id, mount_id);
 }
 
 
-bool BenderApp2D::processCommandLine(const std::string& cmdLine) {
-
+bool BenderApp2D::processCommandLine(const std::string& cmdLine) 
+{
 	if (GLApplication::processCommandLine(cmdLine)) return true;
-
 	return false;
 }
