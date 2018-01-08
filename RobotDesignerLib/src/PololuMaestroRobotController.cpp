@@ -57,9 +57,9 @@ void PololuMaestroRobotController::readRobotMappingParametersFromFile(const char
 
 	int jCount = 0, wCount = 0;
 
-	char line[100];
+	char line[500];
 
-	readValidLine(line, 100, fp);
+	readValidLine(line, 500, fp);
 	sscanf(line, "%d %d", &jCount, &wCount);
 
 	for (int i = 0; i < jCount; i++) {
@@ -86,11 +86,54 @@ void PololuMaestroRobotController::readRobotMappingParametersFromFile(const char
 			hj->motor.flipMotorAxis = true;
 	}
 
+	for (int i = 0; i < wCount; i++) {
+		int jID = -1;
+		int mID = -1;
+		int pwmMin = 1000;
+		int pwmMax = 2000;
+		int pwmFor0 = 1500;
+		int pwmDeadband = 20;
+		int pwmFor50rpm = 1750;
+		char flipAxis = 'f';
+		readValidLine(line, 500, fp);
+		sscanf(line, "%d %d %d %d %d %d %d %c", &jID, &mID, &pwmMin, &pwmMax, &pwmFor0, &pwmDeadband, &pwmFor50rpm, &flipAxis);
+
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getAuxiliaryJoint(jID));
+		if (!hj) continue;
+
+		hj->motor.motorID = mID;
+
+		hj->motor.pwmMin = pwmMin;//depends on type of servomotor
+		hj->motor.pwmMax = pwmMax;//depends on type of servomotor
+		hj->motor.pwmFor0Deg = pwmFor0; //this is the neutral signal of the motor, depends on servomotor
+		hj->motor.pwmDeadBand = pwmDeadband; //depends on servomotor
+		hj->motor.pwmFor50RPM = pwmFor50rpm; //this is pwm value for 50RPM, depends on servomotor
+		if (flipAxis != 'f')
+			hj->motor.flipMotorAxis = true;
+	}
+
 	fclose(fp);
 }
 
 void PololuMaestroRobotController::initialize() {
 	KinematicRobotController::initialize();
+
+	//all the joints of the robots will be controlled via position control, so initialize this mode of operation
+	for (uint i = 0; i < robot->jointList.size(); i++)
+		robot->jointList[i]->controlMode = POSITION_MODE;
+
+	for (int i = 0; i < robot->getRigidBodyCount(); i++) {
+		RigidBody* rb = robot->getRigidBody(i);
+		for (uint j = 0; j < rb->rbProperties.endEffectorPoints.size(); j++) {
+			RBEndEffector* ee = &(rb->rbProperties.endEffectorPoints[j]);
+			if (ee->wheelJoint && (ee->isActiveWheel() || ee->isFreeToMoveWheel())) {
+				if (ee->isActiveWheel())
+					ee->wheelJoint->controlMode = VELOCITY_MODE;
+				else
+					ee->wheelJoint->controlMode = PASSIVE;
+			}
+		}
+	}
 
 	if (rci == NULL) {
 		rci = new PololuServoControlInterface(robot);

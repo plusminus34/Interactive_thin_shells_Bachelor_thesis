@@ -1423,7 +1423,6 @@ void ModularDesignWindow::saveDesignToFile(const char* fName)
 
 void ModularDesignWindow::loadDesignFromFile(const char* fName)
 {
-
 	// clean up guiding mesh
 	delete guidingMesh;
 	guidingMeshPos = P3D();

@@ -14,6 +14,19 @@
 
 using namespace	std;
 
+class HJ {
+public:
+	HingeJoint* j;
+	bool isAuxiliary = false;
+
+	//the partition into normal joints and auxiliary joints lets us employ potentially very different control strategies, for example for the upper body of a robot vs wheels
+
+	HJ(HingeJoint* hj, bool isAuxiliary) {
+		j = hj;
+		this->isAuxiliary = isAuxiliary;
+	}
+};
+
 /**
 * Robot Design and Simulation interface
 */
@@ -23,10 +36,25 @@ protected:
 	bool connected = false;
 	bool motorsOn = false;
 
+	/* This array of joints stores ALL hinge joints (e.g. the ones directly controllable through physical motors) of the robot, including the auxiliary ones... */
+	DynamicArray<HJ> mJoints;
+
 public:
 
 	// constructor
-	RobotControlInterface(Robot* robot) { this->robot = robot; }
+	RobotControlInterface(Robot* robot) { 
+		this->robot = robot; 
+		for (auto j : robot->jointList) {
+			HingeJoint* hj = dynamic_cast<HingeJoint*>(j);
+			if (hj)
+				mJoints.push_back(HJ(hj, false));
+		}
+		for (auto j : robot->auxiliaryJointList) {
+			HingeJoint* hj = dynamic_cast<HingeJoint*>(j);
+			if (hj)
+				mJoints.push_back(HJ(hj, true));
+		}
+	}
 	// destructor
 	virtual ~RobotControlInterface(void) {}
 
@@ -34,28 +62,27 @@ public:
 		//given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot... 
 		RobotState rs(robot);
 
-		for (int i = 0; i < robot->getJointCount(); i++) {
-			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-			if (!hj) continue;
+		for (auto hj : mJoints) {
 			Quaternion q;
-			q.setRotationFrom(hj->motor.currentMotorAngle, hj->rotationAxis);
-			rs.setJointRelativeOrientation(q, i);
-			rs.setJointRelativeAngVelocity(hj->rotationAxis * hj->motor.currentMotorVelocity, i);
+			q.setRotationFrom(hj.j->motor.currentMotorAngle, hj.j->rotationAxis);
+			if (hj.isAuxiliary) {
+				rs.setAuxiliaryJointRelativeOrientation(q, hj.j->jIndex);
+				rs.setAuxiliaryJointRelativeAngVelocity(hj.j->rotationAxis * hj.j->motor.currentMotorVelocity, hj.j->jIndex);
+			}else{
+				rs.setJointRelativeOrientation(q, hj.j->jIndex);
+				rs.setJointRelativeAngVelocity(hj.j->rotationAxis * hj.j->motor.currentMotorVelocity, hj.j->jIndex);
+			}
 		}
 		robot->setState(&rs);
 	}
 
 	virtual void setTargetMotorValuesFromSimRobotState(double dt) {
 		//given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot... 
-		RobotState rs(robot);
-
-		for (int i = 0; i < robot->getJointCount(); i++) {
-			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-			if (!hj) continue;
-			Quaternion q = rs.getJointRelativeOrientation(i);
-			V3D w = rs.getJointRelativeAngVelocity(i);
-			hj->motor.targetMotorAngle = q.getRotationAngle(hj->rotationAxis);
-			hj->motor.targetMotorVelocity = w.dot(hj->rotationAxis);
+		for (auto hj : mJoints) {
+			Quaternion q = robot->getRelativeOrientationForJoint(hj.j);
+			V3D w = robot->getRelativeLocalCoordsAngularVelocityForJoint(hj.j);
+			hj.j->motor.targetMotorAngle = q.getRotationAngle(hj.j->rotationAxis);
+			hj.j->motor.targetMotorVelocity = w.dot(hj.j->rotationAxis);
 		}
 	}
 

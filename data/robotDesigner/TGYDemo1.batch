@@ -1,7 +1,7 @@
-load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerActive_sym.dsn
+load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerActive_printable.dsn
 toSim
-load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerActive_sym_roll.p
-load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerActive_sym.pololu
+load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerActive_printable.p
+load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerActive_printable.pololu
 
 end
 

@@ -32,7 +32,9 @@ public:
 	DynamicArray<ServoMotorCommandBlock> multiTargetCommands;
 
 	double getServomotorAngle(Motor& mp);
+	double getServomotorSpeed(Motor& mp);
 	void setServomotorAngle(Motor& mp, double val);
+	void setServomotorSpeed(Motor& mp, double val);
 	void setServomotorMaxSpeed(Motor& mp, double val);
 
 	bool servosAreMoving();
