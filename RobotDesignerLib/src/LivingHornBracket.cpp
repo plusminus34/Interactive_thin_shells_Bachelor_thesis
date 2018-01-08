@@ -108,3 +108,26 @@ void LivingHornBracket_TGY306G::setDefaultFeaturePointList() {
 	featurePoints.push_back(P3D(-lenX, 0.02, -lenZ));
 	featurePoints.push_back(P3D(-lenX, 0.02, lenZ));
 }
+
+/* ---------------------------------------------------------------------------- */
+LivingHornBracket_BK3002::LivingHornBracket_BK3002() : LivingHornBracket() {
+	this->bracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/BK3002_hornBracket_w.obj")->clone();
+
+	generateBracketMesh();
+	bracketMesh->setMaterial(shaderMaterial);
+}
+
+LivingHornBracket_BK3002::~LivingHornBracket_BK3002(void) {
+	delete bracketMesh;
+}
+
+void LivingHornBracket_BK3002::setDefaultFeaturePointList() {
+	featurePoints.clear();
+	double lenX = 0.008;
+	double lenZ = 0.012;
+
+	featurePoints.push_back(P3D(lenX, 0.02, lenZ));
+	featurePoints.push_back(P3D(lenX, 0.02, -lenZ));
+	featurePoints.push_back(P3D(-lenX, 0.02, -lenZ));
+	featurePoints.push_back(P3D(-lenX, 0.02, lenZ));
+}

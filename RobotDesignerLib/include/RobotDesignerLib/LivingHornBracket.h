@@ -103,3 +103,19 @@ public:
 
 	virtual void goToPreviousMountingPosition() { bracketMountingAngle -= RAD(15.0); shouldRegenerateBracketMesh = true; }
 };
+
+/*
+Horn brackets whose geometry is determined by several parameters that indicate how it will move.
+*/
+class LivingHornBracket_BK3002 : public LivingHornBracket {
+public:
+	LivingHornBracket_BK3002();
+
+	virtual ~LivingHornBracket_BK3002(void);
+
+	virtual void setDefaultFeaturePointList();
+
+	virtual void goToNextMountingPosition() { bracketMountingAngle += RAD(15.0); shouldRegenerateBracketMesh = true; }
+
+	virtual void goToPreviousMountingPosition() { bracketMountingAngle -= RAD(15.0); shouldRegenerateBracketMesh = true; }
+};
