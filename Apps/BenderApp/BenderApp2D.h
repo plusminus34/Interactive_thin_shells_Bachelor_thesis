@@ -6,7 +6,6 @@
 #include <map>
 
 #include "OptimizationLib/GradientBasedFunctionMinimizer.h"
-#include "NodePositionObjectiveFunction.h"
 #include "BenderSimulationMesh.h"
 #include "Trajectory3Dplus.h"
 #include "InverseDeformationSolver.h"
@@ -22,7 +21,7 @@ public:
 
 	Trajectory3Dplus targetTrajectory_input;
 
-	InverseDeformationSolver inverseDeformationSolver;
+	InverseDeformationSolver<2> * inverseDeformationSolver;
 
 	
 	// Optimization Parameters
@@ -40,9 +39,10 @@ public:
 	std::vector<GradientBasedFunctionMinimizer*> minimizers;
 //	GradientBasedFunctionMinimizer * minimizer;
 //	NodePositionObjectiveFunction * objectiveFunction;
-//	int maxIterations = 10;
-//	double solveResidual = 1e-5;
-//	int maxLineSearchIterations = 15;
+	int maxIterations = 10;
+	double solveResidual = 1e-5;
+	int maxLineSearchIterations = 15;
+	double lineSearchStartValue = 0.1;
 
 	int selected_mount = -1;
 
@@ -110,9 +110,9 @@ public:
 
 
 	// optimization process
-	void solveMesh();
-	void computeDoDxi(dVector & dodxi);
-	double peekOofXi(dVector const & xi_in);
+//	void solveMesh();
+//	void computeDoDxi(dVector & dodxi);
+//	double peekOofXi(dVector const & xi_in);
 
 //	void pullXi();
 //	void pushXi();

@@ -6,8 +6,6 @@
 
 
 template <int NDim>
-
-
 class MountedPointSpring
 : 	public std::conditional<NDim == 2, FixedPointSpring2D, FixedPointSpring3D>::type {
 

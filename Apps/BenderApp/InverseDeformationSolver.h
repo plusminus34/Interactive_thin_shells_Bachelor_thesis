@@ -3,7 +3,7 @@
 #include <array>
 
 #include "OptimizationLib/GradientBasedFunctionMinimizer.h"
-#include "NodePositionObjectiveFunction.h"
+#include "InverseDeformationObjectiveFunction.h"
 #include "BenderSimulationMesh.h"
 #include "Trajectory3Dplus.h"
 
@@ -11,14 +11,15 @@ template<int NDim>
 class InverseDeformationSolver {
 
 public:
+
 	BenderSimulationMesh<NDim>* femMesh;
+
+	// Optimization Algorithm and settings
+	GradientBasedFunctionMinimizer * minimizer;
+	InverseDeformationObjectiveFunction<NDim> * objectiveFunction;
 
 	// Optimization Parameters
 	dVector xi;
-	// define optimization parameters (free parameters of simulation)
-	void pullXi();
-	void pushXi();
-
 
 	// helpers for optimization
 	dVector dOdxi;
@@ -26,15 +27,19 @@ public:
 	std::vector<dVector> deltaFdeltaxi;
 	std::vector<dVector> deltaxdeltaxi;
 
-	// Optimization Algorithm and settings
-	GradientBasedFunctionMinimizer * minimizer;
-	InverseDeformationObjectiveFunction * objectiveFunction;
 
-	int maxIterations = 10;
-	double solveResidual = 1e-5;
-	int maxLineSearchIterations = 15;
 
 public:
+
+	InverseDeformationSolver();
+	InverseDeformationSolver(BenderSimulationMesh<NDim> * femMesh,
+							 GradientBasedFunctionMinimizer * minimizer);
+	~InverseDeformationSolver();
+
+	// define optimization parameters (free parameters of simulation)
+	void pullXi();
+	void pushXi();
+
 
 	// optimization process
 	void solveMesh(bool solveStatic, double dt = 1.0/30.0);
@@ -42,7 +47,10 @@ public:
 	double peekOofXi(dVector const & xi_in);
 
 	// solve
-	void solve(int nSteps);
+	double solveOptimization(double terminationResidual, 
+							 int maxIterations, 
+							 double lineSearchStartValue,
+							 int maxLineSearchIteration);
 };
 
 

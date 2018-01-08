@@ -77,6 +77,14 @@ BenderApp2D::BenderApp2D()
 	menuScreen->performLayout();
 
 
+	// initialize minimization algorithms
+	minimizers.push_back(new GradientDescentFunctionMinimizer(maxIterations, solveResidual, maxLineSearchIterations, false));
+	minimizers.push_back(new BFGSFunctionMinimizer           (maxIterations, solveResidual, maxLineSearchIterations, false));
+
+	// initialize the ID Solver
+	inverseDeformationSolver = new InverseDeformationSolver<2>(femMesh, minimizers[comboBoxOptimizationAlgorithm->selectedIndex()]);
+
+
 	//set two mounts with pins
 	addRotationMount();
 	addRotationMount();
@@ -84,14 +92,7 @@ BenderApp2D::BenderApp2D()
 		addMountedNode(i, 0);
 		addMountedNode((nRows-1)*nCols + i, 1);
 	}
-	pullXi();
-
-	minimizers.push_back(new GradientDescentFunctionMinimizer(maxIterations, solveResidual, maxLineSearchIterations, false));
-	minimizers.push_back(new BFGSFunctionMinimizer           (maxIterations, solveResidual, maxLineSearchIterations, false));
-
-	minimizer = minimizers[comboBoxOptimizationAlgorithm->selectedIndex()];
-	
-	objectiveFunction = new NodePositionObjectiveFunction(this);
+	inverseDeformationSolver->pullXi();
 
 }
 
@@ -121,7 +122,7 @@ void BenderApp2D::initInteractionMenu(nanogui::FormHelper* menu)
 		selection->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 			nanogui::Alignment::Middle, 0, 4));
 		comboBoxOptimizationAlgorithm = new nanogui::ComboBox(selection, { "gradient descent", "quasi Newton: BFGS"});
-		comboBoxOptimizationAlgorithm->setCallback([this](int idx){minimizer = minimizers[idx]; });
+		comboBoxOptimizationAlgorithm->setCallback([this](int idx){inverseDeformationSolver->minimizer = minimizers[idx]; });
 		comboBoxOptimizationAlgorithm->setSelectedIndex(1);
 
 
@@ -599,10 +600,10 @@ void BenderApp2D::process() {
 			//			
 			double o_new = 0;
 //			minimizer->minimize(objectiveFunction, xi, o_new);
-			o_new = inverseDeformationSolver.solveOptimization(solveResidual,
-															   maxIterations,
-															   lineSearchStartValue,
-															   maxLineSearchIterations);
+			o_new = inverseDeformationSolver->solveOptimization(solveResidual,
+																maxIterations,
+																lineSearchStartValue,
+																maxLineSearchIterations);
 
 
 
@@ -613,9 +614,11 @@ void BenderApp2D::process() {
 			o_last = o_new;
 			e_last = e_new;
 
+			break;
 		}
 		else {
-			inverseDeformationSolver.solveMesh(computeStaticSolution, simTimeStep);
+			inverseDeformationSolver->solveMesh(computeStaticSolution, simTimeStep);
+			simulationTime += simTimeStep;
 		}
 
 	}
@@ -637,7 +640,7 @@ void BenderApp2D::solveMesh()
 */
 
 
-
+/*
 void BenderApp2D::pullXi()
 {
 	int n_parameters = 0;
@@ -669,6 +672,7 @@ void BenderApp2D::pushXi()
 		}
 	}
 }
+*/
 
 /*
 void BenderApp2D::computeDoDxi(dVector & dodxi)
@@ -825,14 +829,14 @@ void BenderApp2D::restart() {
 void BenderApp2D::addRotationMount() 
 {
 	femMesh->addMount<RotationMount2D>();
-	pullXi();
+	inverseDeformationSolver->pullXi();
 	updateMountSelectionBox();
 }
 
 void BenderApp2D::removeSelectedMount()
 {
 	femMesh->removeMount(selected_mount);
-	pullXi();
+	inverseDeformationSolver->pullXi();
 	updateMountSelectionBox();
 }
 

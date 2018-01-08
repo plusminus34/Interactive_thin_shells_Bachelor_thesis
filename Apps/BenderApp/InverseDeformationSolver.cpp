@@ -1,6 +1,70 @@
 
+#include <iostream>
+
+#include "MountedPointSpring.h"
 
 #include "InverseDeformationSolver.h"
+
+
+
+template<int NDim>
+InverseDeformationSolver<NDim>::InverseDeformationSolver()
+{
+	objectiveFunction = new InverseDeformationObjectiveFunction<NDim>(this);
+}
+
+
+template<int NDim>
+InverseDeformationSolver<NDim>::InverseDeformationSolver(BenderSimulationMesh<NDim> * femMesh,
+														 GradientBasedFunctionMinimizer * minimizer)
+	: femMesh(femMesh), minimizer(minimizer)
+{
+	objectiveFunction = new InverseDeformationObjectiveFunction<NDim>(this);
+}
+
+template<int NDim>
+InverseDeformationSolver<NDim>::~InverseDeformationSolver() 
+{
+	delete objectiveFunction;
+}
+
+
+template<int NDim>
+void InverseDeformationSolver<NDim>::pullXi()
+{
+	// find number of parameters
+	int n_parameters = 0;
+	for(Mount const * m: femMesh->mounts) {
+		if(m->active && m->parameterOptimization) {
+			n_parameters += m->parameters.size();
+		}
+	}
+	// copy values, set start index for each mount
+	xi.resize(n_parameters);
+	int i = 0;
+	for(Mount * m: femMesh->mounts) {
+		if(m->active && m->parameterOptimization) {
+			m->parametersStartIndex = i;
+			for(double p : m->parameters) {
+				xi[i++] = p;
+			}
+		}
+	}
+}
+
+template<int NDim>
+void InverseDeformationSolver<NDim>::pushXi()
+{
+	for(Mount * m: femMesh->mounts) {
+		if(m->active && m->parameterOptimization) {
+			int i = 0;
+			for(double & p : m->parameters) {
+				p = xi[m->parametersStartIndex + (i++)];
+			}
+		}
+	}
+}
+
 
 
 template<int NDim>
@@ -55,7 +119,7 @@ void InverseDeformationSolver<NDim>::computeDoDxi(dVector & dodxi)
 		deltaFdeltaxi[i].setZero();
 	}
 	for(BaseEnergyUnit* pin : femMesh->pinnedNodeElements) {
-		dynamic_cast<MountedPointSpring<2>*>(pin)->addDeltaFDeltaXi(deltaFdeltaxi);
+		dynamic_cast<MountedPointSpring<NDim>* >(pin)->addDeltaFDeltaXi(deltaFdeltaxi);
 	}
 
 	// get dF/dx  (Hessian from FEM simulation)  [lengh(x) x length(x)]
@@ -122,3 +186,9 @@ double InverseDeformationSolver<NDim>::peekOofXi(dVector const & xi_in)
 	return(O);
 }
 
+
+// instantiation of 2D & 3D
+// ATTENTION: other values for NDim won't work
+
+template class InverseDeformationSolver<2>;
+template class InverseDeformationSolver<3>;
