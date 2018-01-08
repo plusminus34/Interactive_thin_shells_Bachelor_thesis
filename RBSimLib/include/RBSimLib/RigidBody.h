@@ -219,7 +219,7 @@ public:
 	/**
 		this method sets the id of the current rigid body.
 	*/
-	inline void setBodyID(int newID){
+	inline void setID(int newID){
 		this->id = newID;
 	}
 

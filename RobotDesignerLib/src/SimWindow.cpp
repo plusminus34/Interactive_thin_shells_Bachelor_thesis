@@ -18,7 +18,7 @@ SimWindow::SimWindow(int x, int y, int w, int h, GLApplication* glApp) : GLWindo
 	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutUpAxis = 0.95;
 	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -1.5;
 
-//	showReflections = true;
+	showReflections = true;
 	showGroundPlane = true;
 }
 
@@ -123,10 +123,12 @@ void SimWindow::loadMotionPlan(LocomotionEngineMotionPlan* mp) {
 	delete positionController;
 	delete torqueController;
 	delete kinematicController;
+	delete pololuMaestroController;
 
 	positionController = new PositionBasedRobotController(robot, mp);
 	torqueController = new TorqueBasedRobotController(robot, mp);
 	kinematicController = new KinematicRobotController(robot, mp);
+	pololuMaestroController = new PololuMaestroRobotController(robot, mp);
 }
 
 void SimWindow::drawScene() {
@@ -165,7 +167,7 @@ void SimWindow::setPerturbationForceFromMouseInput(double xPos, double yPos) {
 }
 
 void SimWindow::doPhysicsStep(double simStep) {
-	activeController->applyControlSignals();
+	activeController->applyControlSignals(simStep);
 	rbEngine->applyForceTo(robot->root, perturbationForce * forceScale, P3D());
 	rbEngine->step(simStep);
 	robot->bFrame->updateStateInformation();
@@ -185,23 +187,44 @@ void SimWindow::doPhysicsStep(double simStep) {
 	}
 }
 
-void SimWindow::step() {
+void SimWindow::advanceSimulation(double dt) {
 	if (!activeController)
 		return;
 
-	activeController->computeControlSignals(simTimeStep);
+/*
+	static RobotState lastSimRobotState(robot);
+	RobotState newRobotState(robot);
 
-	if (activeController == torqueController)
-		for (int i = 0; i < nPhysicsStepsPerControlStep; i++) 
-			doPhysicsStep(simTimeStep / nPhysicsStepsPerControlStep);
-	
-	if (activeController == positionController)
-		doPhysicsStep(simTimeStep);
+	if (lastSimRobotState.isSameAs(newRobotState)) {
+		Logger::consolePrint("Robot state has not mysteriously changed, yay!!!\n");
+	}
+	else
+		Logger::consolePrint("Robot state has changed since last sim step :(\n");
+*/
+	if (activeController == kinematicController || activeController == pololuMaestroController){
+		activeController->computeControlSignals(dt);
+		activeController->applyControlSignals(dt);
+		activeController->advanceInTime(dt);
+	}
+	else {
+		double simulationTime = 0;
 
-	//do the integration of wheel motions here...
-	if (activeController == kinematicController)
-		activeController->applyControlSignals();
+		while (simulationTime < dt) {
+			simulationTime += simTimeStep;
 
-	activeController->advanceInTime(simTimeStep);
+			activeController->computeControlSignals(simTimeStep);
+			doPhysicsStep(simTimeStep);
+
+			activeController->advanceInTime(simTimeStep);
+//			break;
+
+		}
+	}
+
+/*
+	//setting the state of the robot will fix constraints as well. That's why here we read it, set it (project it) and then set it again such that it is clean...
+	lastSimRobotState = RobotState(robot);
+	robot->setState(&lastSimRobotState);
+	lastSimRobotState = RobotState(robot);
+*/
 }
-

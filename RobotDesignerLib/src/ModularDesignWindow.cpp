@@ -838,7 +838,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 	}
 
 
-	if (key == GLFW_KEY_F1 && (action == GLFW_REPEAT || action == GLFW_PRESS))
+	if (key == GLFW_KEY_MINUS && (action == GLFW_REPEAT || action == GLFW_PRESS))
 	{
 		if (selectedRobot && selectedRobot->selectedRMC && (selectedRobot->selectedRMC->type == MOTOR_RMC
 			|| selectedRobot->selectedRMC->type == LIVING_MOTOR))
@@ -860,7 +860,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		}
 	}
 
-	if (key == GLFW_KEY_F2 && (action == GLFW_REPEAT || action == GLFW_PRESS))
+	if (key == GLFW_KEY_EQUAL && (action == GLFW_REPEAT || action == GLFW_PRESS))
 	{
 		if (selectedRobot && selectedRobot->selectedRMC && (selectedRobot->selectedRMC->type == MOTOR_RMC
 			|| selectedRobot->selectedRMC->type == LIVING_MOTOR))
@@ -882,7 +882,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		}
 	}
 
-	if (key == GLFW_KEY_F3 && (action == GLFW_REPEAT || action == GLFW_PRESS))
+	if (key == GLFW_KEY_0 && (action == GLFW_REPEAT || action == GLFW_PRESS))
 	{
 		if (selectedRobot && selectedRobot->selectedRMC && (selectedRobot->selectedRMC->type == MOTOR_RMC
 			|| selectedRobot->selectedRMC->type == LIVING_MOTOR))
@@ -904,6 +904,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 
 	}
 
+/*
 	if (key == GLFW_KEY_F4 && (action == GLFW_REPEAT || action == GLFW_PRESS))
 	{
 		if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->isMovable())
@@ -913,7 +914,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 			selectedRobot->fixJointConstraints();
 		}
 	}
-
+*/
 
 	if (GLWindow3D::onKeyEvent(key, action, mods)) return true;
 
@@ -1422,7 +1423,6 @@ void ModularDesignWindow::saveDesignToFile(const char* fName)
 
 void ModularDesignWindow::loadDesignFromFile(const char* fName)
 {
-
 	// clean up guiding mesh
 	delete guidingMesh;
 	guidingMeshPos = P3D();

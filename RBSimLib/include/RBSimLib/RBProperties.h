@@ -52,11 +52,6 @@ public:
 	//if this is a wheel, we keep track of its axis of rotation, expressed in local coordinates...
 	V3D localCoordsWheelAxis;
 	//the radius is stored in feature size...
-	
-	//this represents desired instantaneous speed for the wheel EEs, expressed in world (e.g. values computed in MOPT)
-	double wheelSpeed_w = 0;
-	//and this is the same quantity, but now expressed relative to the parent rigid body - this is what's needed as a control signal for the motor that drives the wheel, for example, unless there is some global coordinate frame that the control is relative to...
-	double wheelSpeed_rel = 0;
 
 	//in some cases we may want to know which mesh of the parent RB is associated with this feature (e.g. if they are wheels that must rotate about their axis)
 	int meshIndex = -1;

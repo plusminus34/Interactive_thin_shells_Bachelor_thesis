@@ -26,7 +26,7 @@ private:
 		// wheel axis from robot
 		Vector3T<T> wheelAxisRobot = theMotionPlan->robotRepresentation->getWorldCoordinatesForVectorT(wheelAxisLocal, rb, q);
 		// wheel axis from wheel angles
-		Vector3T<T> wheelAxisWorld = LocomotionEngine_EndEffectorTrajectory::rotateVectorUsingWheelAngles(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
+		Vector3T<T> wheelAxisWorld = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle);
 		Vector3T<T> err = wheelAxisWorld - wheelAxisRobot;
 
 		return (T)0.5 * err.squaredNorm() * (T)weight;

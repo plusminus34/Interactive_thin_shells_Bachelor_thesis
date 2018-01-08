@@ -32,6 +32,7 @@ public:
 
 	double weight = 1.0;
 	bool isActive = true;
+	bool hackHessian = true;
 	std::string description;
 };
 

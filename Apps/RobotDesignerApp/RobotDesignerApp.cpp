@@ -7,9 +7,12 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-//WarmStart with no periodic boundary conditions does not work well... - test the design from Moritz, but some of the others too (periodic and non-periodic).
 //debug joint velocity limits some more...
 //add the option to start non-periodic mopt from zero or from two other motion plans...
+//fix the bulk write...
+//fix ffp == toggle all stance/all swing/normal behavior/delete ffp for legs possible, make reading from file better...
+//have the option to create a box (rounded edges) for the body of a robot, as well as an option to rescale the connector cube mesh/faces...
+
 
 RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
@@ -21,10 +24,10 @@ RobotDesignerApp::RobotDesignerApp(){
 	simWindow = new SimWindow(0, 0, 100, 100, this);
 	iEditWindow = new IntelligentRobotEditingWindow(0, 0, 100, 100, this);
 	motionPlanAnalysis = new MotionPlanAnalysis(menuScreen);
-	energyWindow = new EnergyWindow();
+	energyWindow = new EnergyWindow(this);
 
 	mainMenu->addGroup("RobotDesigner Options");
-	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
+	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau", "RobotControl"});
 	mainMenu->addVariable<RD_VIEW_OPTIONS>("View Mode",
 		[this](const RD_VIEW_OPTIONS &val) {viewOptions = val; setupWindows(); },
 		[this]() {return viewOptions;},
@@ -290,12 +293,34 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 		createRobotFromCurrentDesign();
 	}
 
+	if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
+		loadFile("..\\data\\RobotDesigner\\TGYDemo1.batch");
+//		loadFile("..\\data\\RobotDesigner\\SpotMiniDemo.batch");
+	}
+
 	if (key == GLFW_KEY_M && action == GLFW_PRESS) {
 		warmStartMOPT(true);
 	}
 
 	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
 		exportMeshes();
+	}
+
+	if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
+		viewOptions = SIM_WINDOW_ONLY;
+		setupWindows();
+	}
+	if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
+		viewOptions = SIM_AND_MOPT;
+		setupWindows();
+	}
+	if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
+		viewOptions = SIM_AND_DESIGN;
+		setupWindows();
+	}
+	if (key == GLFW_KEY_F4 && action == GLFW_PRESS) {
+		viewOptions = MOPT_AND_IEDIT;
+		setupWindows();
 	}
 
 	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
@@ -306,6 +331,8 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 		runOption = PHYSICS_SIMULATION_WITH_POSITION_CONTROL;
 	if (key == GLFW_KEY_4 && action == GLFW_PRESS)
 		runOption = PHYSICS_SIMULATION_WITH_TORQUE_CONTROL;
+	if (key == GLFW_KEY_5 && action == GLFW_PRESS)
+		runOption = PHYSICAL_ROBOT_CONTROL_VIA_POLOLU_MAESTRO;	
 
 	if (key == GLFW_KEY_A && action == GLFW_PRESS)
 		optimizeWhileAnimating = !optimizeWhileAnimating;
@@ -327,6 +354,32 @@ void RobotDesignerApp::loadFile(const char* fName) {
 	fileName.assign(fName);
 
 	std::string fNameExt = fileName.substr(fileName.find_last_of('.') + 1);
+
+	if (fNameExt.compare("batch") == 0) {
+		Logger::consolePrint("Batch loading from \'%s\'\n", fName);
+		FILE* fp = fopen(fName, "r");
+
+		while (!feof(fp)){
+			char line[200];
+			readValidLine(line, 200, fp);
+			char token[100], argument[100];
+			sscanf(line, "%s %s", &token, &argument);
+			if (strcmp(token, "load") == 0)
+				loadFile(argument);
+			if (strcmp(token, "toSim") == 0)
+				createRobotFromCurrentDesign();
+			if (strcmp(token, "end") == 0)
+				break;
+		}
+		fclose(fp);
+	}
+
+	if (fNameExt.compare("pololu") == 0) {
+		Logger::consolePrint("Loading servomotor mapping/calibration file '%s'\n", fName);
+		if (simWindow && simWindow->pololuMaestroController)
+			simWindow->pololuMaestroController->readRobotMappingParametersFromFile(fName);
+		return;
+	}
 
 	if (fNameExt.compare("rs") == 0) {
 		Logger::consolePrint("Load robot state from '%s'\n", fName);
@@ -367,7 +420,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 	}
 
 	if (fNameExt.compare("dsn") == 0 && designWindow) {
-		Logger::consolePrint("Load robot state from '%s'\n", fName);
+		Logger::consolePrint("Load robot design from '%s'\n", fName);
 		designWindow->loadFile(fName);
 		return;
 	}
@@ -375,7 +428,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 }
 
 void RobotDesignerApp::createRobotFromCurrentDesign() {
-	if (designWindow) {
+	if (designWindow && designWindow->hasDesign()) {
 		designWindow->saveToRBSFile("../out/tmpRobot.rbs");
 		loadFile("../out/tmpRobot.rbs");
 		startingRobotState = RobotState(robot);
@@ -474,6 +527,8 @@ void RobotDesignerApp::setActiveController() {
 		simWindow->setActiveController(simWindow->torqueController);
 	else if (runOption == MOTION_PLAN_ANIMATION)
 		simWindow->setActiveController(simWindow->kinematicController);
+	else if (runOption == PHYSICAL_ROBOT_CONTROL_VIA_POLOLU_MAESTRO)
+		simWindow->setActiveController(simWindow->pololuMaestroController);
 	else
 		simWindow->setActiveController(NULL);
 }
@@ -504,19 +559,10 @@ void RobotDesignerApp::process() {
 		if (optimizeWhileAnimating)
 			DoMOPTStep();
 
-		double simulationTime = 0;
-		double maxRunningTime = 1.0 / desiredFrameRate;
+		double dt = 1.0 / desiredFrameRate;
+		if (slowMo) dt /= 5.0;
 
-		while (simulationTime / maxRunningTime < animationSpeedupFactor) {
-			simulationTime += simWindow->simTimeStep;
-
-//			update wheel rotations here...
-
-			simWindow->step();
-
-			if (slowMo)
-				break;
-		}
+		simWindow->advanceSimulation(dt);
 
 	}
 	else if (runOption == MOTION_PLAN_OPTIMIZATION)

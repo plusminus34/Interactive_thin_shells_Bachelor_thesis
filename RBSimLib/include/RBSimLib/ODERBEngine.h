@@ -197,9 +197,6 @@ public:
 
 	void setMotorsCFMAndFMax(double CFM, double FMAX);
 
-	///<
-	virtual void createODERB(RigidBody* rb);
-
 	/**
 		Update ODERBEngine using current rigidbodies.
 	*/

@@ -4,7 +4,7 @@
 
 #include <MathLib/MathLib.h>
 #include <MathLib/Quaternion.h>
-
+#include <RBSimLib/HingeJoint.h>
 #include <ControlLib/Robot.h>
 
 using namespace std;
@@ -256,6 +256,10 @@ public:
 			V3D eeOffset(params[pIndex + 0] * eeParamMap[listOfAllEEs[i].ee].xModifier, params[pIndex + 1], params[pIndex + 2]);
 
 			listOfAllEEs[i].parentRB->rbProperties.endEffectorPoints[listOfAllEEs[i].eeIndex].coords = initialEEMorphology[listOfAllEEs[i].ee].initialCoords + eeOffset;
+
+			if (listOfAllEEs[i].parentRB->rbProperties.endEffectorPoints[listOfAllEEs[i].eeIndex].wheelJoint != NULL)
+				listOfAllEEs[i].parentRB->rbProperties.endEffectorPoints[listOfAllEEs[i].eeIndex].wheelJoint->pJPos = listOfAllEEs[i].parentRB->rbProperties.endEffectorPoints[listOfAllEEs[i].eeIndex].coords;
+
 		}
 
 		for (int i = 0; i < robot->getJointCount(); i++) {

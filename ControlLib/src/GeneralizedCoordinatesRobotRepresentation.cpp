@@ -166,7 +166,7 @@ void GeneralizedCoordinatesRobotRepresentation::computeWorldCoordinateTorquesFro
 
 	for (int i = 6; i < getDimensionCount(); ++i) {
 		robot->jointList[jointIndexForQ[i]]->controlMode = TORQUE_MODE;
-		robot->jointList[jointIndexForQ[i]]->desiredJointTorque += getWorldCoordsAxisForQ(i) * u[i] * -1;
+		robot->jointList[jointIndexForQ[i]]->desiredJointTorque += getWorldCoordsAxisForQ(i) * u[i];
 	}
 }
 

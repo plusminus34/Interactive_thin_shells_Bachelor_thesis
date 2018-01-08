@@ -96,11 +96,6 @@ public:
 		this method applies a torque to a rigid body. The torque is specified in world coordinates.
 	*/
 	virtual void applyTorqueTo(RigidBody* b, const V3D& t)=0;
-	
-	/**
-	this method applies a torque to a rigid body. The torque is specified in world coordinates.
-	*/
-	virtual void createODERB(RigidBody* rb)=0;
 
 	virtual DynamicArray<ContactForce> getContactForceOnRB(RigidBody* b)=0;
 };

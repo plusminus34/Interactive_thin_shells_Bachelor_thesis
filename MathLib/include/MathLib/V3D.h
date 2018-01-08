@@ -143,8 +143,47 @@ public:
 };
 
 // Returns a new vector obtained by rotating v. Alpha is specified in radians, and axis is assumed to be a unit vector
+// rotate vector using Rodrigues' rotation formula
+
 template<class T>
 Vector3T<T> rotateVec(const Vector3T<T> &v, T alpha, const Vector3T<T> &axis)
+{
+	assert(IS_EQUAL(axis.squaredNorm(), 1));
+
+	T cosa = cos(alpha);
+	T sina = sin(alpha);
+
+	Vector3T<T> result = v*cosa + axis.cross(v)*sina + axis*(axis.dot(v))*(T(1) - cosa);
+	return result;
+}
+
+template<class T>
+Vector3T<T> drotateVec_dalpha(const Vector3T<T> &v, T alpha, const Vector3T<T> &axis)
+{
+	assert(IS_EQUAL(axis.squaredNorm(), 1));
+
+	T cosa = cos(alpha);
+	T sina = sin(alpha);
+
+	Vector3T<T> result = -v*sina + axis.cross(v)*cosa + axis*(axis.dot(v))*sina;
+	return result;
+}
+
+template<class T>
+Vector3T<T> ddrotateVec_dalpha2(const Vector3T<T> &v, T alpha, const Vector3T<T> &axis)
+{
+	assert(IS_EQUAL(axis.squaredNorm(), 1));
+
+	T cosa = cos(alpha);
+	T sina = sin(alpha);
+
+	Vector3T<T> result = -v*cosa - axis.cross(v)*sina + axis*(axis.dot(v))*cosa;
+	return result;
+}
+
+// Returns a new vector obtained by rotating v. Alpha is specified in radians, and axis is assumed to be a unit vector
+template<class T>
+Vector3T<T> rotateVec2(const Vector3T<T> &v, T alpha, const Vector3T<T> &axis)
 {
 	assert(IS_EQUAL(axis.squaredNorm(), 1));
 	T xP = axis(0);
@@ -154,9 +193,9 @@ Vector3T<T> rotateVec(const Vector3T<T> &v, T alpha, const Vector3T<T> &axis)
 	T sina = sin(alpha);
 
 	T s[3][3] = {
-		{ 0,			-zP,		yP  },
+		{ 0,			-zP,		yP },
 		{ zP,			0,			-xP },
-		{ -yP,			xP,			0   }
+		{ -yP,			xP,			0 }
 	};
 	T UUT[3][3] = {
 		{ xP*xP,		xP*yP,		xP*zP },
@@ -166,8 +205,8 @@ Vector3T<T> rotateVec(const Vector3T<T> &v, T alpha, const Vector3T<T> &axis)
 	T I[3][3] = { { 1,0,0 },{ 0,1,0 },{ 0,0,1 } };
 	T R[3][3] = { { 0,0,0 },{ 0,0,0 },{ 0,0,0 } };
 
-	for (int i = 0;i<3;i++)
-		for (int j = 0;j<3;j++)
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
 			R[i][j] = UUT[i][j] + cosa*(I[i][j] - UUT[i][j]) + sina*s[i][j];
 
 	//now that we finally have the transformation matrix set up, we can rotate the vector
@@ -179,7 +218,6 @@ Vector3T<T> rotateVec(const Vector3T<T> &v, T alpha, const Vector3T<T> &axis)
 
 	return result;
 }
-
 // Returns a (uniformly) random unit vector
 V3D getRandomUnitVector();
 

@@ -25,7 +25,6 @@ IntelligentRobotEditingWindow::IntelligentRobotEditingWindow(int x, int y, int w
 
 	tWidget = new TranslateWidget(AXIS_X | AXIS_Y | AXIS_Z);
 	tWidget->visible = false;
-
 }
 
 void IntelligentRobotEditingWindow::addMenuItems() {
@@ -45,6 +44,10 @@ void IntelligentRobotEditingWindow::drawAuxiliarySceneInfo(){
 	glClear(GL_DEPTH_BUFFER_BIT);
 }
 
+bool isEERB(RigidBody* rb) {
+	return rb->rbProperties.endEffectorPoints.size() > 0 || rb->cJoints.size() == 0;
+}
+
 //triggered when using the mouse wheel
 bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	if (highlightedRigidBody) {
@@ -55,7 +58,7 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 			P3D p1 = highlightedRigidBody->pJoints[0]->getWorldPosition();
 			P3D p2;
 
-			if (highlightedRigidBody->cJoints.size() == 1){
+			if (!isEERB(highlightedRigidBody)){
 				p2 = highlightedRigidBody->cJoints[0]->getWorldPosition();
 			} else {
 				for (auto& eeItr : highlightedRigidBody->rbProperties.endEffectorPoints){
@@ -88,7 +91,7 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 					currentDesignParameters[pStartIndex + 3 + i] += offset1[i] * modifier[i];
 
 				//and now, the parent coords of the child joint
-				if (highlightedRigidBody->cJoints.size() == 1) {
+				if (!isEERB(highlightedRigidBody)) {
 					int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
 					V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].xModifier, 1, 1);
 
@@ -120,7 +123,7 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 				for (int i = 0; i < 3; i++)
 					currentDesignParameters[pStartIndex + i] += offset1P[i] * modifier[i];
 
-				if (highlightedRigidBody->cJoints.size() == 1){
+				if (!isEERB(highlightedRigidBody)){
 
 					//adjust the coordinates of the child joint, both in coord frame of its parent and child rigid bodies...
 					int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
@@ -340,11 +343,14 @@ bool IntelligentRobotEditingWindow::onMouseButtonEvent(int button, int action, i
 		if (highlightedEE) {
 			tWidget->visible = true;
 			tWidget->pos = highlightedEEParent->getWorldCoordinates(highlightedEE->coords);
+			if (highlightedEE->wheelJoint)
+			Logger::consolePrint("Clicked on wheel \'%s\' with ID %d\n", highlightedEE->wheelJoint->name.c_str(), highlightedEE->wheelJoint->jIndex);
 		}
 
 		if (highlightedJoint) {
 			tWidget->visible = true;
 			tWidget->pos = highlightedJoint->getWorldPosition();
+			Logger::consolePrint("Clicked on joint \'%s\' with ID %d\n", highlightedJoint->name.c_str(), highlightedJoint->jIndex);
 		}
 		rdApp->robot->setState(&rs);
 	}
@@ -490,7 +496,7 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 	print("../out/dmdp_FD.m", dmdp_FD);
 }
 
-void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep() {
+void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep(ObjectiveFunction* objFunction) {
 	updateJacobian();
 
 	//If we have some objective O, expressed as a function of m, then dO/dp = dO/dm * dm/dp
@@ -499,7 +505,7 @@ void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep() {
 	resize(dOdm, m0.size());
 	resize(dOdp, p0.size());
 
-	rdApp->moptWindow->locomotionManager->energyFunction->objectives[optimizeEnergyNum]->addGradientTo(dOdm, m0);
+	objFunction->addGradientTo(dOdm, m0);
 	
 	dOdp = dmdp.transpose() * dOdm;
 
@@ -544,7 +550,6 @@ void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
 	rdApp->mainMenu->addVariable("Use Jacobian", updateMotionBasedOnJacobian);
 	rdApp->mainMenu->addVariable("Use SVD", useSVD);
 
-	rdApp->mainMenu->addButton("Do Optimization step", [this]() { DoDesignParametersOptimizationStep(); });
 	rdApp->mainMenu->addVariable("Optimize Energy num", optimizeEnergyNum);
 	rdApp->mainMenu->addVariable("Step Size", stepSize);
 
@@ -611,13 +616,10 @@ void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const dVector& p) {
 	rdApp->prd->setParameters(p);
 	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
 }
-
 void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const std::vector<double>& p) {
 	rdApp->prd->setParameters(p);
 	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
 }
-
-
 void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 {
 	if (updateJacobiancontinuously)
@@ -633,7 +635,6 @@ void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m);
 	}
 }
-
 void IntelligentRobotEditingWindow::drawScene() {
 	glColor3d(1, 1, 1);
 	glDisable(GL_LIGHTING);

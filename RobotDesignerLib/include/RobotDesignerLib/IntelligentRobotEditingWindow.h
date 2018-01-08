@@ -22,7 +22,7 @@ public:
 	virtual void drawScene();
 	void updateJacobian();
 	void test_dmdp_Jacobian();
-	void DoDesignParametersOptimizationStep();
+	void DoDesignParametersOptimizationStep(ObjectiveFunction* objFunction);
 	void showMenu();
 	void hideMenu();
 	void syncSliders();

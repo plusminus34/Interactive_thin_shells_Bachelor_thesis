@@ -18,9 +18,7 @@
 BK DS-3002HV: minPWM: 910, maxPWM: 2090
 */
 
-//- should also deal with motors that are in velocity mode...
 //- how well is the speed limit working? Does the board go to the final target just in time? Or way early? Or doesn't get there? Can at least plot desired vs final angles...
-//- wheels and other things should be some sort of helper RBs which do not get read/baked into the structure of a robot... mopt won't know about them, but the simulation will...
 //- do the DXL communication protocol as well...
 
 unsigned short getMaestroSignalFromAngle(double angle, Motor& mp) {
@@ -28,8 +26,13 @@ unsigned short getMaestroSignalFromAngle(double angle, Motor& mp) {
 	return (unsigned short)(mp.getPWMForAngle(angle) * 4);
 }
 
+unsigned short getMaestroSignalFromSpeed(double angle, Motor& mp) {
+	//maestro units are measured in 0.25microseconds increments, hence the factor of 4
+	return (unsigned short)(mp.getPWMForSpeed(angle) * 4);
+}
+
 //a value of 40 corresponds to a speed limit of pwm=1000microseconds/s which corresponds to 90deg/s (if pwmRange is 500 and angle range is 45).
-unsigned short getMaestroSignalFromAngularSpeed(double speed, Motor& mp, int signalPeriod) {
+unsigned short getMaestroSignalFromSpeedLimit(double speed, Motor& mp, int signalPeriod) {
 	//this means no speed limit
 	if (speed <= 0)
 		return 0;
@@ -38,7 +41,6 @@ unsigned short getMaestroSignalFromAngularSpeed(double speed, Motor& mp, int sig
 
 	//1 rad corresponds to 1 / anglePerPWMunit() PWM units
 	//1s is 100 of the time units...
-
 
 	//maestro units are measured in 0.25microseconds/10ms increments, hence the factor of 4 / 100
 	double speedUnits = 4.0 * 10.0 / 1000.0;
@@ -57,6 +59,11 @@ double getAngleFromMaestroSignal(unsigned short ms, Motor& mp) {
 	return mp.getAngleForPWM(ms / 4.0);
 }
 
+double getSpeedFromMaestroSignal(unsigned short ms, Motor& mp) {
+	//maestro signal units are measured in 0.25microseconds increments, hence the factor of 4
+	return mp.getSpeedForPWM(ms / 4.0);
+}
+
 // Gets the position of a Maestro channel.
 // See the "Serial Servo Commands" section of the user's guide.
 int PololuServoControlInterface::maestroGetPosition(Motor& mp){
@@ -64,6 +71,8 @@ int PololuServoControlInterface::maestroGetPosition(Motor& mp){
 	//on the channel, reflecting the effects of any previous commands, speed and acceleration limits, 
 	//or scripts running on the Maestro. It is not the actual position recorded by the servomotor's 
 	//potentiometer
+
+	if (!connected || mp.motorID < 0) return 0;
 
 	if (!connected) return (int)mp.pwmFor0Deg * 4;
 	unsigned char command[2] = { 0x90, 1};
@@ -86,7 +95,7 @@ int PololuServoControlInterface::maestroGetPosition(Motor& mp){
 // See the "Serial Servo Commands" section of the user's guide.
 // The units of 'target' are quarter-microseconds. If 0, the motor will no longer receive pulses
 int PololuServoControlInterface::maestroSetTargetPosition(Motor& mp, unsigned short target) {
-	if (!connected) return 0;
+	if (!connected || mp.motorID < 0) return 0;
 
 	unsigned char command[] = {0x84, 1, (unsigned short)(target & 0x7F), (unsigned short)(target >> 7 & 0x7F)};
 	command[1] = (unsigned char)mp.motorID;
@@ -126,7 +135,7 @@ int PololuServoControlInterface::maestroSetMultipleTargets(int startID, const Dy
 // See the "Serial Servo Commands" section of the user's guide.
 // The units of 'target' are (0.25 micros)/(10 ms). If 0, the motor will have no speed limit
 int PololuServoControlInterface::maestroSetTargetSpeed(Motor& mp, unsigned short target) {
-	if (!connected) return 0;
+	if (!connected || mp.motorID < 0) return 0;
 	if (controlPositionsOnly) target = 0;
 
 	unsigned char command[] = { 0x87, 0, (unsigned short) (target & 0x7F), (unsigned short)(target >> 7 & 0x7F) };
@@ -160,13 +169,21 @@ double PololuServoControlInterface::getServomotorAngle(Motor& mp) {
 	return getAngleFromMaestroSignal(maestroGetPosition(mp), mp);
 }
 
+double PololuServoControlInterface::getServomotorSpeed(Motor& mp) {
+	return getSpeedFromMaestroSignal(maestroGetPosition(mp), mp);
+}
+
 void PololuServoControlInterface::setServomotorAngle(Motor& mp, double val) {
 	maestroSetTargetPosition(mp, getMaestroSignalFromAngle(val, mp));
 }
 
+void PololuServoControlInterface::setServomotorSpeed(Motor& mp, double val) {
+	maestroSetTargetPosition(mp, getMaestroSignalFromSpeed(val, mp));
+}
+
 //val is specified in rad/s
 void PololuServoControlInterface::setServomotorMaxSpeed(Motor& mp, double val) {
-	maestroSetTargetSpeed(mp, getMaestroSignalFromAngularSpeed(val, mp, signalPeriod));
+	maestroSetTargetSpeed(mp, getMaestroSignalFromSpeedLimit(val, mp, signalPeriod));
 }
 
 //set motor goals from target values
@@ -174,16 +191,21 @@ void PololuServoControlInterface::sendControlInputsToPhysicalRobot() {
 	if (motorsOn == false)
 		return;
 
-	for (int i = 0; i < robot->getJointCount(); i++) {
-		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-		if (!hj) continue;
+	for (auto hj : mJoints) {
+		if (hj.j->motor.flipMotorAxis && hj.j->controlMode == POSITION_MODE)
+			hj.j->motor.targetMotorAngle *= -1;
 
-		if (hj->motor.flipMotorAxis)
-			hj->motor.targetMotorAngle *= -1;
+		if (hj.j->motor.flipMotorAxis && hj.j->controlMode == VELOCITY_MODE)
+			hj.j->motor.targetMotorVelocity *= -1;
 
-		setServomotorMaxSpeed(hj->motor, hj->motor.targetMotorVelocity);
-		if (writeAllTargetCommandsAtOnce == false)
-			setServomotorAngle(hj->motor, hj->motor.targetMotorAngle);
+		if (hj.j->controlMode == POSITION_MODE)
+			setServomotorMaxSpeed(hj.j->motor, hj.j->motor.targetMotorVelocity);
+		if (writeAllTargetCommandsAtOnce == false){
+			if (hj.j->controlMode == POSITION_MODE)
+				setServomotorAngle(hj.j->motor, hj.j->motor.targetMotorAngle);
+			else if (hj.j->controlMode == VELOCITY_MODE)
+				setServomotorSpeed(hj.j->motor, hj.j->motor.targetMotorVelocity);
+		}
 	}
 
 	if (writeAllTargetCommandsAtOnce) {
@@ -193,7 +215,10 @@ void PololuServoControlInterface::sendControlInputsToPhysicalRobot() {
 		for (uint i = 0; i < multiTargetCommands.size(); i++) {
 			for (uint j = 0; j < multiTargetCommands[i].robotJoints.size(); j++) {
 				HingeJoint* hj = multiTargetCommands[i].robotJoints[j];
-				multiTargetCommands[i].targetVals[j] = getMaestroSignalFromAngle(hj->motor.targetMotorAngle, hj->motor);
+				if (hj->controlMode == POSITION_MODE)
+					multiTargetCommands[i].targetVals[j] = getMaestroSignalFromAngle(hj->motor.targetMotorAngle, hj->motor);
+				else if (hj->controlMode == VELOCITY_MODE)
+					multiTargetCommands[i].targetVals[j] = getMaestroSignalFromSpeed(hj->motor.targetMotorVelocity, hj->motor);
 			}
 			maestroSetMultipleTargets(multiTargetCommands[i].motorStartID, multiTargetCommands[i].targetVals);
 		}
@@ -202,14 +227,17 @@ void PololuServoControlInterface::sendControlInputsToPhysicalRobot() {
 
 //read motor positions
 void PololuServoControlInterface::readPhysicalRobotMotorPositions() {
-	for (int i = 0; i < robot->getJointCount(); i++) {
-		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-		if (!hj) continue;
-
-		hj->motor.currentMotorAngle = getServomotorAngle(hj->motor);
-
-		if (hj->motor.flipMotorAxis)
-			hj->motor.currentMotorAngle *= -1;
+	for (auto hj : mJoints) {
+		if (hj.j->controlMode == POSITION_MODE){
+			hj.j->motor.currentMotorAngle = getServomotorAngle(hj.j->motor);
+			if (hj.j->motor.flipMotorAxis)
+				hj.j->motor.currentMotorAngle *= -1;
+		}
+		else if (hj.j->controlMode == VELOCITY_MODE) {
+			hj.j->motor.currentMotorVelocity = getServomotorSpeed(hj.j->motor);
+			if (hj.j->motor.flipMotorAxis)
+				hj.j->motor.currentMotorVelocity *= -1;
+		}
 	}
 }
 
@@ -256,23 +284,23 @@ void PololuServoControlInterface::closeCommunicationPort() {
 void PololuServoControlInterface::driveMotorPositionsToZero() {
 	motorsOn = true;
 
-	for (int i = 0; i < robot->getJointCount(); i++) {
-		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-		if (!hj) continue;
-		hj->motor.targetMotorAngle = 0;
-		hj->motor.targetMotorVelocity = 1.0;//make sure the motors all go to zero slowly...
+	for (auto hj : mJoints) {
+		if (hj.j->controlMode == POSITION_MODE) {
+			hj.j->motor.targetMotorAngle = 0;
+			hj.j->motor.targetMotorVelocity = 1.0;//make sure the motors all go to zero slowly...
+		}
+		else if (hj.j->controlMode == VELOCITY_MODE)
+			hj.j->motor.targetMotorVelocity = 0;
 	}
 	sendControlInputsToPhysicalRobot();
 
 	while (servosAreMoving());
 
-	for (int i = 0; i < robot->getJointCount(); i++) {
-		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-		if (!hj) continue;
-		hj->motor.targetMotorVelocity = -1.0;//-1 here we will take to mean no speed limit...
-	}
-	sendControlInputsToPhysicalRobot();
+	for (auto hj : mJoints)
+		if (hj.j->controlMode == POSITION_MODE)
+			hj.j->motor.targetMotorVelocity = -1.0;//-1 here we will take to mean no speed limit...
 
+	sendControlInputsToPhysicalRobot();
 }
 
 void PololuServoControlInterface::toggleMotorPower() {
@@ -282,81 +310,41 @@ void PololuServoControlInterface::toggleMotorPower() {
 void PololuServoControlInterface::setTargetMotorValuesFromSimRobotState(double dt) {
 	readPhysicalRobotMotorPositions();
 
-	//given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot... 
-	RobotState rs(robot);
+	for (auto hj : mJoints){
+		if (hj.j->controlMode == POSITION_MODE){
+			Quaternion q = robot->getRelativeOrientationForJoint(hj.j);
 
-	for (int i = 0; i < robot->getJointCount(); i++) {
-		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-		if (!hj) continue;
-		Quaternion q = rs.getJointRelativeOrientation(i);
-		V3D w = rs.getJointRelativeAngVelocity(i);
-		hj->motor.targetMotorAngle = q.getRotationAngle(hj->rotationAxis);
+			hj.j->motor.targetMotorAngle = q.getRotationAngle(hj.j->rotationAxis);
 
-		//we expect we have dt time to go from the current position to the target position... we ideally want to ensure that the motor gets there exactly dt time from now, so we must limit its velocity...
-		double speedLimit = fabs(hj->motor.targetMotorAngle - hj->motor.currentMotorAngle) / dt;
-		hj->motor.targetMotorVelocity = speedLimit;
+			//set the speed limit for the motor based on the difference between the current motor value and the target value
+
+			//we expect we have dt time to go from the current position to the target position... we ideally want to ensure that the motor gets there exactly dt time from now, so we must limit its velocity...
+			double speedLimit = fabs(hj.j->motor.targetMotorAngle - hj.j->motor.currentMotorAngle) / dt;
+			hj.j->motor.targetMotorVelocity = speedLimit;
+		} else if (hj.j->controlMode == VELOCITY_MODE) {
+			hj.j->motor.targetMotorVelocity = robot->getRelativeLocalCoordsAngularVelocityForJoint(hj.j).dot(hj.j->rotationAxis);
+		}
 	}
 }
 
-
 PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotControlInterface(robot) {
-
-	//TODO: we will need a much better way of setting motor parameters...
-	for (int i = 0; i < robot->getJointCount(); i++) {
-		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-		if (!hj) continue;
-
-		hj->motor.motorID = i;
-
-		if (i == 0) {
-			//settings for the BK DS-3002HV
-			hj->motor.pwmMin = 910;//depends on the type of servomotor
-			hj->motor.pwmMax = 2090;//depends on type of servomotor
-			hj->motor.pwmFor0Deg = 1430; //this depends on how the horn is mounted...
-			hj->motor.pwmFor45Deg = 1870; //this depends on how the horn is mounted...
-		}
-
-		if (i == 1) {
-			//settings for the TURNIGY S306G-HV
-			hj->motor.pwmMin = 910;//depends on the type of servomotor
-			hj->motor.pwmMax = 2100;//depends on type of servomotor
-			hj->motor.pwmFor0Deg = 1430; //this depends on how the horn is mounted...
-			hj->motor.pwmFor45Deg = 1865; //this depends on how the horn is mounted...
-										  //			hj->motor.flipMotorAxis = true;
-		}
-
-		if (i == 2) {
-			//settings for the MKS DS95
-			hj->motor.pwmMin = 800;//depends on the type of servomotor
-			hj->motor.pwmMax = 2160;//depends on type of servomotor
-			hj->motor.pwmFor0Deg = 1390; //this depends on how the horn is mounted...
-			hj->motor.pwmFor45Deg = 1935; //this depends on how the horn is mounted...
-										  //			hj->motor.flipMotorAxis = true;
-		}
-
-	}
-
-
-
-
-
-
-
-
 //set up the information required for multi-motor commands. Each list should be a continuous set of motor ids
 //TODO: outer loop should be over max motor ID found
 //TODO: make a list of all joints, both normal and auxiliary (or better yet, robot should have a way of returning this list directly), and iterate over that...
+//TODO: put this in a different function so that it can be executed whenever desired...
+	int maxIDFound = -1;
+	for (auto hj : mJoints)
+		maxIDFound = max(maxIDFound, hj.j->motor.motorID);
 
-	for (int j = 0; j < robot->getJointCount(); j++) {
+	for (int j = 0; j < maxIDFound; j++) {
 		ServoMotorCommandBlock smcb;
 		smcb.motorStartID = j; //this is the index of the motor we're starting from. We'll be looking for this motor and a continuous block from thereon in the list of robot joints...
 
-		for (int i = 0; i < robot->getJointCount(); i++) {
-			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-			if (!hj) continue;
-			if (hj->motor.motorID == j) {
+		for (int i=0;i<(int)mJoints.size();i++){
+			HJ& hj = mJoints[i];
+			if (hj.j->motor.motorID == j) {
 				smcb.targetVals.push_back(0);
-				smcb.robotJoints.push_back(hj);
+				smcb.robotJoints.push_back(hj.j);
 				j++;	//now look for the next motor to add to the list...
 				i = -1; //this is so that we start looking for the next motor id starting from the very first motor in the robot joint list
 			}
@@ -379,8 +367,6 @@ PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotCo
 		Logger::consolePrint(cmd.c_str());
 	}
 
-	if (robot->getJointCount() == multiTargetCommands.size())
-		Logger::consolePrint("ServoMotorController: found %d blocks of servos...\n", multiTargetCommands.size());
 	int mCount = 0;
 	for (uint i = 0; i < multiTargetCommands.size(); i++) {
 		mCount += multiTargetCommands[i].targetVals.size();
@@ -397,11 +383,6 @@ PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotCo
 				Logger::consolePrint("Warning: robot joints are not consistently ordered to match up with motor IDs...\n");
 		}
 	}
-
-	if (mCount != robot->getJointCount()) {
-		Logger::consolePrint("Warning: robot joints are not consistently ordered to match up with motor IDs...\n");
-	}
-
 
 
 }

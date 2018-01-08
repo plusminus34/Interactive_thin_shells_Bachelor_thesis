@@ -74,6 +74,10 @@ public:
 	
 	string robotMeshDir = "../out/";
 	string configFileName;
+
+	bool hasDesign() {
+		return rmcRobots.size() > 0;
+	}
 public:
 	// constructor
 	ModularDesignWindow(int x, int y, int w, int h, GLApplication* glApp, const char* libraryDefinitionFileName);
