@@ -18,6 +18,7 @@ class SimulationMesh{
 	friend class CSTElement3D;
 	friend class BilateralSpring3D;
 	friend class BenderApp2D;
+	friend class BenderApp3D;
 	template<int NDim> 
 	friend class InverseDeformationSolver;
 

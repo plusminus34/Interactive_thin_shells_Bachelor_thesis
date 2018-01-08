@@ -20,10 +20,6 @@ public:
 
 	DynamicArray<DynamicArray<V3D> > dtTargetDxNode;
 
-	//DynamicArray<V3D> dtTargeti_DxNodej_jsmalleri; // for each node j: the influence this node j has on the t of ANY node i
-	//DynamicArray<V3D> dtTargeti_DxNodej_jbiggeri;
-	//DynamicArray<V3D> dtTargeti_DxNodej_jequalsi;
-
 public:
 	MatchScaledTrajObjective(DynamicArray<Node * > matchedFiber, Trajectory3Dplus targetTrajectory);
 

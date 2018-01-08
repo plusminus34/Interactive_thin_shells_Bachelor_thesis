@@ -17,4 +17,6 @@ public:
 
 	virtual void addError(const dVector & x, double & e) = 0;
 
+	virtual void draw(dVector const & x) = 0;
+
 };

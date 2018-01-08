@@ -1,8 +1,9 @@
 #include "BenderApp2D.h"
+#include "BenderApp3D.h"
 
 int main(void){
 
-	BenderApp2D app;
+	BenderApp3D app;
 	app.runMainLoop();
 
 	return 0;

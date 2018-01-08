@@ -20,6 +20,6 @@ public:
 
 	virtual void addError(const dVector & x, double & e) const;
 
-	void draw(dVector const & x);
+	void draw(dVector const & x) {};
 
 };
