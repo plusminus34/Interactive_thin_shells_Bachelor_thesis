@@ -17,13 +17,13 @@
 class BenderApp3D : public GLApplication {
 public:
 	// Geometry & physics
-	BenderSimulationMesh<3>* femMesh;
+	BenderSimulationMesh<3> * femMesh;
 
 	// target trajectory for shape of mesh
 	Trajectory3Dplus targetTrajectory_input;
 
 	// solver for the inverse problem
-	InverseDeformationSolver<2> * inverseDeformationSolver;
+	InverseDeformationSolver<3> * inverseDeformationSolver;
 
 	// Optimization Algorithms
 	std::vector<GradientBasedFunctionMinimizer*> minimizers;

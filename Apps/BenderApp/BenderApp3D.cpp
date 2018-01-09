@@ -94,20 +94,20 @@ BenderApp3D::BenderApp3D()
 	mainMenu->addButton("set state as target", [this](){
 														femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
 														});
-	/*
+	
 	initInteractionMenu(mainMenu);
-	*/
+	
 	menuScreen->performLayout();
 
-	/*
+	
 	// initialize minimization algorithms
 	minimizers.push_back(new GradientDescentFunctionMinimizer(maxIterations, solveResidual, maxLineSearchIterations, false));
 	minimizers.push_back(new BFGSFunctionMinimizer           (maxIterations, solveResidual, maxLineSearchIterations, false));
 
 	// initialize the ID Solver
-	inverseDeformationSolver = new InverseDeformationSolver<2>(femMesh, minimizers[comboBoxOptimizationAlgorithm->selectedIndex()]);
+	inverseDeformationSolver = new InverseDeformationSolver<3>(femMesh, minimizers[comboBoxOptimizationAlgorithm->selectedIndex()]);
 
-
+	/*
 	//set two mounts with pins
 	addRotationMount();
 	addRotationMount();
@@ -118,6 +118,30 @@ BenderApp3D::BenderApp3D()
 	inverseDeformationSolver->pullXi();
 	*/
 	
+	auto set_mount_from_plane = [&](int dim, double val, double tolerance) 
+	{
+		std::vector<int> nodes_id(0);
+		for(int i = 0; i < femMesh->nodes.size(); ++i) {
+			P3D pt = femMesh->nodes[i]->getCoordinates(femMesh->X);
+			if(pt[dim] > val-tolerance && pt[dim] < val+tolerance) {
+				nodes_id.push_back(i);
+			}
+		}
+		if(nodes_id.size() > 0) {
+			addRotationMount();
+			int i_mount = femMesh->mounts.size()-1;
+			for(int i : nodes_id) {
+				addMountedNode(i, i_mount);
+			}
+		}
+	};
+
+	set_mount_from_plane(0, -1.0, 0.01);
+	set_mount_from_plane(0, +1.0, 0.01);
+
+
+
+
 
 }
 
@@ -580,7 +604,7 @@ void BenderApp3D::saveFile(const char* fName) {
 void BenderApp3D::process() {
 	//do the work here...
 
-	/*
+	
 	simulationTime = 0;
 	maxRunningTime = 1.0 / desiredFrameRate;
 	femMesh->checkDerivatives = checkDerivatives != 0;
@@ -588,7 +612,7 @@ void BenderApp3D::process() {
 	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
 	while (simulationTime < 1.0 * maxRunningTime) {
 
-		if(optimizeObjective) {
+		if(false && optimizeObjective) {
 			double o_new = 0;
 			o_new = inverseDeformationSolver->solveOptimization(solveResidual,
 																maxIterations,
@@ -609,7 +633,7 @@ void BenderApp3D::process() {
 			simulationTime += simTimeStep;
 		}
 	}
-	*/
+	
 }
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
