@@ -297,8 +297,8 @@ void PololuServoControlInterface::driveMotorPositionsToZero() {
 	sendControlInputsToPhysicalRobot();
 
 	Timer t;
-	while (t.timeEllapsed() < 1000);
-//	while (servosAreMoving());
+//	while (t.timeEllapsed() < 1000);
+	while (servosAreMoving());
 
 	for (auto hj : mJoints)
 		if (hj.j->controlMode == POSITION_MODE)
@@ -332,10 +332,12 @@ void PololuServoControlInterface::setTargetMotorValuesFromSimRobotState(double d
 }
 
 PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotControlInterface(robot) {
-//set up the information required for multi-motor commands. Each list should be a continuous set of motor ids
-//TODO: outer loop should be over max motor ID found
-//TODO: make a list of all joints, both normal and auxiliary (or better yet, robot should have a way of returning this list directly), and iterate over that...
-//TODO: put this in a different function so that it can be executed whenever desired...
+	createMultiWriteClusters();
+}
+
+void ::PololuServoControlInterface::createMultiWriteClusters() {
+	multiTargetCommands.clear();
+
 	int maxIDFound = -1;
 	for (auto hj : mJoints)
 		maxIDFound = max(maxIDFound, hj.j->motor.motorID);
@@ -344,7 +346,7 @@ PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotCo
 		ServoMotorCommandBlock smcb;
 		smcb.motorStartID = j; //this is the index of the motor we're starting from. We'll be looking for this motor and a continuous block from thereon in the list of robot joints...
 
-		for (int i=0;i<(int)mJoints.size();i++){
+		for (int i = 0; i<(int)mJoints.size(); i++) {
 			HJ& hj = mJoints[i];
 			if (hj.j->motor.motorID == j) {
 				smcb.targetVals.push_back(0);
@@ -371,21 +373,4 @@ PololuServoControlInterface::PololuServoControlInterface(Robot* robot) : RobotCo
 		Logger::consolePrint(cmd.c_str());
 	}
 
-	int mCount = 0;
-	for (uint i = 0; i < multiTargetCommands.size(); i++) {
-		mCount += multiTargetCommands[i].targetVals.size();
-		if (i > 0) {
-			int lastMotorID = multiTargetCommands[i-1].motorStartID + multiTargetCommands[i-1].targetVals.size() - 1;
-			int currentMotorID = multiTargetCommands[i].motorStartID;
-
-			if (currentMotorID < lastMotorID + 1)
-				Logger::consolePrint("Warning: current motor ID is not properly separated from the last motor ID: lastMotorID = %f, currentMotorID = %d\n", lastMotorID, currentMotorID);
-		}
-		for (uint j = 0; j < multiTargetCommands[i].targetVals.size(); j++) {
-			HingeJoint* hj = multiTargetCommands[i].robotJoints[j];
-			if (hj->motor.motorID != multiTargetCommands[i].motorStartID + j)
-				Logger::consolePrint("Warning: robot joints are not consistently ordered to match up with motor IDs...\n");
-		}
-	}
 }
-

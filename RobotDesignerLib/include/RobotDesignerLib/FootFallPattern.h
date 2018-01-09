@@ -150,7 +150,7 @@ public:
 
 	void writeToFile(FILE* fp) {
 
-		fprintf(fp, "%d\n\n", strideSamplePoints);
+		fprintf(fp, "%d %d\n\n", strideSamplePoints, stepPatterns.size());
 
 		for (uint i = 0; i < stepPatterns.size(); i++)
 			fprintf(fp, "%d %d\n", stepPatterns[i].startIndex, stepPatterns[i].endIndex);
@@ -166,7 +166,14 @@ public:
 	}
 
 	void loadFromFile(FILE* fp) {
-		fscanf(fp, "%d", &strideSamplePoints);
+		int tmpStrideSamplePoints = 0;
+		int tmpStepPatterns = 0;
+		fscanf(fp, "%d %d", &tmpStrideSamplePoints, &tmpStepPatterns);
+
+		if (strideSamplePoints != tmpStrideSamplePoints || tmpStepPatterns != (int)stepPatterns.size()){
+			Logger::consolePrint("FFP from file is incompatible with current settings. Skipping...\n");
+			return;
+		}
 
 		for (uint i = 0; i < stepPatterns.size(); i++)
 			fscanf(fp, "%d %d", &stepPatterns[i].startIndex, &stepPatterns[i].endIndex);

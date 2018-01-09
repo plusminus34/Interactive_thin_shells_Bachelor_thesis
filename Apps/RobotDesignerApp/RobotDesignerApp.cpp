@@ -268,6 +268,10 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 		designWindow->onKeyEvent(key, action, mods);
 	}
 
+	if (shouldShowSimWindow() && moptWindow->isActive()){
+		moptWindow->onKeyEvent(key, action, mods);
+	}
+
 	if (moptWindow->locomotionManager && moptWindow->locomotionManager->motionPlan) {
 		if (key == GLFW_KEY_UP && action == GLFW_PRESS)
 			moptWindow->moptParams.desTravelDistZ += 0.1;

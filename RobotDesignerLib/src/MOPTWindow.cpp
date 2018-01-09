@@ -31,10 +31,6 @@ void MOPTWindow::addMenuItems() {
 */
 
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("startWithEmptyFFP", startWithEmptyFFP);
-	}
-
-	{
 		auto tmpVar = glApp->mainMenu->addVariable("generate periodic motion", periodicMotion);
 	}
 
@@ -195,12 +191,10 @@ void MOPTWindow::loadRobot(Robot* robot){
 	// ******************* footfall patern *******************
 	footFallPattern = FootFallPattern();
 
-	if (startWithEmptyFFP == false){
-		int iMin = 0, iMax = nTimeSteps / nLegs - 1;
-		footFallPattern.strideSamplePoints = nTimeSteps;
-		for (int j = 0; j < nLegs; j++)
-			footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nTimeSteps / nLegs, iMax + j*nTimeSteps / nLegs);
-	}
+	int iMin = 0, iMax = nTimeSteps / nLegs - 1;
+	footFallPattern.strideSamplePoints = nTimeSteps;
+	for (int j = 0; j < nLegs; j++)
+		footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nTimeSteps / nLegs, iMax + j*nTimeSteps / nLegs);
 
 	footFallPattern.loadFromFile("../out/tmpFFP.ffp");
 }
@@ -270,6 +264,9 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	delete locomotionManager;
 
 	footFallPattern.writeToFile("../out/tmpFFP.ffp");
+
+	//make sure the ffp does not get out of sync with the number of samples in the locomotion engine...
+	nTimeSteps = footFallPattern.strideSamplePoints;
 
 	/* ---------- Set up the motion plan ---------- */
 	switch (optimizeOption)
@@ -361,6 +358,13 @@ void MOPTWindow::drawAuxiliarySceneInfo(){
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 
+}
+
+//any time a physical key is pressed, this event will trigger. Useful for reading off special keys...
+bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
+	if (initialized && ffpViewer) {
+		return (ffpViewer->onKeyEvent(key, action, mods));
+	}
 }
 
 bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){

@@ -578,10 +578,10 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 
 //syncs the footfall pattern with the current motion plan
 void LocomotionEngineMotionPlan::syncFootFallPatternWithMotionPlan(FootFallPattern& ffp) {
-	int nPoints = nSamplePoints;
+	int nPoints = nSamplePoints - 1;
 	//if this is a periodic motion, then we know we know the last data point is the exact same as the first...
-	if (wrapAroundBoundaryIndex != -1)
-		nPoints -= 1;
+//	if (wrapAroundBoundaryIndex != -1)
+//		nPoints -= 1;
 
 	ffp = FootFallPattern();
 	ffp.strideSamplePoints = nPoints;
@@ -612,7 +612,7 @@ void LocomotionEngineMotionPlan::syncFootFallPatternWithMotionPlan(FootFallPatte
 		
 		//if always in stance...
 		if (alwaysInStance) {
-//			ffp.addStepPattern(endEffectorTrajectories[eeIndex].theLimb, 0, 0);
+			ffp.addStepPattern(endEffectorTrajectories[eeIndex].theLimb, 10 * nPoints, 10 * nPoints);
 			continue;
 		}
 
