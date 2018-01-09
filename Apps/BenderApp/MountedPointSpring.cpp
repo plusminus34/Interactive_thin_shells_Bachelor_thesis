@@ -35,7 +35,7 @@ void MountedPointSpring<NDim>::addEnergyGradientTo(const dVector& x,
 	//compute the gradient, and write it out
 	//dEdx = Kx
 	P3D mountedTargetPosition = mount->getTransformedX(targetPosition);
-	for (int j = 0; j < 2; j ++) {
+	for (int j = 0; j < NDim; j ++) {
 		grad[node->dataStartIndex + j] += K * (node->getCoordinates(x)[j] - mountedTargetPosition[j]);
 	}
 }
@@ -47,8 +47,9 @@ void MountedPointSpring<NDim>::addEnergyHessianTo(const dVector & x,
 {
 	if(!mount->active) {return;}
 	//ddEdxdx = I;
-	Matrix2x2 ddEdxdx;
-	ddEdxdx << 1, 0, 0, 1;
+	using TMat = std::conditional<NDim == 2, Matrix2x2, Matrix3x3>::type;
+	TMat ddEdxdx;
+	ddEdxdx.setIdentity();
 	addSparseMatrixDenseBlockToTriplet(hesEntries, node->dataStartIndex, node->dataStartIndex, K * ddEdxdx, true);
 }
 
@@ -71,7 +72,7 @@ void MountedPointSpring<NDim>::addDeltaFDeltaXi(std::vector<dVector> & dfdxi)
 	int data_idx_start = node->dataStartIndex;
 
 	for(int i = 0; i < dfdxi_temp.size(); ++i) {
-		for(int j = 0; j < 2; ++j) {
+		for(int j = 0; j < NDim; ++j) {
 			dfdxi[xi_idx_start + i][data_idx_start + j] += dfdxi_temp[i][j];
 		}
 	}

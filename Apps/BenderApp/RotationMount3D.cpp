@@ -75,7 +75,7 @@ P3D RotationMount3D::transformation(P3D const & x0, std::vector<double> const & 
 
 	//P3D x;
 	//x = static_cast<V3D>(mat_times_vec(T_rot, static_cast<V3D>(x0)) + shift);
-	V3D x = T_rot * static_cast<V3D>(x0) + shift;
+	V3D x = T_rot * x0 + shift;
 
 	return(static_cast<P3D>(x));
 }

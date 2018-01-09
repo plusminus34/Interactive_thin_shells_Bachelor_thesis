@@ -4,7 +4,7 @@
 #include <GUILib/GLContentManager.h>
 #include <MathLib/MathLib.h>
 #include <MathLib/Plane.h>
-#include <FEMSimLib/CSTSimulationMesh2D.h>
+//#include <FEMSimLib/CSTSimulationMesh2D.h>
 #include <FEMSimLib/CSTSimulationMesh3D.h>
 #include <FEMSimLib/MassSpringSimulationMesh3D.h>
 #include <GUILib/GLUtils.h>
@@ -17,7 +17,7 @@
 #include <cstdio>
 #include <tuple>
 
-#include "RotationMount2D.h"
+#include "RotationMount3D.h"
 #include "MountedPointSpring.h"
 #include "MatchScaledTrajObjective.h"
 
@@ -323,7 +323,7 @@ bool BenderApp3D::onMouseMoveEvent(double xPos, double yPos) {
 				currentRay.getDistanceToPlane(plane,&targetPos);
 				lastMovedRay.getDistanceToPlane(plane, &lastPos);
 				V3D delta = targetPos - lastPos;
-				dynamic_cast<RotationMount2D*>(femMesh->mounts[selected_mount])->shift(delta);
+				dynamic_cast<RotationMount3D*>(femMesh->mounts[selected_mount])->shift(delta);
 			}
 			return(true);
 		}
@@ -507,7 +507,7 @@ bool BenderApp3D::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 				Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
 				P3D origin; 
 				currentRay.getDistanceToPlane(plane,&origin);
-				dynamic_cast<RotationMount2D*>(femMesh->mounts[selected_mount])->rotate(origin, yOffset * 0.05);
+				dynamic_cast<RotationMount3D*>(femMesh->mounts[selected_mount])->rotate(origin, yOffset * 0.05, 0.0, 0.0);
 			}
 			return(true);
 		}
@@ -724,7 +724,7 @@ void BenderApp3D::restart()
 
 void BenderApp3D::addRotationMount() 
 {
-	femMesh->addMount<RotationMount2D>();
+	femMesh->addMount<RotationMount3D>();
 	inverseDeformationSolver->pullXi();
 	updateMountSelectionBox();
 }
