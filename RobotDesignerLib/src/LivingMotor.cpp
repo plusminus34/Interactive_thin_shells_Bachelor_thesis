@@ -15,8 +15,7 @@ LivingMotor::LivingMotor(const char* LMType){
 
 		bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
 		hornMaterial.setColor(0.7, 0.7, 0.7, 1.0);
-	}
-	if (strcmp(trim((char*)LMType), "BK3002") == 0) {
+	} else if (strcmp(trim((char*)LMType), "BK3002") == 0) {
 		bodyBracket = new LivingMotorBodyBracket_BK3002();
 		hornBracket = new LivingHornBracket_BK3002();
 
