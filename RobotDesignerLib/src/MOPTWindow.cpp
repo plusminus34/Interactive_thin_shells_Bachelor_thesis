@@ -365,6 +365,7 @@ bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
 	if (initialized && ffpViewer) {
 		return (ffpViewer->onKeyEvent(key, action, mods));
 	}
+	return false;
 }
 
 bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){

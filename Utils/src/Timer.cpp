@@ -46,7 +46,7 @@ void Timer::restart(){
 }
 
 /**
-	This method returns the number of milliseconds that has ellapsed since the timer was restarted.
+	This method returns the number of seconds that has ellapsed since the timer was restarted.
 */
 double Timer::timeEllapsed(){
 #ifdef WIN32
@@ -58,7 +58,7 @@ double Timer::timeEllapsed(){
 	SetThreadAffinityMask(GetCurrentThread(), oldmask);
 	if (tempTime<startTime)
 		return 0;
-	return (tempTime - startTime) / countsPerMillisecond;
+	return (tempTime - startTime) / (double)frequency;
 #else
 	struct timeval endTime;
 	struct timeval interval_elapsed;
