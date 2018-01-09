@@ -17,7 +17,7 @@
 class BenderApp3D : public GLApplication {
 public:
 	// Geometry & physics
-	BenderSimulationMesh<2>* femMesh;
+	BenderSimulationMesh<3>* femMesh;
 
 	// target trajectory for shape of mesh
 	Trajectory3Dplus targetTrajectory_input;
@@ -110,7 +110,7 @@ public:
 	virtual bool processCommandLine(const std::string& cmdLine);
 	
 	virtual void saveFile(const char* fName);
-	virtual void loadFile(const char* fName);
+	virtual void loadFile(char* fName);
 
 	void pushInputTrajectory(Trajectory3Dplus & trajInput);
 

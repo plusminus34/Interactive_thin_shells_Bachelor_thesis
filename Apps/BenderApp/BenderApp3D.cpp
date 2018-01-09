@@ -34,7 +34,7 @@ BenderApp3D::BenderApp3D()
 
 
 
-	
+	/*
 	int nRows = 24;
 	int nCols = 6;
 	double length = 2.0;
@@ -44,7 +44,20 @@ BenderApp3D::BenderApp3D()
 	femMesh = new BenderSimulationMesh<2>();
 	femMesh->readMeshFromFile("../data/FEM/2d/triMeshTMP.tri2d");
 	//femMesh->addGravityForces(V3D(0, -9.8, 0));
+	
+	*/
+
+	//femMesh = new BenderSimulationMesh<3>();
+	//femMesh->readMeshFromFile("../data/3dModels/cylinder_vertical_1x20.obj");
+	//loadFile("../data/3dModels/cylinder_vertical_1x20.obj");
+
+	//loadFile("../data/3dModels/extruded_polygon_1x20.obj");
+	//loadFile("../data/3dModels/cylinder_vertical_1x20.obj");
+	loadFile("../data/3dModels/extruded_polygon_0p1x2.ply");
+
 	femMesh->addGravityForces(V3D(0, 0, 0));
+
+
 
 	/*
 
@@ -530,25 +543,29 @@ bool BenderApp3D::onCharacterPressedEvent(int key, int mods) {
 }
 
 
-void BenderApp3D::loadFile(const char* fName) {
+void BenderApp3D::loadFile(char* fName) {
 	Logger::consolePrint("Loading file \'%s\'...\n", fName);
 	std::string fileName;
 	fileName.assign(fName);
 
 	std::string fNameExt = fileName.substr(fileName.find_last_of('.') + 1);
 	if (fNameExt == "tri2d") {
-		delete femMesh;
-		femMesh = new BenderSimulationMesh<2>;
+		//delete femMesh;
+		femMesh = new BenderSimulationMesh<3>;
 		femMesh->readMeshFromFile(fName);
 		Logger::consolePrint("...Done!");
 	} else if (fNameExt == "obj") {
-		std::cerr << "Error: functionality not implemented. (" << __FILE__ << ":" << __LINE__ << ")" << std::endl;
-		exit(1);
 		//delete femMesh;
-		//femMesh = new CSTSimulationMesh3D;
-		//femMesh->readMeshFromFile(fName);
-		//Logger::consolePrint("...Done!");
-	} else {
+		femMesh = new BenderSimulationMesh<3>;
+		femMesh->readMeshFromFile(fName);
+		Logger::consolePrint("...Done!");
+	} else if(fNameExt == "ply") {
+		//delete femMesh;
+		femMesh = new BenderSimulationMesh<3>;
+		femMesh->readMeshFromFile_ply(fName);
+		Logger::consolePrint("...Done!");
+	}	
+	else {
 		Logger::consolePrint("...but how to do with that?");
 	}
 

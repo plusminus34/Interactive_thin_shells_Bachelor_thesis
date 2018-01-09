@@ -13,6 +13,7 @@ public:
     ~CSTSimulationMesh3D();
 
     void readMeshFromFile(const char* fName);
+	void readMeshFromFile_ply(char* fName);
 
     static void generateCubeTriMesh(char* fName);
 
