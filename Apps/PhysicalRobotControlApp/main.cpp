@@ -11,33 +11,31 @@
 
 int main(void){
 
-    //PhysicalRobotControlApp app;
-    //app.runMainLoop();
+    PhysicalRobotControlApp app;
+    app.runMainLoop();
 
-    // --- TESTS ---
-    YuMiArm yumiArmRight("right");
-    //YuMiArm yumiArmLeft("left");
-    YuMiConstants YMC;
-    std::cout << "Main loop" << std::endl;
 
-    while(true){
-        bool ping = yumiArmRight.ping();
+//    std::cout << "Test Main Loop" << std::endl;
+//    YuMiArm yumiArmRight;
+//    yumiArmRight.init("right");
 
-        std::vector<double> joints(YMC.NUM_JOINTS, 0.00);
-        bool state = yumiArmRight.getState(joints);
+//    std::vector<float> joints1 = yumiArmRight.getJoints();
+//    std::vector<float> joints2 = joints1;
+//    joints2[3] += RAD(20);
 
-        std::cout << "J1: " << joints[0] << std::endl;
-        std::cout << "J2: " << joints[1] << std::endl;
-        std::cout << "J3: " << joints[2] << std::endl;
-        std::cout << "J4: " << joints[3] << std::endl;
-        std::cout << "J5: " << joints[4] << std::endl;
-        std::cout << "J6: " << joints[5] << std::endl;
-        std::cout << "J7: " << joints[6] << std::endl;
+//    for(int i = 0; i < 7; i++){
+//        std::cout << "joint " << (i+1) << ": " << joints1[i] << "   " << joints2[i] << std::endl;
+//    }
 
-        usleep(500000);
-    }
+//    for(int i = 0; i < 2; i++){
+//        yumiArmRight.gotoJointPose(joints2);
+//        yumiArmRight.gotoJointPose(joints1);
+//    }
 
-	return 0;
+//    yumiArmRight.closeConnection();
+//    usleep(1000000);
+
+    return 0;
 }
 
 

@@ -1,24 +1,27 @@
 #pragma once
 
-//#include <string>
-//#include <map>
 #include "RobotControlInterface.h"
+#include "../YuMiLib/include/YuMiLib/YuMiArm.h"
 
-//using namespace	std;
+#include <string>
+#include <iostream>
 
 /**
 * Implements communication with yumi robot
 */
+
 class YuMiControlInterface : public RobotControlInterface{
 private:
-    // nothing so far ...
+    //arms
+    YuMiArm leftArm, rightArm;
 
 public:
 	// constructor
     YuMiControlInterface(Robot* robot);
 
 	// destructor
-    virtual ~YuMiControlInterface(void) {}
+    ~YuMiControlInterface();
+
 
 	//set motor goals from target values
 	virtual void sendControlInputsToPhysicalRobot();
@@ -32,5 +35,6 @@ public:
 	virtual void openCommunicationPort();
 	virtual void closeCommunicationPort();
 	virtual void driveMotorPositionsToZero();
+    virtual void driveMotorPositionsToTestPos();
 
 };

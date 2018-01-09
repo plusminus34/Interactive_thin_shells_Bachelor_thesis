@@ -12,6 +12,8 @@
 #include <GUILib/GLWindowContainer.h>
 #include <ControlLib/IK_Solver.h>
 
+#include <iostream>
+
 using namespace	std;
 
 /**
@@ -61,6 +63,7 @@ public:
 
 	//set current sim values from robot readings...
 	virtual void syncSimRobotWithPhysicalRobot() {
+        //std::cout << "syncSimRobotWithPhysicalRobot" << std::endl;
 		readPhysicalRobotMotorPositions();
 		readPhysicalRobotMotorVelocities();
 		setSimRobotStateFromCurrentMotorValues();
@@ -68,7 +71,8 @@ public:
 
 	//the time window dt estimates the amount of time before the next command is issued (or, alternatively, how long we'd expect the physical robot to take before it can match the target values)
 	virtual void syncPhysicalRobotWithSimRobot(double dt = 0.1) {
-		setTargetMotorValuesFromSimRobotState(dt);
+        //std::cout << "syncPhysicalRobotWithSimRobot" << std::endl;
+        setTargetMotorValuesFromSimRobotState(dt);
 		sendControlInputsToPhysicalRobot();
 	}
 
@@ -82,6 +86,7 @@ public:
 	virtual void openCommunicationPort() = 0;
 	virtual void closeCommunicationPort() = 0;
 	virtual void driveMotorPositionsToZero() = 0;
+    virtual void driveMotorPositionsToTestPos() = 0;
 
 	void toggleMotorPower() {
 		motorsOn = !motorsOn;

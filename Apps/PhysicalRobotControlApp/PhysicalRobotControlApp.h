@@ -24,12 +24,12 @@ private:
 	Robot* robot = NULL;
 	AbstractRBEngine* rbEngine = NULL;
 	ReducedRobotState startState = ReducedRobotState(14);
-	bool showMesh = false;
+    bool showMesh = true;
 	bool showMOI = false;
 	bool showRotationAxes = false;
 	bool showCDPs = false;
 
-	bool playFFTrajectory = true;
+    bool playFFTrajectory = false;
 	double trajPhase = 0.0;
 	double trajDuration = 1.0;
 

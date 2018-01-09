@@ -6,32 +6,37 @@
 #include <string>
 #include <vector>
 
-
 class YuMiArm{
+
 private:
     std::string armSide;
     int robotSocket;
-    bool socketConnected;
+    bool connected;
     pthread_mutex_t sendRecvMutex;
 
-    YuMiConstants YMC;
-    YuMiCom yumiCom;
+    float joint1, joint2, joint3, joint4, joint5, joint6, joint7; //joint values in rad!
+    unsigned int speed;
 
 public:
     //Constructor
-    YuMiArm(std::string arm);
+    YuMiArm();
 
     //Destructor
     ~YuMiArm();
 
     //Functions
-    void init(std::string arm);
-    bool connectServer(const char* ip, unsigned int port);
-    bool ping();
+    bool init(std::string arm);
+    bool connectServer(const char* p, unsigned int port);
+    bool closeConnection();
     bool sendAndReceive(char *message, int messageLength, char* reply, int idCode);
 
-    bool getState(std::vector<double> &joints);
+    bool pingRobot();
+    std::vector<float> getJoints();
+    bool gotoJointPose(std::vector<float> joints);
+    bool setSpeed(unsigned int s);
+    unsigned int getSpeed();
 
-    void parseMessage(std::string message, std::vector<double> &parsedValues);
+    bool getConnected();
+
 
 };

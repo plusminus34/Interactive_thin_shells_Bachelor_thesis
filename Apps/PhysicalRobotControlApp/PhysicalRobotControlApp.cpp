@@ -14,12 +14,12 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 
 //	loadFile("../data/rbs/robotArm1DOF.rbs");
 //	loadFile("../data/rbs/robotArm2DOF.rbs");
-//	loadFile("../data/rbs/robotArm3DOF.rbs");
+//    loadFile("../data/rbs/robotArm3DOF.rbs");
 
     loadFile("../data/rbs/yumi/yumi.rbs");
 
-	showMesh = false;
-	showRotationAxes = true;
+    showMesh = true;
+    showRotationAxes = false;
 
 	mainMenu->addGroup("IK App Visualization options");
 
@@ -47,6 +47,11 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	button->setCallback([this]() { if (rci && rci->isConnected()) rci->driveMotorPositionsToZero(); });
 	button->setIcon(ENTYPO_ICON_HOME);
 	button->setTooltip("GoToZero");
+
+    button = new nanogui::Button(tools, "");
+    button->setCallback([this]() { if (rci && rci->isConnected()) rci->driveMotorPositionsToTestPos(); });
+    button->setIcon(ENTYPO_ICON_HOME);
+    button->setTooltip("GoToTestPos");
 
 
 	mainMenu->addVariable("Follow Trajectory", playFFTrajectory);
@@ -112,7 +117,8 @@ PhysicalRobotControlApp::~PhysicalRobotControlApp(void) {
 
 // Restart the application.
 void PhysicalRobotControlApp::restart() {
-	loadFile("../data/rbs/bip/bip.rbs");
+//	loadFile("../data/rbs/bip/bip.rbs");
+    loadFile("../data/rbs/yumi/yumi.rbs");
 }
 
 // Run the App tasks
@@ -258,12 +264,12 @@ void PhysicalRobotControlApp::drawScene() {
 
 	rbEngine->drawRBs(flags);
 
-	ReducedRobotState rs(robot);
-	if (rci) 
-		rci->syncSimRobotWithPhysicalRobot();
-	glTranslated(0.2, 0, 0);
-	rbEngine->drawRBs(flags);
-	robot->setState(&rs);
+    ReducedRobotState rs(robot);
+    if (rci)
+        rci->syncSimRobotWithPhysicalRobot();
+//	glTranslated(0.2, 0, 0);
+//	rbEngine->drawRBs(flags);
+//	robot->setState(&rs);
 
 	glPopMatrix();
 	glDisable(GL_LIGHTING);

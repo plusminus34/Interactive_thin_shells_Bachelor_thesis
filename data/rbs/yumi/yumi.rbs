@@ -64,7 +64,7 @@ RigidBody
 
 
 	hingeJoint
-		jointAxes 0.935828 -6.129759 6.193931
+		jointAxes -0.935828 6.129759 -6.193931
 		dxlID -1
 		name joint_link_1_2_r
 		parent link_1_r
@@ -120,7 +120,7 @@ RigidBody
 
 
 	hingeJoint
-		jointAxes 0.935810 -6.129468 6.193658
+		jointAxes -0.935810 6.129468 -6.193658
 		dxlID -1
 		name joint_link_3_4_r
 		parent link_3_r
@@ -176,7 +176,7 @@ RigidBody
 
 
 	hingeJoint
-		jointAxes 0.935805 -6.129355 6.193550
+		jointAxes -0.935805 6.129355 -6.193550
 		dxlID -1
 		name joint_link_5_6_r
 		parent link_5_r
@@ -204,7 +204,7 @@ RigidBody
 
 
 	hingeJoint
-		jointAxes -0.973698 0.918049 1.055650
+		jointAxes 0.973698 -0.918049 -1.055650
 		dxlID -1
 		name joint_link_6_7_r
 		parent link_6_r
@@ -261,7 +261,7 @@ RigidBody
 
 
 	hingeJoint
-		jointAxes -0.082180 0.538270 0.543910
+		jointAxes 0.082180 -0.538270 -0.543910
 		dxlID -1
 		name joint_link_1_2_l
 		parent link_1_l
@@ -317,7 +317,7 @@ RigidBody
 
 
 	hingeJoint
-		jointAxes -0.082180 0.538270 0.543910
+		jointAxes 0.082180 -0.538270 -0.543910
 		dxlID -1
 		name joint_link_3_4_l
 		parent link_3_l
@@ -373,7 +373,7 @@ RigidBody
 
 
 	hingeJoint
-		jointAxes -0.082176 0.538265 0.543910
+		jointAxes 0.082176 -0.538265 -0.543910
 		dxlID -1
 		name joint_link_5_6_l
 		parent link_5_l
