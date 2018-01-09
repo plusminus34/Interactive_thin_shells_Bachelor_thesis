@@ -124,17 +124,6 @@ void Trajectory3Dplus::setTValueToLength() {
 	}
 }
 
-/*
-void Trajectory3Dplus::updateDiscreteSpline() {
-
-	if(discreteSpline == NULL) {
-		discreteSpline = new Trajectory3Dplus();
-	}
-
-	createDiscreteSpline(50, *discreteSpline);
-
-}
-*/
 
 void Trajectory3Dplus::createDiscreteSpline(int n, Trajectory3Dplus & spline)
 {
@@ -146,12 +135,6 @@ void Trajectory3Dplus::createDiscreteSpline(int n, Trajectory3Dplus & spline)
 
 	spline.values.resize(n);
 	spline.tValues.resize(n);
-	// first and last knot of spline
-	//spline.tValues.front() = this->getMinPosition();
-	//spline.tValues.back() = this->getMaxPosition();
-	//spline.values.front() = this->values.front();
-	//spline.values.back() = this->values.back();
-	// rest
 	for(int i = 0; i < n; ++i) {
 		spline.tValues[i] = this->getMinPosition() + dt * static_cast<double>(i);
 		spline.values[i] = this->evaluate_catmull_rom(spline.tValues[i], false);

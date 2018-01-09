@@ -11,7 +11,6 @@ public:
 public:
 	RotationMount2D() {parametersStartIndex = 0; parameters.assign(3, 0);}
 
-
 	RotationMount2D(double alpha, double shift_1, double shift_2, int parametersStartIndex) {
 		this->parametersStartIndex = parametersStartIndex;
 		parameters.assign({alpha, shift_1, shift_2});

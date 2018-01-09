@@ -108,18 +108,6 @@ void MatchScaledTrajObjective::update_tNode(dVector const & x)
 	for(int i = 0; i < n; ++i) {
 		tNodeTarget[i] = tNodeFiber[i] * t_tgt / t_fiber;
 	}
-/*
-std::cout << "t_tgt = " << t_tgt << std::endl;
-std::cout << "t_fiber = " << t_fiber << std::endl;
-for(double t : tNodeTarget) {
-	std::cout << t << " ";
-}
-std::cout << std::endl;
-for(double t : tNodeFiber) {
-	std::cout << t << " ";
-}
-std::cout << std::endl;
-*/
 }
 
 

@@ -133,6 +133,12 @@ BenderApp3D::BenderApp3D()
 	targetTrajectory_input.setTValueToLength();
 	femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
 
+// output storage layout of nodes
+std::cout << "Node Storage:" << std::endl;
+for(int i = 0; i < femMesh->nodes.size(); ++i) {
+	void * ptr_i = static_cast<void *>(femMesh->nodes[i]);
+	std::cout << ptr_i << std::endl;
+}
 
 }
 

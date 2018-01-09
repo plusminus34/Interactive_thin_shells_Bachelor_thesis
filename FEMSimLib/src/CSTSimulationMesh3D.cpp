@@ -69,6 +69,7 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName)
 	v.resize(3 * nodeCount);
 	f_ext.resize(3 * nodeCount);
 	m.resize(3 * nodeCount);
+
 	for (int i = 0; i<nodeCount; i++) {
 		Node* newNode = new Node(this, i, 3 * i, 3);
 		double *p = output.pointlist + 3 * i;
