@@ -630,7 +630,7 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 	FILE* fp = fopen(fName, "w+");
 	
 	int RBIndex = 1;
-	map<RMC*, int> RBIndexMap;
+	vector<std::pair<RMC*, int>> RBIndexMap;
 	getRMCToRBIndexMap(root, 0, RBIndex, RBIndexMap);
 
 	vector<RigidBody> tmpRBs(RBIndex);
@@ -727,7 +727,9 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 			}
 			if (bracketConnectedRMC)
 			{
-				RigidBody& bracketConnectedRB = tmpRBs[RBIndexMap[bracketConnectedRMC]];
+				auto it = std::find_if(RBIndexMap.begin(), RBIndexMap.end(),
+					[bracketConnectedRMC](const auto &el) {return el.first == bracketConnectedRMC; });
+				RigidBody& bracketConnectedRB = tmpRBs[it->second];
 				bracketConnectedRB.meshes.push_back(livingRMC->hornBracket->bracketMesh);
 				Transformation trans;
 				trans.R = rmc->state.orientation.getRotationMatrix();
@@ -833,7 +835,9 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 		RMCJoint* joint = jointList[i];
 		RMC* parentRMC = jointList[i]->getParent();
 		RMC* childRMC = jointList[i]->getChild();
-		RigidBody* parentRB = &tmpRBs[RBIndexMap[parentRMC]];
+		auto it = std::find_if(RBIndexMap.begin(), RBIndexMap.end(),
+			[parentRMC](const auto &el) {return el.first == parentRMC; });
+		RigidBody* parentRB = &tmpRBs[it->second];
 		if (parentRB == &tmpRBs[0]) {
 			RMC* motorRMC = NULL;
 			if (joint->parentPin && joint->parentPin->type == HORN_PIN) {
@@ -875,8 +879,12 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 		RMCJoint* joint = jointList[i];
 		RMC* parentRMC = jointList[i]->getParent();
 		RMC* childRMC = jointList[i]->getChild();
-		RigidBody* parentRB = &tmpRBs[RBIndexMap[parentRMC]];
-		RigidBody* childRB = &tmpRBs[RBIndexMap[childRMC]];
+		auto it = std::find_if(RBIndexMap.begin(), RBIndexMap.end(),
+			[parentRMC](const auto &el) {return el.first == parentRMC; });
+		RigidBody* parentRB = &tmpRBs[it->second];
+		it = std::find_if(RBIndexMap.begin(), RBIndexMap.end(),
+			[childRMC](const auto &el) {return el.first == childRMC; });
+		RigidBody* childRB = &tmpRBs[it->second];
 		RMC* motorRMC;
 		string jointName = parentRB->name + "_" + childRB->name;
 
@@ -944,8 +952,8 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 
 }
 
-void RMCRobot::getRMCToRBIndexMap(RMC* node, int curIndex, int& RBIndex, map<RMC*, int>& RBIndexMap){		
-	RBIndexMap[node] = curIndex;
+void RMCRobot::getRMCToRBIndexMap(RMC* node, int curIndex, int& RBIndex, vector<std::pair<RMC*, int>>& RBIndexMap){		
+	RBIndexMap.push_back(std::pair<RMC*, int>(node, curIndex));
 
 	// TODO
 	/*if (node->getChildJointCount() == 0 && node->rbProperties.endEffectorPoints.empty())
