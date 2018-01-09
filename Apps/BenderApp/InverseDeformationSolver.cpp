@@ -170,8 +170,10 @@ double InverseDeformationSolver<NDim>::peekOofXi(dVector const & xi_in)
 	// new parameters
 	xi = xi_in;
 	pushXi();
-	femMesh->solve_statics();
+	//femMesh->solve_statics();
+	solveMesh(true);
 	double O = femMesh->computeO();
+std::cout << "    tried new xi; O was " << O << std::endl;
 
 	// set mesh to old state
 	xi = xi_temp;

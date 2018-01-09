@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <tuple>
 
 #include "RotationMount2D.h"
 #include "MountedPointSpring.h"
@@ -107,17 +108,7 @@ BenderApp3D::BenderApp3D()
 	// initialize the ID Solver
 	inverseDeformationSolver = new InverseDeformationSolver<3>(femMesh, minimizers[comboBoxOptimizationAlgorithm->selectedIndex()]);
 
-	/*
-	//set two mounts with pins
-	addRotationMount();
-	addRotationMount();
-	for (int i = 0; i < nCols; ++i) {
-		addMountedNode(i, 0);
-		addMountedNode((nRows-1)*nCols + i, 1);
-	}
-	inverseDeformationSolver->pullXi();
-	*/
-	
+	// set mounts on both ends
 	auto set_mount_from_plane = [&](int dim, double val, double tolerance) 
 	{
 		std::vector<int> nodes_id(0);
@@ -140,7 +131,54 @@ BenderApp3D::BenderApp3D()
 	set_mount_from_plane(0, +1.0, 0.01);
 
 
+	// create matched/target trajectory pair
+	auto node_sequence_from_line_segment = [&](P3D const & pt1, P3D const & pt2, double tolerance,
+		                                       DynamicArray<Node*> & fiber)
+	{
+		using T_i_t = std::tuple<int, double>;
+		DynamicArray<T_i_t> nodes_id_and_t(0);
+		//std::vector<double> t(0);
 
+		V3D vec(pt1, pt2);
+		double vec_length = vec.length();
+
+		// find all nodes close to the line segment
+		for(int i = 0; i < femMesh->nodes.size(); ++i) {
+			Node * node = femMesh->nodes[i];
+			P3D pt_node = node->getCoordinates(femMesh->X);
+			V3D pt1ToNode(pt1, pt_node);
+			double d2 = pt1ToNode.cross(vec).squaredNorm() / vec.squaredNorm();
+			if(d2 < tolerance*tolerance) {	// node within cylinder
+				double t_temp = vec.dot(pt1ToNode) / vec.length();
+				if(t_temp > -tolerance && t_temp < vec.length() + tolerance) {
+					nodes_id_and_t.push_back(std::make_tuple(i, t_temp));
+				}
+			}
+		}
+		// sort nodes
+		std::sort(nodes_id_and_t.begin(), nodes_id_and_t.end(), 
+				  [](T_i_t const & n1, T_i_t const & n2) -> bool {return(std::get<1>(n1) < std::get<1>(n2));});
+
+		// create fiber (sequence of nodes)
+		fiber.resize(0);
+		for(T_i_t i_t : nodes_id_and_t) {
+			fiber.push_back(femMesh->nodes[std::get<0>(i_t)]);
+		}
+	};
+
+
+	// add a fiber in Mesh to match
+	DynamicArray<Node *> matchedFiber;
+	node_sequence_from_line_segment(P3D(-1.0,0.0,0.0), P3D(1.0,0.0,0.0), 0.01, matchedFiber);
+
+	// draw some target trjectory
+	targetTrajectory_input.addKnotBack(P3D(-1.0, 0.2, 0.0));
+	targetTrajectory_input.addKnotBack(P3D( 0.0, 0.4, 0.0));
+	targetTrajectory_input.addKnotBack(P3D( 1.0, 0.2, 0.0));
+
+	// add a "MatchScaledTrajObjective"
+	targetTrajectory_input.setTValueToLength();
+	femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
 
 
 }
@@ -612,7 +650,7 @@ void BenderApp3D::process() {
 	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
 	while (simulationTime < 1.0 * maxRunningTime) {
 
-		if(false && optimizeObjective) {
+		if(optimizeObjective) {
 			double o_new = 0;
 			o_new = inverseDeformationSolver->solveOptimization(solveResidual,
 																maxIterations,
