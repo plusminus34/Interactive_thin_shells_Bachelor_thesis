@@ -1,7 +1,8 @@
 #pragma once
-
+#include <OptimizationLib/BFGSHessianApproximator.h>
 #include <../Apps/RobotDesignerApp/RobotDesignerApp.h>
-
+#include <memory>
+class BFGSHessianApproximator;
 class IntelligentRobotEditingWindow : public GLWindow3D {
 public:
 	RobotDesignerApp* rdApp;
@@ -58,5 +59,7 @@ private:
 	bool compute_dgdp_With_FD = true;
 	int optimizeEnergyNum = 11;
 	double stepSize = 0.01;
+	std::unique_ptr<BFGSHessianApproximator> lbfgsMinimizer;
+	bool useLBFGS = false;
 };
 

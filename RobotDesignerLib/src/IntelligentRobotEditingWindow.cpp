@@ -25,6 +25,7 @@ IntelligentRobotEditingWindow::IntelligentRobotEditingWindow(int x, int y, int w
 
 	tWidget = new TranslateWidget(AXIS_X | AXIS_Y | AXIS_Z);
 	tWidget->visible = false;
+	lbfgsMinimizer = make_unique<BFGSHessianApproximator>(20);
 }
 
 void IntelligentRobotEditingWindow::addMenuItems() {
@@ -405,7 +406,7 @@ void IntelligentRobotEditingWindow::updateJacobian()
 	Eigen::SimplicialLDLT<SparseMatrix, Eigen::Lower> solver;
 	//	Eigen::SparseLU<SparseMatrix> solver;
 	solver.compute(dgdm);
-	Logger::consolePrint("Time to construct dgdm: %lf\n", timerN.timeEllapsed());
+// 	Logger::consolePrint("Time to construct dgdm: %lf\n", timerN.timeEllapsed());
 	double dp = 0.001;
 	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
 	timerN.restart();
@@ -432,10 +433,10 @@ void IntelligentRobotEditingWindow::updateJacobian()
 	{
 
 	}
-	Logger::consolePrint("Time to construct dgdp: %lf\n", timerN.timeEllapsed());
+// 	Logger::consolePrint("Time to construct dgdp: %lf\n", timerN.timeEllapsed());
 	timerN.restart();
 	dmdp = solver.solve(dgdp) * -1;
-	Logger::consolePrint("Time to solve for J: %lf\n", timerN.timeEllapsed());
+// 	Logger::consolePrint("Time to solve for J: %lf\n", timerN.timeEllapsed());
 
 	if (useSVD)
 	{
@@ -498,18 +499,54 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 
 void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep(ObjectiveFunction* objFunction) {
 	updateJacobian();
+	LocomotionEngine_EnergyFunction *totalEnergy = rdApp->moptWindow->locomotionManager->energyFunction;
+	std::vector<bool> hackHessian(totalEnergy->objectives.size());
+	for (int i = 0; i < totalEnergy->objectives.size(); i++)
+	{
+		hackHessian[i] = totalEnergy->objectives[i]->hackHessian;
+		totalEnergy->objectives[i]->hackHessian = false;
+	}
 
 	//If we have some objective O, expressed as a function of m, then dO/dp = dO/dm * dm/dp
 	dVector dOdm;
 	dVector dOdp;
+	dVector p, m;
 	resize(dOdm, m0.size());
 	resize(dOdp, p0.size());
-
 	objFunction->addGradientTo(dOdm, m0);
-	
-	dOdp = dmdp.transpose() * dOdm;
-	dOdp /= dOdp.maxCoeff();
-	updateParamsAndMotion(p0-stepSize*dOdp);
+
+	double currStepSize;
+	dOdp = dOdm.transpose() * dmdp;
+	if (useLBFGS)
+	{
+		lbfgsMinimizer->add_x_and_dfdx_to_history(p0, dOdp);
+		dOdp = lbfgsMinimizer->compute_Hinv_v(dOdp);
+		currStepSize = 1;
+	}
+	else
+	{
+		dOdp /= dOdp.maxCoeff();
+		currStepSize = stepSize;
+	}
+	double O0 = objFunction->computeValue(m0);
+	double E0 = totalEnergy->computeValue(m0);
+	double Ocurr, Ecurr;
+	int i;
+	for(i=0; i<15; i++)
+	{
+		p = p0 - currStepSize * dOdp;
+		m = m0 - currStepSize * dmdp * dOdp;
+		setParamsAndUpdateMOPT(p);
+		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m);
+		Ocurr = objFunction->computeValue(m);
+		Ecurr = totalEnergy->computeValue(m);
+		if (Ocurr < O0)
+			break;
+		currStepSize /= 2;
+	}
+	for (int i = 0; i < totalEnergy->objectives.size(); i++)
+		totalEnergy->objectives[i]->hackHessian = hackHessian[i];
+	Logger::consolePrint("Design optimization line search number of steps: %d", i);
 }
 
 void IntelligentRobotEditingWindow::showMenu(){
@@ -550,7 +587,7 @@ void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
 	rdApp->mainMenu->addVariable("Use Jacobian", updateMotionBasedOnJacobian);
 	rdApp->mainMenu->addVariable("Use SVD", useSVD);
 
-	rdApp->mainMenu->addVariable("Optimize Energy num", optimizeEnergyNum);
+	rdApp->mainMenu->addVariable("Use lbfgs", useLBFGS);
 	rdApp->mainMenu->addVariable("Step Size", stepSize);
 
 	using namespace nanogui;
@@ -611,7 +648,6 @@ void IntelligentRobotEditingWindow::updateParamsUsingSliders(int paramIndex, dou
 	}
 	updateParamsAndMotion(p);
 }
-
 void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const dVector& p) {
 	rdApp->prd->setParameters(p);
 	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
