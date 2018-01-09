@@ -203,12 +203,12 @@ void Trajectory3Dplus::removeKnotInteractive(int knotID)
 	}
 }
 
-int Trajectory3Dplus::getSelectedKnotID(Ray const & ray){
+int Trajectory3Dplus::getSelectedKnotID(Ray const & ray)
+{
 	int ID = -1;
 	double dis = 2e9;
 	for (uint i = 0; i < values.size(); i++) {
 		P3D tp = values[i];
-		tp.z() = 0;
 		double tDis = ray.getDistanceToPoint(tp) / (sqrt((tp-ray.origin).dot(tp - ray.origin)));
 		//Logger::consolePrint("%lf %lf %lf %lf\n", tp.x(), tp.y(), tp.z(), tDis);
 		if (tDis < 0.01 && tDis < dis) {
@@ -219,6 +219,31 @@ int Trajectory3Dplus::getSelectedKnotID(Ray const & ray){
 	return ID;
 }
 
+
+double Trajectory3Dplus::getDistanceToRay(Ray const & ray, P3D *closestPtOnRay)
+{
+	if(values.size() == 0) {
+		closestPtOnRay = NULL;
+		return(-1.0);
+	}
+	else if(values.size() == 1) {
+		return(ray.getDistanceToPoint(values[0], closestPtOnRay));
+	}
+	else {
+		double d_min = std::numeric_limits<double>::max();
+		double i_min = -1;
+		for(int i = 0; i < values.size()-1; ++i) {
+			double d;
+			d = ray.getDistanceToSegment(values[i], values[i+1], closestPtOnRay);
+			if(d < d_min) {
+				d_min = d;
+				i_min = i;
+			}
+		}
+
+		return(ray.getDistanceToSegment(values[i_min], values[i_min+1], closestPtOnRay));
+	}
+}
 
 
 void Trajectory3Dplus::draw(V3D lineColor, int lineWidth, V3D knotColor, double knotSize) {

@@ -32,6 +32,7 @@ public:
 	void removeKnotInteractive(int knotID);
 
 	int getSelectedKnotID(Ray const & ray);
+	double getDistanceToRay(Ray const & ray, P3D *closestPtOnRay = NULL);
 
 	void draw(V3D lineColor, int lineWidth, V3D knotColor, double knotSize);
 

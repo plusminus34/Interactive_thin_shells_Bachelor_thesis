@@ -33,60 +33,13 @@ BenderApp3D::BenderApp3D()
 
 
 
-
-
-	/*
-	int nRows = 24;
-	int nCols = 6;
-	double length = 2.0;
-	double height = 0.1;
-	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -length/2.0, 0, length/(nRows-1), height/(nCols-1), nRows, nCols);
-
-	femMesh = new BenderSimulationMesh<2>();
-	femMesh->readMeshFromFile("../data/FEM/2d/triMeshTMP.tri2d");
-	//femMesh->addGravityForces(V3D(0, -9.8, 0));
-	
-	*/
-
-	//femMesh = new BenderSimulationMesh<3>();
-	//femMesh->readMeshFromFile("../data/3dModels/cylinder_vertical_1x20.obj");
-	//loadFile("../data/3dModels/cylinder_vertical_1x20.obj");
-
-	//loadFile("../data/3dModels/extruded_polygon_1x20.obj");
-	//loadFile("../data/3dModels/cylinder_vertical_1x20.obj");
+	// create mesh
 	loadFile("../data/3dModels/extruded_polygon_0p1x2.ply");
 
 	femMesh->addGravityForces(V3D(0, 0, 0));
 
 
-
-	/*
-
-	// draw some target trjectory
-	targetTrajectory_input.addKnotBack(P3D(-1.0, 0.2, 0.0));
-	targetTrajectory_input.addKnotBack(P3D( 0.0, 0.4, 0.0));
-	targetTrajectory_input.addKnotBack(P3D( 1.0, 0.2, 0.0));
-	
-	
-
-	// add a fiber in Mesh to match
-	DynamicArray<Node *> matchedFiber(0);
-	for(int i = 0; i < nRows; ++i) {
-		int id = i*nCols + nCols-1;
-		matchedFiber.push_back(femMesh->nodes[id]);
-	}
-
-	// add a "MatchScaledTrajObjective"
-	targetTrajectory_input.setTValueToLength();
-	femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
-
-
-	*/
-
-	showGroundPlane = false;
-
 	// menu
-
 	mainMenu->addGroup("FEM Sim options");
 	mainMenu->addVariable("Static solve", computeStaticSolution);
 	mainMenu->addVariable("Optimize Objective", optimizeObjective);
@@ -357,7 +310,8 @@ bool BenderApp3D::onMouseMoveEvent(double xPos, double yPos) {
 		else if(interactionMode == InteractionMode::DRAG) {
 			if (selectedNodeID != -1)
 			{
-				Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
+				P3D pt_selected_node = femMesh->nodes[selectedNodeID]->getWorldPosition();
+				Plane plane(pt_selected_node,V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
 				P3D targetPos;
 				P3D lastPos;
 				currentRay.getDistanceToPlane(plane,&targetPos);
@@ -382,7 +336,8 @@ bool BenderApp3D::onMouseMoveEvent(double xPos, double yPos) {
 		else if(interactionMode == InteractionMode::DRAG) {
 			if (selectedKnotID != -1)
 			{
-				Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
+				P3D knotPos = targetTrajectory_input.getKnotValue(selectedKnotID);
+				Plane plane(knotPos,V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
 				P3D targetPos;
 				currentRay.getDistanceToPlane(plane,&targetPos);
 				targetTrajectory_input.setKnotValue(selectedKnotID, targetPos);
@@ -457,7 +412,15 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 			}
 			else if(interactionMode == InteractionMode::DRAW) {
 				if(action == GLFW_PRESS) {
-					Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
+
+					P3D ref_pt;
+					if(targetTrajectory_input.getKnotCount() == 0) {
+						ref_pt = camera->getCameraTarget();
+					}
+					else {
+						double dist = targetTrajectory_input.getDistanceToRay(currentRay, &ref_pt);
+					}
+					Plane plane(ref_pt,V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
 					P3D cursorPt;
 					currentRay.getDistanceToPlane(plane,&cursorPt);
 					targetTrajectory_input.addKnotInteractive(cursorPt);

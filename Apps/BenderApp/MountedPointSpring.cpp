@@ -87,8 +87,8 @@ void MountedPointSpring<NDim>::draw(const dVector& x) {
 		P3D pi =(node->getCoordinates(x));
 		P3D pj = mount->getTransformedX(targetPosition);
 		glBegin(GL_LINES);
-		glVertex3d(pi[0], pi[1], 0);
-		glVertex3d(pj[0], pj[1], 0);
+		glVertex3d(pi[0], pi[1], pi[2]);
+		glVertex3d(pj[0], pj[1], pj[2]);
 		glEnd();
 		// draw node
 		//glColor3d(0.6, 0, 1);
