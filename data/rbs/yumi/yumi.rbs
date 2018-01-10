@@ -197,9 +197,11 @@ RigidBody
 	frictionCoefficient 0.8
 	restitutionCoefficient 0.2
 	thickness 0.1
-	mesh ../data/rbs/yumi/meshes/link_7_r.obj
+	//mesh ../data/rbs/yumi/meshes/link_7_r.obj
+	mesh ../data/rbs/yumi/meshes/link_7_r_grip_compl.obj
 	meshTransformation 0.70711 -0.70711 0.0 0.0 -0.558968 -0.423587 -0.004722
-	CDP Capsule 0.008588 -0.008097 -0.009311 -0.008588 0.008097 0.009311 0.02
+	//CDP Capsule 0.008588 -0.008097 -0.009311 -0.008588 0.008097 0.009311 0.02
+	CDP Capsule 0.048685 -0.045902 -0.052782 -0.008588 0.008097 0.009311 0.02
 /End
 
 
@@ -394,9 +396,10 @@ RigidBody
 	frictionCoefficient 0.8
 	restitutionCoefficient 0.2
 	thickness 0.1
-	mesh ../data/rbs/yumi/meshes/link_7_l.obj
+	//mesh ../data/rbs/yumi/meshes/link_7_l.obj
+	mesh ../data/rbs/yumi/meshes/link_7_l_grip_compl.obj
 	meshTransformation 0.70711 -0.70711 0.0 0.0 -0.558234 -0.424278 0.005517
-	CDP Capsule 0.007855 -0.007406 0.008516 -0.007855 0.007406 -0.008516 0.02
+	CDP Capsule 0.043809 -0.041305 0.047496 -0.007855 0.007406 -0.008516 0.02
 /End
 
 
@@ -409,3 +412,5 @@ RigidBody
 		jointCPos -0.007855 0.007406 -0.008516
 		jointPPos 0.010582 0.017801 0.010160
 	/Joint
+
+
