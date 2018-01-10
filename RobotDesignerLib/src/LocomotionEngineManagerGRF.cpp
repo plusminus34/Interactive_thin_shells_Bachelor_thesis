@@ -1,6 +1,7 @@
 #include <RobotDesignerLib/LocomotionEngineManagerGRF.h>
 
 #include <RobotDesignerLib/MPO_VelocitySoftConstraints.h>
+#include <RobotDesignerLib/MPO_JointsAnglesSoftConstraint.h>
 #include <RobotDesignerLib/MPO_WheelSpeedConstraint.h>
 #include <RobotDesignerLib/MPO_WheelSpeedRegularizer.h>
 #include <RobotDesignerLib/MPO_WheelSpeedSmoothRegularizer.h>
@@ -396,8 +397,9 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 	//range of motion/speed/acceleration constraints
 	ef->addObjectiveFunction(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1, 6, dimCount - 1), "Bound Constraints");
+	ef->addObjectiveFunction(new MPO_JointsAnglesSoftConstraint(ef->theMotionPlan, "joint angle bound constraint", 1, 6, dimCount - 1), "Bound Constraints");
 	ef->addObjectiveFunction(new MPO_WheelSpeedConstraints(ef->theMotionPlan, "wheel speed bound constraint", 1), "Bound Constraints");
-
+	
 //	ef->addObjectiveFunction(new MPO_WheelAccelerationConstraints(ef->theMotionPlan, "wheel accel. bound constraint", 1e2), "Bound Constraints");
 //	ef->objectives.back()->isActive = false;
 

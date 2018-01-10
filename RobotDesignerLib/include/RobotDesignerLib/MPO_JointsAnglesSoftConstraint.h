@@ -1,5 +1,4 @@
-#ifndef MPO_VELOCITY_SOFT_BOUND_CONSTRAINTS_H
-#define MPO_VELOCITY_SOFT_BOUND_CONSTRAINTS_H
+#pragma once
 
 #include <OptimizationLib/ObjectiveFunction.h>
 #include <MathLib/Matrix.h>
@@ -8,10 +7,10 @@
 
 #include <memory>
 
-class MPO_VelocitySoftBoundConstraints : public ObjectiveFunction {
+class MPO_JointsAnglesSoftConstraint : public ObjectiveFunction {
 public:
-	MPO_VelocitySoftBoundConstraints(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int startQIndex, int endQIndex);
-	virtual ~MPO_VelocitySoftBoundConstraints(void);
+	MPO_JointsAnglesSoftConstraint(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight, int startQIndex, int endQIndex);
+	virtual ~MPO_JointsAnglesSoftConstraint(void);
 
 	virtual double computeValue(const dVector& p);
 
@@ -26,5 +25,3 @@ private:
 
 	int startQIndex, endQIndex;
 };
-
-#endif // MPO_VELOCITY_SOFT_BOUND_CONSTRAINTS_H

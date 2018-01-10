@@ -207,7 +207,7 @@ public:
 	// Parameters for joint motor velocity constraint
 	double jointVelocityLimit = 0;
 	double jointVelocityEpsilon = 0.4;		// for SoftUnilateralConstraint
-
+	double jointAngleLimit = PI / 4;
 	dVector initialRobotState;
 	
 	// Parameters for wheel motor speed constraint
