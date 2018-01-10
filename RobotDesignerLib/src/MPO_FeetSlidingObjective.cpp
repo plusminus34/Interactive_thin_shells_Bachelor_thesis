@@ -77,9 +77,6 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 
 void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 
-	if (theMotionPlan->feetPositionsParamsStartIndex < 0 || theMotionPlan->wheelParamsStartIndex < 0)
-		return;
-
 	typedef AutoDiffT<double, double> ScalarDiff;
 
 	const int nLimbs = theMotionPlan->endEffectorTrajectories.size();
@@ -105,7 +102,7 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 			for (int k = 0; k < 3; ++k)
 				eePosj(k) = p[iEEj + k];
 
-			if(ee.isWheel){
+			if(ee.isWheel && theMotionPlan->wheelParamsStartIndex >= 0){
 				// get wheel axes
 				V3T<ScalarDiff> rhoLocal = ee.getWheelRhoLocal_WF();
 				V3T<ScalarDiff> wheelAxisLocal(ee.wheelAxisLocal_WF);
@@ -168,7 +165,7 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 					dofs[k].v->deriv() = 0.0;
 				}
 			}
-			else{ // ee is foot
+			else if(theMotionPlan->feetPositionsParamsStartIndex >= 0){ // ee is foot
 
 				if (j>0){
 					double c = ee.contactFlag[j] * ee.contactFlag[j-1];
@@ -229,8 +226,6 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 }
 
 void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
-	if (theMotionPlan->feetPositionsParamsStartIndex < 0 || theMotionPlan->wheelParamsStartIndex < 0)
-		return;
 
 	typedef AutoDiffT<double, double> ScalarDiff;
 	typedef AutoDiffT<ScalarDiff, ScalarDiff> ScalarDiffDiff;
@@ -257,7 +252,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 			for (int k = 0; k < 3; ++k)
 				eePosj(k) = p[iEEj + k];
 
-			if(ee.isWheel)
+			if(ee.isWheel && theMotionPlan->wheelParamsStartIndex >= 0)
 			{
 				// get wheel axes
 				V3T<ScalarDiffDiff> rhoLocal = ee.getWheelRhoLocal_WF();
@@ -335,7 +330,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 					dofs[k].v->deriv().value() = 0.0;
 				}
 			}
-			else{ // ee is foot
+			else if(theMotionPlan->feetPositionsParamsStartIndex >= 0){ // ee is foot
 
 				if (j>0){
 					double c = ee.contactFlag[j] * ee.contactFlag[j-1];
