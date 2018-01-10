@@ -25,7 +25,7 @@ double MPO_WheelSpeedConstraints::computeValue(const dVector& s) {
 	for (int j=0; j<theMotionPlan->nSamplePoints; j++){
 		for (uint i=0; i<theMotionPlan->endEffectorTrajectories.size(); i++){
 
-			if(theMotionPlan->endEffectorTrajectories[i].isWheel){
+			if(theMotionPlan->endEffectorTrajectories[i].isWheel && !theMotionPlan->endEffectorTrajectories[i].isPassiveWheel){
 				double wheelSpeed = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j];
 				retVal += constraintLowerBound->computeValue(wheelSpeed);
 				retVal += constraintUpperBound->computeValue(wheelSpeed);
@@ -48,7 +48,7 @@ void MPO_WheelSpeedConstraints::addGradientTo(dVector& grad, const dVector& p) {
 		for (int j=0; j<theMotionPlan->nSamplePoints; j++){
 			for (uint i=0; i<theMotionPlan->endEffectorTrajectories.size(); i++){
 
-				if(theMotionPlan->endEffectorTrajectories[i].isWheel){
+				if(theMotionPlan->endEffectorTrajectories[i].isWheel && !theMotionPlan->endEffectorTrajectories[i].isPassiveWheel){
 					double wheelSpeed = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j];
 
 					// lower bound gradient
@@ -74,7 +74,7 @@ void MPO_WheelSpeedConstraints::addHessianEntriesTo(DynamicArray<MTriplet>& hess
 		for (int j=0; j<theMotionPlan->nSamplePoints; j++){
 			for (uint i=0; i<theMotionPlan->endEffectorTrajectories.size(); i++){
 
-				if(theMotionPlan->endEffectorTrajectories[i].isWheel){
+				if(theMotionPlan->endEffectorTrajectories[i].isWheel && !theMotionPlan->endEffectorTrajectories[i].isPassiveWheel){
 					double wheelSpeed = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j];
 
 					// lower bound hessian

@@ -80,7 +80,8 @@ void RobotController::computeDesiredState() {
 			if (ee->isWeldedWheel())
 				wheelSpeed_rel = 0;
 
-			desiredState.setAuxiliaryJointRelativeAngVelocity(ee->wheelJoint->rotationAxis * wheelSpeed_rel, ee->wheelJoint->jIndex);
+			if (ee->wheelJoint != NULL)
+				desiredState.setAuxiliaryJointRelativeAngVelocity(ee->wheelJoint->rotationAxis * wheelSpeed_rel, ee->wheelJoint->jIndex);
 
 			//now, check if we've succeeded...
 			V3D contactPointVelocity = wheelCenterSpeed + (worldEE.localCoordsWheelAxis * wheelSpeed_w).cross(V3D(worldEE.getWheelRho()) * -1);
@@ -91,10 +92,8 @@ void RobotController::computeDesiredState() {
 			V3D tmpCPVel_global = rb->getAbsoluteVelocityForLocalPoint(ee->coords) - wheelAngularVelocity.cross(worldEE.getWheelRho());
 			tmpCPVel_global = tmpCPVel_global.getProjectionOn(worldEE.getWheelTiltAxis());
 
-			if (!IS_ZERO(tmpCPVel_global.norm()))
-				Logger::consolePrint("velocity @ contact point:\t%lf\t%lf\t%lf\t%lf\n", tmpCPVel_global.x(), tmpCPVel_global.y(), tmpCPVel_global.z(), tmpCPVel_global.norm());
-
-//			test it one more way, basically by creating another wheel rigid body, set the state as it comes from the parent RB + fix constraints... still doesn't look good...
+//			if (!IS_ZERO(tmpCPVel_global.norm()))
+//				Logger::consolePrint("velocity @ contact point:\t%lf\t%lf\t%lf\t%lf\n", tmpCPVel_global.x(), tmpCPVel_global.y(), tmpCPVel_global.z(), tmpCPVel_global.norm());
 
 		}
 	}

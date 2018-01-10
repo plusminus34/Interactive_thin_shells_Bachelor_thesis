@@ -10,9 +10,8 @@
 //debug joint velocity limits some more...
 //add the option to start non-periodic mopt from zero or from two other motion plans...
 //fix the bulk write...
-//fix ffp == toggle all stance/all swing/normal behavior/delete ffp for legs possible, make reading from file better...
-//have the option to create a box (rounded edges) for the body of a robot, as well as an option to rescale the connector cube mesh/faces...
-
+//rotate the "wheel" in the creature design - does the rolling motion become obvious?
+//add a cylinder as CDP in ODE? A flat capsule!
 
 RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
@@ -121,8 +120,8 @@ RobotDesignerApp::RobotDesignerApp(){
 
 #ifdef START_WITH_VISUAL_DESIGNER
 //	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
-	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configTGY306G.cfg");
-	
+// 	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configTGY306G.cfg");
+	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configBK3002.cfg");
 #else
     loadFile("../data/robotsAndMotionPlans/spotMini/robot2.rbs");
     loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
@@ -268,6 +267,10 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 		designWindow->onKeyEvent(key, action, mods);
 	}
 
+	if (shouldShowSimWindow() && moptWindow->isActive()){
+		moptWindow->onKeyEvent(key, action, mods);
+	}
+
 	if (moptWindow->locomotionManager && moptWindow->locomotionManager->motionPlan) {
 		if (key == GLFW_KEY_UP && action == GLFW_PRESS)
 			moptWindow->moptParams.desTravelDistZ += 0.1;
@@ -381,6 +384,14 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		return;
 	}
 
+	if (fNameExt.compare("cfg") == 0) {
+		delete designWindow;
+		Logger::consolePrint("Loading robot designer configuration file from '%s'\n", fName);
+		designWindow = new ModularDesignWindow(0, 0, 100, 100, this, fName);
+		setupWindows();
+		return;
+	}
+
 	if (fNameExt.compare("rs") == 0) {
 		Logger::consolePrint("Load robot state from '%s'\n", fName);
 		if (robot) {
@@ -412,6 +423,8 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		if (moptWindow->locomotionManager && moptWindow->locomotionManager->motionPlan){
 			moptWindow->locomotionManager->motionPlan->readParamsFromFile(fName);
 			moptWindow->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
+			moptWindow->locomotionManager->motionPlan->syncMotionPlanWithFootFallPattern(moptWindow->footFallPattern);
+
 			moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
 			moptWindow->syncMOPTWindowParameters();
 			moptWindow->printCurrentObjectiveValues();
@@ -543,9 +556,13 @@ void RobotDesignerApp::process() {
 		Logger::consolePrint("Syncronizing robot state\n");
 		simWindow->getActiveController()->initialize();
 		simWindow->getActiveController()->setDebugMode(doDebug);
-	}
+		lastRunOptionSelected = runOption;
 
-	lastRunOptionSelected = runOption;
+		if (runOption == PHYSICAL_ROBOT_CONTROL_VIA_POLOLU_MAESTRO){
+			GLApplication::getGLAppInstance()->appIsRunning = false;
+			return;
+		}
+	}
 
 	auto DoMOPTStep = [&]() {
 		runMOPTStep();

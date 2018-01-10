@@ -51,7 +51,12 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 			});
 			buttonHideGroup->setFontSize(14);
 
-			new Label(energyPanel, "", "");
+			Button *button = new Button(energyPanel, "");
+			button->setIcon(ENTYPO_ICON_CLASSIC_COMPUTER);
+			button->setCallback([=] {DoParameterOptimizationStep(energyFunction); 
+									 updateWeightTextboxes(energyFunction); });
+			button->setFontSize(14);
+
 			new Label(energyPanel, "Is Active", "sans");
 			new Label(energyPanel, "Hack Hessian", "sans");
 			new Label(energyPanel, "", "");
@@ -59,19 +64,20 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 			new Label(energyPanel, "", "");
 
 			for (ObjectiveFunction *obj : objGroup.second) {
-
 				EnergyUIElement el;
-
+				el.objective = obj;
 				el.label = new Label(energyPanel, obj->description, "sans");
 
 				Button *button = new Button(energyPanel, "");
 				button->setIcon(ENTYPO_ICON_CLASSIC_COMPUTER);
-				button->setCallback([&,obj]() {rdApp->iEditWindow->DoDesignParametersOptimizationStep(obj); });
+				button->setCallback([=]() {DoParameterOptimizationStep(obj); 
+																updateWeightTextboxes(energyFunction);});
 				button->setFontSize(14);
+				el.optimizeEnergy = button;
 
 				CheckBox *checkBox = new CheckBox(energyPanel,"");
 				checkBox->setChecked(obj->isActive);
-				checkBox->setCallback([obj](bool value){obj->isActive = value; });
+				checkBox->setCallback([=](bool value){obj->isActive = value; });
 				el.checkBoxEnergyActive = checkBox;
 
 				checkBox = new CheckBox(energyPanel, "");
@@ -142,6 +148,11 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 	screen->performLayout();
 }
 
+void EnergyWindow::DoParameterOptimizationStep(ObjectiveFunction * energyFunction)
+{
+	rdApp->iEditWindow->DoDesignParametersOptimizationStep(energyFunction);
+}
+
 void EnergyWindow::updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFunction, const dVector &params)
 {
 	auto double2string = [](double val) {
@@ -210,6 +221,7 @@ void EnergyWindow::hideEnergyGroup(bool visible, const std::string &groupName)
 {
 	for (EnergyUIElement &el : energyUIRows[groupName]) {
 		el.label->setVisible(visible);
+		el.optimizeEnergy->setVisible(visible);
 		el.checkBoxEnergyActive->setVisible(visible);
 		el.checkBoxHackHessian->setVisible(visible);
 		el.slider->setVisible(visible);
@@ -218,4 +230,16 @@ void EnergyWindow::hideEnergyGroup(bool visible, const std::string &groupName)
 	}
 
 	energyGroupVisible[groupName] = visible;
+}
+
+void EnergyWindow::updateWeightTextboxes(LocomotionEngine_EnergyFunction* energyFunction)
+{
+	using namespace nanogui;
+	for (auto &objGroup : energyFunction->objGroups)
+	{
+		for(auto &el : energyUIRows[objGroup.first])
+		{
+			el.weightTextbox->setValue(el.objective->weight);
+		}
+	}
 }

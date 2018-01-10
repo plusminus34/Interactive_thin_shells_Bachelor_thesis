@@ -26,7 +26,7 @@ public:
 	//file handle used for communication with the maestro board
 	int fd = -1;
 	//the target commands can be sent all at once, or one-by-one... which do we want?
-	bool writeAllTargetCommandsAtOnce = true;
+	bool writeAllTargetCommandsAtOnce = false;
 
 	//the servo control board expects a block of continuous servo IDs for the multi-write command... so, store this here...
 	DynamicArray<ServoMotorCommandBlock> multiTargetCommands;
@@ -50,6 +50,8 @@ public:
 
 	// destructor
 	virtual ~PololuServoControlInterface(void) {}
+
+	void createMultiWriteClusters();
 
 	//set motor goals from target values
 	virtual void sendControlInputsToPhysicalRobot();

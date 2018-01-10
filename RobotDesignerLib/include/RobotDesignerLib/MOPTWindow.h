@@ -49,7 +49,6 @@ public:
 	bool initialized = false;
 	GLApplication* glApp;
 
-	bool startWithEmptyFFP = true;
 	int nTimeSteps = 12;
 	double globalMOPTRegularizer = 0.01;
 
@@ -110,6 +109,9 @@ public:
 
 	virtual bool onMouseMoveEvent(double xPos, double yPos);
 	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
+
+	//any time a physical key is pressed, this event will trigger. Useful for reading off special keys...
+	virtual bool onKeyEvent(int key, int action, int mods);
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
 

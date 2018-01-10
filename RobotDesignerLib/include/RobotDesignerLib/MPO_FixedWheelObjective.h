@@ -18,10 +18,9 @@ public:
 private:
 
 	template<class T>
-	T computeEnergy(const Vector3T<T> &wheelAxisLocal, const Vector3T<T> &rhoLocal,
-					const RigidBody *rb, const VectorXT<T> &qj,const VectorXT<T> &qjp,
-					const Vector3T<T> &yawAxis, T yawAnglej, T yawAnglejp,
-					const Vector3T<T> &tiltAxis, T tiltAnglej, T tiltAnglejp,
+	T computeEnergy(const LocomotionEngine_EndEffectorTrajectory& ee, const VectorXT<T> &qj, const VectorXT<T> &qjp,
+					T yawAnglej, T yawAnglejp,
+					T tiltAnglej, T tiltAnglejp,
 					T wheelSpeedj, T wheelSpeedjp, T dt) const
 	{
 		/*
@@ -43,13 +42,15 @@ private:
 		 */
 
 		// wheel axis from robot
-		Vector3T<T> rhoRobotj = theMotionPlan->robotRepresentation->getWorldCoordinatesForVectorT(rhoLocal, rb, qj);
-		Vector3T<T> rhoRobotjp = theMotionPlan->robotRepresentation->getWorldCoordinatesForVectorT(rhoLocal, rb, qjp);
+		V3T<T> rhoLocal_RBF = ee.endEffectorRB->rbProperties.endEffectorPoints[ee.CPIndex].getWheelRho();
+		Vector3T<T> rhoRobotj = theMotionPlan->robotRepresentation->getWorldCoordinatesForVectorT(rhoLocal_RBF, ee.endEffectorRB, qj);
+		Vector3T<T> rhoRobotjp = theMotionPlan->robotRepresentation->getWorldCoordinatesForVectorT(rhoLocal_RBF, ee.endEffectorRB, qjp);
 		// wheel axis from wheel angles
-		Vector3T<T> rhoWheelj = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(rhoLocal, yawAxis, yawAnglej, tiltAxis, tiltAnglej);
-		Vector3T<T> rhoWheelLocalRotjp = rotateVec(rhoLocal, (wheelSpeedj+wheelSpeedjp)*(T)0.5*dt, wheelAxisLocal);
-		Vector3T<T> rhoWheelRotjp = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(rhoWheelLocalRotjp, yawAxis, yawAnglejp, tiltAxis, tiltAnglejp);
-		Vector3T<T> err = rhoRobotj.cross(rhoRobotjp) - rhoWheelj.cross(rhoWheelRotjp);
+		V3T<T> rhoLocal_WF = ee.getWheelRhoLocal_WF();
+		Vector3T<T> rhoWheelj = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(rhoLocal_WF, V3T<T>(ee.wheelYawAxis_WF), yawAnglej, V3T<T>(ee.wheelTiltAxis_WF), tiltAnglej);
+		Vector3T<T> rhoWheelLocalRotjp = rotateVec(rhoLocal_WF, (wheelSpeedj+wheelSpeedjp)*(T)0.5*dt, V3T<T>(ee.wheelAxisLocal_WF));
+		Vector3T<T> rhoWheelRotjp = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(rhoWheelLocalRotjp, V3T<T>(ee.wheelYawAxis_WF), yawAnglejp, V3T<T>(ee.wheelTiltAxis_WF), tiltAnglejp);
+		Vector3T<T> err = rhoRobotj.cross(rhoRobotjp) + rhoWheelj.cross(rhoWheelRotjp);
 
 		return (T)0.5 * err.squaredNorm() * (T)weight;
 	}

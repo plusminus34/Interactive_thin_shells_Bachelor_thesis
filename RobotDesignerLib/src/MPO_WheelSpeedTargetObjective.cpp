@@ -15,7 +15,7 @@ MPO_WheelSpeedTargetObjective::~MPO_WheelSpeedTargetObjective(void) {
 double MPO_WheelSpeedTargetObjective::computeValue(const dVector& s) {
 
 	double retVal = 0;
-	for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
+	for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
 		if(theMotionPlan->endEffectorTrajectories[i].isWheel){
 			double c = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[timeIndex] - targetWheelSpeed;
 			retVal += c*c;
@@ -29,7 +29,7 @@ double MPO_WheelSpeedTargetObjective::computeValue(const dVector& s) {
 void MPO_WheelSpeedTargetObjective::addGradientTo(dVector& grad, const dVector& p) {
 
 	if (theMotionPlan->wheelParamsStartIndex >= 0){
-		for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
+		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
 			if(theMotionPlan->endEffectorTrajectories[i].isWheel){
 				double c = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[timeIndex] - targetWheelSpeed;
 				grad[theMotionPlan->getWheelSpeedIndex(i, timeIndex)] += weight*c;
@@ -41,7 +41,7 @@ void MPO_WheelSpeedTargetObjective::addGradientTo(dVector& grad, const dVector& 
 void MPO_WheelSpeedTargetObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
 
 	if (theMotionPlan->wheelParamsStartIndex >= 0){
-		for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
+		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
 			if(theMotionPlan->endEffectorTrajectories[i].isWheel){
 				ADD_HES_ELEMENT(hessianEntries,
 								theMotionPlan->getWheelSpeedIndex(i, timeIndex),

@@ -206,4 +206,8 @@ void LocomotionEngine_EnergyFunction::setCurrentBestSolution(const dVector& p){
 	}
 }
 
-
+void LocomotionEngine_EnergyFunction::setWeights(const dVector& weights)
+{
+	for (int i = 0; i < objectives.size(); i++)
+		objectives[i]->weight = weights(i);
+}

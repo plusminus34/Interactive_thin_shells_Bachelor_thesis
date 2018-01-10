@@ -15,6 +15,15 @@ LivingMotor::LivingMotor(const char* LMType){
 
 		bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
 		hornMaterial.setColor(0.7, 0.7, 0.7, 1.0);
+	} else if (strcmp(trim((char*)LMType), "BK3002") == 0) {
+		bodyBracket = new LivingMotorBodyBracket_BK3002();
+		hornBracket = new LivingHornBracket_BK3002();
+
+		motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
+		motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+
+		bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
+		hornMaterial.setColor(0.7, 0.7, 0.7, 1.0);
 	}
 	else {
 		//default for XM430 motors

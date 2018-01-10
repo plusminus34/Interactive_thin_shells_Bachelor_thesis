@@ -78,7 +78,7 @@ public:
 
 	// save to .rbs file
 	void saveToRBSFile(const char* fName, const string& robotMeshDir, Robot* templateRobot = NULL, bool freezeRoot = false);
-	void getRMCToRBIndexMap(RMC* node, int curIndex, int& RBIndex, map<RMC*, int>& RBIndexMap);
+	void getRMCToRBIndexMap(RMC* node, int curIndex, int& RBIndex, vector<std::pair<RMC*, int>>& RBIndexMap);
 
 	// load from file, rmcNameMap is for cloning RMC from the rmcWarehouse
 	void loadFromFile(const char* fName, map<string, RMC*>& rmcNameMap);
