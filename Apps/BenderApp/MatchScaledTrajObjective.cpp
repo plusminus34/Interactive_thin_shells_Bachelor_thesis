@@ -93,7 +93,11 @@ void MatchScaledTrajObjective::addDoDxEachNode(int nodeID_local, const dVector &
 
 void MatchScaledTrajObjective::update_tNode(dVector const & x) 
 {
+
 	int n = matchedFiber.size();
+
+	if(n < 1) {return;}
+
 	// length of fiber
 	tNodeFiber.resize(n);
 	tNodeFiber[0] = 0.0;
@@ -169,10 +173,10 @@ void MatchScaledTrajObjective::draw(dVector const & x) {
 	}
 
 	// draw target trajectory
-	targetTrajectory.draw(V3D(0.3, 0.3, 0.3), 2, V3D(0, 0.8, 0), -0.003);
+	targetTrajectory.draw(V3D(0.0, 0.0, 1.0), 2, V3D(0, 0.8, 0), -0.003);
 
 	// draw matched fiber
-	glColor3d(0.3, 0.15, 0.15);
+	glColor3d(0.0, 0.5, 1.0);
 	glLineWidth((GLfloat)2.0);
 	glBegin(GL_LINE_STRIP);
 	for(Node * node : matchedFiber) {

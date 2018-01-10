@@ -34,8 +34,26 @@ BenderApp3D::BenderApp3D()
 
 
 	// create mesh
-	loadFile("../data/3dModels/extruded_polygon_0p1x2.ply");
+	//loadFile("../data/3dModels/extruded_polygon_0p1x2.ply");
+	//loadFile("../data/3dModels/extruded_hexagon_0p1x2.ply");
 
+
+	// create some points on centerline of the mesh
+	DynamicArray<P3D> centerlinePts;
+	{
+		int m = 15;
+		centerlinePts.resize(15);
+		V3D pt1(-1.0, 0.0, 0.0);
+		V3D pt2(+1.0, 0.0, 0.0);
+		double dt = 1.0 / static_cast<double>(m-1);
+		for(int i = 0; i < m; ++i) {
+			centerlinePts[i] = pt1 + (pt2 - pt1) * dt*static_cast<double>(i);
+		}
+	}
+
+	// create mesh
+	femMesh = new BenderSimulationMesh<3>;
+	femMesh->readMeshFromFile_ply("../data/3dModels/extruded_hexagon_0p1x2.ply", &centerlinePts);
 	femMesh->addGravityForces(V3D(0, 0, 0));
 
 
@@ -132,13 +150,6 @@ BenderApp3D::BenderApp3D()
 	// add a "MatchScaledTrajObjective"
 	targetTrajectory_input.setTValueToLength();
 	femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
-
-// output storage layout of nodes
-std::cout << "Node Storage:" << std::endl;
-for(int i = 0; i < femMesh->nodes.size(); ++i) {
-	void * ptr_i = static_cast<void *>(femMesh->nodes[i]);
-	std::cout << ptr_i << std::endl;
-}
 
 }
 
@@ -504,10 +515,19 @@ bool BenderApp3D::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 		else if(interactionMode == InteractionMode::DRAG) {
 			if (selected_mount >= 0) {
 				std::cout << "Offsets: " << xOffset << " " << yOffset << std::endl;
+				
 				Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
 				P3D origin; 
 				currentRay.getDistanceToPlane(plane,&origin);
 				dynamic_cast<RotationMount3D*>(femMesh->mounts[selected_mount])->rotate(origin, yOffset * 0.05, 0.0, 0.0);
+				/*
+				V3D view_direction = V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit();
+				Plane plane(camera->getCameraTarget(),view_direction);
+				P3D origin; 
+				currentRay.getDistanceToPlane(plane,&origin);
+				RotationMount3D * mount = dynamic_cast<RotationMount3D*>(femMesh->mounts[selected_mount]);
+				mount->rotate(origin, view_direction, yOffset * 0.01);
+				*/
 			}
 			return(true);
 		}

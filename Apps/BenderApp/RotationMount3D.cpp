@@ -9,7 +9,7 @@
 #include "RotationMount3D.h"
 
 
-
+// euler rotation: z-y'-z'' intrinsic
 Matrix3x3 get_T_rot(double a, double b, double c)
 {
 	using namespace std;
@@ -57,15 +57,68 @@ Matrix3x3 get_dTdc(double a, double b, double c)
 
 	return(dT);
 }
+
 /*
-V3D mat_times_vec(Matrix3x3 const & T, V3D const & v) 
+void comput_abc_from_rot(V3D const & v, double phi, double & a, double & b, double & c)
 {
-	V3D u;
-	for(int i = 0; i < 3; ++i) {
-		u[i] = T(i,0)*v[0] + T(i,1)*v[1] + T(i,1)*v[2];
+	using namespace std;
+
+	double tiny = 1.0e-10;//std::numeric_limits<double>::epsilon();
+
+	// special case: no rotation
+	if(std::fabs(phi) < tiny) {
+		a = 0.0; 
+		b = 0.0; 
+		c = 0.0;
+		return;
 	}
-	return(u);
+
+	V3D n = v.unit();
+
+	// special case: rotation around z-axis
+	if(n[0] < tiny && n[1] < tiny) {
+		a = phi;
+		b = 0.0;
+		c = 0.0;
+		return;
+	}
+
+	// other cases
+	double cphi = cos(phi);
+	double sphi = sin(phi);
+
+	// t_ij are elements of the rotation matrix T, given by the rotation of angle gamma about normal vector n
+	double t_33 = n[2]*n[2] * (1.0-cphi) + cphi;
+	double t_13 = n[2]*n[0] * (1.0-cphi) + n[1]*sphi;
+	double t_31 = n[2]*n[0] * (1.0-cphi) - n[1]*sphi;
+	double t_23 = n[2]*n[1] * (1.0-cphi) - n[0]*sphi;
+	double t_32 = n[2]*n[1] * (1.0-cphi) + n[0]*sphi;
+	
+	double pi = 3.14159265;
+//	a = atan2(-t_31, t_32);
+//	c = atan2( t_13, t_23);
+//	a = atan(-t_31 / t_32);
+//	c = atan(t_13 / t_23);
+
+
+	b = acos(t_33);
+
+	a = asin(t_31 / sin(b));
+	c = asin(t_13 / sin(b));
+
+	
+	if(sin(b) * t_31 * sin(a) >= 0.0) {
+		b = b;
+	}
+	else {
+		b = -b;
+	}
+	
+	
+
+std::cout << "abc = " << a << " " << b << " " << c << std::endl;
 }
+
 */
 
 P3D RotationMount3D::transformation(P3D const & x0, std::vector<double> const & parameters)
@@ -121,6 +174,17 @@ void RotationMount3D::rotate(P3D const & origin, double alpha, double beta, doub
 	parameters[5] = shift_new[2];
 
 }
+
+/*
+void RotationMount3D::rotate(P3D const & origin, V3D const & axis, double phi)
+{
+	double a, b, c;
+
+	comput_abc_from_rot(axis, phi, a, b, c);
+
+	rotate(origin, a, b, c);
+}
+*/
 
 void RotationMount3D::shift(V3D const & delta)
 {

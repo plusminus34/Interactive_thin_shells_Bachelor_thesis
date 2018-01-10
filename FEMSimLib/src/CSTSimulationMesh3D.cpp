@@ -154,28 +154,44 @@ void CSTSimulationMesh3D::readMeshFromFile(const char* fName)
 }
 
 
-void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName)
+void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> const * add_input_points)
 {
-	FILE *fp = fopen(fName, "r");
-	tetgenio input;
+	// input objects for tetget
+	tetgenio input, addinput;
 	input.mesh_dim = 3;
-
+	// load model
 	input.load_ply(fName);
 
-	tetgenio output;
+	// set behavior for tetgen
 	tetgenbehavior b;
-	//b.nobisect = 1;
 	b.plc = 1;
 	b.coarsen = 1;
-	//b.refine = 1;
 	b.quality = 1;
-	b.minratio = 2.0;
-	b.mindihedral = 1.0;
-	//b.insertaddpoints = 1;
+	//b.minratio = 2.0;
+	//b.mindihedral = 1.0;
 	b.verbose = 1;
 
-	tetrahedralize(&b, &input, &output);
+	// set additional points
+	if(add_input_points && add_input_points->size() > 0) {
+		int m = add_input_points->size();
+		b.insertaddpoints = 1;
+		addinput.pointlist = new REAL[m * 3];
+		addinput.pointmarkerlist = new int[m];
+		addinput.numberofpoints = m;
+		for(int i = 0; i < m; ++i) {
+			for(int j = 0; j < 3; ++j) {
+				addinput.pointlist[i*3+j] = (*add_input_points)[i][j];
+				addinput.pointmarkerlist[i] = 1;
+			}
+		}
+	}
 
+	// output
+	tetgenio output;
+	// create mesh (tetrahedons)
+	tetrahedralize(&b, &input, &output, &addinput);
+
+	// create CST Mesh 
 	int &nodeCount = output.numberofpoints;
 	int &tetCount = output.numberoftetrahedra;
 	x.resize(3 * nodeCount);

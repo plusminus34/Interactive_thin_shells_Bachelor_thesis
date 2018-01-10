@@ -24,6 +24,7 @@ public:
 
 	// manipulation of mount
 	void rotate(P3D const & origin, double alpha, double beta, double gamma);
+	//void rotate(P3D const & origin, V3D const & axis, double phi);
 	void shift(V3D const & delta);
 
 
