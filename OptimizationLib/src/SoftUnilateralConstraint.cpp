@@ -139,10 +139,9 @@ double SmoothBarrierConstraint::computeSecondDerivative(double x) {
 	return 2 / ((x)*(x)*(x));
 }
 
-SoftSymmetricBarrierConstraint::SoftSymmetricBarrierConstraint(double limit, double stiffness)
+SoftSymmetricBarrierConstraint::SoftSymmetricBarrierConstraint(double limit)
 {
 	this->limit = limit;
-	this->stiffness = stiffness;
 }
 
 SoftSymmetricBarrierConstraint::~SoftSymmetricBarrierConstraint() {}

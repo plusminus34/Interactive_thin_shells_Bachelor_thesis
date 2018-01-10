@@ -241,7 +241,7 @@ void MOPTWindow::syncMotionPlanParameters(){
 
 	locomotionManager->motionPlan->jointVelocityLimit = moptParams.jointVelocityLimit;
 	locomotionManager->motionPlan->jointVelocityEpsilon = moptParams.jointVelocityEpsilon;
-
+	locomotionManager->motionPlan->jointAngleLimit = moptParams.jointAngleLimit;
 	locomotionManager->motionPlan->jointL0Delta = moptParams.jointL0Delta;
 
 	locomotionManager->motionPlan->wheelSpeedLimit = moptParams.wheelSpeedLimit;
