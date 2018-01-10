@@ -59,7 +59,6 @@ dGeomID ODERBEngine::getSphereGeom(SphereCDP* s) {
 	return g;
 }
 
-
 /**
 	this method is used to set up an ODE box geom. It is properly placed in body coordinates.
 */
@@ -104,7 +103,13 @@ dGeomID ODERBEngine::getCapsuleGeom(CapsuleCDP* c) {
 	P3D a = c->p1;
 	P3D b = c->p2;
 	V3D ab(a, b);
-	dGeomID g = dCreateCCylinder(0, c->r, ab.length());
+	dGeomID g;
+
+	if (c->hasFlatCaps)
+		g = dCreateCylinder(0, c->r, ab.length());
+	else
+		g = dCreateCCylinder(0, c->r, ab.length());
+
 	setCapsuleGeomTransformation(c, g);
 
 	return g;

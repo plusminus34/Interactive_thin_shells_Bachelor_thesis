@@ -113,9 +113,11 @@ public:
 	P3D p1, p2;
 	double r;
 
+	bool hasFlatCaps = false;
+
 	CapsuleCDP();
 	CapsuleCDP(const CapsuleCDP& other);
-	CapsuleCDP(const P3D& p1, const P3D& p2, double r);
+	CapsuleCDP(const P3D& p1, const P3D& p2, double r, bool hasFlatCaps = false);
 	CapsuleCDP(const std::string& def);
 
 	virtual void draw();

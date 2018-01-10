@@ -475,7 +475,11 @@ void LocomotionEngineMotionPlan::addIKInitEE(RigidBody* rb, IK_Plan* ikPlan) {
 		eeWorldCoords[1] = 0;
 
 		if (rb->rbProperties.endEffectorPoints[j].isWheel()){
-			Vector3d rho = rb->rbProperties.endEffectorPoints[j].getWheelRho();
+			RBEndEffector worldEE = rb->rbProperties.endEffectorPoints[j];		//holds all quantities of the wheel in world coordinates, placed according to its parent RB
+			worldEE.localCoordsWheelAxis = rb->getWorldCoordinates(rb->rbProperties.endEffectorPoints[j].getWheelAxis());
+			Vector3d rho = worldEE.getWheelRho();
+
+//			Vector3d rho = rb->rbProperties.endEffectorPoints[j].getWheelRho();
 			eeWorldCoords[1] += rho[1];
 		}
 

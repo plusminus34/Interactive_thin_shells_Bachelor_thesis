@@ -126,21 +126,26 @@ CapsuleCDP::CapsuleCDP(const CapsuleCDP& other) {
 	this->p1 = other.p1;
 	this->p2 = other.p2;
 	this->r = other.r;
+	this->hasFlatCaps = other.hasFlatCaps;
 }
 
-CapsuleCDP::CapsuleCDP(const P3D& p1, const P3D& p2, double r) {
+CapsuleCDP::CapsuleCDP(const P3D& p1, const P3D& p2, double r, bool hasFlatCaps) {
 	this->p1 = p1;
 	this->p2 = p2;
 	this->r = r;
+	this->hasFlatCaps = hasFlatCaps;
 }
 
 CapsuleCDP::CapsuleCDP(const std::string& def) {
-	if (sscanf(def.c_str(), "%lf %lf %lf %lf %lf %lf %lf", &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2], &r) != 7)
+	if (sscanf(def.c_str(), "%lf %lf %lf %lf %lf %lf %lf", &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2], &r) < 7)
 		throwError("Incorrect CapsuleCDP definition: 7 arguments are required...\n", def.c_str());
 }
 
 void CapsuleCDP::draw() {
-	drawCapsule(p1, p2, r);
+	if (hasFlatCaps)
+		drawCylinder(p1, p2, r);
+	else
+		drawCapsule(p1, p2, r);
 }
 
 std::string CapsuleCDP::getDefinitionString() {
