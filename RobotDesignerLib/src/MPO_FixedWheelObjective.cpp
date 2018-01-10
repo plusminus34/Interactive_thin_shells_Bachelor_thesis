@@ -45,7 +45,7 @@ double MPO_FixedWheelObjective::computeValue(const dVector& p){
 
 			if(ee.isFixedWheel || ee.isWeldedWheel)
 			{
-				retVal += computeEnergy(ee.getWheelRhoLocal(), ee.wheelAxisLocal,
+				retVal += computeEnergy(ee.wheelAxisLocal, ee.getWheelRhoLocal(),
 										ee.endEffectorRB, qi, qip,
 										ee.wheelYawAxis, yawAnglej, yawAnglejp,
 										ee.wheelTiltAxis, tiltAnglej, tiltAnglejp,
@@ -135,7 +135,7 @@ void MPO_FixedWheelObjective::addGradientTo(dVector& grad, const dVector& p) {
 
 				for (int k = 0; k < numDOFs; ++k) {
 					dofs[k].v->deriv() = 1.0;
-					ScalarDiff energy = computeEnergy((V3T<ScalarDiff>)ee.getWheelRhoLocal(), (V3T<ScalarDiff>)ee.wheelAxisLocal,
+					ScalarDiff energy = computeEnergy((V3T<ScalarDiff>)ee.wheelAxisLocal, (V3T<ScalarDiff>)ee.getWheelRhoLocal(),
 													  ee.endEffectorRB, qi, qip,
 													  (V3T<ScalarDiff>)ee.wheelYawAxis, yawAnglej, yawAnglejp,
 													  (V3T<ScalarDiff>)ee.wheelTiltAxis, tiltAnglej, tiltAnglejp,
@@ -228,7 +228,7 @@ void MPO_FixedWheelObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessia
 					dofs[k].v->deriv().value() = 1.0;
 					for (int l = 0; l <= k; ++l) {
 						dofs[l].v->value().deriv() = 1.0;
-						ScalarDiffDiff energy = computeEnergy((V3T<ScalarDiffDiff>)ee.getWheelRhoLocal(), (V3T<ScalarDiffDiff>)ee.wheelAxisLocal,
+						ScalarDiffDiff energy = computeEnergy((V3T<ScalarDiffDiff>)ee.wheelAxisLocal, (V3T<ScalarDiffDiff>)ee.getWheelRhoLocal(),
 														  ee.endEffectorRB, qi, qip,
 														  (V3T<ScalarDiffDiff>)ee.wheelYawAxis, yawAnglej, yawAnglejp,
 														  (V3T<ScalarDiffDiff>)ee.wheelTiltAxis, tiltAnglej, tiltAnglejp,
