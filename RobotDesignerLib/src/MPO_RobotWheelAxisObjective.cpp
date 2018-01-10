@@ -103,6 +103,9 @@ void MPO_RobotWheelAxisObjective::addHessianEntriesTo(DynamicArray<MTriplet>& he
 
 		for (int i = 0; i < nLimbs; i++) {
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
+			if (!ee.isWheel)
+				return;
+
 			Vector3d wheelAxisLocal_WF = ee.wheelAxisLocal_WF;
 			Vector3d wheelAxisLocal_RBF = ee.endEffectorRB->rbProperties.endEffectorPoints[ee.CPIndex].localCoordsWheelAxis;
 
