@@ -22,7 +22,7 @@ double MPO_FixedWheelObjective::computeValue(const dVector& p){
 
 	int nEEs = theMotionPlan->endEffectorTrajectories.size();
 
-	const double dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
+	const double dt = theMotionPlan->motionPlanDuration / (theMotionPlan->nSamplePoints-1);
 
 	for (int j=0; j<end; j++){
 
@@ -45,10 +45,9 @@ double MPO_FixedWheelObjective::computeValue(const dVector& p){
 
 			if(ee.isFixedWheel || ee.isWeldedWheel)
 			{
-				retVal += computeEnergy(ee.getWheelRhoLocal(), ee.wheelAxisLocal,
-										ee.endEffectorRB, qi, qip,
-										ee.wheelYawAxis, yawAnglej, yawAnglejp,
-										ee.wheelTiltAxis, tiltAnglej, tiltAnglejp,
+				retVal += computeEnergy(ee, qi, qip,
+										yawAnglej, yawAnglejp,
+										tiltAnglej, tiltAnglejp,
 										wheelSpeedj, wheelSpeedjp, dt);
 			}
 		}
@@ -75,7 +74,7 @@ void MPO_FixedWheelObjective::addGradientTo(dVector& grad, const dVector& p) {
 
 	int nEEs = theMotionPlan->endEffectorTrajectories.size();
 
-	const ScalarDiff dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
+	const ScalarDiff dt = theMotionPlan->motionPlanDuration / (theMotionPlan->nSamplePoints-1);
 
 	for (int j=0; j<end; j++){
 
@@ -135,11 +134,11 @@ void MPO_FixedWheelObjective::addGradientTo(dVector& grad, const dVector& p) {
 
 				for (int k = 0; k < numDOFs; ++k) {
 					dofs[k].v->deriv() = 1.0;
-					ScalarDiff energy = computeEnergy((V3T<ScalarDiff>)ee.getWheelRhoLocal(), (V3T<ScalarDiff>)ee.wheelAxisLocal,
-													  ee.endEffectorRB, qi, qip,
-													  (V3T<ScalarDiff>)ee.wheelYawAxis, yawAnglej, yawAnglejp,
-													  (V3T<ScalarDiff>)ee.wheelTiltAxis, tiltAnglej, tiltAnglejp,
-													  wheelSpeedj, wheelSpeedjp, dt);
+					ScalarDiff energy = computeEnergy(ee, qi, qip,
+						yawAnglej, yawAnglejp,
+						tiltAnglej, tiltAnglejp,
+						wheelSpeedj, wheelSpeedjp, dt);
+
 					grad[dofs[k].i] += energy.deriv();
 					dofs[k].v->deriv() = 0.0;
 				}
@@ -166,7 +165,7 @@ void MPO_FixedWheelObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessia
 
 	int nEEs = theMotionPlan->endEffectorTrajectories.size();
 
-	const ScalarDiffDiff dt = theMotionPlan->motionPlanDuration / theMotionPlan->nSamplePoints;
+	const ScalarDiffDiff dt = theMotionPlan->motionPlanDuration / (theMotionPlan->nSamplePoints-1);
 
 	for (int j=0; j<end; j++){
 
@@ -228,11 +227,11 @@ void MPO_FixedWheelObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessia
 					dofs[k].v->deriv().value() = 1.0;
 					for (int l = 0; l <= k; ++l) {
 						dofs[l].v->value().deriv() = 1.0;
-						ScalarDiffDiff energy = computeEnergy((V3T<ScalarDiffDiff>)ee.getWheelRhoLocal(), (V3T<ScalarDiffDiff>)ee.wheelAxisLocal,
-														  ee.endEffectorRB, qi, qip,
-														  (V3T<ScalarDiffDiff>)ee.wheelYawAxis, yawAnglej, yawAnglejp,
-														  (V3T<ScalarDiffDiff>)ee.wheelTiltAxis, tiltAnglej, tiltAnglejp,
-														  wheelSpeedj, wheelSpeedjp, dt);
+						ScalarDiffDiff energy = computeEnergy(ee, qi, qip,
+							yawAnglej, yawAnglejp,
+							tiltAnglej, tiltAnglejp,
+							wheelSpeedj, wheelSpeedjp, dt);
+
 						ADD_HES_ELEMENT(hessianEntries,
 										dofs[k].i,
 										dofs[l].i,

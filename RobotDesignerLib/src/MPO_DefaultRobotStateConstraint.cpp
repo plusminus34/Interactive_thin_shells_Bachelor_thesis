@@ -52,7 +52,7 @@ void MPO_DefaultRobotStateConstraint::addGradientTo(dVector& grad, const dVector
 			index++;
 		}
 
-		for (int k = 0; k < dofs.size(); ++k) {
+		for (uint k = 0; k < dofs.size(); ++k) {
 			dofs[k].v->deriv() = 1.0;
 			ScalarDiff energy = computeEnergy(qDefault, q);
 			grad[dofs[k].i] += energy.deriv();
@@ -85,7 +85,7 @@ void MPO_DefaultRobotStateConstraint::addHessianEntriesTo(DynamicArray<MTriplet>
 			index++;
 		}
 
-		for (int k = 0; k < dofs.size(); ++k) {
+		for (uint k = 0; k < dofs.size(); ++k) {
 			dofs[k].v->deriv().value() = 1.0;
 			for (int l = 0; l <= k; ++l) {
 				dofs[l].v->value().deriv() = 1.0;

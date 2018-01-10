@@ -24,11 +24,11 @@ double MPO_PassiveWheelsGRFConstraints::computeValue(const dVector& p){
 		for (int i=0; i<nEEs; i++){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 
-			const V3D &wheelAxisLocal = ee.wheelAxisLocal;
+			const V3D &wheelAxisLocal = ee.wheelAxisLocal_WF;
 			double yawAngle = ee.wheelYawAngle[j];
-			const V3D &yawAxis = ee.wheelYawAxis;
+			const V3D &yawAxis = ee.wheelYawAxis_WF;
 			double tiltAngle = ee.wheelTiltAngle[j];
-			const V3D &tiltAxis = ee.wheelTiltAxis;
+			const V3D &tiltAxis = ee.wheelTiltAxis_WF;
 			const V3D &grf = ee.contactForce[j];
 
 			if(ee.isPassiveWheel)
@@ -63,11 +63,11 @@ void MPO_PassiveWheelsGRFConstraints::addGradientTo(dVector& grad, const dVector
 			if(ee.isPassiveWheel)
 			{
 
-				V3T<ScalarDiff> wheelAxisLocal = ee.wheelAxisLocal;
+				V3T<ScalarDiff> wheelAxisLocal = ee.wheelAxisLocal_WF;
 				ScalarDiff yawAngle = ee.wheelYawAngle[j];
-				V3T<ScalarDiff> yawAxis = ee.wheelYawAxis;
+				V3T<ScalarDiff> yawAxis = ee.wheelYawAxis_WF;
 				ScalarDiff tiltAngle = ee.wheelTiltAngle[j];
-				V3T<ScalarDiff> tiltAxis = ee.wheelTiltAxis;
+				V3T<ScalarDiff> tiltAxis = ee.wheelTiltAxis_WF;
 				V3T<ScalarDiff> grf = ee.contactForce[j];
 
 				std::vector<DOF<ScalarDiff>> dofs(numDOFs);
@@ -121,11 +121,11 @@ void MPO_PassiveWheelsGRFConstraints::addHessianEntriesTo(DynamicArray<MTriplet>
 			if(ee.isPassiveWheel)
 			{
 
-				V3T<ScalarDiffDiff> wheelAxisLocal = ee.wheelAxisLocal;
+				V3T<ScalarDiffDiff> wheelAxisLocal = ee.wheelAxisLocal_WF;
 				ScalarDiffDiff yawAngle = ee.wheelYawAngle[j];
-				V3T<ScalarDiffDiff> yawAxis = ee.wheelYawAxis;
+				V3T<ScalarDiffDiff> yawAxis = ee.wheelYawAxis_WF;
 				ScalarDiffDiff tiltAngle = ee.wheelTiltAngle[j];
-				V3T<ScalarDiffDiff> tiltAxis = ee.wheelTiltAxis;
+				V3T<ScalarDiffDiff> tiltAxis = ee.wheelTiltAxis_WF;
 				V3T<ScalarDiffDiff> grf = ee.contactForce[j];
 
 				std::vector<DOF<ScalarDiffDiff>> dofs(numDOFs);
@@ -189,11 +189,11 @@ double MPO_PassiveWheelsGRFFrictionConstraints::computeValue(const dVector& p){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 			if(ee.isPassiveWheel)
 			{
-				const V3D &wheelAxisLocal = ee.wheelAxisLocal;
+				const V3D &wheelAxisLocal = ee.wheelAxisLocal_WF;
 				double yawAngle = ee.wheelYawAngle[j];
-				const V3D &yawAxis = ee.wheelYawAxis;
+				const V3D &yawAxis = ee.wheelYawAxis_WF;
 				double tiltAngle = ee.wheelTiltAngle[j];
-				const V3D &tiltAxis = ee.wheelTiltAxis;
+				const V3D &tiltAxis = ee.wheelTiltAxis_WF;
 				const V3D &grf = ee.contactForce[j];
 
 				double fr = fabs(computeForceForward(wheelAxisLocal, yawAxis, yawAngle, tiltAxis, tiltAngle, grf));
@@ -230,11 +230,11 @@ void MPO_PassiveWheelsGRFFrictionConstraints::addGradientTo(dVector& grad, const
 			if(ee.isPassiveWheel)
 			{
 
-				V3T<ScalarDiff> wheelAxisLocal = ee.wheelAxisLocal;
+				V3T<ScalarDiff> wheelAxisLocal = ee.wheelAxisLocal_WF;
 				ScalarDiff yawAngle = ee.wheelYawAngle[j];
-				V3T<ScalarDiff> yawAxis = ee.wheelYawAxis;
+				V3T<ScalarDiff> yawAxis = ee.wheelYawAxis_WF;
 				ScalarDiff tiltAngle = ee.wheelTiltAngle[j];
-				V3T<ScalarDiff> tiltAxis = ee.wheelTiltAxis;
+				V3T<ScalarDiff> tiltAxis = ee.wheelTiltAxis_WF;
 				V3T<ScalarDiff> grf = ee.contactForce[j];
 
 				std::vector<DOF<ScalarDiff>> dofs(numDOFs);
@@ -294,11 +294,11 @@ void MPO_PassiveWheelsGRFFrictionConstraints::addHessianEntriesTo(DynamicArray<M
 			if(ee.isPassiveWheel)
 			{
 
-				V3T<ScalarDiffDiff> wheelAxisLocal = ee.wheelAxisLocal;
+				V3T<ScalarDiffDiff> wheelAxisLocal = ee.wheelAxisLocal_WF;
 				ScalarDiffDiff yawAngle = ee.wheelYawAngle[j];
-				V3T<ScalarDiffDiff> yawAxis = ee.wheelYawAxis;
+				V3T<ScalarDiffDiff> yawAxis = ee.wheelYawAxis_WF;
 				ScalarDiffDiff tiltAngle = ee.wheelTiltAngle[j];
-				V3T<ScalarDiffDiff> tiltAxis = ee.wheelTiltAxis;
+				V3T<ScalarDiffDiff> tiltAxis = ee.wheelTiltAxis_WF;
 				V3T<ScalarDiffDiff> grf = ee.contactForce[j];
 
 				std::vector<DOF<ScalarDiffDiff>> dofs(numDOFs);
