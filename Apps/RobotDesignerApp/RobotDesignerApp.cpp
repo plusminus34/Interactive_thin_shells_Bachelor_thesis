@@ -10,10 +10,9 @@
 //debug joint velocity limits some more...
 //add the option to start non-periodic mopt from zero or from two other motion plans...
 //fix the bulk write...
-//have the option to create a box (rounded edges) for the body of a robot, as well as an option to rescale the connector cube mesh/faces...
-//loading of skating plans doesn't work... why?!?
-//start with hack hessians disabled, seems to not work well
-//write out external forces in mopt as well...
+//ik solver doesn't take into account the state of the robot...
+//rotate the "wheel" in the creature design - does the rolling motion become obvious?
+//add a cylinder as CDP in ODE? A flat capsule!
 
 
 RobotDesignerApp::RobotDesignerApp(){
@@ -426,6 +425,8 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		if (moptWindow->locomotionManager && moptWindow->locomotionManager->motionPlan){
 			moptWindow->locomotionManager->motionPlan->readParamsFromFile(fName);
 			moptWindow->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
+			moptWindow->locomotionManager->motionPlan->syncMotionPlanWithFootFallPattern(moptWindow->footFallPattern);
+
 			moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
 			moptWindow->syncMOPTWindowParameters();
 			moptWindow->printCurrentObjectiveValues();

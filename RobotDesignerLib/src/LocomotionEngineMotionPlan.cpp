@@ -1056,9 +1056,8 @@ void LocomotionEngineMotionPlan::writeParamsToFile(FILE *fp) {
 
 	fprintf(fp, "\n\n%d\n", wrapAroundBoundaryIndex);
 
-//	for (int i = 0; i < nSamplePoints; i++)
-//		for (int j = 0; j < robotStateTrajectory.nStateDim; j++)
-//			fprintf(fp, "%10.10lf\n", robotStateTrajectory.defaultRobotStates[i][j]);
+	fprintf(fp, "\n\n%lf %lf\n", externalForce[0], externalForce[2]);
+
 
 	fprintf(fp, "\n\n");
 }
@@ -1126,6 +1125,9 @@ void LocomotionEngineMotionPlan::readParamsFromFile(FILE *fp) {
 
 	wrapAroundBoundaryIndex = 0;
 	fscanf(fp, "%d", &wrapAroundBoundaryIndex);
+
+	fscanf(fp, "%lf %lf", &externalForce[0], &externalForce[2]);
+
 }
 
 void LocomotionEngineMotionPlan::readParamsFromFile(const char *fName){

@@ -296,7 +296,7 @@ void PololuServoControlInterface::driveMotorPositionsToZero() {
 	}
 	sendControlInputsToPhysicalRobot();
 
-	Timer t;
+//	Timer t;
 //	while (t.timeEllapsed() < 1000);
 	while (servosAreMoving());
 
