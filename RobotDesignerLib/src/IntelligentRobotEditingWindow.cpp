@@ -371,172 +371,152 @@ void IntelligentRobotEditingWindow::resetParams()
 	syncSliders();
 }
 
-void IntelligentRobotEditingWindow::updateJacobian()
+void IntelligentRobotEditingWindow::update_dmdX()
 {
 	//evaluates dm/dp at (m,p). It is assumed that m corresponds to a minimum of the energy (i.e. m = arg min (E(m(p)))
 	// Let g = \partial E / \partial m
 	// partial g / partial p + partial g / partial m * dm/dp = dg/dp = 0
 	// dm/dp = -partial g / partial m ^ -1 * partial g / partial p
-
-#ifdef USE_MATLAB
-	igl::matlab::mlinit(&matlabengine);
-	igl::matlab::mleval(&matlabengine, "desktop");
-#endif
-
-	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
-	m0 = m;
-
-	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
-	p0 = Eigen::Map<dVector>(p.data(), p.size());
-
-	SparseMatrix dgdm;
-	dVector dgdpi, dmdpi;
-	dgdp.resize(m.size(), p.size());
-	dVector g_m, g_p;
-
-	resize(dgdm, m.size(), m.size());
-	resize(dmdp, m.size(), p.size());
-	resize(dgdpi, m.size());
-
-	Timer timerN; timerN.restart();
-	DynamicArray<MTriplet> triplets;
-	rdApp->moptWindow->locomotionManager->energyFunction->addHessianEntriesTo(triplets, m);
-	dgdm.setFromTriplets(triplets.begin(), triplets.end());
-
-	Eigen::SimplicialLDLT<SparseMatrix, Eigen::Lower> solver;
-	//	Eigen::SparseLU<SparseMatrix> solver;
-	solver.compute(dgdm);
-// 	Logger::consolePrint("Time to construct dgdm: %lf\n", timerN.timeEllapsed());
-	double dp = 0.001;
-	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
-	timerN.restart();
-	if (compute_dgdp_With_FD)
-	{
-		for (uint i = 0; i < p.size(); i++) {
-			resize(g_m, m.size());
-			resize(g_p, m.size());
-
-			double pVal = p[i];
-			p[i] = pVal + dp;
-			setParamsAndUpdateMOPT(p);
-			rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_p, m);
-			p[i] = pVal - dp;
-			setParamsAndUpdateMOPT(p);
-			rdApp->moptWindow->locomotionManager->energyFunction->addGradientTo(g_m, m);
-			p[i] = pVal;
-			setParamsAndUpdateMOPT(p);
-
-			dgdp.col(i) = (g_p - g_m) / (2 * dp);
-		}
-	}
-	else
-	{
-
-	}
-// 	Logger::consolePrint("Time to construct dgdp: %lf\n", timerN.timeEllapsed());
-	timerN.restart();
-	dmdp = solver.solve(dgdp) * -1;
-// 	Logger::consolePrint("Time to solve for J: %lf\n", timerN.timeEllapsed());
-
-	if (useSVD)
-	{
-		Eigen::JacobiSVD<MatrixNxM> svd(dmdp, Eigen::ComputeThinU | Eigen::ComputeThinV);
-		dmdp_V = svd.matrixV();
-	}
-#ifdef USE_MATLAB
-	RUN_IN_MATLAB(
-		igl::matlab::mlsetmatrix(&matlabengine, "dmdp", dmdp);
-	igl::matlab::mlsetmatrix(&matlabengine, "dmdp_V", dmdp_V);
-	)
-#endif
-}
-
-void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
-	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
-	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
-
-	//dm/dp, the analytic version. 
-	updateJacobian();
-
-	//Now estimate this jacobian with finite differences...
-	MatrixNxM dmdp_FD;
-	dVector m_initial, m_m, m_p;
-	resize(dmdp_FD, m.size(), p.size());
-	double dp = 0.001;
-	rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_initial);
-	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
-	for (uint i = 0; i < p.size(); i++) {
-		resize(m_m, m.size());
-		resize(m_p, m.size());
-
-		double pVal = p[i];
-		p[i] = pVal + dp;
-		setParamsAndUpdateMOPT(p);
-		//now we must solve this thing a loooot...
-
-		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
-		for (int j = 0; j < 300; j++)
-			rdApp->moptWindow->runMOPTStep();
-
-		rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_m);
-		p[i] = pVal - dp;
-		setParamsAndUpdateMOPT(p);
-		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
-		for (int j = 0; j < 300; j++)
-			rdApp->moptWindow->runMOPTStep();
-		rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_p);
-
-		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
-		p[i] = pVal;
-		setParamsAndUpdateMOPT(p);
-
-		dmdp_FD.col(i) = (m_p - m_m) / (2 * dp);
-	}
-
-	print("../out/dmdp.m", dmdp);
-	print("../out/dmdp_FD.m", dmdp_FD);
-}
-
-void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep(ObjectiveFunction* objFunction) {
-	updateJacobian();
+	
+	// disable Hessian hacking first, to get the true hessian
+	
 	LocomotionEngine_EnergyFunction *totalEnergy = rdApp->moptWindow->locomotionManager->energyFunction;
-	std::vector<bool> hackHessian(totalEnergy->objectives.size());
-	for (int i = 0; i < totalEnergy->objectives.size(); i++)
+	int nE = totalEnergy->objectives.size();
+	std::vector<bool> hackHessian(nE);
+	for (int i = 0; i < nE; i++)
 	{
 		hackHessian[i] = totalEnergy->objectives[i]->hackHessian;
 		totalEnergy->objectives[i]->hackHessian = false;
 	}
 
+	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+	m0 = m;
+	SparseMatrix dgdm;
+	resize(dgdm, m.size(), m.size());
+	DynamicArray<MTriplet> triplets;
+	totalEnergy->addHessianEntriesTo(triplets, m);
+	dgdm.setFromTriplets(triplets.begin(), triplets.end());
+
+	Eigen::SimplicialLDLT<SparseMatrix, Eigen::Lower> solver;
+	//	Eigen::SparseLU<SparseMatrix> solver;
+	solver.compute(dgdm);
+
+	// The next part depends on mode
+	if (mode == Mode::design)
+	{
+		DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
+		p0 = Eigen::Map<dVector>(p.data(), p.size());
+
+		dgdX.resize(m.size(), p.size());
+		dVector g_m, g_p;
+
+		resize(dmdX, m.size(), p.size());
+
+		double dp = 0.001;
+		//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
+		if (compute_dgdp_With_FD)
+		{
+			for (uint i = 0; i < p.size(); i++) {
+				resize(g_m, m.size());
+				resize(g_p, m.size());
+
+				double pVal = p[i];
+				p[i] = pVal + dp;
+				setParamsAndUpdateMOPT(p);
+				totalEnergy->addGradientTo(g_p, m);
+				p[i] = pVal - dp;
+				setParamsAndUpdateMOPT(p);
+				totalEnergy->addGradientTo(g_m, m);
+				p[i] = pVal;
+				setParamsAndUpdateMOPT(p);
+
+				dgdX.col(i) = (g_p - g_m) / (2 * dp);
+			}
+		}
+		else
+		{
+
+		}
+	}
+	else
+	{
+		dgdX.resize(m.size(), nE);
+		dVector grad(m.size());
+		w0.resize(nE);
+		for (int i = 0; i < nE; i++)
+		{
+			w0(i) = totalEnergy->objectives[i]->weight;
+			totalEnergy->objectives[i]->weight = 1;
+			dVector temp(m.size());
+			temp.setZero();
+			totalEnergy->objectives[i]->addGradientTo(grad, m0);
+			dgdX.col(i) = grad;
+			totalEnergy->objectives[i]->weight = w0(i);
+		}
+	}
+
+	dmdX = solver.solve(dgdX) * -1;
+
+	if (useSVD)
+	{
+		Eigen::JacobiSVD<MatrixNxM> svd(dmdX, Eigen::ComputeThinU | Eigen::ComputeThinV);
+		dmdX_V = svd.matrixV();
+	}
+
+	for (int i = 0; i < nE; i++)
+		totalEnergy->objectives[i]->hackHessian = hackHessian[i];
+}
+
+
+void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep(ObjectiveFunction* objFunction) {
+	update_dmdX();
+	LocomotionEngine_EnergyFunction *totalEnergy = rdApp->moptWindow->locomotionManager->energyFunction;
+
+
 	//If we have some objective O, expressed as a function of m, then dO/dp = dO/dm * dm/dp
 	dVector dOdm;
-	dVector dOdp;
-	dVector p, m;
+	dVector dOdX;
+	dVector X, m;
 	resize(dOdm, m0.size());
-	resize(dOdp, p0.size());
 	objFunction->addGradientTo(dOdm, m0);
 
+	
 	double currStepSize;
-	dOdp = dOdm.transpose() * dmdp;
+
+	//resize(dOdX, p0.size());
+	dOdX = dOdm.transpose() * dmdX;
 	if (useLBFGS)
 	{
-		lbfgsMinimizer->add_x_and_dfdx_to_history(p0, dOdp);
-		dOdp = lbfgsMinimizer->compute_Hinv_v(dOdp);
+		lbfgsMinimizer->add_x_and_dfdx_to_history(p0, dOdX);
+		dOdX = lbfgsMinimizer->compute_Hinv_v(dOdX);
 		currStepSize = 1;
 	}
 	else
 	{
-		dOdp /= dOdp.maxCoeff();
+		double maxCoeff = dOdX.maxCoeff();
+		if(maxCoeff>11)
+			dOdX /= maxCoeff;
 		currStepSize = stepSize;
 	}
+	dVector dmdXdOdx = dmdX * dOdX;
 	double O0 = objFunction->computeValue(m0);
 	double E0 = totalEnergy->computeValue(m0);
 	double Ocurr, Ecurr;
 	int i;
 	for(i=0; i<15; i++)
 	{
-		p = p0 - currStepSize * dOdp;
-		m = m0 - currStepSize * dmdp * dOdp;
-		setParamsAndUpdateMOPT(p);
+		if (mode == Mode::design)
+		{
+			X = p0 - currStepSize * dOdX;
+			setParamsAndUpdateMOPT(X);
+		}
+		else
+		{
+			X = w0 - currStepSize * dOdX;
+			X = X.unaryExpr([](double val) {return (val > 0) ? val : 0; });
+			totalEnergy->setWeights(X);
+		}
+		m = m0 - currStepSize * dmdXdOdx;
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m);
 		Ocurr = objFunction->computeValue(m);
 		Ecurr = totalEnergy->computeValue(m);
@@ -544,9 +524,8 @@ void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep(Objective
 			break;
 		currStepSize /= 2;
 	}
-	for (int i = 0; i < totalEnergy->objectives.size(); i++)
-		totalEnergy->objectives[i]->hackHessian = hackHessian[i];
-	Logger::consolePrint("Design optimization line search number of steps: %d", i);
+
+	Logger::consolePrint("Param optimization line search number of steps: %d", i);
 }
 
 void IntelligentRobotEditingWindow::showMenu(){
@@ -556,7 +535,6 @@ void IntelligentRobotEditingWindow::showMenu(){
 		CreateParametersDesignWindow();
 	menu->setVisible(true);
 }
-
 void IntelligentRobotEditingWindow::hideMenu()
 {
 	if (menu)
@@ -580,11 +558,12 @@ void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
 		menu->dispose();
 
 	menu = rdApp->mainMenu->addWindow(Eigen::Vector2i(viewportX, viewportY), "Design Parameters");
+	rdApp->mainMenu->addVariable("mode", mode)->setItems({ "design","weights" });
 	rdApp->mainMenu->addButton("Reset Params", [this]() { resetParams(); });
-	rdApp->mainMenu->addButton("Compute Jacobian", [this]() { updateJacobian(); });
+	rdApp->mainMenu->addButton("Compute dmdp", [this]() { update_dmdX(); });
 
-	rdApp->mainMenu->addVariable("Update Jacobian continuously", updateJacobiancontinuously);
-	rdApp->mainMenu->addVariable("Use Jacobian", updateMotionBasedOnJacobian);
+	rdApp->mainMenu->addVariable("Update dmdp continuously", updateJacobiancontinuously);
+	rdApp->mainMenu->addVariable("Use dmdp", updateMotionBasedOnJacobian);
 	rdApp->mainMenu->addVariable("Use SVD", useSVD);
 
 	rdApp->mainMenu->addVariable("Use lbfgs", useLBFGS);
@@ -644,7 +623,7 @@ void IntelligentRobotEditingWindow::updateParamsUsingSliders(int paramIndex, dou
 		p(paramIndex) = value;
 	}
 	else {
-		p = p0 + dmdp_V*slidervalues;
+		p = p0 + dmdX_V*slidervalues;
 	}
 	updateParamsAndMotion(p);
 }
@@ -661,13 +640,13 @@ void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 	if (updateJacobiancontinuously)
 	{
 		Timer timerN; timerN.restart();
-		updateJacobian();
+		update_dmdX();
 		Logger::consolePrint("Total time to compute J: %lf\n", timerN.timeEllapsed());
 	}
 	setParamsAndUpdateMOPT(p);
 	if (updateMotionBasedOnJacobian) {
 		dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
-		m = m0 + dmdp*(p - p0);
+		m = m0 + dmdX*(p - p0);
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m);
 	}
 }
@@ -716,4 +695,48 @@ void IntelligentRobotEditingWindow::drawScene() {
 	rdApp->robot->setState(&rs);
 }
 
+void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
+	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
 
+	//dm/dp, the analytic version. 
+	update_dmdX();
+
+	//Now estimate this jacobian with finite differences...
+	MatrixNxM dmdp_FD;
+	dVector m_initial, m_m, m_p;
+	resize(dmdp_FD, m.size(), p.size());
+	double dp = 0.001;
+	rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_initial);
+	//now, for every design parameter, estimate change in gradient, and use that to compute the corresponding entry in dm/dp...
+	for (uint i = 0; i < p.size(); i++) {
+		resize(m_m, m.size());
+		resize(m_p, m.size());
+
+		double pVal = p[i];
+		p[i] = pVal + dp;
+		setParamsAndUpdateMOPT(p);
+		//now we must solve this thing a loooot...
+
+		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
+		for (int j = 0; j < 300; j++)
+			rdApp->moptWindow->runMOPTStep();
+
+		rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_m);
+		p[i] = pVal - dp;
+		setParamsAndUpdateMOPT(p);
+		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
+		for (int j = 0; j < 300; j++)
+			rdApp->moptWindow->runMOPTStep();
+		rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_p);
+
+		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
+		p[i] = pVal;
+		setParamsAndUpdateMOPT(p);
+
+		dmdp_FD.col(i) = (m_p - m_m) / (2 * dp);
+	}
+
+	print("../out/dmdp.m", dmdX);
+	print("../out/dmdp_FD.m", dmdp_FD);
+}

@@ -21,7 +21,7 @@ public:
 	~IntelligentRobotEditingWindow();
 
 	virtual void drawScene();
-	void updateJacobian();
+	void update_dmdX();
 	void test_dmdp_Jacobian();
 	void DoDesignParametersOptimizationStep(ObjectiveFunction* objFunction);
 	void showMenu();
@@ -44,15 +44,17 @@ public:
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
 	void resetParams();
+	enum class Mode { design, weights } mode = Mode::design;
+
 private:
 	bool updateMotionBasedOnJacobian = false;
 	bool useSVD = false;
 	bool updateJacobiancontinuously = false;
-	MatrixNxM dmdp; //The jacobian at a point
+	MatrixNxM dmdX; //The jacobian at a point
 	dVector m0;
-	MatrixNxM dmdp_V;
-	MatrixNxM dgdp;
-	dVector p0;
+	MatrixNxM dmdX_V;
+	MatrixNxM dgdX;
+	dVector p0,w0;
 	dVector slidervalues;
 	std::vector<nanogui::Slider*> sliders;
 	std::vector<nanogui::TextBox*> textboxes;
