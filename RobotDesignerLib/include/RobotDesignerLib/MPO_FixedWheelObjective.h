@@ -50,7 +50,7 @@ private:
 		Vector3T<T> rhoWheelj = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(rhoLocal_WF, V3T<T>(ee.wheelYawAxis_WF), yawAnglej, V3T<T>(ee.wheelTiltAxis_WF), tiltAnglej);
 		Vector3T<T> rhoWheelLocalRotjp = rotateVec(rhoLocal_WF, (wheelSpeedj+wheelSpeedjp)*(T)0.5*dt, V3T<T>(ee.wheelAxisLocal_WF));
 		Vector3T<T> rhoWheelRotjp = LocomotionEngine_EndEffectorTrajectory::rotVecByYawTilt(rhoWheelLocalRotjp, V3T<T>(ee.wheelYawAxis_WF), yawAnglejp, V3T<T>(ee.wheelTiltAxis_WF), tiltAnglejp);
-		Vector3T<T> err = rhoRobotj.cross(rhoRobotjp) - rhoWheelj.cross(rhoWheelRotjp);
+		Vector3T<T> err = rhoRobotj.cross(rhoRobotjp) + rhoWheelj.cross(rhoWheelRotjp);
 
 		return (T)0.5 * err.squaredNorm() * (T)weight;
 	}
