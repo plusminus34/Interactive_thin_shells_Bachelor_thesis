@@ -1226,7 +1226,7 @@ void LocomotionEngineMotionPlan::updateParameterStartIndices(){
 		paramCount += nSamplePoints * endEffectorTrajectories.size() * 3;
 	}
 
-	if (optimizeWheels){
+	if (optimizeWheels && nWheels>0){
 		// per end effector wheel params: speed
 		wheelParamsStartIndex = paramCount;
 		paramCount += nSamplePoints * nWheels * nWheelParams;

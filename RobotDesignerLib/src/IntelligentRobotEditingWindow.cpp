@@ -358,17 +358,20 @@ bool IntelligentRobotEditingWindow::onMouseButtonEvent(int button, int action, i
 
 	return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
 }
-
 void IntelligentRobotEditingWindow::setViewportParameters(int posX, int posY, int sizeX, int sizeY){
 	GLWindow3D::setViewportParameters(posX, posY, sizeX, sizeY);
 }
-
 void IntelligentRobotEditingWindow::resetParams()
 {
 	dVector p;	rdApp->prd->getCurrentSetOfParameters(p);
 	p.setZero();
 	setParamsAndUpdateMOPT(p);
 	syncSliders();
+}
+
+void IntelligentRobotEditingWindow::onModeChange()
+{
+	throw std::logic_error("The method or operation is not implemented.");
 }
 
 void IntelligentRobotEditingWindow::update_dmdX()
@@ -558,7 +561,11 @@ void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
 		menu->dispose();
 
 	menu = rdApp->mainMenu->addWindow(Eigen::Vector2i(viewportX, viewportY), "Design Parameters");
-	rdApp->mainMenu->addVariable("mode", mode)->setItems({ "design","weights" });
+	{
+		auto temp = rdApp->mainMenu->addVariable<Mode>("mode", mode);
+		temp->setItems({ "design","weights" });
+// 		temp->setCallback([this] (Mode val){onModeChange(); });
+	}
 	rdApp->mainMenu->addButton("Reset Params", [this]() { resetParams(); });
 	rdApp->mainMenu->addButton("Compute dmdp", [this]() { update_dmdX(); });
 

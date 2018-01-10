@@ -92,6 +92,8 @@ void MPO_RobotWheelAxisObjective::addGradientTo(dVector& grad, const dVector& p)
 void MPO_RobotWheelAxisObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
+	if (theMotionPlan->wheelParamsStartIndex < 0)
+		return;
 	int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 
 	MatrixNxM dvdq, ddvdq2;

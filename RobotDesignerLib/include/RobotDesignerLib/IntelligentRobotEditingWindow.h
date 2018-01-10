@@ -63,5 +63,6 @@ private:
 	double stepSize = 0.01;
 	std::unique_ptr<BFGSHessianApproximator> lbfgsMinimizer;
 	bool useLBFGS = false;
+	void onModeChange();
 };
 

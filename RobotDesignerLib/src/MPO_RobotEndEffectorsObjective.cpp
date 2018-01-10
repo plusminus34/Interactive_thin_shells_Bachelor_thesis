@@ -237,9 +237,11 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 				}
 			}
 			else {
+				int I = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
+				int J = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim;
+
 				//compute the gradient with respect to the feet locations
 				if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
-					int I = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
 					ADD_HES_ELEMENT(hessianEntries, I, I, 1, weight);
 					ADD_HES_ELEMENT(hessianEntries, I + 1, I + 1, 1, weight);
 					ADD_HES_ELEMENT(hessianEntries, I + 2, I + 2, 1, weight);
@@ -247,17 +249,15 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 				//and now compute the gradient with respect to the robot q's
 				if (theMotionPlan->robotStatesParamsStartIndex >= 0) {
 					theMotionPlan->robotRepresentation->compute_dpdq(ee.endEffectorLocalCoords, ee.endEffectorRB, dpdq);
-					int I = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim;
 					
 					if (!hackHessian) {
-
 						for (int k = 0; k < theMotionPlan->robotRepresentation->getDimensionCount(); k++) {
 							Vector3d err(ee.EEPos[j] - theMotionPlan->robotRepresentation->getWorldCoordinatesFor(ee.endEffectorLocalCoords, ee.endEffectorRB));
 							bool hasNonZeros = theMotionPlan->robotRepresentation->compute_ddpdq_dqi(ee.endEffectorLocalCoords, ee.endEffectorRB, ddpdqdqi, k);
 							if (hasNonZeros == false) continue;
-							dVector V = ddpdqdqi.transpose()*err;
+							dVector V = -ddpdqdqi.transpose()*err;
 							for (int l = k; l < theMotionPlan->robotRepresentation->getDimensionCount(); l++)
-								ADD_HES_ELEMENT(hessianEntries, I + k, I + l, V(l), weight);
+								ADD_HES_ELEMENT(hessianEntries, J + k, J + l, V(l), weight);
 						}
 					}
 
@@ -269,18 +269,16 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 
 					for (int k = 0; k < theMotionPlan->robotRepresentation->getDimensionCount(); k++) {
 						for (int l = k; l < theMotionPlan->robotRepresentation->getDimensionCount(); l++) {
-							ADD_HES_ELEMENT(hessianEntries, I + k, I + l, outerProd(k, l), weight);
+							ADD_HES_ELEMENT(hessianEntries, J + k, J + l, outerProd(k, l), weight);
 						}
 					}
 
 					//and now the mixed derivatives
 					if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
 						for (int k = 0; k < theMotionPlan->robotRepresentation->getDimensionCount(); k++) {
-							int I = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
-							int J = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + k;
-							ADD_HES_ELEMENT(hessianEntries, I, J, -dpdq(0, k), weight);
-							ADD_HES_ELEMENT(hessianEntries, I + 1, J, -dpdq(1, k), weight);
-							ADD_HES_ELEMENT(hessianEntries, I + 2, J, -dpdq(2, k), weight);
+							ADD_HES_ELEMENT(hessianEntries, I, J+k, -dpdq(0, k), weight);
+							ADD_HES_ELEMENT(hessianEntries, I + 1, J+k, -dpdq(1, k), weight);
+							ADD_HES_ELEMENT(hessianEntries, I + 2, J+k, -dpdq(2, k), weight);
 						}
 					}
 				}
