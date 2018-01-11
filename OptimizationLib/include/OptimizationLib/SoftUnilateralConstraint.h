@@ -104,6 +104,27 @@ public:
 	}
 };
 
+
+
+class SoftLowerBarrierConstraint {
+
+public:
+
+	SoftLowerBarrierConstraint::SoftLowerBarrierConstraint(double limit);
+
+	virtual ~SoftLowerBarrierConstraint();
+
+	//comptue f(x)
+	double computeValue(double x);
+
+	//compute df/dx
+	double computeDerivative(double x);
+
+	//compute ddf/dxdx
+	double computeSecondDerivative(double x);
+	double limit = 1;
+};
+
 class SoftSymmetricBarrierConstraint {
 
 public:
@@ -120,7 +141,6 @@ public:
 
 	//compute ddf/dxdx
 	double computeSecondDerivative(double x);
-	double stiffness = 1;
 	double limit = 1;
 };
 
