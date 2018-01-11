@@ -1,7 +1,13 @@
 #include <YuMiLib/YuMiArm.h>
 
 #include <iostream>
+#ifdef WIN32
+#include <Winsock2.h>
+#include <Ws2tcpip.h>
+#else
 #include <arpa/inet.h>
+#endif
+
 #include <fcntl.h>
 #include <string.h>
 #include <algorithm>
@@ -98,7 +104,8 @@ bool YuMiArm::closeConnection(){
 bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int idCode){
     bool success = false;
 
-    pthread_mutex_lock(&sendRecvMutex);
+    //pthread_mutex_lock(&sendRecvMutex);
+    sendRecvMutex.lock();
     if (send(robotSocket, message, messageLength, 0) == -1){
         std::cerr << "Failed to send command to robot" << std::endl;
     } else {
@@ -112,7 +119,8 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
             //std::cout << "reply: " << reply << std::endl;
             if(idCode!=-1) {
                 if ((ok == YuMiConstants::SERVER_OK) && (rcvIdCode == idCode)) {
-                    pthread_mutex_unlock(&sendRecvMutex);
+                    //pthread_mutex_unlock(&sendRecvMutex);
+					sendRecvMutex.unlock();
                     success = true;
                 } else if ((ok == YuMiConstants::SERVER_COLLISION) && (rcvIdCode == idCode)) {
                     std::cerr << "WARNING: Collision Detected" << std::endl;
@@ -122,7 +130,8 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
                 }
             } else {
                 if (ok == YuMiConstants::SERVER_OK) {
-                    pthread_mutex_unlock(&sendRecvMutex);
+                    //pthread_mutex_unlock(&sendRecvMutex);
+					sendRecvMutex.unlock();
                     success = true;
                 } else if (ok == YuMiConstants::SERVER_COLLISION) {
                     std::cerr << "WARNING: Collision Detected" << std::endl;
@@ -136,7 +145,8 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
         }
     }
 
-    pthread_mutex_unlock(&sendRecvMutex);
+    //pthread_mutex_unlock(&sendRecvMutex);
+	sendRecvMutex.unlock();
 
     return success;
 }
