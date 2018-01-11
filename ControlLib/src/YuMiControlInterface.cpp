@@ -102,8 +102,8 @@ void YuMiControlInterface::closeCommunicationPort() {
 }
 
 void YuMiControlInterface::driveMotorPositionsToZero(){
-    std::vector<float> leftTargetJoints = {0.0, -2.26893, 0.0, 0.69813, 0.0, -2.35619, 0.52360};
-    std::vector<float> rightTargetJoints = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    std::vector<float> leftTargetJoints = {0.0f, -2.26893f, 0.0, 0.69813f, 0.0f, -2.35619f, 0.52360f};
+    std::vector<float> rightTargetJoints = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
     int jointIndex = 0;
     for (int i = 0; i < robot->getJointCount(); i++) {
@@ -125,8 +125,8 @@ void YuMiControlInterface::driveMotorPositionsToZero(){
 
 void YuMiControlInterface::driveMotorPositionsToTestPos(){
 
-    std::vector<float> leftTargetJoints = {0.0, -2.26893, 0.0, 0.69813, 0.0, -2.35619, 0.52360};
-    std::vector<float> rightTargetJoints = {0.0, 0.0, 0.0, 0.349066, 0.0, 0.0, 0.0};
+    std::vector<float> leftTargetJoints = {0.0f, -2.26893f, 0.0f, 0.69813f, 0.0f, -2.35619f, 0.52360f};
+    std::vector<float> rightTargetJoints = {0.0f, 0.0f, 0.0f, 0.349066f, 0.0f, 0.0f, 0.0f};
 
     int jointIndex = 0;
     for (int i = 0; i < robot->getJointCount(); i++) {

@@ -17,6 +17,10 @@ target_link_libraries(
 	PRIVATE
 )
 
+if(WIN32)
+  target_link_libraries(${PROJECT_NAME} PUBLIC wsock32 ws2_32)
+endif()
+
 target_include_directories(
 	${PROJECT_NAME} 
 	PUBLIC

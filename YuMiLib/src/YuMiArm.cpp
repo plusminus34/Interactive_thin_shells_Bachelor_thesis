@@ -65,7 +65,15 @@ bool YuMiArm::connectServer(const char* ip, unsigned int port) {
     bool socketConnected = false;
 
     // Create a socket for robot
-    if ((robotSocket = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+#ifdef WIN32
+	unsigned short version = 2;
+	WSADATA w;
+	int ret = WSAStartup(version, &w);
+	if(ret != 0) {
+		std::cerr << "Failed to start Winsocket2" << std::endl;
+	}
+#endif
+    if ((robotSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
         std::cerr << "Problem creating the socket" << std::endl;
     else {
         // Now try to connect to the robot server
