@@ -98,8 +98,9 @@ public:
 
 	//the time window dt estimates the amount of time before the next command is issued (or, alternatively, how long we'd expect the physical robot to take before it can match the target values)
 	virtual void syncPhysicalRobotWithSimRobot(double dt = 0.1) {
-        //std::cout << "syncPhysicalRobotWithSimRobot" << std::endl;
+        std::cout << "syncPhysicalRobotWithSimRobot" << std::endl;
         setTargetMotorValuesFromSimRobotState(dt);
+        //driveMotorPositionsToZero();
 		sendControlInputsToPhysicalRobot();
 	}
 

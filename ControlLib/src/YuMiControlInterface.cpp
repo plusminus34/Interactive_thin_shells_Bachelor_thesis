@@ -4,10 +4,7 @@
 
 
 //Constructor
-YuMiControlInterface::YuMiControlInterface(Robot* robot) : RobotControlInterface(robot) {
-    leftArm.init("left");
-    rightArm.init("right");
-}
+YuMiControlInterface::YuMiControlInterface(Robot* robot) : RobotControlInterface(robot) {}
 
 //Destructor
 YuMiControlInterface::~YuMiControlInterface() {}
@@ -28,6 +25,7 @@ void YuMiControlInterface::sendControlInputsToPhysicalRobot() {
             rightTargetJoints.at(jointIndex) = hj->motor.targetMotorAngle;
         } else {
             leftTargetJoints.at(jointIndex) = hj->motor.targetMotorAngle;
+            std::cout << "leftTargetJoints: " << hj->motor.targetMotorAngle << std::endl;
             jointIndex++;
         }
 
@@ -69,20 +67,20 @@ void YuMiControlInterface::setTargetMotorValuesFromSimRobotState(double dt) {
     std::cout << "setTargetMotorValuesFromSimRobotState" << std::endl;
     readPhysicalRobotMotorPositions();
 
-//    //given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot...
-//    ReducedRobotState rs(robot);
+    //given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot...
+    RobotState rs(robot);
 
-//    for (int i = 0; i < robot->getJointCount(); i++) {
-//        HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-//        if (!hj) continue;
-//        Quaternion q = rs.getJointRelativeOrientation(i);
-//        V3D w = rs.getJointRelativeAngVelocity(i);
-//        hj->motor.targetMotorAngle = q.getRotationAngle(hj->rotationAxis);
+    for (int i = 0; i < robot->getJointCount(); i++) {
+        HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+        if (!hj) continue;
+        Quaternion q = rs.getJointRelativeOrientation(i);
+        V3D w = rs.getJointRelativeAngVelocity(i);
+        hj->motor.targetMotorAngle = q.getRotationAngle(hj->rotationAxis);
 
-//        //we expect we have dt time to go from the current position to the target position... we ideally want to ensure that the motor gets there exactly dt time from now, so we must limit its velocity...
-//        double speedLimit = fabs(hj->motor.targetMotorAngle - hj->motor.currentMotorAngle) / dt;
-//        hj->motor.targetMotorVelocity = speedLimit;
-//    }
+        //we expect we have dt time to go from the current position to the target position... we ideally want to ensure that the motor gets there exactly dt time from now, so we must limit its velocity...
+        double speedLimit = fabs(hj->motor.targetMotorAngle - hj->motor.currentMotorAngle) / dt;
+        hj->motor.targetMotorVelocity = speedLimit;
+    }
 }
 
 void YuMiControlInterface::openCommunicationPort() {
@@ -102,7 +100,9 @@ void YuMiControlInterface::closeCommunicationPort() {
 }
 
 void YuMiControlInterface::driveMotorPositionsToZero(){
-    std::vector<float> leftTargetJoints = {0.0, -2.26893, 0.0, 0.69813, 0.0, -2.35619, 0.52360};
+    std::cout << "driveMotorPositionsToZero" << std::endl;
+    //std::vector<float> leftTargetJoints = {0.0, -2.26893, 0.0, 0.69813, 0.0, 2.35619, 0.52360};
+    std::vector<float> leftTargetJoints = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     std::vector<float> rightTargetJoints = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     int jointIndex = 0;
@@ -124,6 +124,7 @@ void YuMiControlInterface::driveMotorPositionsToZero(){
 
 
 void YuMiControlInterface::driveMotorPositionsToTestPos(){
+    std::cout << "driveMotorPositionsToTestPos" << std::endl;
 
     std::vector<float> leftTargetJoints = {0.0, -2.26893, 0.0, 0.69813, 0.0, -2.35619, 0.52360};
     std::vector<float> rightTargetJoints = {0.0, 0.0, 0.0, 0.349066, 0.0, 0.0, 0.0};

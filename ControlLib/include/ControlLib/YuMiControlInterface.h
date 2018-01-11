@@ -22,7 +22,6 @@ public:
 	// destructor
     ~YuMiControlInterface();
 
-
 	//set motor goals from target values
 	virtual void sendControlInputsToPhysicalRobot();
 	//read motor positions

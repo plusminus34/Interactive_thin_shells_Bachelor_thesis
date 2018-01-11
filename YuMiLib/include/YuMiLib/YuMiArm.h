@@ -11,7 +11,7 @@ class YuMiArm{
 private:
     std::string armSide;
     int robotSocket;
-    bool connected;
+    bool connected = false;
     pthread_mutex_t sendRecvMutex;
 
     float joint1, joint2, joint3, joint4, joint5, joint6, joint7; //joint values in rad!

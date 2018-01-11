@@ -94,7 +94,7 @@ std::string YuMiCom::gotoJointPose(int idCode, float j1, float j2, float j3, flo
 
     msg += "#";
 
-    std::cout << "msg: " << msg << std::endl;
+    //std::cout << "msg: " << msg << std::endl;
 
     return (msg);
 }

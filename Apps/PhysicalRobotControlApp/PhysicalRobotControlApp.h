@@ -34,8 +34,10 @@ private:
 	double trajDuration = 1.0;
 
 	bool controlPositionsOnly = false;
+    bool syncPhysicalRobot = false;
 
-
+    bool startAtHomePosition = true; //true = uses predefined home position / false = uses position where robot is currently in as home position
+    bool saveCurrentAsHomePosition = false;
 
 	RigidBody* selectedRigidBody = NULL;
 	RigidBody* highlightedRigidBody = NULL;

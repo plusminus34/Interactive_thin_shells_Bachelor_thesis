@@ -100,7 +100,9 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
 
     pthread_mutex_lock(&sendRecvMutex);
     if (send(robotSocket, message, messageLength, 0) == -1){
-        std::cerr << "Failed to send command to robot" << std::endl;
+        if(connected){
+            std::cerr << "Failed to send command to robot" << std::endl;
+        }
     } else {
         // Read the reply to the message we just sent, and make sure
         // it's not corrupt, and the command was executed successfully
@@ -175,7 +177,9 @@ std::vector<float> YuMiArm::getJoints(){
         joints[0] = joint1; joints[1] = joint2; joints[2] = joint3; joints[3] = joint4; joints[4] = joint5; joints[5] = joint6; joints[6] = joint7;
 
     } else {
-        std::cerr << "ERROR: Something is wrong in YuMiArm getJoints!" << std::endl;
+        if(connected){
+            std::cerr << "ERROR: Something is wrong in YuMiArm getJoints!" << std::endl;
+        }
     }
 
     return joints;
