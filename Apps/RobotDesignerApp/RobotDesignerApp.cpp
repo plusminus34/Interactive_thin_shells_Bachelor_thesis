@@ -10,8 +10,7 @@
 //debug joint velocity limits some more...
 //add the option to start non-periodic mopt from zero or from two other motion plans...
 //fix the bulk write...
-//rotate the "wheel" in the creature design - does the rolling motion become obvious?
-//add a cylinder as CDP in ODE? A flat capsule!
+
 
 RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
