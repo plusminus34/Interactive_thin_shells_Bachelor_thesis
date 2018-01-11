@@ -121,7 +121,7 @@ LivingHornBracket_BK3002::LivingHornBracket_BK3002() : LivingHornBracket() {
 	string mat = "../data/textures/matcap/blackFluff.bmp";
 	shaderMaterial.setTextureParam(mat.c_str(), GLContentManager::getTexture(mat.c_str()));
 
-	this->bracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/BK3002_hornBracket_w.obj")->clone();
+	this->bracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/BK3002_hornBracket_d.obj")->clone();
 
 	generateBracketMesh();
 	bracketMesh->setMaterial(shaderMaterial);

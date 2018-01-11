@@ -97,7 +97,7 @@ void LivingMotorBodyBracket_TGY306G::generateBracketMesh() {
 }
 
 LivingMotorBodyBracket_BK3002::LivingMotorBodyBracket_BK3002() {
-	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/BK3002_bodyBracket_w.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
 
 	string whiteMat = "../data/textures/matcap/blackFluff.bmp";
 	bodyBracketMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
