@@ -1,7 +1,13 @@
 #include <YuMiLib/YuMiArm.h>
 
 #include <iostream>
+#ifdef WIN32
+#include <Winsock2.h>
+#include <Ws2tcpip.h>
+#else
 #include <arpa/inet.h>
+#endif
+
 #include <fcntl.h>
 #include <string.h>
 #include <algorithm>
@@ -20,7 +26,7 @@ bool YuMiArm::init(std::string arm){
     //Set constants
     connected = false;
     armSide = arm;
-    const char* ip = YuMiConstants::IP;
+	const char* ip = YuMiConstants::IP.c_str();
     unsigned int port = 0;
     if(armSide.compare("right") == 0){
         port = YuMiConstants::PORT_RIGHT_SERVER;
@@ -36,14 +42,15 @@ bool YuMiArm::init(std::string arm){
 
     //Set speed and joint variables
     std::vector<float> joints = getJoints();
-    bool joints_ok = !(std::all_of(joints.begin(), joints.end(), [](int i) { return i==0; }));
-    bool speed_ok = setSpeed(YuMiConstants::INIT_SPEED);
+//    bool joints_ok = !(std::all_of(joints.begin(), joints.end(), [](int i) { return i==0; }));
+//    bool speed_ok = setSpeed(YuMiConstants::INIT_SPEED);
 
-//    std::cout << "socket: " << socketConnected << std::endl;
-//    std::cout << "joints: " << joints_ok << std::endl;
-//    std::cout << "speed: " << speed_ok << std::endl;
+//	std::cout << "socket: " << socketConnected << std::endl;
+//	std::cout << "joints: " << joints_ok << std::endl;
+//	std::cout << "speed: " << speed_ok << std::endl;
 
-    if(socketConnected && joints_ok && speed_ok){
+//    if(socketConnected && joints_ok && speed_ok){
+	if(socketConnected){
         connected = true;
         return true;
     } else {
@@ -59,7 +66,15 @@ bool YuMiArm::connectServer(const char* ip, unsigned int port) {
     bool socketConnected = false;
 
     // Create a socket for robot
-    if ((robotSocket = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+#ifdef WIN32
+	unsigned short version = 2;
+	WSADATA w;
+	int ret = WSAStartup(version, &w);
+	if(ret != 0) {
+		std::cerr << "Failed to start Winsocket2" << std::endl;
+	}
+#endif
+    if ((robotSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
         std::cerr << "Problem creating the socket" << std::endl;
     else {
         // Now try to connect to the robot server
@@ -98,7 +113,8 @@ bool YuMiArm::closeConnection(){
 bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int idCode){
     bool success = false;
 
-    pthread_mutex_lock(&sendRecvMutex);
+    //pthread_mutex_lock(&sendRecvMutex);
+    sendRecvMutex.lock();
     if (send(robotSocket, message, messageLength, 0) == -1){
         if(connected){
             std::cerr << "Failed to send command to robot" << std::endl;
@@ -114,7 +130,8 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
             //std::cout << "reply: " << reply << std::endl;
             if(idCode!=-1) {
                 if ((ok == YuMiConstants::SERVER_OK) && (rcvIdCode == idCode)) {
-                    pthread_mutex_unlock(&sendRecvMutex);
+                    //pthread_mutex_unlock(&sendRecvMutex);
+					sendRecvMutex.unlock();
                     success = true;
                 } else if ((ok == YuMiConstants::SERVER_COLLISION) && (rcvIdCode == idCode)) {
                     std::cerr << "WARNING: Collision Detected" << std::endl;
@@ -124,7 +141,8 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
                 }
             } else {
                 if (ok == YuMiConstants::SERVER_OK) {
-                    pthread_mutex_unlock(&sendRecvMutex);
+                    //pthread_mutex_unlock(&sendRecvMutex);
+					sendRecvMutex.unlock();
                     success = true;
                 } else if (ok == YuMiConstants::SERVER_COLLISION) {
                     std::cerr << "WARNING: Collision Detected" << std::endl;
@@ -138,7 +156,8 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
         }
     }
 
-    pthread_mutex_unlock(&sendRecvMutex);
+    //pthread_mutex_unlock(&sendRecvMutex);
+	sendRecvMutex.unlock();
 
     return success;
 }
