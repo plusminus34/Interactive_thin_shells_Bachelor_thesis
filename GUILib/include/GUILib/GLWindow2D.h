@@ -15,6 +15,9 @@ protected:
 
 protected:
 
+	virtual void pushViewportTransformation();
+	virtual void popViewportTransformation();
+
 
 	// sets up the window for drawing
 	virtual void preDraw();

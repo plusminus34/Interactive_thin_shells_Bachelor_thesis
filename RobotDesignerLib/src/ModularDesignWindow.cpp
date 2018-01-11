@@ -13,6 +13,8 @@
 #include <RobotDesignerLib/LivingConnector.h>
 #include <RobotDesignerLib/LivingSphereEE.h>
 
+//TODO: this code is quite messy... although it is functional, it would benefit from some cleanup...
+
 /*
 To test:
 - can we still export the entire mesh for a robot?
@@ -45,19 +47,17 @@ TIP 2: Hold ALT while changing the position and orientation of motors to keep ch
 TIP 3: Hold CTRL to change the orientation of motors discretely.
 TIP 4: When selecting body plates, use CTRL to create only 1, or otherwise a symmetric pair will be generated.
 TIP 5: With a motor selected, F1/F2 change its angle value, while F3 resets it to zero. This does not change the assembly configuration!
-
-
 */
 
 using namespace std;
 
 ModularDesignWindow::ModularDesignWindow(int x, int y, int w, int h, GLApplication* glApp, const char* libraryDefinitionFileName) : AbstractDesignWindow(x, y, w, h){
 	this->glApp = glApp;
-	((GLTrackingCamera*)camera)->camDistance = -0.5;
+	((GLTrackingCamera*)camera)->camDistance = -1.5;
 	((GLTrackingCamera*)camera)->rotAboutRightAxis = 0.3;
 	((GLTrackingCamera*)camera)->rotAboutUpAxis = 0.3;
 
-	componentLibrary = new GLWindowContainer(3, 3, x, (int)(h * 3.0 / 4), (int)(w), (int)(h /4.0));
+	componentLibrary = new GLWindowContainer(2, 4, x, (int)(h * 3.0 / 4), (int)(w), (int)(h /4.0));
 
 	tWidget = new TranslateWidget(AXIS_X | AXIS_Y | AXIS_Z);
 	//	rWidget = new RotateWidgetV1();
@@ -73,14 +73,18 @@ ModularDesignWindow::ModularDesignWindow(int x, int y, int w, int h, GLApplicati
 		componentLibrary->addSubWindow(new ModuleDisplayWindow(rmcWarehouse[i]));
 	}
 
-	string bodyTexture = "../data/textures/matcap/whitefluff2.bmp";
 	bodyMesh = new GLMesh();
 	bodyMesh->path = robotMeshDir + "BodyMesh.obj";
 	
-	bodyMesh->getMaterial().setColor(1.0, 1.0, 1.0, 0.8);
+	string mat = "../data/textures/matcap/black2.bmp";
+	bodyMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
+	bodyMaterial.setTextureParam(mat.c_str(), GLContentManager::getTexture(mat.c_str()));
 
 	sphereMesh = new GLMesh();
 	sphereMesh->addSphere(P3D(), 1, 12);
+
+	bgColorR = bgColorG = bgColorB = bgColorA = 1.0;
+
 }
 
 ModularDesignWindow::~ModularDesignWindow(void){
@@ -117,7 +121,7 @@ bool ModularDesignWindow::process() {
 //triggered when mouse moves
 bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 	if (componentLibrary->onMouseMoveEvent(xPos, yPos) == true) return true;
-	preDraw();
+	pushViewportTransformation();
 
     PressedModifier mod = getPressedModifier(glApp->glfwWindow);
 
@@ -172,7 +176,7 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 
 		if (bodyChanged) createBodyMesh3D();
 
-		postDraw();
+		popViewportTransformation();
 		return true;
 	}
 	if (rWidget->onMouseMoveEvent(xPos, yPos) == true && dragging) {
@@ -189,7 +193,7 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 				}
 
 				if (rotAngle < RAD(30)) {
-					postDraw();
+					popViewportTransformation();
 					return true;
 				}
 				else {
@@ -228,11 +232,11 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 		{
 			guidingMeshRot = rWidget->getOrientation();
 		}
-		postDraw();
+		popViewportTransformation();
 		return true;
 	}
 	Ray mouseRay = camera->getRayFromScreenCoords(xPos, yPos);
-	postDraw();
+	popViewportTransformation();
 
 	if (windowSelectedRobot)
 	{
@@ -330,16 +334,15 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 //triggered when mouse buttons are pressed
 bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
 	
-	preDraw();
+	pushViewportTransformation();
 	Ray mouseRay = camera->getRayFromScreenCoords(xPos, yPos);
-	postDraw();
+	popViewportTransformation();
 
 	// new RMCRobot initialization
 	if (componentLibrary->onMouseButtonEvent(button, action, mods, xPos, yPos)) {
 		if (action == 1){
 
 			if (selectedRobot && selectedRobot->selectedRMC){
-				unloadParametersForLivingBracket();
 				selectedRobot->selectedRMC = NULL;
 				selectedRobot = NULL;
 				rWidget->visible = tWidget->visible = false;
@@ -443,14 +446,14 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 		{
 			dragging = true;
 
-			preDraw();
+			pushViewportTransformation();
 			bool res = rWidget->onMouseMoveEvent(xPos, yPos);
-			postDraw();
+			popViewportTransformation();
 			if (res) return true;
 
-			preDraw();
+			pushViewportTransformation();
 			res = tWidget->onMouseMoveEvent(xPos, yPos);
-			postDraw();
+			popViewportTransformation();
 			if (res) return	true;
 
 			tWidget->visible = rWidget->visible = false;
@@ -468,7 +471,6 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 			}
 
 			// reset pick pointers
-			unloadParametersForLivingBracket();
 			if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_MOTOR)
 			{
 //				TwRemoveVar(glApp->mainMenuBar, "motor rotation angle");
@@ -546,7 +548,6 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 					rWidget->pos = tWidget->pos = isSelectedRMCMovable() ? selectedRobot->selectedRMC->state.position : selectedRobot->root->state.position;
 					rWidget->setOrientation(Quaternion());
 				}
-				loadParametersForLivingBracket();
 				if (selectedRobot->selectedRMC->type == LIVING_MOTOR) {
 					motorStartOrient = selectedRobot->selectedRMC->state.orientation;
 					motorRotAngle = 0;
@@ -696,7 +697,6 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 
 		if (selectedRobot && selectedRobot->selectedRMC)
 		{
-			unloadParametersForLivingBracket();
 			if (selectedRobot->selectedRMC == selectedRobot->root) {
 				removeRMCRobot(selectedRobot);
 				if (mirrorMap.count(selectedRobot))
@@ -744,8 +744,11 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 				selectedSphere->update();
 				updateLivingBracket();
 			}
-		}
-		if (selectedRobot && selectedRobot->selectedRMC) {
+			if (Living6FaceConnector* selectedConnector = dynamic_cast<Living6FaceConnector*> (selectedRobot->selectedRMC)) {
+				selectedConnector->size = max(0.005, selectedConnector->size - 0.005);
+				selectedConnector->update();
+				updateLivingBracket();
+			}
 			if (LivingWheelEE* selectedWheel = dynamic_cast<LivingWheelEE*> (selectedRobot->selectedRMC)) {
 				selectedWheel->radius = max(0.01, selectedWheel->radius - 0.005);
 				selectedWheel->update();
@@ -766,8 +769,11 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 				selectedSphere->update();
 				updateLivingBracket();
 			}
-		}
-		if (selectedRobot && selectedRobot->selectedRMC) {
+			if (Living6FaceConnector* selectedConnector = dynamic_cast<Living6FaceConnector*> (selectedRobot->selectedRMC)) {
+				selectedConnector->size = selectedConnector->size + 0.005;
+				selectedConnector->update();
+				updateLivingBracket();
+			}
 			if (LivingWheelEE* selectedWheel = dynamic_cast<LivingWheelEE*> (selectedRobot->selectedRMC)) {
 				selectedWheel->radius = selectedWheel->radius + 0.005;
 				selectedWheel->update();
@@ -1102,12 +1108,24 @@ void ModularDesignWindow::drawScene() {
  
 	glEnable(GL_LIGHTING);
 
+//	drawDesignEnvironment();
+
 	drawRMCRobot();
 	
 	drawConnectionPreview();
 	drawWindowRMCConnectionPreview();
 
 	drawBodyFeaturePts();
+
+	if (bodyMeshSelected == false && highlightedFP == false && selectedFP == false)
+		bodyMesh->setMaterial(bodyMaterial);
+	else {
+		GLShaderMaterial colorMat;
+		colorMat.setColor(1.0, 1.0, 1.0, 0.7);
+		bodyMesh->setMaterial(colorMat);
+	}
+
+
 	if (bodyMesh)
 		bodyMesh->drawMesh();
 
@@ -1195,6 +1213,18 @@ void ModularDesignWindow::loadConfig(const char* fName)
 		else if (strcmp(keyword, "LivingSphereEE") == 0)
 		{
 			RMC* rmc = new LivingSphereEE();
+			rmcWarehouse.push_back(rmc);
+			rmcWarehouse.back()->loadFromFile(fp);
+			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;
+
+			for (uint i = 0; i < rmc->pins.size(); i++)
+			{
+				rmcPinNameMap[rmc->pins[i].name] = &rmc->pins[i];
+			}
+		}
+		else if (strcmp(keyword, "SixFaceConnector") == 0)
+		{
+			RMC* rmc = new Living6FaceConnector();
 			rmcWarehouse.push_back(rmc);
 			rmcWarehouse.back()->loadFromFile(fp);
 			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;
@@ -1436,7 +1466,6 @@ void ModularDesignWindow::loadDesignFromFile(const char* fName)
 	rmcRobots.clear();
 	int startIndex = (int)rmcRobots.size();
 
-	unloadParametersForLivingBracket();
 	selectedRobot = NULL;
 	rWidget->visible = tWidget->visible = false;
 
@@ -1695,54 +1724,9 @@ void ModularDesignWindow::createBodyMesh3D()
 
 	if (points.size() < 4) return;
 
-	ConvexHull3D::computeConvexHullFromSetOfPoints(points, bodyMesh, true);
+	ConvexHull3D::computeConvexHullFromSetOfPoints(points, bodyMesh, false);
 
 	bodyMesh->computeNormals();
-}
-
-
-void ModularDesignWindow::loadParametersForLivingBracket()
-{
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_MOTOR)
-	{
-//		LivingHornBracket* lbh = ((LivingMotor*)selectedRobot->selectedRMC)->hornBracket;
-//		TwAddVarRW(glApp->mainMenuBar, "initial angle", TW_TYPE_DOUBLE, &lbh->bracketInitialAngle, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
-//		TwAddVarRW(glApp->mainMenuBar, "motor angle min", TW_TYPE_DOUBLE, &lbh->motor->rotAngleMin, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
-//		TwAddVarRW(glApp->mainMenuBar, "motor angle max", TW_TYPE_DOUBLE, &lbh->motor->rotAngleMax, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
-//		TwAddVarRW(glApp->mainMenuBar, "bracket connector angle", TW_TYPE_DOUBLE, &lbh->bracketConnectorAngle, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
-	}
-
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_SPHERE_EE)
-	{
-		LivingSphereEE* sphereEE = dynamic_cast<LivingSphereEE*>(selectedRobot->selectedRMC);
-//		TwAddVarRW(glApp->mainMenuBar, "sphere radius", TW_TYPE_DOUBLE, &(sphereEE->sphereRadius), "min=0.001 max=0.1 step=0.001 group='LivingBracket'");
-	}
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_WHEEL_EE)
-	{
-		LivingWheelEE* wheelEE = dynamic_cast<LivingWheelEE*>(selectedRobot->selectedRMC);
-//		TwAddVarRW(glApp->mainMenuBar, "wheel radius", TW_TYPE_DOUBLE, &(wheelEE->radius), "min=0.001 max=0.1 step=0.001 group='LivingBracket'");
-	}
-
-}
-
-void ModularDesignWindow::unloadParametersForLivingBracket()
-{
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_MOTOR)
-	{
-//		TwRemoveVar(glApp->mainMenuBar, "initial angle");
-//		TwRemoveVar(glApp->mainMenuBar, "motor angle min");
-//		TwRemoveVar(glApp->mainMenuBar, "motor angle max");
-//		TwRemoveVar(glApp->mainMenuBar, "bracket connector angle");
-	}
-
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_SPHERE_EE)
-	{
-		//		TwRemoveVar(glApp->mainMenuBar, "sphere radius");
-	}
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_WHEEL_EE)
-	{
-		//		TwRemoveVar(glApp->mainMenuBar, "wheel radius");
-	}
 }
 
 void ModularDesignWindow::updateLivingBracket(){
@@ -1781,6 +1765,15 @@ void ModularDesignWindow::updateLivingBracket(){
 		{
 			RMC* mirrorRMC = rmcMirrorMap[selectedRobot->selectedRMC];
 			dynamic_cast<LivingSphereEE*>(mirrorRMC)->syncSymmParameters(dynamic_cast<LivingSphereEE*>(selectedRobot->selectedRMC));
+		}
+	}
+
+	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_6FACE_CONNECTOR)
+	{
+		if (rmcMirrorMap.count(selectedRobot->selectedRMC))
+		{
+			RMC* mirrorRMC = rmcMirrorMap[selectedRobot->selectedRMC];
+			dynamic_cast<Living6FaceConnector*>(mirrorRMC)->syncSymmParameters(dynamic_cast<Living6FaceConnector*>(selectedRobot->selectedRMC));
 		}
 	}
 
@@ -2034,6 +2027,11 @@ void ModularDesignWindow::updateParentConnector(RMC* rmc)
 
 void ModularDesignWindow::pickBodyFeaturePts(Ray& ray)
 {
+
+	bodyMeshSelected = false;
+	if (bodyMesh && bodyMesh->getDistanceToRayOriginIfHit(ray))
+		bodyMeshSelected = true;
+
 	double closestDist = 1e10;
 
 	for (auto& fp : bodyFeaturePts)

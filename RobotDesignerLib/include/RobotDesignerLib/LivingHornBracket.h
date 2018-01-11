@@ -52,7 +52,7 @@ public:
 
 	virtual void copyBracketProperties(LivingHornBracket* lbh, bool mirror) {
 		if (lbh) {
-			if (mirror = false){
+			if (mirror == false){
 				bracketMountingAngle = lbh->bracketMountingAngle;
 				shouldRegenerateBracketMesh = true;
 //				connectorFaceAngle1 = lbh->connectorFaceAngle1;

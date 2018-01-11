@@ -27,7 +27,7 @@ enum RMCType
 	LIVING_CONNECTOR,
 	LIVING_SPHERE_EE,
 	LIVING_WHEEL_EE,
-
+	LIVING_6FACE_CONNECTOR
 };
 
 class RMC : public RigidBody{

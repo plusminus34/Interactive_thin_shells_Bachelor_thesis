@@ -3,6 +3,8 @@
 #include <MathLib/MathLib.h>
 #include <GUILib/GLIncludes.h>
 
+//TODO: Just like GLWindow3D, this predraw should be separated into setting up viewport transformations and then drawing things...
+
 /**
 	Default constructor
 */
@@ -10,6 +12,38 @@ GLWindow2D::GLWindow2D( int posX, int posY, int sizeX, int sizeY ) : GLWindow(po
 }
 
 GLWindow2D::GLWindow2D() : GLWindow(){
+}
+
+void GLWindow2D::pushViewportTransformation() {
+	double minX = 0;
+	double maxX = 1;
+	double minY = 0;
+	double maxY = 1;
+
+	glPushAttrib(GL_TRANSFORM_BIT | GL_VIEWPORT_BIT);
+	// set viewport
+	glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
+
+	// Save projection matrix and sets it to a simple orthogonal projection
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	gluOrtho2D(minX, maxX, minY, maxY);
+
+	// Save model-view matrix and sets it to identity
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+
+}
+
+void GLWindow2D::popViewportTransformation() {
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glPopAttrib();
+
 }
 
 // sets up the window for drawing
@@ -21,6 +55,8 @@ void GLWindow2D::preDraw() {
 
 	glPushAttrib(GL_ENABLE_BIT | GL_TRANSFORM_BIT | GL_VIEWPORT_BIT | GL_SCISSOR_BIT | GL_POINT_BIT | GL_LINE_BIT | GL_TRANSFORM_BIT);
 
+	pushViewportTransformation();
+
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
@@ -29,20 +65,8 @@ void GLWindow2D::preDraw() {
 	glPointSize(1);
 	glLineWidth(1);
 
-	glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
 	glScissor(viewportX, viewportY, viewportWidth, viewportHeight);
 	glEnable(GL_SCISSOR_TEST);
-
-	// Save projection matrix and sets it to a simple orthogonal projection
-    glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	gluOrtho2D(minX, maxX, minY, maxY);
-	
-	// Save model-view matrix and sets it to identity
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
 
 	// Draw on a clean background
 	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -78,12 +102,8 @@ void GLWindow2D::preDraw() {
 
 // clean up
 void GLWindow2D::postDraw() {
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
+	popViewportTransformation();
 	glPopAttrib();
-
 }
 
 void GLWindow2D::draw() {

@@ -19,10 +19,14 @@ LivingMotor::LivingMotor(const char* LMType){
 		bodyBracket = new LivingMotorBodyBracket_BK3002();
 		hornBracket = new LivingHornBracket_BK3002();
 
-		motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
-		motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+		motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_parent.obj");
 
-		bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
+		bodyMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
+		string mat = "../data/textures/matcap/red_specular.bmp";
+		bodyMaterial.setTextureParam(mat.c_str(), GLContentManager::getTexture(mat.c_str()));
+		motorBodyMesh->setMaterial(bodyMaterial);
+
+		motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_child.obj");
 		hornMaterial.setColor(0.7, 0.7, 0.7, 1.0);
 	}
 	else {

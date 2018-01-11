@@ -3,9 +3,7 @@
 #include <GUILib/GLContentManager.h>
 
 LivingHornBracket::LivingHornBracket(){
-	shaderMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
-	string mat = "../data/textures/matcap/whitefluff2.bmp";
-	shaderMaterial.setTextureParam(mat.c_str(), GLContentManager::getTexture(mat.c_str()));
+
 }
 
 LivingHornBracket::~LivingHornBracket(void){
@@ -66,6 +64,10 @@ void LivingHornBracket::draw() {
 /* ---------------------------------------------------------------------------- */
 
 LivingHornBracket_XM430::LivingHornBracket_XM430() : LivingHornBracket() {
+	shaderMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
+	string mat = "../data/textures/matcap/whitefluff2.bmp";
+	shaderMaterial.setTextureParam(mat.c_str(), GLContentManager::getTexture(mat.c_str()));
+
 //	this->bracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_hornBracket_w.obj")->clone();
 	this->bracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_hornBracket_lo.obj")->clone();
 
@@ -88,6 +90,10 @@ void LivingHornBracket_XM430::setDefaultFeaturePointList() {
 
 /* ---------------------------------------------------------------------------- */
 LivingHornBracket_TGY306G::LivingHornBracket_TGY306G() : LivingHornBracket() {
+	shaderMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
+	string mat = "../data/textures/matcap/whitefluff2.bmp";
+	shaderMaterial.setTextureParam(mat.c_str(), GLContentManager::getTexture(mat.c_str()));
+
 	this->bracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_hornBracket_w.obj")->clone();
 
 	generateBracketMesh();
@@ -111,6 +117,10 @@ void LivingHornBracket_TGY306G::setDefaultFeaturePointList() {
 
 /* ---------------------------------------------------------------------------- */
 LivingHornBracket_BK3002::LivingHornBracket_BK3002() : LivingHornBracket() {
+	shaderMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
+	string mat = "../data/textures/matcap/blackFluff.bmp";
+	shaderMaterial.setTextureParam(mat.c_str(), GLContentManager::getTexture(mat.c_str()));
+
 	this->bracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/BK3002_hornBracket_w.obj")->clone();
 
 	generateBracketMesh();

@@ -1611,7 +1611,6 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 		robotState.setPosition(pRoot + vecToRoot);
 		robot->setState(&robotState);
 		
-		
 		//draw the axes of rotation...
 		//for (int i=0;i<robot->getJointCount();i++){
 		//	HingeJoint* hj = dynamic_cast<HingeJoint*> (robot->getJoint(i));
@@ -1643,6 +1642,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 
 		robot->setState(&oldState);	
 
+/*
 		// draw center of rotation
 		{
 			glLineWidth(5);
@@ -1685,7 +1685,9 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 
 			}
 		}
+*/
 	}
+
 
 	glEnable(GL_LIGHTING);
 
@@ -1709,20 +1711,20 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 			V3D axis = ee.getRotatedWheelAxis(alpha, beta);
 			P3D wheelCenter = ee.getWheelCenterPositionAt(f);
 
-			glColor4d(0.8, 0.2, 0.6, 0.8);
-			drawArrow(wheelCenter, wheelCenter + ee.wheelYawAxis_WF*radius*2.0, 0.003);
+//			glColor4d(0.8, 0.2, 0.6, 0.8);
+//			drawArrow(wheelCenter, wheelCenter + ee.wheelYawAxis_WF*radius*2.0, 0.003);
 
-			glColor4d(0.8, 0.6, 0.2, 0.8);
-			drawArrow(wheelCenter, wheelCenter + ee.wheelTiltAxis_WF*radius*2.0, 0.003);
+//			glColor4d(0.8, 0.6, 0.2, 0.8);
+//			drawArrow(wheelCenter, wheelCenter + ee.wheelTiltAxis_WF*radius*2.0, 0.003);
 
-			glColor4d(0, 0, 0.5, 0.8);
-			drawArrow(wheelCenter, wheelCenter + ee.wheelAxisLocal_WF*radius*2.0, 0.003);
+//			glColor4d(0, 0, 0.5, 0.8);
+//			drawArrow(wheelCenter, wheelCenter + ee.wheelAxisLocal_WF*radius*2.0, 0.003);
 
 			glColor4d(0.2, 0.6, 0.8, 0.8);
-			drawArrow(wheelCenter, wheelCenter + axis*0.05, 0.005);
+			drawArrow(wheelCenter, wheelCenter + axis*0.05, 0.003);
 		}
 
-		double width = 0.02;
+		double width = 0.01;
 		for (const LocomotionEngine_EndEffectorTrajectory &ee : endEffectorTrajectories) {
 			double alpha = ee.getWheelYawAngleAt(f);
 			double beta = ee.getWheelTiltAngleAt(f);

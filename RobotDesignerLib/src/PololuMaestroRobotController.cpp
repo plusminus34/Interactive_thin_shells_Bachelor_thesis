@@ -143,6 +143,7 @@ void PololuMaestroRobotController::initialize() {
 		rci->comNumber = 4;
 //		rci->signalPeriod = 3;//ms - CHECK WITH THE BOARD SETTINGS!!!
 		rci->openCommunicationPort();
+		rci->createMultiWriteClusters();
 	}
 	else
 		rci->driveMotorPositionsToZero();

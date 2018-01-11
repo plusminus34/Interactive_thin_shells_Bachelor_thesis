@@ -57,6 +57,9 @@ public:
 	RMCRobot* windowSelectedRobot = NULL;
 
 	GLMesh* bodyMesh = NULL;
+	bool bodyMeshSelected = false;
+	GLShaderMaterial bodyMaterial;
+
 	vector<RBFeaturePoint> bodyFeaturePts;
 	RBFeaturePoint* highlightedFP = NULL;
 	RBFeaturePoint* selectedFP = NULL;
@@ -133,9 +136,6 @@ public:
 	void createBodyMesh3D();
 
 	bool process();
-
-	void loadParametersForLivingBracket();
-	void unloadParametersForLivingBracket();
 
 	void updateLivingBracket();
 	bool isSelectedRMCMovable();

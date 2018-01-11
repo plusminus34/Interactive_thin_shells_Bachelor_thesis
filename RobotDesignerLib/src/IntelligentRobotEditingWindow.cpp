@@ -160,12 +160,12 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 
 bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 	if (Robot* robot = rdApp->robot) {
-		preDraw();
+		pushViewportTransformation();
 		Ray ray = getRayFromScreenCoords(xPos, yPos);
-		postDraw();
+		popViewportTransformation();
 
 		if (tWidget->visible) {
-			preDraw();
+			pushViewportTransformation();
 			bool clickProcessed = false;
 			if ((clickProcessed = tWidget->onMouseMoveEvent(xPos, yPos)) == true) {
 				RobotState rs(robot);
@@ -218,7 +218,7 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 				updateParamsAndMotion(Eigen::Map<dVector>(currentDesignParameters.data(), currentDesignParameters.size()));
 				syncSliders();
 			}
-			postDraw();
+			popViewportTransformation();
 			if (clickProcessed)
 				return true;
 		}

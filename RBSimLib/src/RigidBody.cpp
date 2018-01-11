@@ -284,7 +284,7 @@ uint RigidBody::renderToObjFile(FILE* fp, uint vertexIdxOffset) {
 			q.setRotationFrom(meshTransformations[i].R);
 
 			rot = rot * q;
-			pos = pos + meshTransformations[i].T;
+			pos = pos + state.orientation * meshTransformations[i].T;
 		}
 
 		retVal += meshes[i]->renderToObjFile(fp, vertexIdxOffset + retVal, rot, pos);

@@ -19,9 +19,14 @@ protected:
 	// clean up
 	virtual void postDraw();
 
+	virtual void pushViewportTransformation();
+	virtual void popViewportTransformation();
+
 	void init();
 
 	virtual void drawScene() {};
+
+	virtual void clear();
 
 public:
 

@@ -373,9 +373,9 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 		if (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging())
 			if (ffpViewer->onMouseMoveEvent(xPos, yPos)) return true;
 	}
-	preDraw();
+	pushViewportTransformation();
 	Ray ray = getRayFromScreenCoords(xPos, yPos);
-	postDraw();
+	popViewportTransformation();
 
 	RobotState oldState(robot);
 	RobotState robotState(robot);
