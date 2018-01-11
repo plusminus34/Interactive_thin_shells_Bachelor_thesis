@@ -5,13 +5,14 @@ MPO_EndEffectorCollisionEnergy::MPO_EndEffectorCollisionEnergy(LocomotionEngineM
 	this->description = objectiveDescription;
 	this->weight = weight;
 
-	boundFunction = std::make_unique<SoftLowerBarrierConstraint>(0.5);
+	boundFunction = std::make_unique<SoftLowerBarrierConstraint>(theMotionPlan->EEminDistance);
 }
 
 MPO_EndEffectorCollisionEnergy::~MPO_EndEffectorCollisionEnergy(void){
 }
 
 double MPO_EndEffectorCollisionEnergy::computeValue(const dVector& p) {
+	boundFunction->limit = theMotionPlan->EEminDistance;
 	if (theMotionPlan->feetPositionsParamsStartIndex < 0/* || theMotionPlan->wheelParamsStartIndex < 0*/)
 		return 0;
 
@@ -33,7 +34,7 @@ double MPO_EndEffectorCollisionEnergy::computeValue(const dVector& p) {
 }
 
 void MPO_EndEffectorCollisionEnergy::addGradientTo(dVector& grad, const dVector& p) {
-
+	boundFunction->limit = theMotionPlan->EEminDistance;
 	if (theMotionPlan->feetPositionsParamsStartIndex < 0/* || theMotionPlan->wheelParamsStartIndex < 0*/)
 		return;
 
@@ -56,12 +57,12 @@ void MPO_EndEffectorCollisionEnergy::addGradientTo(dVector& grad, const dVector&
 			G.row(3 * i) +=  weight * (2 * dx).cwiseProduct(g);
 			G.row(3 * j) += -weight * (2 * dx).cwiseProduct(g);
 			G.row(3 * i+2) += weight * (2 * dz).cwiseProduct(g);
-			G.row(3 * j+2) += -weight * (2 * dx).cwiseProduct(g);
+			G.row(3 * j+2) += -weight * (2 * dz).cwiseProduct(g);
 		}
 }
 
 void MPO_EndEffectorCollisionEnergy::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
-
+	boundFunction->limit = theMotionPlan->EEminDistance;
 	if (theMotionPlan->feetPositionsParamsStartIndex < 0 /*|| theMotionPlan->wheelParamsStartIndex < 0*/)
 		return;
 
@@ -87,8 +88,8 @@ void MPO_EndEffectorCollisionEnergy::addHessianEntriesTo(DynamicArray<MTriplet>&
 			dVector h = err.unaryExpr([&](double val) {return boundFunction->computeSecondDerivative(val); });
 			for (int k = 0; k < theMotionPlan->nSamplePoints; k++)
 			{
-				int I = theMotionPlan->feetPositionsParamsStartIndex + 3 * nLimbs*i + 3 * k;
-				int J = theMotionPlan->feetPositionsParamsStartIndex + 3 * nLimbs*j + 3 * k;
+				int I = theMotionPlan->feetPositionsParamsStartIndex + 3 * nLimbs*k + 3 * i;
+				int J = theMotionPlan->feetPositionsParamsStartIndex + 3 * nLimbs*k + 3 * j;
 				ADD_HES_ELEMENT(hessianEntries, I, I, 2*g(k) + 4*dx2(k)*h(k), weight);
 				ADD_HES_ELEMENT(hessianEntries, J, J, 2*g(k) + 4*dx2(k)*h(k), weight);
 				ADD_HES_ELEMENT(hessianEntries, I, J,-2*g(k) - 4*dx2(k)*h(k), weight);

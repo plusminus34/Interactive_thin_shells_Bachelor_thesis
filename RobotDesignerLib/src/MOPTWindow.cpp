@@ -86,6 +86,14 @@ void MOPTWindow::addMenuItems() {
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
 	}
 	{
+		auto tmpVar = glApp->mainMenu->addVariable("EE min distance", moptParams.EEminDistance);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("joint angle limit", moptParams.jointAngleLimit);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
+	}
+	{
 		auto tmpVar = glApp->mainMenu->addVariable("wheel speed limit", moptParams.wheelSpeedLimit);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
 	}
@@ -210,6 +218,8 @@ void MOPTWindow::syncMOPTWindowParameters() {
 
 	moptParams.jointVelocityLimit = locomotionManager->motionPlan->jointVelocityLimit;
 	moptParams.jointVelocityEpsilon = locomotionManager->motionPlan->jointVelocityEpsilon;
+	moptParams.jointAngleLimit = locomotionManager->motionPlan->jointAngleLimit;
+	moptParams.EEminDistance = locomotionManager->motionPlan->EEminDistance;
 
 	moptParams.jointL0Delta = locomotionManager->motionPlan->jointL0Delta;
 
@@ -242,6 +252,9 @@ void MOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->motionPlan->jointVelocityLimit = moptParams.jointVelocityLimit;
 	locomotionManager->motionPlan->jointVelocityEpsilon = moptParams.jointVelocityEpsilon;
 	locomotionManager->motionPlan->jointAngleLimit = moptParams.jointAngleLimit;
+	locomotionManager->motionPlan->EEminDistance = moptParams.EEminDistance;
+
+
 	locomotionManager->motionPlan->jointL0Delta = moptParams.jointL0Delta;
 
 	locomotionManager->motionPlan->wheelSpeedLimit = moptParams.wheelSpeedLimit;

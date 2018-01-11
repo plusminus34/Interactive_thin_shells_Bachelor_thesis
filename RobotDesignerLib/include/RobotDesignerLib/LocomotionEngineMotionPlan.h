@@ -208,6 +208,7 @@ public:
 	double jointVelocityLimit = 0;
 	double jointVelocityEpsilon = 0.4;		// for SoftUnilateralConstraint
 	double jointAngleLimit = PI / 4;
+	double EEminDistance = 0.2;
 	dVector initialRobotState;
 	
 	// Parameters for wheel motor speed constraint
