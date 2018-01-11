@@ -59,7 +59,6 @@ dGeomID ODERBEngine::getSphereGeom(SphereCDP* s) {
 	return g;
 }
 
-
 /**
 	this method is used to set up an ODE box geom. It is properly placed in body coordinates.
 */
@@ -104,7 +103,13 @@ dGeomID ODERBEngine::getCapsuleGeom(CapsuleCDP* c) {
 	P3D a = c->p1;
 	P3D b = c->p2;
 	V3D ab(a, b);
-	dGeomID g = dCreateCCylinder(0, c->r, ab.length());
+	dGeomID g;
+
+	if (c->hasFlatCaps)
+		g = dCreateCylinder(0, c->r, ab.length());
+	else
+		g = dCreateCCylinder(0, c->r, ab.length());
+
 	setCapsuleGeomTransformation(c, g);
 
 	return g;
@@ -490,76 +495,63 @@ void ODERBEngine::setEngineStateFromRB(DynamicArray<RigidBody*> &rbs) {
 	}
 }
 
-/**
-This method reads a list of rigid bodies from the specified file.
-*/
-void ODERBEngine::loadRBsFromFile(const char* fName) {
-	//make sure we don't go over the old articulated figures in case this method gets called multiple times.
-	int index_rbs = (int)rbs.size();
-	int index_joints = (int)joints.size();
+void ODERBEngine::addRigidBodyToEngine(RigidBody* rb) {
+	AbstractRBEngine::addRigidBodyToEngine(rb);
 
-	AbstractRBEngine::loadRBsFromFile(fName);
+	//create and link rigid body to ODE corresponding body
+	dBodyID newBody = dBodyCreate(worldID);
+	odeToRbs.push_back(ODE_RB_Map(newBody, rb));
+	//the ID of this rigid body will be its index in the
+	rb->setID(rbs.size() - 1);
+	//we will use the user data of the object to store the index in this mapping as well, for easy retrieval
+	dBodySetData(odeToRbs[rb->id].id, (void*)rb->id);
+	//PROCESS THE COLLISION PRIMITIVES OF THE BODY
+	createODECollisionPrimitives(rb);
 
-	//now we'll make sure that the joint constraints are satisfied
-	for (uint i = index_rbs;i<rbs.size();i++) {
-		//create and link rigid body to ODE corresponding body
-		dBodyID newBody = dBodyCreate(worldID);
-		odeToRbs.push_back(ODE_RB_Map(newBody, rbs[i]));
-		//the ID of this rigid body will be its index in the 
-		rbs[i]->setBodyID(i);
-		//we will use the user data of the object to store the index in this mapping as well, for easy retrieval
-		dBodySetData(odeToRbs[i].id, (void*)i);
-		//PROCESS THE COLLISION PRIMITIVES OF THE BODY
-		createODECollisionPrimitives(rbs[i]);
+	//if the body is fixed, we'll create constraints to keep it in place...
+	if (rb->rbProperties.isFrozen) {
+		dBodySetKinematic(newBody);
+	}
+	else {
+		//SET THE INERTIAL PARAMETERS
+		dMass m;
 
-		//if the body is fixed, we'll create constraints to keep it in place...
-		if (rbs[i]->rbProperties.isFrozen) {
-			dBodySetKinematic(newBody);
-/*
-			dJointID j1 = dJointCreateHinge(worldID, 0);
-			dJointAttach(j1, newBody, 0);
-			P3D p = rbs[i]->state.position;
-			dJointSetHingeAnchor(j1, p[0], p[1], p[2]);
-			dJointSetHingeAxis(j1, 1, 0, 0);
+		//set the mass and principal moments of inertia for this object
+		m.setZero();
 
-			dJointID j2 = dJointCreateHinge(worldID, 0);
-			dJointAttach(j2, newBody, 0);
-			dJointSetHingeAnchor(j2, p[0], p[1], p[2]);
-			dJointSetHingeAxis(j2, 1, 0, 0);
-*/
-		} else {
-			//SET THE INERTIAL PARAMETERS
-			dMass m;
+		m.setParameters(rb->rbProperties.mass, 0, 0, 0,
+			rb->rbProperties.MOI_local(0, 0),
+			rb->rbProperties.MOI_local(1, 1),
+			rb->rbProperties.MOI_local(2, 2),
+			rb->rbProperties.MOI_local(0, 1),
+			rb->rbProperties.MOI_local(0, 2),
+			rb->rbProperties.MOI_local(1, 2));
 
-			//set the mass and principal moments of inertia for this object
-			m.setZero();
-
-			m.setParameters(odeToRbs[i].rb->rbProperties.mass, 0, 0, 0,
-				odeToRbs[i].rb->rbProperties.MOI_local(0, 0),
-				odeToRbs[i].rb->rbProperties.MOI_local(1, 1),
-				odeToRbs[i].rb->rbProperties.MOI_local(2, 2),
-				odeToRbs[i].rb->rbProperties.MOI_local(0, 1),
-				odeToRbs[i].rb->rbProperties.MOI_local(0, 2),
-				odeToRbs[i].rb->rbProperties.MOI_local(1, 2));
-
-			dBodySetMass(odeToRbs[i].id, &m);
-		}
-
-		setODEStateFromRB(i);
+		dBodySetMass(odeToRbs[rb->id].id, &m);
 	}
 
-	//now we will go through all the new joints, and create and link their ode equivalents
-	for (uint i = index_joints;i<joints.size();i++) {
-		//connect the joint to the two bodies
-		if (BallAndSocketJoint* bJoint = dynamic_cast<BallAndSocketJoint*>(joints[i])) {
-			setupODEBallAndSocketJoint(bJoint);
-		}else if (HingeJoint* hJoint = dynamic_cast<HingeJoint*>(joints[i])) {
-			setupODEHingeJoint(hJoint);
-		}else if (UniversalJoint* uJoint = dynamic_cast<UniversalJoint*>(joints[i])){
-			setupODEUniversalJoint(uJoint);
-		}else
-			throwError("Ooops.... Only BallAndSocket, Hinge and Universal joints are currently supported.\n");
+	setODEStateFromRB(rb->id);
+}
+
+void ODERBEngine::addJointToEngine(Joint* j) {
+	AbstractRBEngine::addJointToEngine(j);
+
+	//update the ODE state for the parent and child rigid bodies, since the joint axis/position will be set up in world coordinates
+	setODEStateFromRB(j->parent->id);
+	setODEStateFromRB(j->child->id);
+
+	//connect the joint to the two bodies
+	if (BallAndSocketJoint* bJoint = dynamic_cast<BallAndSocketJoint*>(j)) {
+		setupODEBallAndSocketJoint(bJoint);
 	}
+	else if (HingeJoint* hJoint = dynamic_cast<HingeJoint*>(j)) {
+		setupODEHingeJoint(hJoint);
+	}
+	else if (UniversalJoint* uJoint = dynamic_cast<UniversalJoint*>(j)) {
+		setupODEUniversalJoint(uJoint);
+	}
+	else
+		throwError("Ooops.... Only BallAndSocket, Hinge and Universal joints are currently supported.\n");
 }
 
 /**
@@ -695,12 +687,12 @@ void ODERBEngine::step(double deltaT) {
 					dJointSetAMotorParam(motorToJointmap[motorID].motorID, dParamVel, desSpeed);
 				} else {
 					//the desired relative angular velocity needs to be expressed in world coordinates...
-					V3D rotAxis = joints[j]->desiredRelativeAngVelocityAxis;
+					V3D rotAxis = joints[j]->parent->getWorldCoordinates(joints[j]->desiredRelativeAngularVelocity.unit());
 					rotAxis.toUnit(); if (rotAxis.length() < 0.9) rotAxis = V3D(1,0,0);
-					double angVelocity = joints[j]->desiredRelativeAngVelocity;
+					double angVelocity = joints[j]->desiredRelativeAngularVelocity.length();
 					dJointSetAMotorNumAxes(motorToJointmap[motorID].motorID, 1);
 					dJointSetAMotorAxis(motorToJointmap[motorID].motorID, 0, 1, rotAxis[0], rotAxis[1], rotAxis[2]);
-					dJointSetAMotorParam(motorToJointmap[motorID].motorID, dParamVel, angVelocity);
+					dJointSetAMotorParam(motorToJointmap[motorID].motorID, dParamVel, -angVelocity);
 				}
 				//setup the feedback structure so that we can read off the torques that were applied
 				if (j < MAX_AMOTOR_FEEDBACK)
@@ -708,6 +700,13 @@ void ODERBEngine::step(double deltaT) {
 			}
 			else
 				Logger::consolePrint("Warning: control mode for joint %d requires a motor, but none has been created...\n");
+		}
+
+		if (joints[j]->controlMode == PASSIVE) {
+			int motorID = getODEMotorForJoint(joints[j]);
+			//we need to place the motor in limbo, such that it does not interfere with torque controller...
+			if (motorID >= 0)
+				dJointAttach(motorToJointmap[motorID].motorID, 0, 0);
 		}
 
 		if (joints[j]->controlMode == TORQUE_MODE) {
@@ -718,8 +717,8 @@ void ODERBEngine::step(double deltaT) {
 
 			V3D t = joints[j]->desiredJointTorque;
 			//we will apply to the parent a positive torque, and to the child a negative torque
-			dBodyAddTorque(odeToRbs[joints[j]->parent->id].id, t[0], t[1], t[2]);
-			dBodyAddTorque(odeToRbs[joints[j]->child->id].id, -t[0], -t[1], -t[2]);
+			dBodyAddTorque(odeToRbs[joints[j]->parent->id].id, -t[0], -t[1], -t[2]);
+			dBodyAddTorque(odeToRbs[joints[j]->child->id].id, t[0], t[1], t[2]);
 		}
 	}
 
@@ -809,37 +808,4 @@ DynamicArray<ContactForce> ODERBEngine::getContactForceOnRB(RigidBody* bs) {
 		}
 
 	return grfs;
-}
-
-/*
-Create the rigid body.
-*/
-void ODERBEngine::createODERB(RigidBody* rb)
-{
-	//create and link rigid body to ODE corresponding body
-	dBodyID newBody = dBodyCreate(worldID);
-
-	int id = rbs.size() - 1;
-	odeToRbs.push_back(ODE_RB_Map(newBody, rbs[id]));
-	//the ID of this rigid body will be its index in the 
-	rbs[id]->setBodyID(id);
-	//we will use the user data of the object to store the index in this mapping as well, for easy retrieval
-	dBodySetData(odeToRbs[id].id, (void*)id);
-	//PROCESS THE COLLISION PRIMITIVES OF THE BODY
-	createODECollisionPrimitives(rbs[id]);
-
-	dMass m;
-
-	//set the mass and principal moments of inertia for this object
-	m.setZero();
-
-	m.setParameters(odeToRbs[id].rb->rbProperties.mass, 0, 0, 0,
-		odeToRbs[id].rb->rbProperties.MOI_local(0, 0),
-		odeToRbs[id].rb->rbProperties.MOI_local(1, 1),
-		odeToRbs[id].rb->rbProperties.MOI_local(2, 2),
-		odeToRbs[id].rb->rbProperties.MOI_local(0, 1),
-		odeToRbs[id].rb->rbProperties.MOI_local(0, 2),
-		odeToRbs[id].rb->rbProperties.MOI_local(1, 2));
-
-	dBodySetMass(odeToRbs[id].id, &m);
 }

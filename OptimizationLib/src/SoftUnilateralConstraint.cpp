@@ -139,39 +139,49 @@ double SmoothBarrierConstraint::computeSecondDerivative(double x) {
 	return 2 / ((x)*(x)*(x));
 }
 
-SoftSymmetricBarrierConstraint::SoftSymmetricBarrierConstraint(double limit, double stiffness)
+SoftSymmetricBarrierConstraint::SoftSymmetricBarrierConstraint(double limit)
 {
 	this->limit = limit;
-	this->stiffness = stiffness;
 }
 
 SoftSymmetricBarrierConstraint::~SoftSymmetricBarrierConstraint() {}
 
 double SoftSymmetricBarrierConstraint::computeValue(double x)
 {
-	double xx = fabs(x) - limit;
-	if (xx < 0)
+	if (x < limit && x > -limit)
 		return 0;
-	else
-		return stiffness*xx*xx*xx;
+	double val;
+	if (x > limit) 
+		 val = x - limit;
+	else   // x<-limit
+		val = - limit - x;
+	return stiffness*val*val*val;
 }
 
 double SoftSymmetricBarrierConstraint::computeDerivative(double x)
 {
-	double xx = fabs(x) - limit;
-	if (xx < 0)    // |x|<limit
+	if (x < limit && x > -limit)
 		return 0;
-	else if (x>0)  // x>limit
-		return 3 * stiffness*xx*xx;
-	else           // x<-limit
-		return -3 * stiffness*xx*xx;
+	double val;
+	if (x > limit) {
+		val = x - limit;
+		return 3 * stiffness*val*val;
+	}	
+	else {   // x<-limit
+		val = -limit - x;
+		return -3 * stiffness*val*val;
+	}
 }
 
 double SoftSymmetricBarrierConstraint::computeSecondDerivative(double x)
 {
-	double xx = fabs(x) - limit;
-	if (xx < 0)
+	if (x < limit && x > -limit)
 		return 0;
-	else
-		return 6 * stiffness * xx;
+	double val;
+	if (x > limit)
+		val = x - limit;
+	else   // x<-limit
+		val = -limit - x;
+	
+	return 6 * stiffness * val;
 }

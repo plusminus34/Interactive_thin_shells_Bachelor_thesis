@@ -41,16 +41,10 @@ public:
 	//goes through all the contact forces and marks the rigid bodies that are affected as inContact
 	void markRBContacts(double fMagTreshold = 0.0);
 
-	/**
-		This method renders all the rigid bodies as a set of vertices 
-		and faces that will be appended to the passed OBJ file.
+	virtual void addRigidBodyToEngine(RigidBody* rb);
 
-		vertexIdxOffset indicates the index of the first vertex for this object, this makes it possible to render
-		multiple different meshes to the same OBJ file
-		 
-		Returns the number of vertices written to the file
-	*/
-	uint renderRBsToObjFile(FILE* fp, uint vertexIdxOffset);
+	virtual void addJointToEngine(Joint* j);
+
 
 	/**
 		This method is used to return a pointer to the list of contact forces
@@ -102,11 +96,6 @@ public:
 		this method applies a torque to a rigid body. The torque is specified in world coordinates.
 	*/
 	virtual void applyTorqueTo(RigidBody* b, const V3D& t)=0;
-	
-	/**
-	this method applies a torque to a rigid body. The torque is specified in world coordinates.
-	*/
-	virtual void createODERB(RigidBody* rb)=0;
 
 	virtual DynamicArray<ContactForce> getContactForceOnRB(RigidBody* b)=0;
 };

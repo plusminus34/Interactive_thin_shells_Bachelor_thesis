@@ -33,6 +33,9 @@ void read(FILE *fp, int &x, char &ch)
 			return;
 	}
 }
+
+
+
 //
 void CSTSimulationMesh3D::readMeshFromFile(const char* fName)
 {
@@ -130,6 +133,73 @@ void CSTSimulationMesh3D::readMeshFromFile(const char* fName)
 	v.resize(3 * nodeCount);
 	f_ext.resize(3 * nodeCount);
 	m.resize(3 * nodeCount);
+	for (int i = 0; i<nodeCount; i++) {
+		Node* newNode = new Node(this, i, 3 * i, 3);
+		double *p = output.pointlist + 3 * i;
+		x[3 * i + 0] = p[0]; x[3 * i + 1] = p[1]; x[3 * i + 2] = p[2];
+		X[3 * i + 0] = p[0]; X[3 * i + 1] = p[1]; X[3 * i + 2] = p[2];
+		v[3 * i + 0] = 0; v[3 * i + 1] = 0; v[3 * i + 2] = 0;
+		f_ext[3 * i + 0] = 0; f_ext[3 * i + 1] = 0; f_ext[3 * i + 2] = 0;
+		//the masses for the node are obtained by lumping together/distributing the mass of the elements that share the nodes...
+		m[3 * i + 0] = 0; m[3 * i + 1] = 0; m[3 * i + 2] = 0;
+		nodes.push_back(newNode);
+	}
+	for (int i = 0;i<tetCount; i++) {
+		CSTElement3D* newElem = new CSTElement3D(this, nodes[output.tetrahedronlist[i * 4]], nodes[output.tetrahedronlist[i * 4 + 1]],
+			nodes[output.tetrahedronlist[i * 4 + 2]], nodes[output.tetrahedronlist[i * 4 + 3]]);
+		elements.push_back(newElem);
+	}
+	energyFunction = new FEMEnergyFunction();
+	energyFunction->initialize(this);
+}
+
+
+void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> const * add_input_points)
+{
+	// input objects for tetget
+	tetgenio input, addinput;
+	input.mesh_dim = 3;
+	// load model
+	input.load_ply(fName);
+
+	// set behavior for tetgen
+	tetgenbehavior b;
+	b.plc = 1;
+	b.coarsen = 1;
+	b.quality = 1;
+	//b.minratio = 2.0;
+	//b.mindihedral = 1.0;
+	b.verbose = 1;
+
+	// set additional points
+	if(add_input_points && add_input_points->size() > 0) {
+		int m = add_input_points->size();
+		b.insertaddpoints = 1;
+		addinput.pointlist = new REAL[m * 3];
+		addinput.pointmarkerlist = new int[m];
+		addinput.numberofpoints = m;
+		for(int i = 0; i < m; ++i) {
+			for(int j = 0; j < 3; ++j) {
+				addinput.pointlist[i*3+j] = (*add_input_points)[i][j];
+				addinput.pointmarkerlist[i] = 1;
+			}
+		}
+	}
+
+	// output
+	tetgenio output;
+	// create mesh (tetrahedons)
+	tetrahedralize(&b, &input, &output, &addinput);
+
+	// create CST Mesh 
+	int &nodeCount = output.numberofpoints;
+	int &tetCount = output.numberoftetrahedra;
+	x.resize(3 * nodeCount);
+	X.resize(3 * nodeCount);
+	v.resize(3 * nodeCount);
+	f_ext.resize(3 * nodeCount);
+	m.resize(3 * nodeCount);
+
 	for (int i = 0; i<nodeCount; i++) {
 		Node* newNode = new Node(this, i, 3 * i, 3);
 		double *p = output.pointlist + 3 * i;

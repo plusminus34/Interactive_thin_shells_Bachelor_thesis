@@ -21,12 +21,18 @@ public:
 	DynamicArray<double> contactFlag;
 	DynamicArray<double> EEWeights;
 
-	bool isWheel = false;
+	bool isWheel = false;				// true for any wheel type
+	bool isFixedWheel = false;			// true for a temporary fixed wheel
+	bool isWeldedWheel = false;			// true for a permanently fixed wheel
+	bool isPassiveWheel = false;		// true if passive wheel
+
 	double wheelRadius = 0.1;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
-	V3D wheelAxisLocal;						// wheel axis in world coords.
-	V3D wheelYawAxis;					// yaw axis in world coords.
-	V3D wheelTiltAxis;					// tilt axis in world coords.
+	//these are all quantities from the wheel's coordinate frame point of view...
+	V3D wheelAxisLocal_WF;					// wheel axis, not transformed by tilt and yaw angles...
+	V3D wheelYawAxis_WF;					// yaw axis in world coords.
+	V3D wheelTiltAxis_WF;					// tilt axis in world coords.
+
 	DynamicArray<double> wheelYawAngle;	// rotation around yaw axis
 	DynamicArray<double> wheelTiltAngle;// rotation around tilt axis
 
@@ -53,7 +59,7 @@ public:
 	P3D getEEPositionAt(double t) const;
 
 	// TODO: maybe we can store rho alongside with wheelAxis etc.
-	V3D getWheelRhoLocal() const;
+	V3D getWheelRhoLocal_WF() const;
 
 	P3D getWheelCenterPositionAt(double t) const;
 
@@ -65,7 +71,7 @@ public:
 	double getWheelSpeedAt(double t) const;
 
 	template<class T>
-	static Vector3T<T> rotateVectorUsingWheelAngles(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {
+	static Vector3T<T> rotVecByYawTilt(const Vector3T<T> &axis, const Vector3T<T> &axisYaw,  T alpha, const Vector3T<T> &axisTilt, T beta) {
 		// First tilt the axis ...
 		Vector3T<T> axisRot = rotateVec(axis, beta, axisTilt);
 		// ... and then yaw
@@ -73,14 +79,20 @@ public:
 		return axisRot;
 	}
 
+	static Vector3d drotVecByYawTilt_dTilt(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
+	static Vector3d drotVecByYawTilt_dYaw(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
+
+	static Vector3d ddrotVecByYawTilt_dYaw2(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
+	static Vector3d ddrotVecByYawTilt_dYawdTilt(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
+	static Vector3d ddrotVecByYawTilt_dTilt2(const Vector3d &axis, const Vector3d &axisYaw, double alpha, const Vector3d &axisTilt, double beta);
 	template<class T>
 	Vector3T<T> getRotatedWheelAxis(T angleYaw, T angleTilt) const
 	{
-		Vector3T<T> axis(wheelAxisLocal);
-		Vector3T<T> axisYaw(wheelYawAxis);
-		Vector3T<T> axisTilt(wheelTiltAxis);
+		Vector3T<T> axis(wheelAxisLocal_WF);
+		Vector3T<T> axisYaw(wheelYawAxis_WF);
+		Vector3T<T> axisTilt(wheelTiltAxis_WF);
 
-		return rotateVectorUsingWheelAngles(axis, axisYaw, angleYaw, axisTilt, angleTilt);
+		return rotVecByYawTilt(axis, axisYaw, angleYaw, axisTilt, angleTilt);
 	}
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
@@ -144,16 +156,24 @@ public:
 	void getQ(double t, dVector& q_t);
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
-	void getRobotPoseAt(double t, ReducedRobotState& robotPose);
+	void getRobotPoseAt(double t, RobotState& robotPose);
 
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
-	void getRobotStateAt(double t, double motionPlanDuration, ReducedRobotState& robotState);
+	void getRobotStateAt(double t, double motionPlanDuration, RobotState& robotState);
 
 	void writeRobotMotionTrajectoriesToFile(const char* fName);
 
 	void loadRobotMotionTrajectoriesToFile(const char* fName);
 
 	void getQAtTimeIndex(int j, dVector& q_t);
+
+	template<class T>
+	void getQAtTimeIndex(int j, VectorXT<T> &q_t){
+		q_t.resize(qArray[j].size());
+		for (int i = 0; i < qArray[j].size(); ++i) {
+			q_t[i] = qArray[j][i];
+		}
+	}
 
 	P3D getBodyPositionAtTimeIndex(int j);
 };
@@ -174,6 +194,7 @@ public:
 	double swingFootHeight = 0.02;	
 
 	V3D desDistanceToTravel;
+	V3D externalForce;
 	double desTurningAngle = 0.0;
 	double desCOMHeight = 0.0;
 	P3D defaultCOMPosition;
@@ -181,12 +202,12 @@ public:
 	double verticalGRFLowerBoundVal = 0;
 	double GRFEpsilon = 0.4;				// for SoftUnilateralConstraint
 	double pseudoLimbEpsilon = 0.1;
-	double frictionEpsilon = 0.4;				// for SoftUnilateralConstraint
+	double frictionEpsilon = 0.05;				// for SoftUnilateralConstraint
 
 	// Parameters for joint motor velocity constraint
 	double jointVelocityLimit = 0;
 	double jointVelocityEpsilon = 0.4;		// for SoftUnilateralConstraint
-
+	double jointAngleLimit = PI / 4;
 	dVector initialRobotState;
 	
 	// Parameters for wheel motor speed constraint

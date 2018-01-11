@@ -57,11 +57,59 @@ public:
 	double computeSecondDerivative(double x);
 };
 
+template<class T>
+class SoftUnilateralUpperConstraintT {
+private:
+	T a1, b1, c1, a2, b2, c2, d2, epsilon;
+	T limit = 0;
+public:
+	SoftUnilateralUpperConstraintT(T l, T stiffness, T epsilon){
+		this->limit = l;
+		this->epsilon = epsilon;
+		a1 = stiffness;
+
+		b1 = (T)0.5*a1*epsilon;
+		c1 = (T)1/(T)6 * a1*epsilon*epsilon;
+		a2 = (T)1/((T)2*epsilon)*a1;
+		b2 = a1;
+		c2 = (T)0.5*a1*epsilon;
+		d2 = (T)1/(T)6*a1*epsilon*epsilon;
+	}
+
+	virtual ~SoftUnilateralUpperConstraintT()
+	{
+
+	}
+
+	void setLimit(T l)
+	{
+		limit = l;
+	}
+
+	void setEpsilon(T eps)
+	{
+		epsilon = eps;
+	}
+
+	//comptue f(x)
+	T computeValue(T x)
+	{
+		x = x - limit;
+		if (x > 0)
+			return (T)0.5 * a1 * x * x + b1 * x + c1;
+		if (x > -epsilon)
+			return (T)1.0 / (T)3 * a2 * x * x * x + (T)0.5 * b2 * x * x + c2 * x + d2;
+		return 0;
+
+	}
+};
+
 class SoftSymmetricBarrierConstraint {
 
 public:
 
-	SoftSymmetricBarrierConstraint(double limit, double stiffness);
+    //SoftSymmetricBarrierConstraint::SoftSymmetricBarrierConstraint(double limit);
+    SoftSymmetricBarrierConstraint(double limit);
 
 	virtual ~SoftSymmetricBarrierConstraint();
 

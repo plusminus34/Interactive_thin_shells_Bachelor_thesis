@@ -639,11 +639,6 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		saveToRBSFile("../out/tmpRobot.rbs");
 	}
 
-	if (key == GLFW_KEY_K && action == GLFW_PRESS){
-		Logger::consolePrint("Exporting meshes to \'../out/tmpModularRobotMeshes.obj\'...\n");
-		exportMeshes();
-	}
-
 	// clone the picked robot
 	if (key == GLFW_KEY_Q && action == GLFW_PRESS){
 		Logger::consolePrint("Cloning selected robot...\n");
@@ -727,7 +722,6 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 			buildRMCMirrorMap();
 		}
 	}
-
 
 	if (key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
@@ -844,7 +838,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 	}
 
 
-	if (key == GLFW_KEY_F1 && (action == GLFW_REPEAT || action == GLFW_PRESS))
+	if (key == GLFW_KEY_MINUS && (action == GLFW_REPEAT || action == GLFW_PRESS))
 	{
 		if (selectedRobot && selectedRobot->selectedRMC && (selectedRobot->selectedRMC->type == MOTOR_RMC
 			|| selectedRobot->selectedRMC->type == LIVING_MOTOR))
@@ -866,7 +860,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		}
 	}
 
-	if (key == GLFW_KEY_F2 && (action == GLFW_REPEAT || action == GLFW_PRESS))
+	if (key == GLFW_KEY_EQUAL && (action == GLFW_REPEAT || action == GLFW_PRESS))
 	{
 		if (selectedRobot && selectedRobot->selectedRMC && (selectedRobot->selectedRMC->type == MOTOR_RMC
 			|| selectedRobot->selectedRMC->type == LIVING_MOTOR))
@@ -888,7 +882,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		}
 	}
 
-	if (key == GLFW_KEY_F3 && (action == GLFW_REPEAT || action == GLFW_PRESS))
+	if (key == GLFW_KEY_0 && (action == GLFW_REPEAT || action == GLFW_PRESS))
 	{
 		if (selectedRobot && selectedRobot->selectedRMC && (selectedRobot->selectedRMC->type == MOTOR_RMC
 			|| selectedRobot->selectedRMC->type == LIVING_MOTOR))
@@ -910,6 +904,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 
 	}
 
+/*
 	if (key == GLFW_KEY_F4 && (action == GLFW_REPEAT || action == GLFW_PRESS))
 	{
 		if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->isMovable())
@@ -919,7 +914,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 			selectedRobot->fixJointConstraints();
 		}
 	}
-
+*/
 
 	if (GLWindow3D::onKeyEvent(key, action, mods)) return true;
 
@@ -1428,7 +1423,6 @@ void ModularDesignWindow::saveDesignToFile(const char* fName)
 
 void ModularDesignWindow::loadDesignFromFile(const char* fName)
 {
-
 	// clean up guiding mesh
 	delete guidingMesh;
 	guidingMeshPos = P3D();
@@ -1555,24 +1549,6 @@ PossibleConnection* ModularDesignWindow::getClosestConnnection(Ray& ray, vector<
 	return closestConnection;
 }
 
-void ModularDesignWindow::exportMeshes(){
-	RMCRobot* robot = new RMCRobot(new RMC(), transformationMap);
-
-	FILE* fp = fopen(bodyMesh->path.c_str(), "w+");
-	bodyMesh->renderToObjFile(fp, 0, Quaternion(), P3D());
-	fclose(fp);
-
-	for (uint i = 0; i < rmcRobots.size(); i++)
-	{
-		if (rmcRobots[i]->getRoot()->type == PLATE_RMC)
-		{
-			robot->connectRMCRobotDirectly(rmcRobots[i]->clone(), robot->getRoot());
-		}
-	}
-	robot->exportMeshes("../out/tmpModularRobotMeshes.obj");
-
-	delete robot;
-}
 
 
 /**
@@ -1618,7 +1594,7 @@ void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot)
 	robot->saveToRBSFile(fName, robotMeshDir, templateRobot, freezeRobotRoot);
 
 	//saverbs should also save an rs file, right after having restored the joint angles... I think it's cleaner that way...
-//	ReducedRobotState tmpState = robot->getReducedRobotState(rbRobot);
+//	RobotState tmpState = robot->getReducedRobotState(rbRobot);
 //	tmpState.writeToFile(fName);
 
 	delete robot;
@@ -1828,10 +1804,10 @@ bool ModularDesignWindow::isSelectedRMCMovable(){
 	return selectedRobot->selectedRMC->isMovable();
 }
 
-void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot, ReducedRobotState* initialRobotState){
+void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot, RobotState* initialRobotState){
 	bool incompatible = false;
 
-	ReducedRobotState currentRobotState(tRobot);
+	RobotState currentRobotState(tRobot);
 	tRobot->setState(initialRobotState);
 
 	for (auto joint : tRobot->jointList){
@@ -1909,7 +1885,7 @@ void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot, ReducedRobotState*
 
 
 
-void ModularDesignWindow::transferMeshes(Robot* tRobot, ReducedRobotState* initialRobotState){
+void ModularDesignWindow::transferMeshes(Robot* tRobot, RobotState* initialRobotState){
 	// adjust design
 	matchDesignWithRobot(tRobot, initialRobotState);
 

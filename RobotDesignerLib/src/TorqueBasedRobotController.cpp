@@ -16,7 +16,7 @@ void TorqueBasedRobotController::initialize() {
 	for (uint i = 0; i < robot->jointList.size(); i++)
 		robot->jointList[i]->controlMode = TORQUE_MODE;
 	stridePhase = 0;
-	ReducedRobotState rs = controller->getTargetRobotState(motionPlan, stridePhase);
+	RobotState rs = controller->getTargetRobotState(motionPlan, stridePhase);
 	robot->setState(&rs);
 }
 
@@ -27,13 +27,13 @@ void TorqueBasedRobotController::drawDebugInfo() {
 	controller->draw();
 }
 
-void TorqueBasedRobotController::computeControlSignals(double simTimeStep){
+void TorqueBasedRobotController::computeControlSignals(double timeStep){
 	robot->bFrame->updateLimbGroundContactInformation();
 	robot->bFrame->updateStateInformation();
-	controller->computeControlSignals(motionPlan, stridePhase, simTimeStep);
+	controller->computeControlSignals(motionPlan, stridePhase, timeStep);
 }
 
-void TorqueBasedRobotController::applyControlSignals() {
+void TorqueBasedRobotController::applyControlSignals(double timeStep) {
 	GeneralizedCoordinatesRobotRepresentation gcrr(robot);
 	gcrr.computeWorldCoordinateTorquesFromU(controller->qpPlan->u);
 }

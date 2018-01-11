@@ -27,13 +27,10 @@
 //	RUN_IN_MATLAB(x)
 #endif
 
-
-
 #define START_WITH_VISUAL_DESIGNER
 
-
 class IntelligentRobotEditingWindow;
-
+class EnergyWindow;
 /**
  * Robot Design and Simulation interface
  */
@@ -55,7 +52,7 @@ public:
 
 
 	Robot* robot = NULL;
-	ReducedRobotState startingRobotState = ReducedRobotState(13);
+	RobotState startingRobotState = RobotState(13);
 
 	bool drawMotionPlan = false;
 
@@ -70,7 +67,8 @@ public:
 		MOTION_PLAN_OPTIMIZATION = 0,
 		MOTION_PLAN_ANIMATION,
 		PHYSICS_SIMULATION_WITH_POSITION_CONTROL,
-		PHYSICS_SIMULATION_WITH_TORQUE_CONTROL
+		PHYSICS_SIMULATION_WITH_TORQUE_CONTROL,
+		PHYSICAL_ROBOT_CONTROL_VIA_POLOLU_MAESTRO
 	};
 	RD_RUN_OPTIONS runOption = MOTION_PLAN_OPTIMIZATION;
 
@@ -128,6 +126,7 @@ public:
 	void loadToSim(bool initializeMOPT = true);
 	void createRobotFromCurrentDesign();
 
+	void exportMeshes();
 
 	SymmetricParameterizedRobotDesign* prd = NULL;
 

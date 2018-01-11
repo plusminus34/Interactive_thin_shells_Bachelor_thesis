@@ -41,9 +41,7 @@ public:
 	//target relative orientation
 	Quaternion desiredRelativeOrientation;
 	//target relative angular velocity axis, unit length expected
-	V3D desiredRelativeAngVelocityAxis;
-	//target relative angular velocity (around axis)
-	double desiredRelativeAngVelocity;
+	V3D desiredRelativeAngularVelocity;
 
 	//the name of the joint
 	std::string name;

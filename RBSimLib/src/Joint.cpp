@@ -159,13 +159,8 @@ void Joint::loadFromFile(FILE* f, AbstractRBEngine* rbEngine){
 					throwError("A parent has been found that does not have a child rigid body");
 				child->pJoints.push_back(this);
 				parent->cJoints.push_back(this);
-				//fixJointConstraints(true, true, true, true);
-                //fixJointConstraints(true, false, false, false);
                 fixJointConstraints(true, false, false, false);
-//				if (child->pJoint != NULL)
-//					throwError("The child body \'%s\' already has a parent.", child->name);
-//				parent->cJoints.push_back(this);
-//				child->pJoint = this;
+
 				return;//and... done
 				break;
 			case RB_NOT_IMPORTANT:

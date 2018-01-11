@@ -22,6 +22,7 @@ struct MOPTParams {
 
 	double jointVelocityLimit = 10;
 	double jointVelocityEpsilon = 0.4;
+	double jointAngleLimit = PI/4;
 
 	double jointL0Delta = 1;
 
@@ -39,6 +40,8 @@ struct MOPTParams {
 	bool useDynamicRegularization = true;
 	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod = NewtonFunctionMinimizer::DynamicRegularization;
 	bool checkHessianPSD = false;
+	double externalForceX=0;
+	double externalForceZ=0;
 };
 
 
@@ -47,11 +50,10 @@ public:
 	bool initialized = false;
 	GLApplication* glApp;
 
-	bool startWithEmptyFFP = true;
 	int nTimeSteps = 12;
 	double globalMOPTRegularizer = 0.01;
 
-	nanogui::Graph* energyGraph;
+	nanogui::Graph* energyGraph = NULL;
 	std::vector<float> energyGraphValues;
 
 	nanogui::Graph* velocityProfileGraph;
@@ -108,6 +110,9 @@ public:
 
 	virtual bool onMouseMoveEvent(double xPos, double yPos);
 	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
+
+	//any time a physical key is pressed, this event will trigger. Useful for reading off special keys...
+	virtual bool onKeyEvent(int key, int action, int mods);
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
 

@@ -4,7 +4,7 @@
 
 #include <MathLib/MathLib.h>
 #include <MathLib/Quaternion.h>
-
+#include <RBSimLib/HingeJoint.h>
 #include <ControlLib/Robot.h>
 
 using namespace std;
@@ -44,7 +44,7 @@ Given a set of parameters, instances of this class will output new robot morphol
 class ParameterizedRobotDesign {
 public:
 	Robot* robot;
-	ReducedRobotState defaultRobotState;
+	RobotState defaultRobotState;
 
 	//the morphology of the design is given by the parameterization of each joint (e.g. position in child and parent coords, rotation axis, etc).
 	//we will store the initial morphology here
@@ -245,7 +245,7 @@ public:
 	virtual void setParameters(const DynamicArray<double>& params) {
 		currentParams = params;
 
-		ReducedRobotState rs(robot);
+		RobotState rs(robot);
 		robot->setState(&defaultRobotState);
 
 		// go through each joint and apply its offset as specified in the param list...
@@ -256,6 +256,10 @@ public:
 			V3D eeOffset(params[pIndex + 0] * eeParamMap[listOfAllEEs[i].ee].xModifier, params[pIndex + 1], params[pIndex + 2]);
 
 			listOfAllEEs[i].parentRB->rbProperties.endEffectorPoints[listOfAllEEs[i].eeIndex].coords = initialEEMorphology[listOfAllEEs[i].ee].initialCoords + eeOffset;
+
+			if (listOfAllEEs[i].parentRB->rbProperties.endEffectorPoints[listOfAllEEs[i].eeIndex].wheelJoint != NULL)
+				listOfAllEEs[i].parentRB->rbProperties.endEffectorPoints[listOfAllEEs[i].eeIndex].wheelJoint->pJPos = listOfAllEEs[i].parentRB->rbProperties.endEffectorPoints[listOfAllEEs[i].eeIndex].coords;
+
 		}
 
 		for (int i = 0; i < robot->getJointCount(); i++) {

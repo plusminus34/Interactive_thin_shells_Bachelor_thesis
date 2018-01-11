@@ -35,9 +35,9 @@ public:
 	IK_Plan(Robot* robot);
 	virtual ~IK_Plan(void);
 
-	void setCurrentIKState(const ReducedRobotState& rs);
-	void setTargetIKState(const ReducedRobotState& rs);
-	void getCurrentIKState(ReducedRobotState& rs);
+	void setCurrentIKState(const RobotState& rs);
+	void setTargetIKState(const RobotState& rs);
+	void getCurrentIKState(RobotState& rs);
 
 	void setCurrentIKStateFromRobot();
 	void setTargetIKStateFromRobot();

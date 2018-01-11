@@ -31,10 +31,6 @@ void MOPTWindow::addMenuItems() {
 */
 
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("startWithEmptyFFP", startWithEmptyFFP);
-	}
-
-	{
 		auto tmpVar = glApp->mainMenu->addVariable("generate periodic motion", periodicMotion);
 	}
 
@@ -67,6 +63,14 @@ void MOPTWindow::addMenuItems() {
 	glApp->mainMenu->addVariable("curr speed Z", COMSpeed(2))->setEditable(false);
 	{
 		auto tmpVar = glApp->mainMenu->addVariable("des turning angle", moptParams.desTurningAngle);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("Ext force X", moptParams.externalForceX);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
+		auto tmpVar = glApp->mainMenu->addVariable("Ext force Z", moptParams.externalForceZ);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 	{
@@ -130,7 +134,7 @@ void MOPTWindow::addMenuItems() {
 		using namespace nanogui;
 
 		Window *window = new Window(glApp->menuScreen, "MOPT Energy");
-		window->setPosition(Eigen::Vector2i(900, 0));
+		window->setPosition(Eigen::Vector2i(0, 0));
 		window->setWidth(300);
 		window->setLayout(new GroupLayout());
 
@@ -187,12 +191,10 @@ void MOPTWindow::loadRobot(Robot* robot){
 	// ******************* footfall patern *******************
 	footFallPattern = FootFallPattern();
 
-	if (startWithEmptyFFP == false){
-		int iMin = 0, iMax = nTimeSteps / nLegs - 1;
-		footFallPattern.strideSamplePoints = nTimeSteps;
-		for (int j = 0; j < nLegs; j++)
-			footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nTimeSteps / nLegs, iMax + j*nTimeSteps / nLegs);
-	}
+	int iMin = 0, iMax = nTimeSteps / nLegs - 1;
+	footFallPattern.strideSamplePoints = nTimeSteps;
+	for (int j = 0; j < nLegs; j++)
+		footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nTimeSteps / nLegs, iMax + j*nTimeSteps / nLegs);
 
 	footFallPattern.loadFromFile("../out/tmpFFP.ffp");
 }
@@ -202,6 +204,9 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.desTravelDistX = locomotionManager->motionPlan->desDistanceToTravel.x();
 	moptParams.desTravelDistZ = locomotionManager->motionPlan->desDistanceToTravel.z();
 	moptParams.desTurningAngle = locomotionManager->motionPlan->desTurningAngle;
+
+	moptParams.externalForceX = locomotionManager->motionPlan->externalForce.x();
+	moptParams.externalForceZ = locomotionManager->motionPlan->externalForce.z();
 
 	moptParams.jointVelocityLimit = locomotionManager->motionPlan->jointVelocityLimit;
 	moptParams.jointVelocityEpsilon = locomotionManager->motionPlan->jointVelocityEpsilon;
@@ -228,11 +233,15 @@ void MOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->motionPlan->swingFootHeight = moptParams.swingFootHeight;
 	locomotionManager->motionPlan->desDistanceToTravel.x() = moptParams.desTravelDistX;
 	locomotionManager->motionPlan->desDistanceToTravel.z() = moptParams.desTravelDistZ;
+	
+	locomotionManager->motionPlan->externalForce.x() = moptParams.externalForceX;
+	locomotionManager->motionPlan->externalForce.z() = moptParams.externalForceZ;
+
 	locomotionManager->motionPlan->desTurningAngle = moptParams.desTurningAngle;
 
 	locomotionManager->motionPlan->jointVelocityLimit = moptParams.jointVelocityLimit;
 	locomotionManager->motionPlan->jointVelocityEpsilon = moptParams.jointVelocityEpsilon;
-
+	locomotionManager->motionPlan->jointAngleLimit = moptParams.jointAngleLimit;
 	locomotionManager->motionPlan->jointL0Delta = moptParams.jointL0Delta;
 
 	locomotionManager->motionPlan->wheelSpeedLimit = moptParams.wheelSpeedLimit;
@@ -255,6 +264,9 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	delete locomotionManager;
 
 	footFallPattern.writeToFile("../out/tmpFFP.ffp");
+
+	//make sure the ffp does not get out of sync with the number of samples in the locomotion engine...
+	nTimeSteps = footFallPattern.strideSamplePoints;
 
 	/* ---------- Set up the motion plan ---------- */
 	switch (optimizeOption)
@@ -348,6 +360,14 @@ void MOPTWindow::drawAuxiliarySceneInfo(){
 
 }
 
+//any time a physical key is pressed, this event will trigger. Useful for reading off special keys...
+bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
+	if (initialized && ffpViewer) {
+		return (ffpViewer->onKeyEvent(key, action, mods));
+	}
+	return false;
+}
+
 bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	if (initialized) {
 		if (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging())
@@ -357,8 +377,8 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	Ray ray = getRayFromScreenCoords(xPos, yPos);
 	postDraw();
 
-	ReducedRobotState oldState(robot);
-	ReducedRobotState robotState(robot);
+	RobotState oldState(robot);
+	RobotState robotState(robot);
 	locomotionManager->motionPlan->robotStateTrajectory.getRobotPoseAt(moptParams.phase, robotState);
 	robot->setState(&robotState);
 
@@ -387,6 +407,7 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 			velocityProfileWindow->dispose();
 			velocityProfileWindow = nullptr;
 		}
+		robot->setState(&oldState);
 		return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 	}
 	

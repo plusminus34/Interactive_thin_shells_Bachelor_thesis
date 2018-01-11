@@ -6,11 +6,18 @@
 
 using namespace	std;
 
+class ServoMotorCommandBlock {
+public:
+	int motorStartID;
+	DynamicArray<unsigned short> targetVals;
+	DynamicArray<HingeJoint*> robotJoints;
+};
+
 /**
 * Implements communication with servomotors via the Pololu Maestro 12/18/24-Channel USB Servo Controller
 */
 class PololuServoControlInterface : public RobotControlInterface{
-private:
+public:
 
 //SOME OF THESE PARAMETERS MUST BE SET WITH THE POLOLU SERVOMOTOR CONTROLLER, INCLUDING THE MAESTRO’S SERIAL MODE WHICH NEEDS TO BE SET TO “USB Dual Port”
 	int comNumber = 4;
@@ -21,8 +28,13 @@ private:
 	//the target commands can be sent all at once, or one-by-one... which do we want?
 	bool writeAllTargetCommandsAtOnce = false;
 
+	//the servo control board expects a block of continuous servo IDs for the multi-write command... so, store this here...
+	DynamicArray<ServoMotorCommandBlock> multiTargetCommands;
+
 	double getServomotorAngle(Motor& mp);
+	double getServomotorSpeed(Motor& mp);
 	void setServomotorAngle(Motor& mp, double val);
+	void setServomotorSpeed(Motor& mp, double val);
 	void setServomotorMaxSpeed(Motor& mp, double val);
 
 	bool servosAreMoving();
@@ -38,6 +50,8 @@ public:
 
 	// destructor
 	virtual ~PololuServoControlInterface(void) {}
+
+	void createMultiWriteClusters();
 
 	//set motor goals from target values
 	virtual void sendControlInputsToPhysicalRobot();

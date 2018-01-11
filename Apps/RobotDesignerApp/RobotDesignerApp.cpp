@@ -7,12 +7,11 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-//the wheel speed is in world coordinates! In integrating the wheel speed for visualization/playback, as well as for control, we need to compensate for what the leg is doing!!!!! This is potentially a source of bugs otherwise!
-//when in MOPT, mouse over robot changes pose in sim (probably because picking sets the state but then doesn't restore it?).
-//WarmStart with no periodic boundary conditions does not work well... - test the design from Moritz, but some of the others too (periodic and non-periodic).
 //debug joint velocity limits some more...
-//work out the math for fixed wheel...
 //add the option to start non-periodic mopt from zero or from two other motion plans...
+//fix the bulk write...
+//rotate the "wheel" in the creature design - does the rolling motion become obvious?
+//add a cylinder as CDP in ODE? A flat capsule!
 
 RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
@@ -24,10 +23,10 @@ RobotDesignerApp::RobotDesignerApp(){
 	simWindow = new SimWindow(0, 0, 100, 100, this);
 	iEditWindow = new IntelligentRobotEditingWindow(0, 0, 100, 100, this);
 	motionPlanAnalysis = new MotionPlanAnalysis(menuScreen);
-	energyWindow = new EnergyWindow();
+	energyWindow = new EnergyWindow(this);
 
 	mainMenu->addGroup("RobotDesigner Options");
-	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
+	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau", "RobotControl"});
 	mainMenu->addVariable<RD_VIEW_OPTIONS>("View Mode",
 		[this](const RD_VIEW_OPTIONS &val) {viewOptions = val; setupWindows(); },
 		[this]() {return viewOptions;},
@@ -43,20 +42,27 @@ RobotDesignerApp::RobotDesignerApp(){
 	button = new nanogui::Button(tools, "");
 	button->setIcon(ENTYPO_ICON_SAVE);
 	button->setCallback([this]() { if (designWindow) designWindow->saveFile("../out/tmpModularRobotDesign.dsn"); });
-	button->setTooltip("Quick Save");
+	button->setTooltip("Quick Save (S)");
 
 	button = new nanogui::Button(tools, "");
 	button->setIcon(ENTYPO_ICON_DOWNLOAD);
 	button->setCallback([this]() { if (designWindow) designWindow->loadDesignFromFile("../out/tmpModularRobotDesign.dsn"); });
-	button->setTooltip("Quick Load");
+	button->setTooltip("Quick Load (R)");
 
-	button = new nanogui::Button(tools, "ToSim");
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_GITHUB);
+	button->setCallback([this]() { exportMeshes(); });
+	button->setTooltip("Export Meshes (K)");
+
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_LOG_OUT);
 	button->setCallback([this]() { createRobotFromCurrentDesign(); });
-	button->setTooltip("Load Robot Design To Sim");
+	button->setTooltip("Load Robot Design To Sim (T)");
 
-	button = new nanogui::Button(tools, "GoMOPT");
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_BAIDU);
 	button->setCallback([this]() { warmStartMOPT(true); });
-	button->setTooltip("Warmstart MOPT");
+	button->setTooltip("Warmstart MOPT (M)");
 
 	{
 		using namespace nanogui;
@@ -113,9 +119,9 @@ RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = 0.75;
 
 #ifdef START_WITH_VISUAL_DESIGNER
-	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
-//	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configTGY306G.cfg");
-	
+//	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
+// 	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configTGY306G.cfg");
+ 	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configBK3002.cfg");
 #else
     loadFile("../data/robotsAndMotionPlans/spotMini/robot2.rbs");
     loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");
@@ -261,6 +267,10 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 		designWindow->onKeyEvent(key, action, mods);
 	}
 
+	if (shouldShowSimWindow() && moptWindow->isActive()){
+		moptWindow->onKeyEvent(key, action, mods);
+	}
+
 	if (moptWindow->locomotionManager && moptWindow->locomotionManager->motionPlan) {
 		if (key == GLFW_KEY_UP && action == GLFW_PRESS)
 			moptWindow->moptParams.desTravelDistZ += 0.1;
@@ -282,6 +292,40 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 			moptWindow->locomotionManager->motionPlan->writeRobotMotionAnglesToFile("../out/tmpMPAngles.mpa");
 	}
 
+	if (key == GLFW_KEY_T && action == GLFW_PRESS) {
+		createRobotFromCurrentDesign();
+	}
+
+	if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
+		loadFile("..\\data\\RobotDesigner\\TGYDemo1.batch");
+//		loadFile("..\\data\\RobotDesigner\\SpotMiniDemo.batch");
+	}
+
+	if (key == GLFW_KEY_M && action == GLFW_PRESS) {
+		warmStartMOPT(true);
+	}
+
+	if (key == GLFW_KEY_K && action == GLFW_PRESS) {
+		exportMeshes();
+	}
+
+	if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
+		viewOptions = SIM_WINDOW_ONLY;
+		setupWindows();
+	}
+	if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
+		viewOptions = SIM_AND_MOPT;
+		setupWindows();
+	}
+	if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
+		viewOptions = SIM_AND_DESIGN;
+		setupWindows();
+	}
+	if (key == GLFW_KEY_F4 && action == GLFW_PRESS) {
+		viewOptions = MOPT_AND_IEDIT;
+		setupWindows();
+	}
+
 	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
 		runOption = MOTION_PLAN_OPTIMIZATION;
 	if (key == GLFW_KEY_2 && action == GLFW_PRESS)
@@ -290,6 +334,8 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 		runOption = PHYSICS_SIMULATION_WITH_POSITION_CONTROL;
 	if (key == GLFW_KEY_4 && action == GLFW_PRESS)
 		runOption = PHYSICS_SIMULATION_WITH_TORQUE_CONTROL;
+	if (key == GLFW_KEY_5 && action == GLFW_PRESS)
+		runOption = PHYSICAL_ROBOT_CONTROL_VIA_POLOLU_MAESTRO;	
 
 	if (key == GLFW_KEY_A && action == GLFW_PRESS)
 		optimizeWhileAnimating = !optimizeWhileAnimating;
@@ -312,11 +358,45 @@ void RobotDesignerApp::loadFile(const char* fName) {
 
 	std::string fNameExt = fileName.substr(fileName.find_last_of('.') + 1);
 
+	if (fNameExt.compare("batch") == 0) {
+		Logger::consolePrint("Batch loading from \'%s\'\n", fName);
+		FILE* fp = fopen(fName, "r");
+
+		while (!feof(fp)){
+			char line[200];
+			readValidLine(line, 200, fp);
+			char token[100], argument[100];
+			sscanf(line, "%s %s", &token, &argument);
+			if (strcmp(token, "load") == 0)
+				loadFile(argument);
+			if (strcmp(token, "toSim") == 0)
+				createRobotFromCurrentDesign();
+			if (strcmp(token, "end") == 0)
+				break;
+		}
+		fclose(fp);
+	}
+
+	if (fNameExt.compare("pololu") == 0) {
+		Logger::consolePrint("Loading servomotor mapping/calibration file '%s'\n", fName);
+		if (simWindow && simWindow->pololuMaestroController)
+			simWindow->pololuMaestroController->readRobotMappingParametersFromFile(fName);
+		return;
+	}
+
+	if (fNameExt.compare("cfg") == 0) {
+		delete designWindow;
+		Logger::consolePrint("Loading robot designer configuration file from '%s'\n", fName);
+		designWindow = new ModularDesignWindow(0, 0, 100, 100, this, fName);
+		setupWindows();
+		return;
+	}
+
 	if (fNameExt.compare("rs") == 0) {
 		Logger::consolePrint("Load robot state from '%s'\n", fName);
 		if (robot) {
 			robot->loadReducedStateFromFile(fName);
-			startingRobotState = ReducedRobotState(robot);
+			startingRobotState = RobotState(robot);
 			if (prd)
 				prd->updateMorphology();
 		}
@@ -329,7 +409,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		delete prd;
 		prd = new SymmetricParameterizedRobotDesign(robot);
 
-		startingRobotState = ReducedRobotState(robot);
+		startingRobotState = RobotState(robot);
 		return;
 	}
 
@@ -343,6 +423,8 @@ void RobotDesignerApp::loadFile(const char* fName) {
 		if (moptWindow->locomotionManager && moptWindow->locomotionManager->motionPlan){
 			moptWindow->locomotionManager->motionPlan->readParamsFromFile(fName);
 			moptWindow->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
+			moptWindow->locomotionManager->motionPlan->syncMotionPlanWithFootFallPattern(moptWindow->footFallPattern);
+
 			moptWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
 			moptWindow->syncMOPTWindowParameters();
 			moptWindow->printCurrentObjectiveValues();
@@ -351,7 +433,7 @@ void RobotDesignerApp::loadFile(const char* fName) {
 	}
 
 	if (fNameExt.compare("dsn") == 0 && designWindow) {
-		Logger::consolePrint("Load robot state from '%s'\n", fName);
+		Logger::consolePrint("Load robot design from '%s'\n", fName);
 		designWindow->loadFile(fName);
 		return;
 	}
@@ -359,10 +441,10 @@ void RobotDesignerApp::loadFile(const char* fName) {
 }
 
 void RobotDesignerApp::createRobotFromCurrentDesign() {
-	if (designWindow) {
+	if (designWindow && designWindow->hasDesign()) {
 		designWindow->saveToRBSFile("../out/tmpRobot.rbs");
 		loadFile("../out/tmpRobot.rbs");
-		startingRobotState = ReducedRobotState(robot);
+		startingRobotState = RobotState(robot);
 		robot->populateState(&startingRobotState, true);
 		robot->setState(&startingRobotState);
 		if (prd)
@@ -389,7 +471,31 @@ void RobotDesignerApp::loadToSim(bool initializeMOPT){
 //	CreateParametersDesignWindow();
 }
 
+
+void RobotDesignerApp::exportMeshes() {
+	if (!robot) {
+		Logger::consolePrint("A robot must first be loaded before meshes can be exported...\n");
+		return;
+	}
+
+	RobotState rs(robot);
+
+	robot->setState(&startingRobotState);
+	robot->renderMeshesToFile("..\\out\\robotMeshes.obj");
+	Logger::consolePrint("Exported robot meshes to \'..\\out\\robotMeshes.obj\'\n");
+
+	robot->setState(&rs);
+}
+
 void RobotDesignerApp::warmStartMOPT(bool initializeMotionPlan) {
+	if (!robot) {
+		Logger::consolePrint("Please load a robot first...\n");
+		return;
+	}
+
+	if (!moptWindow || !simWindow)
+		return;
+
 	//reset the state of the robot, to make sure we're always starting from the same configuration
 	robot->setState(&startingRobotState);
 
@@ -434,6 +540,8 @@ void RobotDesignerApp::setActiveController() {
 		simWindow->setActiveController(simWindow->torqueController);
 	else if (runOption == MOTION_PLAN_ANIMATION)
 		simWindow->setActiveController(simWindow->kinematicController);
+	else if (runOption == PHYSICAL_ROBOT_CONTROL_VIA_POLOLU_MAESTRO)
+		simWindow->setActiveController(simWindow->pololuMaestroController);
 	else
 		simWindow->setActiveController(NULL);
 }
@@ -448,9 +556,13 @@ void RobotDesignerApp::process() {
 		Logger::consolePrint("Syncronizing robot state\n");
 		simWindow->getActiveController()->initialize();
 		simWindow->getActiveController()->setDebugMode(doDebug);
-	}
+		lastRunOptionSelected = runOption;
 
-	lastRunOptionSelected = runOption;
+		if (runOption == PHYSICAL_ROBOT_CONTROL_VIA_POLOLU_MAESTRO){
+			GLApplication::getGLAppInstance()->appIsRunning = false;
+			return;
+		}
+	}
 
 	auto DoMOPTStep = [&]() {
 		runMOPTStep();
@@ -464,19 +576,10 @@ void RobotDesignerApp::process() {
 		if (optimizeWhileAnimating)
 			DoMOPTStep();
 
-		double simulationTime = 0;
-		double maxRunningTime = 1.0 / desiredFrameRate;
+		double dt = 1.0 / desiredFrameRate;
+		if (slowMo) dt /= 5.0;
 
-		while (simulationTime / maxRunningTime < animationSpeedupFactor) {
-			simulationTime += simWindow->simTimeStep;
-
-//			update wheel rotations here...
-
-			simWindow->step();
-
-			if (slowMo)
-				break;
-		}
+		simWindow->advanceSimulation(dt);
 
 	}
 	else if (runOption == MOTION_PLAN_OPTIMIZATION)

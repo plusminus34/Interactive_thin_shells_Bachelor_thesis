@@ -12,7 +12,7 @@ public:
 	virtual ~GradientBasedFunctionMinimizer();
 
 	/**
-		use gradient-based method to minimize this function. 
+		use gradient-based method to minimize this function.
 	*/
 	virtual bool minimize(ObjectiveFunction *function, dVector &p, double & functionValue);
 

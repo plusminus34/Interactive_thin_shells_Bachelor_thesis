@@ -12,10 +12,19 @@ public:
 	KinematicRobotController(Robot* robot, LocomotionEngineMotionPlan *motionPlan);
 	~KinematicRobotController(void);
 
+	//advance the phase of the motion by timeStep...
 	virtual void advanceInTime(double timeStep);
+
+	//timeStep indicates the time that will take until the next call to this function, esentially how long do we expect the current control signals to be constant for...
+	virtual void applyControlSignals(double timeStep);
+
+	//compute the control signals based on the current stride phase. timeStep indicates the planning horizon...
+	virtual void computeControlSignals(double timeStep);
+
+	//compute the desired state of the robot at the current stride phase
 	virtual void computeDesiredState();
-	virtual void computeControlSignals(double simTimeStep);
-	virtual void applyControlSignals();
+
+
 	virtual void drawDebugInfo();
 	virtual void initialize();
 
@@ -23,13 +32,9 @@ public:
 
 	virtual void draw();
 
-	void computeMotionPlanPeriodDistAndHeading();
-public:
-//	Quaternion qRel;
-//	V3D vRel;
-//	V3D mpTravelDist;
-//	Quaternion mpTravelHeading;
 
+
+public:
 	V3D posInPlane;
 	Quaternion overallHeading;
 };

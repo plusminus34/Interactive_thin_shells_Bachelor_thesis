@@ -4,6 +4,7 @@
 #include <MathLib/P3D.h>
 #include <MathLib/V3D.h>
 #include <MathLib/MathLib.h>
+#include <MathLib/Transformation.h>
 
 class RBFeaturePoint {
 public:
@@ -14,8 +15,7 @@ public:
 		coords = p;
 		featureSize = fSize;
 	}
-	//in some cases we may want to know which mesh of the parent RB is associated with this feature (e.g. if they are wheels that must rotate about their axis)
-	int meshIndex = -1;
+
 };
 
 enum END_EFFECTOR_TYPE {
@@ -26,6 +26,7 @@ enum END_EFFECTOR_TYPE {
 };
 
 class RigidBody;
+class HingeJoint;
 
 class RBEndEffector : public RBFeaturePoint {
 public:
@@ -51,9 +52,11 @@ public:
 	//if this is a wheel, we keep track of its axis of rotation, expressed in local coordinates...
 	V3D localCoordsWheelAxis;
 	//the radius is stored in feature size...
-	
-	//this represents desired instantaneous speed for the wheel EEs
-	double rotationSpeed = 0;
+
+	//in some cases we may want to know which mesh of the parent RB is associated with this feature (e.g. if they are wheels that must rotate about their axis)
+	int meshIndex = -1;
+	HingeJoint* wheelJoint = NULL;
+	Transformation initialMeshTransformation;
 };
 
 /*================================================================================================================*

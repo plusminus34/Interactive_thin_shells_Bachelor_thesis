@@ -33,10 +33,10 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 			Vector3d eePosj = ee.EEPos[j];
 
 			if(ee.isWheel){
-				Vector3d rhoLocal = ee.getWheelRhoLocal();
-				Vector3d axisLocal = ee.wheelAxisLocal;
-				Vector3d axisYaw = ee.wheelYawAxis;
-				Vector3d axisTilt = ee.wheelTiltAxis;
+				Vector3d rhoLocal = ee.getWheelRhoLocal_WF();
+				Vector3d axisLocal = ee.wheelAxisLocal_WF;
+				Vector3d axisYaw = ee.wheelYawAxis_WF;
+				Vector3d axisTilt = ee.wheelTiltAxis_WF;
 
 				double speedj = ee.wheelSpeed[j];
 				double alphaj = ee.wheelYawAngle[j];
@@ -77,9 +77,6 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 
 void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 
-	if (theMotionPlan->feetPositionsParamsStartIndex < 0 || theMotionPlan->wheelParamsStartIndex < 0)
-		return;
-
 	typedef AutoDiffT<double, double> ScalarDiff;
 
 	const int nLimbs = theMotionPlan->endEffectorTrajectories.size();
@@ -105,12 +102,12 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 			for (int k = 0; k < 3; ++k)
 				eePosj(k) = p[iEEj + k];
 
-			if(ee.isWheel){
+			if(ee.isWheel && theMotionPlan->wheelParamsStartIndex >= 0){
 				// get wheel axes
-				V3T<ScalarDiff> rhoLocal = ee.getWheelRhoLocal();
-				V3T<ScalarDiff> wheelAxisLocal(ee.wheelAxisLocal);
-				V3T<ScalarDiff> wheelYawAxis(ee.wheelYawAxis);
-				V3T<ScalarDiff> wheelTiltAxis(ee.wheelTiltAxis);
+				V3T<ScalarDiff> rhoLocal = ee.getWheelRhoLocal_WF();
+				V3T<ScalarDiff> wheelAxisLocal(ee.wheelAxisLocal_WF);
+				V3T<ScalarDiff> wheelYawAxis(ee.wheelYawAxis_WF);
+				V3T<ScalarDiff> wheelTiltAxis(ee.wheelTiltAxis_WF);
 
 				// get wheel motion parameters at time j
 				ScalarDiff alphaj = p[theMotionPlan->getWheelYawAngleIndex(i, j)];
@@ -168,7 +165,7 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 					dofs[k].v->deriv() = 0.0;
 				}
 			}
-			else{ // ee is foot
+			else if(theMotionPlan->feetPositionsParamsStartIndex >= 0){ // ee is foot
 
 				if (j>0){
 					double c = ee.contactFlag[j] * ee.contactFlag[j-1];
@@ -229,8 +226,6 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 }
 
 void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
-	if (theMotionPlan->feetPositionsParamsStartIndex < 0 || theMotionPlan->wheelParamsStartIndex < 0)
-		return;
 
 	typedef AutoDiffT<double, double> ScalarDiff;
 	typedef AutoDiffT<ScalarDiff, ScalarDiff> ScalarDiffDiff;
@@ -257,13 +252,13 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 			for (int k = 0; k < 3; ++k)
 				eePosj(k) = p[iEEj + k];
 
-			if(ee.isWheel)
+			if(ee.isWheel && theMotionPlan->wheelParamsStartIndex >= 0)
 			{
 				// get wheel axes
-				V3T<ScalarDiffDiff> rhoLocal = ee.getWheelRhoLocal();
-				V3T<ScalarDiffDiff> wheelAxisLocal(ee.wheelAxisLocal);
-				V3T<ScalarDiffDiff> wheelYawAxis(ee.wheelYawAxis);
-				V3T<ScalarDiffDiff> wheelTiltAxis(ee.wheelTiltAxis);
+				V3T<ScalarDiffDiff> rhoLocal = ee.getWheelRhoLocal_WF();
+				V3T<ScalarDiffDiff> wheelAxisLocal(ee.wheelAxisLocal_WF);
+				V3T<ScalarDiffDiff> wheelYawAxis(ee.wheelYawAxis_WF);
+				V3T<ScalarDiffDiff> wheelTiltAxis(ee.wheelTiltAxis_WF);
 
 				// get wheel motion parameters at time j
 				ScalarDiffDiff alphaj = p[theMotionPlan->getWheelYawAngleIndex(i, j)];
@@ -335,7 +330,7 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 					dofs[k].v->deriv().value() = 0.0;
 				}
 			}
-			else{ // ee is foot
+			else if(theMotionPlan->feetPositionsParamsStartIndex >= 0){ // ee is foot
 
 				if (j>0){
 					double c = ee.contactFlag[j] * ee.contactFlag[j-1];

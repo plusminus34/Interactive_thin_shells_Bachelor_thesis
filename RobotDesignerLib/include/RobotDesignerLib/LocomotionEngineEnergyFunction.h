@@ -24,7 +24,7 @@ public:
 
 	void testIndividualHessianPSD(dVector& params);
 	void addObjectiveFunction(ObjectiveFunction* obj, std::string string = "no group");
-
+	void setWeights(const dVector& weights);
 public:
 	DynamicArray<ObjectiveFunction*> objectives;
 	std::map<std::string, std::vector<ObjectiveFunction*>> objGroups;

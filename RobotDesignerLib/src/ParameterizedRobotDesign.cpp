@@ -8,7 +8,7 @@ ParameterizedRobotDesign::ParameterizedRobotDesign(Robot* robot) : defaultRobotS
 }
 
 void ParameterizedRobotDesign::updateMorphology() {
-	defaultRobotState = ReducedRobotState(robot);
+	defaultRobotState = RobotState(robot);
 
 	initialJointMorphology.clear();
 	initialEEMorphology.clear();

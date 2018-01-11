@@ -71,7 +71,7 @@ bool GradientBasedFunctionMinimizer::minimize(ObjectiveFunction *function, dVect
 		}
 	}
 
-	if (!printOutput && optimizationConverged)
+	if (printOutput && optimizationConverged)
 		Logger::logPrint("Converged! Gradient norm: %lf. FunctionValue: %10.10lf\n", dp.norm(), functionValue);
 
 	//p now holds the parameter values at the start of the iteration...

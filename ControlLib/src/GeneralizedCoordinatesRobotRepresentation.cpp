@@ -166,14 +166,14 @@ void GeneralizedCoordinatesRobotRepresentation::computeWorldCoordinateTorquesFro
 
 	for (int i = 6; i < getDimensionCount(); ++i) {
 		robot->jointList[jointIndexForQ[i]]->controlMode = TORQUE_MODE;
-		robot->jointList[jointIndexForQ[i]]->desiredJointTorque += getWorldCoordsAxisForQ(i) * u[i] * -1;
+		robot->jointList[jointIndexForQ[i]]->desiredJointTorque += getWorldCoordsAxisForQ(i) * u[i];
 	}
 }
 
 //updates q and qDot given current state of robot
 void GeneralizedCoordinatesRobotRepresentation::syncGeneralizedCoordinatesWithRobotState() {
 	//write out the position of the root...
-	ReducedRobotState state(robot);
+	RobotState state(robot);
 	P3D pos = state.getPosition();
 	Quaternion orientation = state.getOrientation();
 
@@ -297,13 +297,13 @@ P3D GeneralizedCoordinatesRobotRepresentation::getPivotPointLocalPosition(RigidB
 }
 
 void GeneralizedCoordinatesRobotRepresentation::syncRobotStateWithGeneralizedCoordinates() {
-	ReducedRobotState rs(robot);
+	RobotState rs(robot);
 	getReducedRobotState(rs);
 	robot->setState(&rs);
 }
 
 //given the current state of the generalized representation, output the reduced state of the robot
-void GeneralizedCoordinatesRobotRepresentation::getReducedRobotState(ReducedRobotState& state) {
+void GeneralizedCoordinatesRobotRepresentation::getReducedRobotState(RobotState& state) {
 	//set the position, velocity, rotation and angular velocity for the root
 	state.setPosition(P3D() + getQAxis(0) * q[0] + getQAxis(1) * q[1] + getQAxis(2) * q[2]);
 	state.setVelocity(V3D(getQAxis(0) * qDot[0] + getQAxis(1) * qDot[1] + getQAxis(2) * qDot[2]));
@@ -355,12 +355,12 @@ void GeneralizedCoordinatesRobotRepresentation::getQDot(dVector& qDot_copy) {
 //	return getQAxis(qIndex);
 //}
 
-void GeneralizedCoordinatesRobotRepresentation::getQAndQDotFromReducedState(const ReducedRobotState& rs, dVector& q_copy, dVector& qDot_copy) {
+void GeneralizedCoordinatesRobotRepresentation::getQAndQDotFromReducedState(const RobotState& rs, dVector& q_copy, dVector& qDot_copy) {
 	dVector q_old = q;
 	dVector qDot_old = qDot;
 
-	ReducedRobotState oldState(robot);
-	robot->setState((ReducedRobotState*)&rs);
+	RobotState oldState(robot);
+	robot->setState((RobotState*)&rs);
 	syncGeneralizedCoordinatesWithRobotState();
 	getQ(q_copy);
 	getQDot(qDot_copy);
@@ -371,12 +371,12 @@ void GeneralizedCoordinatesRobotRepresentation::getQAndQDotFromReducedState(cons
 }
 
 
-void GeneralizedCoordinatesRobotRepresentation::getQFromReducedState(const ReducedRobotState& rs, dVector& q_copy) {
+void GeneralizedCoordinatesRobotRepresentation::getQFromReducedState(const RobotState& rs, dVector& q_copy) {
 	dVector q_old = q;
 	dVector qDot_old = qDot;
 
-	ReducedRobotState oldState(robot);
-	robot->setState((ReducedRobotState*)&rs);
+	RobotState oldState(robot);
+	robot->setState((RobotState*)&rs);
 	syncGeneralizedCoordinatesWithRobotState();
 	getQ(q_copy);
 	robot->setState(&oldState);
@@ -443,9 +443,16 @@ void GeneralizedCoordinatesRobotRepresentation::projectWorldCoordsValuesIntoGene
 	}
 }
 
-//returns the world coordinates for point p, which is specified in the local coordinates of rb (relative to its COM).
+//returns the world coordinates for point p, which is specified in the local coordinates of rb (relative to its COM): p(q)
 P3D GeneralizedCoordinatesRobotRepresentation::getWorldCoordinatesFor(const P3D& p, RigidBody* rb) {
-	return P3D(getWorldCoordinatesForT(p, rb, q));
+	return P3D(getWorldCoordinatesForPointT(p, rb, q));
+}
+
+//TODO: we will also want derivatives of v(q) (vector to world) e.g. dv/dq and d2v/dqq2s
+
+//returns the world coordinates for vector b, which is specified in the local coordinates of rb: v(q)
+V3D GeneralizedCoordinatesRobotRepresentation::getWorldCoordinatesFor(const V3D& v, RigidBody* rb) {
+	return V3D(getWorldCoordinatesForVectorT(v, rb, q));
 }
 
 //returns the velocity (world coordinates) of the point p, which is specified in the local coordinates of rb (relative to its COM). I.e. p(q)
@@ -527,6 +534,40 @@ void GeneralizedCoordinatesRobotRepresentation::compute_dpdq(const P3D& p, Rigid
 	dpdq(2, 2) = 1;
 }
 
+//computes the jacobian dp/dq that tells you how the world coordinates of p change with q. p is expressed in the local coordinates of rb
+void GeneralizedCoordinatesRobotRepresentation::compute_dvdq(const V3D& v, RigidBody* rb, MatrixNxM &dvdq) {
+	resize(dvdq, 3, q.size());
+	dvdq.fill(0);
+
+	int startIndex = 5;
+	if (rb->pJoints.size() != 0)
+		startIndex = jointCoordStartIndex[rb->pJoints[0]->jIndex] + jointCoordsDimSize[rb->pJoints[0]->jIndex] - 1;
+
+	int loopIndex = startIndex;
+	//2 here is the index of the first translational DOF of the root
+	while (loopIndex > 2) {
+		V3D theVector(v);
+		int qIndex = startIndex;
+
+		while (qIndex > loopIndex) {
+			theVector = theVector.rotate(q[qIndex], getQAxis(qIndex));
+			qIndex = qParentIndex[qIndex];
+		}
+
+		theVector = getQAxis(qIndex).cross(theVector);
+
+		while (qIndex > 2) {
+			theVector = theVector.rotate(q[qIndex], getQAxis(qIndex));
+			qIndex = qParentIndex[qIndex];
+		}
+
+		for (int i = 0; i<3; i++)
+			dvdq(i, loopIndex) = theVector[i];
+
+		loopIndex = qParentIndex[loopIndex];
+	}
+}
+
 //estimates the linear jacobian dp/dq using finite differences
 void GeneralizedCoordinatesRobotRepresentation::estimate_linear_jacobian(const P3D& p, RigidBody* rb, MatrixNxM &dpdq) {
 	resize(dpdq, 3, (int)q.size());
@@ -546,6 +587,28 @@ void GeneralizedCoordinatesRobotRepresentation::estimate_linear_jacobian(const P
 		dpdq(0, i) = dpdq_i[0];
 		dpdq(1, i) = dpdq_i[1];
 		dpdq(2, i) = dpdq_i[2];
+	}
+}
+
+//estimates the jacobian dv/dq using finite differences
+void GeneralizedCoordinatesRobotRepresentation::estimate_linear_jacobian(const V3D& v, RigidBody* rb, MatrixNxM &dvdq) {
+	resize(dvdq, 3, (int)q.size());
+
+	for (int i = 0; i<q.size(); i++) {
+		double val = q[i];
+		double h = 0.0001;
+
+		q[i] = val + h;
+		V3D p_p = getWorldCoordinatesFor(v, rb);
+
+		q[i] = val - h;
+		V3D p_m = getWorldCoordinatesFor(v, rb);
+
+		q[i] = val;
+		V3D dvdq_i = (p_p - p_m) / (2 * h);
+		dvdq(0, i) = dvdq_i[0];
+		dvdq(1, i) = dvdq_i[1];
+		dvdq(2, i) = dvdq_i[2];
 	}
 }
 
@@ -571,6 +634,27 @@ bool GeneralizedCoordinatesRobotRepresentation::test_linear_jacobian(const P3D& 
 	return !error;
 }
 
+bool GeneralizedCoordinatesRobotRepresentation::test_linear_jacobian(const V3D& v, RigidBody* rb) {
+	MatrixNxM dvdq_analytic, dvdq_estimated;
+	compute_dvdq(v, rb, dvdq_analytic);
+	estimate_linear_jacobian(v, rb, dvdq_estimated);
+
+	//	print("../out/dpdq_analytic.mat", dpdq_analytic);
+	//	print("../out/dpdq_estimated.mat", dpdq_estimated);
+
+	bool error = false;
+
+	for (int i = 0; i<dvdq_analytic.rows(); i++)
+		for (int j = 0; j<dvdq_analytic.cols(); j++) {
+			double err = dvdq_analytic(i, j) - dvdq_estimated(i, j);
+			if (fabs(err) > 0.0001) {
+				Logger::consolePrint("error at: %d %d: analytic: %lf estimated %lf error: %lf\n", i, j, dvdq_analytic(i, j), dvdq_estimated(i, j), err);
+				error = true;
+			}
+		}
+
+	return !error;
+}
 
 //computes the matrix that tells you how the jacobian dp/dq changes with respect to q_i. Returns true if it contains non-zero elements, false otherwise
 bool GeneralizedCoordinatesRobotRepresentation::compute_ddpdq_dqi(const P3D& p, RigidBody* rb, MatrixNxM &ddpdq_dqi, int q_i) {
@@ -628,6 +712,61 @@ bool GeneralizedCoordinatesRobotRepresentation::compute_ddpdq_dqi(const P3D& p, 
 	return true;
 }
 
+//computes the matrix that tells you how the jacobian dv/dq changes with respect to q_i. Returns true if it contains non-zero elements, false otherwise
+bool GeneralizedCoordinatesRobotRepresentation::compute_ddvdq_dqi(const V3D& v, RigidBody* rb, MatrixNxM &ddvdq_dqi, int q_i) {
+	resize(ddvdq_dqi, 3, (int)q.size());
+
+	int startIndex = 5;
+	if (rb->pJoints.size() != 0)
+		startIndex = jointCoordStartIndex[rb->pJoints[0]->jIndex] + jointCoordsDimSize[rb->pJoints[0]->jIndex] - 1;
+
+	//if q_i is not one of the ancestors of rb, then it means the jacobian dpdq does not depent on it, so check first...
+	int qIndex = startIndex;
+	bool isAncestor = false;
+	while (qIndex > 2) {
+		if (q_i == qIndex) {
+			isAncestor = true;
+			break;
+		}
+		qIndex = qParentIndex[qIndex];
+	}
+
+	if (!isAncestor) return false;
+
+	//input is valid, so we must compute this derivative...
+	int loopIndex = startIndex;
+	//2 here is the index of the first translational DOF of the root
+	while (loopIndex > 2) {
+		V3D theVector(v);
+		int qIndex = startIndex;
+
+		int stopIndex = loopIndex;
+		if (q_i > loopIndex) stopIndex = q_i;
+
+		while (qIndex > stopIndex) {
+			theVector = theVector.rotate(q[qIndex], getQAxis(qIndex));
+			qIndex = qParentIndex[qIndex];
+		}
+
+		while (qIndex > 2) {
+			if (qIndex == loopIndex)
+				theVector = getQAxis(qIndex).cross(theVector);
+			if (qIndex == q_i)
+				theVector = getQAxis(qIndex).cross(theVector);
+
+			theVector = theVector.rotate(q[qIndex], getQAxis(qIndex));
+			qIndex = qParentIndex[qIndex];
+		}
+
+		for (int i = 0; i<3; i++)
+			ddvdq_dqi(i, loopIndex) = theVector[i];
+
+		loopIndex = qParentIndex[loopIndex];
+	}
+
+	return true;
+}
+
 //estimates the change of dp/dq with respect to q_i
 void GeneralizedCoordinatesRobotRepresentation::estimate_ddpdq_dqi(const P3D& p, RigidBody* rb, MatrixNxM &ddpdq_dqi, int q_i) {
 	resize(ddpdq_dqi, 3, (int)q.size());
@@ -646,6 +785,26 @@ void GeneralizedCoordinatesRobotRepresentation::estimate_ddpdq_dqi(const P3D& p,
 	q[q_i] = val;
 
 	ddpdq_dqi = (dpdq_p - dpdq_m) / (2 * h);
+}
+
+//estimates the change of dv/dq with respect to q_i
+void GeneralizedCoordinatesRobotRepresentation::estimate_ddvdq_dqi(const V3D& v, RigidBody* rb, MatrixNxM &ddvdq_dqi, int q_i) {
+	resize(ddvdq_dqi, 3, (int)q.size());
+	MatrixNxM dvdq_p, dvdq_m;
+	dvdq_p = ddvdq_dqi;	dvdq_m = ddvdq_dqi;
+
+	double val = q[q_i];
+	double h = 0.0001;
+
+	q[q_i] = val + h;
+	compute_dvdq(v, rb, dvdq_p);
+
+	q[q_i] = val - h;
+	compute_dvdq(v, rb, dvdq_m);
+
+	q[q_i] = val;
+
+	ddvdq_dqi = (dvdq_p - dvdq_m) / (2 * h);
 }
 
 bool GeneralizedCoordinatesRobotRepresentation::test_linear_jacobian_derivatives(const P3D& p, RigidBody* rb) {
@@ -673,6 +832,30 @@ bool GeneralizedCoordinatesRobotRepresentation::test_linear_jacobian_derivatives
 	return !error;
 }
 
+bool GeneralizedCoordinatesRobotRepresentation::test_linear_jacobian_derivatives(const V3D& v, RigidBody* rb) {
+	MatrixNxM dvdq_analytic, dvdq_estimated;
+
+	bool error = false;
+
+	for (int k = 0; k<getDimensionCount(); k++) {
+
+		compute_ddvdq_dqi(v, rb, dvdq_analytic, k);
+		estimate_ddvdq_dqi(v, rb, dvdq_estimated, k);
+
+		//		dpdq_analytic.printMatrix("out\\dpdq.mat");
+
+		for (int i = 0; i<dvdq_analytic.rows(); i++)
+			for (int j = 0; j<dvdq_analytic.cols(); j++) {
+				double err = dvdq_analytic(i, j) - dvdq_estimated(i, j);
+				if (fabs(err) > 0.0001) {
+					Logger::consolePrint("error when computing ddpdq_dq%d at: %d %d: analytic: %lf estimated %lf error: %lf\n", k, i, j, dvdq_analytic(i, j), dvdq_estimated(i, j), err);
+					error = true;
+				}
+			}
+	}
+
+	return !error;
+}
 
 //computes the angular part of the jacobian, that relates changes in the orientation of a link to changes in q
 void GeneralizedCoordinatesRobotRepresentation::compute_angular_jacobian(RigidBody* rb, MatrixNxM &dRdq) {

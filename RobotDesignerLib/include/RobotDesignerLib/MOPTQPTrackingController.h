@@ -17,7 +17,7 @@ public:
 	virtual void computeControlSignals(LocomotionEngineMotionPlan *motionPlan, double stridePhase, double dt);
 
 	//this is the target robot state, copied directly from the motion plan...
-	virtual ReducedRobotState getTargetRobotState(LocomotionEngineMotionPlan *motionPlan, double stridePhase);
+	virtual RobotState getTargetRobotState(LocomotionEngineMotionPlan *motionPlan, double stridePhase);
 
 	//this target mopt state needs to be adapted based on the current configuration of the robot... this method computes the quantities required to perform this retargetting operation...
 	virtual void computeRobotStateTransferQuantities(LocomotionEngineMotionPlan *motionPlan, double stridePhase, double &moptGroundHeight, double &currentGroundHeight, Quaternion& headingOffset, P3D& moptEEFrameOrigin, P3D&robotEEFrameOrigin);

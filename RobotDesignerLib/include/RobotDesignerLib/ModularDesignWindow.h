@@ -74,6 +74,10 @@ public:
 	
 	string robotMeshDir = "../out/";
 	string configFileName;
+
+	bool hasDesign() {
+		return rmcRobots.size() > 0;
+	}
 public:
 	// constructor
 	ModularDesignWindow(int x, int y, int w, int h, GLApplication* glApp, const char* libraryDefinitionFileName);
@@ -120,8 +124,6 @@ public:
 
 	void saveToRBSFile(const char* fName, Robot* templateRobot = NULL);
 
-	void exportMeshes();
-
 	// transform the child RMC to get a preview.
 	bool previewConnectRMCRobot(RMCPin* parentPin, RMCPin* childPin, RMCRobot* childRobot, bool rotationOnly);
 
@@ -138,8 +140,8 @@ public:
 	void updateLivingBracket();
 	bool isSelectedRMCMovable();
 
-	void matchDesignWithRobot(Robot* tRobot, ReducedRobotState* initialRobotState);
-	void transferMeshes(Robot* tRobot, ReducedRobotState* initialRobotState);
+	void matchDesignWithRobot(Robot* tRobot, RobotState* initialRobotState);
+	void transferMeshes(Robot* tRobot, RobotState* initialRobotState);
 
 	void buildRMCMirrorMap();
 	void makeSelectedRMCSymmtry();

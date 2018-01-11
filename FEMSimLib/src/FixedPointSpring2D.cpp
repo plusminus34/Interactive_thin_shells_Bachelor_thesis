@@ -2,10 +2,9 @@
 #include <GUILib/GLUtils.h>
 #include <FEMSimLib/SimulationMesh.h>
 
-FixedPointSpring2D::FixedPointSpring2D(SimulationMesh * simMesh, Node * node, P3D targetPosition){
-	this->node = node;
-	this->targetPosition = targetPosition;
-	K = 10000;
+FixedPointSpring2D::FixedPointSpring2D(SimulationMesh * simMesh, Node * node, P3D targetPosition, double K)
+: node(node), targetPosition(targetPosition), K(K)
+{
 }
 
 FixedPointSpring2D::~FixedPointSpring2D(){

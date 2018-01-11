@@ -190,6 +190,8 @@ bool FootFallPatternViewer::onMouseMoveEvent(double xPos, double yPos) {
 	if (GLWindow2D::onMouseMoveEvent(xPos, yPos))
 		return true;
 
+	selectedRowIndex = -1;
+
 	if (mouseIsWithinWindow(xPos, yPos) == false && GlobalMouseState::lButtonPressed == false && GlobalMouseState::rButtonPressed == false) {
 		selectedLimbIndex = -1;
 		selectedColIndex = -1;
@@ -224,6 +226,8 @@ bool FootFallPatternViewer::onMouseMoveEvent(double xPos, double yPos) {
 
 	int row = (int)(y * ffp->stepPatterns.size());
 	int col = (int)(x * (end - start));
+
+	selectedRowIndex = row;
 
 	selectedColIndex = col;
 
@@ -276,8 +280,24 @@ bool FootFallPatternViewer::onMouseMoveEvent(double xPos, double yPos) {
 		oldCol = col;
 	}
 
-
-
 	return true;
+}
+
+//any time a physical key is pressed, this event will trigger. Useful for reading off special keys...
+bool FootFallPatternViewer::onKeyEvent(int key, int action, int mods) {
+	if (selectedRowIndex != -1) {
+		if (key == GLFW_KEY_S && action == GLFW_PRESS){
+			bool inStance = ffp->stepPatterns[selectedRowIndex].startIndex == ffp->stepPatterns[selectedRowIndex].endIndex;
+			if (inStance) {
+				ffp->stepPatterns[selectedRowIndex].startIndex = 0;
+				ffp->stepPatterns[selectedRowIndex].endIndex = 2;
+			}
+			else {
+				ffp->stepPatterns[selectedRowIndex].startIndex = ffp->stepPatterns[selectedRowIndex].endIndex = 10 * ffp->strideSamplePoints;
+			}
+			return true;
+		}
+	}
+	return false;
 }
 

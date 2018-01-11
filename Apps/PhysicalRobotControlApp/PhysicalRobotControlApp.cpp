@@ -80,11 +80,48 @@ void PhysicalRobotControlApp::loadRobot(const char* fName) {
 	rbEngine = new ODERBEngine();
 	rbEngine->loadRBsFromFile(fName);
 	robot = new Robot(rbEngine->rbs[0]);
-	startState = ReducedRobotState(robot);
+	startState = RobotState(robot);
 	setupSimpleRobotStructure(robot);
 
 	delete ikSolver;
 	ikSolver = new IK_Solver(robot, true);
+
+
+
+	//TODO: we will need a much better way of setting motor parameters...
+	for (int i = 0; i < robot->getJointCount(); i++) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
+
+		hj->motor.motorID = i;
+
+		if (i == 0) {
+			//settings for the BK DS-3002HV
+			hj->motor.pwmMin = 910;//depends on the type of servomotor
+			hj->motor.pwmMax = 2090;//depends on type of servomotor
+			hj->motor.pwmFor0Deg = 1430; //this depends on how the horn is mounted...
+			hj->motor.pwmFor45Deg = 1870; //this depends on how the horn is mounted...
+		}
+
+		if (i == 1) {
+			//settings for the TURNIGY S306G-HV
+			hj->motor.pwmMin = 910;//depends on the type of servomotor
+			hj->motor.pwmMax = 2100;//depends on type of servomotor
+			hj->motor.pwmFor0Deg = 1430; //this depends on how the horn is mounted...
+			hj->motor.pwmFor45Deg = 1865; //this depends on how the horn is mounted...
+  //			hj->motor.flipMotorAxis = true;
+		}
+
+		if (i == 2) {
+			//settings for the MKS DS95
+			hj->motor.pwmMin = 800;//depends on the type of servomotor
+			hj->motor.pwmMax = 2160;//depends on type of servomotor
+			hj->motor.pwmFor0Deg = 1390; //this depends on how the horn is mounted...
+			hj->motor.pwmFor45Deg = 1935; //this depends on how the horn is mounted...
+ //			hj->motor.flipMotorAxis = true;
+		}
+
+	}
 
 	delete rci;
     //rci = new PololuServoControlInterface(robot);
@@ -103,7 +140,7 @@ void PhysicalRobotControlApp::loadFile(const char* fName) {
 	if (fNameExt.compare("rs") == 0) {
 		if (robot) {
 			robot->loadReducedStateFromFile(fName);
-			startState = ReducedRobotState(robot);
+			startState = RobotState(robot);
 			ikSolver->ikPlan->setTargetIKStateFromRobot();
 		}
 	}
@@ -131,7 +168,7 @@ void PhysicalRobotControlApp::process() {
 		ikSolver->solve();
 	}
 	else {
-		ReducedRobotState rs(robot);
+		RobotState rs(robot);
 
 		double nextTrajPhase = trajPhase;
 		nextTrajPhase += dt / trajDuration;
@@ -264,7 +301,7 @@ void PhysicalRobotControlApp::drawScene() {
 
 	rbEngine->drawRBs(flags);
 
-    ReducedRobotState rs(robot);
+    RobotState rs(robot);
     if (rci)
         rci->syncSimRobotWithPhysicalRobot();
 //	glTranslated(0.2, 0, 0);

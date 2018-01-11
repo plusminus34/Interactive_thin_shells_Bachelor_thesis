@@ -46,9 +46,9 @@ MOPTQPTrackingController::~MOPTQPTrackingController(void) {
 }
 
 //this is the target robot state, copied directly from the motion plan...
-ReducedRobotState MOPTQPTrackingController::getTargetRobotState(LocomotionEngineMotionPlan *motionPlan, double stridePhase) {
+RobotState MOPTQPTrackingController::getTargetRobotState(LocomotionEngineMotionPlan *motionPlan, double stridePhase) {
 	if (stridePhase > 1) stridePhase -= 1.0;
-	ReducedRobotState desiredState(robot);
+	RobotState desiredState(robot);
 	motionPlan->robotStateTrajectory.getRobotStateAt(stridePhase, motionPlan->motionPlanDuration, desiredState);
 	return desiredState;
 }
@@ -150,7 +150,7 @@ void MOPTQPTrackingController::computeControlSignals(LocomotionEngineMotionPlan 
 	P3D moptEEFrameOrigin, robotEEFrameOrigin;
 
 	prepareForControlStep(motionPlan, stridePhase, dt);
-	ReducedRobotState targetRobotState = getTargetRobotState(motionPlan, stridePhase);
+	RobotState targetRobotState = getTargetRobotState(motionPlan, stridePhase);
 	computeRobotStateTransferQuantities(motionPlan, stridePhase, moptGroundHeight, groundHeight, headingOffset, moptEEFrameOrigin, robotEEFrameOrigin);
 
 	//now we're ready to set various objectives based on the target robot state...

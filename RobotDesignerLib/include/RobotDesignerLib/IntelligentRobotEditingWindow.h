@@ -1,10 +1,13 @@
 #pragma once
-
+#include <OptimizationLib/BFGSHessianApproximator.h>
 #include <../Apps/RobotDesignerApp/RobotDesignerApp.h>
+#include <memory>
 
+class RobotDesignerApp; //added due to compilation error (simonzi)
+class BFGSHessianApproximator;
 class IntelligentRobotEditingWindow : public GLWindow3D {
 public:
-	RobotDesignerApp* rdApp;
+    RobotDesignerApp* rdApp;
 
 	RigidBody* highlightedRigidBody = NULL;
 	Joint* highlightedJoint = NULL;
@@ -16,13 +19,13 @@ public:
 	void addMenuItems();
 
 public:
-	IntelligentRobotEditingWindow(int x, int y, int w, int h, RobotDesignerApp* rdApp);
+    IntelligentRobotEditingWindow(int x, int y, int w, int h, RobotDesignerApp* rdApp);
 	~IntelligentRobotEditingWindow();
 
 	virtual void drawScene();
-	void updateJacobian();
+	void update_dmdX();
 	void test_dmdp_Jacobian();
-	void DoDesignParametersOptimizationStep();
+	void DoDesignParametersOptimizationStep(ObjectiveFunction* objFunction);
 	void showMenu();
 	void hideMenu();
 	void syncSliders();
@@ -43,20 +46,25 @@ public:
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
 	void resetParams();
+	enum class Mode { design, weights } mode = Mode::design;
+
 private:
 	bool updateMotionBasedOnJacobian = false;
 	bool useSVD = false;
 	bool updateJacobiancontinuously = false;
-	MatrixNxM dmdp; //The jacobian at a point
+	MatrixNxM dmdX; //The jacobian at a point
 	dVector m0;
-	MatrixNxM dmdp_V;
-	MatrixNxM dgdp;
-	dVector p0;
+	MatrixNxM dmdX_V;
+	MatrixNxM dgdX;
+	dVector p0,w0;
 	dVector slidervalues;
 	std::vector<nanogui::Slider*> sliders;
 	std::vector<nanogui::TextBox*> textboxes;
 	bool compute_dgdp_With_FD = true;
 	int optimizeEnergyNum = 11;
 	double stepSize = 0.01;
+	std::unique_ptr<BFGSHessianApproximator> lbfgsMinimizer;
+	bool useLBFGS = false;
+	void onModeChange();
 };
 

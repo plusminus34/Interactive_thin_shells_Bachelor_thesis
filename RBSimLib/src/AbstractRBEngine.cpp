@@ -65,22 +65,6 @@ void AbstractRBEngine::drawRBs(int flags){
 		rbs[i]->draw(flags);
 }
 
-/**
-	This method renders all the rigid bodies as a set of vertices 
-	and faces that will be appended to the passed OBJ file.
-
-	vertexIdxOffset indicates the index of the first vertex for this object, this makes it possible to render
-	multiple different meshes to the same OBJ file
-	
-	Returns the number of vertices written to the file
-*/
-uint AbstractRBEngine::renderRBsToObjFile(FILE* fp, uint vertexIdxOffset){
-	uint nbVerts = 0;
-	for (uint i=0;i<rbs.size();i++)
-		nbVerts += rbs[i]->renderToObjFile(fp, vertexIdxOffset + nbVerts);
-
-	return nbVerts;
-}
 
 /**
 	This method returns the reference to the rigid body with the given name, or NULL if it is not found
@@ -119,11 +103,10 @@ void AbstractRBEngine::loadRBsFromFile(const char* fName){
 	if (f == NULL)
 		throwError("Could not open file: %s", fName);
 
-	int nRBsAlreadyLoaded = rbs.size();
-
 	//have a temporary buffer used to read the file line by line...
 	char buffer[200];
 	RigidBody* newBody = NULL;
+	Joint* j = NULL;
 	//ArticulatedFigure* newFigure = NULL;
 	//this is where it happens.
 	while (!feof(f)){
@@ -139,32 +122,28 @@ void AbstractRBEngine::loadRBsFromFile(const char* fName){
 				//create a new rigid body and have it load its own info...
 				newBody = new RigidBody();
 				newBody->loadFromFile(f);
-				rbs.push_back(newBody);
+				addRigidBodyToEngine(newBody);
 				break;
 			case RB_BALL_AND_SOCKET_JOINT:
-				joints.push_back(new BallAndSocketJoint());
-				joints[joints.size()-1]->loadFromFile(f, this);
+				j = new BallAndSocketJoint();
+				j->loadFromFile(f, this);
+				addJointToEngine(j);
 				break;
 			case RB_HINGE_JOINT:
-				joints.push_back(new HingeJoint());
-				joints[joints.size() - 1]->loadFromFile(f, this);
+				j = new HingeJoint();
+				j->loadFromFile(f, this);
+				addJointToEngine(j);
 				break;
 			case RB_UNIVERSAL_JOINT:
-				joints.push_back(new UniversalJoint());
-				joints[joints.size() - 1]->loadFromFile(f, this);
+				j = new UniversalJoint();
+				j->loadFromFile(f, this);
+				addJointToEngine(j);
 				break;
 			case RB_WELDED_JOINT:
-				joints.push_back(new FixedJoint());
-				joints[joints.size() - 1]->loadFromFile(f, this);
+				j = new FixedJoint();
+				j->loadFromFile(f, this);
+				addJointToEngine(j);
 				break;
-
-//			case RB_ARTICULATED_FIGURE:
-//				//we have an articulated figure to worry about...
-//               newFigure = new ArticulatedFigure();
-//				AFs.push_back(newFigure);
-//				newFigure->loadFromFile(f, this);
-//				newFigure->addJointsToList(&jts);
-//				break;
 			case RB_MATERIAL_DEFINITION: {
 					GLShaderMaterial* material = new GLShaderMaterial();
 					material->readFromFile(f);
@@ -181,12 +160,16 @@ void AbstractRBEngine::loadRBsFromFile(const char* fName){
 	}
 
 	fclose(f);
+}
 
+void AbstractRBEngine::addRigidBodyToEngine(RigidBody* rb) {
+	rbs.push_back(rb);
 	if (autoGenerateCDPs)
-		for (uint i = nRBsAlreadyLoaded; i < rbs.size(); i++)
-			rbs[i]->autoGenerateCDPs();
-	
+		rb->autoGenerateCDPs();
+}
 
+void AbstractRBEngine::addJointToEngine(Joint* j) {
+	joints.push_back(j);
 }
 
 /**

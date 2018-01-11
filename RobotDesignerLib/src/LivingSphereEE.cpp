@@ -115,11 +115,12 @@ void LivingSphereEE::draw(int flags, const Vector4d& color /*= Vector4d(0, 0, 0,
 
 void LivingSphereEE::update()
 {
-	// update ee mesh
 	delete eeMesh;
-	eeMesh = new GLMesh();
-	eeMesh->addSphere(P3D(), sphereRadius, 16);
-	eeMesh->computeNormals();
+	eeMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-sphere.obj")->clone();
+	//now scale it according to the radius...
+	for (int i = 0; i < eeMesh->getVertexCount() * 3; i++) {
+		eeMesh->getVertexArray()[i] *= sphereRadius;
+	}
 	eeMesh->calBoundingBox();
 
 	// update pins
@@ -172,7 +173,9 @@ LivingWheelEE::LivingWheelEE(const char* LMType){
 		radius = 0.03;
 	}
 	else if (strcmp(trim((char*)LMType), "TGY306GPassiveWheel") == 0) {
-		originalWheelMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-wheel3.obj");
+		originalWheelMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-wheelPassive_w.obj");
+		// uncomment the following line to show passive wheel brackets
+		// motorBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-passiveWheelBracket_w.obj");
 		radius = 0.03;
 		isActive = false;
 	} 

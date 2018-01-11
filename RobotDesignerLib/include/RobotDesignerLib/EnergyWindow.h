@@ -1,30 +1,40 @@
 #pragma once
-
+#include <../Apps/RobotDesignerApp/RobotDesignerApp.h>
 #include <GUILib/GLIncludes.h>
 #include <nanogui/nanogui.h>
 #include <GUILib/Plot.h>
 #include <RobotDesignerLib/LocomotionEngineEnergyFunction.h>
+#include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
+
+class RobotDesignerApp;
+class IntelligentRobotEditingWindow;
 
 class EnergyWindow
 {
 public:
-	EnergyWindow();
+	EnergyWindow(RobotDesignerApp *app);
 
 	void createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunction, nanogui::Screen *screen);
+
+	void DoParameterOptimizationStep(ObjectiveFunction * energyFunction);
 
 	void updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFunction, const dVector &params);
 
 	void setVisible(bool visible);
+	RobotDesignerApp *rdApp;
 
 private:
 	void hideEnergyGroup(bool visible, const std::string &groupName);
 
+	void updateWeightTextboxes(LocomotionEngine_EnergyFunction* energyFunction);
 private:
 	nanogui::Window * window = nullptr;
-
 	struct EnergyUIElement {
+		ObjectiveFunction *objective;
 		nanogui::Label *label;
-		nanogui::CheckBox *checkBox;
+		nanogui::Button *optimizeEnergy;
+		nanogui::CheckBox *checkBoxEnergyActive;
+		nanogui::CheckBox *checkBoxHackHessian;
 		nanogui::Slider* slider;
 		nanogui::FloatBox<double>* textbox;
 		nanogui::FloatBox<double>* weightTextbox;

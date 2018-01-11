@@ -69,20 +69,20 @@ void YuMiControlInterface::setTargetMotorValuesFromSimRobotState(double dt) {
     std::cout << "setTargetMotorValuesFromSimRobotState" << std::endl;
     readPhysicalRobotMotorPositions();
 
-    //given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot...
-    ReducedRobotState rs(robot);
+//    //given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot...
+//    ReducedRobotState rs(robot);
 
-    for (int i = 0; i < robot->getJointCount(); i++) {
-        HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-        if (!hj) continue;
-        Quaternion q = rs.getJointRelativeOrientation(i);
-        V3D w = rs.getJointRelativeAngVelocity(i);
-        hj->motor.targetMotorAngle = q.getRotationAngle(hj->rotationAxis);
+//    for (int i = 0; i < robot->getJointCount(); i++) {
+//        HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+//        if (!hj) continue;
+//        Quaternion q = rs.getJointRelativeOrientation(i);
+//        V3D w = rs.getJointRelativeAngVelocity(i);
+//        hj->motor.targetMotorAngle = q.getRotationAngle(hj->rotationAxis);
 
-        //we expect we have dt time to go from the current position to the target position... we ideally want to ensure that the motor gets there exactly dt time from now, so we must limit its velocity...
-        double speedLimit = fabs(hj->motor.targetMotorAngle - hj->motor.currentMotorAngle) / dt;
-        hj->motor.targetMotorVelocity = speedLimit;
-    }
+//        //we expect we have dt time to go from the current position to the target position... we ideally want to ensure that the motor gets there exactly dt time from now, so we must limit its velocity...
+//        double speedLimit = fabs(hj->motor.targetMotorAngle - hj->motor.currentMotorAngle) / dt;
+//        hj->motor.targetMotorVelocity = speedLimit;
+//    }
 }
 
 void YuMiControlInterface::openCommunicationPort() {

@@ -16,6 +16,7 @@ public:
 	int selectedLimbIndex;
 	int selectedColIndex;
 	int oldCol;
+	int selectedRowIndex;
 
 private:
 	double labelsStart;
@@ -34,6 +35,9 @@ public:
 
 	//triggered when mouse moves
 	virtual bool onMouseMoveEvent(double xPos, double yPos);
+
+	//any time a physical key is pressed, this event will trigger. Useful for reading off special keys...
+	virtual bool onKeyEvent(int key, int action, int mods);
 };
 
 

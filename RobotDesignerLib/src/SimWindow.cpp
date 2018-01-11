@@ -109,7 +109,11 @@ Robot* SimWindow::loadRobot(const char* fName) {
 	worldOracle = new WorldOracle(Globals::worldUp, Globals::groundPlane);
 	rbEngine->loadRBsFromFile(fName);
 	robot = new Robot(rbEngine->rbs[0]);
+
 	setupSimpleRobotStructure(robot);
+
+	robot->addWheelsAsAuxiliaryRBs(rbEngine);
+
 	worldOracle->writeRBSFile("../out/tmpEnvironment.rbs");
 	rbEngine->loadRBsFromFile("../out/tmpEnvironment.rbs");
 	return robot;
@@ -119,10 +123,12 @@ void SimWindow::loadMotionPlan(LocomotionEngineMotionPlan* mp) {
 	delete positionController;
 	delete torqueController;
 	delete kinematicController;
+	delete pololuMaestroController;
 
 	positionController = new PositionBasedRobotController(robot, mp);
 	torqueController = new TorqueBasedRobotController(robot, mp);
 	kinematicController = new KinematicRobotController(robot, mp);
+	pololuMaestroController = new PololuMaestroRobotController(robot, mp);
 }
 
 void SimWindow::drawScene() {
@@ -160,37 +166,65 @@ void SimWindow::setPerturbationForceFromMouseInput(double xPos, double yPos) {
 	forceScale = robot->getMass() * 1.5;
 }
 
-void SimWindow::step() {
+void SimWindow::doPhysicsStep(double simStep) {
+	activeController->applyControlSignals(simStep);
+	rbEngine->applyForceTo(robot->root, perturbationForce * forceScale, P3D());
+	rbEngine->step(simStep);
+	robot->bFrame->updateStateInformation();
+
+	//integrate forward in time the motion of the weels...
+	for (uint j = 0; j < activeController->motionPlan->endEffectorTrajectories.size(); j++) {
+		LocomotionEngine_EndEffectorTrajectory* eeTraj = &activeController->motionPlan->endEffectorTrajectories[j];
+		if (eeTraj->isWheel) {
+			RigidBody* rb = eeTraj->endEffectorRB;
+			int eeIndex = eeTraj->CPIndex;
+			int meshIndex = rb->rbProperties.endEffectorPoints[eeIndex].meshIndex;
+			Joint* wheelJoint = rb->rbProperties.endEffectorPoints[eeIndex].wheelJoint;
+
+			if (meshIndex >= 0 && wheelJoint)
+				rb->meshTransformations[meshIndex].R = wheelJoint->computeRelativeOrientation().getRotationMatrix() * rb->rbProperties.endEffectorPoints[eeIndex].initialMeshTransformation.R;
+		}
+	}
+}
+
+void SimWindow::advanceSimulation(double dt) {
 	if (!activeController)
 		return;
 
-	activeController->computeControlSignals(simTimeStep);
+/*
+	static RobotState lastSimRobotState(robot);
+	RobotState newRobotState(robot);
 
-	for (int i = 0; i < nPhysicsStepsPerControlStep; i++) {
-		activeController->applyControlSignals();
-		rbEngine->applyForceTo(robot->root, perturbationForce * forceScale, P3D());
-		if (activeController != kinematicController)
-			rbEngine->step(simTimeStep / nPhysicsStepsPerControlStep);
-		robot->bFrame->updateStateInformation();
+	if (lastSimRobotState.isSameAs(newRobotState)) {
+		Logger::consolePrint("Robot state has not mysteriously changed, yay!!!\n");
 	}
+	else
+		Logger::consolePrint("Robot state has changed since last sim step :(\n");
+*/
+	if (activeController == kinematicController || activeController == pololuMaestroController){
+		activeController->computeControlSignals(dt);
+		activeController->applyControlSignals(dt);
+		activeController->advanceInTime(dt);
+	}
+	else {
+		double simulationTime = 0;
 
+		while (simulationTime < dt) {
+			simulationTime += simTimeStep;
 
-	//do the integration of wheel motions here...
-	if (activeController == kinematicController) {
-		for (uint j = 0; j < activeController->motionPlan->endEffectorTrajectories.size(); j++) {
-			LocomotionEngine_EndEffectorTrajectory* eeTraj = &activeController->motionPlan->endEffectorTrajectories[j];
-			if (eeTraj->isWheel) {
-				RigidBody* rb = eeTraj->endEffectorRB;
-				int eeIndex = eeTraj->CPIndex;
-				int meshIndex = rb->rbProperties.endEffectorPoints[eeIndex].meshIndex;
-				rb->rbProperties.endEffectorPoints[eeIndex].rotationSpeed = -eeTraj->getWheelSpeedAt(activeController->stridePhase);
-				if (meshIndex >= 0)
-					rb->meshTransformations[meshIndex].R = getRotationQuaternion(simTimeStep * rb->rbProperties.endEffectorPoints[eeIndex].rotationSpeed, rb->rbProperties.endEffectorPoints[eeIndex].localCoordsWheelAxis).getRotationMatrix() * rb->meshTransformations[meshIndex].R;
-			}
+			activeController->computeControlSignals(simTimeStep);
+			doPhysicsStep(simTimeStep);
+
+			activeController->advanceInTime(simTimeStep);
+//			break;
+
 		}
 	}
 
-	activeController->advanceInTime(simTimeStep);
-
+/*
+	//setting the state of the robot will fix constraints as well. That's why here we read it, set it (project it) and then set it again such that it is clean...
+	lastSimRobotState = RobotState(robot);
+	robot->setState(&lastSimRobotState);
+	lastSimRobotState = RobotState(robot);
+*/
 }
-

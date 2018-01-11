@@ -62,3 +62,13 @@ public:
 
 	void generateBracketMesh();
 };
+
+class LivingMotorBodyBracket_BK3002 : public LivingMotorBodyBracket {
+public:
+
+public:
+	LivingMotorBodyBracket_BK3002();
+	~LivingMotorBodyBracket_BK3002(void);
+
+	void generateBracketMesh();
+};

@@ -17,6 +17,8 @@ public:
 	//depending on how the robot is assembled, the axis may point in the wrong direction, relative to the simulation mode. Make this easy to fix...
 	bool flipMotorAxis = false;
 
+/* everything below is specific to servomotors... */
+
 	//for servomotors (as opposed to say dynamixels) there needs to be a bit of calibration to know how they need to be controlled properly
 	//all this data depends on the type of servomotor used, as well as on the way in which the horn is assembled...
 	//PWM signals are measured in microseconds... the min/max values can either be found in specs or experimentally
@@ -27,8 +29,17 @@ public:
 	double pwmFor0Deg = 1500;
 	double pwmFor45Deg = 2000;
 
-	double anglePerPWMunit() { return RAD(45.0) / (pwmFor45Deg - pwmFor0Deg); }
+	//if the servomotor is in continuous rotation mode, then we need to map RPM to PWM.
+	//these servomotors have a deadband (e.g. interval of PWM values that don't make the motor move)
+	double pwmDeadBand = 30;
+	double pwmFor50RPM = 1750;
 
+	//the units of angle returned here are measured in radians
+	double anglePerPWMunit() {
+		return RAD(45) / (pwmFor45Deg - pwmFor0Deg);
+	}
+
+	//angle is measured in radians
 	double getPWMForAngle(double angle) {
 		double angleMin = getAngleForPWM(pwmMin);
 		double angleMax = getAngleForPWM(pwmMax);
@@ -39,11 +50,43 @@ public:
 		return pwmFor0Deg + angle / anglePerPWMunit();
 	}
 
+	//angle will be measured in radians
 	double getAngleForPWM(double pwm) {
 		boundToRange(pwm, pwmMin, pwmMax);
 
 		return (pwm - pwmFor0Deg) * anglePerPWMunit();
 	}
+
+	//the units of speed returned here are measured in radians per sec
+	double speedPerPWMunit() {
+		return (2 * PI / 60.0) * 50 / (pwmFor50RPM - (pwmFor0Deg + pwmDeadBand));
+	}
+
+	//speed is measured in RAD/S
+	double getPWMForSpeed(double speed) {
+		double speedMin = getSpeedForPWM(pwmMin);
+		double speedMax = getSpeedForPWM(pwmMax);
+
+		boundToRange(speed, speedMin, speedMax);
+		if (speed > 0)
+			return (pwmFor0Deg + pwmDeadBand) + speed / speedPerPWMunit();
+		else
+			return (pwmFor0Deg - pwmDeadBand) + speed / speedPerPWMunit();
+	}
+
+	//angle will be measured in radians
+	double getSpeedForPWM(double pwm) {
+		boundToRange(pwm, pwmMin, pwmMax);
+		if (pwm > pwmFor0Deg - pwmDeadBand && pwm < pwmFor0Deg + pwmDeadBand)
+			return 0;
+
+		if (pwm > pwmFor0Deg)
+			return (pwm - (pwmFor0Deg + pwmDeadBand)) * speedPerPWMunit();
+		else
+			return (pwm - (pwmFor0Deg - pwmDeadBand)) * speedPerPWMunit();
+	}
+
+
 };
 
 /*================================================================================================================================*

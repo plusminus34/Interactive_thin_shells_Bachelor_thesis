@@ -23,8 +23,8 @@ class PhysicalRobotControlApp : public GLApplication {
 private:
 	Robot* robot = NULL;
 	AbstractRBEngine* rbEngine = NULL;
-	ReducedRobotState startState = ReducedRobotState(14);
-    bool showMesh = true;
+	RobotState startState = RobotState(14);
+	bool showMesh = false;
 	bool showMOI = false;
 	bool showRotationAxes = false;
 	bool showCDPs = false;

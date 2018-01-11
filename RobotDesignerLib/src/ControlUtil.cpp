@@ -51,8 +51,8 @@ Quaternion getHeadingOffsetFromMotionPlanToRobotState(LocomotionEngineMotionPlan
 	//and that's it...
 	return getRotationQuaternion(headingAngle, Globals::worldUp);
 	*/
-	ReducedRobotState rs(robot);
-	ReducedRobotState moptrs(robot);
+	RobotState rs(robot);
+	RobotState moptrs(robot);
 	mp->robotStateTrajectory.getRobotPoseAt(mpPhase, moptrs);
 	double headingAngle1 = rs.getHeading();
 	double headingAngle2 = moptrs.getHeading();
