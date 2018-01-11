@@ -2,6 +2,13 @@
  * Simple example that shows how to use the `Plot` class to plot data.
  */
 
+#ifndef NANOGUI_GLAD
+#define NANOGUI_GLAD
+#endif // NANOUI_GLAD
+#include <nanogui/opengl.h>
+
+#include <GL/glu.h>
+
 #include <nanogui/nanogui.h>
 #include <GUILib/Plot.h>
 #include <MathLib/MathLib.h>
@@ -23,12 +30,12 @@ int main(void){
 	// add some data ...
 	VectorXf x1(3); x1 << -0.68, 1, 2;
 	VectorXf y1(3); y1 << 0, 2, 10;
-	plot->setPlotData("data 1", PlotData(x1, y1, Color(Vector3f(1, 0, 0), 0.5), 4));
+	plot->setPlotData("data 1", PlotData(x1, y1, Color(Vector3f(1, 0, 0), 0.5), 4.f));
 
 	// ... some more ...
 	VectorXf x2(3); x2 << 0, 0.2, 2;
 	VectorXf y2(3); y2 << -3.3f, 2, 4;
-	plot->setPlotData("data 2", PlotData(x2, y2, Color(Vector3f(0, 1, 0), 1)));
+	plot->setPlotData("data 2", PlotData(x2, y2, Color(Vector3f(0, 1, 0), 1.f)));
 
 	// ... a sine wave ...
 	{
@@ -36,11 +43,11 @@ int main(void){
 		VectorXf xValues(nPoints);
 		VectorXf yValues(nPoints);
 		for (int i = 0; i < xValues.size(); ++i) {
-			xValues[i] = 2.f*M_PI*(float)i/(float)xValues.size();
+			xValues[i] = 2.f*PI*(float)i/(float)xValues.size();
 			yValues[i] = std::sin(xValues[i]);
 		}
 
-		PlotData data(xValues, yValues, Color(Vector3f(0, 0, 1), 1));
+		PlotData data(xValues, yValues, Color(Vector3f(0, 0, 1), 1.f));
 		plot->setPlotData("sine", data);
 	}
 
@@ -50,11 +57,11 @@ int main(void){
 		VectorXf xValues(nPoints);
 		VectorXf yValues(nPoints);
 		for (int i = 0; i < xValues.size(); ++i) {
-			xValues[i] = 2.f*M_PI*(float)i/(float)xValues.size();
+			xValues[i] = 2.f*PI*(float)i/(float)xValues.size();
 			yValues[i] = std::cos(xValues[i]);
 		}
 
-		PlotData data(xValues, yValues, Color(Vector3f(1, 1, 0), 1));
+		PlotData data(xValues, yValues, Color(Vector3f(1, 1, 0), 1.f));
 		plot->setPlotData("cosine", data);
 	}
 
