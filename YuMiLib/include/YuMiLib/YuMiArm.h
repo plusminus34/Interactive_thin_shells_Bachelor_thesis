@@ -14,6 +14,7 @@ private:
     int robotSocket;
 	bool connected = false;
 	std::mutex sendRecvMutex;
+	bool gripperOpen;
 
     float joint1, joint2, joint3, joint4, joint5, joint6, joint7; //joint values in rad!
     unsigned int speed;
@@ -29,7 +30,7 @@ public:
     bool init(std::string arm);
     bool connectServer(const char* p, unsigned int port);
     bool closeConnection();
-    bool sendAndReceive(char *message, int messageLength, char* reply, int idCode);
+	bool sendAndReceive(char *message, int messageLength, char* reply, int idCode, bool waitForReply);
 
     bool pingRobot();
     std::vector<float> getJoints();
@@ -39,5 +40,9 @@ public:
 
     bool getConnected();
 
+	bool initGripper();
+	bool closeGripper();
+	bool openGripper();
+	bool getGripperOpen();
 
 };

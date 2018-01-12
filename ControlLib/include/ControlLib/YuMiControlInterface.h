@@ -36,4 +36,7 @@ public:
 	virtual void driveMotorPositionsToZero();
     virtual void driveMotorPositionsToTestPos();
 
+	void driveMotorPositionsToInputPos(std::vector<float> leftJoints, std::vector<float> rightJoints);
+	void grip(std::string arm);
+
 };

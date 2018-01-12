@@ -1,5 +1,6 @@
 #include <YuMiLib/YuMiCom.h>
 #include <YuMiLib/YuMiConstants.h>
+#include "../../MathLib/include/MathLib/MathLib.h"
 
 #include <string.h>
 #include <cstring>
@@ -63,7 +64,7 @@ void YuMiCom::parseJoints(std::string msg, float &j1, float &j2, float &j3, floa
     int iter = 0;
     while(p!=0){
         if(iter > 1){ //1. = idCode, 2. = ok
-            joints[iter-2] = degToRad(float(atof(p)));
+			joints[iter-2] = RAD(float(atof(p)));
         }
         p = std::strtok(NULL," ");
         iter++;
@@ -84,17 +85,17 @@ std::string YuMiCom::gotoJointPose(int idCode, float j1, float j2, float j3, flo
     }
     //Switch because of weird naming of ABB joints (1, 2, 7, 3, 4, 5, 6)
     msg += std::to_string(idCode); msg += " ";
-    msg += std::to_string(radToDeg(j1)); msg += " ";
-    msg += std::to_string(radToDeg(j2)); msg += " ";
-    msg += std::to_string(radToDeg(j4)); msg += " ";
-    msg += std::to_string(radToDeg(j5)); msg += " ";
-    msg += std::to_string(radToDeg(j6)); msg += " ";
-    msg += std::to_string(radToDeg(j7)); msg += " ";
-    msg += std::to_string(radToDeg(j3)); msg += " ";
+	msg += std::to_string(DEG(j1)); msg += " ";
+	msg += std::to_string(DEG(j2)); msg += " ";
+	msg += std::to_string(DEG(j4)); msg += " ";
+	msg += std::to_string(DEG(j5)); msg += " ";
+	msg += std::to_string(DEG(j6)); msg += " ";
+	msg += std::to_string(DEG(j7)); msg += " ";
+	msg += std::to_string(DEG(j3)); msg += " ";
 
     msg += "#";
 
-    //std::cout << "msg: " << msg << std::endl;
+	//std::cout << "msg: " << msg << std::endl;
 
     return (msg);
 }
@@ -107,23 +108,79 @@ std::string YuMiCom::setSpeed(int idCode, unsigned int s){
     } else {
         msg = "";
     }
-    msg += std::to_string(idCode); msg += " ";
-    msg += std::to_string(s); msg += " ";
-    msg += std::to_string(YuMiConstants::SPEED_DATA_ROT); msg += " ";
-    msg += std::to_string(s); msg += " ";
-    msg += std::to_string(YuMiConstants::SPEED_DATA_ROT); msg += " ";
-    msg += "#";
+	msg += std::to_string(idCode); msg += " ";
+	msg += std::to_string(s); msg += " ";
+	msg += std::to_string(YuMiConstants::SPEED_DATA_ROT); msg += " ";
+	msg += std::to_string(s); msg += " ";
+	msg += std::to_string(YuMiConstants::SPEED_DATA_ROT); msg += " ";
+	msg += "#";
 
-//    std::cout << "msg: " << msg << std::endl;
+	//std::cout << "msg: " << msg << std::endl;
 
     return (msg);
 }
 
+std::string YuMiCom::initGripper(int idCode, float maxSpd, float holdForce, float phyLimit, bool calibrate){
+	std::string msg;
+	if(idCode < 10){
+		msg = "0";
+	} else {
+		msg = "";
+	}
+	msg += std::to_string(idCode); msg += " ";
+	msg += std::to_string(maxSpd); msg += " ";
+	msg += std::to_string(holdForce); msg += " ";
+	msg += std::to_string(phyLimit); msg += " ";
+	if(calibrate){
+		msg += std::to_string(0); msg += " ";
+	}
+	msg += "#";
 
-float YuMiCom::degToRad(float v){
-    return v*3.14159265359/180.0;
+//    std::cout << "msg: " << msg << std::endl;
+
+	return (msg);
 }
 
-float YuMiCom::radToDeg(float v){
-    return v*180.0/3.14159265359;
+
+std::string YuMiCom::openGripper(int idCode, float targetPos, bool noWait){
+	std::string msg;
+	if(idCode < 10){
+		msg = "0";
+	} else {
+		msg = "";
+	}
+
+	if(targetPos < 0 || targetPos > YuMiConstants::GRIP_PHYLIMIT){
+		std::cerr << "ERROR: Gripper target pos not in correct range!" << std::endl;
+	} else {
+		msg += std::to_string(idCode); msg += " ";
+		msg += std::to_string(targetPos); msg += " ";
+		if(noWait){
+			msg += std::to_string(0); msg += " ";
+		}
+		msg += "#";
+	}
+
+	//    std::cout << "msg: " << msg << std::endl;
+
+	return (msg);
+}
+
+
+std::string YuMiCom::closeGripper(int idCode, bool noWait){
+	std::string msg;
+	if(idCode < 10){
+		msg = "0";
+	} else {
+		msg = "";
+	}
+	msg += std::to_string(idCode); msg += " ";
+	if(noWait){
+		msg += std::to_string(0); msg += " ";
+	}
+	msg += "#";
+
+	//    std::cout << "msg: " << msg << std::endl;
+
+	return (msg);
 }

@@ -17,6 +17,9 @@ public:
 	//depending on how the robot is assembled, the axis may point in the wrong direction, relative to the simulation mode. Make this easy to fix...
 	bool flipMotorAxis = false;
 
+	//temporary end-effector speed variable for yumi
+	unsigned int yumiSpeed = 100;
+
 /* everything below is specific to servomotors... */
 
 	//for servomotors (as opposed to say dynamixels) there needs to be a bit of calibration to know how they need to be controlled properly
