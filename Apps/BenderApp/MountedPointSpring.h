@@ -17,7 +17,7 @@ public:
 					   Node * node, 
 					   P3D referencePosition, 
 					   Mount * mount, 
-					   double K = 10000);
+					   double K);
 
 	~MountedPointSpring();
 

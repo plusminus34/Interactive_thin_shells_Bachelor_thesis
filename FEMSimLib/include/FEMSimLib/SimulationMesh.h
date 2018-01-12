@@ -43,14 +43,16 @@ public:
 	~SimulationMesh();
 
 	void drawNodes();
-	void drawSimulationMesh();
+	void drawSimulationMesh(V3D const & edgeColor = V3D(1.0,1.0,1.0), double edgeWidth = 1, 
+							V3D const & pinnedNodeColor = V3D(1.0,0.0,0.0), double pinnedNodeSize = 1,
+							V3D const & nodeColor = V3D(1.0,0.0,0.0), double nodeSize = 0.005);
 	void drawExternalForces();
 	void drawRestConfiguration();
 
 	void solve_dynamics(double dt);
 	void solve_statics();
 
-	void addGravityForces(const V3D& g);
+	void addGravityForces(const V3D & g);
 
 	//projects positions of nodes to lie on the plane, rather than under it, and kills normal component of their velocities
 	void fakeContactWithPlane(const Plane& plane);

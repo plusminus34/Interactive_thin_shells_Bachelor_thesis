@@ -19,14 +19,6 @@ BenderSimulationMesh<NDim>::~BenderSimulationMesh()
 	}
 }
 
-/*
-template<int NDim>
-template<typename TMount>
-void BenderSimulationMesh<NDim>::addMount() 
-{
-	mounts.push_back(new TMount);
-}
-*/
 
 template<int NDim>
 void BenderSimulationMesh<NDim>::removeMount(int mountID) 
@@ -54,7 +46,8 @@ void BenderSimulationMesh<NDim>::setMountedNode(int nodeID, const P3D & x0, int 
 {
 	P3D rp = x0;
 	//rp[2] = 0;
-	pinnedNodeElements.push_back(new MountedPointSpring<NDim>(this, nodes[nodeID], rp, mounts[mountID] ));
+	constexpr double K = (NDim == 2) ? 10000 : 100;
+	pinnedNodeElements.push_back(new MountedPointSpring<NDim>(this, nodes[nodeID], rp, mounts[mountID], K));
 }
 
 template<int NDim>
@@ -86,6 +79,52 @@ void BenderSimulationMesh<NDim>::setNodeGlobalNodePositionObjective(dVector cons
 		setNodePositionObjective(i, nodes[i]->getCoordinates(x));
 	}
 }
+/*
+template<int NDim>
+void BenderSimulationMesh<NDim>::scaleAll(double s)
+{
+	for(size_t i = 0; i < x.size(); ++i) {
+		x[i] *= s;
+	}
+	for(size_t i = 0; i < X.size(); ++i) {
+		X[i] *= s;
+	}
+	for(size_t i = 0; i < m.size(); ++i) {
+		m[i] *= std::pow(s, NDim);
+	}
+	for(size_t i = 0; i < f_ext.size(); ++i) {
+		f_ext[i] *= std::pow(s, NDim + 1);
+	}
+	for(size_t i = 0; i < xSolver.size(); ++i) {
+		xSolver[i] *= s;
+	}
+	energyFunction->initialize(this);
+}
+
+template<int NDim>
+void BenderSimulationMesh<NDim>::moveAll(V3D v)
+{
+	int n = x.size() / NDim;
+	for(int i = 0; i < n; ++i) {
+		for(int j = 0; j < NDim; ++j) {
+			x[i*NDim+j] += v[j];
+		}
+	}
+	n = X.size() / NDim;
+	for(int i = 0; i < n; ++i) {
+		for(int j = 0; j < NDim; ++j) {
+			X[i*NDim+j] += v[j];
+		}
+	}
+	n = xSolver.size() / NDim;
+	for(int i = 0; i < n; ++i) {
+		for(int j = 0; j < NDim; ++j) {
+			xSolver[i*NDim+j] += v[j];
+		}
+	}
+	energyFunction->initialize(this);
+}
+*/
 
 template<int NDim>
 int BenderSimulationMesh<NDim>::getMountIdOfNode(int nodeID) {
@@ -176,7 +215,9 @@ double BenderSimulationMesh<NDim>::computeTargetPositionError()
 template<int NDim>
 void BenderSimulationMesh<NDim>::drawSimulationMesh() 
 {
-	SimulationMesh::drawSimulationMesh();
+	SimulationMesh::drawSimulationMesh(V3D(1.0,1.0,1.0), 1.0,
+									   V3D(1.0,0.0,0.0), 1.0,
+									   V3D(1.0,0.0,0.0), 0.002);
 
 	//for(MeshObjective * obj : objectives) {
 	//	dynamic_cast<NodePositionObjective *>(obj)->draw(x);

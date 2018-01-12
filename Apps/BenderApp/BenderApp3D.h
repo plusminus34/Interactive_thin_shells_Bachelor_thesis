@@ -1,6 +1,10 @@
 #pragma once
 
 #include <GUILib/GLApplication.h>
+#include <ControlLib/Robot.h>
+#include <RBSimLib/AbstractRBEngine.h>
+#include <ControlLib/RobotControlInterface.h>
+
 #include <string>
 #include <array>
 #include <map>
@@ -21,6 +25,13 @@ public:
 
 	// target trajectory for shape of mesh
 	Trajectory3Dplus targetTrajectory_input;
+
+	// robot
+	Robot * robot = NULL;
+	AbstractRBEngine * rbEngine = NULL;
+	RobotState startState = RobotState();
+
+
 
 	// solver for the inverse problem
 	InverseDeformationSolver<3> * inverseDeformationSolver;
@@ -57,6 +68,12 @@ public:
 	double simTimeStep = 1/100.0;
 	double simulationTime;
 	double maxRunningTime;
+
+	// visualization robot
+	bool showMesh = false;
+	bool showMOI = false;
+	bool showRotationAxes = true;
+	bool showCDPs = false;
 
 	// Interaction
 	Ray lastClickedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
@@ -109,8 +126,8 @@ public:
 
 	virtual bool processCommandLine(const std::string& cmdLine);
 	
-	virtual void saveFile(const char* fName);
-	virtual void loadFile(char* fName);
+	//virtual void saveFile(const char* fName);
+	//virtual void loadFile(char* fName);
 
 	void pushInputTrajectory(Trajectory3Dplus & trajInput);
 

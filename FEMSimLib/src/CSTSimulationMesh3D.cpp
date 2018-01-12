@@ -154,7 +154,8 @@ void CSTSimulationMesh3D::readMeshFromFile(const char* fName)
 }
 
 
-void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> const * add_input_points)
+void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> const * add_input_points,
+											   double scale, V3D const & offset)
 {
 	// input objects for tetget
 	tetgenio input, addinput;
@@ -199,6 +200,14 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 	v.resize(3 * nodeCount);
 	f_ext.resize(3 * nodeCount);
 	m.resize(3 * nodeCount);
+
+	// apply scaling and offset
+	for(int i = 0; i < nodeCount; ++i) {
+		for(int j = 0; j < 3; ++j) {
+			output.pointlist[i*3 + j] *= scale;
+			output.pointlist[i*3 + j] += offset(j);
+		}
+	}
 
 	for (int i = 0; i<nodeCount; i++) {
 		Node* newNode = new Node(this, i, 3 * i, 3);

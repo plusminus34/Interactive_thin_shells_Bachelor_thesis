@@ -33,6 +33,8 @@ public:
 	void setNodePositionObjective(int nodeID, const P3D & x0);
 	void setNodeGlobalNodePositionObjective(dVector const & x);
 
+	//void scaleAll(double s);
+	//void moveAll(V3D v);
 	
 
 	int getMountIdOfNode(int nodeID);

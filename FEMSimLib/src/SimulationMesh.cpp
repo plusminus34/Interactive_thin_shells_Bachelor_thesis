@@ -16,13 +16,24 @@ void SimulationMesh::drawNodes(){
 		nodes[i]->draw();
 }
 
-void SimulationMesh::drawSimulationMesh(){
+void SimulationMesh::drawSimulationMesh(V3D const & edgeColor, double elementSize, 
+										V3D const & pinnedNodeColor, double pinnedNodeSize,
+										V3D const & nodeColor, double nodeSize)
+{
+
+	// elements
+	glColor3d(edgeColor(0), edgeColor(1), edgeColor(2));
+	glLineWidth((GLfloat)elementSize);
 	for (uint i=0; i<elements.size();i++)
 		elements[i]->draw(x);
+	// pinned nodes (lines only)
+	glColor3d(pinnedNodeColor(0), pinnedNodeColor(1), pinnedNodeColor(2));
+	glLineWidth((GLfloat)pinnedNodeSize);
 	for (uint i=0;i<pinnedNodeElements.size();i++)
 		pinnedNodeElements[i]->draw(x);
+	// nodes
 	for (uint i = 0; i < nodes.size(); i++) {
-		nodes[i]->draw();
+		nodes[i]->draw(nodeColor, nodeSize);
 	}
 }
 

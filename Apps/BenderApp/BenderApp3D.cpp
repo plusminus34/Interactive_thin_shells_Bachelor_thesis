@@ -4,10 +4,12 @@
 #include <GUILib/GLContentManager.h>
 #include <MathLib/MathLib.h>
 #include <MathLib/Plane.h>
-//#include <FEMSimLib/CSTSimulationMesh2D.h>
+
 #include <FEMSimLib/CSTSimulationMesh3D.h>
 #include <FEMSimLib/MassSpringSimulationMesh3D.h>
 #include <GUILib/GLUtils.h>
+
+#include <RBSimLib/ODERBEngine.h>
 
 #include "OptimizationLib/GradientDescentFunctionMinimizer.h"
 #include "OptimizationLib/BFGSFunctionMinimizer.h"
@@ -29,14 +31,24 @@
 
 BenderApp3D::BenderApp3D() 
 {
+
+	const double rod_length = 0.3;
+	const P3D rod_center(0.0, 0.4, 0.5);
+
+
 	setWindowTitle("Test FEM Sim Application...");
 
+	////////////////////////
+	// menu
+	////////////////////////
+
+	initInteractionMenu(mainMenu);
+	menuScreen->performLayout();
 
 
-	// create mesh
-	//loadFile("../data/3dModels/extruded_polygon_0p1x2.ply");
-	//loadFile("../data/3dModels/extruded_hexagon_0p1x2.ply");
-
+	////////////////////////
+	// FEM Mesh
+	////////////////////////
 
 	// create some points on centerline of the mesh
 	DynamicArray<P3D> centerlinePts;
@@ -53,23 +65,52 @@ BenderApp3D::BenderApp3D()
 
 	// create mesh
 	femMesh = new BenderSimulationMesh<3>;
-	femMesh->readMeshFromFile_ply("../data/3dModels/extruded_hexagon_0p1x2.ply", &centerlinePts);
+	femMesh->readMeshFromFile_ply("../data/3dModels/extruded_hexagon_0p1x2.ply", &centerlinePts,
+								  1.0/2.0 * rod_length, rod_center);
 	femMesh->addGravityForces(V3D(0, 0, 0));
 
 
-	// menu
-	mainMenu->addGroup("FEM Sim options");
-	mainMenu->addVariable("Static solve", computeStaticSolution);
-	mainMenu->addVariable("Optimize Objective", optimizeObjective);
-	mainMenu->addVariable("Check derivatives", checkDerivatives);
-	mainMenu->addVariable("Approx. line search", approxLineSearch);
-	mainMenu->addButton("set state as target", [this](){
-														femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
-														});
-	
-	initInteractionMenu(mainMenu);
-	
-	menuScreen->performLayout();
+	// create a fiber in mesh for matching objective
+	auto node_sequence_from_line_segment = [&](P3D const & pt1, P3D const & pt2, double tolerance,
+											   DynamicArray<Node*> & fiber)
+	{
+		using T_i_t = std::tuple<int, double>;
+		DynamicArray<T_i_t> nodes_id_and_t(0);
+		//std::vector<double> t(0);
+
+		V3D vec(pt1, pt2);
+		double vec_length = vec.length();
+
+		// find all nodes close to the line segment
+		for(int i = 0; i < femMesh->nodes.size(); ++i) {
+			Node * node = femMesh->nodes[i];
+			P3D pt_node = node->getCoordinates(femMesh->X);
+			V3D pt1ToNode(pt1, pt_node);
+			double d2 = pt1ToNode.cross(vec).squaredNorm() / vec.squaredNorm();
+			if(d2 < tolerance*tolerance) {	// node within cylinder
+				double t_temp = vec.dot(pt1ToNode) / vec.length();
+				if(t_temp > -tolerance && t_temp < vec.length() + tolerance) {
+					nodes_id_and_t.push_back(std::make_tuple(i, t_temp));
+				}
+			}
+		}
+		// sort nodes
+		std::sort(nodes_id_and_t.begin(), nodes_id_and_t.end(), 
+			[](T_i_t const & n1, T_i_t const & n2) -> bool {return(std::get<1>(n1) < std::get<1>(n2));});
+
+		// create fiber (sequence of nodes)
+		fiber.resize(0);
+		for(T_i_t i_t : nodes_id_and_t) {
+			fiber.push_back(femMesh->nodes[std::get<0>(i_t)]);
+		}
+	};
+
+	// add a fiber in Mesh to match
+	DynamicArray<Node *> matchedFiber;
+	node_sequence_from_line_segment(rod_center + P3D(-0.5*rod_length,0.0,0.0),
+									rod_center + P3D(0.5*rod_length,0.0,0.0),
+									0.01*rod_length, 
+									matchedFiber);
 
 	
 	// initialize minimization algorithms
@@ -98,58 +139,42 @@ BenderApp3D::BenderApp3D()
 		}
 	};
 
-	set_mount_from_plane(0, -1.0, 0.01);
-	set_mount_from_plane(0, +1.0, 0.01);
-
-
-	// create matched/target trajectory pair
-	auto node_sequence_from_line_segment = [&](P3D const & pt1, P3D const & pt2, double tolerance,
-		                                       DynamicArray<Node*> & fiber)
-	{
-		using T_i_t = std::tuple<int, double>;
-		DynamicArray<T_i_t> nodes_id_and_t(0);
-		//std::vector<double> t(0);
-
-		V3D vec(pt1, pt2);
-		double vec_length = vec.length();
-
-		// find all nodes close to the line segment
-		for(int i = 0; i < femMesh->nodes.size(); ++i) {
-			Node * node = femMesh->nodes[i];
-			P3D pt_node = node->getCoordinates(femMesh->X);
-			V3D pt1ToNode(pt1, pt_node);
-			double d2 = pt1ToNode.cross(vec).squaredNorm() / vec.squaredNorm();
-			if(d2 < tolerance*tolerance) {	// node within cylinder
-				double t_temp = vec.dot(pt1ToNode) / vec.length();
-				if(t_temp > -tolerance && t_temp < vec.length() + tolerance) {
-					nodes_id_and_t.push_back(std::make_tuple(i, t_temp));
-				}
-			}
-		}
-		// sort nodes
-		std::sort(nodes_id_and_t.begin(), nodes_id_and_t.end(), 
-				  [](T_i_t const & n1, T_i_t const & n2) -> bool {return(std::get<1>(n1) < std::get<1>(n2));});
-
-		// create fiber (sequence of nodes)
-		fiber.resize(0);
-		for(T_i_t i_t : nodes_id_and_t) {
-			fiber.push_back(femMesh->nodes[std::get<0>(i_t)]);
-		}
-	};
-
-
-	// add a fiber in Mesh to match
-	DynamicArray<Node *> matchedFiber;
-	node_sequence_from_line_segment(P3D(-1.0,0.0,0.0), P3D(1.0,0.0,0.0), 0.01, matchedFiber);
+	set_mount_from_plane(0, -0.15, 0.01);
+	set_mount_from_plane(0, +0.15, 0.01);
 
 	// draw some target trjectory
-	targetTrajectory_input.addKnotBack(P3D(-1.0, 0.2, 0.0));
-	targetTrajectory_input.addKnotBack(P3D( 0.0, 0.4, 0.0));
-	targetTrajectory_input.addKnotBack(P3D( 1.0, 0.2, 0.0));
+	targetTrajectory_input.addKnotBack(P3D(-0.15, 0.45, 0.5));
+	targetTrajectory_input.addKnotBack(P3D( 0.0,  0.5, 0.5));
+	targetTrajectory_input.addKnotBack(P3D( 0.15, 0.45, 0.5));
 
 	// add a "MatchScaledTrajObjective"
 	targetTrajectory_input.setTValueToLength();
 	femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
+
+
+	////////////////////////
+	// Robot
+	////////////////////////
+	
+	// load robot
+	std::string fnameRB = "../data/rbs/yumi/yumi.rbs";
+
+	auto loadRobot = [&] (std::string const & fname)
+	{
+		delete robot;
+		delete rbEngine;
+
+		rbEngine = new ODERBEngine();
+		rbEngine->loadRBsFromFile(fname.c_str());
+		robot = new Robot(rbEngine->rbs[0]);
+		startState = RobotState(robot);
+		setupSimpleRobotStructure(robot);
+
+	};
+	loadRobot(fnameRB);
+
+	robot->setHeading(-PI / 2.0);
+	
 
 }
 
@@ -171,6 +196,17 @@ void BenderApp3D::pushInputTrajectory(Trajectory3Dplus & trajInput)
 void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 {
 
+	// 
+	menu->addGroup("FEM Sim options");
+	menu->addVariable("Static solve", computeStaticSolution);
+	menu->addVariable("Optimize Objective", optimizeObjective);
+	menu->addVariable("Check derivatives", checkDerivatives);
+	menu->addVariable("Approx. line search", approxLineSearch);
+	menu->addButton("set state as target", [this](){
+		femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
+	});
+
+
 	// add selection of optimization algorithm
 	menu->addGroup("Optimization");
 	{
@@ -187,7 +223,6 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 		menu->addVariable("solve residual", solveResidual);
 		menu->addVariable("max linesearch iter", maxLineSearchIterations);
 	}
-
 
 	menu->addGroup("Mode");
 	// add selection for active interaction object
@@ -538,7 +573,7 @@ bool BenderApp3D::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 			return(false);
 		}
 	}
-	if(interactionObject == InteractionObject::OBJECTIVE) {
+	else if(interactionObject == InteractionObject::OBJECTIVE) {
 		if(interactionMode == InteractionMode::SELECT) {
 			return(true);
 		}
@@ -552,6 +587,8 @@ bool BenderApp3D::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 			return(false);
 		}
 	}
+
+	return(false);
 }
 
 bool BenderApp3D::onKeyEvent(int key, int action, int mods) {	
@@ -593,7 +630,7 @@ bool BenderApp3D::onCharacterPressedEvent(int key, int mods) {
 	return false;
 }
 
-
+/*
 void BenderApp3D::loadFile(char* fName) {
 	Logger::consolePrint("Loading file \'%s\'...\n", fName);
 	std::string fileName;
@@ -625,7 +662,7 @@ void BenderApp3D::loadFile(char* fName) {
 void BenderApp3D::saveFile(const char* fName) {
 	Logger::consolePrint("SAVE FILE: Do not know what to do with file \'%s\'\n", fName);
 }
-
+*/
 
 // Run the App tasks
 void BenderApp3D::process() {
@@ -700,7 +737,7 @@ void BenderApp3D::drawScene() {
 	for(int i = 0; i < femMesh->pinnedNodeElements.size(); ++i) {
 		MountedPointSpring<2> * mp = static_cast<MountedPointSpring<2> *>(femMesh->pinnedNodeElements[i]);
 
-		double size = 0.005;
+		double size = 0.002;
 		P3D color(0.5, 0.0, 1.0);
 		P3D white(1.0, 1.0, 1.0);
 		P3D red(1.0, 1.0, 1.0);
@@ -711,7 +748,7 @@ void BenderApp3D::drawScene() {
 			color = color*0.5 + red*0.5;
 		}
 		if(mp->mount == femMesh->mounts[selected_mount]) {
-			size *= 1.8;
+			size *= 1.7;
 		}
 
 		mp->draw(femMesh->x, size, color(0), color(1), color(2));
@@ -720,13 +757,33 @@ void BenderApp3D::drawScene() {
 	
 
 	// draw target trajectory
-	targetTrajectory_input.draw(V3D(0.3, 0.3, 0.3), 2, V3D(0, 0.8, 0), 0.005);
+	targetTrajectory_input.draw(V3D(0.3, 0.3, 0.3), 2, V3D(0, 0.8, 0), 0.0025);
 	
 	
 	// draw objective
 	for(MeshObjective * o : femMesh->objectives) {
 		o->draw(femMesh->x);
 	}
+
+	
+	// draw robot
+	int flags = SHOW_ABSTRACT_VIEW | HIGHLIGHT_SELECTED;
+	if (showMesh)
+		flags |= SHOW_MESH;
+	if (showMOI){
+		flags |= SHOW_MOI_BOX;
+		Logger::consolePrint("total mass: %lf\n", robot->mass);
+	}
+	if (showRotationAxes)
+		flags |= SHOW_JOINTS;
+	if (showCDPs)
+		flags |= SHOW_CD_PRIMITIVES;
+
+	glEnable(GL_LIGHTING);
+	glPushMatrix();
+
+	rbEngine->drawRBs(flags);
+	
 	
 }
 
