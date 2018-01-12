@@ -1549,11 +1549,15 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 		//----------------------------
 
 		//draw end effector positions...
-		for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
-			if (endEffectorTrajectories[i].isInStance(f))
-				glColor3d(1, 0, 0);
+		for (uint i = 0; i < endEffectorTrajectories.size(); i++) 
+		{
+			if(endEffectorTrajectories[i].isHighlighted)
+				glColor3d(0, 0, 1);
 			else
-				glColor3d(0, 1, 0);
+				if (endEffectorTrajectories[i].isInStance(f))
+					glColor3d(1, 0, 0);
+				else
+					glColor3d(0, 1, 0);
 			drawSphere(endEffectorTrajectories[i].getEEPositionAt(f), 0.003);
 		}
 	}
@@ -1633,7 +1637,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 		int flags = SHOW_MESH;
 		if (drawPlanDetails || drawSkeleton)
 			flags = SHOW_ABSTRACT_VIEW;
-
+		flags |= HIGHLIGHT_SELECTED;
 		//draw the robot configuration...
 		robot->getRoot()->draw(flags);
 		for (int i=0;i<robot->getJointCount();i++)

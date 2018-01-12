@@ -20,7 +20,7 @@
 #include <RobotDesignerLib/MPO_PassiveWheelsGRFConstraints.h>
 #include <RobotDesignerLib/MPO_FixedWheelObjective.h>
 #include <RobotDesignerLib/MPO_WheelTiltObjective.h>
-
+#include <RobotDesignerLib/MPO_EEPosObjective.h>
 //#define DEBUG_WARMSTART
 //#define CHECK_DERIVATIVES_AFTER_WARMSTART
 
@@ -400,8 +400,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	ef->addObjectiveFunction(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1, 6, dimCount - 1), "Bound Constraints");
 	ef->addObjectiveFunction(new MPO_JointsAnglesSoftConstraint(ef->theMotionPlan, "joint angle bound constraint", 1, 6, dimCount - 1), "Bound Constraints");
 	ef->addObjectiveFunction(new MPO_WheelSpeedConstraints(ef->theMotionPlan, "wheel speed bound constraint", 1), "Bound Constraints");
-	ef->addObjectiveFunction(new MPO_EndEffectorCollisionEnergy(ef->theMotionPlan, "EE collision energy", 1), "Bound Constraints");
-	
+	ef->addObjectiveFunction(new MPO_EndEffectorCollisionEnergy(ef->theMotionPlan, "EE collision objective", 10000), "Bound Constraints");
 //	ef->addObjectiveFunction(new MPO_WheelAccelerationConstraints(ef->theMotionPlan, "wheel accel. bound constraint", 1e2), "Bound Constraints");
 //	ef->objectives.back()->isActive = false;
 
@@ -446,6 +445,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	//functional objectives
 	ef->addObjectiveFunction(new MPO_COMTravelObjective(ef->theMotionPlan, "COM Travel objective", 50.0), "Objectives");
 	ef->addObjectiveFunction(new MPO_COMTurningObjective(ef->theMotionPlan, "COM turning objective (YAW)", 50.0), "Objectives");
+	ef->addObjectiveFunction(new MPO_EEPosObjective(ef->theMotionPlan, "EE position objective", 1), "Objectives");
 
 	//smooth motion regularizers
 	ef->addObjectiveFunction(new MPO_SmoothStanceLegMotionObjective(ef->theMotionPlan, "robot stance leg smooth joint angle trajectories", 0.01), "Smooth Regularizer");

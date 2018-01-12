@@ -11,6 +11,12 @@
 #include <vector>
 #include <RBSimLib/HingeJoint.h>
 #include <ControlLib/IK_Solver.h>
+#include <memory>
+struct EndEffectorPositionObjective {
+	int endEffectorInd;
+	int sampleNum;
+	P3D pos;
+};
 
 class LocomotionEngine_EndEffectorTrajectory{
 public:
@@ -46,6 +52,7 @@ public:
 	//and this is the index of the end effector contact point that it represents
 	int CPIndex = -1;
 
+	bool isHighlighted = false;
 public:
 	LocomotionEngine_EndEffectorTrajectory(int nPos);
 
@@ -219,6 +226,8 @@ public:
 
 	//	parameters for L0 optimization
 	double jointL0Delta = 1;
+
+	list < shared_ptr<EndEffectorPositionObjective> > EEPosObjectives;
 
 public:
 	bool optimizeCOMPositions;
