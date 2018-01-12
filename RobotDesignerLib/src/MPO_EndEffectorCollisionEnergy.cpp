@@ -5,14 +5,13 @@ MPO_EndEffectorCollisionEnergy::MPO_EndEffectorCollisionEnergy(LocomotionEngineM
 	this->description = objectiveDescription;
 	this->weight = weight;
 
-	boundFunction = std::make_unique<SoftLowerBarrierConstraint>(theMotionPlan->EEminDistance);
+	boundFunction = std::make_unique<SoftUnilateralConstraint>(theMotionPlan->EEminDistance, 10, 0.02 * 0.02);
 }
 
 MPO_EndEffectorCollisionEnergy::~MPO_EndEffectorCollisionEnergy(void){
 }
 
 double MPO_EndEffectorCollisionEnergy::computeValue(const dVector& p) {
-	boundFunction->limit = theMotionPlan->EEminDistance;
 	if (theMotionPlan->feetPositionsParamsStartIndex < 0/* || theMotionPlan->wheelParamsStartIndex < 0*/)
 		return 0;
 
@@ -22,8 +21,18 @@ double MPO_EndEffectorCollisionEnergy::computeValue(const dVector& p) {
 	
 	Eigen::Map<const Eigen::MatrixXd> EE(p.data() + theMotionPlan->feetPositionsParamsStartIndex, 3 * nLimbs, theMotionPlan->nSamplePoints);
 	for (int i = 0; i < nLimbs; i++)
-		for (int j = 0; j < i; j++)
-		{
+		for (int j = 0; j < i; j++)	{
+			if (theMotionPlan->endEffectorTrajectories[i].endEffectorRB == theMotionPlan->endEffectorTrajectories[j].endEffectorRB)
+				continue;
+			boundFunction->limit = theMotionPlan->EEminDistance;
+			if (theMotionPlan->endEffectorTrajectories[i].isWheel)
+				boundFunction->limit += theMotionPlan->endEffectorTrajectories[i].wheelRadius;
+
+			if (theMotionPlan->endEffectorTrajectories[j].isWheel)
+				boundFunction->limit += theMotionPlan->endEffectorTrajectories[j].wheelRadius;
+
+			boundFunction->limit *= boundFunction->limit;
+
 			auto EExi = EE.row(3 * i);
 			auto EEzi = EE.row(3 * i+2);
 			auto EExj = EE.row(3 * j);
@@ -34,7 +43,6 @@ double MPO_EndEffectorCollisionEnergy::computeValue(const dVector& p) {
 }
 
 void MPO_EndEffectorCollisionEnergy::addGradientTo(dVector& grad, const dVector& p) {
-	boundFunction->limit = theMotionPlan->EEminDistance;
 	if (theMotionPlan->feetPositionsParamsStartIndex < 0/* || theMotionPlan->wheelParamsStartIndex < 0*/)
 		return;
 
@@ -45,8 +53,18 @@ void MPO_EndEffectorCollisionEnergy::addGradientTo(dVector& grad, const dVector&
 	Eigen::Map<const Eigen::MatrixXd> EE(p.data() + theMotionPlan->feetPositionsParamsStartIndex, 3 * nLimbs, theMotionPlan->nSamplePoints);
 	Eigen::Map<Eigen::MatrixXd> G(grad.data() + theMotionPlan->feetPositionsParamsStartIndex, 3 * nLimbs, theMotionPlan->nSamplePoints);
 	for (int i = 0; i < nLimbs; i++)
-		for (int j = 0; j < i; j++)
-		{
+		for (int j = 0; j < i; j++)	{
+			if (theMotionPlan->endEffectorTrajectories[i].endEffectorRB == theMotionPlan->endEffectorTrajectories[j].endEffectorRB)
+				continue;
+			boundFunction->limit = theMotionPlan->EEminDistance;
+			if (theMotionPlan->endEffectorTrajectories[i].isWheel)
+				boundFunction->limit += theMotionPlan->endEffectorTrajectories[i].wheelRadius;
+
+			if (theMotionPlan->endEffectorTrajectories[j].isWheel)
+				boundFunction->limit += theMotionPlan->endEffectorTrajectories[j].wheelRadius;
+
+			boundFunction->limit *= boundFunction->limit;
+
 			auto EExi = EE.row(3 * i);
 			auto EExj = EE.row(3 * j);
 			auto EEzi = EE.row(3 * i + 2);
@@ -62,7 +80,6 @@ void MPO_EndEffectorCollisionEnergy::addGradientTo(dVector& grad, const dVector&
 }
 
 void MPO_EndEffectorCollisionEnergy::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
-	boundFunction->limit = theMotionPlan->EEminDistance;
 	if (theMotionPlan->feetPositionsParamsStartIndex < 0 /*|| theMotionPlan->wheelParamsStartIndex < 0*/)
 		return;
 
@@ -70,10 +87,19 @@ void MPO_EndEffectorCollisionEnergy::addHessianEntriesTo(DynamicArray<MTriplet>&
 	const int nLimbs = theMotionPlan->endEffectorTrajectories.size();
 	Eigen::Map<const Eigen::MatrixXd> Q(p.data() + theMotionPlan->feetPositionsParamsStartIndex, 3 * nLimbs, theMotionPlan->nSamplePoints);
 
-	for (int i = 0; i < nLimbs; i++)
-	{
-		for (int j = 0; j < i; j++)
-		{
+	for (int i = 0; i < nLimbs; i++){
+		for (int j = 0; j < i; j++){
+			if (theMotionPlan->endEffectorTrajectories[i].endEffectorRB == theMotionPlan->endEffectorTrajectories[j].endEffectorRB)
+				continue;
+			boundFunction->limit = theMotionPlan->EEminDistance;
+			if (theMotionPlan->endEffectorTrajectories[i].isWheel)
+				boundFunction->limit += theMotionPlan->endEffectorTrajectories[i].wheelRadius;
+
+			if (theMotionPlan->endEffectorTrajectories[j].isWheel)
+				boundFunction->limit += theMotionPlan->endEffectorTrajectories[j].wheelRadius;
+
+			boundFunction->limit *= boundFunction->limit;
+
 			auto Qxi = Q.row(3 * i);
 			auto Qxj = Q.row(3 * j);
 			auto Qzi = Q.row(3 * i + 2);

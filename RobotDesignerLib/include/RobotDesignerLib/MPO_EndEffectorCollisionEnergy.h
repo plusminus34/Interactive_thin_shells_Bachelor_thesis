@@ -19,5 +19,5 @@ public:
 
 private:
 	LocomotionEngineMotionPlan* theMotionPlan;
-	std::unique_ptr<SoftLowerBarrierConstraint> boundFunction;
+	std::unique_ptr<SoftUnilateralConstraint> boundFunction;
 };

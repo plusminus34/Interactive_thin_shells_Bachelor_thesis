@@ -23,7 +23,7 @@ struct MOPTParams {
 	double jointVelocityLimit = 10;
 	double jointVelocityEpsilon = 0.4;
 	double jointAngleLimit = PI/4;
-	double EEminDistance = 0.2;
+	double EEminDistance = 0.02;
 
 	double jointL0Delta = 1;
 

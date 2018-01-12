@@ -26,7 +26,7 @@ public:
 	bool isWeldedWheel = false;			// true for a permanently fixed wheel
 	bool isPassiveWheel = false;		// true if passive wheel
 
-	double wheelRadius = 0.1;			// wheel radius
+	double wheelRadius = 0.01;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
 	//these are all quantities from the wheel's coordinate frame point of view...
 	V3D wheelAxisLocal_WF;					// wheel axis, not transformed by tilt and yaw angles...
@@ -208,7 +208,7 @@ public:
 	double jointVelocityLimit = 0;
 	double jointVelocityEpsilon = 0.4;		// for SoftUnilateralConstraint
 	double jointAngleLimit = PI / 4;
-	double EEminDistance = 0.2;
+	double EEminDistance = 0.02;
 	dVector initialRobotState;
 	
 	// Parameters for wheel motor speed constraint

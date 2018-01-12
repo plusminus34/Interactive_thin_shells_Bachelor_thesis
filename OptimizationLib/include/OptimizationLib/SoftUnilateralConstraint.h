@@ -15,6 +15,7 @@
 class SoftUnilateralConstraint {
 private:
 	double a1, b1, c1, a2, b2, c2, d2, epsilon;
+public:
 	double limit = 0;
 public:
 
