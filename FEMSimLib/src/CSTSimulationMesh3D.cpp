@@ -155,6 +155,7 @@ void CSTSimulationMesh3D::readMeshFromFile(const char* fName)
 
 
 void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> const * add_input_points,
+											   double massDensity, double shearModulus, double bulkModulus,
 											   double scale, V3D const & offset)
 {
 	// input objects for tetget
@@ -222,7 +223,8 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 	}
 	for (int i = 0;i<tetCount; i++) {
 		CSTElement3D* newElem = new CSTElement3D(this, nodes[output.tetrahedronlist[i * 4]], nodes[output.tetrahedronlist[i * 4 + 1]],
-			nodes[output.tetrahedronlist[i * 4 + 2]], nodes[output.tetrahedronlist[i * 4 + 3]]);
+												 nodes[output.tetrahedronlist[i * 4 + 2]], nodes[output.tetrahedronlist[i * 4 + 3]],
+												 massDensity, shearModulus, bulkModulus);
 		elements.push_back(newElem);
 	}
 	energyFunction = new FEMEnergyFunction();

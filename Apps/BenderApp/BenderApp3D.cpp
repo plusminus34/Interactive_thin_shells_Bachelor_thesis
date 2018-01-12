@@ -35,6 +35,13 @@ BenderApp3D::BenderApp3D()
 	const double rod_length = 0.3;
 	const P3D rod_center(0.0, 0.4, 0.5);
 
+	double massDensity = 50;
+	double youngsModulus = 3.0e4;
+	double poissonRatio = 0.25;
+
+	double shearModulus = youngsModulus / (2 * (1 + poissonRatio));
+	double bulkModulus = youngsModulus / (3 * (1 - 2 * poissonRatio));
+
 
 	setWindowTitle("Test FEM Sim Application...");
 
@@ -66,8 +73,10 @@ BenderApp3D::BenderApp3D()
 	// create mesh
 	femMesh = new BenderSimulationMesh<3>;
 	femMesh->readMeshFromFile_ply("../data/3dModels/extruded_hexagon_0p1x2.ply", &centerlinePts,
+								  massDensity, shearModulus, bulkModulus,
 								  1.0/2.0 * rod_length, rod_center);
-	femMesh->addGravityForces(V3D(0, 0, 0));
+	femMesh->addGravityForces(V3D(0, -9.8, 0));
+	
 
 
 	// create a fiber in mesh for matching objective
