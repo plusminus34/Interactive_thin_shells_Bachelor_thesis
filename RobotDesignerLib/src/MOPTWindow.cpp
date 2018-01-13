@@ -500,9 +500,14 @@ bool MOPTWindow::onMouseButtonEvent(int button, int action, int mods, double xPo
 	}
 	if (action == GLFW_PRESS && endEffectorInd > -1)
 	{
+		int timeStep = floor((moptParams.phase / moptParams.motionPlanDuration)*nTimeSteps);
+
+		for (auto EEPosObj: locomotionManager->motionPlan->EEPosObjectives)
+			if(EEPosObj->endEffectorInd == endEffectorInd && EEPosObj->sampleNum == timeStep)
+				return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
+
 		auto widget = std::make_shared<TranslateWidget>(AXIS_X | AXIS_Z);
 		widgets.push_back(widget);
-		int timeStep = floor((moptParams.phase / moptParams.motionPlanDuration)*nTimeSteps);
 		Logger::consolePrint("Picked end effector %d at time step %d", endEffectorInd, timeStep);
 		widget->pos = P3D(locomotionManager->motionPlan->endEffectorTrajectories[endEffectorInd].getEEPositionAt(moptParams.motionPlanDuration*timeStep/nTimeSteps));
 		auto EEPosObj = make_shared<EndEffectorPositionObjective>();
