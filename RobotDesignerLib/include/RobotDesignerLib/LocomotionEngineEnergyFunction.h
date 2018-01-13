@@ -31,7 +31,7 @@ public:
 
 	bool printDebugInfo;
 	double regularizer;
-
+	std::string description = "Total energy";
 private:
 
 	//this is the configuration of the sim mesh that is used as a regularizing solution...

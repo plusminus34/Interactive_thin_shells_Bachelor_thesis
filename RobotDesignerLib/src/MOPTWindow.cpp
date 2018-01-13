@@ -502,7 +502,7 @@ bool MOPTWindow::onMouseButtonEvent(int button, int action, int mods, double xPo
 	{
 		int timeStep = floor((moptParams.phase / moptParams.motionPlanDuration)*nTimeSteps);
 
-		for (auto EEPosObj: locomotionManager->motionPlan->EEPosObjectives)
+		for (const auto &EEPosObj: locomotionManager->motionPlan->EEPosObjectives)
 			if(EEPosObj->endEffectorInd == endEffectorInd && EEPosObj->sampleNum == timeStep)
 				return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
 

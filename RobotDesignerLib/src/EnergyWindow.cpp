@@ -127,8 +127,22 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 		layout->setSpacing(0, 10);
 		plotPanel->setLayout(layout);
 
-		Button *togglePlot = new Button(plotPanel, "Energy Plot");
+		Widget *buttonSubPanel = new Widget(window);
+		layout = new GridLayout(Orientation::Horizontal, 3, Alignment::Fill);
+		layout->setColAlignment({ Alignment::Minimum, Alignment::Fill });
+		layout->setRowAlignment({ Alignment::Minimum, Alignment::Fill });
+		layout->setSpacing(0, 10);
+		buttonSubPanel->setLayout(layout);
+
+		Button *togglePlot = new Button(buttonSubPanel, "Energy Plot");
 		togglePlot->setFlags(Button::ToggleButton);
+
+		Button *btnSaveData = new Button(buttonSubPanel, "Save data");
+		btnSaveData->setCallback([&] {saveData(); });
+
+		Button *btnResetData = new Button(buttonSubPanel, "Reset");
+		btnResetData->setCallback([&] {resetData(); });
+
 
 		energyPlot = new Plot(plotPanel, "Energy Plot");
 		energyPlot->setSize(Vector2i(600, 600));
@@ -136,6 +150,7 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 		energyPlot->setShowTicks(true);
 		energyPlot->setShowLegend(true);
 		energyPlot->setVisible(false);
+
 
 		togglePlot->setChangeCallback([this, screen](bool state){
 			energyPlot->setVisible(state);
@@ -187,6 +202,23 @@ void EnergyWindow::updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFun
 	// update energy plot
 	energyPlot->clearPlotData();
 	index = 0;
+	
+	{  //total energy plot
+		float value = (float)values[index];
+		std::vector<float> &eValues = energyHist[energyFunction->description];
+		eValues.push_back(value);
+
+		int size = std::min(numPlotValues, (int)eValues.size());
+		int start = std::max(0, (int)eValues.size() - size);
+		Eigen::Map<Eigen::VectorXf> y(&eValues[start], size);
+
+		start = std::max(0, (int)plotXValues.size() - size);
+		Eigen::Map<Eigen::VectorXf> x(&plotXValues[start], size);
+
+		PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)index / (float)(40), 0.2f), 1.f));
+		energyPlot->setPlotData(energyFunction->description, data);
+		index++;
+	}
 	for (const auto &objGroup : energyFunction->objGroups) {
 		for (ObjectiveFunction *obj : objGroup.second){
 			if(obj->isActive)
@@ -241,5 +273,32 @@ void EnergyWindow::updateWeightTextboxes(LocomotionEngine_EnergyFunction* energy
 		{
 			el.weightTextbox->setValue(el.objective->weight);
 		}
+	}
+}
+
+void EnergyWindow::resetData()
+{
+	for (auto& energy : energyHist)
+	{
+		energy.second.clear();
+	}
+}
+
+void EnergyWindow::saveData()
+{
+	ofstream outputfile;
+	outputfile.open("energy.txt");
+	for (const auto& energy : energyHist)
+	{
+		outputfile << energy.first << ",";
+	}
+	outputfile << endl;
+	for (int i = 0; i < (*energyHist.begin()).second.size(); i++)
+	{
+		for (const auto& energy : energyHist)
+		{
+			outputfile << energy.second[i] << ",";
+		}
+		outputfile << endl;
 	}
 }
