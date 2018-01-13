@@ -127,7 +127,7 @@ void MPO_VelocityL0Regularization::addHessianEntriesTo(DynamicArray<MTriplet>& h
 
 	for (int j=0; j<nSamplePoints-1; j++){
 
-		int jm, jp;
+		int jp;
 // 		auto ij2ind = [this](int i, int j){}
 // 		theMotionPlan->getVelocityTimeIndicesFor(j, jm, jp);
 // 		if (jm == -1 || jp == -1) continue;

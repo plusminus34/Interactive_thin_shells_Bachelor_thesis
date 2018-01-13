@@ -311,7 +311,7 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	return locomotionManager;
 }
 
-double MOPTWindow::runMOPTStep(){
+double MOPTWindow::runMOPTStep() {
 	syncMotionPlanParameters();
 
 	locomotionManager->energyFunction->regularizer = globalMOPTRegularizer;
@@ -321,7 +321,7 @@ double MOPTWindow::runMOPTStep(){
 	// plot energy value
 	{
 		energyGraphValues.push_back((float)energyVal);
-		int start = std::max(0, (int)energyGraphValues.size()-100);
+		int start = std::max(0, (int)energyGraphValues.size() - 100);
 		int size = std::min(100, (int)energyGraphValues.size());
 		Eigen::Map<Eigen::VectorXf> values(&energyGraphValues[start], size);
 		energyGraph->setValues(values);
@@ -331,17 +331,17 @@ double MOPTWindow::runMOPTStep(){
 	return energyVal;
 }
 
-void MOPTWindow::reset(){
+void MOPTWindow::reset() {
 	locomotionManager = NULL;
 }
 
-void MOPTWindow::setAnimationParams(double f, int animationCycle){
+void MOPTWindow::setAnimationParams(double f, int animationCycle) {
 	moptParams.phase = f;
 	moptParams.gaitCycle = animationCycle;
 	ffpViewer->cursorPosition = f;
 }
 
-void MOPTWindow::loadFFPFromFile(const char* fName){
+void MOPTWindow::loadFFPFromFile(const char* fName) {
 	footFallPattern.loadFromFile(fName);
 }
 
@@ -351,18 +351,26 @@ void MOPTWindow::drawScene() {
 	drawGround();
 	glEnable(GL_LIGHTING);
 
-	if (locomotionManager){
+	if (locomotionManager) {
 		locomotionManager->drawMotionPlan(moptParams.phase, moptParams.gaitCycle, moptParams.drawRobotPose, moptParams.drawPlanDetails, moptParams.drawContactForces, moptParams.drawOrientation);
 
 		int startIndex = locomotionManager->motionPlan->wrapAroundBoundaryIndex;
 		if (startIndex < 0)  startIndex = 0;
-		COMSpeed = locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(locomotionManager->motionPlan->nSamplePoints - 1) - 
-			       locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(startIndex);
-			
+		COMSpeed = locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(locomotionManager->motionPlan->nSamplePoints - 1) -
+			locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(startIndex);
+
+	}
+	for (auto widget : widgets)
+	{
+		if (fabs(widget2constraint[widget]->phase - moptParams.phase) < (moptParams.motionPlanDuration / nTimeSteps))
+			widget->transparent = true;
+		else
+			widget->transparent = false;
+		widget->draw();
 	}
 }
 
-void MOPTWindow::drawAuxiliarySceneInfo(){
+void MOPTWindow::drawAuxiliarySceneInfo() {
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	preDraw();
@@ -376,7 +384,18 @@ void MOPTWindow::drawAuxiliarySceneInfo(){
 //any time a physical key is pressed, this event will trigger. Useful for reading off special keys...
 bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
 	if (initialized && ffpViewer) {
-		return (ffpViewer->onKeyEvent(key, action, mods));
+		if (ffpViewer->onKeyEvent(key, action, mods))
+			return true;
+		if (key == GLFW_KEY_DELETE)
+			for (auto itr = widgets.begin(); itr != widgets.end(); itr++)
+			{
+				if ((*itr)->active)
+				{
+					locomotionManager->motionPlan->EEPosObjectives.remove(widget2constraint[*itr]);
+					widgets.erase(itr);
+					break;
+				}
+			}
 	}
 	return false;
 }
@@ -386,6 +405,9 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 		if (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging())
 			if (ffpViewer->onMouseMoveEvent(xPos, yPos)) return true;
 	}
+
+
+
 	pushViewportTransformation();
 	Ray ray = getRayFromScreenCoords(xPos, yPos);
 	popViewportTransformation();
@@ -394,7 +416,40 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	RobotState robotState(robot);
 	locomotionManager->motionPlan->robotStateTrajectory.getRobotPoseAt(moptParams.phase, robotState);
 	robot->setState(&robotState);
+	updateJointVelocityProfileWindowOnMouseMove(ray, xPos, yPos);
+	robot->setState(&oldState);
 
+	DynamicArray<LocomotionEngine_EndEffectorTrajectory> &EET = locomotionManager->motionPlan->endEffectorTrajectories;
+	int i;
+	endEffectorInd = -1;
+	for (i = 0; i < EET.size(); i++) {
+		EET[i].isHighlighted = false;
+		P3D p;
+		P3D EEPos = EET[i].getEEPositionAt(moptParams.phase);
+		double dist = ray.getDistanceToPoint(EEPos, &p);
+		double tVal = ray.getRayParameterFor(p);
+		if (dist < 0.01 * 1.2 && tVal < DBL_MAX) {
+			EET[i].isHighlighted = true;
+			endEffectorInd = i;
+			break;
+		}
+	}
+	pushViewportTransformation();
+	for (auto widget : widgets)
+		if (widget->onMouseMoveEvent(xPos, yPos))
+		{
+			widget2constraint[widget]->pos = widget->pos;
+			popViewportTransformation();
+			return true;
+		}
+			
+	popViewportTransformation();
+
+	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
+}
+
+void MOPTWindow::updateJointVelocityProfileWindowOnMouseMove(Ray &ray, double xPos, double yPos)
+{
 	Joint* joint;
 	dVector velocity;
 	double tMinJ = DBL_MAX;
@@ -420,23 +475,21 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 			velocityProfileWindow->dispose();
 			velocityProfileWindow = nullptr;
 		}
-		robot->setState(&oldState);
-		return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 	}
-	
-	if (velocityProfileWindow == nullptr)
+	else
 	{
-		velocityProfileWindow = new Window(glApp->menuScreen, "Velocity Profile");
-		velocityProfileWindow->setWidth(300);
-		velocityProfileWindow->setLayout(new GroupLayout());
-		velocityProfileGraph = velocityProfileWindow->add<Graph>("Velocity");
+		if (velocityProfileWindow == nullptr)
+		{
+			velocityProfileWindow = new Window(glApp->menuScreen, "Velocity Profile");
+			velocityProfileWindow->setWidth(300);
+			velocityProfileWindow->setLayout(new GroupLayout());
+			velocityProfileGraph = velocityProfileWindow->add<Graph>("Velocity");
+		}
+		velocityProfileWindow->setPosition(Eigen::Vector2i(xPos / 1.5, yPos / 1.5));
+		velocityProfileGraph->setValues(velocity.cast<float>());
+
+		glApp->menuScreen->performLayout();
 	}
-	velocityProfileWindow->setPosition(Eigen::Vector2i(xPos /1.5, yPos / 1.5));
-	velocityProfileGraph->setValues(velocity.cast<float>());
-	
-	glApp->menuScreen->performLayout();
-	robot->setState(&oldState);
-	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 }
 
 bool MOPTWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos)
@@ -445,7 +498,21 @@ bool MOPTWindow::onMouseButtonEvent(int button, int action, int mods, double xPo
 		if (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging())
 			if (ffpViewer->onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
 	}
-
+	if (action == GLFW_PRESS && endEffectorInd > -1)
+	{
+		auto widget = std::make_shared<TranslateWidget>(AXIS_X | AXIS_Z);
+		widgets.push_back(widget);
+		int timeStep = floor((moptParams.phase / moptParams.motionPlanDuration)*nTimeSteps);
+		Logger::consolePrint("Picked end effector %d at time step %d", endEffectorInd, timeStep);
+		widget->pos = P3D(locomotionManager->motionPlan->endEffectorTrajectories[endEffectorInd].getEEPositionAt(moptParams.motionPlanDuration*timeStep/nTimeSteps));
+		auto EEPosObj = make_shared<EndEffectorPositionObjective>();
+		EEPosObj->endEffectorInd = endEffectorInd;
+		EEPosObj->sampleNum = timeStep;
+		EEPosObj->pos = P3D(widget->pos);
+		EEPosObj->phase = moptParams.phase;
+		locomotionManager->motionPlan->EEPosObjectives.push_back(EEPosObj);
+		widget2constraint[widget] = EEPosObj;
+	}
 	return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
 }
 

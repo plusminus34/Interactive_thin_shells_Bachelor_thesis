@@ -60,15 +60,12 @@ void MPO_JointsAnglesSoftConstraint::addHessianEntriesTo(DynamicArray<MTriplet>&
 
 	for (int j=0; j<nSamplePoints-1; j++){
 		for (int i=startQIndex; i<=endQIndex; i++){
+			int I = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + i;
 			double Qij = theMotionPlan->robotStateTrajectory.qArray[j][i];
-
+			
 			// lower bound hessian
 			// d_jm_jm
-			addMTripletToList_reflectUpperElements(
-						hessianEntries,
-						theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + i,
-						theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + i,
-						weight * constraintSymmetricBound->computeSecondDerivative(Qij));
+			ADD_HES_ELEMENT(hessianEntries, I, I, constraintSymmetricBound->computeSecondDerivative(Qij), weight);
 		}
 	}
 }
