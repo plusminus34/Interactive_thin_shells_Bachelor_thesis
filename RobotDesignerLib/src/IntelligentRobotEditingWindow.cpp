@@ -637,11 +637,20 @@ void IntelligentRobotEditingWindow::updateParamsUsingSliders(int paramIndex, dou
 void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const dVector& p) {
 	rdApp->prd->setParameters(p);
 	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
+
+	if (rdApp->designWindow)
+		rdApp->designWindow->matchDesignWithRobot(rdApp->robot, &rdApp->startingRobotState);
+
 }
 void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const std::vector<double>& p) {
 	rdApp->prd->setParameters(p);
 	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
+
+	if (rdApp->designWindow)
+		rdApp->designWindow->matchDesignWithRobot(rdApp->robot, &rdApp->startingRobotState);
+
 }
+
 void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 {
 	if (updateJacobiancontinuously)
@@ -668,7 +677,7 @@ void IntelligentRobotEditingWindow::drawScene() {
 
 	tWidget->draw();
 
-	int flags = SHOW_ABSTRACT_VIEW | SHOW_BODY_FRAME | SHOW_JOINTS | HIGHLIGHT_SELECTED;
+	int flags = SHOW_ABSTRACT_VIEW | SHOW_BODY_FRAME | SHOW_JOINTS | HIGHLIGHT_SELECTED | SHOW_WHEELS;
 
 	RobotState rs(rdApp->robot);
 	rdApp->robot->setState(&rdApp->prd->defaultRobotState);

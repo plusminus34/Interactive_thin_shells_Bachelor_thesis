@@ -153,10 +153,17 @@ void RigidBody::draw(int flags, V3D color, double alpha) {
 			drawCylinder(lastFeature, rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius, 16);
 
 			glColor3d(0, 0.5, 1);
-			if (rbProperties.endEffectorPoints[i].isWheel() && !rbProperties.endEffectorPoints[i].isWeldedWheel()) {
+			if (rbProperties.endEffectorPoints[i].isWheel() /*&& !rbProperties.endEffectorPoints[i].isWeldedWheel()*/ && flags & SHOW_WHEELS) {
 				V3D axis = rbProperties.endEffectorPoints[i].localCoordsWheelAxis;
 				drawArrow(rbProperties.endEffectorPoints[i].coords, rbProperties.endEffectorPoints[i].coords + axis*0.05, 0.0025);
+				P3D wheelCenter = rbProperties.endEffectorPoints[i].coords;
+				glColor4d(0.2, 0.6, 0.8, 0.8);
+				double width = 0.01;
+				drawCylinder(wheelCenter - axis*0.5*width, axis*width, rbProperties.endEffectorPoints[i].featureSize, 24);
 			}
+
+
+
 		}
 
 		for (uint i = 0; i < cJoints.size(); i++) {
