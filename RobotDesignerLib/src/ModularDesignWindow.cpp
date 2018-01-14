@@ -1858,8 +1858,8 @@ void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot, RobotState* initia
 
 	if (incompatible){
 		tRobot->setState(&currentRobotState);
-		Logger::consolePrint("This .rbs is not compatible with current design!");
-		return;
+		Logger::consolePrint("This .rbs does not seem compatible with current design!");
+//		return;
 	}
 
 	// move the plates with motors

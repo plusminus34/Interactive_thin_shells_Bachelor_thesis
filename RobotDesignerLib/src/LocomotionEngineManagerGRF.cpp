@@ -377,8 +377,8 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 
 	//consistancy constraints (between robot states and other auxiliary variables)
-	ef->addObjectiveFunction(new MPO_RobotEndEffectorsObjective(ef->theMotionPlan, "robot EE objective", 10000.0), "Consistency Constraints (Kinematics)");
-	ef->addObjectiveFunction(new MPO_RobotWheelAxisObjective(ef->theMotionPlan, "robot wheel axis objective", 10000.0), "Consistency Constraints (Kinematics)");
+	ef->addObjectiveFunction(new MPO_RobotEndEffectorsObjective(ef->theMotionPlan, "robot EE objective", 10000.0), "Consistency Constraints (Kinematics)"); ef->objectives.back()->hackHessian = true;
+	ef->addObjectiveFunction(new MPO_RobotWheelAxisObjective(ef->theMotionPlan, "robot wheel axis objective", 10000.0), "Consistency Constraints (Kinematics)"); ef->objectives.back()->hackHessian = true;
 	ef->addObjectiveFunction(new MPO_RobotCOMObjective(ef->theMotionPlan, "robot COM objective", 10000.0), "Consistency Constraints (Kinematics)");
 	ef->addObjectiveFunction(new MPO_RobotCOMOrientationsObjective(ef->theMotionPlan, "robot COM orientations objective", 10000.0), "Consistency Constraints (Kinematics)");
 	ef->addObjectiveFunction(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0), "Consistency Constraints (Kinematics)");
@@ -445,7 +445,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	//functional objectives
 	ef->addObjectiveFunction(new MPO_COMTravelObjective(ef->theMotionPlan, "COM Travel objective", 50.0), "Objectives");
 	ef->addObjectiveFunction(new MPO_COMTurningObjective(ef->theMotionPlan, "COM turning objective (YAW)", 50.0), "Objectives");
-	ef->addObjectiveFunction(new MPO_EEPosObjective(ef->theMotionPlan, "EE position objective", 1), "Objectives");
+	ef->addObjectiveFunction(new MPO_EEPosObjective(ef->theMotionPlan, "EE position objective", 10000), "Objectives");
 
 	//smooth motion regularizers
 	ef->addObjectiveFunction(new MPO_SmoothStanceLegMotionObjective(ef->theMotionPlan, "robot stance leg smooth joint angle trajectories", 0.01), "Smooth Regularizer");

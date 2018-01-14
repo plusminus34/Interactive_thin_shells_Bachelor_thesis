@@ -16,6 +16,7 @@ struct EndEffectorPositionObjective {
 	int endEffectorInd;
 	int sampleNum;
 	P3D pos;
+	double phase;
 };
 
 class LocomotionEngine_EndEffectorTrajectory{

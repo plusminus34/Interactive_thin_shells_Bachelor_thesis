@@ -22,6 +22,7 @@ public:
 	double scale = 0.2;
 	// Flag indicating if the widget is visible. If false, it is also unpickable
 	bool visible = true;
+	bool transparent = false;
 	// Flag indicating if the widget is active, i.e., if the mouse is over it
 	bool active = false;
 	// Flag indicating if the widget is being dragged
