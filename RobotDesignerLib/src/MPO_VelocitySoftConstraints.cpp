@@ -8,7 +8,7 @@ MPO_VelocitySoftBoundConstraints::MPO_VelocitySoftBoundConstraints(LocomotionEng
 	this->startQIndex = startQIndex;
 	this->endQIndex = endQIndex;
 
-	constraintSymmetricBound = std::make_shared<SoftSymmetricBarrierConstraint>(theMotionPlan->jointVelocityLimit, 10);
+	constraintSymmetricBound = std::make_unique<SoftSymmetricBarrierConstraint>(theMotionPlan->jointVelocityLimit);
 }
 
 MPO_VelocitySoftBoundConstraints::~MPO_VelocitySoftBoundConstraints(void) {

@@ -24,6 +24,13 @@ void SoftUnilateralConstraint::setLimit(double l)
 void SoftUnilateralConstraint::setEpsilon(double eps)
 {
 	epsilon = eps;
+	b1 = -0.5 * a1 * epsilon;
+	c1 = -1.0 / 3 * (-b1 - a1 * epsilon) * epsilon - 1.0 / 2 * a1 * epsilon * epsilon - b1 * epsilon;
+
+	a2 = (-b1 - a1 * epsilon) / (epsilon * epsilon);
+	b2 = a1;
+	c2 = b1;
+	d2 = c1;
 }
 
 // returns 1/2 C'C, where C is the current set of equality constraint values
@@ -139,10 +146,9 @@ double SmoothBarrierConstraint::computeSecondDerivative(double x) {
 	return 2 / ((x)*(x)*(x));
 }
 
-SoftSymmetricBarrierConstraint::SoftSymmetricBarrierConstraint(double limit, double stiffness)
+SoftSymmetricBarrierConstraint::SoftSymmetricBarrierConstraint(double limit)
 {
 	this->limit = limit;
-	this->stiffness = stiffness;
 }
 
 SoftSymmetricBarrierConstraint::~SoftSymmetricBarrierConstraint() {}
@@ -156,7 +162,7 @@ double SoftSymmetricBarrierConstraint::computeValue(double x)
 		 val = x - limit;
 	else   // x<-limit
 		val = - limit - x;
-	return stiffness*val*val*val;
+	return val*val*val;
 }
 
 double SoftSymmetricBarrierConstraint::computeDerivative(double x)
@@ -166,11 +172,11 @@ double SoftSymmetricBarrierConstraint::computeDerivative(double x)
 	double val;
 	if (x > limit) {
 		val = x - limit;
-		return 3 * stiffness*val*val;
+		return 3 *val*val;
 	}	
 	else {   // x<-limit
 		val = -limit - x;
-		return -3 * stiffness*val*val;
+		return -3 * val*val;
 	}
 }
 
@@ -184,5 +190,43 @@ double SoftSymmetricBarrierConstraint::computeSecondDerivative(double x)
 	else   // x<-limit
 		val = -limit - x;
 	
-	return 6 * stiffness * val;
+	return 6 * val;
+}
+
+SoftLowerBarrierConstraint::SoftLowerBarrierConstraint(double limit)
+{
+	this->limit = limit;
+}
+
+SoftLowerBarrierConstraint::~SoftLowerBarrierConstraint() {}
+
+double SoftLowerBarrierConstraint::computeValue(double x)
+{
+	if (x > limit)
+		return 0;
+	else
+	{
+		double val = limit - x;
+		return val*val*val;
+	}
+}
+
+double SoftLowerBarrierConstraint::computeDerivative(double x)
+{
+	if (x > limit)
+		return 0;
+	else {
+		double val = limit - x;
+		return -3 * val*val;
+	}
+}
+
+double SoftLowerBarrierConstraint::computeSecondDerivative(double x)
+{
+	if (x > limit)
+		return 0;
+	else {
+		double val = limit - x;
+		return 6 * val;
+	}
 }

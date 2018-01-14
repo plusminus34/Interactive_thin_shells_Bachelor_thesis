@@ -16,7 +16,6 @@ LivingSphereEE::LivingSphereEE()
 	update();
 }
 
-
 LivingSphereEE::~LivingSphereEE()
 {
 	delete eeMesh;
@@ -157,6 +156,122 @@ void LivingSphereEE::exportMeshes(const char* dirName, int index)
 	GLContentManager::addMeshFileMapping(nMesh, sphereEEFileName.c_str());
 }
 
+
+/** -------------------------------------------------------------------------------- **/
+Living6FaceConnector::Living6FaceConnector(){
+	type = LIVING_6FACE_CONNECTOR;
+
+	update();
+}
+
+Living6FaceConnector::~Living6FaceConnector(){
+	delete mesh;
+}
+
+Living6FaceConnector* Living6FaceConnector::clone(){
+	Living6FaceConnector* new_rmc = new Living6FaceConnector();
+	new_rmc->size = size;
+	new_rmc->state = state;
+	new_rmc->rbProperties = rbProperties;
+
+	new_rmc->meshes = meshes;
+	new_rmc->name = name;
+	new_rmc->id = id;
+	new_rmc->type = type;
+	new_rmc->motorAxis = motorAxis;
+	new_rmc->motorAngle = motorAngle;
+
+	new_rmc->material = material;
+
+	new_rmc->mappingInfo = mappingInfo;
+
+	new_rmc->pins = pins;
+	for (uint i = 0; i < pins.size(); i++)
+		new_rmc->pins[i].rmc = new_rmc;
+
+	for (uint i = 0; i < pins.size(); i++){
+		new_rmc->pins[i].compatibleMap = pins[i].compatibleMap;
+	}
+
+	for (uint i = 0; i < bulletCollisionObjects.size(); i++) {
+		new_rmc->bulletCollisionObjects.push_back(bulletCollisionObjects[i]->clone());
+		new_rmc->bulletCollisionObjects.back()->parent = new_rmc;
+	}
+
+	return new_rmc;
+}
+
+bool Living6FaceConnector::pickMesh(Ray& ray, double* closestDist /*= NULL*/){
+	Transformation invTrans = Transformation(state.orientation.getRotationMatrix(), state.position).inverse();
+	Ray newRay(invTrans.transform(ray.origin), invTrans.transform(ray.direction));
+
+	return (mesh->getDistanceToRayOriginIfHit(newRay, closestDist));
+}
+
+void Living6FaceConnector::draw(int flags, const Vector4d& color /*= Vector4d(0, 0, 0, 0)*/){
+	if (flags & SHOW_PINS)
+		for (uint i = 0; i < pins.size(); i++) {
+			if ((&pins[i]) == pickedPin)
+				pins[i].draw(V3D(1, 0, 0));
+			else
+				pins[i].draw(V3D(0, 1, 1));
+		}
+
+	if (flags & SHOW_MESH) {
+		if (color.isZero()){
+			mesh->setMaterial(material);
+		}
+		else {
+			GLShaderMaterial colorMat;
+			colorMat.setColor(color[0], color[1], color[2], color[3]);
+			mesh->setMaterial(colorMat);
+		}
+
+		glEnable(GL_LIGHTING);
+		glPushMatrix();
+		glTranslated(state.position[0], state.position[1], state.position[2]);
+		//and rotation part
+		V3D rotAxis; double rotAngle;
+		state.orientation.getAxisAngle(rotAxis, rotAngle);
+		glRotated(DEG(rotAngle), rotAxis[0], rotAxis[1], rotAxis[2]);
+
+		mesh->drawMesh();
+		glPopMatrix();
+	}
+
+	return;
+}
+
+void Living6FaceConnector::update(){
+	delete mesh;
+	mesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-6FaceConnector.obj")->clone();
+	//now scale it according to the radius...
+	for (int i = 0; i < mesh->getVertexCount() * 3; i++) {
+		mesh->getVertexArray()[i] *= size;
+	}
+	mesh->calBoundingBox();
+
+	for (auto& pin : pins) {
+		for (auto& v : pin.face.vertices)
+			v = P3D() + V3D(P3D(), v).unit() * size * sqrt(2);
+		pin.face.center = P3D() + V3D(P3D(), pin.face.center).unit() * size;
+		pin.transformation.T = pin.transformation.T.normalized() * size;
+	}
+}
+
+void Living6FaceConnector::syncSymmParameters(Living6FaceConnector* ref){
+	size = ref->size;
+}
+
+void Living6FaceConnector::exportMeshes(const char* dirName, int index){
+	string fileName = dirName + string("LivingConnectorMesh") + to_string(index) + string(".obj");
+
+	mesh->path = fileName;
+	mesh->writeTriangulatedMeshToObj(fileName.c_str());
+	GLMesh* nMesh = mesh->clone();
+	mesh->setMaterial(material);
+	GLContentManager::addMeshFileMapping(nMesh, fileName.c_str());
+}
 
 /** -------------------------------------------------------------------------------- **/
 LivingWheelEE::LivingWheelEE(const char* LMType){

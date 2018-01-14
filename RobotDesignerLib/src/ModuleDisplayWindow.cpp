@@ -41,9 +41,7 @@ ModuleDisplayWindow::ModuleDisplayWindow() : GLWindow3D() {
 }
 
 void ModuleDisplayWindow::drawScene() {
-
 	if (rmc) {
-		rmc->draw(SHOW_MESH);
+		rmc->draw(SHOW_MESH | SHOW_PINS);
 	}
-		
 }

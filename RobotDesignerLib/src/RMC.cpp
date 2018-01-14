@@ -7,7 +7,6 @@ RMC::RMC(GLMesh* mesh)
 	this->meshes.push_back(mesh);
 }
 
-
 RMC::~RMC()
 {
 	/*for (auto bulletObj : bulletCollisionObjects)
@@ -240,3 +239,4 @@ void RMC::addBulletObjectsToList(DynamicArray<AbstractBulletObject*>& list) {
 		list.push_back(bulletCollisionObjects[i]);
 	}
 }
+

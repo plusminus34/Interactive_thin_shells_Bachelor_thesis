@@ -11,6 +11,13 @@
 #include <vector>
 #include <RBSimLib/HingeJoint.h>
 #include <ControlLib/IK_Solver.h>
+#include <memory>
+struct EndEffectorPositionObjective {
+	int endEffectorInd;
+	int sampleNum;
+	P3D pos;
+	double phase;
+};
 
 class LocomotionEngine_EndEffectorTrajectory{
 public:
@@ -26,7 +33,7 @@ public:
 	bool isWeldedWheel = false;			// true for a permanently fixed wheel
 	bool isPassiveWheel = false;		// true if passive wheel
 
-	double wheelRadius = 0.1;			// wheel radius
+	double wheelRadius = 0.01;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
 	//these are all quantities from the wheel's coordinate frame point of view...
 	V3D wheelAxisLocal_WF;					// wheel axis, not transformed by tilt and yaw angles...
@@ -46,6 +53,7 @@ public:
 	//and this is the index of the end effector contact point that it represents
 	int CPIndex = -1;
 
+	bool isHighlighted = false;
 public:
 	LocomotionEngine_EndEffectorTrajectory(int nPos);
 
@@ -207,7 +215,8 @@ public:
 	// Parameters for joint motor velocity constraint
 	double jointVelocityLimit = 0;
 	double jointVelocityEpsilon = 0.4;		// for SoftUnilateralConstraint
-
+	double jointAngleLimit = PI / 4;
+	double EEminDistance = 0.02;
 	dVector initialRobotState;
 	
 	// Parameters for wheel motor speed constraint
@@ -218,6 +227,8 @@ public:
 
 	//	parameters for L0 optimization
 	double jointL0Delta = 1;
+
+	list < shared_ptr<EndEffectorPositionObjective> > EEPosObjectives;
 
 public:
 	bool optimizeCOMPositions;

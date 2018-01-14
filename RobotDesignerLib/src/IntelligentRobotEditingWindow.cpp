@@ -160,12 +160,12 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 
 bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 	if (Robot* robot = rdApp->robot) {
-		preDraw();
+		pushViewportTransformation();
 		Ray ray = getRayFromScreenCoords(xPos, yPos);
-		postDraw();
+		popViewportTransformation();
 
 		if (tWidget->visible) {
-			preDraw();
+			pushViewportTransformation();
 			bool clickProcessed = false;
 			if ((clickProcessed = tWidget->onMouseMoveEvent(xPos, yPos)) == true) {
 				RobotState rs(robot);
@@ -218,7 +218,7 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 				updateParamsAndMotion(Eigen::Map<dVector>(currentDesignParameters.data(), currentDesignParameters.size()));
 				syncSliders();
 			}
-			postDraw();
+			popViewportTransformation();
 			if (clickProcessed)
 				return true;
 		}
@@ -637,11 +637,20 @@ void IntelligentRobotEditingWindow::updateParamsUsingSliders(int paramIndex, dou
 void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const dVector& p) {
 	rdApp->prd->setParameters(p);
 	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
+
+	if (rdApp->designWindow)
+		rdApp->designWindow->matchDesignWithRobot(rdApp->robot, &rdApp->startingRobotState);
+
 }
 void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const std::vector<double>& p) {
 	rdApp->prd->setParameters(p);
 	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
+
+	if (rdApp->designWindow)
+		rdApp->designWindow->matchDesignWithRobot(rdApp->robot, &rdApp->startingRobotState);
+
 }
+
 void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 {
 	if (updateJacobiancontinuously)
@@ -668,7 +677,7 @@ void IntelligentRobotEditingWindow::drawScene() {
 
 	tWidget->draw();
 
-	int flags = SHOW_ABSTRACT_VIEW | SHOW_BODY_FRAME | SHOW_JOINTS | HIGHLIGHT_SELECTED;
+	int flags = SHOW_ABSTRACT_VIEW | SHOW_BODY_FRAME | SHOW_JOINTS | HIGHLIGHT_SELECTED | SHOW_WHEELS;
 
 	RobotState rs(rdApp->robot);
 	rdApp->robot->setState(&rdApp->prd->defaultRobotState);

@@ -52,7 +52,7 @@ public:
 
 	virtual void copyBracketProperties(LivingHornBracket* lbh, bool mirror) {
 		if (lbh) {
-			if (mirror = false){
+			if (mirror == false){
 				bracketMountingAngle = lbh->bracketMountingAngle;
 				shouldRegenerateBracketMesh = true;
 //				connectorFaceAngle1 = lbh->connectorFaceAngle1;
@@ -99,9 +99,13 @@ public:
 
 	virtual void setDefaultFeaturePointList();
 
-	virtual void goToNextMountingPosition() { bracketMountingAngle += RAD(15.0); shouldRegenerateBracketMesh = true; }
+	virtual void goToNextMountingPosition() { bracketMountingAngle += RAD(360./(double)numMountingPositions); shouldRegenerateBracketMesh = true; }
 
-	virtual void goToPreviousMountingPosition() { bracketMountingAngle -= RAD(15.0); shouldRegenerateBracketMesh = true; }
+	virtual void goToPreviousMountingPosition() { bracketMountingAngle -= RAD(360./ (double)numMountingPositions); shouldRegenerateBracketMesh = true; }
+
+private:
+	// The TGY 306G servo motor has 27 mounting positions
+	const int numMountingPositions = 27;
 };
 
 /*

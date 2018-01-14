@@ -135,11 +135,10 @@ void SimWindow::drawScene() {
 	glEnable(GL_LIGHTING);
 
 	int flags = 0;
-	if (drawMeshes) flags |= SHOW_MESH | SHOW_MATERIALS | SHOW_ABSTRACT_VIEW;
-	if (drawSkeletonView) flags |= SHOW_BODY_FRAME | SHOW_ABSTRACT_VIEW;
+	if (drawMeshes) flags |= SHOW_MESH | SHOW_MATERIALS;
+	if (drawSkeletonView) flags |= SHOW_BODY_FRAME | SHOW_ABSTRACT_VIEW | SHOW_JOINTS;
 	if (drawMOIs) flags |= SHOW_MOI_BOX;
 	if (drawCDPs) flags |= SHOW_CD_PRIMITIVES;
-	if (drawSkeletonView) flags |= SHOW_JOINTS;
 
 	glEnable(GL_LIGHTING);
 	if (rbEngine)
@@ -153,9 +152,9 @@ void SimWindow::drawScene() {
 
 
 void SimWindow::setPerturbationForceFromMouseInput(double xPos, double yPos) {
-	preDraw();
+	pushViewportTransformation();
 	Ray ray = getRayFromScreenCoords(xPos, yPos);
-	postDraw();
+	popViewportTransformation();
 	P3D pForce;
 	//ray.getDistanceToPoint(robot->root->getCMPosition(), &pForce);
 	ray.getDistanceToPlane(Plane(robot->root->getCMPosition(), V3D(0, 1, 0)), &pForce);

@@ -273,7 +273,7 @@ bool RMCRobot::pickRMC(Ray& ray, double* closestDist)
 
 	for (uint i = 0; i < jointList.size(); i++) {
 		bool res = jointList[i]->getChild()->pickMesh(ray, &dist);
-		if (res && dist < minDist) {
+		if (res && dist < minDist && jointList[i]->getChild()->type != LIVING_CONNECTOR) {
 			intersect = true;
 			minDist = dist;
 			highlightedRMC = jointList[i]->getChild();
@@ -371,6 +371,14 @@ void RMCRobot::saveToFile(FILE* fp)
 
 			fprintf(fp, "LivingSphereEE %s ", rmc->getName().c_str());
 			fprintf(fp, "%lf ", livingRMC->sphereRadius);
+			fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf", q[0], q[1], q[2], q[3], pos[0], pos[1], pos[2]);
+		}
+		else if (rmc->type == LIVING_6FACE_CONNECTOR)
+		{
+			Living6FaceConnector* livingRMC = dynamic_cast<Living6FaceConnector*>(rmc);
+
+			fprintf(fp, "SixFaceConnector %s ", rmc->getName().c_str());
+			fprintf(fp, "%lf ", livingRMC->size);
 			fprintf(fp, "%lf %lf %lf %lf %lf %lf %lf", q[0], q[1], q[2], q[3], pos[0], pos[1], pos[2]);
 		}
 		else if (rmc->type == LIVING_WHEEL_EE)
@@ -515,6 +523,24 @@ void RMCRobot::loadFromFile(FILE* fp, map<string, RMC*>& rmcNameMap)
 			posMap[livingRMC] = pos;
 			qMap[livingRMC] = q;
 		}
+		else if (strcmp(keyword, "SixFaceConnector") == 0)
+		{
+			char name[50];
+			sscanf(line + strlen(keyword), "%s", name);
+			Living6FaceConnector* livingRMC = dynamic_cast<Living6FaceConnector*>(rmcNameMap[name])->clone();
+			tmpRmcs.push_back(livingRMC);
+			if (!root)
+				root = livingRMC;
+
+			P3D pos;
+			Quaternion q;
+
+			int num = sscanf(line + strlen(keyword) + strlen(name) + 1, "%lf %lf %lf %lf %lf %lf %lf %lf", &livingRMC->size, &q[0], &q[1], &q[2], &q[3], &pos[0], &pos[1], &pos[2]);
+			livingRMC->update();
+
+			posMap[livingRMC] = pos;
+			qMap[livingRMC] = q;
+		}
 		else if (strcmp(keyword, "LivingWheelEE") == 0)
 		{
 			char name[50];
@@ -613,6 +639,11 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 		else if (rmc->type == LIVING_CONNECTOR)
 		{
 			dynamic_cast<LivingConnector*>(rmc)->exportMeshes(robotMeshDir.c_str(), connectorID);
+			connectorID++;
+		}
+		else if (rmc->type == LIVING_6FACE_CONNECTOR)
+		{
+			dynamic_cast<Living6FaceConnector*>(rmc)->exportMeshes(robotMeshDir.c_str(), connectorID);
 			connectorID++;
 		}
 		else if (rmc->type == LIVING_SPHERE_EE)
@@ -781,9 +812,19 @@ void RMCRobot::saveToRBSFile(const char* fName, const string& robotMeshDir, Robo
 			rb.meshDescriptions.push_back("skeleton");
 		}
 
+		else if (rmc->type == LIVING_6FACE_CONNECTOR)
+		{
+			Living6FaceConnector* connector = dynamic_cast<Living6FaceConnector*>(rmc);
+			rb.meshes.push_back(connector->mesh);
+			Transformation trans;
+			trans.R = rmc->state.orientation.getRotationMatrix();
+			trans.T = rmc->state.position - rb.state.position;
+			rb.meshTransformations.push_back(trans);
+			rb.meshDescriptions.push_back("skeleton");
+		}
+
 		if (rmc->type == LIVING_WHEEL_EE)
 		{
-
 			LivingWheelEE* wheelEE = dynamic_cast<LivingWheelEE*>(rmc);
 			rb.meshes.push_back(wheelEE->wheelMesh);
 			//keep track of the mesh associated with this end effector - we will need to keep track of it such as to be able to spin it appropriately... 
