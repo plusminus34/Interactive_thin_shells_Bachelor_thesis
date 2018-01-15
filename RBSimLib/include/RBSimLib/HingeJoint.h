@@ -18,7 +18,8 @@ public:
 	bool flipMotorAxis = false;
 
 	//temporary end-effector speed variable for yumi
-	unsigned int yumiSpeed = 100;
+	unsigned int currentYuMiTCPSpeed = 100;
+	unsigned int targetYuMiTCPSpeed = currentYuMiTCPSpeed;
 
 /* everything below is specific to servomotors... */
 

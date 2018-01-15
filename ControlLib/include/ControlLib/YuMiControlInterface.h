@@ -3,6 +3,8 @@
 #include "RobotControlInterface.h"
 #include "../YuMiLib/include/YuMiLib/YuMiArm.h"
 
+#include <ControlLib/IK_Solver.h>
+
 #include <string>
 #include <iostream>
 
@@ -34,9 +36,13 @@ public:
 	virtual void openCommunicationPort();
 	virtual void closeCommunicationPort();
 	virtual void driveMotorPositionsToZero();
-    virtual void driveMotorPositionsToTestPos();
 
-	void driveMotorPositionsToInputPos(std::vector<float> leftJoints, std::vector<float> rightJoints);
+	virtual void driveMotorPositionsToTestPos1(IK_Solver* ikSolverPtr);
+	virtual void driveMotorPositionsToTestPos2(IK_Solver* ikSolverPtr);
+	void driveMotorPositionsToInputPos(std::vector<float> leftJoints, std::vector<float> rightJoints, IK_Solver* ikSolverPtr);
 	void grip(std::string arm);
+	virtual void printJointValues();
+	bool sendJointInputsCheck();
+	bool sendSpeedInputCheck();
 
 };

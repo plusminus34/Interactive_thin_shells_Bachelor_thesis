@@ -115,17 +115,18 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
         if(connected){
             std::cerr << "Failed to send command to robot" << std::endl;
         }
-    } else {
+	} else {
         // Read the reply to the message we just sent, and make sure
         // it's not corrupt, and the command was executed successfully
+		usleep(5000);
 		if(waitForReply){
-			//usleep(100000);
-			int t;
-			if ((t=recv(robotSocket, reply, YuMiConstants::BUFSIZE-1, 0)) > 0) {
+			int t = recv(robotSocket, reply, YuMiConstants::BUFSIZE-1, 0);
+			if(t > 0 && t < YuMiConstants::BUFSIZE && checkReply(reply)){
 				reply[t] = '\0';
 				int ok, rcvIdCode;
 				sscanf(reply,"%d %d", &rcvIdCode, &ok);
 				//std::cout << "reply: " << reply << std::endl;
+				//std::cout << "message: " << message << std::endl;
 				if(idCode!=-1) {
 					if ((ok == YuMiConstants::SERVER_OK) && (rcvIdCode == idCode)) {
 						//pthread_mutex_unlock(&sendRecvMutex);
@@ -136,6 +137,7 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
 					} else {
 						std::cerr << "WARNING: Corrupt message 1:" << std::endl;
 						std::cerr << "msg = " << message << ";  reply = " << reply << ";  idCode = " << idCode << ";  ok = " << ok << ";  rcvCode = " << rcvIdCode << std::endl;
+						//usleep(100000);
 					}
 				} else {
 					if (ok == YuMiConstants::SERVER_OK) {
@@ -150,12 +152,14 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
 					}
 				}
 			} else {
-				if(connected){
+				if(connected && idCode != YuMiConstants::ID_CLOSE_CONNECTION){
 					std::cerr << "WARNING: Failed to receive answer from robot" << std::endl;
 				}
 			}
 		} else {
-			reply[2] = '\0';
+			memset(reply, 0, sizeof(reply));
+			reply[0] = 'x';
+			sendRecvMutex.unlock();
 			success = true;
 		}
     }
@@ -166,7 +170,22 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
 }
 
 
-//Ping robot
+bool YuMiArm::checkReply(char* reply){
+	bool checkPassed = true;
+	const char *invalid_char = "x";
+	char *c = reply;
+	while(*c){
+		if(strchr(invalid_char, *c)){
+			checkPassed = false;
+		}
+		c++;
+	}
+	return checkPassed;
+}
+
+
+
+//Ping Robot
 bool YuMiArm::pingRobot(){
     char message[YuMiConstants::BUFSIZE];
     char reply[YuMiConstants::BUFSIZE];
@@ -196,14 +215,15 @@ std::vector<float> YuMiArm::getJoints(){
 
 	if(sendAndReceive(message, strlen(message), reply, idCode, waitForReply)){
 
+		//std::cout << "getJoints-reply: " << reply << std::endl;
         //Parse joints
         YuMiCom::parseJoints(reply, joint1, joint2, joint3, joint4, joint5, joint6, joint7);
         joints[0] = joint1; joints[1] = joint2; joints[2] = joint3; joints[3] = joint4; joints[4] = joint5; joints[5] = joint6; joints[6] = joint7;
 
     } else {
-        if(connected){
-			std::cerr << "ERROR: Something is wrong in YuMiArm getJoints!" << std::endl;
-        }
+//        if(connected){
+//			std::cerr << "ERROR: Something is wrong in YuMiArm getJoints!" << std::endl;
+//        }
     }
 
     return joints;
@@ -225,6 +245,7 @@ bool YuMiArm::gotoJointPose(std::vector<float> joints){
     strcpy(message, YuMiCom::gotoJointPose(idCode, joint1, joint2, joint3, joint4, joint5, joint6, joint7).c_str());
 
 	if(sendAndReceive(message, strlen(message), reply, idCode, waitForReply)){
+		//std::cout << "gotoJointPose-reply: " << reply << std::endl;
         return true;
     } else {
         return false;
@@ -242,6 +263,7 @@ bool YuMiArm::setSpeed(unsigned int s){
         strcpy(message, YuMiCom::setSpeed(idCode, s).c_str());
 
 		if(sendAndReceive(message, strlen(message), reply, idCode, waitForReply)){
+			//std::cout << "setSpeed-reply: " << reply << std::endl;
             return true;
         } else {
             return false;

@@ -31,6 +31,7 @@ public:
     bool connectServer(const char* p, unsigned int port);
     bool closeConnection();
 	bool sendAndReceive(char *message, int messageLength, char* reply, int idCode, bool waitForReply);
+	bool checkReply(char* reply);
 
     bool pingRobot();
     std::vector<float> getJoints();

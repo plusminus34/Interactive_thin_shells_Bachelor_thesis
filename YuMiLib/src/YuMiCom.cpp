@@ -52,6 +52,8 @@ std::string YuMiCom::getJoints(int idCode) {
     msg += std::to_string(idCode);
     msg += " #";
 
+	//std::cout << "getJoints-msg: " << msg << std::endl;
+
     return (msg);
 }
 
@@ -115,7 +117,7 @@ std::string YuMiCom::setSpeed(int idCode, unsigned int s){
 	msg += std::to_string(YuMiConstants::SPEED_DATA_ROT); msg += " ";
 	msg += "#";
 
-	//std::cout << "msg: " << msg << std::endl;
+	//std::cout << "setSpeed-msg: " << msg << std::endl;
 
     return (msg);
 }
@@ -136,7 +138,7 @@ std::string YuMiCom::initGripper(int idCode, float maxSpd, float holdForce, floa
 	}
 	msg += "#";
 
-//    std::cout << "msg: " << msg << std::endl;
+	//std::cout << "initGripper-msg: " << msg << std::endl;
 
 	return (msg);
 }
@@ -161,7 +163,7 @@ std::string YuMiCom::openGripper(int idCode, float targetPos, bool noWait){
 		msg += "#";
 	}
 
-	//    std::cout << "msg: " << msg << std::endl;
+	//std::cout << "openGripper-msg: " << msg << std::endl;
 
 	return (msg);
 }

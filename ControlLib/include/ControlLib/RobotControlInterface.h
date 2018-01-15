@@ -112,8 +112,11 @@ public:
 	virtual void openCommunicationPort() = 0;
 	virtual void closeCommunicationPort() = 0;
 	virtual void driveMotorPositionsToZero() = 0;
-    virtual void driveMotorPositionsToTestPos() = 0;
+
+	virtual void driveMotorPositionsToTestPos1(IK_Solver* ikSolverPtr) = 0;
+	virtual void driveMotorPositionsToTestPos2(IK_Solver* ikSolverPtr) = 0;
 	virtual void grip(std::string arm) = 0;
+	virtual void printJointValues() = 0;
 
 	void toggleMotorPower() {
 		motorsOn = !motorsOn;

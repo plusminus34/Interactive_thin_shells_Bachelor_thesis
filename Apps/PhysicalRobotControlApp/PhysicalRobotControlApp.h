@@ -35,12 +35,12 @@ private:
 
 	bool controlPositionsOnly = false;
     bool syncPhysicalRobot = false;
+	bool requestPosition = false;
 
 	bool startAtHomeState = true; //true = uses predefined home position / false = uses position where robot is currently in as home position
 	bool saveCurrentAsHomePosition = false;
 	std::string homeFilePath = "/scp/data/rbs/yumi/yumiHomeState.rs";
 
-	bool keepPosition = true;
 	unsigned int speed = 100;
 
 	RigidBody* selectedRigidBody = NULL;

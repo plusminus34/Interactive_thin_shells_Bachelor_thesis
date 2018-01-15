@@ -48,7 +48,7 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 
 			// Option 1: always start from home position
 			if(startAtHomeState){
-				std::cout << "start at home state" << std::endl;
+				//std::cout << "start at home state" << std::endl;
 				rs.readFromFile(homeStatePath);
 				robot->setState(&rs);
 				ikSolver->ikPlan->setTargetIKStateFromRobot();
@@ -83,13 +83,13 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 
 	button = new nanogui::Button(tools, "");
 	//button->setCallback([this]() { if (rci && rci->isConnected()) rci->driveMotorPositionsToZero(); });
-	button->setCallback([this]() { if (rci) rci->driveMotorPositionsToZero(); });
+	button->setCallback([this]() { if (rci) rci->driveMotorPositionsToTestPos1(ikSolver); });
 	button->setIcon(ENTYPO_ICON_HOME);
 	button->setTooltip("GoToZero");
 
     button = new nanogui::Button(tools, "");
 	//button->setCallback([this]() { if (rci && rci->isConnected()) rci->driveMotorPositionsToTestPos(); });
-	button->setCallback([this]() { if (rci) rci->driveMotorPositionsToTestPos(); });
+	button->setCallback([this]() { if (rci) rci->driveMotorPositionsToTestPos2(ikSolver); });
     button->setIcon(ENTYPO_ICON_HOME);
     button->setTooltip("GoToTestPos");
 
@@ -97,8 +97,7 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	mainMenu->addVariable("duration", trajDuration)->setSpinnable(true);
 	mainMenu->addVariable("control positions only", controlPositionsOnly);
     mainMenu->addVariable("sync physical robot", syncPhysicalRobot);
-	mainMenu->addVariable("start at home state", startAtHomeState);
-	mainMenu->addVariable("keep position", keepPosition);
+	mainMenu->addVariable("request position", requestPosition);
 	mainMenu->addVariable("speed", speed)->setSpinnable(true);
 
 
@@ -208,11 +207,11 @@ void PhysicalRobotControlApp::restart() {
 // Run the App tasks
 void PhysicalRobotControlApp::process() {
 
-	if(!keepPosition){
-		ikSolver->ikEnergyFunction->regularizer = 100;
-		ikSolver->ikOptimizer->checkDerivatives = true;
-		ikSolver->solve();
-	}
+	ikSolver->ikEnergyFunction->regularizer = 100;
+	ikSolver->ikOptimizer->checkDerivatives = true;
+	ikSolver->solve();
+
+	//rci->printJointValues();
 
     if (rci && syncPhysicalRobot) {
 		updateSpeedParameter();
@@ -332,7 +331,7 @@ void PhysicalRobotControlApp::drawScene() {
 	rbEngine->drawRBs(flags);
 
     RobotState rs(robot);
-    if (rci)
+	if (rci && requestPosition)
         rci->syncSimRobotWithPhysicalRobot();
     glTranslated(0, 0, 1);
     rbEngine->drawRBs(flags);
@@ -362,12 +361,8 @@ bool PhysicalRobotControlApp::processCommandLine(const std::string& cmdLine) {
 }
 
 void PhysicalRobotControlApp::updateSpeedParameter(){
-	for (int i = 0; i < robot->getJointCount(); i++) {
-		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-		if (!hj) continue;
-
-		hj->motor.yumiSpeed = speed;
-	}
+	HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(0));
+	hj->motor.targetYuMiTCPSpeed = speed;
 }
 
 
