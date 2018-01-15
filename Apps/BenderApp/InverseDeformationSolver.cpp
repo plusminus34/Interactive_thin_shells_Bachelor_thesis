@@ -28,7 +28,7 @@ InverseDeformationSolver<NDim>::~InverseDeformationSolver()
 	delete objectiveFunction;
 }
 
-
+/*
 template<int NDim>
 void InverseDeformationSolver<NDim>::pullXi()
 {
@@ -63,6 +63,34 @@ void InverseDeformationSolver<NDim>::pushXi()
 				p = xi[m->parametersStartIndex + (i++)];
 			}
 		}
+	}
+}
+*/
+
+template<int NDim>
+void InverseDeformationSolver<NDim>::pullXi()
+{
+	// find number of parameters
+	int n_parameters = 0;
+	for(ParameterSet* const * p: parameterSets) {
+		n_parameters += p->getNPar();
+	}
+	// copy values, set start index for each mount
+	xi.resize(n_parameters);
+	int i = 0;
+	for(ParameterSet* const * p: parameterSets) {
+		p->parametersStartIndex = i;
+		p->writeToList(xi, i);
+	}
+}
+
+
+template<int NDim>
+void InverseDeformationSolver<NDim>::pushXi()
+{
+	int i = 0;
+	for(ParameterSet* const * p: parameterSets) {
+		p->setFromList(xi, i);
 	}
 }
 

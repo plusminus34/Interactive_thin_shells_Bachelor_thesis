@@ -31,7 +31,17 @@ public:
 	AbstractRBEngine * rbEngine = NULL;
 	RobotState startState = RobotState();
 
+	// mount base in coords of gripper mesh
 
+	V3D mountBaseOriginMesh_l;
+	V3D mountBaseOriginMesh_r;
+	Matrix3x3 mountBaseCoordinatesMesh_l;
+	Matrix3x3 mountBaseCoordinatesMesh_r;
+
+	V3D mountBaseOriginRB_l;
+	V3D mountBaseOriginRB_r;
+	Matrix3x3 mountBaseCoordinatesRB_l;
+	Matrix3x3 mountBaseCoordinatesRB_r;
 
 	// solver for the inverse problem
 	InverseDeformationSolver<3> * inverseDeformationSolver;
@@ -70,7 +80,7 @@ public:
 	double maxRunningTime;
 
 	// visualization robot
-	bool showMesh = false;
+	bool showMesh = true;
 	bool showMOI = false;
 	bool showRotationAxes = true;
 	bool showCDPs = false;

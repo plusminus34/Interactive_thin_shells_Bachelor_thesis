@@ -183,6 +183,54 @@ BenderApp3D::BenderApp3D()
 	loadRobot(fnameRB);
 
 	robot->setHeading(-PI / 2.0);
+
+
+	//find mount base in coords of gripper mesh
+	{
+		std::string gripper_name = "link_7_l";
+
+		int face_xyPlane_mountBase_idx = 70363-1;
+		int face_xzPlane_mountSymmetric1_idx = 44563-1;
+		int face_xzPlane_mountSymmetric2_idx = 79225-1;
+		int vertex_yzPlane_idx = 22422-1;
+
+		RigidBody* gripper = rbEngine->getRBByName(gripper_name.c_str());
+		GLMesh* gripper_mesh = gripper->meshes[0];
+
+		GLIndexedTriangle face_xyPlane_mountBase = gripper_mesh->getTriangle(face_xyPlane_mountBase_idx);
+		GLIndexedTriangle face_xzPlane_mountSymmetric1 = gripper_mesh->getTriangle(face_xzPlane_mountSymmetric1_idx);
+		GLIndexedTriangle face_xzPlane_mountSymmetric2 = gripper_mesh->getTriangle(face_xzPlane_mountSymmetric2_idx);
+		Plane plane_xy = Plane(gripper_mesh->getVertex[face_xyPlane_mountBase.indexes[0]],
+								gripper_mesh->getVertex[face_xyPlane_mountBase.indexes[1]],
+								gripper_mesh->getVertex[face_xyPlane_mountBase.indexes[2]]);
+		Plane plane_xz_symmetric1 = Plane(gripper_mesh->getVertex[face_xzPlane_mountSymmetric1.indexes[0]],
+										gripper_mesh->getVertex[face_xzPlane_mountSymmetric1.indexes[1]],
+										gripper_mesh->getVertex[face_xzPlane_mountSymmetric1.indexes[2]]);
+		Plane plane_xz_symmetric2 = Plane(gripper_mesh->getVertex[face_xzPlane_mountSymmetric2.indexes[0]],
+										gripper_mesh->getVertex[face_xzPlane_mountSymmetric2.indexes[1]],
+										gripper_mesh->getVertex[face_xzPlane_mountSymmetric2.indexes[2]]);
+		P3D pt_yzPlane = gripper_mesh->getVertex(vertex_yzPlane_idx);
+
+		V3D z_dir = plane_xy.n;
+		V3D y_dir = plane_xz_symmetric1.n;
+		V3D x_dir = y_dir.cross(z_dir);
+
+		P3D pt_xzPlane = gripper_mesh->getVertex(gripper_mesh->getVertex[face_xzPlane_mountSymmetric1.indexes[0]])
+			             + y_dir * plane_xz_symmetric1.getSignedDistanceToPoint(gripper_mesh->getVertex(gripper_mesh->getVertex[face_xzPlane_mountSymmetric2.indexes[0]])) * 0.5;
+		P3D pt_xyPlane = gripper_mesh->getVertex[face_xyPlane_mountBase.indexes[0]];
+
+		V3D origin_mount_coordinates(pt_yzPlane[0], pt_xzPlane[1], pt_xyPlane[2]);
+
+		Matrix3x3 mountBaseCoordinatesMesh;
+		mountBaseCoordinatesMesh << z_dir, y_dir, x_dir;
+
+		V3D origin_original_coordinates = mountBaseCoordinatesMesh.inverse() * origin_mount_coordinates;
+
+		mountBaseOriginMesh_l = origin_original_coordinates;
+		mountBaseCoordinatesMesh_l = mountBaseCoordinatesMesh;
+
+	}
+
 	
 
 }
@@ -793,6 +841,7 @@ void BenderApp3D::drawScene() {
 
 	rbEngine->drawRBs(flags);
 	
+
 	
 }
 
@@ -810,13 +859,17 @@ void BenderApp3D::restart()
 
 void BenderApp3D::addRotationMount() 
 {
-	femMesh->addMount<RotationMount3D>();
+	inverseDeformationSolver->parameterSets.push_back(new EulerRotationParameters);
+	femMesh->addMount<RotationMount3D>(inverseDeformationSolver->parameterSets.back());
 	inverseDeformationSolver->pullXi();
 	updateMountSelectionBox();
 }
 
 void BenderApp3D::removeSelectedMount()
 {
+	std::cerr << "error: not properly implemented yet" << std::endl;
+	exit(3);
+	
 	femMesh->removeMount(selected_mount);
 	inverseDeformationSolver->pullXi();
 	updateMountSelectionBox();

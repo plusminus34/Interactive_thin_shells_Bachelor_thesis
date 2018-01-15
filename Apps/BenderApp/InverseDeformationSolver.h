@@ -19,6 +19,7 @@ public:
 	InverseDeformationObjectiveFunction<NDim> * objectiveFunction;
 
 	// Optimization Parameters
+	std::vector<ParameterSet*> parameterSets;
 	dVector xi;
 
 	// helpers for optimization
