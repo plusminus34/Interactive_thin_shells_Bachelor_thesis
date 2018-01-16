@@ -41,6 +41,10 @@ bool YuMiArm::init(std::string arm){
     //Connect arm to server
     bool socketConnected = connectServer(ip, port);
 
+	if(!socketConnected){
+		return false;
+	}
+
     //Set speed and joint variables
 	bool jointsReceived = getCurrentJointsFromRobot(true);
 	bool tcpSpeedSent = setRobotTCPSpeed(YuMiConstants::INIT_SPEED);
@@ -49,7 +53,7 @@ bool YuMiArm::init(std::string arm){
 	bool gripInit = initGripper();
 	bool gripOpened = openGripper();
 
-	if(socketConnected && jointsReceived && tcpSpeedSent && gripInit && gripOpened){
+	if(jointsReceived && tcpSpeedSent && gripInit && gripOpened){
         connected = true;
         return true;
     } else {
@@ -61,10 +65,10 @@ bool YuMiArm::init(std::string arm){
 
 //Open socket and connect
 bool YuMiArm::connectServer(const char* ip, unsigned int port) {
-    // Init bool
-    bool socketConnected = false;
+	// Init bool
+	bool socketConnected = false;
 
-    // Create a socket for robot
+	// Create a socket for robot
 #ifdef WIN32
 	unsigned short version = 2;
 	WSADATA w;
@@ -73,23 +77,102 @@ bool YuMiArm::connectServer(const char* ip, unsigned int port) {
 		std::cerr << "Failed to start Winsocket2" << std::endl;
 	}
 #endif
-    if ((robotSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
-        std::cerr << "Problem creating the socket" << std::endl;
-    else {
-        // Now try to connect to the robot server
-        struct sockaddr_in remoteSocket;
-        remoteSocket.sin_family = AF_INET;
-        remoteSocket.sin_port = htons(port);
-        inet_pton(AF_INET, ip, &remoteSocket.sin_addr.s_addr);
-        if(connect(robotSocket, (sockaddr*)&remoteSocket, sizeof(remoteSocket)) == -1){
-            std::cerr << "Could not connect to the ABB robot" << std::endl;
-        } else {
-            socketConnected = true;
-            std::cout << "Successfully connected to the ABB robot" << std::endl;
-        }
-    }
 
-    return socketConnected;
+	if ((robotSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
+		std::cerr << "Problem creating the socket" << std::endl;
+	else {
+		// Now try to connect to the robot server
+		struct sockaddr_in remoteSocket;
+		remoteSocket.sin_family = AF_INET;
+		remoteSocket.sin_port = htons(port);
+		inet_pton(AF_INET, ip, &remoteSocket.sin_addr.s_addr);
+		long arg;
+
+		// Set socket to non-blocking
+		if( (arg = fcntl(robotSocket, F_GETFL, NULL)) < 0) {
+			fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno));
+			return false;
+		}
+		arg |= O_NONBLOCK;
+		if( fcntl(robotSocket, F_SETFL, arg) < 0) {
+			fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
+			return false;
+		}
+
+		// Establish connection
+		int connection = connect(robotSocket, (sockaddr*)&remoteSocket, sizeof(remoteSocket));
+		if (connection < 0) {
+			struct timeval tv;
+			fd_set myset;
+			int valopt;
+			socklen_t lon;
+			if (errno == EINPROGRESS) {
+				//fprintf(stderr, "EINPROGRESS in connect() - selecting\n");
+
+				do {
+					tv.tv_sec = 3;
+					tv.tv_usec = 0;
+					FD_ZERO(&myset);
+					FD_SET(robotSocket, &myset);
+					connection = select(robotSocket+1, NULL, &myset, NULL, &tv);
+					if (connection < 0 && errno != EINTR) {
+						fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+						return false;
+					}
+					else if (connection > 0) {
+						// Socket selected for write
+						lon = sizeof(int);
+						if (getsockopt(robotSocket, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) {
+							fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno));
+							return false;
+						}
+						// Check the value returned...
+						if (valopt) {
+							fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt)
+									);
+							return false;
+						}
+						break;
+					}
+					else {
+						fprintf(stderr, "Timeout in select() - Cancelling!\n");
+						return false;
+					}
+				} while (1);
+			}
+			else {
+				fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+				return false;
+			}
+		}
+
+		if(connection > 0){
+			#ifndef WIN32
+			usleep(1000000);
+			#endif
+
+			bool pingReceived = pingRobot();
+			if(pingReceived){
+				if( (arg = fcntl(robotSocket, F_GETFL, NULL)) < 0) {
+					fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno));
+					return false;
+				}
+				arg &= (~O_NONBLOCK);
+				if( fcntl(robotSocket, F_SETFL, arg) < 0) {
+					fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
+					return false;
+				}
+
+				std::cout << "Successfully connected to the ABB robot" << std::endl;
+				socketConnected = true;
+			} else {
+				std::cerr << "Could not ping the robot... - Robot controller running?" << std::endl;
+			}
+		} else {
+			std::cerr << "Opening communication port failed..." << std::endl;
+		}
+	}
+	return socketConnected;
 }
 
 
@@ -169,7 +252,7 @@ bool YuMiArm::pingRobot(){
     strcpy(message, YuMiCom::ping(idCode).c_str());
 
 	if(sendAndReceive(message, strlen(message), reply, idCode)){
-        std::cout << "reply: " << reply << std::endl;
+		//std::cout << "reply: " << reply << std::endl;
         return true;
     } else {
         return false;
@@ -239,6 +322,26 @@ bool YuMiArm::setRobotTCPSpeed(unsigned int speed){
 		std::cerr << "ERROR in YuMiArm setSpeed -> speed must be larger than 0!" << std::endl;
         return false;
     }
+}
+
+
+bool YuMiArm::getAndSendJointsAndTCPSpeedToRobot(YuMiJoints yumiJoints, unsigned int speed){
+	char message[YuMiConstants::BUFSIZE];
+	char reply[YuMiConstants::BUFSIZE];
+	int idCode = YuMiConstants::ID_GET_SEND_JOINTS_SPEED;
+
+	strcpy(message, YuMiCom::getAndSendJointsAndTCPSpeed(idCode, targetJoints, TCPSpeed).c_str());
+
+	if(sendAndReceive(message, strlen(message), reply, idCode)){
+		//Set current joints, target joints and TCPSpeed
+		targetJoints = yumiJoints;
+		TCPSpeed = speed;
+		YuMiCom::parseJoints(reply, currentJoints);
+	} else {
+		if(connected){
+			std::cerr << "ERROR: Something is wrong in YuMiArm getJoints!" << std::endl;
+		}
+	}
 }
 
 

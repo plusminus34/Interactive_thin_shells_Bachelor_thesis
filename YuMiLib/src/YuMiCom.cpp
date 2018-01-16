@@ -129,7 +129,7 @@ std::string YuMiCom::setTCPSpeed(int idCode, unsigned int speed){
     return (msg);
 }
 
-std::string getAndSetJointsAndTCPSpeed(int idCode, YuMiJoints yumiJoints, unsigned int speed){
+std::string YuMiCom::getAndSendJointsAndTCPSpeed(int idCode, YuMiJoints yumiJoints, unsigned int speed){
 	std::string msg;
 	if(idCode < 10){
 		msg = "0";

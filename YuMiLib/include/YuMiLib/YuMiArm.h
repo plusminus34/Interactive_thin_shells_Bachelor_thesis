@@ -36,8 +36,9 @@ public:
 
     bool pingRobot();
 	bool getCurrentJointsFromRobot(bool setTargetToCurrent);
-	bool sendRobotToJointPose(YuMiJoints inputJoints);
-	bool setRobotTCPSpeed(unsigned int inputSpeed);
+	bool sendRobotToJointPose(YuMiJoints yumiJoints);
+	bool setRobotTCPSpeed(unsigned int speed);
+	bool getAndSendJointsAndTCPSpeedToRobot(YuMiJoints yumiJoints, unsigned int speed);
 
 	bool initGripper();
 	bool closeGripper();
