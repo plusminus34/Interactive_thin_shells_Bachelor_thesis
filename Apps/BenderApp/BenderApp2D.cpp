@@ -652,13 +652,16 @@ void BenderApp2D::restart()
 
 void BenderApp2D::addRotationMount() 
 {
-	femMesh->addMount<RotationMount2D>();
+	inverseDeformationSolver->parameterSets.push_back(new Rotation2DParameters);
+	femMesh->addMount<RotationMount2D>(inverseDeformationSolver->parameterSets.back());
 	inverseDeformationSolver->pullXi();
 	updateMountSelectionBox();
 }
 
 void BenderApp2D::removeSelectedMount()
 {
+	std::cerr << "error: not properly implemented yet" << std::endl;
+	exit(3);
 	femMesh->removeMount(selected_mount);
 	inverseDeformationSolver->pullXi();
 	updateMountSelectionBox();

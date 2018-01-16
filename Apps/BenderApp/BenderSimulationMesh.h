@@ -24,7 +24,8 @@ public:
 	~BenderSimulationMesh();
 
 	// mesh manipulation
-	template<typename TMount> void addMount(ParameterSet *){mounts.push_back(new TMount(ParameterSet *));}
+	template<typename TMount> 
+	void addMount(ParameterSet * parameters) {mounts.push_back(new TMount(parameters));}
 	void removeMount(int mountID);
 
 	void setMountedNode(int nodeID, const P3D & x0, int mountID);

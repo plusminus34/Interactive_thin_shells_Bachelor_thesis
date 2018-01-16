@@ -24,7 +24,7 @@ void Mount::dxDparFD(P3D const & x0, ParameterSet * parameters_in, std::vector<V
 	pars->pullVec(par_vec_temp);
 
 	double const delta = 1.0e-12;
-	int n_par = par_vec_temp.getNPar();
+	int n_par = par_vec_temp.size();
 
 	grad.resize(n_par);
 

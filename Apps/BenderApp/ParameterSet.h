@@ -1,3 +1,5 @@
+#pragma once
+
 
 #include "MathLib/matrix.h"
 
@@ -18,6 +20,6 @@ public:
 
 	virtual void writeToList(dVector & par, int & cursor_idx_io) = 0;
 	virtual void setFromList(dVector & par, int & cursor_idx_io) = 0;
-	virtual int getNPar() = 0;
+	virtual int getNPar() const = 0;
 
 };

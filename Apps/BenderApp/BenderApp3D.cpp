@@ -184,7 +184,7 @@ BenderApp3D::BenderApp3D()
 
 	robot->setHeading(-PI / 2.0);
 
-
+	/*
 	//find mount base in coords of gripper mesh
 	{
 		std::string gripper_name = "link_7_l";
@@ -230,7 +230,7 @@ BenderApp3D::BenderApp3D()
 		mountBaseCoordinatesMesh_l = mountBaseCoordinatesMesh;
 
 	}
-
+	*/
 	
 
 }

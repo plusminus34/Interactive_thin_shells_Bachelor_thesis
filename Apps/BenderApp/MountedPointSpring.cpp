@@ -68,7 +68,7 @@ void MountedPointSpring<NDim>::addDeltaFDeltaXi(std::vector<dVector> & dfdxi)
 		gradi *= K;
 	}
 
-	int xi_idx_start = mount->parametersStartIndex;
+	int xi_idx_start = mount->parameters->parametersStartIndex;
 	int data_idx_start = node->dataStartIndex;
 
 	for(int i = 0; i < dfdxi_temp.size(); ++i) {

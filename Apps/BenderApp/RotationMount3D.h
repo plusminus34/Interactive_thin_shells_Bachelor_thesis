@@ -7,7 +7,6 @@
 
 #include "ParameterSet.h"
 
-class EulerRotationParameters;
 
 class RotationMount3D : public Mount {
 
@@ -21,7 +20,7 @@ public:
 //		this->parametersStartIndex = parametersStartIndex;
 //		parameters.assign({alpha, shift_1, shift_2});
 //	};
-	RotationMount3D(ParameterSet * parameters) : Mount(parameters) {};
+	RotationMount3D(ParameterSet * parameters);
 
 
 	virtual P3D transformation(P3D const & x0, ParameterSet * parameters_in);
@@ -49,6 +48,6 @@ public:
 
 	virtual void writeToList(dVector & par, int & cursor_idx_io);
 	virtual void setFromList(dVector & par, int & cursor_idx_io);
-	virtual int getNPar() {return(6);}
+	virtual int getNPar() const {return(6);}
 
 };

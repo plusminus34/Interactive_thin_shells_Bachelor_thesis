@@ -121,6 +121,15 @@ std::cout << "abc = " << a << " " << b << " " << c << std::endl;
 
 */
 
+RotationMount3D::RotationMount3D(ParameterSet * parameters) 
+	: Mount(parameters) 
+{
+	if(! dynamic_cast<EulerRotationParameters *>(parameters)) {
+		std::cerr << "Error:" << __FILE__ << ":" << __LINE__ << std::endl;
+		exit(3);
+	}
+}
+
 P3D RotationMount3D::transformation(P3D const & x0, ParameterSet * parameters_in)
 {
 	EulerRotationParameters * pars = static_cast<EulerRotationParameters * >(parameters_in);
