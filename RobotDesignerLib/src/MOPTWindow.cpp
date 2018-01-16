@@ -199,12 +199,14 @@ void MOPTWindow::loadRobot(Robot* robot){
 	// ******************* footfall patern *******************
 	footFallPattern = FootFallPattern();
 
-	int iMin = 0, iMax = nTimeSteps / nLegs - 1;
-	footFallPattern.strideSamplePoints = nTimeSteps;
-	for (int j = 0; j < nLegs; j++)
-		footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nTimeSteps / nLegs, iMax + j*nTimeSteps / nLegs);
+	if (nLegs > 0){
+		int iMin = 0, iMax = nTimeSteps / nLegs - 1;
+		footFallPattern.strideSamplePoints = nTimeSteps;
+		for (int j = 0; j < nLegs; j++)
+			footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nTimeSteps / nLegs, iMax + j*nTimeSteps / nLegs);
 
-	footFallPattern.loadFromFile("../out/tmpFFP.ffp");
+		footFallPattern.loadFromFile("../out/tmpFFP.ffp");
+	}
 }
 
 void MOPTWindow::syncMOPTWindowParameters() {

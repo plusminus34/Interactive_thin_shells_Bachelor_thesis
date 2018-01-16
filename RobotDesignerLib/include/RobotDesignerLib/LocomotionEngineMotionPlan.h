@@ -36,9 +36,9 @@ public:
 	double wheelRadius = 0.01;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
 	//these are all quantities from the wheel's coordinate frame point of view...
-	V3D wheelAxisLocal_WF;					// wheel axis, not transformed by tilt and yaw angles...
-	V3D wheelYawAxis_WF;					// yaw axis in world coords.
-	V3D wheelTiltAxis_WF;					// tilt axis in world coords.
+	V3D wheelAxisLocal;					// wheel axis, not transformed by tilt and yaw angles...
+	V3D wheelYawAxis;					// yaw axis in world coords.
+	V3D wheelTiltAxis;					// tilt axis in world coords.
 
 	DynamicArray<double> wheelYawAngle;	// rotation around yaw axis
 	DynamicArray<double> wheelTiltAngle;// rotation around tilt axis
@@ -67,7 +67,7 @@ public:
 	P3D getEEPositionAt(double t) const;
 
 	// TODO: maybe we can store rho alongside with wheelAxis etc.
-	V3D getWheelRhoLocal_WF() const;
+	V3D getWheelRhoLocal() const;
 
 	P3D getWheelCenterPositionAt(double t) const;
 
@@ -96,9 +96,9 @@ public:
 	template<class T>
 	Vector3T<T> getRotatedWheelAxis(T angleYaw, T angleTilt) const
 	{
-		Vector3T<T> axis(wheelAxisLocal_WF);
-		Vector3T<T> axisYaw(wheelYawAxis_WF);
-		Vector3T<T> axisTilt(wheelTiltAxis_WF);
+		Vector3T<T> axis(wheelAxisLocal);
+		Vector3T<T> axisYaw(wheelYawAxis);
+		Vector3T<T> axisTilt(wheelTiltAxis);
 
 		return rotVecByYawTilt(axis, axisYaw, angleYaw, axisTilt, angleTilt);
 	}
