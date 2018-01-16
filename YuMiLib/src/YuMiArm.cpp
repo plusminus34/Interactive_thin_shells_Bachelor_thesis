@@ -42,14 +42,14 @@ bool YuMiArm::init(std::string arm){
     bool socketConnected = connectServer(ip, port);
 
     //Set speed and joint variables
-	getJoints();
-	setSpeed(YuMiConstants::INIT_SPEED);
+	bool jointsReceived = getCurrentJointsFromRobot(true);
+	bool tcpSpeedSent = setRobotTCPSpeed(YuMiConstants::INIT_SPEED);
 
 	//Init gripper
-	initGripper();
-	openGripper();
+	bool gripInit = initGripper();
+	bool gripOpened = openGripper();
 
-	if(socketConnected){
+	if(socketConnected && jointsReceived && tcpSpeedSent && gripInit && gripOpened){
         connected = true;
         return true;
     } else {
@@ -92,22 +92,22 @@ bool YuMiArm::connectServer(const char* ip, unsigned int port) {
     return socketConnected;
 }
 
+
 bool YuMiArm::closeConnection(){
     char message[YuMiConstants::BUFSIZE];
     char reply[YuMiConstants::BUFSIZE];
     int idCode = YuMiConstants::ID_CLOSE_CONNECTION;
-	bool waitForReply = true;
 
     strcpy(message, YuMiCom::closeConnection(idCode).c_str());
 
-	sendAndReceive(message, strlen(message), reply, idCode, waitForReply); //TODO: Now reply from robot yet if successfully closed or not
+	sendAndReceive(message, strlen(message), reply, idCode); //TODO: Now reply from robot yet if successfully closed or not
 	connected = false;
 	return true;
 }
 
 
 //Send message to robot and receive answer
-bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int idCode, bool waitForReply){
+bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int idCode){
     bool success = false;
 
     sendRecvMutex.lock();
@@ -118,49 +118,39 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
 	} else {
         // Read the reply to the message we just sent, and make sure
         // it's not corrupt, and the command was executed successfully
-		usleep(5000);
-		if(waitForReply){
-			int t = recv(robotSocket, reply, YuMiConstants::BUFSIZE-1, 0);
-			if(t > 0 && t < YuMiConstants::BUFSIZE && checkReply(reply)){
-				reply[t] = '\0';
-				int ok, rcvIdCode;
-				sscanf(reply,"%d %d", &rcvIdCode, &ok);
-				//std::cout << "reply: " << reply << std::endl;
-				//std::cout << "message: " << message << std::endl;
-				if(idCode!=-1) {
-					if ((ok == YuMiConstants::SERVER_OK) && (rcvIdCode == idCode)) {
-						//pthread_mutex_unlock(&sendRecvMutex);
-						sendRecvMutex.unlock();
-						success = true;
-					} else if ((ok == YuMiConstants::SERVER_COLLISION) && (rcvIdCode == idCode)) {
-						std::cerr << "WARNING: Collision Detected" << std::endl;
-					} else {
-						std::cerr << "WARNING: Corrupt message 1:" << std::endl;
-						std::cerr << "msg = " << message << ";  reply = " << reply << ";  idCode = " << idCode << ";  ok = " << ok << ";  rcvCode = " << rcvIdCode << std::endl;
-						//usleep(100000);
-					}
+		#ifndef WIN32
+			usleep(5000);
+		#endif
+		int t = recv(robotSocket, reply, YuMiConstants::BUFSIZE-1, 0);
+		if(t > 0){
+			reply[t] = '\0';
+			int ok, rcvIdCode;
+			sscanf(reply,"%d %d", &rcvIdCode, &ok);
+			//std::cout << "reply: " << reply << std::endl;
+			//std::cout << "message: " << message << std::endl;
+			if(idCode!=-1) {
+				if ((ok == YuMiConstants::SERVER_OK) && (rcvIdCode == idCode)) {
+					success = true;
+				} else if ((ok == YuMiConstants::SERVER_COLLISION) && (rcvIdCode == idCode)) {
+					std::cerr << "WARNING: Collision Detected" << std::endl;
 				} else {
-					if (ok == YuMiConstants::SERVER_OK) {
-						//pthread_mutex_unlock(&sendRecvMutex);
-						sendRecvMutex.unlock();
-						success = true;
-					} else if (ok == YuMiConstants::SERVER_COLLISION) {
-						std::cerr << "WARNING: Collision Detected" << std::endl;
-					} else {
-						std::cerr << "WARNING: Corrupt message 2:" << std::endl;
-						std::cerr << "msg = " << message << ";  reply = " << reply << ";  idCode = " << idCode << ";  ok = " << ok << ";  rcvCode = " << rcvIdCode << std::endl;
-					}
+					std::cerr << "WARNING: Corrupt message 1:" << std::endl;
+					std::cerr << "msg = " << message << ";  reply = " << reply << ";  idCode = " << idCode << ";  ok = " << ok << ";  rcvCode = " << rcvIdCode << std::endl;
 				}
 			} else {
-				if(connected && idCode != YuMiConstants::ID_CLOSE_CONNECTION){
-					std::cerr << "WARNING: Failed to receive answer from robot" << std::endl;
+				if (ok == YuMiConstants::SERVER_OK) {
+					success = true;
+				} else if (ok == YuMiConstants::SERVER_COLLISION) {
+					std::cerr << "WARNING: Collision Detected" << std::endl;
+				} else {
+					std::cerr << "WARNING: Corrupt message 2:" << std::endl;
+					std::cerr << "msg = " << message << ";  reply = " << reply << ";  idCode = " << idCode << ";  ok = " << ok << ";  rcvCode = " << rcvIdCode << std::endl;
 				}
 			}
 		} else {
-			memset(reply, 0, sizeof(reply));
-			reply[0] = 'x';
-			sendRecvMutex.unlock();
-			success = true;
+			if(connected && idCode != YuMiConstants::ID_CLOSE_CONNECTION){
+				std::cerr << "WARNING: Failed to receive answer from robot" << std::endl;
+			}
 		}
     }
 
@@ -170,31 +160,15 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
 }
 
 
-bool YuMiArm::checkReply(char* reply){
-	bool checkPassed = true;
-	const char *invalid_char = "x";
-	char *c = reply;
-	while(*c){
-		if(strchr(invalid_char, *c)){
-			checkPassed = false;
-		}
-		c++;
-	}
-	return checkPassed;
-}
-
-
-
 //Ping Robot
 bool YuMiArm::pingRobot(){
     char message[YuMiConstants::BUFSIZE];
     char reply[YuMiConstants::BUFSIZE];
     int idCode = YuMiConstants::ID_PING;
-	bool waitForReply = true;
 
     strcpy(message, YuMiCom::ping(idCode).c_str());
 
-	if(sendAndReceive(message, strlen(message), reply, idCode, waitForReply)){
+	if(sendAndReceive(message, strlen(message), reply, idCode)){
         std::cout << "reply: " << reply << std::endl;
         return true;
     } else {
@@ -204,47 +178,40 @@ bool YuMiArm::pingRobot(){
 
 
 // Query robot for the current joint positions
-std::vector<float> YuMiArm::getJoints(){
-    char message[YuMiConstants::BUFSIZE];
+bool YuMiArm::getCurrentJointsFromRobot(bool setTargetToCurrent){
+	bool jointsReceived = false;
+	char message[YuMiConstants::BUFSIZE];
     char reply[YuMiConstants::BUFSIZE];
     int idCode = YuMiConstants::ID_GET_JOINTS;
-	bool waitForReply = true;
-    std::vector<float> joints(YuMiConstants::NUM_JOINTS, 0.0);
 
     strcpy(message, YuMiCom::getJoints(idCode).c_str());
 
-	if(sendAndReceive(message, strlen(message), reply, idCode, waitForReply)){
-
-		//std::cout << "getJoints-reply: " << reply << std::endl;
+	if(sendAndReceive(message, strlen(message), reply, idCode)){
         //Parse joints
-        YuMiCom::parseJoints(reply, joint1, joint2, joint3, joint4, joint5, joint6, joint7);
-        joints[0] = joint1; joints[1] = joint2; joints[2] = joint3; joints[3] = joint4; joints[4] = joint5; joints[5] = joint6; joints[6] = joint7;
-
+		YuMiCom::parseJoints(reply, currentJoints);
+		if(setTargetToCurrent){
+			targetJoints = currentJoints;
+		}
+		jointsReceived = true;
     } else {
-//        if(connected){
-//			std::cerr << "ERROR: Something is wrong in YuMiArm getJoints!" << std::endl;
-//        }
+		if(connected){
+			std::cerr << "ERROR: Something is wrong in YuMiArm getJoints!" << std::endl;
+		}
     }
 
-    return joints;
+	return jointsReceived;
 }
 
 
-bool YuMiArm::gotoJointPose(std::vector<float> joints){
+bool YuMiArm::sendRobotToJointPose(YuMiJoints yumiJoints){
     char message[YuMiConstants::BUFSIZE];
     char reply[YuMiConstants::BUFSIZE];
     int idCode = YuMiConstants::ID_GOTO_JOINT_POSE;
-	bool waitForReply = true;
 
-    if(joints.size() == YuMiConstants::NUM_JOINTS){
-        joint1 = joints[0]; joint2 = joints[1]; joint3 = joints[2]; joint4 = joints[3]; joint5 = joints[4]; joint6 = joints[5]; joint7 = joints[6];
-    } else {
-		std::cerr << "ERROR: Something with the joint vector in YuMiArm setJoints is wrong!" << std::endl;
-        return false;
-    }
-    strcpy(message, YuMiCom::gotoJointPose(idCode, joint1, joint2, joint3, joint4, joint5, joint6, joint7).c_str());
+	strcpy(message, YuMiCom::gotoJointPose(idCode, yumiJoints).c_str());
 
-	if(sendAndReceive(message, strlen(message), reply, idCode, waitForReply)){
+	if(sendAndReceive(message, strlen(message), reply, idCode)){
+		targetJoints = yumiJoints;
 		//std::cout << "gotoJointPose-reply: " << reply << std::endl;
         return true;
     } else {
@@ -253,16 +220,16 @@ bool YuMiArm::gotoJointPose(std::vector<float> joints){
 }
 
 
-bool YuMiArm::setSpeed(unsigned int s){
-    if(s > 0){
+bool YuMiArm::setRobotTCPSpeed(unsigned int speed){
+	if(speed > 0){
         char message[YuMiConstants::BUFSIZE];
         char reply[YuMiConstants::BUFSIZE];
         int idCode = YuMiConstants::ID_SET_SPEED;
-		bool waitForReply = true;
 
-        strcpy(message, YuMiCom::setSpeed(idCode, s).c_str());
+		strcpy(message, YuMiCom::setTCPSpeed(idCode, speed).c_str());
 
-		if(sendAndReceive(message, strlen(message), reply, idCode, waitForReply)){
+		if(sendAndReceive(message, strlen(message), reply, idCode)){
+			TCPSpeed = speed;
 			//std::cout << "setSpeed-reply: " << reply << std::endl;
             return true;
         } else {
@@ -274,24 +241,15 @@ bool YuMiArm::setSpeed(unsigned int s){
     }
 }
 
-unsigned int YuMiArm::getSpeed(){
-    return speed;
-}
-
-bool YuMiArm::getConnected(){
-    return connected;
-}
-
 
 bool YuMiArm::initGripper(){
 	char message[YuMiConstants::BUFSIZE];
 	char reply[YuMiConstants::BUFSIZE];
 	int idCode = YuMiConstants::ID_GRIP_INIT;
-	bool waitForReply = true;
 
 	strcpy(message, YuMiCom::initGripper(idCode, YuMiConstants::GRIP_MAXSPD, YuMiConstants::GRIP_HOLDFORCE, YuMiConstants::GRIP_PHYLIMIT, YuMiConstants::GRIP_CALIB).c_str());
 
-	if(sendAndReceive(message, strlen(message), reply, idCode, waitForReply)){
+	if(sendAndReceive(message, strlen(message), reply, idCode)){
 		gripperOpen = false;
 		return true;
 	} else {
@@ -303,11 +261,10 @@ bool YuMiArm::openGripper(){
 	char message[YuMiConstants::BUFSIZE];
 	char reply[YuMiConstants::BUFSIZE];
 	int idCode = YuMiConstants::ID_GRIP_OPEN;
-	bool waitForReply = true;
 
 	strcpy(message, YuMiCom::openGripper(idCode, YuMiConstants::GRIP_MOVETOOPEN, YuMiConstants::GRIP_NOWAIT).c_str());
 
-	if(sendAndReceive(message, strlen(message), reply, idCode, waitForReply)){
+	if(sendAndReceive(message, strlen(message), reply, idCode)){
 		gripperOpen = true;
 		return true;
 	} else {
@@ -319,11 +276,10 @@ bool YuMiArm::closeGripper(){
 	char message[YuMiConstants::BUFSIZE];
 	char reply[YuMiConstants::BUFSIZE];
 	int idCode = YuMiConstants::ID_GRIP_OPEN;
-	bool waitForReply = true;
 
 	strcpy(message, YuMiCom::closeGripper(idCode, YuMiConstants::GRIP_NOWAIT).c_str());
 
-	if(sendAndReceive(message, strlen(message), reply, idCode, waitForReply)){
+	if(sendAndReceive(message, strlen(message), reply, idCode)){
 		gripperOpen = false;
 		return true;
 	} else {
@@ -331,6 +287,21 @@ bool YuMiArm::closeGripper(){
 	}
 }
 
-bool YuMiArm::getGripperOpen(){
+
+YuMiJoints YuMiArm::getCurrentJointValues(){
+	return currentJoints;
+}
+
+unsigned int YuMiArm::getTCPSpeedValue(){
+	return TCPSpeed;
+}
+
+
+bool YuMiArm::getConnectedValue(){
+	return connected;
+}
+
+
+bool YuMiArm::getGripperOpenValue(){
 	return gripperOpen;
 }

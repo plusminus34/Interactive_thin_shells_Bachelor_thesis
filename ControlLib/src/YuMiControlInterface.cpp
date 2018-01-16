@@ -13,34 +13,35 @@ YuMiControlInterface::~YuMiControlInterface() {}
 void YuMiControlInterface::sendControlInputsToPhysicalRobot() {
 
 	if(sendJointInputsCheck()){
-		std::vector<float> rightTargetJoints(robot->getJointCount()/2, 0.0);
-		std::vector<float> leftTargetJoints(robot->getJointCount()/2, 0.0);
+		YuMiJoints rightTragetJoints, leftTargetJoints;
+
+		float* rightTargetJointsPtr = &rightTragetJoints.j1;
+		float* leftTargetJointsPtr = &leftTargetJoints.j1;
 
 		unsigned int speed = 1;
 
-		int jointIndex = 0;
 		for (int i = 0; i < robot->getJointCount(); i++) {
 			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
 			if (!hj) continue;
 
 			if(i % 2 == 0){
-				rightTargetJoints.at(jointIndex) = hj->motor.targetMotorAngle;
+				*rightTargetJointsPtr = hj->motor.targetMotorAngle;
+				rightTargetJointsPtr++;
 			} else {
-				leftTargetJoints.at(jointIndex) = hj->motor.targetMotorAngle;
-				//std::cout << "leftTargetJoints: " << hj->motor.targetMotorAngle << std::endl;
-				jointIndex++;
+				*leftTargetJointsPtr = hj->motor.targetMotorAngle;
+				leftTargetJointsPtr++;
 			}
 		}
 
-		rightArm.gotoJointPose(rightTargetJoints);
-		leftArm.gotoJointPose(leftTargetJoints);
+		rightArm.sendRobotToJointPose(rightTragetJoints);
+		leftArm.sendRobotToJointPose(leftTargetJoints);
 	}
 
 	if(sendSpeedInputCheck()){
 		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(0));
 		unsigned int speed = hj->motor.targetYuMiTCPSpeed;
-		rightArm.setSpeed(speed);
-		leftArm.setSpeed(speed);
+		rightArm.setRobotTCPSpeed(speed);
+		leftArm.setRobotTCPSpeed(speed);
 		hj->motor.currentYuMiTCPSpeed = speed;
 	}
 }
@@ -49,26 +50,32 @@ void YuMiControlInterface::sendControlInputsToPhysicalRobot() {
 void YuMiControlInterface::readPhysicalRobotMotorPositions() {
     //std::cout << "readPhysicalRobotMotorPositions" << std::endl;
 
-	std::vector<float> rightJoints = rightArm.getJoints();
-	std::vector<float> leftJoints = leftArm.getJoints();
-	//std::vector<float> rightJoints = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-	//std::vector<float> leftJoints = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+	bool rightJointsReceived = rightArm.getCurrentJointsFromRobot(true);
+	bool leftJointsReceived = leftArm.getCurrentJointsFromRobot(true);
 
-    int jointIndex = 0;
-    for (int i = 0; i < robot->getJointCount(); i++) {
-        HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-        if (!hj) continue;
+	if(rightJointsReceived && leftJointsReceived){
+		YuMiJoints rightCurrentJoints = rightArm.getCurrentJointValues();
+		YuMiJoints leftCurrentJoints = leftArm.getCurrentJointValues();
 
-        float tempJoint = 0.0;
-        if(i % 2 == 0){
-            tempJoint = rightJoints.at(jointIndex);
-        } else {
-            tempJoint = leftJoints.at(jointIndex);
-            jointIndex++;
-        }
+		float* rightCurrentJointsPtr = &rightCurrentJoints.j1;
+		float* leftCurrentJointsPtr = &leftCurrentJoints.j1;
 
-        hj->motor.currentMotorAngle = tempJoint;
-    }
+		for (int i = 0; i < robot->getJointCount(); i++) {
+			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+			if (!hj) continue;
+
+			float tempJoint = 0.0f;
+			if(i % 2 == 0){
+				tempJoint = *rightCurrentJointsPtr;
+				rightCurrentJointsPtr++;
+			} else {
+				tempJoint = *leftCurrentJointsPtr;
+				leftCurrentJointsPtr++;
+			}
+
+			hj->motor.currentMotorAngle = tempJoint;
+		}
+	}
 }
 
 //read motor positions
@@ -96,10 +103,10 @@ void YuMiControlInterface::setTargetMotorValuesFromSimRobotState(double dt) {
 void YuMiControlInterface::openCommunicationPort() {
 	bool leftConnect = false;
 	bool rightConnect = false;
-	if(leftArm.getConnected() == false){
+	if(leftArm.getConnectedValue() == false){
 		leftConnect = leftArm.init("left");
     }
-	if(rightArm.getConnected() == false){
+	if(rightArm.getConnectedValue() == false){
 		rightConnect = rightArm.init("right");
     }
 
@@ -161,13 +168,13 @@ void YuMiControlInterface::driveMotorPositionsToInputPos(std::vector<float> left
 
 void YuMiControlInterface::grip(std::string arm){
 	if(arm.compare("right") == 0){
-		if(rightArm.getGripperOpen()){
+		if(rightArm.getGripperOpenValue()){
 			rightArm.closeGripper();
 		} else {
 			rightArm.openGripper();
 		}
 	} else if(arm.compare("left") == 0){
-		if(leftArm.getGripperOpen()){
+		if(leftArm.getGripperOpenValue()){
 			leftArm.closeGripper();
 		} else {
 			leftArm.openGripper();
