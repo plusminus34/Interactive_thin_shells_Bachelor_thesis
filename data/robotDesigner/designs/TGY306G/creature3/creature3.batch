@@ -1,0 +1,8 @@
+load ..\data\robotDesigner\configTGY306G.cfg
+load ..\data\RobotDesigner\designs\TGY306G\creature3\creature3.dsn
+toSim
+load ..\data\RobotDesigner\designs\TGY306G\creature3\walk_speed0.1.p
+load ..\data\RobotDesigner\designs\TGY306G\creature3\creature3.pololu
+
+end
+

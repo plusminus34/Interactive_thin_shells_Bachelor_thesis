@@ -1,0 +1,31 @@
+#Format: #joints (position mode control) #wheels (velocity mode control)
+
+
+
+#12 4
+
+12 0
+
+#For every joint: robotJointID motorID pwmMin pwmMax pwmFor0 pwmFor45 flipMotorAxis (t/f) 
+
+0 0 800 2180 1510 1960 t 
+4 1 800 2180 1470 1920 t 
+8 2 800 2180 1430 1880 f 
+
+1 3 800 2180 1470 1920 t 
+5 4 800 2180 1520 1970 f 
+9 5 800 2180 1500 1950 t
+
+2 18 800 2180 1510 1960 t 
+6 19 800 2180 1420 1870 f 
+10 20 800 2500 1580 2030 t
+
+3 21 800 2180 1510 1960 t 
+7 22 800 2180 1400 1850 t 
+11 23 800 2180 1590 2040 f 
+
+
+#For every wheel: wheelJointID motorID pwmMin pwmMax pwmFor0 deadband(e.g. PWM values for which we still have 0RPM) pwmFor50RPM flipMotorAxis (t/f) 
+#0 4 1000 2000 1500 30 2000 f
+
+
