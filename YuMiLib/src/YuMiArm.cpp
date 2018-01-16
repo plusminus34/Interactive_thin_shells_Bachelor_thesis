@@ -50,10 +50,11 @@ bool YuMiArm::init(std::string arm){
 	bool tcpSpeedSent = setRobotTCPSpeed(YuMiConstants::INIT_SPEED);
 
 	//Init gripper
-	bool gripInit = initGripper();
-	bool gripOpened = openGripper();
+	//bool gripInit = initGripper();
+	//bool gripOpened = openGripper();
 
-	if(jointsReceived && tcpSpeedSent && gripInit && gripOpened){
+	//if(jointsReceived && tcpSpeedSent && gripInit && gripOpened){
+	if(jointsReceived && tcpSpeedSent){
         connected = true;
         return true;
     } else {
@@ -202,7 +203,7 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
         // Read the reply to the message we just sent, and make sure
         // it's not corrupt, and the command was executed successfully
 		#ifndef WIN32
-			usleep(5000);
+			usleep(3000);
 		#endif
 		int t = recv(robotSocket, reply, YuMiConstants::BUFSIZE-1, 0);
 		if(t > 0){

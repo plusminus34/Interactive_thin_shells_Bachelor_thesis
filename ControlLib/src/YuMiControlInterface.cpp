@@ -18,7 +18,8 @@ void YuMiControlInterface::sendControlInputsToPhysicalRobot() {
 		float* rightTargetJointsPtr = &rightTragetJoints.j1;
 		float* leftTargetJointsPtr = &leftTargetJoints.j1;
 
-		unsigned int speed = 1;
+		float rightTargetVel = 0.0f;
+		float leftTargetVel = 0.0f;
 
 		for (int i = 0; i < robot->getJointCount(); i++) {
 			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
@@ -27,13 +28,36 @@ void YuMiControlInterface::sendControlInputsToPhysicalRobot() {
 			if(i % 2 == 0){
 				*rightTargetJointsPtr = hj->motor.targetMotorAngle;
 				rightTargetJointsPtr++;
+				rightTargetVel += hj->motor.targetMotorVelocity;
 			} else {
 				*leftTargetJointsPtr = hj->motor.targetMotorAngle;
 				leftTargetJointsPtr++;
+				leftTargetVel += hj->motor.targetMotorVelocity;
 			}
 		}
 
+		rightTargetVel *= 2*PI;
+		leftTargetVel *= 2*PI;
+		float rescaleFactor = 1.5;
+		unsigned int lowerBound = 10;
+
+		rightTargetVel = (unsigned int)ceil(rightTargetVel*rescaleFactor);
+		leftTargetVel = (unsigned int)ceil(leftTargetVel*rescaleFactor);
+
+		if(rightTargetVel < lowerBound){
+			rightTargetVel = lowerBound;
+		}
+
+		if(leftTargetVel < lowerBound){
+			leftTargetVel = lowerBound;
+		}
+
+		//std::cout << "rightTargetVel: " << rightTargetVel << "   /   leftTargetVel: " << leftTargetVel << std::endl;
+
+		rightArm.setRobotTCPSpeed(rightTargetVel);
 		rightArm.sendRobotToJointPose(rightTragetJoints);
+
+		leftArm.setRobotTCPSpeed(leftTargetVel);
 		leftArm.sendRobotToJointPose(leftTargetJoints);
 	}
 
