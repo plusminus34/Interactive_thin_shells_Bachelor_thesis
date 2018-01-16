@@ -30,6 +30,9 @@ public:
 	Robot * robot = NULL;
 	AbstractRBEngine * rbEngine = NULL;
 	RobotState startState = RobotState();
+	GeneralizedCoordinatesRobotRepresentation * generalizedRobotCoordinates= NULL;
+
+	IK_Solver * ikSolver = NULL;
 
 	// mount base in coords of gripper mesh
 
@@ -66,6 +69,8 @@ public:
 	bool optimizeObjective = true;
 	bool approxLineSearch = true;
 	bool checkDerivatives = false;
+
+	bool runIkSolver = false;
 	
 	enum InteractionObject {MOUNTS, OBJECTIVE};
 	InteractionObject interactionObject = OBJECTIVE;
@@ -80,7 +85,7 @@ public:
 	double maxRunningTime;
 
 	// visualization robot
-	bool showMesh = true;
+	bool showMesh = false;
 	bool showMOI = false;
 	bool showRotationAxes = true;
 	bool showCDPs = false;

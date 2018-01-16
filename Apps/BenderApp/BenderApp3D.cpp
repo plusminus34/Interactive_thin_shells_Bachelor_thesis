@@ -13,6 +13,7 @@
 
 #include "OptimizationLib/GradientDescentFunctionMinimizer.h"
 #include "OptimizationLib/BFGSFunctionMinimizer.h"
+#include "MathLib/Transformation.h"
 
 #include <algorithm>
 #include <cmath>
@@ -20,6 +21,7 @@
 #include <tuple>
 
 #include "RotationMount3D.h"
+#include "RobotMount.h"
 #include "MountedPointSpring.h"
 #include "MatchScaledTrajObjective.h"
 
@@ -129,31 +131,9 @@ BenderApp3D::BenderApp3D()
 	// initialize the ID Solver
 	inverseDeformationSolver = new InverseDeformationSolver<3>(femMesh, minimizers[comboBoxOptimizationAlgorithm->selectedIndex()]);
 
-	// set mounts on both ends
-	auto set_mount_from_plane = [&](int dim, double val, double tolerance) 
-	{
-		std::vector<int> nodes_id(0);
-		for(int i = 0; i < femMesh->nodes.size(); ++i) {
-			P3D pt = femMesh->nodes[i]->getCoordinates(femMesh->X);
-			if(pt[dim] > val-tolerance && pt[dim] < val+tolerance) {
-				nodes_id.push_back(i);
-			}
-		}
-		if(nodes_id.size() > 0) {
-			addRotationMount();
-			int i_mount = femMesh->mounts.size()-1;
-			for(int i : nodes_id) {
-				addMountedNode(i, i_mount);
-			}
-		}
-	};
-
-	set_mount_from_plane(0, -0.15, 0.01);
-	set_mount_from_plane(0, +0.15, 0.01);
-
 	// draw some target trjectory
 	targetTrajectory_input.addKnotBack(P3D(-0.15, 0.45, 0.5));
-	targetTrajectory_input.addKnotBack(P3D( 0.0,  0.5, 0.5));
+	targetTrajectory_input.addKnotBack(P3D( 0.0,  0.45, 0.5));
 	targetTrajectory_input.addKnotBack(P3D( 0.15, 0.45, 0.5));
 
 	// add a "MatchScaledTrajObjective"
@@ -182,10 +162,83 @@ BenderApp3D::BenderApp3D()
 	};
 	loadRobot(fnameRB);
 
+	RigidBody * left_gripper = rbEngine->getRBByName("link_7_l");
+	RigidBody * right_gripper = rbEngine->getRBByName("link_7_r");
+
 	robot->setHeading(-PI / 2.0);
 
+	
+
 	/*
+	{
+		// change initial state of robot
+		Joint * joint_1_l = rbEngine->getJointByName("joint_link_1_2_l");
+		Joint * joint_1_r = rbEngine->getJointByName("joint_link_1_2_r");
+std::cout << "joint_1_l* = " << joint_1_l << std::endl; 
+		Quaternion qRel;
+		qRel = robot->getRelativeOrientationForJoint(joint_1_l);
+		qRel.s -= 0.5+PI;
+		robot->setRelativeOrientationForJoint(joint_1_l, qRel);
+		robot->fixJointConstraints();
+
+
+	}
+	*/
+
+	delete ikSolver;
+	ikSolver = new IK_Solver(robot, true);
+	// new target: right gripper
+	ikSolver->ikPlan->endEffectors.push_back(IK_EndEffector());
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = P3D(0.0,0.0,0.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorRB = right_gripper;
+	ikSolver->ikPlan->endEffectors.back().targetEEPos = P3D(-0.15, 0.0, 0.0) + rod_center;
+	// new target: left gripper
+	ikSolver->ikPlan->endEffectors.push_back(IK_EndEffector());
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = P3D(0.0,0.0,0.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorRB = left_gripper;
+	ikSolver->ikPlan->endEffectors.back().targetEEPos = P3D(+0.15, 0.0, 0.0) + rod_center;
+
+	for(int i = 0; i < 100; ++i) {
+		ikSolver->ikEnergyFunction->regularizer = 100;
+		ikSolver->ikOptimizer->checkDerivatives = true;
+		ikSolver->solve();
+		testGeneralizedCoordinateRepresentation(robot);
+	}
+
+	// create generalized parametrization of the robot
+	generalizedRobotCoordinates = new GeneralizedCoordinatesRobotRepresentation(robot);
+
+	// change initial state of robot
+	/*
+	{
+	dVector q;
+	generalizedRobotCoordinates->getQ(q);
+	q(6) -= 0.15*PI;
+	q(13) -= 0.15*PI;
+	generalizedRobotCoordinates->setQ(q);
+	generalizedRobotCoordinates->syncRobotStateWithGeneralizedCoordinates();
+
+	}
+	*/
+
+
+	// create a parameter set with the above robot coordinates
+	inverseDeformationSolver->parameterSets.push_back(new RobotParameters(generalizedRobotCoordinates));
+
+	// create a mount on the left gripper
+	femMesh->addMount<RobotMount>(inverseDeformationSolver->parameterSets.back());
+	RobotMount * mount_left_gripper = static_cast<RobotMount*>(femMesh->mounts.back());
+	int mount_id_left_gripper = femMesh->mounts.size()-1;
+	mount_left_gripper->robotPart = left_gripper;
+	// create a mount on the right gripper
+	femMesh->addMount<RobotMount>(inverseDeformationSolver->parameterSets.back());
+	RobotMount * mount_right_gripper = static_cast<RobotMount*>(femMesh->mounts.back());
+	int mount_id_right_gripper = femMesh->mounts.size()-1;
+	mount_right_gripper->robotPart = right_gripper;
+
+	
 	//find mount base in coords of gripper mesh
+	/*
 	{
 		std::string gripper_name = "link_7_l";
 
@@ -200,24 +253,24 @@ BenderApp3D::BenderApp3D()
 		GLIndexedTriangle face_xyPlane_mountBase = gripper_mesh->getTriangle(face_xyPlane_mountBase_idx);
 		GLIndexedTriangle face_xzPlane_mountSymmetric1 = gripper_mesh->getTriangle(face_xzPlane_mountSymmetric1_idx);
 		GLIndexedTriangle face_xzPlane_mountSymmetric2 = gripper_mesh->getTriangle(face_xzPlane_mountSymmetric2_idx);
-		Plane plane_xy = Plane(gripper_mesh->getVertex[face_xyPlane_mountBase.indexes[0]],
-								gripper_mesh->getVertex[face_xyPlane_mountBase.indexes[1]],
-								gripper_mesh->getVertex[face_xyPlane_mountBase.indexes[2]]);
-		Plane plane_xz_symmetric1 = Plane(gripper_mesh->getVertex[face_xzPlane_mountSymmetric1.indexes[0]],
-										gripper_mesh->getVertex[face_xzPlane_mountSymmetric1.indexes[1]],
-										gripper_mesh->getVertex[face_xzPlane_mountSymmetric1.indexes[2]]);
-		Plane plane_xz_symmetric2 = Plane(gripper_mesh->getVertex[face_xzPlane_mountSymmetric2.indexes[0]],
-										gripper_mesh->getVertex[face_xzPlane_mountSymmetric2.indexes[1]],
-										gripper_mesh->getVertex[face_xzPlane_mountSymmetric2.indexes[2]]);
+		Plane plane_xy = Plane(gripper_mesh->getVertex(face_xyPlane_mountBase.indexes[0]),
+								gripper_mesh->getVertex(face_xyPlane_mountBase.indexes[1]),
+								gripper_mesh->getVertex(face_xyPlane_mountBase.indexes[2]));
+		Plane plane_xz_symmetric1 = Plane(gripper_mesh->getVertex(face_xzPlane_mountSymmetric1.indexes[0]),
+										gripper_mesh->getVertex(face_xzPlane_mountSymmetric1.indexes[1]),
+										gripper_mesh->getVertex(face_xzPlane_mountSymmetric1.indexes[2]));
+		Plane plane_xz_symmetric2 = Plane(gripper_mesh->getVertex(face_xzPlane_mountSymmetric2.indexes[0]),
+										gripper_mesh->getVertex(face_xzPlane_mountSymmetric2.indexes[1]),
+										gripper_mesh->getVertex(face_xzPlane_mountSymmetric2.indexes[2]));
 		P3D pt_yzPlane = gripper_mesh->getVertex(vertex_yzPlane_idx);
 
 		V3D z_dir = plane_xy.n;
 		V3D y_dir = plane_xz_symmetric1.n;
 		V3D x_dir = y_dir.cross(z_dir);
 
-		P3D pt_xzPlane = gripper_mesh->getVertex(gripper_mesh->getVertex[face_xzPlane_mountSymmetric1.indexes[0]])
-			             + y_dir * plane_xz_symmetric1.getSignedDistanceToPoint(gripper_mesh->getVertex(gripper_mesh->getVertex[face_xzPlane_mountSymmetric2.indexes[0]])) * 0.5;
-		P3D pt_xyPlane = gripper_mesh->getVertex[face_xyPlane_mountBase.indexes[0]];
+		P3D pt_xzPlane = gripper_mesh->getVertex(face_xzPlane_mountSymmetric1.indexes[0])
+			             + y_dir * plane_xz_symmetric1.getSignedDistanceToPoint(gripper_mesh->getVertex(face_xzPlane_mountSymmetric2.indexes[0])) * 0.5;
+		P3D pt_xyPlane = gripper_mesh->getVertex(face_xyPlane_mountBase.indexes[0]);
 
 		V3D origin_mount_coordinates(pt_yzPlane[0], pt_xzPlane[1], pt_xyPlane[2]);
 
@@ -226,11 +279,133 @@ BenderApp3D::BenderApp3D()
 
 		V3D origin_original_coordinates = mountBaseCoordinatesMesh.inverse() * origin_mount_coordinates;
 
-		mountBaseOriginMesh_l = origin_original_coordinates;
-		mountBaseCoordinatesMesh_l = mountBaseCoordinatesMesh;
+		mountBaseOriginRB_l = origin_original_coordinates;
+		mountBaseCoordinatesRB_l = mountBaseCoordinatesMesh;
+
+		Transformation & meshtrans = gripper->meshTransformations[0];
+		mountBaseOriginRB_l = meshtrans.transform(mountBaseOriginRB_l);
+		mountBaseCoordinatesRB_l = meshtrans.R * mountBaseCoordinatesRB_l;
 
 	}
 	*/
+	
+	mountBaseOriginRB_l = V3D(0.0);
+	mountBaseCoordinatesRB_l << 0.0, 0.0, 1.0,
+								0.0, -1.0, 0.0,
+								1.0, 0.0, 0.0;
+
+	mountBaseOriginRB_r = V3D(0.0);
+	mountBaseCoordinatesRB_r << 0.0, 0.0, 1.0,
+								0.0, -1.0, 0.0,
+								1.0, 0.0, 0.0;
+	
+
+
+	// add node to robot mount
+
+
+	// set rotation mounts
+	auto set_rotation_mount_from_plane = [&](int dim, double val, double tolerance) 
+	{
+		std::vector<int> nodes_id(0);
+		for(int i = 0; i < femMesh->nodes.size(); ++i) {
+			P3D pt = femMesh->nodes[i]->getCoordinates(femMesh->X);
+			if(pt[dim] > val-tolerance && pt[dim] < val+tolerance) {
+				nodes_id.push_back(i);
+			}
+		}
+		if(nodes_id.size() > 0) {
+			addRotationMount();
+			int i_mount = femMesh->mounts.size()-1;
+			for(int i : nodes_id) {
+				addMountedNode(i, i_mount);
+			}
+		}
+	};
+
+
+	
+	// set robot mount
+	auto add_node_to_robot_mount = [&](int nodeId, int mountId, 
+										V3D & mount_origin_mesh, Matrix3x3 & mount_coordinates_mesh, 
+										V3D & mount_origin_body, Matrix3x3 & mount_coordinates_body)
+	{
+		V3D x0 = femMesh->nodes[nodeId]->getCoordinates(femMesh->X);
+		V3D x0_mount = mount_coordinates_mesh  * (x0 - mount_origin_mesh);
+		V3D x0_body = mount_coordinates_body * x0_mount + mount_origin_body;
+
+		femMesh->setMountedNode(nodeId, static_cast<P3D>(x0_body), mountId);
+	};
+
+	auto set_robot_mount_from_plane = [&](int dim, double val, double tolerance,
+										int mountId, 
+										V3D & mount_origin_mesh, Matrix3x3 & mount_coordinates_mesh, 
+										V3D & mount_origin_body, Matrix3x3 & mount_coordinates_body)
+	{
+		std::vector<int> nodes_id(0);
+		for(int i = 0; i < femMesh->nodes.size(); ++i) {
+			P3D pt = femMesh->nodes[i]->getCoordinates(femMesh->X);
+			if(pt[dim] > val-tolerance && pt[dim] < val+tolerance) {
+				nodes_id.push_back(i);
+			}
+		}
+
+		for(int i : nodes_id) {
+			add_node_to_robot_mount(i, mountId,
+									mount_origin_mesh, mount_coordinates_mesh,
+									mount_origin_body, mount_coordinates_body);
+		}
+	};
+
+	mountBaseOriginMesh_r = V3D(-0.15, 0.0, 0.0) + rod_center;
+	mountBaseCoordinatesMesh_r << 0.0, 0.0, 1.0,
+									0.0, -1.0, 0.0,
+									1.0, 0.0, 0.0;
+
+	mountBaseOriginMesh_l = V3D(+0.15, 0.0, 0.0) + rod_center;
+	mountBaseCoordinatesMesh_l << 0.0, 0.0, 1.0,
+								0.0, -1.0, 0.0,
+								1.0, 0.0, 0.0;
+
+
+	mountBaseOriginRB_l = V3D(0.0);
+	Quaternion gripper_left_orientation = left_gripper->state.orientation;
+	Matrix3x3 gripper_left_orientation_matrix = gripper_left_orientation.getRotationMatrix();
+	mountBaseCoordinatesRB_l = gripper_left_orientation_matrix.inverse()*mountBaseCoordinatesMesh_l;
+//	mountBaseCoordinatesRB_l << 0.0, 0.0, 1.0,
+//		0.0, -1.0, 0.0,
+//		1.0, 0.0, 0.0;
+
+	mountBaseOriginRB_r = V3D(0.0);
+	Quaternion gripper_right_orientation = right_gripper->state.orientation;
+	Matrix3x3 gripper_right_orientation_matrix = gripper_right_orientation.getRotationMatrix();
+	mountBaseCoordinatesRB_r = gripper_right_orientation_matrix.inverse()*mountBaseCoordinatesMesh_r;
+//	mountBaseCoordinatesRB_r << 0.0, 0.0, 1.0,
+//		0.0, -1.0, 0.0,
+//		1.0, 0.0, 0.0;
+
+
+
+	set_robot_mount_from_plane(0, -0.15, 0.01,
+								mount_id_right_gripper,
+								mountBaseOriginMesh_r, mountBaseCoordinatesMesh_r,
+								mountBaseOriginRB_r, mountBaseCoordinatesRB_r);
+	set_robot_mount_from_plane(0, +0.15, 0.01,
+								mount_id_left_gripper,
+								mountBaseOriginMesh_l, mountBaseCoordinatesMesh_l,
+								mountBaseOriginRB_l, mountBaseCoordinatesRB_l);
+
+
+
+	//set_rotation_mount_from_plane(0, -0.15, 0.01);
+	//set_rotation_mount_from_plane(0, +0.15, 0.01);
+
+
+
+
+
+
+	
 	
 
 }
@@ -259,9 +434,11 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 	menu->addVariable("Optimize Objective", optimizeObjective);
 	menu->addVariable("Check derivatives", checkDerivatives);
 	menu->addVariable("Approx. line search", approxLineSearch);
+	menu->addVariable("initialize with IK solver", runIkSolver);
 	menu->addButton("set state as target", [this](){
 		femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
 	});
+	
 
 
 	// add selection of optimization algorithm
@@ -733,7 +910,15 @@ void BenderApp3D::process() {
 	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
 	while (simulationTime < 1.0 * maxRunningTime) {
 
-		if(optimizeObjective) {
+
+		if(runIkSolver) {
+			ikSolver->ikEnergyFunction->regularizer = 100;
+			ikSolver->ikOptimizer->checkDerivatives = true;
+			ikSolver->solve();
+			testGeneralizedCoordinateRepresentation(robot);
+			break;
+		}
+		else if(optimizeObjective) {
 			double o_new = 0;
 			o_new = inverseDeformationSolver->solveOptimization(solveResidual,
 																maxIterations,
@@ -842,6 +1027,7 @@ void BenderApp3D::drawScene() {
 	rbEngine->drawRBs(flags);
 	
 
+
 	
 }
 
@@ -882,6 +1068,8 @@ void BenderApp3D::addMountedNode(int node_id, int mount_id)
 	if(mount_id < 0) {return;}
 	femMesh->setMountedNode(node_id, femMesh->nodes[node_id]->getCoordinates(femMesh->X), mount_id);
 }
+
+
 
 void BenderApp3D::unmountNode(int node_id, int mount_id)
 {
