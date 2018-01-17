@@ -210,6 +210,7 @@ bool RobotDesignerApp::shouldShowDesignWindow() {
 bool RobotDesignerApp::onMouseMoveEvent(double xPos, double yPos) {
 	if (shouldShowSimWindow() && (simWindow->isActive() || simWindow->mouseIsWithinWindow(xPos, yPos)))
 		if (simWindow->onMouseMoveEvent(xPos, yPos)) {
+			if (syncCameras)
 			{
 				copy((GLTrackingCamera*)simWindow->camera, (GLTrackingCamera*)simWindow->camera+1, (GLTrackingCamera*)moptWindow->camera);
 				copy((GLTrackingCamera*)simWindow->camera, (GLTrackingCamera*)simWindow->camera+1, (GLTrackingCamera*)designWindow->camera);
