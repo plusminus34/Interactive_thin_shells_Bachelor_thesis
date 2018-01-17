@@ -132,9 +132,9 @@ BenderApp3D::BenderApp3D()
 	inverseDeformationSolver = new InverseDeformationSolver<3>(femMesh, minimizers[comboBoxOptimizationAlgorithm->selectedIndex()]);
 
 	// draw some target trjectory
-	targetTrajectory_input.addKnotBack(P3D(-0.15, 0.45, 0.5));
-	targetTrajectory_input.addKnotBack(P3D( 0.0,  0.45, 0.5));
-	targetTrajectory_input.addKnotBack(P3D( 0.15, 0.45, 0.5));
+	targetTrajectory_input.addKnotBack(rod_center + P3D(-rod_length*0.5, 0.05, 0.0));
+	targetTrajectory_input.addKnotBack(rod_center + P3D( 0.0,  0.1, 0.0));
+	targetTrajectory_input.addKnotBack(rod_center + P3D( rod_length*0.5, 0.05, 0.0));
 
 	// add a "MatchScaledTrajObjective"
 	targetTrajectory_input.setTValueToLength();
@@ -162,12 +162,32 @@ BenderApp3D::BenderApp3D()
 	};
 	loadRobot(fnameRB);
 
-	RigidBody * left_gripper = rbEngine->getRBByName("link_7_l");
 	RigidBody * right_gripper = rbEngine->getRBByName("link_7_r");
+	RigidBody * left_gripper = rbEngine->getRBByName("link_7_l");
+	
 
 	robot->setHeading(-PI / 2.0);
 
-	
+	// find mount point on gripper
+
+	P3D mount_point_surfacemesh_r = (P3D(0.628,0.085,0.344) + P3D(0.647,0.075,0.356)) * 0.5;
+	P3D mount_point_surfacemesh_l = (P3D(0.628,-0.085,0.344) + P3D(0.647,-0.075,0.356)) * 0.5;
+
+	mountBaseOriginRB_r = right_gripper->meshTransformations[0].transform(mount_point_surfacemesh_r);
+	mountBaseOriginRB_l = left_gripper->meshTransformations[0].transform(mount_point_surfacemesh_l);
+
+	//mountBaseOriginRB_l = V3D(0.0);
+	mountBaseCoordinatesRB_l << 0.0, 0.0, 1.0,
+		0.0, -1.0, 0.0,
+		1.0, 0.0, 0.0;
+
+	//mountBaseOriginRB_r = V3D(0.0);
+	mountBaseCoordinatesRB_r << 0.0, 0.0, 1.0,
+		0.0, -1.0, 0.0,
+		1.0, 0.0, 0.0;
+
+
+
 
 	/*
 	{
@@ -189,14 +209,14 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 	ikSolver = new IK_Solver(robot, true);
 	// new target: right gripper
 	ikSolver->ikPlan->endEffectors.push_back(IK_EndEffector());
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = P3D(0.0,0.0,0.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = mountBaseOriginRB_r;
 	ikSolver->ikPlan->endEffectors.back().endEffectorRB = right_gripper;
-	ikSolver->ikPlan->endEffectors.back().targetEEPos = P3D(-0.15, 0.0, 0.0) + rod_center;
+	ikSolver->ikPlan->endEffectors.back().targetEEPos = P3D(-rod_length*0.5, 0.0, 0.0) + rod_center;
 	// new target: left gripper
 	ikSolver->ikPlan->endEffectors.push_back(IK_EndEffector());
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = P3D(0.0,0.0,0.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = mountBaseOriginRB_l;
 	ikSolver->ikPlan->endEffectors.back().endEffectorRB = left_gripper;
-	ikSolver->ikPlan->endEffectors.back().targetEEPos = P3D(+0.15, 0.0, 0.0) + rod_center;
+	ikSolver->ikPlan->endEffectors.back().targetEEPos = P3D(+rod_length*0.5, 0.0, 0.0) + rod_center;
 
 	for(int i = 0; i < 100; ++i) {
 		ikSolver->ikEnergyFunction->regularizer = 100;
@@ -236,68 +256,7 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 	int mount_id_right_gripper = femMesh->mounts.size()-1;
 	mount_right_gripper->robotPart = right_gripper;
 
-	
-	//find mount base in coords of gripper mesh
-	/*
-	{
-		std::string gripper_name = "link_7_l";
 
-		int face_xyPlane_mountBase_idx = 70363-1;
-		int face_xzPlane_mountSymmetric1_idx = 44563-1;
-		int face_xzPlane_mountSymmetric2_idx = 79225-1;
-		int vertex_yzPlane_idx = 22422-1;
-
-		RigidBody* gripper = rbEngine->getRBByName(gripper_name.c_str());
-		GLMesh* gripper_mesh = gripper->meshes[0];
-
-		GLIndexedTriangle face_xyPlane_mountBase = gripper_mesh->getTriangle(face_xyPlane_mountBase_idx);
-		GLIndexedTriangle face_xzPlane_mountSymmetric1 = gripper_mesh->getTriangle(face_xzPlane_mountSymmetric1_idx);
-		GLIndexedTriangle face_xzPlane_mountSymmetric2 = gripper_mesh->getTriangle(face_xzPlane_mountSymmetric2_idx);
-		Plane plane_xy = Plane(gripper_mesh->getVertex(face_xyPlane_mountBase.indexes[0]),
-								gripper_mesh->getVertex(face_xyPlane_mountBase.indexes[1]),
-								gripper_mesh->getVertex(face_xyPlane_mountBase.indexes[2]));
-		Plane plane_xz_symmetric1 = Plane(gripper_mesh->getVertex(face_xzPlane_mountSymmetric1.indexes[0]),
-										gripper_mesh->getVertex(face_xzPlane_mountSymmetric1.indexes[1]),
-										gripper_mesh->getVertex(face_xzPlane_mountSymmetric1.indexes[2]));
-		Plane plane_xz_symmetric2 = Plane(gripper_mesh->getVertex(face_xzPlane_mountSymmetric2.indexes[0]),
-										gripper_mesh->getVertex(face_xzPlane_mountSymmetric2.indexes[1]),
-										gripper_mesh->getVertex(face_xzPlane_mountSymmetric2.indexes[2]));
-		P3D pt_yzPlane = gripper_mesh->getVertex(vertex_yzPlane_idx);
-
-		V3D z_dir = plane_xy.n;
-		V3D y_dir = plane_xz_symmetric1.n;
-		V3D x_dir = y_dir.cross(z_dir);
-
-		P3D pt_xzPlane = gripper_mesh->getVertex(face_xzPlane_mountSymmetric1.indexes[0])
-			             + y_dir * plane_xz_symmetric1.getSignedDistanceToPoint(gripper_mesh->getVertex(face_xzPlane_mountSymmetric2.indexes[0])) * 0.5;
-		P3D pt_xyPlane = gripper_mesh->getVertex(face_xyPlane_mountBase.indexes[0]);
-
-		V3D origin_mount_coordinates(pt_yzPlane[0], pt_xzPlane[1], pt_xyPlane[2]);
-
-		Matrix3x3 mountBaseCoordinatesMesh;
-		mountBaseCoordinatesMesh << z_dir, y_dir, x_dir;
-
-		V3D origin_original_coordinates = mountBaseCoordinatesMesh.inverse() * origin_mount_coordinates;
-
-		mountBaseOriginRB_l = origin_original_coordinates;
-		mountBaseCoordinatesRB_l = mountBaseCoordinatesMesh;
-
-		Transformation & meshtrans = gripper->meshTransformations[0];
-		mountBaseOriginRB_l = meshtrans.transform(mountBaseOriginRB_l);
-		mountBaseCoordinatesRB_l = meshtrans.R * mountBaseCoordinatesRB_l;
-
-	}
-	*/
-	
-	mountBaseOriginRB_l = V3D(0.0);
-	mountBaseCoordinatesRB_l << 0.0, 0.0, 1.0,
-								0.0, -1.0, 0.0,
-								1.0, 0.0, 0.0;
-
-	mountBaseOriginRB_r = V3D(0.0);
-	mountBaseCoordinatesRB_r << 0.0, 0.0, 1.0,
-								0.0, -1.0, 0.0,
-								1.0, 0.0, 0.0;
 	
 
 
@@ -357,18 +316,18 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 		}
 	};
 
-	mountBaseOriginMesh_r = V3D(-0.15, 0.0, 0.0) + rod_center;
+	mountBaseOriginMesh_r = V3D(-rod_length*0.5, 0.0, 0.0) + rod_center;
 	mountBaseCoordinatesMesh_r << 0.0, 0.0, 1.0,
 									0.0, -1.0, 0.0,
 									1.0, 0.0, 0.0;
 
-	mountBaseOriginMesh_l = V3D(+0.15, 0.0, 0.0) + rod_center;
+	mountBaseOriginMesh_l = V3D(+rod_length*0.5, 0.0, 0.0) + rod_center;
 	mountBaseCoordinatesMesh_l << 0.0, 0.0, 1.0,
 								0.0, -1.0, 0.0,
 								1.0, 0.0, 0.0;
 
 
-	mountBaseOriginRB_l = V3D(0.0);
+	//mountBaseOriginRB_l = V3D(0.0);
 	Quaternion gripper_left_orientation = left_gripper->state.orientation;
 	Matrix3x3 gripper_left_orientation_matrix = gripper_left_orientation.getRotationMatrix();
 	mountBaseCoordinatesRB_l = gripper_left_orientation_matrix.inverse()*mountBaseCoordinatesMesh_l;
@@ -376,7 +335,7 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 //		0.0, -1.0, 0.0,
 //		1.0, 0.0, 0.0;
 
-	mountBaseOriginRB_r = V3D(0.0);
+	//mountBaseOriginRB_r = V3D(0.0);
 	Quaternion gripper_right_orientation = right_gripper->state.orientation;
 	Matrix3x3 gripper_right_orientation_matrix = gripper_right_orientation.getRotationMatrix();
 	mountBaseCoordinatesRB_r = gripper_right_orientation_matrix.inverse()*mountBaseCoordinatesMesh_r;
@@ -386,11 +345,11 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 
 
 
-	set_robot_mount_from_plane(0, -0.15, 0.01,
+	set_robot_mount_from_plane(0, -rod_length*0.5, 0.01,
 								mount_id_right_gripper,
 								mountBaseOriginMesh_r, mountBaseCoordinatesMesh_r,
 								mountBaseOriginRB_r, mountBaseCoordinatesRB_r);
-	set_robot_mount_from_plane(0, +0.15, 0.01,
+	set_robot_mount_from_plane(0, +rod_length*0.5, 0.01,
 								mount_id_left_gripper,
 								mountBaseOriginMesh_l, mountBaseCoordinatesMesh_l,
 								mountBaseOriginRB_l, mountBaseCoordinatesRB_l);
@@ -438,6 +397,13 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 	menu->addButton("set state as target", [this](){
 		femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
 	});
+	//
+	menu->addGroup("Visualization");
+	menu->addVariable("Show mesh", showMesh);
+	menu->addVariable("Show Rotation Axes", showRotationAxes);
+	menu->addVariable("Show MOI", showMOI);
+	menu->addVariable("Show CDP", showCDPs);
+
 	
 
 

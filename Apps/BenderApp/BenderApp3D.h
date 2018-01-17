@@ -86,8 +86,8 @@ public:
 
 	// visualization robot
 	bool showMesh = false;
-	bool showMOI = false;
 	bool showRotationAxes = true;
+	bool showMOI = false;
 	bool showCDPs = false;
 
 	// Interaction
