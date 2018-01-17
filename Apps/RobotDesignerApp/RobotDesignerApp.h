@@ -142,6 +142,8 @@ public:
 	dVector slidervalues;
 	bool updateMotionBasedOnJacobian = false;
 	bool optimizeWhileAnimating = false;
+private:
+	bool syncCameras = false;
 };
 
 

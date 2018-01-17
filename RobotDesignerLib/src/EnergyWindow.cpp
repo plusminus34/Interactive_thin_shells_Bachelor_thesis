@@ -178,8 +178,9 @@ void EnergyWindow::updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFun
 	};
 
 	double maxValue = -HUGE_VAL;
-	int NE = energyFunction->objectives.size();
+	int NE = energyFunction->objectives.size()+1;
 	std::vector<double> values(NE); int index = 0;
+	values[index++] = energyFunction->computeValue(params);
 	for (const auto &objGroup : energyFunction->objGroups) {
 		for (ObjectiveFunction *obj : objGroup.second){
 			double value = obj->computeValue(params);
@@ -190,7 +191,7 @@ void EnergyWindow::updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFun
 	}
 
 	// update energy menu
-	index = 0;
+	index = 1;
 	for (auto &energyRow : energyUIRows) {
 		for (EnergyUIElement &el : energyRow.second){
 			double value = values[index++];
