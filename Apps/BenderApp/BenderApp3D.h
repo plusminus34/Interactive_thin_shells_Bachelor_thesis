@@ -71,8 +71,12 @@ public:
 	bool checkDerivatives = false;
 
 	bool runIkSolver = false;
+	int selectedArmIk = -1;
+
+	RigidBody * right_gripper;
+	RigidBody * left_gripper;
 	
-	enum InteractionObject {MOUNTS, OBJECTIVE};
+	enum InteractionObject {MOUNTS, OBJECTIVE, IKROBOT};
 	InteractionObject interactionObject = OBJECTIVE;
 	enum InteractionMode {VIEW, SELECT, DRAG, DRAW};
 	InteractionMode interactionMode = VIEW;
@@ -86,9 +90,12 @@ public:
 
 	// visualization robot
 	bool showMesh = false;
+	bool showAbstract = true;
 	bool showRotationAxes = true;
+	bool highlightSelected = true;
 	bool showMOI = false;
 	bool showCDPs = false;
+	
 
 	// Interaction
 	Ray lastClickedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));

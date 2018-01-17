@@ -120,7 +120,7 @@ BenderApp3D::BenderApp3D()
 	DynamicArray<Node *> matchedFiber;
 	node_sequence_from_line_segment(rod_center + P3D(-0.5*rod_length,0.0,0.0),
 									rod_center + P3D(0.5*rod_length,0.0,0.0),
-									0.01*rod_length, 
+									0.01*rod_length,
 									matchedFiber);
 
 	
@@ -131,14 +131,14 @@ BenderApp3D::BenderApp3D()
 	// initialize the ID Solver
 	inverseDeformationSolver = new InverseDeformationSolver<3>(femMesh, minimizers[comboBoxOptimizationAlgorithm->selectedIndex()]);
 
-	// draw some target trjectory
-	targetTrajectory_input.addKnotBack(rod_center + P3D(-rod_length*0.5, 0.05, 0.0));
-	targetTrajectory_input.addKnotBack(rod_center + P3D( 0.0,  0.1, 0.0));
-	targetTrajectory_input.addKnotBack(rod_center + P3D( rod_length*0.5, 0.05, 0.0));
+	//// draw some target trjectory
+	//targetTrajectory_input.addKnotBack(rod_center + P3D(-rod_length*0.5, 0.05, 0.0));
+	//targetTrajectory_input.addKnotBack(rod_center + P3D( 0.0,  0.1, 0.0));
+	//targetTrajectory_input.addKnotBack(rod_center + P3D( rod_length*0.5, 0.05, 0.0));
 
-	// add a "MatchScaledTrajObjective"
-	targetTrajectory_input.setTValueToLength();
-	femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
+	//// add a "MatchScaledTrajObjective"
+	//targetTrajectory_input.setTValueToLength();
+	//femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
 
 
 	////////////////////////
@@ -162,8 +162,8 @@ BenderApp3D::BenderApp3D()
 	};
 	loadRobot(fnameRB);
 
-	RigidBody * right_gripper = rbEngine->getRBByName("link_7_r");
-	RigidBody * left_gripper = rbEngine->getRBByName("link_7_l");
+	right_gripper = rbEngine->getRBByName("link_7_r");
+	left_gripper = rbEngine->getRBByName("link_7_l");
 	
 
 	robot->setHeading(-PI / 2.0);
@@ -228,18 +228,6 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 	// create generalized parametrization of the robot
 	generalizedRobotCoordinates = new GeneralizedCoordinatesRobotRepresentation(robot);
 
-	// change initial state of robot
-	/*
-	{
-	dVector q;
-	generalizedRobotCoordinates->getQ(q);
-	q(6) -= 0.15*PI;
-	q(13) -= 0.15*PI;
-	generalizedRobotCoordinates->setQ(q);
-	generalizedRobotCoordinates->syncRobotStateWithGeneralizedCoordinates();
-
-	}
-	*/
 
 
 	// create a parameter set with the above robot coordinates
@@ -258,11 +246,6 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 
 
 	
-
-
-	// add node to robot mount
-
-
 	// set rotation mounts
 	auto set_rotation_mount_from_plane = [&](int dim, double val, double tolerance) 
 	{
@@ -331,17 +314,10 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 	Quaternion gripper_left_orientation = left_gripper->state.orientation;
 	Matrix3x3 gripper_left_orientation_matrix = gripper_left_orientation.getRotationMatrix();
 	mountBaseCoordinatesRB_l = gripper_left_orientation_matrix.inverse()*mountBaseCoordinatesMesh_l;
-//	mountBaseCoordinatesRB_l << 0.0, 0.0, 1.0,
-//		0.0, -1.0, 0.0,
-//		1.0, 0.0, 0.0;
-
 	//mountBaseOriginRB_r = V3D(0.0);
 	Quaternion gripper_right_orientation = right_gripper->state.orientation;
 	Matrix3x3 gripper_right_orientation_matrix = gripper_right_orientation.getRotationMatrix();
 	mountBaseCoordinatesRB_r = gripper_right_orientation_matrix.inverse()*mountBaseCoordinatesMesh_r;
-//	mountBaseCoordinatesRB_r << 0.0, 0.0, 1.0,
-//		0.0, -1.0, 0.0,
-//		1.0, 0.0, 0.0;
 
 
 
@@ -353,7 +329,6 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 								mount_id_left_gripper,
 								mountBaseOriginMesh_l, mountBaseCoordinatesMesh_l,
 								mountBaseOriginRB_l, mountBaseCoordinatesRB_l);
-
 
 
 	//set_rotation_mount_from_plane(0, -0.15, 0.01);
@@ -398,9 +373,11 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 		femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
 	});
 	//
-	menu->addGroup("Visualization");
+	menu->addGroup("Robot Visualization");
 	menu->addVariable("Show mesh", showMesh);
+	menu->addVariable("Show abstract", showAbstract);
 	menu->addVariable("Show Rotation Axes", showRotationAxes);
+	menu->addVariable("Highlight selected", highlightSelected);
 	menu->addVariable("Show MOI", showMOI);
 	menu->addVariable("Show CDP", showCDPs);
 
@@ -426,7 +403,7 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 
 	menu->addGroup("Mode");
 	// add selection for active interaction object
-	menu->addVariable("Manipulate: ", interactionObject, true) -> setItems({"Mounts", "Target Trajectory"});	
+	menu->addVariable("Manipulate: ", interactionObject, true) -> setItems({"Mounts", "Target Trajectory", "IKROBOT"});	
 	// add selection for interaction mode
 	{
 		nanogui::Widget *modes = new nanogui::Widget(menu->window());
@@ -457,7 +434,7 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 		menu->addWidget("", selection);
 		selection->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 			nanogui::Alignment::Middle, 0, 4));
-		comboBoxMountSelection = new nanogui::ComboBox(selection, { "Combo box item 1", "Combo box item 2", "Combo box item 3"});
+		comboBoxMountSelection = new nanogui::ComboBox(selection, { "no mounts available"});
 		comboBoxMountSelection->setCallback([this](int idx){selected_mount = idx;
 		                                                    std::cout << "selected mount: " << selected_mount << std::endl;
 															});
@@ -605,6 +582,38 @@ bool BenderApp3D::onMouseMoveEvent(double xPos, double yPos) {
 			return(false);
 		}
 	}
+	if(interactionObject == InteractionObject::IKROBOT) {
+		if(interactionMode == InteractionMode::SELECT) {
+			return(true);
+		}
+		else if(interactionMode == InteractionMode::DRAG) {
+			if(selectedArmIk == 0) {
+				RigidBody* selectedRigidBody = right_gripper;
+				P3D selectedPoint = static_cast<P3D>(mountBaseOriginRB_r);
+				P3D targetPoint;
+				Ray ray = getRayFromScreenCoords(xPos, yPos);
+				V3D viewPlaneNormal = V3D(camera->getCameraPosition(), camera->getCameraTarget()).unit();
+				ray.getDistanceToPlane(Plane(selectedRigidBody->getWorldCoordinates(selectedPoint), viewPlaneNormal), &targetPoint);
+				ikSolver->ikPlan->endEffectors[selectedArmIk].targetEEPos = targetPoint;
+			}
+			else if(selectedArmIk == 1) {
+				RigidBody* selectedRigidBody = left_gripper;
+				P3D selectedPoint = static_cast<P3D>(mountBaseOriginRB_l);
+				P3D targetPoint;
+				Ray ray = getRayFromScreenCoords(xPos, yPos);
+				V3D viewPlaneNormal = V3D(camera->getCameraPosition(), camera->getCameraTarget()).unit();
+				ray.getDistanceToPlane(Plane(selectedRigidBody->getWorldCoordinates(selectedPoint), viewPlaneNormal), &targetPoint);
+				ikSolver->ikPlan->endEffectors[selectedArmIk].targetEEPos = targetPoint;
+			}
+			return(true);
+		}
+		else if(interactionMode == InteractionMode::DRAW) {
+			return(true);
+		}
+		else {
+			return(false);
+		}
+	}
 	
 	return false;
 }
@@ -684,6 +693,28 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 				return(false);
 			}
 		}
+		else if(interactionObject == InteractionObject::IKROBOT) {
+			if(interactionMode == InteractionMode::SELECT) {
+				return(true);
+			}
+			else if(interactionMode == InteractionMode::DRAG) {
+				if(action == GLFW_PRESS) {
+					selectedArmIk = 0;
+					runIkSolver = true;
+				}
+				else if(action == GLFW_RELEASE) {
+					selectedArmIk = -1;
+					runIkSolver = false;
+				}
+				return(true);
+			}
+			else if(interactionMode == InteractionMode::DRAW) {
+				return(true);
+			}
+			else {
+				return(false);
+			}
+		}
 	}
 
 	if (button == GLFW_MOUSE_BUTTON_RIGHT) {
@@ -730,6 +761,28 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 				return(false);
 			}
 		}
+		else if(interactionObject == InteractionObject::IKROBOT) {
+			if(interactionMode == InteractionMode::SELECT) {
+				return(true);
+			}
+			else if(interactionMode == InteractionMode::DRAG) {
+				if(action == GLFW_PRESS) {
+					selectedArmIk = 1;
+					runIkSolver = true;
+				}
+				else if(action == GLFW_RELEASE) {
+					selectedArmIk = -1;
+					runIkSolver = false;
+				}
+				return(true);
+			}
+			else if(interactionMode == InteractionMode::DRAW) {
+				return(true);
+			}
+			else {
+				return(false);
+			}
+		}
 
 	}
 
@@ -755,14 +808,6 @@ bool BenderApp3D::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 				P3D origin; 
 				currentRay.getDistanceToPlane(plane,&origin);
 				dynamic_cast<RotationMount3D*>(femMesh->mounts[selected_mount])->rotate(origin, yOffset * 0.05, 0.0, 0.0);
-				/*
-				V3D view_direction = V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit();
-				Plane plane(camera->getCameraTarget(),view_direction);
-				P3D origin; 
-				currentRay.getDistanceToPlane(plane,&origin);
-				RotationMount3D * mount = dynamic_cast<RotationMount3D*>(femMesh->mounts[selected_mount]);
-				mount->rotate(origin, view_direction, yOffset * 0.01);
-				*/
 			}
 			return(true);
 		}
@@ -919,7 +964,7 @@ void BenderApp3D::drawScene() {
 
 	// draw origin
 	P3D p0(0.0, 0.0, 0.0);
-	double l = 0.2;
+	double l = 0.1;
 	P3D px(l, 0.0, 0.0);
 	P3D py(0.0, l, 0.0);
 	P3D pz(0.0, 0.0, l);
@@ -975,7 +1020,11 @@ void BenderApp3D::drawScene() {
 
 	
 	// draw robot
-	int flags = SHOW_ABSTRACT_VIEW | HIGHLIGHT_SELECTED;
+	int flags = 0;
+	if(showAbstract)
+		flags |= SHOW_ABSTRACT_VIEW;
+	if(highlightSelected)
+		flags |= HIGHLIGHT_SELECTED;
 	if (showMesh)
 		flags |= SHOW_MESH;
 	if (showMOI){
