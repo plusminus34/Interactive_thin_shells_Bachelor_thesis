@@ -1,5 +1,6 @@
 build*
 out/
+screenShots/*
 
 /.vs/SCP/v14/.suo
 

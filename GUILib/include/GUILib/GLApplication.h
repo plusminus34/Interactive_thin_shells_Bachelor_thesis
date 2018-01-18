@@ -10,6 +10,8 @@
 #include "GLContentManager.h"
 #include "GlobalMouseState.h"
 
+#include "Utils/Image.h"
+
 #include "Canvas3D.h"
 
 #pragma warning( disable : 4005)
@@ -29,12 +31,15 @@ public:
 
 	bool appIsRunning = false;
 	bool waitForFrameRate = true;
+	bool saveScreenshots = false;
+	std::vector<Image*> screenshots;
 
     nanogui::Screen *menuScreen = nullptr;
 	nanogui::FormHelper *mainMenu = nullptr;
 	nanogui::Button* playButton = nullptr;
 
 	void setupMainMenu();
+
 
 protected:
 	//keep a timer here to see how long it's been since the last redraw
