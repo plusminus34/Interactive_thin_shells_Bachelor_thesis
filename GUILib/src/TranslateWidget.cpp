@@ -122,7 +122,7 @@ void TranslateWidgetAxis::pickWith(const Ray& ray) {
 
 void TranslateWidgetAxis::draw() {
 	double scale = isPicked ? 3 : 1;
-	double alpha = pWidget->transparent ? 1:0.25;
+	double alpha = pWidget->transparent ? 0.25:1;
 	glColor4d(tAxis[0] / 3 * scale, tAxis[1] / 3 * scale, tAxis[2] / 3 * scale, alpha);
 	drawArrow(P3D(), P3D() + tAxis*pWidget->scale * (1+(scale-1)/20.0), pWidget->scale * (1 + (scale - 1) / 20.0) / 10);
 }

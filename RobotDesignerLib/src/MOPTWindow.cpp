@@ -352,7 +352,7 @@ void MOPTWindow::drawScene() {
 	glEnable(GL_LIGHTING);
 
 	if (locomotionManager) {
-		locomotionManager->drawMotionPlan(moptParams.phase, moptParams.gaitCycle, moptParams.drawRobotPose, moptParams.drawPlanDetails, moptParams.drawContactForces, moptParams.drawOrientation);
+		locomotionManager->drawMotionPlan(moptParams.phase, moptParams.gaitCycle, moptParams.drawRobotPose, moptParams.drawPlanDetails, moptParams.drawContactForces, true);
 
 		int startIndex = locomotionManager->motionPlan->wrapAroundBoundaryIndex;
 		if (startIndex < 0)  startIndex = 0;
@@ -363,9 +363,9 @@ void MOPTWindow::drawScene() {
 	for (auto widget : widgets)
 	{
 		if (fabs(widget2constraint[widget]->phase - moptParams.phase) < (moptParams.motionPlanDuration / nTimeSteps))
-			widget->transparent = true;
-		else
 			widget->transparent = false;
+		else
+			widget->transparent = true;
 		widget->draw();
 	}
 }
