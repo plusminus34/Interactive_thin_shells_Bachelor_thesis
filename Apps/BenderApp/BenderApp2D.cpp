@@ -200,6 +200,9 @@ void BenderApp2D::initInteractionMenu(nanogui::FormHelper* menu)
 	menu->addGroup("Tools");
 	menu->addVariable("Add/remove nodes", toolMode, true) -> setItems({"pick single node", "brush"});
 	
+	menu->addGroup("other");
+	menu->addVariable("Record", saveScreenshots);
+
 };
 
 void BenderApp2D::updateMountSelectionBox()

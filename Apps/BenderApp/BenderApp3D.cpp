@@ -62,8 +62,8 @@ BenderApp3D::BenderApp3D()
 	// create some points on centerline of the mesh
 	DynamicArray<P3D> centerlinePts;
 	{
-		int m = 15;
-		centerlinePts.resize(15);
+		int m = 10;
+		centerlinePts.resize(m);
 		V3D pt1(-1.0, 0.0, 0.0);
 		V3D pt2(+1.0, 0.0, 0.0);
 		double dt = 1.0 / static_cast<double>(m-1);
@@ -338,8 +338,10 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 
 
 
+	// camera view
+	camera->setCameraTarget(P3D(rod_center) - V3D(0.0, 0.0, 0.25));
 
-	
+	glfwSetWindowSize(glfwWindow, 1920, 1080);
 	
 
 }
@@ -362,6 +364,7 @@ void BenderApp3D::pushInputTrajectory(Trajectory3Dplus & trajInput)
 void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 {
 
+	menu->addVariable("Record", saveScreenshots);
 	// 
 	menu->addGroup("FEM Sim options");
 	menu->addVariable("Static solve", computeStaticSolution);
@@ -589,20 +592,22 @@ bool BenderApp3D::onMouseMoveEvent(double xPos, double yPos) {
 		else if(interactionMode == InteractionMode::DRAG) {
 			if(selectedArmIk == 0) {
 				RigidBody* selectedRigidBody = right_gripper;
-				P3D selectedPoint = static_cast<P3D>(mountBaseOriginRB_r);
+				//P3D selectedPoint = static_cast<P3D>(mountBaseOriginRB_r);
+				P3D selectedPoint = selectedIkPoint;
 				P3D targetPoint;
 				Ray ray = getRayFromScreenCoords(xPos, yPos);
 				V3D viewPlaneNormal = V3D(camera->getCameraPosition(), camera->getCameraTarget()).unit();
-				ray.getDistanceToPlane(Plane(selectedRigidBody->getWorldCoordinates(selectedPoint), viewPlaneNormal), &targetPoint);
+				ray.getDistanceToPlane(Plane(selectedPoint, viewPlaneNormal), &targetPoint);
 				ikSolver->ikPlan->endEffectors[selectedArmIk].targetEEPos = targetPoint;
 			}
 			else if(selectedArmIk == 1) {
 				RigidBody* selectedRigidBody = left_gripper;
-				P3D selectedPoint = static_cast<P3D>(mountBaseOriginRB_l);
+				//P3D selectedPoint = static_cast<P3D>(mountBaseOriginRB_l);
+				P3D selectedPoint = selectedIkPoint;
 				P3D targetPoint;
 				Ray ray = getRayFromScreenCoords(xPos, yPos);
 				V3D viewPlaneNormal = V3D(camera->getCameraPosition(), camera->getCameraTarget()).unit();
-				ray.getDistanceToPlane(Plane(selectedRigidBody->getWorldCoordinates(selectedPoint), viewPlaneNormal), &targetPoint);
+				ray.getDistanceToPlane(Plane(selectedPoint, viewPlaneNormal), &targetPoint);
 				ikSolver->ikPlan->endEffectors[selectedArmIk].targetEEPos = targetPoint;
 			}
 			return(true);
@@ -700,6 +705,8 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 			else if(interactionMode == InteractionMode::DRAG) {
 				if(action == GLFW_PRESS) {
 					selectedArmIk = 0;
+					//selectedIkPoint = static_cast<P3D>(mountBaseOriginRB_r);
+					selectedIkPoint = right_gripper->getWorldCoordinates(static_cast<P3D>(mountBaseOriginRB_r));
 					runIkSolver = true;
 				}
 				else if(action == GLFW_RELEASE) {
@@ -768,6 +775,7 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 			else if(interactionMode == InteractionMode::DRAG) {
 				if(action == GLFW_PRESS) {
 					selectedArmIk = 1;
+					selectedIkPoint = left_gripper->getWorldCoordinates(static_cast<P3D>(mountBaseOriginRB_l));
 					runIkSolver = true;
 				}
 				else if(action == GLFW_RELEASE) {
@@ -927,7 +935,7 @@ void BenderApp3D::process() {
 			ikSolver->ikOptimizer->checkDerivatives = true;
 			ikSolver->solve();
 			testGeneralizedCoordinateRepresentation(robot);
-			break;
+			//break;
 		}
 		else if(optimizeObjective) {
 			double o_new = 0;
@@ -945,7 +953,7 @@ void BenderApp3D::process() {
 
 			break;
 		}
-		else {
+		if(!optimizeObjective) {
 			inverseDeformationSolver->solveMesh(computeStaticSolution, simTimeStep);
 			simulationTime += simTimeStep;
 		}
@@ -955,12 +963,15 @@ void BenderApp3D::process() {
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
 void BenderApp3D::drawScene() {
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_LIGHTING);
-	glColor3d(1,1,1);
+	
 
 	// draw mesh
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_LIGHTING);
+	//glColor3d(0.8,0.8,1);
+	glColor3d(1,1,1);
 	femMesh->drawSimulationMesh();
+
 
 	// draw origin
 	P3D p0(0.0, 0.0, 0.0);
@@ -1018,6 +1029,7 @@ void BenderApp3D::drawScene() {
 		o->draw(femMesh->x);
 	}
 
+
 	
 	// draw robot
 	int flags = 0;
@@ -1036,12 +1048,13 @@ void BenderApp3D::drawScene() {
 	if (showCDPs)
 		flags |= SHOW_CD_PRIMITIVES;
 
+	//glPushMatrix();
+
 	glEnable(GL_LIGHTING);
-	glPushMatrix();
+	//glPushMatrix();
+
 
 	rbEngine->drawRBs(flags);
-	
-
 
 	
 }

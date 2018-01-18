@@ -72,6 +72,7 @@ public:
 
 	bool runIkSolver = false;
 	int selectedArmIk = -1;
+	P3D selectedIkPoint;
 
 	RigidBody * right_gripper;
 	RigidBody * left_gripper;
