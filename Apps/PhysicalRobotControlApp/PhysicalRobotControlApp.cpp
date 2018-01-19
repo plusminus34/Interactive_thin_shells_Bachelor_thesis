@@ -337,12 +337,12 @@ void PhysicalRobotControlApp::drawScene() {
 
 	rbEngine->drawRBs(flags);
 
-//    RobotState rs(robot);
+//	RobotState rs(robot);
 //	if (rci && requestPosition)
-//        rci->syncSimRobotWithPhysicalRobot();
-//    glTranslated(0, 0, 1);
-//    rbEngine->drawRBs(flags);
-//    robot->setState(&rs);
+//		rci->syncSimRobotWithPhysicalRobot();
+//	glTranslated(0, 0, 1);
+//	rbEngine->drawRBs(flags);
+//	robot->setState(&rs);
 
 //	drawSphere(robot->getRBByName("link_7_l")->getWorldCoordinates(P3D(0.017977, -0.0169495, 0.01949)), 0.05);
 //	drawSphere(robot->getRBByName("link_7_r")->getWorldCoordinates(P3D(0.0200485, -0.0189025, -0.0217355)), 0.05);

@@ -35,7 +35,7 @@ private:
 
 	bool controlPositionsOnly = false;
     bool syncPhysicalRobot = false;
-	bool requestPosition = false;
+	bool requestPosition = true;
 
 	bool startAtHomeState = true; //true = uses predefined home position / false = uses position where robot is currently in as home position
 	bool saveCurrentAsHomePosition = false;

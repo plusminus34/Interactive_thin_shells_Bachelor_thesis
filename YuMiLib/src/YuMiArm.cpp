@@ -56,6 +56,7 @@ bool YuMiArm::init(std::string arm){
 	//if(jointsReceived && tcpSpeedSent && gripInit && gripOpened){
 	if(jointsReceived && tcpSpeedSent){
         connected = true;
+		std::cout << "Robot successfully connected!" << std::endl;
         return true;
     } else {
         std::cerr << "ERROR: Problem in YumiArm init -> socket connection, joints or speed..." << std::endl;
@@ -66,9 +67,6 @@ bool YuMiArm::init(std::string arm){
 
 //Open socket and connect
 bool YuMiArm::connectServer(const char* ip, unsigned int port) {
-	// Init bool
-	bool socketConnected = false;
-
 	// Create a socket for robot
 #ifdef WIN32
 	unsigned short version = 2;
@@ -79,103 +77,26 @@ bool YuMiArm::connectServer(const char* ip, unsigned int port) {
 	}
 #endif
 
-	if ((robotSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
+	std::cout << "Opening communication port... (if screen freezes, press play button on robot controller)" << std::endl;
+
+	if ((robotSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1){
 		std::cerr << "Problem creating the socket" << std::endl;
-	else {
+		return false;
+	} else {
 		// Now try to connect to the robot server
 		struct sockaddr_in remoteSocket;
 		remoteSocket.sin_family = AF_INET;
 		remoteSocket.sin_port = htons(port);
 		inet_pton(AF_INET, ip, &remoteSocket.sin_addr.s_addr);
-		long arg;
 
-//		// Set socket to non-blocking
-//		if( (arg = fcntl(robotSocket, F_GETFL, NULL)) < 0) {
-//			fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno));
-//			return false;
-//		}
-//		arg |= O_NONBLOCK;
-//		if( fcntl(robotSocket, F_SETFL, arg) < 0) {
-//			fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
-//			return false;
-//		}
-
-		// Establish connection
 		int connection = connect(robotSocket, (sockaddr*)&remoteSocket, sizeof(remoteSocket));
-//		if (connection < 0) {
-//			struct timeval tv;
-//			fd_set myset;
-//			int valopt;
-//			socklen_t lon;
-//			if (errno == EINPROGRESS) {
-//				//fprintf(stderr, "EINPROGRESS in connect() - selecting\n");
 
-//				do {
-//					tv.tv_sec = 3;
-//					tv.tv_usec = 0;
-//					FD_ZERO(&myset);
-//					FD_SET(robotSocket, &myset);
-//					connection = select(robotSocket+1, NULL, &myset, NULL, &tv);
-//					if (connection < 0 && errno != EINTR) {
-//						fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
-//						return false;
-//					}
-//					else if (connection > 0) {
-//						// Socket selected for write
-//						lon = sizeof(int);
-//						if (getsockopt(robotSocket, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) {
-//							fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno));
-//							return false;
-//						}
-//						// Check the value returned...
-//						if (valopt) {
-//							fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt)
-//									);
-//							return false;
-//						}
-//						break;
-//					}
-//					else {
-//						fprintf(stderr, "Timeout in select() - Cancelling!\n");
-//						return false;
-//					}
-//				} while (1);
-//			}
-//			else {
-//				fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
-//				return false;
-//			}
-//		}
-
-//		if(connection > 0){
-//			#ifndef WIN32
-//			usleep(2000000);
-//			#endif
-
-//			bool pingReceived = pingRobot();
-//			if(pingReceived){
-//				if( (arg = fcntl(robotSocket, F_GETFL, NULL)) < 0) {
-//					fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno));
-//					return false;
-//				}
-//				arg &= (~O_NONBLOCK);
-//				if( fcntl(robotSocket, F_SETFL, arg) < 0) {
-//					fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
-//					return false;
-//				}
-
-//				std::cout << "Successfully connected to the ABB robot" << std::endl;
-//				socketConnected = true;
-//			} else {
-//				std::cerr << "Could not ping the robot... - Robot controller running?" << std::endl;
-//			}
-//		} else {
-//			std::cerr << "Opening communication port failed..." << std::endl;
-//		}
+		if(connection == -1){
+			std::cerr << "Robot could not be connected - Robot controller running?" << std::endl;
+			return false;
+		} else if(connection == 0);
+			return true;
 	}
-	socketConnected = true;
-
-	return socketConnected;
 }
 
 
@@ -186,7 +107,7 @@ bool YuMiArm::closeConnection(){
 
     strcpy(message, YuMiCom::closeConnection(idCode).c_str());
 
-	sendAndReceive(message, strlen(message), reply, idCode); //TODO: Now reply from robot yet if successfully closed or not
+	sendAndReceive(message, strlen(message), reply, idCode); //TODO: No reply from robot yet if successfully closed or not
 	connected = false;
 	return true;
 }
@@ -337,7 +258,7 @@ bool YuMiArm::getAndSendJointsAndTCPSpeedToRobot(YuMiJoints yumiJoints, unsigned
 
 	if(sendAndReceive(message, strlen(message), reply, idCode)){
 		//Set current joints, target joints and TCPSpeed
-		std::cout << "getAndSendJointsAndTCPSpeedToRobot - reply: " << reply << std::endl;
+		//std::cout << "getAndSendJointsAndTCPSpeedToRobot - reply: " << reply << std::endl;
 		targetJoints = yumiJoints;
 		TCPSpeed = speed;
 		YuMiCom::parseJoints(reply, currentJoints);

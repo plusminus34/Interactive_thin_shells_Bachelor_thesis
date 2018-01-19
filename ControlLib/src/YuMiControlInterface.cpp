@@ -2,9 +2,19 @@
 
 #include <iostream>
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+
 
 //Constructor
-YuMiControlInterface::YuMiControlInterface(Robot* robot) : RobotControlInterface(robot) {}
+YuMiControlInterface::YuMiControlInterface(Robot* robot) : RobotControlInterface(robot) {
+	savedRightJoints = rightArm.convertVectorToYuMiJoints(YuMiConstants::HOME_STATE_RIGHT);
+	savedLeftJoints = leftArm.convertVectorToYuMiJoints(YuMiConstants::HOME_STATE_LEFT);
+
+	tcpSpeedRight.current = 100;
+	tcpSpeedLeft.current = 100;
+}
 
 //Destructor
 YuMiControlInterface::~YuMiControlInterface() {}
@@ -12,85 +22,62 @@ YuMiControlInterface::~YuMiControlInterface() {}
 //set motor goals from target values
 void YuMiControlInterface::sendControlInputsToPhysicalRobot() {
 
-//	bool sendLeftJointInputs = sendJointInputsCheck("left");
-//	bool sendRightJointInputs = sendJointInputsCheck("right");
+	//Send commands to robot
+	rightArm.getAndSendJointsAndTCPSpeedToRobot(savedRightJoints, tcpSpeedRight.current);
+	leftArm.getAndSendJointsAndTCPSpeedToRobot(savedLeftJoints, tcpSpeedLeft.current);
 
-//	if(sendRightJointInputs || sendLeftJointInputs){
+	//Get right and left joint targets
+	YuMiJoints rightTargetJoints, leftTargetJoints;
 
-		//Get right and left joint targets
-		YuMiJoints rightTargetJoints, leftTargetJoints;
+	float* rightTargetJointsPtr = &rightTargetJoints.j1;
+	float* leftTargetJointsPtr = &leftTargetJoints.j1;
 
-		float* rightTargetJointsPtr = &rightTargetJoints.j1;
-		float* leftTargetJointsPtr = &leftTargetJoints.j1;
+	for (int i = 0; i < robot->getJointCount(); i++) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
 
-		for (int i = 0; i < robot->getJointCount(); i++) {
-			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-			if (!hj) continue;
-
-			if(i % 2 == 0){
-				*rightTargetJointsPtr = hj->motor.targetMotorAngle;
-				rightTargetJointsPtr++;
-			} else {
-				*leftTargetJointsPtr = hj->motor.targetMotorAngle;
-				leftTargetJointsPtr++;
-			}
+		if(i % 2 == 0){
+			*rightTargetJointsPtr = hj->motor.targetMotorAngle;
+			rightTargetJointsPtr++;
+		} else {
+			*leftTargetJointsPtr = hj->motor.targetMotorAngle;
+			leftTargetJointsPtr++;
 		}
+	}
 
-		//Send inputs to robot arm controllers
-		//if(sendRightJointInputs){
-			rightArm.setRobotTCPSpeed(tcpSpeedRight.target);
-			rightArm.sendRobotToJointPose(rightTargetJoints);
-		//}
+	//Update current values belonging to calculate TCPSpeed
+	savedLeftJoints = leftTargetJoints;
+	savedRightJoints = rightTargetJoints;
 
-		//rightArm.getAndSendJointsAndTCPSpeedToRobot(rightTargetJoints, tcpSpeedRight.target);
-		//YuMiJoints rightCurrentJoints = rightArm.getCurrentJointValues();
+	globalTCPLeft.current = globalTCPLeft.target;
+	globalTCPRight.current = globalTCPRight.target;
 
-		//if(sendLeftJointInputs){
-			leftArm.setRobotTCPSpeed(tcpSpeedLeft.target);
-			leftArm.sendRobotToJointPose(leftTargetJoints);
-		//}
-
-		//leftArm.getAndSendJointsAndTCPSpeedToRobot(leftTargetJoints, tcpSpeedLeft.target);
-		//YuMiJoints leftCurrentJoints = leftArm.getCurrentJointValues();
-
-		//Update current values belonging to calculate TCPSpeed
-		globalTCPLeft.current = globalTCPLeft.target;
-		globalTCPRight.current = globalTCPRight.target;
-
-		tcpSpeedLeft.current = tcpSpeedLeft.target;
-		tcpSpeedRight.current = tcpSpeedRight.target;
-//	}
+	tcpSpeedLeft.current = tcpSpeedLeft.target;
+	tcpSpeedRight.current = tcpSpeedRight.target;
 }
 
 //read motor positions
 void YuMiControlInterface::readPhysicalRobotMotorPositions() {
-    //std::cout << "readPhysicalRobotMotorPositions" << std::endl;
+	YuMiJoints rightCurrentJoints = rightArm.getCurrentJointValues();
+	YuMiJoints leftCurrentJoints = leftArm.getCurrentJointValues();
 
-	bool rightJointsReceived = rightArm.getCurrentJointsFromRobot(true);
-	bool leftJointsReceived = leftArm.getCurrentJointsFromRobot(true);
+	float* rightCurrentJointsPtr = &rightCurrentJoints.j1;
+	float* leftCurrentJointsPtr = &leftCurrentJoints.j1;
 
-	if(rightJointsReceived && leftJointsReceived){
-		YuMiJoints rightCurrentJoints = rightArm.getCurrentJointValues();
-		YuMiJoints leftCurrentJoints = leftArm.getCurrentJointValues();
+	for (int i = 0; i < robot->getJointCount(); i++) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
 
-		float* rightCurrentJointsPtr = &rightCurrentJoints.j1;
-		float* leftCurrentJointsPtr = &leftCurrentJoints.j1;
-
-		for (int i = 0; i < robot->getJointCount(); i++) {
-			HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-			if (!hj) continue;
-
-			float tempJoint = 0.0f;
-			if(i % 2 == 0){
-				tempJoint = *rightCurrentJointsPtr;
-				rightCurrentJointsPtr++;
-			} else {
-				tempJoint = *leftCurrentJointsPtr;
-				leftCurrentJointsPtr++;
-			}
-
-			hj->motor.currentMotorAngle = tempJoint;
+		float tempJoint = 0.0f;
+		if(i % 2 == 0){
+			tempJoint = *rightCurrentJointsPtr;
+			rightCurrentJointsPtr++;
+		} else {
+			tempJoint = *leftCurrentJointsPtr;
+			leftCurrentJointsPtr++;
 		}
+
+		hj->motor.currentMotorAngle = tempJoint;
 	}
 }
 
@@ -98,7 +85,7 @@ void YuMiControlInterface::readPhysicalRobotMotorPositions() {
 void YuMiControlInterface::readPhysicalRobotMotorVelocities() {}
 
 void YuMiControlInterface::setTargetMotorValuesFromSimRobotState(double dt) {
-	//readPhysicalRobotMotorPositions();
+	//readPhysicalRobotMotorPositions();  //optional!
 
     //given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot...
     RobotState rs(robot);
@@ -119,21 +106,24 @@ void YuMiControlInterface::setTargetMotorValuesFromSimRobotState(double dt) {
 	globalTCPLeft.target = robot->getRBByName("link_7_l")->getWorldCoordinates(localTCPLeft);
 	V3D vecTCPLeft = globalTCPLeft.target - globalTCPLeft.current;
 	double lengthVecTCPLeft = vecTCPLeft.length();
-	tcpSpeedLeft.target = (unsigned int)round(lengthVecTCPLeft*1000.0f/dt);
+	tcpSpeedLeft.target = (unsigned int)round(lengthVecTCPLeft*1000.0f/dt*speedWeight);
 
-	if(tcpSpeedLeft.target < 1){
-		tcpSpeedLeft.target = 1;
+	if(tcpSpeedLeft.target < minSpeed){
+		tcpSpeedLeft.target = minSpeed;
+	} else if(tcpSpeedLeft.target > maxSpeed){
+		tcpSpeedLeft.target = maxSpeed;
 	}
 
 	globalTCPRight.target = robot->getRBByName("link_7_r")->getWorldCoordinates(localTCPRight);
 	V3D vecTCPRight = globalTCPRight.target - globalTCPRight.current;
 	double lengthVecTCPRight = vecTCPRight.length();
-	tcpSpeedRight.target = (unsigned int)round(lengthVecTCPRight*1000.0f/dt);
+	tcpSpeedRight.target = (unsigned int)round(lengthVecTCPRight*1000.0f/dt*speedWeight);
 
-	if(tcpSpeedRight.target < 1){
-		tcpSpeedRight.target = 1;
+	if(tcpSpeedRight.target < minSpeed){
+		tcpSpeedRight.target = minSpeed;
+	} else if(tcpSpeedRight.target > maxSpeed){
+		tcpSpeedRight.target = maxSpeed;
 	}
-
 
 //	std::cout << "TCPSpeed Target Left: " << tcpSpeedLeft.target << std::endl;
 //	std::cout << "TCPSpeed Target Right: " << tcpSpeedRight.target << std::endl;

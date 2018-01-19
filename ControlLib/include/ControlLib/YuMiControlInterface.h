@@ -18,9 +18,11 @@ private:
     //arms
     YuMiArm leftArm, rightArm;
 
+	YuMiJoints savedLeftJoints, savedRightJoints;
+
 	//End-effector speed variable for yumi (left + right arm) -> mm/s
 	struct TCPSpeed{
-		unsigned int current = 10, target = 10;
+		unsigned int current = 50, target = 50;
 	};
 	TCPSpeed tcpSpeedRight;
 	TCPSpeed tcpSpeedLeft;
@@ -34,6 +36,10 @@ private:
 
 	TCP globalTCPLeft;
 	TCP globalTCPRight;
+
+	unsigned int minSpeed = 1;
+	unsigned int maxSpeed = 1500;
+	float speedWeight = 1.0f;
 
 public:
 	// constructor

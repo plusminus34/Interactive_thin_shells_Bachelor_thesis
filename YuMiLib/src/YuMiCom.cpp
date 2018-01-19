@@ -139,23 +139,25 @@ std::string YuMiCom::getAndSendJointsAndTCPSpeed(int idCode, YuMiJoints yumiJoin
 	//Switch because of weird naming of ABB joints (1, 2, 7, 3, 4, 5, 6)
 	msg += std::to_string(idCode); msg += " ";
 
-	msg += std::to_string(DEG(yumiJoints.j1)); msg += " ";
-	msg += std::to_string(DEG(yumiJoints.j2)); msg += " ";
-	msg += std::to_string(DEG(yumiJoints.j4)); msg += " ";
-	msg += std::to_string(DEG(yumiJoints.j5)); msg += " ";
-	msg += std::to_string(DEG(yumiJoints.j6)); msg += " ";
-	msg += std::to_string(DEG(yumiJoints.j7)); msg += " ";
-	msg += std::to_string(DEG(yumiJoints.j3)); msg += " ";
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j1)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j2)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j4)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j5)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j6)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j7)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j3)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
 
 	msg += std::to_string(speed); msg += " ";
 
-	msg += std::to_string(YuMiConstants::MOVE_ZONE); msg += " ";
+//	msg += std::to_string(YuMiConstants::SPEED_DATA_ROT); msg += " ";
 
-	msg += std::to_string(YuMiConstants::MOVE_STOPPOINTDATA); msg += " ";
+//	msg += std::to_string(YuMiConstants::MOVE_ZONE); msg += " ";
+
+//	msg += std::to_string(YuMiConstants::MOVE_STOPPOINTDATA); msg += " ";
 
 	msg += "#";
 
-	std::cout << "getAndSendJointsAndTCPSpeed - msg: " << msg << std::endl;
+	//std::cout << "getAndSendJointsAndTCPSpeed - msg: " << msg << std::endl;
 
 	return (msg);
 }
