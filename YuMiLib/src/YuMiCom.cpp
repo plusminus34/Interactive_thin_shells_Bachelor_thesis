@@ -52,7 +52,7 @@ std::string YuMiCom::getJoints(int idCode) {
     msg += std::to_string(idCode);
     msg += " #";
 
-	//std::cout << "getJoints-msg: " << msg << std::endl;
+	std::cout << "getJoints-msg: " << msg << std::endl;
 
     return (msg);
 }
@@ -104,7 +104,7 @@ std::string YuMiCom::gotoJointPose(int idCode, YuMiJoints yumiJoints){
 
     msg += "#";
 
-	//std::cout << "msg: " << msg << std::endl;
+	//std::cout << "gotoJointPose-msg: " << msg << std::endl;
 
     return (msg);
 }
@@ -155,7 +155,31 @@ std::string YuMiCom::getAndSendJointsAndTCPSpeed(int idCode, YuMiJoints yumiJoin
 
 	msg += "#";
 
+	std::cout << "getAndSendJointsAndTCPSpeed - msg: " << msg << std::endl;
+
+	return (msg);
+}
+
+std::string YuMiCom::gotoExtAx(int idCode, std::vector<float> extAx){
+	std::string msg;
+	if(idCode < 10){
+		msg = "0";
+	} else {
+		msg = "";
+	}
+	msg += std::to_string(idCode); msg += " ";
+	msg += std::to_string(extAx.at(0)); msg += " ";
+	msg += std::to_string(extAx.at(1)); msg += " ";
+	msg += std::to_string(extAx.at(2)); msg += " ";
+	msg += std::to_string(extAx.at(3)); msg += " ";
+	msg += std::to_string(extAx.at(4)); msg += " ";
+	msg += std::to_string(extAx.at(5)); msg += " ";
+
+	msg += "#";
+
 	std::cout << "msg: " << msg << std::endl;
+
+	return (msg);
 }
 
 

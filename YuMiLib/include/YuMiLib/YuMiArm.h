@@ -39,6 +39,7 @@ public:
 	bool sendRobotToJointPose(YuMiJoints yumiJoints);
 	bool setRobotTCPSpeed(unsigned int speed);
 	bool getAndSendJointsAndTCPSpeedToRobot(YuMiJoints yumiJoints, unsigned int speed);
+	bool sendRobotExtAx(std::vector<float> extAx);
 
 	bool initGripper();
 	bool closeGripper();
@@ -48,5 +49,7 @@ public:
 	unsigned int getTCPSpeedValue();
 	bool getConnectedValue();
 	bool getGripperOpenValue();
+
+	YuMiJoints convertVectorToYuMiJoints(std::vector<float> v);
 
 };

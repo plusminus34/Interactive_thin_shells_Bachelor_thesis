@@ -205,6 +205,8 @@ void PhysicalRobotControlApp::restart() {
 }
 
 // Run the App tasks
+Timer t;
+
 void PhysicalRobotControlApp::process() {
 
 	ikSolver->ikEnergyFunction->regularizer = 100;
@@ -214,11 +216,16 @@ void PhysicalRobotControlApp::process() {
 	//rci->printJointValues();
 
     if (rci && syncPhysicalRobot) {
-		updateSpeedParameter();
+		//updateSpeedParameter();
 
-		double dt = 1.0 / desiredFrameRate;
+		//double dt = 1.0 / desiredFrameRate;
+		double dt = t.timeEllapsed();
         rci->controlPositionsOnly = controlPositionsOnly;
+		t.restart();
         rci->syncPhysicalRobotWithSimRobot(dt);
+		t.timeEllapsed();
+		Logger::consolePrint("It's been %lf s since timer restart\n", t.timeEllapsed());
+
     }
 }
 
@@ -330,12 +337,15 @@ void PhysicalRobotControlApp::drawScene() {
 
 	rbEngine->drawRBs(flags);
 
-    RobotState rs(robot);
-	if (rci && requestPosition)
-        rci->syncSimRobotWithPhysicalRobot();
-    glTranslated(0, 0, 1);
-    rbEngine->drawRBs(flags);
-    robot->setState(&rs);
+//    RobotState rs(robot);
+//	if (rci && requestPosition)
+//        rci->syncSimRobotWithPhysicalRobot();
+//    glTranslated(0, 0, 1);
+//    rbEngine->drawRBs(flags);
+//    robot->setState(&rs);
+
+//	drawSphere(robot->getRBByName("link_7_l")->getWorldCoordinates(P3D(0.017977, -0.0169495, 0.01949)), 0.05);
+//	drawSphere(robot->getRBByName("link_7_r")->getWorldCoordinates(P3D(0.0200485, -0.0189025, -0.0217355)), 0.05);
 
 	glPopMatrix();
 	glDisable(GL_LIGHTING);
@@ -361,8 +371,8 @@ bool PhysicalRobotControlApp::processCommandLine(const std::string& cmdLine) {
 }
 
 void PhysicalRobotControlApp::updateSpeedParameter(){
-	HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(0));
-	hj->motor.targetYuMiTCPSpeed = speed;
+//	HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(0));
+//	hj->motor.targetYuMiTCPSpeed = speed;
 }
 
 

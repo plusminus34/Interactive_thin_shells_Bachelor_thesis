@@ -4,6 +4,7 @@
 #include "../YuMiLib/include/YuMiLib/YuMiArm.h"
 
 #include <ControlLib/IK_Solver.h>
+#include <MathLib/P3D.h>
 
 #include <string>
 #include <iostream>
@@ -16,6 +17,23 @@ class YuMiControlInterface : public RobotControlInterface{
 private:
     //arms
     YuMiArm leftArm, rightArm;
+
+	//End-effector speed variable for yumi (left + right arm) -> mm/s
+	struct TCPSpeed{
+		unsigned int current = 10, target = 10;
+	};
+	TCPSpeed tcpSpeedRight;
+	TCPSpeed tcpSpeedLeft;
+
+	P3D localTCPLeft = P3D(0.017977, -0.0169495, 0.01949);
+	P3D localTCPRight = P3D(0.0200485, -0.0189025, -0.02173559);
+
+	struct TCP{
+		V3D current, target;
+	};
+
+	TCP globalTCPLeft;
+	TCP globalTCPRight;
 
 public:
 	// constructor
@@ -42,7 +60,7 @@ public:
 	void driveMotorPositionsToInputPos(std::vector<float> leftJoints, std::vector<float> rightJoints, IK_Solver* ikSolverPtr);
 	void grip(std::string arm);
 	virtual void printJointValues();
-	bool sendJointInputsCheck();
+	bool sendJointInputsCheck(std::string arm);
 	bool sendSpeedInputCheck();
 
 };

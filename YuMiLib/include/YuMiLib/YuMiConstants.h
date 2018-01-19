@@ -45,6 +45,7 @@ public:
 	static const unsigned int ID_GOTO_JOINT_POSE = 2; //2 for unsync, 12 for sync
 	static const unsigned int ID_GET_JOINTS = 4;
 	static const unsigned int ID_SET_SPEED = 8;
+	static const unsigned int ID_GOTO_EXT_AXES = 34;
 	static const unsigned int ID_GRIP_INIT = 60;
 	static const unsigned int ID_GRIP_OPEN = 63;
 	static const unsigned int ID_GRIP_CLOSE = 64;

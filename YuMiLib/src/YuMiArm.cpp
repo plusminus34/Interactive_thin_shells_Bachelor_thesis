@@ -89,90 +89,92 @@ bool YuMiArm::connectServer(const char* ip, unsigned int port) {
 		inet_pton(AF_INET, ip, &remoteSocket.sin_addr.s_addr);
 		long arg;
 
-		// Set socket to non-blocking
-		if( (arg = fcntl(robotSocket, F_GETFL, NULL)) < 0) {
-			fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno));
-			return false;
-		}
-		arg |= O_NONBLOCK;
-		if( fcntl(robotSocket, F_SETFL, arg) < 0) {
-			fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
-			return false;
-		}
+//		// Set socket to non-blocking
+//		if( (arg = fcntl(robotSocket, F_GETFL, NULL)) < 0) {
+//			fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno));
+//			return false;
+//		}
+//		arg |= O_NONBLOCK;
+//		if( fcntl(robotSocket, F_SETFL, arg) < 0) {
+//			fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
+//			return false;
+//		}
 
 		// Establish connection
 		int connection = connect(robotSocket, (sockaddr*)&remoteSocket, sizeof(remoteSocket));
-		if (connection < 0) {
-			struct timeval tv;
-			fd_set myset;
-			int valopt;
-			socklen_t lon;
-			if (errno == EINPROGRESS) {
-				//fprintf(stderr, "EINPROGRESS in connect() - selecting\n");
+//		if (connection < 0) {
+//			struct timeval tv;
+//			fd_set myset;
+//			int valopt;
+//			socklen_t lon;
+//			if (errno == EINPROGRESS) {
+//				//fprintf(stderr, "EINPROGRESS in connect() - selecting\n");
 
-				do {
-					tv.tv_sec = 3;
-					tv.tv_usec = 0;
-					FD_ZERO(&myset);
-					FD_SET(robotSocket, &myset);
-					connection = select(robotSocket+1, NULL, &myset, NULL, &tv);
-					if (connection < 0 && errno != EINTR) {
-						fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
-						return false;
-					}
-					else if (connection > 0) {
-						// Socket selected for write
-						lon = sizeof(int);
-						if (getsockopt(robotSocket, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) {
-							fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno));
-							return false;
-						}
-						// Check the value returned...
-						if (valopt) {
-							fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt)
-									);
-							return false;
-						}
-						break;
-					}
-					else {
-						fprintf(stderr, "Timeout in select() - Cancelling!\n");
-						return false;
-					}
-				} while (1);
-			}
-			else {
-				fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
-				return false;
-			}
-		}
+//				do {
+//					tv.tv_sec = 3;
+//					tv.tv_usec = 0;
+//					FD_ZERO(&myset);
+//					FD_SET(robotSocket, &myset);
+//					connection = select(robotSocket+1, NULL, &myset, NULL, &tv);
+//					if (connection < 0 && errno != EINTR) {
+//						fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+//						return false;
+//					}
+//					else if (connection > 0) {
+//						// Socket selected for write
+//						lon = sizeof(int);
+//						if (getsockopt(robotSocket, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) {
+//							fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno));
+//							return false;
+//						}
+//						// Check the value returned...
+//						if (valopt) {
+//							fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt)
+//									);
+//							return false;
+//						}
+//						break;
+//					}
+//					else {
+//						fprintf(stderr, "Timeout in select() - Cancelling!\n");
+//						return false;
+//					}
+//				} while (1);
+//			}
+//			else {
+//				fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+//				return false;
+//			}
+//		}
 
-		if(connection > 0){
-			#ifndef WIN32
-			usleep(1000000);
-			#endif
+//		if(connection > 0){
+//			#ifndef WIN32
+//			usleep(2000000);
+//			#endif
 
-			bool pingReceived = pingRobot();
-			if(pingReceived){
-				if( (arg = fcntl(robotSocket, F_GETFL, NULL)) < 0) {
-					fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno));
-					return false;
-				}
-				arg &= (~O_NONBLOCK);
-				if( fcntl(robotSocket, F_SETFL, arg) < 0) {
-					fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
-					return false;
-				}
+//			bool pingReceived = pingRobot();
+//			if(pingReceived){
+//				if( (arg = fcntl(robotSocket, F_GETFL, NULL)) < 0) {
+//					fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno));
+//					return false;
+//				}
+//				arg &= (~O_NONBLOCK);
+//				if( fcntl(robotSocket, F_SETFL, arg) < 0) {
+//					fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno));
+//					return false;
+//				}
 
-				std::cout << "Successfully connected to the ABB robot" << std::endl;
-				socketConnected = true;
-			} else {
-				std::cerr << "Could not ping the robot... - Robot controller running?" << std::endl;
-			}
-		} else {
-			std::cerr << "Opening communication port failed..." << std::endl;
-		}
+//				std::cout << "Successfully connected to the ABB robot" << std::endl;
+//				socketConnected = true;
+//			} else {
+//				std::cerr << "Could not ping the robot... - Robot controller running?" << std::endl;
+//			}
+//		} else {
+//			std::cerr << "Opening communication port failed..." << std::endl;
+//		}
 	}
+	socketConnected = true;
+
 	return socketConnected;
 }
 
@@ -335,13 +337,29 @@ bool YuMiArm::getAndSendJointsAndTCPSpeedToRobot(YuMiJoints yumiJoints, unsigned
 
 	if(sendAndReceive(message, strlen(message), reply, idCode)){
 		//Set current joints, target joints and TCPSpeed
+		std::cout << "getAndSendJointsAndTCPSpeedToRobot - reply: " << reply << std::endl;
 		targetJoints = yumiJoints;
 		TCPSpeed = speed;
 		YuMiCom::parseJoints(reply, currentJoints);
 	} else {
 		if(connected){
-			std::cerr << "ERROR: Something is wrong in YuMiArm getJoints!" << std::endl;
+			std::cerr << "ERROR: Something is wrong in YuMiArm send and get joints and speed!" << std::endl;
 		}
+	}
+}
+
+
+bool YuMiArm::sendRobotExtAx(std::vector<float> extAx){
+	char message[YuMiConstants::BUFSIZE];
+	char reply[YuMiConstants::BUFSIZE];
+	int idCode = YuMiConstants::ID_GOTO_EXT_AXES;
+
+	strcpy(message, YuMiCom::gotoExtAx(idCode, extAx).c_str());
+
+	if(sendAndReceive(message, strlen(message), reply, idCode)){
+		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -408,4 +426,15 @@ bool YuMiArm::getConnectedValue(){
 
 bool YuMiArm::getGripperOpenValue(){
 	return gripperOpen;
+}
+
+YuMiJoints YuMiArm::convertVectorToYuMiJoints(std::vector<float> v){
+	YuMiJoints yumiJoints;
+	float* yumiJointsPtr = &yumiJoints.j1;
+
+	for(int i = 0; i < YuMiConstants::NUM_JOINTS; i++){
+		*yumiJointsPtr = v.at(i);
+		yumiJointsPtr++;
+	}
+	return yumiJoints;
 }

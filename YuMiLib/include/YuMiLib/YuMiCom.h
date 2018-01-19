@@ -22,6 +22,7 @@ public:
 	static std::string gotoJointPose(int idCode, YuMiJoints yumiJoints);
 	static std::string setTCPSpeed(int idCode, unsigned int speed);
 	static std::string getAndSendJointsAndTCPSpeed(int idCode, YuMiJoints yumiJoints, unsigned int speed);
+	static std::string gotoExtAx(int idCode, std::vector<float> extAx);
 	static std::string initGripper(int idCode, float maxSpd, float holdForce, float phyLimit, bool calibrate);
 	static std::string openGripper(int idCode, float targetPos, bool noWait);
 	static std::string closeGripper(int idCode, bool noWait);
