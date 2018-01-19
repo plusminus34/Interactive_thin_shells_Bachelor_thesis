@@ -1742,7 +1742,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 	}
 
 	// drawOrientation
-	if (drawPlanDetails && drawOrientation) {
+	if (drawOrientation) {
 		glPushMatrix();
 		P3D comPos = COMTrajectory.getCOMPositionAt(f);
 		glTranslated(comPos[0], comPos[1], comPos[2]);

@@ -19,6 +19,12 @@ struct EndEffectorPositionObjective {
 	double phase;
 };
 
+struct COMPositionObjective {
+	int sampleNum;
+	P3D pos;
+	double phase;
+};
+
 class LocomotionEngine_EndEffectorTrajectory{
 public:
 	// world coords of end effector position
@@ -229,6 +235,7 @@ public:
 	double jointL0Delta = 1;
 
 	list < shared_ptr<EndEffectorPositionObjective> > EEPosObjectives;
+	list < shared_ptr<COMPositionObjective> > BodyPosObjectives;
 
 public:
 	bool optimizeCOMPositions;

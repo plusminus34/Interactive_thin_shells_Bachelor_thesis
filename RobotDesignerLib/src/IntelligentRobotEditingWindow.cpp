@@ -727,7 +727,8 @@ void IntelligentRobotEditingWindow::updatePUsingSynergies(dVector &p)
 	MatrixNxM JtJ = Jmid.transpose()*Jmid + stepSize * MatrixNxM::Identity(dmdX.cols(), dmdX.cols());
 	MatrixNxM C(fixedDesignParamSet.size(), dmdX.cols()); C.setZero();
 	dVector b(JtJ.rows() + C.rows()); b.setZero();
-	b.head(JtJ.rows()) = Jmid.transpose() * dm.segment(i, j);
+	if(useSnapshot)
+		b.head(JtJ.rows()) = Jmid.transpose() * dm.segment(i, j);
 	int k = 0;
 	for (int ind : fixedDesignParamSet)
 	{

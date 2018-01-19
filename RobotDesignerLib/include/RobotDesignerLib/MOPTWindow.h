@@ -82,7 +82,8 @@ public:
 
 	bool periodicMotion = true;
 
-	std::list<shared_ptr<TranslateWidget>> widgets;
+	std::list<shared_ptr<TranslateWidget>> EEwidgets;
+	std::list<shared_ptr<TranslateWidget>> COMWidgets;
 public:
 	MOPTWindow(int x, int y, int w, int h, GLApplication* glApp);
 	~MOPTWindow();
@@ -128,5 +129,6 @@ private:
 	V3D COMSpeed;
 	nanogui::Window* velocityProfileWindow=nullptr;
 	int endEffectorInd = -1;
-	map<shared_ptr<TranslateWidget>, shared_ptr<EndEffectorPositionObjective>> widget2constraint;
+	map<shared_ptr<TranslateWidget>, shared_ptr<EndEffectorPositionObjective>> EEwidget2constraint;
+	map<shared_ptr<TranslateWidget>, shared_ptr<COMPositionObjective>> COMwidget2constraint;
 };
