@@ -364,7 +364,7 @@ void BenderApp3D::pushInputTrajectory(Trajectory3Dplus & trajInput)
 void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 {
 
-	menu->addVariable("Record", saveScreenshots);
+	screenRecorder.attachToNanoGui(menu);
 	// 
 	menu->addGroup("FEM Sim options");
 	menu->addVariable("Static solve", computeStaticSolution);

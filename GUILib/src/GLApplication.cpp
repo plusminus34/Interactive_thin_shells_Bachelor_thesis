@@ -405,25 +405,6 @@ void GLApplication::setWindowTitle(char* windowTitle) {
 }
 
 GLApplication::~GLApplication(void){
-
-	for(int i = 0; i < screenshots.size(); ++i) {
-		Image *img = screenshots[i];
-		char fName[100];
-		sprintf(fName, "..\\screenShots\\ss%05d.bmp", i);
-		if (fName == NULL)
-			return;
-		std::ofstream out(fName, std::ofstream::binary);
-		if(!out){
-			Logger::print("Cannot save screenshot %s\n", fName);
-			return;
-		}
-
-		BMPIO b(fName);
-		b.writeToFile(img);
-
-		delete img;
-	}
-	
 	// terminate GLFW
 	glfwTerminate();
 }
@@ -455,18 +436,12 @@ void GLApplication::runMainLoop() {
 
 		if (showFPS)
 			drawFPS(fpsTimer.timeEllapsed(), timeSpentProcessing / fpsTimer.timeEllapsed());
-		// dirty vvvvvvvvvvvvvvvvvvvvvvv
-		glPushMatrix();
-		glLoadIdentity();
-		glTranslatef(0.0f, 0.0f, -1.0f);
-
-		glColor4d(1.0, 1.0, 1.0, 1.0);
-		glprint(0, 0, ".");
-		glPopMatrix();
-		//^^^^^^^^^^^^^^^^^^^^^^^^
+		
+		
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(glfwWindow);
+
 
 #ifdef GUI_TWO_WINDOWS
 		// draw the nanogui
@@ -483,35 +458,8 @@ void GLApplication::runMainLoop() {
 			glfwSwapBuffers(menuScreen->glfwWindow());
 		}
 #endif
-		if (saveScreenshots) {
-			//static int screenShotNumber = 0;
-			//char fName[100];
-			//sprintf(fName, "..\\screenShots\\ss%05d.bmp", screenShotNumber);
-			//screenShotNumber++;
-			int viewportSettings[4];//x, y, w, h
-			glGetIntegerv(GL_VIEWPORT, viewportSettings);
-			int w, h;
-			glfwGetWindowSize(glfwWindow, &w, &h);
-			saveScreenShot(fName, 0, 0, w, h);
-			auto dumpScreenShot = [&](std::vector<Image*> & screenshots, int x, int y, int width, int height){
 
-				glReadBuffer(GL_BACK);
-
-				Image * img = new Image(3, width, height, NULL);
-
-				glReadPixels(x , y, width, height, GL_RGB, GL_UNSIGNED_BYTE, img->getDataPointer());
-
-				screenshots.push_back(img);
-
-				//BMPIO b(fileName);
-				//b.writeToFile(img);
-			};
-			dumpScreenShot(screenshots, 0, 0, w, h);
-
-
-
-
-		}
+		screenRecorder.call(glfwWindow);
 
 		/* Poll for and process events */
 		glfwPollEvents();

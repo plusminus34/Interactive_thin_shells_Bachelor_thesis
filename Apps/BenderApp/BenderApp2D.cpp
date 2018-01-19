@@ -71,6 +71,7 @@ BenderApp2D::BenderApp2D()
 	mainMenu->addButton("set state as target", [this](){
 														femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
 														});
+	screenRecorder.attachToNanoGui(mainMenu);
 	
 	initInteractionMenu(mainMenu);
 
@@ -199,9 +200,6 @@ void BenderApp2D::initInteractionMenu(nanogui::FormHelper* menu)
 
 	menu->addGroup("Tools");
 	menu->addVariable("Add/remove nodes", toolMode, true) -> setItems({"pick single node", "brush"});
-	
-	menu->addGroup("other");
-	menu->addVariable("Record", saveScreenshots);
 
 };
 

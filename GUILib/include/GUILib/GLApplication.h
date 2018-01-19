@@ -10,7 +10,7 @@
 #include "GLContentManager.h"
 #include "GlobalMouseState.h"
 
-#include "Utils/Image.h"
+#include "ScreenRecorder.h"
 
 #include "Canvas3D.h"
 
@@ -31,8 +31,9 @@ public:
 
 	bool appIsRunning = false;
 	bool waitForFrameRate = true;
-	bool saveScreenshots = false;
-	std::vector<Image*> screenshots;
+	
+	ScreenRecorder screenRecorder;
+	
 
     nanogui::Screen *menuScreen = nullptr;
 	nanogui::FormHelper *mainMenu = nullptr;
