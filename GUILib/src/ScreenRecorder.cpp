@@ -24,22 +24,22 @@ int ScreenRecorder::call(GLFWwindow * glfwWindow)
 		return(0);
 	}
 
-	int viewportSettings[4];//x, y, w, h
-	glGetIntegerv(GL_VIEWPORT, viewportSettings);
+//	int viewportSettings[4];//x, y, w, h
+//	glGetIntegerv(GL_VIEWPORT, viewportSettings);
 	int w, h;
 	glfwGetWindowSize(glfwWindow, &w, &h);
-	glReadBuffer(GL_BACK);
+	glReadBuffer(GL_FRONT);
 
 	if(recordingFormat == FORMAT_RAW) {
 		// estimate size of raw image
-		size_t imageSize = w * h * 3;
+		size_t imageSize = w * h * 4;
 		if(imageSize <= imageBuffer.capacity() - imageBuffer.size()) {
 			
 			size_t idxStart = imageBuffer.size();
 			imageBuffer.resize(imageBuffer.size() + imageSize);
 			size_t idxEnd = imageBuffer.size();
 
-			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, &imageBuffer[idxStart]);
+			glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, &imageBuffer[idxStart]);
 
 			imageStartIdx.push_back(idxStart);
 			imageEndIdx.push_back(idxEnd);
@@ -71,7 +71,7 @@ int ScreenRecorder::save(std::string const & dirName, std::string const & fileBa
 			fname_stream << ".bmp";			
 			
 			// create image
-			Image img(3, imageWidth[i], imageHeight[i], &imageBuffer[imageStartIdx[i]]);
+			Image img(4, imageWidth[i], imageHeight[i], &imageBuffer[imageStartIdx[i]]);
 			// write to file
 			BMPIO b(fname_stream.str().c_str());
 			b.writeToFile(&img);
