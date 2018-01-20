@@ -30,8 +30,8 @@ public:
 private:
 	bool record = false;
 
-	ImageFormat recordingFormat = FORMAT_RAW;
-	ImageFormat outputFormat = FORMAT_BMP;
+	ImageFormat recordingFormat = FORMAT_PNG;
+	ImageFormat outputFormat = FORMAT_PNG;
 
 	std::vector<unsigned char> imageBuffer;
 	std::vector<size_t> imageStartIdx;
@@ -42,12 +42,11 @@ private:
 
 	std::vector<unsigned char> singleRawBuffer;
 
-	
 
 
 public:
 
-	ScreenRecorder(size_t bufferSize = 100'000'000);
+	ScreenRecorder(size_t bufferSize = 0);
 
 
 	int call(GLFWwindow * glfwWindow);

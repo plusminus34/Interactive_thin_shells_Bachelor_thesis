@@ -343,6 +343,9 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 
 	glfwSetWindowSize(glfwWindow, 1920, 1080);
 	
+	// screen recorder
+	//screenRecorder.setBufferSize(1'000'000'000);
+
 
 }
 
