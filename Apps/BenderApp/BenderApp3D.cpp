@@ -47,6 +47,9 @@ BenderApp3D::BenderApp3D()
 
 	setWindowTitle("Test FEM Sim Application...");
 
+	// prepare recording of screen
+	screenRecorder = new ScreenRecorder();
+
 	////////////////////////
 	// menu
 	////////////////////////
@@ -342,9 +345,8 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 	camera->setCameraTarget(P3D(rod_center) - V3D(0.0, 0.0, 0.25));
 
 	glfwSetWindowSize(glfwWindow, 1920, 1080);
+	//glfwSetWindowSize(glfwWindow, 1280, 720);
 	
-	// screen recorder
-	//screenRecorder.setBufferSize(1'000'000'000);
 
 
 }
@@ -352,7 +354,7 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 
 BenderApp3D::~BenderApp3D()
 {
-
+	delete screenRecorder;
 }
 
 
@@ -367,7 +369,7 @@ void BenderApp3D::pushInputTrajectory(Trajectory3Dplus & trajInput)
 void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 {
 
-	screenRecorder.attachToNanoGui(menu);
+	screenRecorder->attachToNanoGui(menu);
 	// 
 	menu->addGroup("FEM Sim options");
 	menu->addVariable("Static solve", computeStaticSolution);

@@ -459,7 +459,7 @@ void GLApplication::runMainLoop() {
 		}
 #endif
 
-		screenRecorder.call(glfwWindow);
+		if(screenRecorder != NULL) {screenRecorder->call(glfwWindow);}
 
 		/* Poll for and process events */
 		glfwPollEvents();

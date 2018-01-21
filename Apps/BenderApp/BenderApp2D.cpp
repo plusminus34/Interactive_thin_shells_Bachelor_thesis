@@ -71,7 +71,7 @@ BenderApp2D::BenderApp2D()
 	mainMenu->addButton("set state as target", [this](){
 														femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
 														});
-	screenRecorder.attachToNanoGui(mainMenu);
+	screenRecorder->attachToNanoGui(mainMenu);
 	
 	initInteractionMenu(mainMenu);
 

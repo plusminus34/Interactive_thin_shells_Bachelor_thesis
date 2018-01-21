@@ -32,7 +32,7 @@ public:
 	bool appIsRunning = false;
 	bool waitForFrameRate = true;
 	
-	ScreenRecorder screenRecorder;
+	ScreenRecorder * screenRecorder = NULL;
 	
 
     nanogui::Screen *menuScreen = nullptr;
