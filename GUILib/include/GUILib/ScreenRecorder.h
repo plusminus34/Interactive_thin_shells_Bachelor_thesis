@@ -35,7 +35,7 @@ private:
 	int instanceID;
 	static int instanceCounter;
 
-	ImageFormat recordingFormat = FORMAT_RAWFILE;
+	ImageFormat recordingFormat = FORMAT_RAW;
 	ImageFormat outputFormat = FORMAT_PNG;
 
 	std::vector<unsigned char> imageBuffer;

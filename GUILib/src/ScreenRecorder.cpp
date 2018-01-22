@@ -179,12 +179,20 @@ int ScreenRecorder::save(std::string const & dirName, std::string const & fileBa
 	};
 
 	auto writeIthPNG = [&](size_t i, unsigned char *raw_buffer) {
+		unsigned int w = static_cast<int>(imageWidth[i]);
+		unsigned int h = static_cast<int>(imageHeight[i]);
+		unsigned int c = static_cast<int>(imageChannels[i]);
+		// flip
+		std::vector<unsigned char> rawFlipped(w*h*c);
+		for(int i = 0; i < h; ++i) {
+			std::copy(raw_buffer+i*w*c, raw_buffer+(i+1)*w*c, rawFlipped.data()+(h-i-1)*w*c);
+		}
+		// encode png
 		unsigned char * out;
 		size_t outsize;
-		lodepng_encode_memory(&out, &outsize,
-			raw_buffer, 
-			static_cast<unsigned int>(imageWidth[i]), static_cast<unsigned int>(imageHeight[i]),
-			(imageChannels[i]==4?LodePNGColorType::LCT_RGBA:LodePNGColorType::LCT_RGB), 8);
+		lodepng_encode_memory(&out, &outsize, rawFlipped.data(), 
+			w, h, (imageChannels[i]==4?LodePNGColorType::LCT_RGBA:LodePNGColorType::LCT_RGB), 8);
+		// write to file
 		std::ofstream outfile(getFileName(i), std::ofstream::binary);
 		outfile.write(reinterpret_cast<char *>(out), outsize);
 		free(out);
