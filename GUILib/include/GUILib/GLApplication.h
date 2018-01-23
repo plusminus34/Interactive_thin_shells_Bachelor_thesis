@@ -41,7 +41,6 @@ public:
 
 	void setupMainMenu();
 
-
 protected:
 	//keep a timer here to see how long it's been since the last redraw
 	Timer fpsTimer;

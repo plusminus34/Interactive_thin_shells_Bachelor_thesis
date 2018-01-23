@@ -425,7 +425,7 @@ void GLApplication::runMainLoop() {
 		glfwMakeContextCurrent(glfwWindow);
 #endif
 		draw();
-#ifndef gui_two_windows
+#ifndef GUI_TWO_WINDOWS
 		mainMenu->refresh();
 		menuScreen->drawWidgets();
 #endif
@@ -436,12 +436,9 @@ void GLApplication::runMainLoop() {
 
 		if (showFPS)
 			drawFPS(fpsTimer.timeEllapsed(), timeSpentProcessing / fpsTimer.timeEllapsed());
-		
-		
 
 		/* Swap front and back buffers */
 		glfwSwapBuffers(glfwWindow);
-
 
 #ifdef GUI_TWO_WINDOWS
 		// draw the nanogui
