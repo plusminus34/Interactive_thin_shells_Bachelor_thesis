@@ -56,6 +56,8 @@ public:
 	int maxLineSearchIterations = 15;
 	double lineSearchStartValue = 0.1;
 
+	double xiRegularizerValue = -1.0;
+
 	// mesh properties
 	double shearModulus = 50, bulkModulus = 50;
 	bool autoUpdateShearModulusAndBulkModulus = false;
@@ -66,19 +68,20 @@ public:
 
 	// state of the app 
 	bool computeStaticSolution = true;
-	bool optimizeObjective = true;
-	bool approxLineSearch = true;
+	bool optimizeObjective = false;
 	bool checkDerivatives = false;
 
 	bool runIkSolver = false;
 	int selectedArmIk = -1;
 	P3D selectedIkPoint;
+	int selectedGeneralizedRobotParameter = -1;
+	int selectedXi = 0;
 
 	RigidBody * right_gripper;
 	RigidBody * left_gripper;
 	
 	enum InteractionObject {MOUNTS, OBJECTIVE, IKROBOT};
-	InteractionObject interactionObject = OBJECTIVE;
+	InteractionObject interactionObject = IKROBOT;
 	enum InteractionMode {VIEW, SELECT, DRAG, DRAW};
 	InteractionMode interactionMode = VIEW;
 	enum ToolMode {PICK_NODE, BRUSH};

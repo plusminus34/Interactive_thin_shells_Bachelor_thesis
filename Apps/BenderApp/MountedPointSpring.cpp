@@ -65,7 +65,6 @@ void MountedPointSpring<NDim>::addDeltaFDeltaXi(std::vector<dVector> & dfdxi)
 
 	std::vector<V3D> dfdmountpar_temp;
 
-	//mount->getDxDpar(mount->getTransformedX(targetPosition), dfdmountpar_temp);
 	mount->getDxDpar(targetPosition, dfdmountpar_temp);
 
 

@@ -80,7 +80,8 @@ BenderApp3D::BenderApp3D()
 	femMesh->readMeshFromFile_ply("../data/3dModels/extruded_hexagon_0p1x2.ply", &centerlinePts,
 								  massDensity, shearModulus, bulkModulus,
 								  1.0/2.0 * rod_length, rod_center);
-	femMesh->addGravityForces(V3D(0, -9.8, 0));
+	//femMesh->addGravityForces(V3D(0, -9.8, 0));
+	femMesh->addGravityForces(V3D(0, 0.0, 0));
 	
 
 
@@ -126,22 +127,23 @@ BenderApp3D::BenderApp3D()
 									0.01*rod_length,
 									matchedFiber);
 
-	
+
 	// initialize minimization algorithms
 	minimizers.push_back(new GradientDescentFunctionMinimizer(maxIterations, solveResidual, maxLineSearchIterations, false));
 	minimizers.push_back(new BFGSFunctionMinimizer           (maxIterations, solveResidual, maxLineSearchIterations, false));
 
-	// initialize the ID Solver
+	// create ID Solver
 	inverseDeformationSolver = new InverseDeformationSolver<3>(femMesh, minimizers[comboBoxOptimizationAlgorithm->selectedIndex()]);
+	
 
-	//// draw some target trjectory
-	//targetTrajectory_input.addKnotBack(rod_center + P3D(-rod_length*0.5, 0.05, 0.0));
-	//targetTrajectory_input.addKnotBack(rod_center + P3D( 0.0,  0.1, 0.0));
-	//targetTrajectory_input.addKnotBack(rod_center + P3D( rod_length*0.5, 0.05, 0.0));
+	// draw some target trjectory
+	targetTrajectory_input.addKnotBack(rod_center + P3D(-rod_length*0.5, 0.05, 0.0));
+	targetTrajectory_input.addKnotBack(rod_center + P3D( 0.0,  0.1, 0.0));
+	targetTrajectory_input.addKnotBack(rod_center + P3D( rod_length*0.5, 0.05, 0.0));
 
-	//// add a "MatchScaledTrajObjective"
-	//targetTrajectory_input.setTValueToLength();
-	//femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
+	// add a "MatchScaledTrajObjective"
+	targetTrajectory_input.setTValueToLength();
+	femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
 
 
 	////////////////////////
@@ -189,24 +191,6 @@ BenderApp3D::BenderApp3D()
 		0.0, -1.0, 0.0,
 		1.0, 0.0, 0.0;
 
-
-
-
-	/*
-	{
-		// change initial state of robot
-		Joint * joint_1_l = rbEngine->getJointByName("joint_link_1_2_l");
-		Joint * joint_1_r = rbEngine->getJointByName("joint_link_1_2_r");
-std::cout << "joint_1_l* = " << joint_1_l << std::endl; 
-		Quaternion qRel;
-		qRel = robot->getRelativeOrientationForJoint(joint_1_l);
-		qRel.s -= 0.5+PI;
-		robot->setRelativeOrientationForJoint(joint_1_l, qRel);
-		robot->fixJointConstraints();
-
-
-	}
-	*/
 
 	delete ikSolver;
 	ikSolver = new IK_Solver(robot, true);
@@ -323,7 +307,7 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 	mountBaseCoordinatesRB_r = gripper_right_orientation_matrix.inverse()*mountBaseCoordinatesMesh_r;
 
 
-
+	
 	set_robot_mount_from_plane(0, -rod_length*0.5, 0.01,
 								mount_id_right_gripper,
 								mountBaseOriginMesh_r, mountBaseCoordinatesMesh_r,
@@ -334,10 +318,15 @@ std::cout << "joint_1_l* = " << joint_1_l << std::endl;
 								mountBaseOriginRB_l, mountBaseCoordinatesRB_l);
 
 
-	//set_rotation_mount_from_plane(0, -0.15, 0.01);
-	//set_rotation_mount_from_plane(0, +0.15, 0.01);
+	//set_rotation_mount_from_plane(0, -rod_length/2.0, 0.01);
+	//set_rotation_mount_from_plane(0, +rod_length/2.0, 0.01);
 
 
+	// set a regularizer for the IDSolver, update the regularizer solution for the IK Solver
+	// initialize the ID Solver
+	inverseDeformationSolver->pullXi();
+	inverseDeformationSolver->objectiveFunction->setRegularizer(xiRegularizerValue, inverseDeformationSolver->xi);
+	// IK Solver
 
 
 
@@ -375,7 +364,6 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 	menu->addVariable("Static solve", computeStaticSolution);
 	menu->addVariable("Optimize Objective", optimizeObjective);
 	menu->addVariable("Check derivatives", checkDerivatives);
-	menu->addVariable("Approx. line search", approxLineSearch);
 	menu->addVariable("initialize with IK solver", runIkSolver);
 	menu->addButton("set state as target", [this](){
 		femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
@@ -388,8 +376,9 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 	menu->addVariable("Highlight selected", highlightSelected);
 	menu->addVariable("Show MOI", showMOI);
 	menu->addVariable("Show CDP", showCDPs);
+	menu->addVariable("selected rob par", selectedGeneralizedRobotParameter);
+	menu->addVariable("selected glob par", selectedXi);
 
-	
 
 
 	// add selection of optimization algorithm
@@ -401,17 +390,19 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 			nanogui::Alignment::Middle, 0, 4));
 		comboBoxOptimizationAlgorithm = new nanogui::ComboBox(selection, { "gradient descent", "quasi Newton: BFGS"});
 		comboBoxOptimizationAlgorithm->setCallback([this](int idx){inverseDeformationSolver->minimizer = minimizers[idx]; });
-		comboBoxOptimizationAlgorithm->setSelectedIndex(1);
+		comboBoxOptimizationAlgorithm->setSelectedIndex(0);
 
 
 		menu->addVariable("max Iterations", maxIterations);
 		menu->addVariable("solve residual", solveResidual);
+		menu->addVariable("line search start val", lineSearchStartValue);
 		menu->addVariable("max linesearch iter", maxLineSearchIterations);
+		menu->addVariable("regularizer xi", xiRegularizerValue);
 	}
 
 	menu->addGroup("Mode");
 	// add selection for active interaction object
-	menu->addVariable("Manipulate: ", interactionObject, true) -> setItems({"Mounts", "Target Trajectory", "IKROBOT"});	
+	menu->addVariable("Manipulate: ", interactionObject, true)->setItems({"Mounts", "Target Trajectory", "IKROBOT"});
 	// add selection for interaction mode
 	{
 		nanogui::Widget *modes = new nanogui::Widget(menu->window());
@@ -814,13 +805,25 @@ bool BenderApp3D::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 			return(true);
 		}
 		else if(interactionMode == InteractionMode::DRAG) {
-			if (selected_mount >= 0) {
+			if(selected_mount >= 0) {
 				std::cout << "Offsets: " << xOffset << " " << yOffset << std::endl;
 				
 				Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
 				P3D origin; 
 				currentRay.getDistanceToPlane(plane,&origin);
 				dynamic_cast<RotationMount3D*>(femMesh->mounts[selected_mount])->rotate(origin, yOffset * 0.05, 0.0, 0.0);
+			}
+			else if(selectedXi >= 0 && selectedXi < inverseDeformationSolver->xi.size()) {
+				std::cout << "yOffset: " << yOffset << std::endl;
+				
+				inverseDeformationSolver->xi[selectedXi] += yOffset * 0.05;
+				inverseDeformationSolver->pushXi();
+			}
+			else if(selectedGeneralizedRobotParameter >= 0 && selectedGeneralizedRobotParameter < 20) {
+				RobotMount * m = dynamic_cast<RobotMount *>(femMesh->mounts[0]);
+				if(m) {
+					m->move(selectedGeneralizedRobotParameter, 0.05*yOffset);
+				}
 			}
 			return(true);
 		}
@@ -940,9 +943,12 @@ void BenderApp3D::process() {
 			ikSolver->ikOptimizer->checkDerivatives = true;
 			ikSolver->solve();
 			testGeneralizedCoordinateRepresentation(robot);
+			// sync the parameters of the BenderApp
+			generalizedRobotCoordinates->syncGeneralizedCoordinatesWithRobotState();
 			//break;
 		}
 		else if(optimizeObjective) {
+			inverseDeformationSolver->objectiveFunction->setRegularizerValue(xiRegularizerValue);
 			double o_new = 0;
 			o_new = inverseDeformationSolver->solveOptimization(solveResidual,
 																maxIterations,

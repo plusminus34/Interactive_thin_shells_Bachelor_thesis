@@ -37,6 +37,7 @@ bool GradientBasedFunctionMinimizer::minimize(ObjectiveFunction *function, dVect
 
 		timer.restart();
 		computeSearchDirection(function, pi, dp);
+
 		if (printOutput)
 			Logger::logPrint("\tTime to compute search direction: %lf\n", timer.timeEllapsed());
 

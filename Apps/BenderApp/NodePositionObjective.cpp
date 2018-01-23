@@ -43,7 +43,7 @@ void NodePositionObjective::draw(dVector const & x)
 	P3D pi = (node->getCoordinates(x));
 	P3D pj = targetPosition;
 	glBegin(GL_LINES);
-	glVertex3d(pi[0], pi[1], 0);
-	glVertex3d(pj[0], pj[1], 0);
+	glVertex3d(pi[0], pi[1], pi[2]);
+	glVertex3d(pj[0], pj[1], pj[2]);
 	glEnd();
 }

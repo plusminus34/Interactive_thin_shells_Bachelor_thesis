@@ -23,15 +23,24 @@ P3D RobotMount::transformation(P3D const & x0, ParameterSet * parameters_in)
 {
 	RobotParameters * pars = static_cast<RobotParameters * >(parameters_in);
 
-	if(pars->robot_is_synced) {
-		return robotPart->getWorldCoordinates(x0);
+	if(! pars->is_synced_with_robot()) {
+		std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << std::endl; 
+		exit(3);
 	}
-	else {
-		pars->robotParameters->syncRobotStateWithGeneralizedCoordinates();
-		pars->robot_is_synced = true;
-		return robotPart->getWorldCoordinates(x0);
-	}
+
+	return robotPart->getWorldCoordinates(x0);
 }
+
+
+void RobotMount::move(int parameter_idx, double dp)
+{
+	RobotParameters * pars = static_cast<RobotParameters * >(parameters);
+
+	dVector par_vec;
+	pars->pullVec(par_vec);
+	par_vec[parameter_idx] += dp;
+	pars->pushVec(par_vec);	
+};
 
 /*
 void RobotMount::dxDpar(P3D const & x0, ParameterSet * parameters_in, std::vector<V3D> & grad)
@@ -54,6 +63,13 @@ std::cout << "done" << std::endl;
 */
 
 
+RobotParameters::RobotParameters(GeneralizedCoordinatesRobotRepresentation * robotParameters)
+	: robotParameters(robotParameters)
+{
+	syncRobotStateWithParameters();
+}
+
+
 void RobotParameters::writeToList(dVector & par, int & cursor_idx_io)
 {
 	dVector par_local;
@@ -70,6 +86,8 @@ void RobotParameters::writeToList(dVector & par, int & cursor_idx_io)
 
 void RobotParameters::setFromList(dVector & par, int & cursor_idx_io)
 {
+	robot_is_synced = false;
+	
 	int n = robotParameters->getDimensionCount();
 	dVector par_local;
 	robotParameters->getQ(par_local);
@@ -80,8 +98,13 @@ void RobotParameters::setFromList(dVector & par, int & cursor_idx_io)
 
 	robotParameters->setQ(par_local);
 
-	robot_is_synced = false;
+	syncRobotStateWithParameters();
+}
+
+
+
+void RobotParameters::syncRobotStateWithParameters() 
+{
 	robotParameters->syncRobotStateWithGeneralizedCoordinates();
 	robot_is_synced = true;
 }
-

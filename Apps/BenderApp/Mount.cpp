@@ -20,7 +20,7 @@ void Mount::dxDparFD(P3D const & x0, ParameterSet * parameters_in, std::vector<V
 {
 	ParameterSet * pars = parameters_in;
 	dVector par_vec_temp;
-
+	// save original parameter set
 	pars->pullVec(par_vec_temp);
 
 	double const delta = 1.0e-9;
@@ -45,6 +45,7 @@ void Mount::dxDparFD(P3D const & x0, ParameterSet * parameters_in, std::vector<V
 		grad[i] =  trans_pdelta - trans_mdelta;
 		grad[i] /= 2.0 * delta;
 	}
+	pars->pushVec(par_vec_temp);
 
 }
 
