@@ -2,6 +2,8 @@
 
 #include "MountedPointSpring.h"
 
+#include <iostream>
+
 template <int NDim>
 MountedPointSpring<NDim>::MountedPointSpring(SimulationMesh * simMesh, 
 											 Node * node, 
@@ -58,22 +60,25 @@ void MountedPointSpring<NDim>::addDeltaFDeltaXi(std::vector<dVector> & dfdxi)
 {
 	if(!mount->active) {return;}
 
+
 	double K = this->K;
 
-	std::vector<V3D> dfdxi_temp;
+	std::vector<V3D> dfdmountpar_temp;
 
-	mount->getDxDpar(mount->getTransformedX(targetPosition), dfdxi_temp);
+	//mount->getDxDpar(mount->getTransformedX(targetPosition), dfdmountpar_temp);
+	mount->getDxDpar(targetPosition, dfdmountpar_temp);
 
-	for(V3D & gradi : dfdxi_temp) {
+
+	for(V3D & gradi : dfdmountpar_temp) {
 		gradi *= K;
 	}
 
 	int xi_idx_start = mount->parameters->parametersStartIndex;
 	int data_idx_start = node->dataStartIndex;
 
-	for(int i = 0; i < dfdxi_temp.size(); ++i) {
+	for(int i = 0; i < dfdmountpar_temp.size(); ++i) {
 		for(int j = 0; j < NDim; ++j) {
-			dfdxi[xi_idx_start + i][data_idx_start + j] += dfdxi_temp[i][j];
+			dfdxi[xi_idx_start + i][data_idx_start + j] += dfdmountpar_temp[i][j];
 		}
 	}
 
