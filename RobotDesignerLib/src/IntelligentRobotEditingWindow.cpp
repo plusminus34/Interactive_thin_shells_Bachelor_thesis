@@ -578,7 +578,7 @@ void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
 	}
 	{
 		auto temp = rdApp->mainMenu->addVariable<MotionParamSet>("MotionParamSet", motionParamSet);
-		temp->setItems({ "Joints", "EndEffectors", "Forces", "Wheels", "Body", "All" });
+		temp->setItems({ "Joints", "EndEffectors", "Forces", "Wheels", "BodyPos", "BodyOrientation", "All" });
 	}
 	rdApp->mainMenu->addVariable("Use synergies", useSynergies);
 	rdApp->mainMenu->addVariable("Use snapshot", useSnapshot);
@@ -695,7 +695,7 @@ void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 void IntelligentRobotEditingWindow::updatePUsingSynergies(dVector &p)
 {
 	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
-	dVector dm = m - m_snap;
+	dVector dm = - m + m_snap;
 
 	//find out which design parameters changed
 	auto tempFixedDesignParamSet = fixedDesignParamSet;
@@ -705,10 +705,16 @@ void IntelligentRobotEditingWindow::updatePUsingSynergies(dVector &p)
 
 	const auto &motionPlan = rdApp->moptWindow->locomotionManager->motionPlan;
 	int i, j;
-	if (motionParamSet == MotionParamSet::Body)
+	if (motionParamSet == MotionParamSet::BodyPosition)
 	{
 		i = motionPlan->COMPositionsParamsStartIndex;
-		j = 6 * motionPlan->nSamplePoints;
+		j = 3 * motionPlan->nSamplePoints;
+	}
+	
+	if (motionParamSet == MotionParamSet::BodyOrientation)
+	{
+		i = motionPlan->COMPositionsParamsStartIndex + 3 * motionPlan->nSamplePoints;
+		j = 3 * motionPlan->nSamplePoints;
 	}
 
 	else if (motionParamSet == MotionParamSet::EndEffectors)

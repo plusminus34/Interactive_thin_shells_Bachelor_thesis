@@ -123,7 +123,9 @@ public:
 	virtual bool onKeyEvent(int key, int action, int mods);
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
-
+	virtual void drawGround() {
+		drawTexturedGround(GLContentManager::getTexture("../data/textures/grid.bmp"));
+	}
 private:
 
 	V3D COMSpeed;

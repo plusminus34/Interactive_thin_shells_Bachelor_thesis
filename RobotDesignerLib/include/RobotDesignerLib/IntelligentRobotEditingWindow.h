@@ -51,7 +51,7 @@ public:
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
 	void resetParams();
 	enum class Mode { design, weights } mode = Mode::design;
-	enum class MotionParamSet { Joints, EndEffectors, Forces, Wheels, Body, All } motionParamSet = MotionParamSet::EndEffectors;
+	enum class MotionParamSet { Joints, EndEffectors, Forces, Wheels, BodyPosition, BodyOrientation, All } motionParamSet = MotionParamSet::BodyOrientation;
 
 private:
 	bool updateMotionBasedOnJacobian = false;

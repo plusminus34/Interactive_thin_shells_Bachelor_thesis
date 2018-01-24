@@ -165,7 +165,9 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 
 void EnergyWindow::DoParameterOptimizationStep(ObjectiveFunction * energyFunction)
 {
+	TotalEnergyForDesignOptimization.push_back(energyHist["Total energy"].back());
 	rdApp->iEditWindow->DoDesignParametersOptimizationStep(energyFunction);
+
 }
 
 void EnergyWindow::updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFunction, const dVector &params)
@@ -288,7 +290,7 @@ void EnergyWindow::resetData()
 void EnergyWindow::saveData()
 {
 	ofstream outputfile;
-	outputfile.open("energy.txt");
+	outputfile.open("energyPerMotionIteration.txt");
 	for (const auto& energy : energyHist)
 	{
 		outputfile << energy.first << ",";
@@ -302,4 +304,9 @@ void EnergyWindow::saveData()
 		}
 		outputfile << endl;
 	}
+	outputfile.close();
+	outputfile.open("energyPerDesignIteration.txt");
+	for (int i = 0; i < TotalEnergyForDesignOptimization.size(); i++)
+		outputfile << TotalEnergyForDesignOptimization[i] << endl;
+	outputfile.close();
 }

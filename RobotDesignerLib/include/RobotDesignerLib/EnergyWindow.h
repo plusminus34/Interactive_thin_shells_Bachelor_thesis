@@ -50,4 +50,5 @@ private:
 	const int numPlotValues = 500;
 	Eigen::VectorXf plotXValues;
 	void saveData();
+	vector<double> TotalEnergyForDesignOptimization;
 };
