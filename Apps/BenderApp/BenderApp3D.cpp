@@ -178,8 +178,14 @@ BenderApp3D::BenderApp3D()
 	P3D mount_point_surfacemesh_r = (P3D(0.628,0.085,0.344) + P3D(0.647,0.075,0.356)) * 0.5;
 	P3D mount_point_surfacemesh_l = (P3D(0.628,-0.085,0.344) + P3D(0.647,-0.075,0.356)) * 0.5;
 
+	V3D mount_axialDirection_surfacemesh_r = (P3D(0.627,0.084,0.344) - P3D(0.619,0.076,0.351)).unit();
+	V3D mount_axialDirection_surfacemesh_l = (P3D(0.647,-0.075,0.356) - P3D(0.639,-0.067,0.363)).unit();
+
 	mountBaseOriginRB_r = right_gripper->meshTransformations[0].transform(mount_point_surfacemesh_r);
 	mountBaseOriginRB_l = left_gripper->meshTransformations[0].transform(mount_point_surfacemesh_l);
+
+	mountBaseAxialDirectionRB_r = right_gripper->meshTransformations[0].transform(mount_axialDirection_surfacemesh_r);
+	mountBaseAxialDirectionRB_l = right_gripper->meshTransformations[0].transform(mount_axialDirection_surfacemesh_l);
 
 	//mountBaseOriginRB_l = V3D(0.0);
 	mountBaseCoordinatesRB_l << 0.0, 0.0, 1.0,
@@ -203,15 +209,16 @@ BenderApp3D::BenderApp3D()
 	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = mountBaseOriginRB_r;
 	ikSolver->ikPlan->endEffectors.back().targetEEPos = P3D(-rod_length*0.5, 0.0, 0.0) + rod_center;
 
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = V3D(1.0, 0.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = V3D(0.0, 1.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = V3D(0.0, 0.0, 1.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = mountBaseAxialDirectionRB_r;
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(1) = V3D(0.0, 1.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(2) = V3D(0.0, 0.0, 1.0);
+	ikSolver->ikPlan->endEffectors.back().orientationMask = V3D(1.0, 0.0, 0.0);
 
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(1.0, 0.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(0.0, 1.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(0.0, 0.0, 1.0);
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(1.0, -1.0, 0.0).unit();
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(1) = V3D(0.0, 1.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(2) = V3D(0.0, 0.0, 1.0);
 
-	ikSolver->ikPlan->endEffectors.back().lengthScaleOrientation = -0.01;
+	ikSolver->ikPlan->endEffectors.back().lengthScaleOrientation = +0.5;
 
 	// new target: left gripper
 	ikSolver->ikPlan->endEffectors.push_back(IK_EndEffector());
@@ -220,21 +227,22 @@ BenderApp3D::BenderApp3D()
 	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = mountBaseOriginRB_l;
 	ikSolver->ikPlan->endEffectors.back().targetEEPos = P3D(+rod_length*0.5, 0.0, 0.0) + rod_center;
 
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = V3D(1.0, 0.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = V3D(0.0, 1.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = V3D(0.0, 0.0, 1.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = mountBaseAxialDirectionRB_l;
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(1) = V3D(0.0, 1.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(2) = V3D(0.0, 0.0, 1.0);
+	ikSolver->ikPlan->endEffectors.back().orientationMask = V3D(1.0, 0.0, 0.0);
 
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(-1.0, 0.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(0.0, 1.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(0.0, 0.0, 1.0);
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(-1.0, -1.0, 0.0).unit();
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(1) = V3D(0.0, 1.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(2) = V3D(0.0, 0.0, 1.0);
 
-	ikSolver->ikPlan->endEffectors.back().lengthScaleOrientation = -0.01;
+	ikSolver->ikPlan->endEffectors.back().lengthScaleOrientation = +0.5;
 
 	for(int i = 0; i < 100; ++i) {
 		ikSolver->ikEnergyFunction->regularizer = 100;
-		ikSolver->ikOptimizer->checkDerivatives = true;
+		ikSolver->ikOptimizer->checkDerivatives = false;
 		ikSolver->solve();
-		testGeneralizedCoordinateRepresentation(robot);
+		//testGeneralizedCoordinateRepresentation(robot);
 	}
 
 	// create generalized parametrization of the robot
@@ -965,9 +973,9 @@ void BenderApp3D::process() {
 
 		if(runIkSolver) {
 			ikSolver->ikEnergyFunction->regularizer = 100;
-			ikSolver->ikOptimizer->checkDerivatives = true;
+			ikSolver->ikOptimizer->checkDerivatives = false;
 			ikSolver->solve();
-			testGeneralizedCoordinateRepresentation(robot);
+			//testGeneralizedCoordinateRepresentation(robot);
 			// sync the parameters of the BenderApp
 			generalizedRobotCoordinates->syncGeneralizedCoordinatesWithRobotState();
 			//break;

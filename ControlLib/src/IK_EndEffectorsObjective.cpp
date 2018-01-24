@@ -123,12 +123,12 @@ void IK_EndEffectorsObjective::addGradientTo(dVector& grad, const dVector& p) {
 		// first derivative
 		MatrixNxM dPosEEdq;
 		IKPlan->gcRobotRepresentation->compute_dpdq(endEffector.endEffectorLocalCoords, 
-											endEffector.endEffectorRB,
-											dPosEEdq);
+													endEffector.endEffectorRB,
+													dPosEEdq);
 
 		for(int k = 0; k < 3; ++k) {
 			for(int l = p_active_start_idx; l < nP; ++l) {
-				grad[l-p_active_start_idx] += endEffector.positionMask[k] * errPos[k] * dPosEEdq(k,l);
+				grad[l-p_active_start_idx] += endEffector.positionMask[k] * errPos[k] * dPosEEdq(k,l) * weight;
 			}
 		}
 	};
@@ -149,7 +149,7 @@ void IK_EndEffectorsObjective::addGradientTo(dVector& grad, const dVector& p) {
 											dVecEEdq);
 
 		for(int l = p_active_start_idx; l < nP; ++l) {
-			grad[l-p_active_start_idx] += - endEffector.orientationMask[i_vec] * dVecEEdq.col(l).dot(errVec) * s2;
+			grad[l-p_active_start_idx] += - endEffector.orientationMask[i_vec] * dVecEEdq.col(l).dot(errVec) * s2 * weight;
 		}
 	};
 	
@@ -280,7 +280,7 @@ void IK_EndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 				double val = 0.0;
 				val += dVecEEdq.col(l).dot(dVecEEdq.col(m)) * endEffector.orientationMask[i_vec];
 				val += - ddVecEEdq_dql.col(m).dot(errVec) * endEffector.orientationMask[i_vec];
-				ADD_HES_ELEMENT(hessianEntries, l-p_active_start_idx, m-p_active_start_idx, val, weight);
+				ADD_HES_ELEMENT(hessianEntries, l-p_active_start_idx, m-p_active_start_idx, val, weight*s2);
 			}
 		}
 	};

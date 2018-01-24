@@ -36,22 +36,25 @@ public:
 
 	// mount base in coords of gripper mesh
 
-	V3D mountBaseOriginMesh_l;
 	V3D mountBaseOriginMesh_r;
-	Matrix3x3 mountBaseCoordinatesMesh_l;
+	V3D mountBaseOriginMesh_l;
 	Matrix3x3 mountBaseCoordinatesMesh_r;
+	Matrix3x3 mountBaseCoordinatesMesh_l;
 
-	V3D mountBaseOriginRB_l;
 	V3D mountBaseOriginRB_r;
-	Matrix3x3 mountBaseCoordinatesRB_l;
+	V3D mountBaseOriginRB_l;
+	V3D mountBaseAxialDirectionRB_r;
+	V3D mountBaseAxialDirectionRB_l;
+
 	Matrix3x3 mountBaseCoordinatesRB_r;
+	Matrix3x3 mountBaseCoordinatesRB_l;
 
 	// solver for the inverse problem
 	InverseDeformationSolver<3> * inverseDeformationSolver;
 
 	// Optimization Algorithms
 	std::vector<GradientBasedFunctionMinimizer*> minimizers;
-	int maxIterations = 10;
+	int maxIterations = 1;
 	double solveResidual = 1e-5;
 	int maxLineSearchIterations = 15;
 	double lineSearchStartValue = 0.1;
