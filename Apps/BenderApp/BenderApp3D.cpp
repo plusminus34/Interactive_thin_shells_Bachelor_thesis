@@ -191,19 +191,44 @@ BenderApp3D::BenderApp3D()
 		0.0, -1.0, 0.0,
 		1.0, 0.0, 0.0;
 
-
+	////////////////////////
+	// IK Solver for Robot
+	////////////////////////
 	delete ikSolver;
 	ikSolver = new IK_Solver(robot, true);
 	// new target: right gripper
 	ikSolver->ikPlan->endEffectors.push_back(IK_EndEffector());
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = mountBaseOriginRB_r;
 	ikSolver->ikPlan->endEffectors.back().endEffectorRB = right_gripper;
+
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = mountBaseOriginRB_r;
 	ikSolver->ikPlan->endEffectors.back().targetEEPos = P3D(-rod_length*0.5, 0.0, 0.0) + rod_center;
+
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = V3D(1.0, 0.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = V3D(0.0, 1.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = V3D(0.0, 0.0, 1.0);
+
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(1.0, 0.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(0.0, 1.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(0.0, 0.0, 1.0);
+
+	ikSolver->ikPlan->endEffectors.back().lengthScaleOrientation = -0.01;
+
 	// new target: left gripper
 	ikSolver->ikPlan->endEffectors.push_back(IK_EndEffector());
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = mountBaseOriginRB_l;
 	ikSolver->ikPlan->endEffectors.back().endEffectorRB = left_gripper;
+
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = mountBaseOriginRB_l;
 	ikSolver->ikPlan->endEffectors.back().targetEEPos = P3D(+rod_length*0.5, 0.0, 0.0) + rod_center;
+
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = V3D(1.0, 0.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = V3D(0.0, 1.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = V3D(0.0, 0.0, 1.0);
+
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(-1.0, 0.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(0.0, 1.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(0.0, 0.0, 1.0);
+
+	ikSolver->ikPlan->endEffectors.back().lengthScaleOrientation = -0.01;
 
 	for(int i = 0; i < 100; ++i) {
 		ikSolver->ikEnergyFunction->regularizer = 100;
