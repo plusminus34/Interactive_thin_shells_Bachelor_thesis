@@ -2,9 +2,9 @@
 
 #include <iostream>
 
-#include <unistd.h>
+//#include <unistd.h>
 #include <sys/types.h>
-#include <pwd.h>
+//#include <pwd.h>
 
 
 //Constructor

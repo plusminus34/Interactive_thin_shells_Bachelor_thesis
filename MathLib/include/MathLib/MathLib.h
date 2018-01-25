@@ -48,6 +48,7 @@ typedef unsigned int uint;
 	Computes the value of x in radians
 */
 #define RAD(x) (((x) * PI)/180.0)
+#define RADF(x) (((x) * static_cast<float>(PI))/180.0f)
 
 /**
 	And this computes the value of x in degrees
