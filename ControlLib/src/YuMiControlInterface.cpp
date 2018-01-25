@@ -2,70 +2,90 @@
 
 #include <iostream>
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+
 
 //Constructor
-YuMiControlInterface::YuMiControlInterface(Robot* robot) : RobotControlInterface(robot) {}
+YuMiControlInterface::YuMiControlInterface(Robot* robot) : RobotControlInterface(robot) {
+	savedRightJoints = rightArm.convertVectorToYuMiJoints(YuMiConstants::HOME_STATE_RIGHT);
+	savedLeftJoints = leftArm.convertVectorToYuMiJoints(YuMiConstants::HOME_STATE_LEFT);
+
+	tcpSpeedRight.current = 100;
+	tcpSpeedLeft.current = 100;
+}
 
 //Destructor
 YuMiControlInterface::~YuMiControlInterface() {}
 
 //set motor goals from target values
 void YuMiControlInterface::sendControlInputsToPhysicalRobot() {
-    std::cout << "sendControlInputsToPhysicalRobot" << std::endl;
 
-    std::vector<float> rightTargetJoints(robot->getJointCount()/2, 0.0);
-    std::vector<float> leftTargetJoints(robot->getJointCount()/2, 0.0);
+	//Send commands to robot
+	rightArm.getAndSendJointsAndTCPSpeedToRobot(savedRightJoints, tcpSpeedRight.current);
+	leftArm.getAndSendJointsAndTCPSpeedToRobot(savedLeftJoints, tcpSpeedLeft.current);
 
-    int jointIndex = 0;
-    for (int i = 0; i < robot->getJointCount(); i++) {
-        HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-        if (!hj) continue;
+	//Get right and left joint targets
+	YuMiJoints rightTargetJoints, leftTargetJoints;
 
-        if(i % 2 == 0){
-            rightTargetJoints.at(jointIndex) = hj->motor.targetMotorAngle;
-        } else {
-            leftTargetJoints.at(jointIndex) = hj->motor.targetMotorAngle;
-            std::cout << "leftTargetJoints: " << hj->motor.targetMotorAngle << std::endl;
-            jointIndex++;
-        }
+	float* rightTargetJointsPtr = &rightTargetJoints.j1;
+	float* leftTargetJointsPtr = &leftTargetJoints.j1;
 
-        //hj->motor.targetMotorVelocity = 1.0;//make sure the motors all go to zero slowly...
-    }
+	for (int i = 0; i < robot->getJointCount(); i++) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
 
-    rightArm.gotoJointPose(rightTargetJoints);
-    leftArm.gotoJointPose(leftTargetJoints);
+		if(i % 2 == 0){
+			*rightTargetJointsPtr = hj->motor.targetMotorAngle;
+			rightTargetJointsPtr++;
+		} else {
+			*leftTargetJointsPtr = hj->motor.targetMotorAngle;
+			leftTargetJointsPtr++;
+		}
+	}
+
+	//Update current values belonging to calculate TCPSpeed
+	savedLeftJoints = leftTargetJoints;
+	savedRightJoints = rightTargetJoints;
+
+	globalTCPLeft.current = globalTCPLeft.target;
+	globalTCPRight.current = globalTCPRight.target;
+
+	tcpSpeedLeft.current = tcpSpeedLeft.target;
+	tcpSpeedRight.current = tcpSpeedRight.target;
 }
 
 //read motor positions
 void YuMiControlInterface::readPhysicalRobotMotorPositions() {
-    //std::cout << "readPhysicalRobotMotorPositions" << std::endl;
+	YuMiJoints rightCurrentJoints = rightArm.getCurrentJointValues();
+	YuMiJoints leftCurrentJoints = leftArm.getCurrentJointValues();
 
-    std::vector<float> rightJoints = rightArm.getJoints();
-    std::vector<float> leftJoints = leftArm.getJoints();
+	float* rightCurrentJointsPtr = &rightCurrentJoints.j1;
+	float* leftCurrentJointsPtr = &leftCurrentJoints.j1;
 
-    int jointIndex = 0;
-    for (int i = 0; i < robot->getJointCount(); i++) {
-        HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-        if (!hj) continue;
+	for (int i = 0; i < robot->getJointCount(); i++) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
 
-        float tempJoint = 0.0;
-        if(i % 2 == 0){
-            tempJoint = rightJoints.at(jointIndex);
-        } else {
-            tempJoint = leftJoints.at(jointIndex);
-            jointIndex++;
-        }
+		float tempJoint = 0.0f;
+		if(i % 2 == 0){
+			tempJoint = *rightCurrentJointsPtr;
+			rightCurrentJointsPtr++;
+		} else {
+			tempJoint = *leftCurrentJointsPtr;
+			leftCurrentJointsPtr++;
+		}
 
-        hj->motor.currentMotorAngle = tempJoint;
-    }
+		hj->motor.currentMotorAngle = tempJoint;
+	}
 }
 
 //read motor positions
 void YuMiControlInterface::readPhysicalRobotMotorVelocities() {}
 
 void YuMiControlInterface::setTargetMotorValuesFromSimRobotState(double dt) {
-    std::cout << "setTargetMotorValuesFromSimRobotState" << std::endl;
-    readPhysicalRobotMotorPositions();
+	//readPhysicalRobotMotorPositions();  //optional!
 
     //given the values stored in the joint's dxl properties structure (which are updated either from the menu or by sync'ing with the dynamixels), update the state of the robot...
     RobotState rs(robot);
@@ -81,67 +101,207 @@ void YuMiControlInterface::setTargetMotorValuesFromSimRobotState(double dt) {
         double speedLimit = fabs(hj->motor.targetMotorAngle - hj->motor.currentMotorAngle) / dt;
         hj->motor.targetMotorVelocity = speedLimit;
     }
+
+	//Set tcpSpeed
+	globalTCPLeft.target = robot->getRBByName("link_7_l")->getWorldCoordinates(localTCPLeft);
+	V3D vecTCPLeft = globalTCPLeft.target - globalTCPLeft.current;
+	double lengthVecTCPLeft = vecTCPLeft.length();
+	tcpSpeedLeft.target = (unsigned int)round(lengthVecTCPLeft*1000.0f/dt*speedWeight);
+
+	if(tcpSpeedLeft.target < minSpeed){
+		tcpSpeedLeft.target = minSpeed;
+	} else if(tcpSpeedLeft.target > maxSpeed){
+		tcpSpeedLeft.target = maxSpeed;
+	}
+
+	globalTCPRight.target = robot->getRBByName("link_7_r")->getWorldCoordinates(localTCPRight);
+	V3D vecTCPRight = globalTCPRight.target - globalTCPRight.current;
+	double lengthVecTCPRight = vecTCPRight.length();
+	tcpSpeedRight.target = (unsigned int)round(lengthVecTCPRight*1000.0f/dt*speedWeight);
+
+	if(tcpSpeedRight.target < minSpeed){
+		tcpSpeedRight.target = minSpeed;
+	} else if(tcpSpeedRight.target > maxSpeed){
+		tcpSpeedRight.target = maxSpeed;
+	}
+
+//	std::cout << "TCPSpeed Target Left: " << tcpSpeedLeft.target << std::endl;
+//	std::cout << "TCPSpeed Target Right: " << tcpSpeedRight.target << std::endl;
+
 }
 
 void YuMiControlInterface::openCommunicationPort() {
-    std::cout << "openCommunicationPort" << std::endl;
-    if(!leftArm.getConnected()){
-        leftArm.init("left");
+	bool leftConnect = false;
+	bool rightConnect = false;
+
+	if(leftArm.getConnectedValue() == false){
+		leftConnect = leftArm.init("left");
     }
-    if(!rightArm.getConnected()){
-        rightArm.init("right");
+	if(rightArm.getConnectedValue() == false){
+		rightConnect = rightArm.init("right");
     }
+
+	if(leftConnect && !rightConnect){
+		leftArm.closeConnection();
+		leftConnect = false;
+	} else if(!leftConnect && rightConnect){
+		rightArm.closeConnection();
+		rightConnect = false;
+	}
+
+	if(leftConnect && rightConnect){
+		connected = true;
+	}
 }
 
 void YuMiControlInterface::closeCommunicationPort() {
-    std::cout << "closeCommunicationPort" << std::endl;
     leftArm.closeConnection();
     rightArm.closeConnection();
+	connected = false;
 }
 
-void YuMiControlInterface::driveMotorPositionsToZero(){
-    std::vector<float> leftTargetJoints = {0.0f, -2.26893f, 0.0, 0.69813f, 0.0f, -2.35619f, 0.52360f};
-    std::vector<float> rightTargetJoints = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+void YuMiControlInterface::driveMotorPositionsToZero(){}
 
-    int jointIndex = 0;
-    for (int i = 0; i < robot->getJointCount(); i++) {
-        HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-        if (!hj) continue;
+void YuMiControlInterface::driveMotorPositionsToTestPos1(IK_Solver* ikSolverPtr){
+	std::cout << "driveMotorPositionsToTestPos1" << std::endl;
 
-        if(i % 2 == 0){
-            hj->motor.targetMotorAngle = rightTargetJoints.at(jointIndex);
-        } else {
-            hj->motor.targetMotorAngle = leftTargetJoints.at(jointIndex);
-            jointIndex++;
-        }
+	std::vector<float> leftTargetJoints = YuMiConstants::HOME_STATE_LEFT;
+	std::vector<float> rightTargetJoints = YuMiConstants::HOME_STATE_RIGHT;
 
-        //hj->motor.targetMotorVelocity = 1.0;//make sure the motors all go to zero slowly...
-    }
-    sendControlInputsToPhysicalRobot();
+	driveMotorPositionsToInputPos(leftTargetJoints, rightTargetJoints, ikSolverPtr);
 }
 
 
-void YuMiControlInterface::driveMotorPositionsToTestPos(){
-    std::cout << "driveMotorPositionsToTestPos" << std::endl;
+void YuMiControlInterface::driveMotorPositionsToTestPos2(IK_Solver* ikSolverPtr){
+	std::cout << "driveMotorPositionsToTestPos2" << std::endl;
 
-    std::vector<float> leftTargetJoints = {0.0f, -2.26893f, 0.0f, 0.69813f, 0.0f, -2.35619f, 0.52360f};
-    std::vector<float> rightTargetJoints = {0.0f, 0.0f, 0.0f, 0.349066f, 0.0f, 0.0f, 0.0f};
+	std::vector<float> leftTargetJoints = YuMiConstants::INIT_STATE_LEFT;
+	//std::vector<float> rightTargetJoints = YuMiConstants::INIT_STATE_RIGHT;
+	std::vector<float> rightTargetJoints = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
-    int jointIndex = 0;
-    for (int i = 0; i < robot->getJointCount(); i++) {
-        HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-        if (!hj) continue;
+	driveMotorPositionsToInputPos(leftTargetJoints, rightTargetJoints, ikSolverPtr);
+}
 
-        if(i % 2 == 0){
-            hj->motor.targetMotorAngle = rightTargetJoints.at(jointIndex);
-        } else {
-            hj->motor.targetMotorAngle = leftTargetJoints.at(jointIndex);
-            jointIndex++;
-        }
+void YuMiControlInterface::driveMotorPositionsToInputPos(std::vector<float> leftJoints, std::vector<float> rightJoints, IK_Solver* ikSolverPtr){
+	RobotState rs(robot);
 
-        //hj->motor.targetMotorVelocity = 1.0;//make sure the motors all go to zero slowly...
-    }
-    sendControlInputsToPhysicalRobot();
+	int jointIndex = 0;
+	for (int i = 0; i < robot->getJointCount(); i++) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
+
+		float angleNext = 0.0f;
+		if(i % 2 == 0){
+			angleNext = rightJoints.at(jointIndex);
+
+		} else {
+			angleNext = leftJoints.at(jointIndex);
+			jointIndex++;
+		}
+		rs.setJointRelativeOrientation(getRotationQuaternion(angleNext, hj->rotationAxis), hj->jIndex);
+	}
+
+	//robot->setState(&rs);
+	ikSolverPtr->ikPlan->setTargetIKState(rs);
+}
+
+void YuMiControlInterface::grip(std::string arm){
+	if(arm.compare("right") == 0){
+		if(rightArm.getGripperOpenValue()){
+			rightArm.closeGripper();
+		} else {
+			rightArm.openGripper();
+		}
+	} else if(arm.compare("left") == 0){
+		if(leftArm.getGripperOpenValue()){
+			leftArm.closeGripper();
+		} else {
+			leftArm.openGripper();
+		}
+	}
+}
+
+void YuMiControlInterface::printJointValues(){
+	std::vector<float> rightCurrentJoints(robot->getJointCount()/2, 0.0f);
+	std::vector<float> leftCurrentJoints(robot->getJointCount()/2, 0.0f);
+
+	std::vector<float> rightTargetJoints(robot->getJointCount()/2, 0.0f);
+	std::vector<float> leftTargetJoints(robot->getJointCount()/2, 0.0f);
+
+	int jointIndex = 0;
+	for (int i = 0; i < robot->getJointCount(); i++) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
+
+		if(i % 2 == 0){
+			rightCurrentJoints.at(jointIndex) = hj->motor.currentMotorAngle;
+			rightTargetJoints.at(jointIndex) = hj->motor.targetMotorAngle;
+		} else {
+			leftCurrentJoints.at(jointIndex) = hj->motor.currentMotorAngle;
+			leftTargetJoints.at(jointIndex) = hj->motor.targetMotorAngle;
+			jointIndex++;
+		}
+	}
+
+	std::cout << "CURRENT: Right joint angles: ";
+	for(int i = 0; i < 7; i++){
+		std::cout << "J" << (i+1) << ": " << rightCurrentJoints.at(i) << "   /   ";
+	}
+	std::cout << "" << std::endl;
+
+	std::cout << "TARGET: Right joint angles: ";
+	for(int i = 0; i < 7; i++){
+		std::cout << "J" << (i+1) << ": " << rightTargetJoints.at(i) << "   /   ";
+	}
+	std::cout << "" << std::endl;
+
+//	std::cout << "CURRENT: Left joint angles: ";
+//	for(int i = 0; i < 7; i++){
+//		std::cout << "J" << (i+1) << ": " << leftCurrentJoints.at(i) << "   /   ";
+//	}
+//	std::cout << "" << std::endl;
+
+//	std::cout << "TARGET: Left joint angles: ";
+//	for(int i = 0; i < 7; i++){
+//		std::cout << "J" << (i+1) << ": " << leftTargetJoints.at(i) << "   /   ";
+//	}
+//	std::cout << "" << std::endl;
+}
+
+bool YuMiControlInterface::sendJointInputsCheck(std::string arm){
+	bool sendInput = false;
+	double tol = 0.001f;
+	for (int i = 0; i < robot->getJointCount(); i++) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
+
+		if(arm.compare("right") == 0 && (i % 2 == 0)){
+			double delta = fabs(hj->motor.currentMotorAngle - hj->motor.targetMotorAngle);
+			if(delta > tol){
+				sendInput = true;
+				break;
+			}
+		} else if(arm.compare("left") == 0 && (i % 2 == 1)){
+			double delta = fabs(hj->motor.currentMotorAngle - hj->motor.targetMotorAngle);
+			if(delta > tol){
+				sendInput = true;
+				break;
+			}
+		}
+	}
+	return sendInput;
+}
+
+bool YuMiControlInterface::sendSpeedInputCheck(){
+	bool sendInput = false;
+	double tol = 0.001f;
+	HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(0));
+	//double delta = fabs(hj->motor.currenttcpSpeed - hj->motor.targettcpSpeed);
+	double delta = 0.0f;
+	if(delta > tol){
+		sendInput = true;
+	}
+	return sendInput;
 }
 
 

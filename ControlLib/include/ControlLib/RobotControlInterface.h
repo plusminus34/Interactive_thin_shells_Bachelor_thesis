@@ -84,7 +84,7 @@ public:
 			Quaternion q = robot->getRelativeOrientationForJoint(hj.j);
 			V3D w = robot->getRelativeLocalCoordsAngularVelocityForJoint(hj.j);
 			hj.j->motor.targetMotorAngle = q.getRotationAngle(hj.j->rotationAxis);
-			hj.j->motor.targetMotorVelocity = w.dot(hj.j->rotationAxis);
+			//hj.j->motor.targetMotorVelocity = w.dot(hj.j->rotationAxis);
 		}
 	}
 
@@ -98,9 +98,7 @@ public:
 
 	//the time window dt estimates the amount of time before the next command is issued (or, alternatively, how long we'd expect the physical robot to take before it can match the target values)
 	virtual void syncPhysicalRobotWithSimRobot(double dt = 0.1) {
-        std::cout << "syncPhysicalRobotWithSimRobot" << std::endl;
         setTargetMotorValuesFromSimRobotState(dt);
-        //driveMotorPositionsToZero();
 		sendControlInputsToPhysicalRobot();
 	}
 
@@ -114,7 +112,11 @@ public:
 	virtual void openCommunicationPort() = 0;
 	virtual void closeCommunicationPort() = 0;
 	virtual void driveMotorPositionsToZero() = 0;
-    virtual void driveMotorPositionsToTestPos() = 0;
+
+	virtual void driveMotorPositionsToTestPos1(IK_Solver* ikSolverPtr) = 0;
+	virtual void driveMotorPositionsToTestPos2(IK_Solver* ikSolverPtr) = 0;
+	virtual void grip(std::string arm) = 0;
+	virtual void printJointValues() = 0;
 
 	void toggleMotorPower() {
 		motorsOn = !motorsOn;

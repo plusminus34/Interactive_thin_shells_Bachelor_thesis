@@ -9,6 +9,10 @@
 #include <ControlLib/PololuServoControlInterface.h>
 #include <ControlLib/YuMiControlInterface.h>
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+
 PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	setWindowTitle("Physical Robot Control");
 
@@ -31,36 +35,44 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	nanogui::Button* button = new nanogui::Button(tools, "");
     button->setCallback([this]() {
         if (rci && rci->isConnected() == false) {
+			std::cout << "openCommunicationPort" << std::endl;
             rci->openCommunicationPort();
 
-//            // Option 1: always start from home position
-//            if(startAtHomePosition){
-//                RobotState rs(robot);
-//                rs.readFromFile( from home );
-//                robot->setState(&rs);
-//                ikSolver->ikPlan->setTargetIKStateFromRobot();
-//                rci->syncPhysicalRobotWithSimRobot();
-//            } else { // Option 2: Read robot state from physical YuMi and start simulation from it...
-//                RobotState rs(robot);
-//                rci->syncSimRobotWithPhysicalRobot();
-//                ikSolver->ikPlan->setTargetIKStateFromRobot();
-//            }
+			RobotState rs(robot);
 
-//            //Option to save home file
-//            if(saveCurrentAsHomePosition){
-//                RobotState newState(robot);
-//                RobotState.writeToFile();
-//            }
+			//File path to load home position
+			struct passwd *pw = getpwuid(getuid());
+			std::string homeDir = pw->pw_dir;
+			std::string homePath = homeDir + homeFilePath;
+			const char* homeStatePath = homePath.c_str();
 
-//            robot->setState(&rs);
+			// Option 1: always start from home position
+			if(startAtHomeState){
+				//std::cout << "start at home state" << std::endl;
+				rs.readFromFile(homeStatePath);
+				robot->setState(&rs);
+				ikSolver->ikPlan->setTargetIKStateFromRobot();
+
+				if(syncPhysicalRobot){
+					rci->syncPhysicalRobotWithSimRobot();
+				}
+			} else { // Option 2: Read robot state from physical YuMi and start simulation from it...
+				rci->syncSimRobotWithPhysicalRobot();
+				ikSolver->ikPlan->setTargetIKStateFromRobot();
+			}
+
+			//Option to save home file
+			if(saveCurrentAsHomePosition){
+				rs.writeToFile(homeStatePath);
+			}
         }
         else {
             if (rci) {
+				std::cout << "closeCommunicationPort" << std::endl;
                 rci->closeCommunicationPort();
             }
         }
     });
-
 	button->setIcon(ENTYPO_ICON_CYCLE);
 	button->setTooltip("Connect/Disconnect");
 
@@ -70,12 +82,14 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	button->setTooltip("Motors on/off");
 
 	button = new nanogui::Button(tools, "");
-	button->setCallback([this]() { if (rci && rci->isConnected()) rci->driveMotorPositionsToZero(); });
+	//button->setCallback([this]() { if (rci && rci->isConnected()) rci->driveMotorPositionsToZero(); });
+	button->setCallback([this]() { if (rci) rci->driveMotorPositionsToTestPos1(ikSolver); });
 	button->setIcon(ENTYPO_ICON_HOME);
 	button->setTooltip("GoToZero");
 
     button = new nanogui::Button(tools, "");
-    button->setCallback([this]() { if (rci && rci->isConnected()) rci->driveMotorPositionsToTestPos(); });
+	//button->setCallback([this]() { if (rci && rci->isConnected()) rci->driveMotorPositionsToTestPos(); });
+	button->setCallback([this]() { if (rci) rci->driveMotorPositionsToTestPos2(ikSolver); });
     button->setIcon(ENTYPO_ICON_HOME);
     button->setTooltip("GoToTestPos");
 
@@ -83,18 +97,29 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	mainMenu->addVariable("duration", trajDuration)->setSpinnable(true);
 	mainMenu->addVariable("control positions only", controlPositionsOnly);
     mainMenu->addVariable("sync physical robot", syncPhysicalRobot);
+	mainMenu->addVariable("request position", requestPosition);
+	mainMenu->addVariable("speed", speed)->setSpinnable(true);
+
+
+	mainMenu->addGroup("Gripper Controller");
+
+	nanogui::Widget *toolsGrip = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", toolsGrip);
+	toolsGrip->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 4));
+
+	button = new nanogui::Button(toolsGrip, "");
+	button->setCallback([this]() { if (rci) rci->grip("left"); });
+	button->setIcon(ENTYPO_ICON_ALIGN_LEFT);
+	button->setTooltip("Open / Close LEFT gripper");
+
+	button = new nanogui::Button(toolsGrip, "");
+	button->setCallback([this]() { if (rci) rci->grip("right"); });
+	button->setIcon(ENTYPO_ICON_ALIGN_RIGHT);
+	button->setTooltip("Open / Close RIGHT gripper");
 
 	menuScreen->performLayout();
 
 	showGroundPlane = false;
-
-//    int nPts = 10;
-//    for (int i = 0; i < nPts; i++) {
-//        double t = (double)i / (nPts - 1);
-//        FFTrajectory.addKnot(t, sin(2 * M_PI * t) * RAD(45));
-//    }
-//    FFTrajectory.addKnot(1, 0);
-
 }
 
 void PhysicalRobotControlApp::loadRobot(const char* fName) {
@@ -180,16 +205,27 @@ void PhysicalRobotControlApp::restart() {
 }
 
 // Run the App tasks
-void PhysicalRobotControlApp::process() {
-	double dt = 1.0 / desiredFrameRate;
+Timer t;
 
-    ikSolver->ikEnergyFunction->regularizer = 100;
-    ikSolver->ikOptimizer->checkDerivatives = true;
-    ikSolver->solve();
+void PhysicalRobotControlApp::process() {
+
+	ikSolver->ikEnergyFunction->regularizer = 100;
+	ikSolver->ikOptimizer->checkDerivatives = true;
+	ikSolver->solve();
+
+	//rci->printJointValues();
 
     if (rci && syncPhysicalRobot) {
+		//updateSpeedParameter();
+
+		//double dt = 1.0 / desiredFrameRate;
+		double dt = t.timeEllapsed();
         rci->controlPositionsOnly = controlPositionsOnly;
+		t.restart();
         rci->syncPhysicalRobotWithSimRobot(dt);
+		t.timeEllapsed();
+		Logger::consolePrint("It's been %lf s since timer restart\n", t.timeEllapsed());
+
     }
 }
 
@@ -301,12 +337,15 @@ void PhysicalRobotControlApp::drawScene() {
 
 	rbEngine->drawRBs(flags);
 
-    RobotState rs(robot);
-    if (rci)
-        rci->syncSimRobotWithPhysicalRobot();
-    glTranslated(0, 0, 1);
-    rbEngine->drawRBs(flags);
-    robot->setState(&rs);
+//	RobotState rs(robot);
+//	if (rci && requestPosition)
+//		rci->syncSimRobotWithPhysicalRobot();
+//	glTranslated(0, 0, 1);
+//	rbEngine->drawRBs(flags);
+//	robot->setState(&rs);
+
+//	drawSphere(robot->getRBByName("link_7_l")->getWorldCoordinates(P3D(0.017977, -0.0169495, 0.01949)), 0.05);
+//	drawSphere(robot->getRBByName("link_7_r")->getWorldCoordinates(P3D(0.0200485, -0.0189025, -0.0217355)), 0.05);
 
 	glPopMatrix();
 	glDisable(GL_LIGHTING);
@@ -330,4 +369,10 @@ bool PhysicalRobotControlApp::processCommandLine(const std::string& cmdLine) {
 
 	return false;
 }
+
+void PhysicalRobotControlApp::updateSpeedParameter(){
+//	HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(0));
+//	hj->motor.targetYuMiTCPSpeed = speed;
+}
+
 

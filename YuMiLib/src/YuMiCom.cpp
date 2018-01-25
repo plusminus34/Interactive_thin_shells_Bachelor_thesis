@@ -1,5 +1,6 @@
 #include <YuMiLib/YuMiCom.h>
 #include <YuMiLib/YuMiConstants.h>
+#include "../../MathLib/include/MathLib/MathLib.h"
 
 #include <string.h>
 #include <cstring>
@@ -51,31 +52,40 @@ std::string YuMiCom::getJoints(int idCode) {
     msg += std::to_string(idCode);
     msg += " #";
 
+	std::cout << "getJoints-msg: " << msg << std::endl;
+
     return (msg);
 }
 
-void YuMiCom::parseJoints(std::string msg, float &j1, float &j2, float &j3, float &j4, float &j5, float &j6, float &j7){
-    char * cstr = new char [msg.length()+1];
-    std::strcpy (cstr, msg.c_str());
-    char * p = std::strtok (cstr," ");
-    std::vector<float> joints(YuMiConstants::NUM_JOINTS, 0.0);
 
-    int iter = 0;
-    while(p!=0){
-        if(iter > 1){ //1. = idCode, 2. = ok
-            joints[iter-2] = degToRad(float(atof(p)));
-        }
-        p = std::strtok(NULL," ");
-        iter++;
-    }
-    delete[] cstr;
+void YuMiCom::parseJoints(std::string msg, YuMiJoints& yumiJoints){
+	char * cstr = new char [msg.length()+1];
+	std::strcpy (cstr, msg.c_str());
+	char * p = std::strtok (cstr," ");
+	std::vector<float> jointsTemp(YuMiConstants::NUM_JOINTS, 0.0);
 
-    //Switch because of weird naming of ABB joints (1, 2, 7, 3, 4, 5, 6)
-    j1 = joints[0]; j2 = joints[1]; j3 = joints[6]; j4 = joints[2]; j5 = joints[3]; j6 = joints[4]; j7 = joints[5];
+	int iter = 0;
+	while(p!=0){
+		if(iter > 1){ //1. = idCode, 2. = ok
+			jointsTemp[iter-2] = RAD(float(atof(p)));
+		}
+		p = std::strtok(NULL," ");
+		iter++;
+	}
+	delete[] cstr;
+
+	//Switch because of weird naming of ABB joints (1, 2, 7, 3, 4, 5, 6)
+	yumiJoints.j1 = jointsTemp[0];
+	yumiJoints.j2 = jointsTemp[1];
+	yumiJoints.j3 = jointsTemp[6];
+	yumiJoints.j4 = jointsTemp[2];
+	yumiJoints.j5 = jointsTemp[3];
+	yumiJoints.j6 = jointsTemp[4];
+	yumiJoints.j7 = jointsTemp[5];
 }
 
 
-std::string YuMiCom::gotoJointPose(int idCode, float j1, float j2, float j3, float j4, float j5, float j6, float j7){
+std::string YuMiCom::gotoJointPose(int idCode, YuMiJoints yumiJoints){
     std::string msg;
     if(idCode < 10){
         msg = "0";
@@ -84,46 +94,159 @@ std::string YuMiCom::gotoJointPose(int idCode, float j1, float j2, float j3, flo
     }
     //Switch because of weird naming of ABB joints (1, 2, 7, 3, 4, 5, 6)
     msg += std::to_string(idCode); msg += " ";
-    msg += std::to_string(radToDeg(j1)); msg += " ";
-    msg += std::to_string(radToDeg(j2)); msg += " ";
-    msg += std::to_string(radToDeg(j4)); msg += " ";
-    msg += std::to_string(radToDeg(j5)); msg += " ";
-    msg += std::to_string(radToDeg(j6)); msg += " ";
-    msg += std::to_string(radToDeg(j7)); msg += " ";
-    msg += std::to_string(radToDeg(j3)); msg += " ";
+	msg += std::to_string(DEG(yumiJoints.j1)); msg += " ";
+	msg += std::to_string(DEG(yumiJoints.j2)); msg += " ";
+	msg += std::to_string(DEG(yumiJoints.j4)); msg += " ";
+	msg += std::to_string(DEG(yumiJoints.j5)); msg += " ";
+	msg += std::to_string(DEG(yumiJoints.j6)); msg += " ";
+	msg += std::to_string(DEG(yumiJoints.j7)); msg += " ";
+	msg += std::to_string(DEG(yumiJoints.j3)); msg += " ";
 
     msg += "#";
 
-    //std::cout << "msg: " << msg << std::endl;
+	//std::cout << "gotoJointPose-msg: " << msg << std::endl;
 
     return (msg);
 }
 
 
-std::string YuMiCom::setSpeed(int idCode, unsigned int s){
+std::string YuMiCom::setTCPSpeed(int idCode, unsigned int speed){
     std::string msg;
     if(idCode < 10){
         msg = "0";
     } else {
         msg = "";
     }
-    msg += std::to_string(idCode); msg += " ";
-    msg += std::to_string(s); msg += " ";
-    msg += std::to_string(YuMiConstants::SPEED_DATA_ROT); msg += " ";
-    msg += std::to_string(s); msg += " ";
-    msg += std::to_string(YuMiConstants::SPEED_DATA_ROT); msg += " ";
-    msg += "#";
+	msg += std::to_string(idCode); msg += " ";
+	msg += std::to_string(speed); msg += " ";
+	msg += std::to_string(YuMiConstants::SPEED_DATA_ROT); msg += " ";
+	msg += std::to_string(speed); msg += " ";
+	msg += std::to_string(YuMiConstants::SPEED_DATA_ROT); msg += " ";
+	msg += "#";
 
-//    std::cout << "msg: " << msg << std::endl;
+	//std::cout << "setSpeed-msg: " << msg << std::endl;
 
     return (msg);
 }
 
+std::string YuMiCom::getAndSendJointsAndTCPSpeed(int idCode, YuMiJoints yumiJoints, unsigned int speed){
+	std::string msg;
+	if(idCode < 10){
+		msg = "0";
+	} else {
+		msg = "";
+	}
+	//Switch because of weird naming of ABB joints (1, 2, 7, 3, 4, 5, 6)
+	msg += std::to_string(idCode); msg += " ";
 
-float YuMiCom::degToRad(float v){
-    return v*3.14159265359/180.0;
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j1)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j2)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j4)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j5)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j6)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j7)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
+	msg += std::to_string((float)((int)(DEG(yumiJoints.j3)*100))/100); msg.erase(msg.end()-4, msg.end()); msg += " ";
+
+	msg += std::to_string(speed); msg += " ";
+
+//	msg += std::to_string(YuMiConstants::SPEED_DATA_ROT); msg += " ";
+
+//	msg += std::to_string(YuMiConstants::MOVE_ZONE); msg += " ";
+
+//	msg += std::to_string(YuMiConstants::MOVE_STOPPOINTDATA); msg += " ";
+
+	msg += "#";
+
+	//std::cout << "getAndSendJointsAndTCPSpeed - msg: " << msg << std::endl;
+
+	return (msg);
 }
 
-float YuMiCom::radToDeg(float v){
-    return v*180.0/3.14159265359;
+std::string YuMiCom::gotoExtAx(int idCode, std::vector<float> extAx){
+	std::string msg;
+	if(idCode < 10){
+		msg = "0";
+	} else {
+		msg = "";
+	}
+	msg += std::to_string(idCode); msg += " ";
+	msg += std::to_string(extAx.at(0)); msg += " ";
+	msg += std::to_string(extAx.at(1)); msg += " ";
+	msg += std::to_string(extAx.at(2)); msg += " ";
+	msg += std::to_string(extAx.at(3)); msg += " ";
+	msg += std::to_string(extAx.at(4)); msg += " ";
+	msg += std::to_string(extAx.at(5)); msg += " ";
+
+	msg += "#";
+
+	std::cout << "msg: " << msg << std::endl;
+
+	return (msg);
+}
+
+
+
+std::string YuMiCom::initGripper(int idCode, float maxSpd, float holdForce, float phyLimit, bool calibrate){
+	std::string msg;
+	if(idCode < 10){
+		msg = "0";
+	} else {
+		msg = "";
+	}
+	msg += std::to_string(idCode); msg += " ";
+	msg += std::to_string(maxSpd); msg += " ";
+	msg += std::to_string(holdForce); msg += " ";
+	msg += std::to_string(phyLimit); msg += " ";
+	if(calibrate){
+		msg += std::to_string(0); msg += " ";
+	}
+	msg += "#";
+
+	//std::cout << "initGripper-msg: " << msg << std::endl;
+
+	return (msg);
+}
+
+
+std::string YuMiCom::openGripper(int idCode, float targetPos, bool noWait){
+	std::string msg;
+	if(idCode < 10){
+		msg = "0";
+	} else {
+		msg = "";
+	}
+
+	if(targetPos < 0 || targetPos > YuMiConstants::GRIP_PHYLIMIT){
+		std::cerr << "ERROR: Gripper target pos not in correct range!" << std::endl;
+	} else {
+		msg += std::to_string(idCode); msg += " ";
+		msg += std::to_string(targetPos); msg += " ";
+		if(noWait){
+			msg += std::to_string(0); msg += " ";
+		}
+		msg += "#";
+	}
+
+	//std::cout << "openGripper-msg: " << msg << std::endl;
+
+	return (msg);
+}
+
+
+std::string YuMiCom::closeGripper(int idCode, bool noWait){
+	std::string msg;
+	if(idCode < 10){
+		msg = "0";
+	} else {
+		msg = "";
+	}
+	msg += std::to_string(idCode); msg += " ";
+	if(noWait){
+		msg += std::to_string(0); msg += " ";
+	}
+	msg += "#";
+
+	//    std::cout << "msg: " << msg << std::endl;
+
+	return (msg);
 }
