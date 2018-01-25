@@ -19,7 +19,7 @@ public:
 	RobotMount(ParameterSet * parameters);
 
 	virtual P3D transformation(P3D const & x0, ParameterSet * parameters_in);
-	//virtual void dxDpar(P3D const & x0, ParameterSet * parameters_in, std::vector<V3D> & grad);
+	virtual void dxDpar(P3D const & x0, ParameterSet * parameters_in, std::vector<V3D> & grad);
 
 	void move(int parameter_idx, double dp);
 
@@ -29,8 +29,9 @@ public:
 
 
 class RobotParameters : public ParameterSet {
+	friend	RobotMount;
 
-private:
+protected:
 	GeneralizedCoordinatesRobotRepresentation * robotParameters;
 	bool robot_is_synced = false;
 

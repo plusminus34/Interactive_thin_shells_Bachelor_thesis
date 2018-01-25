@@ -42,25 +42,30 @@ void RobotMount::move(int parameter_idx, double dp)
 	pars->pushVec(par_vec);	
 };
 
-/*
+
 void RobotMount::dxDpar(P3D const & x0, ParameterSet * parameters_in, std::vector<V3D> & grad)
 {
 	RobotParameters * pars = static_cast<RobotParameters * >(parameters_in);
-std::cout << "dxDpar... ";
+	if(! pars->is_synced_with_robot()) {
+		std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << std::endl; 
+		exit(3);
+	}
+
+
 	MatrixNxM dpdq;
 	pars->robotParameters->compute_dpdq(x0, robotPart, dpdq);
 
 	int n = pars->getNPar();
 	grad.resize(n);
 
-	for(int i = 0; i < n; ++n) {
+	for(int i = 0; i < n; ++i) {
 		for(int j = 0; j < 3; ++j) {
-			grad[i][j] = dpdq(j, i);
+			grad[i][j] = dpdq(j, i+6);
 		}
 	}
-std::cout << "done" << std::endl;
+
 }
-*/
+
 
 
 RobotParameters::RobotParameters(GeneralizedCoordinatesRobotRepresentation * robotParameters)
