@@ -72,7 +72,6 @@ public:
 	// state of the app 
 	bool computeStaticSolution = true;
 	bool optimizeObjective = false;
-	bool checkDerivatives = false;
 
 	bool runIkSolver = false;
 	int selectedArmIk = -1;
@@ -113,6 +112,9 @@ public:
 	int selected_mount = -1;
 
 	// menu elements
+	nanogui::Screen *menuScreen2 = nullptr;
+	nanogui::FormHelper *menu2 = nullptr;
+
 	nanogui::ComboBox * comboBoxMountSelection;
 	std::array<nanogui::Button *, 4> buttonsInteractionMode;
 	nanogui::ComboBox * comboBoxOptimizationAlgorithm;

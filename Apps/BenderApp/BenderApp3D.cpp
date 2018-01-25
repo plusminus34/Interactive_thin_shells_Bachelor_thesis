@@ -391,16 +391,12 @@ void BenderApp3D::pushInputTrajectory(Trajectory3Dplus & trajInput)
 void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 {
 
-	screenRecorder->attachToNanoGui(menu);
+	
 	// 
 	menu->addGroup("FEM Sim options");
-	menu->addVariable("Static solve", computeStaticSolution);
-	menu->addVariable("Optimize Objective", optimizeObjective);
-	menu->addVariable("Check derivatives", checkDerivatives);
-	menu->addVariable("initialize with IK solver", runIkSolver);
-	menu->addButton("set state as target", [this](){
-		femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
-	});
+	{
+		menu->addVariable("Static solve", computeStaticSolution);
+	}
 	//
 	menu->addGroup("Robot Visualization");
 	menu->addVariable("Show mesh", showMesh);
@@ -409,14 +405,18 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 	menu->addVariable("Highlight selected", highlightSelected);
 	menu->addVariable("Show MOI", showMOI);
 	menu->addVariable("Show CDP", showCDPs);
-	menu->addVariable("selected rob par", selectedGeneralizedRobotParameter);
-	menu->addVariable("selected glob par", selectedXi);
 
 
 
 	// add selection of optimization algorithm
 	menu->addGroup("Optimization");
 	{
+		menu->addVariable("Optimize Objective", optimizeObjective);
+
+		menu->addButton("set state as target", [this](){
+			femMesh->setNodeGlobalNodePositionObjective(femMesh->x);
+		});
+
 		nanogui::Widget *selection = new nanogui::Widget(menu->window());
 		menu->addWidget("", selection);
 		selection->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
@@ -433,7 +433,7 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 		menu->addVariable("regularizer xi", xiRegularizerValue);
 	}
 
-	menu->addGroup("Mode");
+	menu->addGroup("Interaction Mode");
 	// add selection for active interaction object
 	menu->addVariable("Manipulate: ", interactionObject, true)->setItems({"Mounts", "Target Trajectory", "IKROBOT"});
 	// add selection for interaction mode
@@ -457,6 +457,9 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 		buttonsInteractionMode[3] = new nanogui::Button(modes, "Edit");
 		buttonsInteractionMode[3]->setFlags(nanogui::Button::RadioButton);
 		buttonsInteractionMode[3]->setCallback([this](){switchInteractionMode(InteractionMode::DRAW);});
+
+		menu->addVariable("selected rob par", selectedGeneralizedRobotParameter);
+		menu->addVariable("selected glob par", selectedXi);
 	}
 
 	// add combo box for selected mount/handle
@@ -501,6 +504,13 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 	menu->addGroup("Tools");
 	menu->addVariable("Add/remove nodes", toolMode, true) -> setItems({"pick single node", "brush"});
 	
+	/////////////////////
+	// second window
+	////////////////////
+
+	menu->addWindow(Eigen::Vector2i(260, 0), "");
+	screenRecorder->attachToNanoGui(menu);
+
 };
 
 void BenderApp3D::updateMountSelectionBox()
@@ -965,7 +975,7 @@ void BenderApp3D::process() {
 	
 	simulationTime = 0;
 	maxRunningTime = 1.0 / desiredFrameRate;
-	femMesh->checkDerivatives = checkDerivatives != 0;
+	femMesh->checkDerivatives = false;
 
 	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
 	while (simulationTime < 1.0 * maxRunningTime) {
