@@ -10,6 +10,7 @@
 #include <GUILib/GLUtils.h>
 
 #include <RBSimLib/ODERBEngine.h>
+#include <ControlLib/YuMiControlInterface.h>
 
 #include "OptimizationLib/GradientDescentFunctionMinimizer.h"
 #include "OptimizationLib/BFGSFunctionMinimizer.h"
@@ -64,11 +65,21 @@ BenderApp3D::BenderApp3D()
 
 	// create some points on centerline of the mesh
 	DynamicArray<P3D> centerlinePts;
+	//{
+	//	int m = 10;
+	//	centerlinePts.resize(m);
+	//	V3D pt1(-1.0, 0.0, 0.0);
+	//	V3D pt2(+1.0, 0.0, 0.0);
+	//	double dt = 1.0 / static_cast<double>(m-1);
+	//	for(int i = 0; i < m; ++i) {
+	//		centerlinePts[i] = pt1 + (pt2 - pt1) * dt*static_cast<double>(i);
+	//	}
+	//}
 	{
 		int m = 10;
 		centerlinePts.resize(m);
-		V3D pt1(-1.0, 0.0, 0.0);
-		V3D pt2(+1.0, 0.0, 0.0);
+		V3D pt1(-300, -15, -15);
+		V3D pt2(0.0, -15, -15);
 		double dt = 1.0 / static_cast<double>(m-1);
 		for(int i = 0; i < m; ++i) {
 			centerlinePts[i] = pt1 + (pt2 - pt1) * dt*static_cast<double>(i);
@@ -77,11 +88,14 @@ BenderApp3D::BenderApp3D()
 
 	// create mesh
 	femMesh = new BenderSimulationMesh<3>;
-	femMesh->readMeshFromFile_ply("../data/3dModels/extruded_hexagon_0p1x2.ply", &centerlinePts,
+	//femMesh->readMeshFromFile_ply("../data/3dModels/extruded_hexagon_0p1x2.ply", &centerlinePts,
+	//							  massDensity, shearModulus, bulkModulus,
+	//							  1.0/2.0 * rod_length, rod_center);
+	femMesh->readMeshFromFile_ply("../data/3dModels/square_rod_0p03x0p3.ply", &centerlinePts,
 								  massDensity, shearModulus, bulkModulus,
-								  1.0/2.0 * rod_length, rod_center);
-	//femMesh->addGravityForces(V3D(0, -9.8, 0));
-	femMesh->addGravityForces(V3D(0, 0.0, 0));
+								  1e-3, rod_center + V3D(0.15, 0.015, 0.015));
+	femMesh->addGravityForces(V3D(0, -9.8, 0));
+	//femMesh->addGravityForces(V3D(0, 0.0, 0));
 	
 
 
@@ -172,6 +186,7 @@ BenderApp3D::BenderApp3D()
 	
 
 	robot->setHeading(-PI / 2.0);
+
 
 	// find mount point on gripper
 
@@ -359,17 +374,24 @@ BenderApp3D::BenderApp3D()
 	// initialize the ID Solver
 	inverseDeformationSolver->pullXi();
 	inverseDeformationSolver->objectiveFunction->setRegularizer(xiRegularizerValue, inverseDeformationSolver->xi);
-	// IK Solver
 
 
+	///////////////////////////////
+	// Physical robot interface
+	///////////////////////////////
+	robotControlInterface = new YuMiControlInterface(robot);
+
+	robotControlInterface->controlPositionsOnly = true;
+
+	///////////////////////////////
+	// Window
+	///////////////////////////////
 
 	// camera view
 	camera->setCameraTarget(P3D(rod_center) - V3D(0.0, 0.0, 0.25));
 
 	glfwSetWindowSize(glfwWindow, 1920, 1080);
 	//glfwSetWindowSize(glfwWindow, 1280, 720);
-	
-
 
 }
 
@@ -507,8 +529,39 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 	/////////////////////
 	// second window
 	////////////////////
-
 	menu->addWindow(Eigen::Vector2i(260, 0), "");
+
+	// synchronize physical robot
+	nanogui::Widget *physicalRobotControlTools = new nanogui::Widget(menu->window());
+	menu->addWidget("", physicalRobotControlTools);
+	physicalRobotControlTools->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+
+	connectRobotButton = new nanogui::Button(physicalRobotControlTools, "CONNECT");
+	connectRobotButton->setFlags(nanogui::Button::ToggleButton);
+	connectRobotButton->setChangeCallback([&](bool is_pressed){
+		if(is_pressed) {
+			// try to connect
+			if(robotControlInterface && robotControlInterface->isConnected() == false) {
+				robotControlInterface->openCommunicationPort();
+			}
+		}
+		else {	// button not pressed
+			// try to disconnect
+			if(robotControlInterface) {
+				robotControlInterface->closeCommunicationPort();
+			}
+		}
+		connectRobotButton->setPushed(robotControlInterface->isConnected());
+	});
+
+	menu->addVariable("Sync. Robot", synchronizePhysicalRobot);
+
+
+
+
+	// screen recorder
+	
 	screenRecorder->attachToNanoGui(menu);
 
 };
@@ -1011,6 +1064,17 @@ void BenderApp3D::process() {
 			inverseDeformationSolver->solveMesh(computeStaticSolution, simTimeStep);
 			simulationTime += simTimeStep;
 		}
+	}
+
+
+	if(synchronizePhysicalRobot) {
+		if(robotControlInterface && robotControlInterface->isConnected()) {
+			robotControlInterface->syncPhysicalRobotWithSimRobot(maxRunningTime);
+		}
+		else {
+			synchronizePhysicalRobot = false;
+		}
+
 	}
 	
 }

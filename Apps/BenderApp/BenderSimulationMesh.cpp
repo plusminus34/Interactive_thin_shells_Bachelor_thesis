@@ -46,7 +46,7 @@ void BenderSimulationMesh<NDim>::setMountedNode(int nodeID, const P3D & x0, int 
 {
 	P3D rp = x0;
 	//rp[2] = 0;
-	constexpr double K = (NDim == 2) ? 10000 : 100;
+	constexpr double K = (NDim == 2) ? 10000 : 1000;
 	pinnedNodeElements.push_back(new MountedPointSpring<NDim>(this, nodes[nodeID], rp, mounts[mountID], K));
 }
 

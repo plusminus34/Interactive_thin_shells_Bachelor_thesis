@@ -4,6 +4,7 @@
 #include <ControlLib/Robot.h>
 #include <RBSimLib/AbstractRBEngine.h>
 #include <ControlLib/RobotControlInterface.h>
+#include <ControlLib/YuMiControlInterface.h>
 
 #include <string>
 #include <array>
@@ -31,6 +32,8 @@ public:
 	AbstractRBEngine * rbEngine = NULL;
 	RobotState startState = RobotState();
 	GeneralizedCoordinatesRobotRepresentation * generalizedRobotCoordinates= NULL;
+
+	RobotControlInterface* robotControlInterface = NULL;
 
 	IK_Solver * ikSolver = NULL;
 
@@ -72,6 +75,8 @@ public:
 	// state of the app 
 	bool computeStaticSolution = true;
 	bool optimizeObjective = false;
+	
+	bool synchronizePhysicalRobot = false;
 
 	bool runIkSolver = false;
 	int selectedArmIk = -1;
@@ -118,6 +123,9 @@ public:
 	nanogui::ComboBox * comboBoxMountSelection;
 	std::array<nanogui::Button *, 4> buttonsInteractionMode;
 	nanogui::ComboBox * comboBoxOptimizationAlgorithm;
+
+	nanogui::Button *connectRobotButton;
+	nanogui::Button *synchronizeRobotButton;
 
 public:
 	// constructor
