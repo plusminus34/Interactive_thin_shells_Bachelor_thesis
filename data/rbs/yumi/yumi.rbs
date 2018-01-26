@@ -37,6 +37,8 @@ RigidBody
 
 	hingeJoint
 		jointAxes 0.500595 0.289017 0.210388
+		jointLimits -2.940880 2.940880
+		RB_JOINT_LIMITS
 		dxlID -1
 		name joint_body_link_1_r
 		parent body
@@ -65,6 +67,7 @@ RigidBody
 
 	hingeJoint
 		jointAxes -0.935828 6.129759 -6.193931
+		jointLimits -2.504547 0.759218
 		dxlID -1
 		name joint_link_1_2_r
 		parent link_1_r
@@ -93,6 +96,7 @@ RigidBody
 
 	hingeJoint
 		jointAxes 0.500594 0.289018 0.210388
+		jointLimits -2.940880 2.940880
 		dxlID -1
 		name joint_link_2_3_r
 		parent link_2_r
@@ -121,6 +125,7 @@ RigidBody
 
 	hingeJoint
 		jointAxes -0.935810 6.129468 -6.193658
+		jointLimits -2.155482 1.396263
 		dxlID -1
 		name joint_link_3_4_r
 		parent link_3_r
@@ -149,6 +154,7 @@ RigidBody
 
 	hingeJoint
 		jointAxes 0.973704 -0.918052 -1.055652
+		jointLimits -5.061455 5.061455
 		dxlID -1
 		name joint_link_4_5_r
 		parent link_4_r
@@ -177,6 +183,7 @@ RigidBody
 
 	hingeJoint
 		jointAxes -0.935805 6.129355 -6.193550
+		jointLimits -1.535897 2.4085544
 		dxlID -1
 		name joint_link_5_6_r
 		parent link_5_r
@@ -207,6 +214,7 @@ RigidBody
 
 	hingeJoint
 		jointAxes 0.973698 -0.918049 -1.055650
+		jointLimits -3.996804 3.996804
 		dxlID -1
 		name joint_link_6_7_r
 		parent link_6_r
@@ -236,6 +244,7 @@ RigidBody
 
 	hingeJoint
 		jointAxes 0.966941 0.558261 -0.525201
+		jointLimits -2.940880 2.940880
 		dxlID -1
 		name joint_body_link_1_l
 		parent body
@@ -264,6 +273,7 @@ RigidBody
 
 	hingeJoint
 		jointAxes 0.082180 -0.538270 -0.543910
+		jointLimits -2.504547 0.759218
 		dxlID -1
 		name joint_link_1_2_l
 		parent link_1_l
@@ -292,6 +302,7 @@ RigidBody
 
 	hingeJoint
 		jointAxes 0.864249 0.498974 -0.363224
+		jointLimits -2.940880 2.940880
 		dxlID -1
 		name joint_link_2_3_l
 		parent link_2_l
@@ -320,6 +331,7 @@ RigidBody
 
 	hingeJoint
 		jointAxes 0.082180 -0.538270 -0.543910
+		jointLimits -2.155482 1.396263
 		dxlID -1
 		name joint_link_3_4_l
 		parent link_3_l
@@ -348,6 +360,7 @@ RigidBody
 
 	hingeJoint
 		jointAxes 0.876181 -0.826103 0.949922
+		jointLimits -5.061455 5.061455
 		dxlID -1
 		name joint_link_4_5_l
 		parent link_4_l
@@ -376,6 +389,7 @@ RigidBody
 
 	hingeJoint
 		jointAxes 0.082176 -0.538265 -0.543910
+		jointLimits -1.535897 2.4085544
 		dxlID -1
 		name joint_link_5_6_l
 		parent link_5_l
@@ -405,6 +419,7 @@ RigidBody
 
 	hingeJoint
 		jointAxes 0.876180 -0.826104 0.949924
+		jointLimits -3.996804 3.996804
 		dxlID -1
 		name joint_link_6_7_l
 		parent link_6_l
