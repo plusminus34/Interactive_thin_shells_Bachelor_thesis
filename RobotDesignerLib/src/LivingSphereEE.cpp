@@ -269,7 +269,7 @@ void Living6FaceConnector::exportMeshes(const char* dirName, int index){
 	mesh->path = fileName;
 	mesh->writeTriangulatedMeshToObj(fileName.c_str());
 	GLMesh* nMesh = mesh->clone();
-	mesh->setMaterial(material);
+	nMesh->setMaterial(material);
 	GLContentManager::addMeshFileMapping(nMesh, fileName.c_str());
 }
 
