@@ -240,6 +240,15 @@ public:
 	int getQIndexForJoint(int jIndex) {
 		return jointCoordStartIndex[jIndex];
 	}
+
+	int getJointIndexForQ(int QIndex) {
+		return jointIndexForQ[QIndex];
+	}
+
+	Joint * getJointForQ(int QIndex) {
+		return robot->jointList[getJointIndexForQ(QIndex)];
+	}
+
 };
 
 

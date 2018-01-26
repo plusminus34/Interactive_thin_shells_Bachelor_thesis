@@ -13,6 +13,8 @@ public:
 
 	InverseDeformationSolver<NDim> * idSolver;
 
+	std::vector<ObjectiveFunction *> parameterConstraints;
+
 private:
 	bool use_regularizer = false;
 	double regularizer;
@@ -34,3 +36,4 @@ public:
 	void unsetRegularizer();
 
 };
+

@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "MathLib/P3D.h"
+#include "RBSimLib/HingeJoint.h";
 
 #include "RobotMount.h"
 
@@ -104,6 +105,23 @@ void RobotParameters::setFromList(dVector & par, int & cursor_idx_io)
 	robotParameters->setQ(par_local);
 
 	syncRobotStateWithParameters();
+}
+
+
+std::pair<double, double> RobotParameters::getParameterLimitsByLocalIdx(int idx)
+{
+	// find the robot joint (hinge joint) the parameter corresponds to
+	HingeJoint * joint = dynamic_cast<HingeJoint*>(robotParameters->getJointForQ(idx-6)); 
+
+	if(!joint) {
+		std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << std::endl;
+		exit(3);
+	}
+
+	// create pair of limits
+	std::pair<double, double> limits(joint->minAngle, joint->maxAngle);
+
+	return(limits);
 }
 
 

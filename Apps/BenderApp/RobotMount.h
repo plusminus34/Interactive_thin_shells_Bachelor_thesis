@@ -41,6 +41,8 @@ public:
 	virtual void writeToList(dVector & par, int & cursor_idx_io);
 	virtual void setFromList(dVector & par, int & cursor_idx_io);
 	virtual int getNPar() const {return(robotParameters->getDimensionCount()-6);}
+	virtual std::pair<double, double> getParameterLimitsByLocalIdx(int idx);
+
 
 	void syncRobotStateWithParameters();
 	bool is_synced_with_robot() {return(robot_is_synced);}
