@@ -64,6 +64,7 @@ RobotDesignerApp::RobotDesignerApp(){
 	button->setCallback([this]() { warmStartMOPT(true); });
 	button->setTooltip("Warmstart MOPT (M)");
 
+	mainMenu->addVariable("Sync Cameras", syncCameras);
 	{
 		using namespace nanogui;
 
@@ -208,16 +209,48 @@ bool RobotDesignerApp::shouldShowDesignWindow() {
 //triggered when mouse moves
 bool RobotDesignerApp::onMouseMoveEvent(double xPos, double yPos) {
 	if (shouldShowSimWindow() && (simWindow->isActive() || simWindow->mouseIsWithinWindow(xPos, yPos)))
-		if (simWindow->onMouseMoveEvent(xPos, yPos)) return true;
+		if (simWindow->onMouseMoveEvent(xPos, yPos)) {
+			if (syncCameras)
+			{
+				copy((GLTrackingCamera*)simWindow->camera, (GLTrackingCamera*)simWindow->camera+1, (GLTrackingCamera*)moptWindow->camera);
+				copy((GLTrackingCamera*)simWindow->camera, (GLTrackingCamera*)simWindow->camera+1, (GLTrackingCamera*)designWindow->camera);
+				copy((GLTrackingCamera*)simWindow->camera, (GLTrackingCamera*)simWindow->camera+1, (GLTrackingCamera*)iEditWindow->camera);
+ 			}
+			return true;
+		}
 
 	if (shouldShowMOPTWindow() && (moptWindow->isActive() || moptWindow->mouseIsWithinWindow(xPos, yPos)))
-		if (moptWindow->onMouseMoveEvent(xPos, yPos)) return true;
+		if (moptWindow->onMouseMoveEvent(xPos, yPos)) {
+			if (syncCameras)
+			{
+				copy((GLTrackingCamera*)moptWindow->camera, (GLTrackingCamera*)moptWindow->camera + 1, (GLTrackingCamera*)simWindow->camera);
+				copy((GLTrackingCamera*)moptWindow->camera, (GLTrackingCamera*)moptWindow->camera + 1, (GLTrackingCamera*)designWindow->camera);
+				copy((GLTrackingCamera*)moptWindow->camera, (GLTrackingCamera*)moptWindow->camera + 1, (GLTrackingCamera*)iEditWindow->camera);
+			}
+			return true;
+		}
 
 	if (shouldShowDesignWindow() && (designWindow->isActive() || designWindow->mouseIsWithinWindow(xPos, yPos)))
-		if (designWindow->onMouseMoveEvent(xPos, yPos)) return true;
+		if (designWindow->onMouseMoveEvent(xPos, yPos)) {
+			if (syncCameras)
+			{
+				copy((GLTrackingCamera*)designWindow->camera, (GLTrackingCamera*)designWindow->camera + 1, (GLTrackingCamera*)simWindow->camera);
+				copy((GLTrackingCamera*)designWindow->camera, (GLTrackingCamera*)designWindow->camera + 1, (GLTrackingCamera*)moptWindow->camera);
+				copy((GLTrackingCamera*)designWindow->camera, (GLTrackingCamera*)designWindow->camera + 1, (GLTrackingCamera*)iEditWindow->camera);
+			}
+			return true;
+		}
 
 	if (shouldShowIEditWindow() && (iEditWindow->isActive() || iEditWindow->mouseIsWithinWindow(xPos, yPos)))
-		if (iEditWindow->onMouseMoveEvent(xPos, yPos)) return true;
+		if (iEditWindow->onMouseMoveEvent(xPos, yPos)) {
+			if (syncCameras)
+			{
+				copy(iEditWindow->camera, designWindow->camera + 1, simWindow->camera);
+				copy(iEditWindow->camera, designWindow->camera + 1, moptWindow->camera);
+				copy(iEditWindow->camera, designWindow->camera + 1, designWindow->camera);
+			}
+			return true;
+		};
 
 	if (GLApplication::onMouseMoveEvent(xPos, yPos)) return true;
 

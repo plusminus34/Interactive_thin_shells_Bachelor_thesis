@@ -165,7 +165,9 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 
 void EnergyWindow::DoParameterOptimizationStep(ObjectiveFunction * energyFunction)
 {
+	TotalEnergyForDesignOptimization.push_back(energyHist["Total energy"].back());
 	rdApp->iEditWindow->DoDesignParametersOptimizationStep(energyFunction);
+
 }
 
 void EnergyWindow::updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFunction, const dVector &params)
@@ -178,8 +180,9 @@ void EnergyWindow::updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFun
 	};
 
 	double maxValue = -HUGE_VAL;
-	int NE = energyFunction->objectives.size();
+	int NE = energyFunction->objectives.size()+1;
 	std::vector<double> values(NE); int index = 0;
+	values[index++] = energyFunction->computeValue(params);
 	for (const auto &objGroup : energyFunction->objGroups) {
 		for (ObjectiveFunction *obj : objGroup.second){
 			double value = obj->computeValue(params);
@@ -190,7 +193,7 @@ void EnergyWindow::updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFun
 	}
 
 	// update energy menu
-	index = 0;
+	index = 1;
 	for (auto &energyRow : energyUIRows) {
 		for (EnergyUIElement &el : energyRow.second){
 			double value = values[index++];
@@ -287,7 +290,7 @@ void EnergyWindow::resetData()
 void EnergyWindow::saveData()
 {
 	ofstream outputfile;
-	outputfile.open("energy.txt");
+	outputfile.open("energyPerMotionIteration.txt");
 	for (const auto& energy : energyHist)
 	{
 		outputfile << energy.first << ",";
@@ -301,4 +304,9 @@ void EnergyWindow::saveData()
 		}
 		outputfile << endl;
 	}
+	outputfile.close();
+	outputfile.open("energyPerDesignIteration.txt");
+	for (int i = 0; i < TotalEnergyForDesignOptimization.size(); i++)
+		outputfile << TotalEnergyForDesignOptimization[i] << endl;
+	outputfile.close();
 }

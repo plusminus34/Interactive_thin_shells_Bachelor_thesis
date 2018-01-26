@@ -354,7 +354,7 @@ void MOPTWindow::drawScene() {
 	glEnable(GL_LIGHTING);
 
 	if (locomotionManager) {
-		locomotionManager->drawMotionPlan(moptParams.phase, moptParams.gaitCycle, moptParams.drawRobotPose, moptParams.drawPlanDetails, moptParams.drawContactForces, moptParams.drawOrientation);
+		locomotionManager->drawMotionPlan(moptParams.phase, moptParams.gaitCycle, moptParams.drawRobotPose, moptParams.drawPlanDetails, moptParams.drawContactForces, true);
 
 		int startIndex = locomotionManager->motionPlan->wrapAroundBoundaryIndex;
 		if (startIndex < 0)  startIndex = 0;
@@ -362,12 +362,20 @@ void MOPTWindow::drawScene() {
 			locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(startIndex);
 
 	}
-	for (auto widget : widgets)
+	for (auto widget : EEwidgets)
 	{
-		if (fabs(widget2constraint[widget]->phase - moptParams.phase) < (moptParams.motionPlanDuration / nTimeSteps))
-			widget->transparent = true;
-		else
+		if (fabs(EEwidget2constraint[widget]->phase - moptParams.phase) < (moptParams.motionPlanDuration / nTimeSteps))
 			widget->transparent = false;
+		else
+			widget->transparent = true;
+		widget->draw();
+	}
+	for (auto widget : COMWidgets)
+	{
+		if (fabs(COMwidget2constraint[widget]->phase - moptParams.phase) < (moptParams.motionPlanDuration / nTimeSteps))
+			widget->transparent = false;
+		else
+			widget->transparent = true;
 		widget->draw();
 	}
 }
@@ -388,16 +396,38 @@ bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
 	if (initialized && ffpViewer) {
 		if (ffpViewer->onKeyEvent(key, action, mods))
 			return true;
-		if (key == GLFW_KEY_DELETE)
-			for (auto itr = widgets.begin(); itr != widgets.end(); itr++)
-			{
+		if (key == GLFW_KEY_DELETE && action == GLFW_PRESS)
+		{
+			for (auto itr = EEwidgets.begin(); itr != EEwidgets.end(); itr++)
 				if ((*itr)->active)
 				{
-					locomotionManager->motionPlan->EEPosObjectives.remove(widget2constraint[*itr]);
-					widgets.erase(itr);
+					locomotionManager->motionPlan->EEPosObjectives.remove(EEwidget2constraint[*itr]);
+					EEwidgets.erase(itr);
 					break;
 				}
-			}
+			for (auto itr = COMWidgets.begin(); itr != COMWidgets.end(); itr++)
+				if ((*itr)->active)
+				{
+					locomotionManager->motionPlan->BodyPosObjectives.remove(COMwidget2constraint[*itr]);
+					COMWidgets.erase(itr);
+					break;
+				}
+		}
+		if (key == GLFW_KEY_L && action == GLFW_PRESS)
+		{
+			int timeStep = round(moptParams.phase*nTimeSteps);
+			Logger::consolePrint("Picked body at time step %d", timeStep);
+			auto widget = std::make_shared<TranslateWidget>(AXIS_X | AXIS_Y | AXIS_Z);
+			COMWidgets.push_back(widget);
+
+			widget->pos = locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeStep);
+			auto bodyPosObj = make_shared<COMPositionObjective>();
+			bodyPosObj->sampleNum = timeStep;
+			bodyPosObj->pos = P3D(widget->pos);
+			bodyPosObj->phase = moptParams.phase;
+			locomotionManager->motionPlan->BodyPosObjectives.push_back(bodyPosObj);
+			COMwidget2constraint[widget] = bodyPosObj;
+		}
 	}
 	return false;
 }
@@ -437,14 +467,20 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 		}
 	}
 	pushViewportTransformation();
-	for (auto widget : widgets)
+	for (auto widget : EEwidgets)
 		if (widget->onMouseMoveEvent(xPos, yPos))
 		{
-			widget2constraint[widget]->pos = widget->pos;
+			EEwidget2constraint[widget]->pos = widget->pos;
 			popViewportTransformation();
 			return true;
 		}
-			
+	for (auto widget : COMWidgets)
+		if (widget->onMouseMoveEvent(xPos, yPos))
+		{
+			COMwidget2constraint[widget]->pos = widget->pos;
+			popViewportTransformation();
+			return true;
+		}
 	popViewportTransformation();
 
 	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
@@ -509,7 +545,7 @@ bool MOPTWindow::onMouseButtonEvent(int button, int action, int mods, double xPo
 				return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
 
 		auto widget = std::make_shared<TranslateWidget>(AXIS_X | AXIS_Z);
-		widgets.push_back(widget);
+		EEwidgets.push_back(widget);
 		Logger::consolePrint("Picked end effector %d at time step %d", endEffectorInd, timeStep);
 		widget->pos = locomotionManager->motionPlan->endEffectorTrajectories[endEffectorInd].EEPos[timeStep];
 		auto EEPosObj = make_shared<EndEffectorPositionObjective>();
@@ -518,7 +554,7 @@ bool MOPTWindow::onMouseButtonEvent(int button, int action, int mods, double xPo
 		EEPosObj->pos = P3D(widget->pos);
 		EEPosObj->phase = moptParams.phase;
 		locomotionManager->motionPlan->EEPosObjectives.push_back(EEPosObj);
-		widget2constraint[widget] = EEPosObj;
+		EEwidget2constraint[widget] = EEPosObj;
 		if (button == GLFW_MOUSE_BUTTON_LEFT) // make it temporary
 		{
 
