@@ -241,7 +241,7 @@ BenderApp3D::BenderApp3D()
 	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(2) = mountBaseZDirectionRB_r;
 	ikSolver->ikPlan->endEffectors.back().orientationMask = V3D(1.0, 0.0, 1.0);
 
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(1.0, -1.0, 0.0).unit();
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(1.0, 0.0, 0.0).unit();
 	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(1) = V3D(0.0, 1.0, 0.0);
 	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(2) = V3D(0.0, 0.0, 1.0);
 
@@ -259,7 +259,7 @@ BenderApp3D::BenderApp3D()
 	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(2) = mountBaseZDirectionRB_l;
 	ikSolver->ikPlan->endEffectors.back().orientationMask = V3D(1.0, 0.0, 1.0);
 
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(-1.0, -1.0, 0.0).unit();
+	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(-1.0, 0.0, 0.0).unit();
 	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(1) = V3D(0.0, 1.0, 0.0);
 	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(2) = V3D(0.0, 0.0, 1.0);
 
@@ -277,7 +277,7 @@ BenderApp3D::BenderApp3D()
 
 
 
-	// create a parameter set with the above robot coordinates
+	// create a parameter set with the above robot coordinatespr
 	inverseDeformationSolver->parameterSets.push_back(new RobotParameters(generalizedRobotCoordinates));
 	// create constraints for that parameter set (i.e. the joint angles)
 	{
@@ -407,6 +407,7 @@ BenderApp3D::BenderApp3D()
 	robotControlInterface = new YuMiControlInterface(robot);
 
 	robotControlInterface->controlPositionsOnly = true;
+	static_cast<YuMiControlInterface *>(robotControlInterface)->sendControlInputsDelayed = false;
 
 	///////////////////////////////
 	// Window
@@ -418,6 +419,7 @@ BenderApp3D::BenderApp3D()
 	glfwSetWindowSize(glfwWindow, 1920, 1080);
 	//glfwSetWindowSize(glfwWindow, 1280, 720);
 
+	desiredFrameRate = 5;
 }
 
 

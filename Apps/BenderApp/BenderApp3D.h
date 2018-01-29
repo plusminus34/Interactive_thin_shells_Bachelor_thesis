@@ -91,7 +91,7 @@ V3D mountBaseZDirectionRB_l;
 	RigidBody * left_gripper;
 	
 	enum InteractionObject {MOUNTS, OBJECTIVE, IKROBOT};
-	InteractionObject interactionObject = IKROBOT;
+	InteractionObject interactionObject = OBJECTIVE;
 	enum InteractionMode {VIEW, SELECT, DRAG, DRAW};
 	InteractionMode interactionMode = VIEW;
 	enum ToolMode {PICK_NODE, BRUSH};

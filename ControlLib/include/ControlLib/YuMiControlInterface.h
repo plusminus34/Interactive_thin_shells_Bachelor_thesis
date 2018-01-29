@@ -42,6 +42,9 @@ private:
 	float speedWeight = 1.0f;
 
 public:
+	bool sendControlInputsDelayed = true;
+
+public:
 	// constructor
     YuMiControlInterface(Robot* robot);
 

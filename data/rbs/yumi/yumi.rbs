@@ -243,14 +243,16 @@ RigidBody
 
 
 	hingeJoint
-		jointAxes 0.966941 0.558261 -0.525201
+#		jointAxes 0.966941 0.558261 -0.525201
+		jointAxes 0.500595 0.289017 -0.210388 
 		jointLimits -2.940880 2.940880
 		dxlID -1
 		name joint_body_link_1_l
 		parent body
 		child link_1_l
 		jointCPos -0.041175 -0.025050 0.039663
-		jointPPos 0.038900 0.406459 -0.067849
+#		jointPPos 0.038900 0.406459 -0.067849
+		jointPPos 0.038900 0.406459 -0.066349
 	/Joint
 
 
