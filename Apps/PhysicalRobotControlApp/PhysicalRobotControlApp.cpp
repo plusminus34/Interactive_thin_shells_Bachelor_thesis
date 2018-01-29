@@ -21,6 +21,8 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
     showMesh = true;
     showRotationAxes = false;
 
+	//desiredFrameRate = 5;
+
 	mainMenu->addGroup("IK App Visualization options");
 
 	mainMenu->addVariable("Draw Meshes", showMesh);
@@ -209,7 +211,7 @@ Timer t;
 
 void PhysicalRobotControlApp::process() {
 
-	ikSolver->ikEnergyFunction->regularizer = 100;
+	ikSolver->ikEnergyFunction->regularizer = 150; //Default: 100
 	ikSolver->ikOptimizer->checkDerivatives = true;
 	ikSolver->solve();
 
