@@ -1,5 +1,16 @@
 
+
+#include <iostream>
+
 #include "ParameterSet.h"
+
+
+
+std::pair<double, double> ParameterSet::getParameterLimitsByLocalIdx(int idx)
+{
+	std::cerr << "Error: not implemented (" << __FILE__ << ":" << __LINE__ << std::endl; 
+	exit(3);
+}
 
 
 

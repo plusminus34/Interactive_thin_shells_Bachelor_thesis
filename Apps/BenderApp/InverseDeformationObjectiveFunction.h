@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <OptimizationLib/ObjectiveFunction.h>
 
 template<int NDim>

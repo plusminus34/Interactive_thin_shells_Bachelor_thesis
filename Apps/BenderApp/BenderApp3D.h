@@ -46,8 +46,11 @@ public:
 
 	V3D mountBaseOriginRB_r;
 	V3D mountBaseOriginRB_l;
-	V3D mountBaseAxialDirectionRB_r;
-	V3D mountBaseAxialDirectionRB_l;
+
+V3D mountBaseAxialDirectionRB_r;
+V3D mountBaseAxialDirectionRB_l;
+V3D mountBaseZDirectionRB_r;
+V3D mountBaseZDirectionRB_l;
 
 	Matrix3x3 mountBaseCoordinatesRB_r;
 	Matrix3x3 mountBaseCoordinatesRB_l;

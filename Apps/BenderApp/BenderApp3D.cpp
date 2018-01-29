@@ -25,6 +25,7 @@
 #include "RobotMount.h"
 #include "MountedPointSpring.h"
 #include "MatchScaledTrajObjective.h"
+#include "ParameterConstraintObjective.h"
 
 #include "BenderApp3D.h"
 
@@ -36,7 +37,7 @@ BenderApp3D::BenderApp3D()
 {
 
 	const double rod_length = 0.3;
-	const P3D rod_center(0.0, 0.4, 0.5);
+	const P3D rod_center(0.0, 0.35, 0.50);
 
 	double massDensity = 50;
 	double youngsModulus = 3.0e4;
@@ -78,8 +79,8 @@ BenderApp3D::BenderApp3D()
 	{
 		int m = 10;
 		centerlinePts.resize(m);
-		V3D pt1(-300, -15, -15);
-		V3D pt2(0.0, -15, -15);
+		V3D pt1(-0.15, 0.0, 0.0);
+		V3D pt2(0.15, 0.0, 0.0);
 		double dt = 1.0 / static_cast<double>(m-1);
 		for(int i = 0; i < m; ++i) {
 			centerlinePts[i] = pt1 + (pt2 - pt1) * dt*static_cast<double>(i);
@@ -93,7 +94,7 @@ BenderApp3D::BenderApp3D()
 	//							  1.0/2.0 * rod_length, rod_center);
 	femMesh->readMeshFromFile_ply("../data/3dModels/square_rod_0p03x0p3.ply", &centerlinePts,
 								  massDensity, shearModulus, bulkModulus,
-								  1e-3, rod_center + V3D(0.15, 0.015, 0.015));
+								  1.0, rod_center);
 	femMesh->addGravityForces(V3D(0, -9.8, 0));
 	//femMesh->addGravityForces(V3D(0, 0.0, 0));
 	
@@ -190,17 +191,28 @@ BenderApp3D::BenderApp3D()
 
 	// find mount point on gripper
 
-	P3D mount_point_surfacemesh_r = (P3D(0.628,0.085,0.344) + P3D(0.647,0.075,0.356)) * 0.5;
-	P3D mount_point_surfacemesh_l = (P3D(0.628,-0.085,0.344) + P3D(0.647,-0.075,0.356)) * 0.5;
+	//P3D mount_point_surfacemesh_r = (P3D(0.628,0.085,0.344) + P3D(0.647,0.075,0.356)) * 0.5;
+	//P3D mount_point_surfacemesh_l = (P3D(0.628,-0.085,0.344) + P3D(0.647,-0.075,0.356)) * 0.5;
+	P3D mount_point_surfacemesh_r = (P3D(0.634457, 0.093577, 0.335758) + P3D(0.656349, 0.0844, 0.348425)) * 0.5;
+	P3D mount_point_surfacemesh_l = (P3D(0.634453, -0.093602, 0.335783) + P3D(0.656353, -0.084374, 0.3484)) * 0.5;
 
 	V3D mount_axialDirection_surfacemesh_r = (P3D(0.627,0.084,0.344) - P3D(0.619,0.076,0.351)).unit();
 	V3D mount_axialDirection_surfacemesh_l = (P3D(0.647,-0.075,0.356) - P3D(0.639,-0.067,0.363)).unit();
 
+	//V3D mount_zDirection_r = -(P3D(0.628,0.085,0.344) - P3D(0.647,0.075,0.356));
+	//V3D mount_zDirection_l = -(P3D(0.628,-0.085,0.344) - P3D(0.647,-0.075,0.356));
+	V3D mount_zDirection_r = -(P3D(0.656349, 0.0844, 0.348425) - P3D(0.634457, 0.093577, 0.335758)).unit();
+	V3D mount_zDirection_l = -(P3D(0.656353, -0.084374, 0.3484) - P3D(0.634453, -0.093602, 0.335783)).unit();
+
 	mountBaseOriginRB_r = right_gripper->meshTransformations[0].transform(mount_point_surfacemesh_r);
 	mountBaseOriginRB_l = left_gripper->meshTransformations[0].transform(mount_point_surfacemesh_l);
 
+
 	mountBaseAxialDirectionRB_r = right_gripper->meshTransformations[0].transform(mount_axialDirection_surfacemesh_r);
 	mountBaseAxialDirectionRB_l = right_gripper->meshTransformations[0].transform(mount_axialDirection_surfacemesh_l);
+
+	mountBaseZDirectionRB_r = right_gripper->meshTransformations[0].transform(mount_zDirection_r);
+	mountBaseZDirectionRB_l = right_gripper->meshTransformations[0].transform(mount_zDirection_l);
 
 	//mountBaseOriginRB_l = V3D(0.0);
 	mountBaseCoordinatesRB_l << 0.0, 0.0, 1.0,
@@ -226,8 +238,8 @@ BenderApp3D::BenderApp3D()
 
 	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = mountBaseAxialDirectionRB_r;
 	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(1) = V3D(0.0, 1.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(2) = V3D(0.0, 0.0, 1.0);
-	ikSolver->ikPlan->endEffectors.back().orientationMask = V3D(1.0, 0.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(2) = mountBaseZDirectionRB_r;
+	ikSolver->ikPlan->endEffectors.back().orientationMask = V3D(1.0, 0.0, 1.0);
 
 	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(1.0, -1.0, 0.0).unit();
 	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(1) = V3D(0.0, 1.0, 0.0);
@@ -244,8 +256,8 @@ BenderApp3D::BenderApp3D()
 
 	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = mountBaseAxialDirectionRB_l;
 	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(1) = V3D(0.0, 1.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(2) = V3D(0.0, 0.0, 1.0);
-	ikSolver->ikPlan->endEffectors.back().orientationMask = V3D(1.0, 0.0, 0.0);
+	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(2) = mountBaseZDirectionRB_l;
+	ikSolver->ikPlan->endEffectors.back().orientationMask = V3D(1.0, 0.0, 1.0);
 
 	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(-1.0, -1.0, 0.0).unit();
 	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(1) = V3D(0.0, 1.0, 0.0);
@@ -257,7 +269,7 @@ BenderApp3D::BenderApp3D()
 		ikSolver->ikEnergyFunction->regularizer = 100;
 		ikSolver->ikOptimizer->checkDerivatives = false;
 		ikSolver->solve();
-		//testGeneralizedCoordinateRepresentation(robot);
+		testGeneralizedCoordinateRepresentation(robot);
 	}
 
 	// create generalized parametrization of the robot
@@ -267,6 +279,18 @@ BenderApp3D::BenderApp3D()
 
 	// create a parameter set with the above robot coordinates
 	inverseDeformationSolver->parameterSets.push_back(new RobotParameters(generalizedRobotCoordinates));
+	// create constraints for that parameter set (i.e. the joint angles)
+	{
+		ParameterSet * jointAnglePars = inverseDeformationSolver->parameterSets.back();
+		int n = jointAnglePars->getNPar();
+		for(int i = 0; i < n; ++i) {
+			inverseDeformationSolver->objectiveFunction->parameterConstraints.
+				push_back(new ParameterConstraintObjective(jointAnglePars, i,
+														   true, true,
+														   1000, 0.0873));
+		}
+	}
+
 
 	// create a mount on the left gripper
 	femMesh->addMount<RobotMount>(inverseDeformationSolver->parameterSets.back());
@@ -334,12 +358,12 @@ BenderApp3D::BenderApp3D()
 		}
 	};
 
-	mountBaseOriginMesh_r = V3D(-rod_length*0.5, 0.0, 0.0) + rod_center;
+	mountBaseOriginMesh_r = V3D(-rod_length*0.5, 0.0, 0.0) + rod_center + V3D(-0.005, 0.0, 0.0);
 	mountBaseCoordinatesMesh_r << 0.0, 0.0, 1.0,
 									0.0, -1.0, 0.0,
 									1.0, 0.0, 0.0;
 
-	mountBaseOriginMesh_l = V3D(+rod_length*0.5, 0.0, 0.0) + rod_center;
+	mountBaseOriginMesh_l = V3D(+rod_length*0.5, 0.0, 0.0) + rod_center + V3D(+0.005, 0.0, 0.0);
 	mountBaseCoordinatesMesh_l << 0.0, 0.0, 1.0,
 								0.0, -1.0, 0.0,
 								1.0, 0.0, 0.0;
@@ -370,10 +394,11 @@ BenderApp3D::BenderApp3D()
 	//set_rotation_mount_from_plane(0, +rod_length/2.0, 0.01);
 
 
-	// set a regularizer for the IDSolver, update the regularizer solution for the IK Solver
 	// initialize the ID Solver
 	inverseDeformationSolver->pullXi();
+	// set a regularizer for the IDSolver, update the regularizer solution for the IK Solver
 	inverseDeformationSolver->objectiveFunction->setRegularizer(xiRegularizerValue, inverseDeformationSolver->xi);
+
 
 
 	///////////////////////////////

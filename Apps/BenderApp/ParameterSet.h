@@ -20,7 +20,7 @@ public:
 	virtual void writeToList(dVector & par, int & cursor_idx_io) = 0;
 	virtual void setFromList(dVector & par, int & cursor_idx_io) = 0;
 	virtual int getNPar() const = 0;
-	virtual std::pair<double, double> getParameterLimitsByLocalIdx(int idx){std::cerr << "Error: not implemented (" << __FILE__ << ":" << __LINE__ << std::endl; exit(3);}
+	virtual std::pair<double, double> getParameterLimitsByLocalIdx(int idx);
 
 	// "wrappers" for easy access
 	void pullVec(dVector & par_vec);
