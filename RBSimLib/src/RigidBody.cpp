@@ -339,7 +339,7 @@ void RigidBody::writeToFile(FILE* fp){
 	for (uint i = 0; i < meshTransformations.size(); i++) {
 		Quaternion q;
 		q.setRotationFrom(meshTransformations[i].R);
-		V3D T = meshTransformations[i].T;
+		V3D T(meshTransformations[i].T);
 		fprintf(fp, "\t%s %lf %lf %lf %lf %lf %lf %lf\n", getRBString(RB_MESH_TRANSFORMATION), 
 			q[0], q[1], q[2], q[3], T[0], T[1], T[2]);
 	}	
