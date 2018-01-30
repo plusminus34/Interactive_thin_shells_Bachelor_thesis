@@ -23,51 +23,28 @@ V3D::V3D(double x, double y) {
 }
 
 V3D::V3D(const V3D& v) {
-	this->at(0) = v.at(0);
-	this->at(1) = v.at(1);
-	this->at(2) = v.at(2);
+	Vector3d::operator=(v);
+}
+
+V3D::V3D(const P3D& v) {
+	Vector3d::operator=(v);
 }
 
 V3D::V3D(const Vector3d& v) {
-	this->at(0) = v[0];
-	this->at(1) = v[1];
-	this->at(2) = v[2];
-}
-
-V3D::V3D(const P3D& p) {
-	this->at(0) = p.at(0);
-	this->at(1) = p.at(1);
-	this->at(2) = p.at(2);
+	Vector3d::operator=(v);
 }
 
 V3D::V3D(const V3D &other, double scale) {
-	at(0) = other.at(0) * scale;
-	at(1) = other.at(1) * scale;
-	at(2) = other.at(2) * scale;
+	Vector3d::operator=((scale * other).eval());
 }
 
 V3D::V3D(const P3D &p1, const P3D &p2) {
-	at(0) = p2.at(0) - p1.at(0);
-	at(1) = p2.at(1) - p1.at(1);
-	at(2) = p2.at(2) - p1.at(2);
+	Vector3d::operator=((p2 - p1).eval());
 }
 
 V3D::~V3D() {
 }
 
-V3D& V3D::operator = (const P3D& other) {
-	this->at(0) = other.at(0);
-	this->at(1) = other.at(1);
-	this->at(2) = other.at(2);
-	return *this;
-}
-
-V3D& V3D::operator = (const V3D& other) {
-	this->at(0) = other.at(0);
-	this->at(1) = other.at(1);
-	this->at(2) = other.at(2);
-	return *this;
-}
 
 bool V3D::operator == (const V3D& v) const {
 	return IS_EQUAL(this->at(0), v.at(0)) && IS_EQUAL(this->at(1), v.at(1)) && IS_EQUAL(this->at(2), v.at(2));
@@ -87,80 +64,69 @@ double& V3D::at(int i) {
 
 //return *this + v
 V3D V3D::operator + (const V3D &v) const {
-	return V3D(this->at(0) + v.at(0), this->at(1) + v.at(1), this->at(2) + v.at(2));
+	return V3D(Vector3d::operator+(v));
 }
 
 //*this += v
 V3D& V3D::operator += (const V3D &v) {
-	this->at(0) += v.at(0);
-	this->at(1) += v.at(1);
-	this->at(2) += v.at(2);
+	Vector3d::operator+=(v);
 	return *this;
 }
 
 //*this -= v
 V3D& V3D::operator -= (const V3D &v) {
-	this->at(0) -= v.at(0);
-	this->at(1) -= v.at(1);
-	this->at(2) -= v.at(2);
+	Vector3d::operator-=(v);
 	return *this;
 }
 
 //return *this / v
 V3D V3D::operator / (double val) const {
-	return V3D(this->at(0) / val, this->at(1) / val, this->at(2) / val);
+	return V3D(Vector3d::operator/(val));
 }
 
 //return *this * v
 V3D V3D::operator * (double val) const {
-	return V3D(this->at(0)*val, this->at(1)*val, this->at(2)*val);
+	return V3D(Vector3d::operator*(val));
 }
 
 // * this /= v
 V3D& V3D::operator /= (double val) {
-	at(0) /= val;
-	at(1) /= val;
-	at(2) /= val;
+	Vector3d::operator/=(val);
 	return *this;
 }
 
 // *this *= v
 V3D& V3D::operator *= (double val) {
-	at(0) *= val;
-	at(1) *= val;
-	at(2) *= val;
+	Vector3d::operator*=(val);
 	return *this;
 }
 
 // return - *this
 V3D V3D::operator - () const {
-	return V3D(-this->at(0), -this->at(1), -this->at(2));
+
+	return Vector3d::operator-();
 }
 
 // *this - v
 V3D V3D::operator - (const V3D &v) const {
-	return V3D(this->at(0) - v.at(0), this->at(1) - v.at(1), this->at(2) - v.at(2));
+	return Vector3d::operator-(v);
 }
 
 double V3D::getComponentAlong(const V3D& other) {
-	return at(0) * other.at(0) + at(1) * other.at(1) + at(2) * other.at(2);
+	return Vector3d::dot(other);
 }
 
 double V3D::getComponentAlong(const V3D& other) const {
-	return at(0) * other.at(0) + at(1) * other.at(1) + at(2) * other.at(2);
+	return Vector3d::dot(other);
 }
 
 void V3D::setComponentAlong(const V3D& other, double val) {
 	double oldVal = getComponentAlong(other);
-	this->at(0) += other.at(0) * (val - oldVal);
-	this->at(1) += other.at(1) * (val - oldVal);
-	this->at(2) += other.at(2) * (val - oldVal);
+	*this *= (val - oldVal);
 }
 
 void V3D::addOffsetToComponentAlong(const V3D& other, double offset) {
-	this->at(0) += other.at(0) * (offset);
-	this->at(1) += other.at(1) * (offset);
-	this->at(2) += other.at(2) * (offset);
+	*this += (other*offset);
 }
 
 void V3D::scaleComponentAlong(const V3D& other, double scale) {
@@ -199,7 +165,7 @@ Matrix3x3 V3D::outerProductWith(const V3D& v) {
 
 // computes dot product with v
 double V3D::dot(const V3D &v) const {
-	return (this->at(0) * v.at(0) + this->at(1)*v.at(1) + this->at(2) * v.at(2));
+	return Vector3d::dot(v);
 }
 
 // computes cross product with v
@@ -230,7 +196,7 @@ double V3D::length() const {
 
 // computes the squared length of the vector
 double V3D::length2() const {
-	return at(0) * at(0) + at(1) * at(1) + at(2) * at(2);
+	return (*this).squaredNorm();
 }
 
 // computes the projection of the current vector on v
