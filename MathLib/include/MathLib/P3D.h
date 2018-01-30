@@ -6,7 +6,7 @@ class V3D;
 /**
  * Point in 3d.
  */
-class P3D : public V3T<double> {
+class P3D : public Vector3d {
 public:
 
 /**
@@ -20,6 +20,8 @@ public:
 
 	P3D(double x, double y);
 
+	P3D(const Vector3d& v);
+
 	explicit P3D(const V3D& v);
 
 	P3D(const P3D& p);
@@ -29,10 +31,6 @@ public:
 /**
 	operators
 */
-
-	P3D& operator = (const P3D& other);
-
-	P3D& operator = (const V3D& other);
 
 	bool operator == (const P3D& p) const;
 
@@ -45,13 +43,14 @@ public:
 	double& at(int i);
 
 	//return *this + v
-	P3D operator + (const V3D &v) const;
+	P3D operator + (const Vector3d &v) const;
 
 	//return *this - p
     V3D operator - (const P3D &p) const;
 
 	//return *this - p
 	P3D operator - (const V3D &p) const;
+
 
 	//*this += v
 	P3D& operator += (const V3D &v);
@@ -60,9 +59,6 @@ public:
 
 	//*this += p
 	P3D& operator += (const P3D& p);
-
-	//return *this + p
-	P3D operator + (const P3D& p) const;
 
 	//return *this / v
 	P3D operator / (double val) const;
@@ -77,7 +73,7 @@ public:
 	P3D& operator *= (double val);
 
 	// return - *this
-	P3D operator - ();
+	P3D operator - () const;
 
 /**
 	useful methods

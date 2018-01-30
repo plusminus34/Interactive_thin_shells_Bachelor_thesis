@@ -23,32 +23,18 @@ P3D::P3D(double x, double y) {
 }
 
 P3D::P3D(const V3D& v) {
-	this->at(0) = v.at(0);
-	this->at(1) = v.at(1);
-	this->at(2) = v.at(2);
+	Vector3d::operator=(v);
 }
 
 P3D::P3D(const P3D& p) {
-	this->at(0) = p.at(0);
-	this->at(1) = p.at(1);
-	this->at(2) = p.at(2);
+	Vector3d::operator=(p);
+}
+
+P3D::P3D(const Vector3d& v) {
+	Vector3d::operator=(v);
 }
 
 P3D::~P3D() {
-}
-
-P3D& P3D::operator = (const P3D& other) {
-	this->at(0) = other.at(0);
-	this->at(1) = other.at(1);
-	this->at(2) = other.at(2);
-	return *this;
-}
-
-P3D& P3D::operator = (const V3D& other) {
-	this->at(0) = other.at(0);
-	this->at(1) = other.at(1);
-	this->at(2) = other.at(2);
-	return *this;
 }
 
 bool P3D::operator == (const P3D& p) const {
@@ -73,99 +59,80 @@ double& P3D::at(int i) {
 }
 
 //return *this + v
-P3D P3D::operator + (const V3D &v) const {
-	return P3D(this->at(0) + v.at(0), this->at(1) + v.at(1), this->at(2) + v.at(2));
-}
-
-//return *this + p
-P3D P3D::operator + (const P3D& p) const{
-	return P3D(this->at(0) + p.at(0), this->at(1) + p.at(1), this->at(2) + p.at(2));
+P3D P3D::operator+(const Vector3d &v) const {
+	return P3D(Vector3d::operator+(v));
 }
 
 //*this += p
 P3D& P3D::operator += (const P3D& p) {
-	this->at(0) += p.at(0);
-	this->at(1) += p.at(1);
-	this->at(2) += p.at(2);
+	Vector3d::operator+=(p);
 	return *this;
 }
 
 //*this += v
 P3D& P3D::operator += (const V3D &v) {
-	this->at(0) += v.at(0);
-	this->at(1) += v.at(1);
-	this->at(2) += v.at(2);
+	Vector3d::operator+=(v);
 	return *this;
 }
 
 //*this -= v
 P3D& P3D::operator -= (const V3D &v) {
-	this->at(0) -= v.at(0);
-	this->at(1) -= v.at(1);
-	this->at(2) -= v.at(2);
+	Vector3d::operator-=(v);
 	return *this;
 }
 
 //return *this / v
 P3D P3D::operator / (double val) const {
-	return P3D(this->at(0) / val, this->at(1) / val, this->at(2) / val);
+	return P3D(Vector3d::operator/(val));
 }
 
 //return *this * v
 P3D P3D::operator * (double val) const {
-	return P3D(this->at(0) * val, this->at(1) * val, this->at(2) * val);
+	return P3D(Vector3d::operator*(val));
 }
 
 // * this /= v
 P3D& P3D::operator /= (double val) {
-	at(0) /= val;
-	at(1) /= val;
-	at(2) /= val;
+	Vector3d::operator/=(val);
 	return *this;
 }
 
 // *this *= v
 P3D& P3D::operator *= (double val) {
-	at(0) *= val;
-	at(1) *= val;
-	at(2) *= val;
+	Vector3d::operator*=(val);
 	return *this;
 }
 
 // return - *this
-P3D P3D::operator - () {
-	return P3D(-this->at(0), -this->at(1), -this->at(2));
+P3D P3D::operator-() const {
+	return P3D(Vector3d::operator-());
 }
 
 // return the vector between the two points
-V3D P3D::operator - (const P3D &p) const{
-	return V3D(this->at(0) - p.at(0), this->at(1) - p.at(1), this->at(2) - p.at(2));
+V3D P3D::operator-(const P3D &p) const{
+	return V3D(Vector3d::operator-(p));
 }
 
-P3D P3D::operator -(const V3D &p) const
+P3D P3D::operator-(const V3D &p) const
 {
-	return P3D(this->at(0) - p.at(0), this->at(1) - p.at(1), this->at(2) - p.at(2));
+	return P3D(Vector3d::operator-(p));
 }
 
 double P3D::getComponentAlong(const V3D& other) {
-	return at(0) * other.at(0) + at(1) * other.at(1) + at(2) * other.at(2);
+	return Vector3d::dot(other);
 }
 
 double P3D::getComponentAlong(const V3D& other) const {
-	return at(0) * other.at(0) + at(1) * other.at(1) + at(2) * other.at(2);
+	return Vector3d::dot(other);
 }
 
 void P3D::setComponentAlong(const V3D& other, double val) {
 	double oldVal = getComponentAlong(other);
-	this->at(0) += other.at(0) * (val - oldVal);
-	this->at(1) += other.at(1) * (val - oldVal);
-	this->at(2) += other.at(2) * (val - oldVal);
+	*this += other*(val - oldVal);
 }
 
 void P3D::addOffsetToComponentAlong(const V3D& other, double offset) {
-	this->at(0) += other.at(0) * (offset);
-	this->at(1) += other.at(1) * (offset);
-	this->at(2) += other.at(2) * (offset);
+	*this += (other*offset);
 }
 
 void P3D::scaleComponentAlong(const V3D& other, double scale) {
