@@ -178,18 +178,17 @@ source_group("Source Files\\Design"
 
 source_group("Header Files\\Living Connectors"
 	FILES
-		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/LivingHornBracket.h
+		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/LivingBracket.h
 		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/LivingBracketMotor.h
 		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/LivingMotor.h
 		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/LivingConnector.h
-		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/LivingSphereEE.h
+		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/LivingEE.h
 	)
 
 source_group("Source Files\\Living Connectors"
 	FILES
-		${CMAKE_CURRENT_SOURCE_DIR}/src/LivingHornBracket.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/src/LivingBracketMotor.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/src/LivingBracket.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/src/LivingMotor.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/src/LivingConnector.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/src/LivingSphereEE.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/src/LivingEE.cpp
 )
