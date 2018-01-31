@@ -168,7 +168,12 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 	tetgenbehavior b;
 	b.plc = 1;
 	b.coarsen = 1;
+	//b.refine = 1;
 	b.quality = 1;
+
+	//b.fixedvolume = 1;
+	//b.maxvolume = 1.35e-6;
+
 	//b.minratio = 2.0;
 	//b.mindihedral = 1.0;
 	b.verbose = 1;

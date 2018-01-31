@@ -18,7 +18,7 @@ public:
 public:
 	// abstract interface
 	virtual void writeToList(dVector & par, int & cursor_idx_io) = 0;
-	virtual void setFromList(dVector & par, int & cursor_idx_io) = 0;
+	virtual void setFromList(dVector const & par, int & cursor_idx_io) = 0;
 	virtual int getNPar() const = 0;
 	virtual std::pair<double, double> getParameterLimitsByLocalIdx(int idx);
 

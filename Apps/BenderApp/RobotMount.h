@@ -8,6 +8,7 @@
 
 #include "ParameterSet.h"
 
+class RBSphereCollisionObjective;
 
 
 class RobotMount : public Mount {
@@ -27,9 +28,9 @@ public:
 
 
 
-
 class RobotParameters : public ParameterSet {
-	friend	RobotMount;
+	friend RobotMount;
+	friend RBSphereCollisionObjective;
 
 protected:
 	GeneralizedCoordinatesRobotRepresentation * robotParameters;
@@ -39,7 +40,7 @@ public:
 	RobotParameters(GeneralizedCoordinatesRobotRepresentation * robotParameters);
 
 	virtual void writeToList(dVector & par, int & cursor_idx_io);
-	virtual void setFromList(dVector & par, int & cursor_idx_io);
+	virtual void setFromList(dVector const & par, int & cursor_idx_io);
 	virtual int getNPar() const {return(robotParameters->getDimensionCount()-6);}
 	virtual std::pair<double, double> getParameterLimitsByLocalIdx(int idx);
 

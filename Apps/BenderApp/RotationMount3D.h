@@ -41,7 +41,7 @@ public:
 public:
 
 	virtual void writeToList(dVector & par, int & cursor_idx_io);
-	virtual void setFromList(dVector & par, int & cursor_idx_io);
+	virtual void setFromList(dVector const & par, int & cursor_idx_io);
 	virtual int getNPar() const {return(6);}
 
 };

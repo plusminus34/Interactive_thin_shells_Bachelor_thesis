@@ -90,7 +90,7 @@ void RobotParameters::writeToList(dVector & par, int & cursor_idx_io)
 
 
 
-void RobotParameters::setFromList(dVector & par, int & cursor_idx_io)
+void RobotParameters::setFromList(dVector const & par, int & cursor_idx_io)
 {
 	robot_is_synced = false;
 	

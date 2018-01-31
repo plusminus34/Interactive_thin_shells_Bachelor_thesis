@@ -26,6 +26,7 @@
 #include "MountedPointSpring.h"
 #include "MatchScaledTrajObjective.h"
 #include "ParameterConstraintObjective.h"
+#include "RBSphereCollision.h"
 
 #include "BenderApp3D.h"
 
@@ -39,8 +40,8 @@ BenderApp3D::BenderApp3D()
 	const double rod_length = 0.3;
 	const P3D rod_center(0.0, 0.35, 0.50);
 
-	double massDensity = 50;
-	double youngsModulus = 3.0e4;
+	double massDensity = 130;//50;
+	double youngsModulus = 3.0e4;//3.0e4;
 	double poissonRatio = 0.25;
 
 	double shearModulus = youngsModulus / (2 * (1 + poissonRatio));
@@ -178,7 +179,6 @@ BenderApp3D::BenderApp3D()
 		robot = new Robot(rbEngine->rbs[0]);
 		startState = RobotState(robot);
 		setupSimpleRobotStructure(robot);
-
 	};
 	loadRobot(fnameRB);
 
@@ -291,6 +291,11 @@ BenderApp3D::BenderApp3D()
 		}
 	}
 
+	// create Collision avoidance Objective
+	new RBSphereCollisionObjective(static_cast<RobotParameters*>(inverseDeformationSolver->parameterSets.back()),
+								   rbEngine->rbs,
+								   0.0, 1000.0, 0.05);
+
 
 	// create a mount on the left gripper
 	femMesh->addMount<RobotMount>(inverseDeformationSolver->parameterSets.back());
@@ -380,11 +385,11 @@ BenderApp3D::BenderApp3D()
 
 
 	
-	set_robot_mount_from_plane(0, -rod_length*0.5, 0.01,
+	set_robot_mount_from_plane(0, -rod_length*0.5, 0.01*rod_length,
 								mount_id_right_gripper,
 								mountBaseOriginMesh_r, mountBaseCoordinatesMesh_r,
 								mountBaseOriginRB_r, mountBaseCoordinatesRB_r);
-	set_robot_mount_from_plane(0, +rod_length*0.5, 0.01,
+	set_robot_mount_from_plane(0, +rod_length*0.5, 0.01*rod_length,
 								mount_id_left_gripper,
 								mountBaseOriginMesh_l, mountBaseCoordinatesMesh_l,
 								mountBaseOriginRB_l, mountBaseCoordinatesRB_l);
@@ -419,7 +424,7 @@ BenderApp3D::BenderApp3D()
 	glfwSetWindowSize(glfwWindow, 1920, 1080);
 	//glfwSetWindowSize(glfwWindow, 1280, 720);
 
-	desiredFrameRate = 5;
+	desiredFrameRate = 30;
 }
 
 
