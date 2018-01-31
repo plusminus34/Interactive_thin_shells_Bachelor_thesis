@@ -157,7 +157,7 @@ std::string YuMiCom::getAndSendJointsAndTCPSpeed(int idCode, YuMiJoints yumiJoin
 
 	msg += "#";
 
-	//std::cout << "getAndSendJointsAndTCPSpeed - msg: " << msg << std::endl;
+//	std::cout << "getAndSendJointsAndTCPSpeed - msg: " << msg << std::endl;
 
 	return (msg);
 }

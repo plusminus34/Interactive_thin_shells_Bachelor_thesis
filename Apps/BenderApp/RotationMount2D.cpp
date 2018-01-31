@@ -96,7 +96,7 @@ void Rotation2DParameters::writeToList(dVector & par, int & cursor_idx_io)
 }
 
 
-void Rotation2DParameters::setFromList(dVector & par, int & cursor_idx_io)
+void Rotation2DParameters::setFromList(dVector const & par, int & cursor_idx_io)
 {
 	alpha = par[cursor_idx_io++];
 	for(int i = 0; i < 3; ++i) {

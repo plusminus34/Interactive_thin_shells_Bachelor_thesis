@@ -231,7 +231,7 @@ void EulerRotationParameters::writeToList(dVector & par, int & cursor_idx_io)
 }
 
 
-void EulerRotationParameters::setFromList(dVector & par, int & cursor_idx_io)
+void EulerRotationParameters::setFromList(dVector const & par, int & cursor_idx_io)
 {
 	alpha = par[cursor_idx_io++];
 	beta = par[cursor_idx_io++];

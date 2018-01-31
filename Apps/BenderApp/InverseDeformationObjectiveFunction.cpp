@@ -13,8 +13,17 @@
 template<int NDim>
 double InverseDeformationObjectiveFunction<NDim>::computeValue(const dVector& p)
 {
-	// energy
+	// energy of mesh objectives
 	double o = idSolver->peekOofXi(p);
+	// parameter constraints
+	for(ObjectiveFunction * pc : parameterConstraints) {
+		o += pc->computeValue(p);
+	}
+	// collision avoidance
+	for(ObjectiveFunction * ca : collisionAvoidance) {
+		o += ca->computeValue(p);
+	}
+
 	// regularizer
 	dVector deltap = p - p0_reg;
 	o += 0.5*regularizer*deltap.dot(deltap);
@@ -30,10 +39,20 @@ void InverseDeformationObjectiveFunction<NDim>::addGradientTo(dVector& grad, con
 	dVector dodxi;
 	idSolver->computeDoDxi(dodxi);
 	grad += dodxi;
+	// parameter constraints
+	for(ObjectiveFunction * pc : parameterConstraints) {
+		pc->addGradientTo(grad, p);
+	}
+	// collision avoidance
+	for(ObjectiveFunction * ca : collisionAvoidance) {
+		ca->addGradientTo(grad, p);
+	}
+
+
+
 std::cout << "grad without reg: ";
 for(int i = 0; i < grad.size(); ++i) {std::cout << grad[i] << " ";};
 std::cout << std::endl;
-
 	// regularizer
 	grad += regularizer*(p - p0_reg);
 std::cout << "grad with reg: (val = " << regularizer << ")" << std::endl;
