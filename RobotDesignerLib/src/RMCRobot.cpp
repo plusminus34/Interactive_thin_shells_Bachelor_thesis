@@ -6,7 +6,7 @@
 #include <GUILib/GLContentManager.h>
 #include <RobotDesignerLib/LivingMotor.h>
 #include <RobotDesignerLib/LivingConnector.h>
-#include <RobotDesignerLib/LivingSphereEE.h>
+#include <RobotDesignerLib/LivingEE.h>
 
 // TODO: find where min and max where defined!
 #undef min

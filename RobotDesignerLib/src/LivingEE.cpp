@@ -1,4 +1,4 @@
-#include <RobotDesignerLib/LivingSphereEE.h>
+#include <RobotDesignerLib/LivingEE.h>
 #include <GUILib/GLContentManager.h>
 #include <GUILib/GLUtils.h>
 

@@ -1,4 +1,4 @@
-#include <RobotDesignerLib/LivingHornBracket.h>
+#include <RobotDesignerLib/LivingBracket.h>
 #include <MathLib/ConvexHull3D.h>
 #include <GUILib/GLContentManager.h>
 

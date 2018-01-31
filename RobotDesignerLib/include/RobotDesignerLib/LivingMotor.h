@@ -1,7 +1,6 @@
 #pragma once
 #include <RobotDesignerLib/RMC.h>
-#include <RobotDesignerLib/LivingHornBracket.h>
-#include <RobotDesignerLib/LivingBracketMotor.h>
+#include <RobotDesignerLib/LivingBracket.h>
 
 class Motor_RMC : public RMC{
 public:

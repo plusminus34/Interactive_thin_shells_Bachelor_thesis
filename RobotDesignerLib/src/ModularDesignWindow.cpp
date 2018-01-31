@@ -11,7 +11,7 @@
 #include <iostream>
 #include <RobotDesignerLib/LivingMotor.h>
 #include <RobotDesignerLib/LivingConnector.h>
-#include <RobotDesignerLib/LivingSphereEE.h>
+#include <RobotDesignerLib/LivingEE.h>
 
 //TODO: parts of this code are still messy... although functional, it would benefit from some cleanup...
 

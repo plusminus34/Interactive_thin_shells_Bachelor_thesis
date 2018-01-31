@@ -120,6 +120,7 @@ public:
 	virtual void goToPreviousMountingPosition() { bracketMountingAngle -= RAD(15.0); shouldRegenerateBracketMesh = true; }
 };
 
+using namespace std;
 
 //TODO: could have alternate body brackets that get instantiated based on which one of the pins is chosen...
 
