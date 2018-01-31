@@ -292,9 +292,10 @@ BenderApp3D::BenderApp3D()
 	}
 
 	// create Collision avoidance Objective
-	new RBSphereCollisionObjective(static_cast<RobotParameters*>(inverseDeformationSolver->parameterSets.back()),
+	RBSphereCollisionObjective * rbsco = new RBSphereCollisionObjective(static_cast<RobotParameters*>(inverseDeformationSolver->parameterSets.back()),
 								   rbEngine->rbs,
-								   0.0, 1000.0, 0.05);
+								   -0.03, 1000.0, 0.03);
+//	inverseDeformationSolver->objectiveFunction->parameterConstraints.push_back(rbsco);
 
 
 	// create a mount on the left gripper

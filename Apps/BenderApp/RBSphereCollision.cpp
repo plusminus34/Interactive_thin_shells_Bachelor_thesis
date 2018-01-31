@@ -95,9 +95,10 @@ double RBSphereCollisionObjective::distance(RigidBody * rb1, RigidBody * rb2)
 
 
 
-double RBSphereCollisionObjective::distance(RigidBody * rb1, RigidBody * rb2, SphereCDP * cdp1_min, SphereCDP * cdp2_min)
+double RBSphereCollisionObjective::distance(RigidBody * rb1, RigidBody * rb2, SphereCDP *& cdp1_min, SphereCDP *& cdp2_min)
 {
-	double d_min = std::numeric_limits<double>::max();
+	//double d_min = std::numeric_limits<double>::max();
+	double d_min = 1.0e50;
 	cdp1_min = nullptr;
 	cdp2_min = nullptr;
 	// loop through all pairs of (shperical) cdps between the rigid bodys

@@ -19,6 +19,10 @@ double InverseDeformationObjectiveFunction<NDim>::computeValue(const dVector& p)
 	for(ObjectiveFunction * pc : parameterConstraints) {
 		o += pc->computeValue(p);
 	}
+	// collision avoidance
+	for(ObjectiveFunction * ca : collisionAvoidance) {
+		o += ca->computeValue(p);
+	}
 
 	// regularizer
 	dVector deltap = p - p0_reg;
@@ -39,6 +43,11 @@ void InverseDeformationObjectiveFunction<NDim>::addGradientTo(dVector& grad, con
 	for(ObjectiveFunction * pc : parameterConstraints) {
 		pc->addGradientTo(grad, p);
 	}
+	// collision avoidance
+	for(ObjectiveFunction * ca : collisionAvoidance) {
+		ca->addGradientTo(grad, p);
+	}
+
 
 
 std::cout << "grad without reg: ";

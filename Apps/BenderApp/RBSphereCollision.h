@@ -11,7 +11,7 @@ using MatrixNxM_bool = Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic>;
 
 
 
-class RBSphereCollisionObjective : ObjectiveFunction {
+class RBSphereCollisionObjective : public ObjectiveFunction {
 
 public:
 	RobotParameters * robotParameters;
@@ -29,7 +29,7 @@ public:
 
 
 	double distance(RigidBody * rb1, RigidBody * rb2);
-	double distance(RigidBody * rb1, RigidBody * rb2, SphereCDP * cdp1_min, SphereCDP * cdp2_min);
+	double distance(RigidBody * rb1, RigidBody * rb2, SphereCDP *& cdp1_min, SphereCDP *& cdp2_min);
 
 	void dDistanceDpar(RigidBody * rb1, RigidBody * rb2, dVector & grad);
 
