@@ -142,7 +142,7 @@ void MOPTWindow::addMenuItems() {
 		using namespace nanogui;
 
 		Window *window = new Window(glApp->menuScreen, "MOPT Energy");
-		window->setPosition(Eigen::Vector2i(0, 0));
+		window->setPosition(Eigen::Vector2i(glApp->getMainWindowWidth() / glApp->menuScreen->pixelRatio() - 200, 0));
 		window->setWidth(300);
 		window->setLayout(new GroupLayout());
 
@@ -313,7 +313,7 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	return locomotionManager;
 }
 
-double MOPTWindow::runMOPTStep() {
+double MOPTWindow::runMOPTStep(){
 	syncMotionPlanParameters();
 
 	locomotionManager->energyFunction->regularizer = globalMOPTRegularizer;
@@ -323,7 +323,7 @@ double MOPTWindow::runMOPTStep() {
 	// plot energy value
 	{
 		energyGraphValues.push_back((float)energyVal);
-		int start = std::max(0, (int)energyGraphValues.size() - 100);
+		int start = std::max(0, (int)energyGraphValues.size()-100);
 		int size = std::min(100, (int)energyGraphValues.size());
 		Eigen::Map<Eigen::VectorXf> values(&energyGraphValues[start], size);
 		energyGraph->setValues(values);
@@ -333,17 +333,17 @@ double MOPTWindow::runMOPTStep() {
 	return energyVal;
 }
 
-void MOPTWindow::reset() {
+void MOPTWindow::reset(){
 	locomotionManager = NULL;
 }
 
-void MOPTWindow::setAnimationParams(double f, int animationCycle) {
+void MOPTWindow::setAnimationParams(double f, int animationCycle){
 	moptParams.phase = f;
 	moptParams.gaitCycle = animationCycle;
 	ffpViewer->cursorPosition = f;
 }
 
-void MOPTWindow::loadFFPFromFile(const char* fName) {
+void MOPTWindow::loadFFPFromFile(const char* fName){
 	footFallPattern.loadFromFile(fName);
 }
 
@@ -353,14 +353,14 @@ void MOPTWindow::drawScene() {
 	drawGround();
 	glEnable(GL_LIGHTING);
 
-	if (locomotionManager) {
-		locomotionManager->drawMotionPlan(moptParams.phase, moptParams.gaitCycle, moptParams.drawRobotPose, moptParams.drawPlanDetails, moptParams.drawContactForces, true);
+	if (locomotionManager){
+		locomotionManager->drawMotionPlan(moptParams.phase, moptParams.gaitCycle, moptParams.drawRobotPose, moptParams.drawPlanDetails, moptParams.drawContactForces, moptParams.drawOrientation);
 
 		int startIndex = locomotionManager->motionPlan->wrapAroundBoundaryIndex;
 		if (startIndex < 0)  startIndex = 0;
-		COMSpeed = locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(locomotionManager->motionPlan->nSamplePoints - 1) -
-			locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(startIndex);
-
+		COMSpeed = locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(locomotionManager->motionPlan->nSamplePoints - 1) - 
+			       locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(startIndex);
+			
 	}
 	for (auto widget : EEwidgets)
 	{
@@ -380,7 +380,7 @@ void MOPTWindow::drawScene() {
 	}
 }
 
-void MOPTWindow::drawAuxiliarySceneInfo() {
+void MOPTWindow::drawAuxiliarySceneInfo(){
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	preDraw();

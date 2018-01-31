@@ -37,7 +37,14 @@ public:
 	RMCRobot(RMC* _root, map<string, vector<Transformation>>& _transformationMap);
 	~RMCRobot();
 
-	void fixJointConstraints();
+	//changes the state of components such that geometrically everything makes sense...
+	void fixConstraints();
+
+	void fixLivingBracketState(RMC* rmc);
+
+	//updates the geometric properties (e.g. shape of living connectors)
+	void updateComponents();
+
 	void fixPlateStateByMotor();
 
 	void draw(int flags, const Vector4d& root_color = Vector4d(0, 0, 0, 0), const Vector4d& highlight_color = Vector4d(0, 0, 0, 0), const Vector4d& color = Vector4d(0, 0, 0, 0));
@@ -139,9 +146,6 @@ public:
 		return i == 0 ? root : jointList[i-1]->getChild();
 	}
 
-	void addBulletObjectsToList(DynamicArray<AbstractBulletObject*>& list);
-
-	void updateAllLivingMotor();
 
 protected:
 	void cloneSubTreeHelper(RMC* rmc, map<RMC*, RMC*>& rmcMap);

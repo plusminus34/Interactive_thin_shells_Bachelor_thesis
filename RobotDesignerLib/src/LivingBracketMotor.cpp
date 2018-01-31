@@ -5,19 +5,20 @@
 #include <MathLib/Quaternion.h>
 #include <RobotDesignerLib/LivingHornBracket.h>
 
-LivingMotorBodyBracket::LivingMotorBodyBracket() {
-}
-
-LivingMotorBodyBracket::~LivingMotorBodyBracket() {
+Motor_RMC_BodyBracket::Motor_RMC_BodyBracket() {
 
 }
 
-void LivingMotorBodyBracket::draw() {
+Motor_RMC_BodyBracket::~Motor_RMC_BodyBracket() {
+
+}
+
+void Motor_RMC_BodyBracket::draw() {
 	if (bodyBracketMesh)
 		bodyBracketMesh->drawMesh();
 }
 
-void LivingMotorBodyBracket::setColor(const Vector4d& color /*= Vector4d(0, 0, 0, 0)*/){
+void Motor_RMC_BodyBracket::setColor(const Vector4d& color /*= Vector4d(0, 0, 0, 0)*/){
 	if (color.isZero()){
 		bodyBracketMesh->setMaterial(bodyBracketMaterial);
 	}
@@ -28,10 +29,9 @@ void LivingMotorBodyBracket::setColor(const Vector4d& color /*= Vector4d(0, 0, 0
 	}
 }
 
-LivingMotorBodyBracket_XM430::LivingMotorBodyBracket_XM430() {
+Motor_RMC_BodyBracket_XM430::Motor_RMC_BodyBracket_XM430() {
 //	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_bodyBracket_w.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
 	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_bodyBracket_lo.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
-
 
 	string whiteMat = "../data/textures/matcap/whitefluff2.bmp";
 	bodyBracketMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
@@ -40,11 +40,11 @@ LivingMotorBodyBracket_XM430::LivingMotorBodyBracket_XM430() {
 	generateBracketMesh();
 }
 
-LivingMotorBodyBracket_XM430::~LivingMotorBodyBracket_XM430() {
+Motor_RMC_BodyBracket_XM430::~Motor_RMC_BodyBracket_XM430() {
 
 }
 
-void LivingMotorBodyBracket_XM430::generateBracketMesh(){
+void Motor_RMC_BodyBracket_XM430::generateBracketMesh(){
 	pinInfos.clear();
 
 	P3D center = P3D(0, -0.038, 0);
@@ -64,7 +64,7 @@ void LivingMotorBodyBracket_XM430::generateBracketMesh(){
 
 
 
-LivingMotorBodyBracket_TGY306G::LivingMotorBodyBracket_TGY306G() {
+Motor_RMC_BodyBracket_TGY306G::Motor_RMC_BodyBracket_TGY306G() {
 	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_bodyBracket_w.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
 
 	string whiteMat = "../data/textures/matcap/whitefluff2.bmp";
@@ -74,11 +74,11 @@ LivingMotorBodyBracket_TGY306G::LivingMotorBodyBracket_TGY306G() {
 	generateBracketMesh();
 }
 
-LivingMotorBodyBracket_TGY306G::~LivingMotorBodyBracket_TGY306G() {
+Motor_RMC_BodyBracket_TGY306G::~Motor_RMC_BodyBracket_TGY306G() {
 
 }
 
-void LivingMotorBodyBracket_TGY306G::generateBracketMesh() {
+void Motor_RMC_BodyBracket_TGY306G::generateBracketMesh() {
 	pinInfos.clear();
 
 	P3D center = P3D(0, -0.024, 0);
@@ -96,7 +96,7 @@ void LivingMotorBodyBracket_TGY306G::generateBracketMesh() {
 	pinInfos.push_back(PinInfo(pinTrans, "BottomBracketPin", FPs, center, V3D(0, -1, 0)));
 }
 
-LivingMotorBodyBracket_BK3002::LivingMotorBodyBracket_BK3002() {
+Motor_RMC_BodyBracket_BK3002::Motor_RMC_BodyBracket_BK3002() {
 	bodyBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj"); bodyBracketMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
 
 	string whiteMat = "../data/textures/matcap/blackFluff.bmp";
@@ -106,11 +106,11 @@ LivingMotorBodyBracket_BK3002::LivingMotorBodyBracket_BK3002() {
 	generateBracketMesh();
 }
 
-LivingMotorBodyBracket_BK3002::~LivingMotorBodyBracket_BK3002() {
+Motor_RMC_BodyBracket_BK3002::~Motor_RMC_BodyBracket_BK3002() {
 
 }
 
-void LivingMotorBodyBracket_BK3002::generateBracketMesh() {
+void Motor_RMC_BodyBracket_BK3002::generateBracketMesh() {
 	pinInfos.clear();
 
 	P3D center = P3D(0, -0.024, 0);

@@ -2,15 +2,15 @@
 #include <MathLib/ConvexHull3D.h>
 #include <GUILib/GLContentManager.h>
 
-LivingHornBracket::LivingHornBracket(){
+Motor_RMC_HornBracket::Motor_RMC_HornBracket(){
 
 }
 
-LivingHornBracket::~LivingHornBracket(void){
+Motor_RMC_HornBracket::~Motor_RMC_HornBracket(void){
 
 }
 
-void LivingHornBracket::generateBracketMesh() {
+void Motor_RMC_HornBracket::generateBracketMesh() {
 	if (!shouldRegenerateBracketMesh)
 		return;
 	shouldRegenerateBracketMesh = false;
@@ -38,11 +38,11 @@ void LivingHornBracket::generateBracketMesh() {
 }
 
 
-Transformation LivingHornBracket::getPinTransformation(){
+Transformation Motor_RMC_HornBracket::getPinTransformation(){
 	return Transformation(pinOrientation.getRotationMatrix(), pinPosition);
 }
 
-void LivingHornBracket::setColor(const Vector4d& color /*= Vector4d(0, 0, 0, 0)*/){
+void Motor_RMC_HornBracket::setColor(const Vector4d& color /*= Vector4d(0, 0, 0, 0)*/){
 	if (color.isZero()){
 		bracketMesh->setMaterial(shaderMaterial);
 	}
@@ -53,7 +53,7 @@ void LivingHornBracket::setColor(const Vector4d& color /*= Vector4d(0, 0, 0, 0)*
 	}
 }
 
-void LivingHornBracket::draw() {
+void Motor_RMC_HornBracket::draw() {
 	glColor3d(1, 1, 1);
 	glDisable(GL_LIGHTING);
 
@@ -63,7 +63,7 @@ void LivingHornBracket::draw() {
 
 /* ---------------------------------------------------------------------------- */
 
-LivingHornBracket_XM430::LivingHornBracket_XM430() : LivingHornBracket() {
+Motor_RMC_HornBracket_XM430::Motor_RMC_HornBracket_XM430() : Motor_RMC_HornBracket() {
 	shaderMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
 	string mat = "../data/textures/matcap/whitefluff2.bmp";
 	shaderMaterial.setTextureParam(mat.c_str(), GLContentManager::getTexture(mat.c_str()));
@@ -75,11 +75,11 @@ LivingHornBracket_XM430::LivingHornBracket_XM430() : LivingHornBracket() {
 	bracketMesh->setMaterial(shaderMaterial);
 }
 
-LivingHornBracket_XM430::~LivingHornBracket_XM430(void){
+Motor_RMC_HornBracket_XM430::~Motor_RMC_HornBracket_XM430(void){
 	delete bracketMesh;
 }
 
-void LivingHornBracket_XM430::setDefaultFeaturePointList() {
+void Motor_RMC_HornBracket_XM430::setDefaultFeaturePointList() {
 	featurePoints.clear();
 	featurePoints.push_back(P3D(0.017, 0.022, 0.023));
 	featurePoints.push_back(P3D(0.017, 0.022, -0.023));
@@ -89,7 +89,7 @@ void LivingHornBracket_XM430::setDefaultFeaturePointList() {
 
 
 /* ---------------------------------------------------------------------------- */
-LivingHornBracket_TGY306G::LivingHornBracket_TGY306G() : LivingHornBracket() {
+Motor_RMC_HornBracket_TGY306G::Motor_RMC_HornBracket_TGY306G() : Motor_RMC_HornBracket() {
 	shaderMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
 	string mat = "../data/textures/matcap/whitefluff2.bmp";
 	shaderMaterial.setTextureParam(mat.c_str(), GLContentManager::getTexture(mat.c_str()));
@@ -100,11 +100,11 @@ LivingHornBracket_TGY306G::LivingHornBracket_TGY306G() : LivingHornBracket() {
 	bracketMesh->setMaterial(shaderMaterial);
 }
 
-LivingHornBracket_TGY306G::~LivingHornBracket_TGY306G(void) {
+Motor_RMC_HornBracket_TGY306G::~Motor_RMC_HornBracket_TGY306G(void) {
 	delete bracketMesh;
 }
 
-void LivingHornBracket_TGY306G::setDefaultFeaturePointList() {
+void Motor_RMC_HornBracket_TGY306G::setDefaultFeaturePointList() {
 	featurePoints.clear();
 	double lenX = 0.008;
 	double lenZ = 0.012;
@@ -116,7 +116,7 @@ void LivingHornBracket_TGY306G::setDefaultFeaturePointList() {
 }
 
 /* ---------------------------------------------------------------------------- */
-LivingHornBracket_BK3002::LivingHornBracket_BK3002() : LivingHornBracket() {
+Motor_RMC_HornBracket_BK3002::Motor_RMC_HornBracket_BK3002() : Motor_RMC_HornBracket() {
 	shaderMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
 	string mat = "../data/textures/matcap/blackFluff.bmp";
 	shaderMaterial.setTextureParam(mat.c_str(), GLContentManager::getTexture(mat.c_str()));
@@ -127,11 +127,11 @@ LivingHornBracket_BK3002::LivingHornBracket_BK3002() : LivingHornBracket() {
 	bracketMesh->setMaterial(shaderMaterial);
 }
 
-LivingHornBracket_BK3002::~LivingHornBracket_BK3002(void) {
+Motor_RMC_HornBracket_BK3002::~Motor_RMC_HornBracket_BK3002(void) {
 	delete bracketMesh;
 }
 
-void LivingHornBracket_BK3002::setDefaultFeaturePointList() {
+void Motor_RMC_HornBracket_BK3002::setDefaultFeaturePointList() {
 	featurePoints.clear();
 	double lenX = 0.008;
 	double lenZ = 0.012;

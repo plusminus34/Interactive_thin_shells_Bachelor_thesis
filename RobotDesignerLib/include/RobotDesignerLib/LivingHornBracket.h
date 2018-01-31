@@ -9,31 +9,27 @@
 #include <MathLib/Quaternion.h>
 #include <MathLib/Segment.h>
 #include <MathLib/boundingBox.h>
-#include "LivingMotor.h"
 
 /*
 	Horn brackets whose geometry is determined by several parameters that indicate how it will move.
 */
-class LivingHornBracket {
+class Motor_RMC_HornBracket {
 public:
 	virtual void draw();
 
 	// feature points of the bracket... used to attach to living connectors
-	vector<P3D> featurePoints;
+	DynamicArray<P3D> featurePoints;
 
 	// position and orientation of the pin
 	P3D pinPosition;
 	Quaternion pinOrientation;
 
+	GLShaderMaterial shaderMaterial;
+
 	GLMesh* bracketMesh = NULL;
 
 	//the initial attachment angle of the bracket relative to the motor. This allows us to offset the range of motion of the motor.
 	double bracketMountingAngle = 0;
-
-	//TODO: the connector face could be parameterized such that it can rotate+translate relative to its default configuration
-//	double connectorFaceAngle1 = 0, connectorFaceAngle2 = 0;
-
-	GLShaderMaterial shaderMaterial;
 
 	virtual void generateBracketMesh();
 
@@ -44,13 +40,13 @@ public:
 	virtual void goToPreviousMountingPosition() {}
 
 public:
-	LivingHornBracket();
-	virtual ~LivingHornBracket(void);
+	Motor_RMC_HornBracket();
+	virtual ~Motor_RMC_HornBracket(void);
 
 	virtual void setColor(const Vector4d& color = Vector4d(0, 0, 0, 0));
 	Transformation getPinTransformation();
 
-	virtual void copyBracketProperties(LivingHornBracket* lbh, bool mirror) {
+	virtual void copyBracketProperties(Motor_RMC_HornBracket* lbh, bool mirror) {
 		if (lbh) {
 			if (mirror == false){
 				bracketMountingAngle = lbh->bracketMountingAngle;
@@ -73,11 +69,11 @@ public:
 /*
 	Horn brackets whose geometry is determined by several parameters that indicate how it will move.
 */
-class LivingHornBracket_XM430 : public LivingHornBracket {
+class Motor_RMC_HornBracket_XM430 : public Motor_RMC_HornBracket {
 public:
-	LivingHornBracket_XM430();
+	Motor_RMC_HornBracket_XM430();
 
-	virtual ~LivingHornBracket_XM430(void);
+	virtual ~Motor_RMC_HornBracket_XM430(void);
 
 	virtual void setDefaultFeaturePointList();
 
@@ -91,11 +87,11 @@ public:
 /*
 Horn brackets whose geometry is determined by several parameters that indicate how it will move.
 */
-class LivingHornBracket_TGY306G : public LivingHornBracket {
+class Motor_RMC_HornBracket_TGY306G : public Motor_RMC_HornBracket {
 public:
-	LivingHornBracket_TGY306G();
+	Motor_RMC_HornBracket_TGY306G();
 
-	virtual ~LivingHornBracket_TGY306G(void);
+	virtual ~Motor_RMC_HornBracket_TGY306G(void);
 
 	virtual void setDefaultFeaturePointList();
 
@@ -111,11 +107,11 @@ private:
 /*
 Horn brackets whose geometry is determined by several parameters that indicate how it will move.
 */
-class LivingHornBracket_BK3002 : public LivingHornBracket {
+class Motor_RMC_HornBracket_BK3002 : public Motor_RMC_HornBracket {
 public:
-	LivingHornBracket_BK3002();
+	Motor_RMC_HornBracket_BK3002();
 
-	virtual ~LivingHornBracket_BK3002(void);
+	virtual ~Motor_RMC_HornBracket_BK3002(void);
 
 	virtual void setDefaultFeaturePointList();
 

@@ -1,49 +1,70 @@
 #pragma once
 #include <RobotDesignerLib/RMC.h>
 
-class LivingSphereEE : public RMC
-{
+class SphereEE_RMC : public RMC{
 public:
 	GLMesh* eeMesh = NULL;
 
-	double sphereRadius = 0.03;
+	double sphereRadius = 0.01;
 
 public:
-	LivingSphereEE();
-	~LivingSphereEE();
+	SphereEE_RMC();
+	~SphereEE_RMC();
 
-	virtual LivingSphereEE* clone();
+	virtual SphereEE_RMC* clone();
 	virtual bool pickMesh(Ray& ray, double* closestDist = NULL);
 	virtual void draw(int flags, const Vector4d& color = Vector4d(0, 0, 0, 0));
 	virtual void update();
 
-	void syncSymmParameters(LivingSphereEE* refEE);
+	void syncSymmParameters(RMC* refEE);
 	void exportMeshes(const char* dirName, int index);
+
+	//should return true if it's parsed it, false otherwise...
+	virtual bool interpretInputLine(FILE* fp, char* line) {
+		char keyword[50];
+		sscanf(line, "%s", keyword);
+
+		if (strcmp(keyword, "Name") == 0)
+			return true;
+
+		if (RMC::interpretInputLine(fp, line))
+			return true;
+
+		if (strcmp(keyword, "Radius") == 0) {
+			sscanf(line + strlen(keyword), "%lf", &sphereRadius);
+			update();
+			return true;
+		}
+
+		return false;
+	}
+
+	virtual void processInputKeyPress(int key) {
+		if (key == GLFW_KEY_EQUAL)
+			sphereRadius = max(0.005, sphereRadius - 0.005);
+		if (key == GLFW_KEY_MINUS)
+			sphereRadius = sphereRadius + 0.005;
+
+	}
+
+	virtual void writeParamsToCommandLine(char* cmdLine) {
+		Quaternion q = state.orientation;
+		P3D pos = state.position;
+		sprintf(cmdLine, "%lf %lf %lf %lf %lf %lf %lf %lf ", q[0], q[1], q[2], q[3],
+			pos[0], pos[1], pos[2],
+			sphereRadius);
+	}
+
+	virtual void readParamsFromCommandLine(char* cmdLine) {
+		sscanf(cmdLine, "%lf %lf %lf %lf %lf %lf %lf %lf",
+			&state.orientation[0], &state.orientation[1], &state.orientation[2], &state.orientation[3],
+			&state.position[0], &state.position[1], &state.position[2],
+			&sphereRadius);
+	}
+
 };
 
-class Living6FaceConnector : public RMC
-{
-public:
-	GLMesh* mesh = NULL;
-
-	double size = 0.0075;
-
-public:
-	Living6FaceConnector();
-	~Living6FaceConnector();
-
-	virtual Living6FaceConnector* clone();
-	virtual bool pickMesh(Ray& ray, double* closestDist = NULL);
-	virtual void draw(int flags, const Vector4d& color = Vector4d(0, 0, 0, 0));
-	virtual void update();
-
-	void syncSymmParameters(Living6FaceConnector* refEE);
-	void exportMeshes(const char* dirName, int index);
-};
-
-
-class LivingWheelEE : public RMC
-{
+class WheelEE_RMC : public RMC{
 public:
 	GLMesh* originalWheelMesh = NULL;
 	GLMesh* wheelMesh = NULL;
@@ -57,14 +78,56 @@ public:
 	string LMType;
 
 public:
-	LivingWheelEE(const char* LMType);
-	~LivingWheelEE();
+	WheelEE_RMC(const char* LMType);
+	~WheelEE_RMC();
 
-	virtual LivingWheelEE* clone();
+	virtual WheelEE_RMC* clone();
 	virtual bool pickMesh(Ray& ray, double* closestDist = NULL);
 	virtual void draw(int flags, const Vector4d& color = Vector4d(0, 0, 0, 0));
 	virtual void update();
 
-	void syncSymmParameters(LivingWheelEE* refEE);
+	void syncSymmParameters(RMC* refEE);
 	void exportMeshes(const char* dirName, int index);
+
+	//should return true if it's parsed it, false otherwise...
+	virtual bool interpretInputLine(FILE* fp, char* line) {
+		char keyword[50];
+		sscanf(line, "%s", keyword);
+
+		if (strcmp(keyword, "Name") == 0)
+			return true;
+
+		if (RMC::interpretInputLine(fp, line))
+			return true;
+
+		if (strcmp(keyword, "Radius") == 0) {
+			sscanf(line + strlen(keyword), "%lf", &radius);
+			update();
+			return true;
+		}
+
+		return false;
+	}
+
+	virtual void processInputKeyPress(int key) {
+		if (key == GLFW_KEY_EQUAL)
+			radius = max(0.005, radius - 0.005);
+		if (key == GLFW_KEY_MINUS)
+			radius = radius + 0.005;
+	}
+
+	virtual void writeParamsToCommandLine(char* cmdLine) {
+		Quaternion q = state.orientation;
+		P3D pos = state.position;
+		sprintf(cmdLine, "%lf %lf %lf %lf %lf %lf %lf %lf ", q[0], q[1], q[2], q[3],
+			pos[0], pos[1], pos[2],
+			radius);
+	}
+
+	virtual void readParamsFromCommandLine(char* cmdLine) {
+		sscanf(cmdLine, "%lf %lf %lf %lf %lf %lf %lf %lf",
+			&state.orientation[0], &state.orientation[1], &state.orientation[2], &state.orientation[3],
+			&state.position[0], &state.position[1], &state.position[2],
+			&radius);
+	}
 };

@@ -1,6 +1,7 @@
 #include <GUILib/GLUtils.h>
 #include <RobotDesignerLib/RMCJoint.h>
 #include <Utils/Utils.h>
+#include <RobotDesignerLib/LivingMotor.h>
 
 RMCJoint::RMCJoint(){
 }
@@ -45,16 +46,6 @@ void RMCJoint::fixRMCConstraint() {
 		Transformation parentTrans = parentPin->transformation;
 		Transformation childTrans = childPin->transformation;
 
-		if (getParent()->type == MOTOR_RMC && parentPin->type == HORN_PIN){
-			RMC* parentRMC = getParent();
-			parentTrans *= Transformation(getRotationQuaternion(RAD(parentRMC->motorAngle), parentRMC->motorAxis).getRotationMatrix());
-		}
-
-		if (getChild()->type == MOTOR_RMC && childPin->type == HORN_PIN){
-			RMC* childRMC = getChild();
-			childTrans *= Transformation(getRotationQuaternion(RAD(childRMC->motorAngle), childRMC->motorAxis).getRotationMatrix());
-		}
-
 		trans = parentTrans * transformations[curTransIndex] * childTrans.inverse();
 	}
 	else
@@ -65,9 +56,7 @@ void RMCJoint::fixRMCConstraint() {
 	child->state.position = parent->state.position + parent->state.orientation.rotate(trans.T);
 }
 
-
-void RMCJoint::fixRMCConstraintInverse()
-{
+void RMCJoint::fixRMCConstraintInverse(){
 	if (curTransIndex >= (int)transformations.size()) return;
 
 	Transformation trans;

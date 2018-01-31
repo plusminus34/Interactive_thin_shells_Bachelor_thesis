@@ -24,10 +24,10 @@ struct PinInfo {
 
 class LivingHornBracket;
 
-class LivingMotorBodyBracket{
+class Motor_RMC_BodyBracket{
 public:
-	LivingMotorBodyBracket();
-	~LivingMotorBodyBracket(void);
+	Motor_RMC_BodyBracket();
+	~Motor_RMC_BodyBracket(void);
 
 	GLMesh* bodyBracketMesh = NULL;
 
@@ -43,32 +43,32 @@ public:
 	virtual void generateBracketMesh() {};
 };
 
-class LivingMotorBodyBracket_XM430 : public LivingMotorBodyBracket {
+class Motor_RMC_BodyBracket_XM430 : public Motor_RMC_BodyBracket {
 public:
 
 public:
-	LivingMotorBodyBracket_XM430();
-	~LivingMotorBodyBracket_XM430(void);
+	Motor_RMC_BodyBracket_XM430();
+	~Motor_RMC_BodyBracket_XM430(void);
 
 	void generateBracketMesh();
 };
 
-class LivingMotorBodyBracket_TGY306G : public LivingMotorBodyBracket {
+class Motor_RMC_BodyBracket_TGY306G : public Motor_RMC_BodyBracket {
 public:
 
 public:
-	LivingMotorBodyBracket_TGY306G();
-	~LivingMotorBodyBracket_TGY306G(void);
+	Motor_RMC_BodyBracket_TGY306G();
+	~Motor_RMC_BodyBracket_TGY306G(void);
 
 	void generateBracketMesh();
 };
 
-class LivingMotorBodyBracket_BK3002 : public LivingMotorBodyBracket {
+class Motor_RMC_BodyBracket_BK3002 : public Motor_RMC_BodyBracket {
 public:
 
 public:
-	LivingMotorBodyBracket_BK3002();
-	~LivingMotorBodyBracket_BK3002(void);
+	Motor_RMC_BodyBracket_BK3002();
+	~Motor_RMC_BodyBracket_BK3002(void);
 
 	void generateBracketMesh();
 };

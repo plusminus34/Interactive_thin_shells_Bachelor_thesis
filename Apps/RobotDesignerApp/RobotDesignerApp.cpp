@@ -295,8 +295,9 @@ bool RobotDesignerApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	return false;
 }
 
+//XXX: this is a bit of a mess...
 bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
-	if (viewOptions == SIM_AND_DESIGN && designWindow) {
+	if (shouldShowDesignWindow() && designWindow->isActive()) {
 		designWindow->onKeyEvent(key, action, mods);
 	}
 
