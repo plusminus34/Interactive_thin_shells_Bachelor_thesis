@@ -184,7 +184,7 @@ int ScreenRecorder::save(std::string const & dirName, std::string const & fileBa
 		unsigned int c = static_cast<int>(imageChannels[i]);
 		// flip
 		std::vector<unsigned char> rawFlipped(w*h*c);
-		for(int i = 0; i < h; ++i) {
+		for(unsigned int i = 0; i < h; ++i) {
 			std::copy(raw_buffer+i*w*c, raw_buffer+(i+1)*w*c, rawFlipped.data()+(h-i-1)*w*c);
 		}
 		// encode png
