@@ -39,22 +39,22 @@ void IDCustomYuMiControlInterface::setTargetMotorValuesFromGCRR(double dt)
 
 		int idx_GCRR = robotParameters->getQIndexForJoint(hj);
 
-		//if(q_GCRR_last.size() > 0) {
+		if(q_GCRR_last.size() > 0) {
 
-		//	double delta_q = q_GCRR[idx_GCRR] - q_GCRR_last[idx_GCRR];
-		//	if(delta_q > PI) {
-		//		delta_q -= 2.0*PI;
-		//	}
-		//	else if(delta_q < -PI) {
-		//		delta_q += 2.0*PI;
-		//	}
+			double delta_q = q_GCRR[idx_GCRR] - q_GCRR_last[idx_GCRR];
+			if(delta_q > PI) {
+				delta_q -= 2.0*PI;
+			}
+			else if(delta_q < -PI) {
+				delta_q += 2.0*PI;
+			}
 
-		//	hj->motor.targetMotorAngle = q_GCRR_last[idx_GCRR] + delta_q;
+			hj->motor.targetMotorAngle = q_GCRR_last[idx_GCRR] + delta_q;
 
-		//}
-		//else {
-		//	hj->motor.targetMotorAngle = q_GCRR[idx_GCRR];
-		//}
+		}
+		else {
+			hj->motor.targetMotorAngle = q_GCRR[idx_GCRR];
+		}
 		hj->motor.targetMotorAngle = q_GCRR[idx_GCRR];
 
 		//we expect we have dt time to go from the current position to the target position... we ideally want to ensure that the motor gets there exactly dt time from now, so we must limit its velocity...
@@ -96,38 +96,6 @@ void IDCustomYuMiControlInterface::setTargetMotorValuesFromGCRR(double dt)
 
 void IDCustomYuMiControlInterface::sendControlInputsToPhysicalRobot() {
 
-	//
-	////Get right and left joint targets
-	//YuMiJoints rightTargetJoints, leftTargetJoints;
-
-	//float* rightTargetJointsPtr = &rightTargetJoints.j1;
-	//float* leftTargetJointsPtr = &leftTargetJoints.j1;
-
-	//for (int i = 0; i < robot->getJointCount(); i++) {
-	//	HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
-	//	if (!hj) continue;
-
-	//	if(i % 2 == 0){
-	//		*rightTargetJointsPtr = hj->motor.targetMotorAngle;
-	//		rightTargetJointsPtr++;
-	//	} else {
-	//		*leftTargetJointsPtr = hj->motor.targetMotorAngle;
-	//		leftTargetJointsPtr++;
-	//	}
-	//}
-
-	//
-	//// check if old robot-communication is still running, wait if necessary
-	//if(arm_right_synchronized.valid()) {
-	//	arm_right_synchronized.wait();
-	//}
-	//if(arm_left_synchronized.valid()) {
-	//	arm_left_synchronized.wait();
-	//}
-	////Send commands to robot, don't wait for them to be executed
-	//arm_right_synchronized = std::async([&](){rightArm.getAndSendJointsAndTCPSpeedToRobot(rightTargetJoints, tcpSpeedRight.target);});
-	//arm_left_synchronized = std::async([&](){leftArm.getAndSendJointsAndTCPSpeedToRobot(leftTargetJoints, tcpSpeedLeft.target);});
-
 	//Get right and left joint targets
 	YuMiJoints rightTargetJoints, leftTargetJoints;
 
@@ -149,12 +117,18 @@ void IDCustomYuMiControlInterface::sendControlInputsToPhysicalRobot() {
 
 	
 	// check if old robot-communication is still running, wait if necessary
-	if(arm_right_synchronized.valid()) {
-		arm_right_synchronized.wait();
-	}
 	if(arm_left_synchronized.valid()) {
+		std::cout << "waiting for left arm ... ";
 		arm_left_synchronized.wait();
+		std::cout << "done" << std::endl;
 	}
+
+	if(arm_right_synchronized.valid()) {
+		std::cout << "waiting for right arm ... ";
+		arm_right_synchronized.wait();
+		std::cout << "done" << std::endl;
+	}
+
 	//Send commands to robot, don't wait for them to be executed
 	
 	auto getAndSendArm = [](YuMiArm * arm, YuMiJoints targetJoints, unsigned int targetSpeed)
@@ -162,9 +136,9 @@ void IDCustomYuMiControlInterface::sendControlInputsToPhysicalRobot() {
 		arm->getAndSendJointsAndTCPSpeedToRobot(targetJoints, targetSpeed);
 	};
 	
-	//arm_right_synchronized = std::async([&](){rightArm.getAndSendJointsAndTCPSpeedToRobot(rightTargetJoints, tcpSpeedRight.target);});
-	//arm_left_synchronized = std::async([&](){leftArm.getAndSendJointsAndTCPSpeedToRobot(leftTargetJoints, tcpSpeedLeft.target);});
-	arm_right_synchronized = std::async(getAndSendArm, &rightArm, rightTargetJoints, tcpSpeedRight.target);
+std::cout << "tcpSpeeds r/l : " << tcpSpeedRight.target << " " << tcpSpeedLeft.target << std::endl;
+	
 	arm_left_synchronized = std::async(getAndSendArm, &leftArm, leftTargetJoints, tcpSpeedLeft.target);
+	arm_right_synchronized = std::async(getAndSendArm, &rightArm, rightTargetJoints, tcpSpeedRight.target);
 
 }

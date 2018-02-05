@@ -254,8 +254,11 @@ bool YuMiArm::getAndSendJointsAndTCPSpeedToRobot(YuMiJoints yumiJoints, unsigned
 	char reply[YuMiConstants::BUFSIZE];
 	int idCode = YuMiConstants::ID_GET_SEND_JOINTS_SPEED;
 
-	strcpy(message, YuMiCom::getAndSendJointsAndTCPSpeed(idCode, targetJoints, TCPSpeed).c_str());
+	strcpy(message, YuMiCom::getAndSendJointsAndTCPSpeed(idCode, yumiJoints, speed).c_str());
+	//strcpy(message, YuMiCom::getAndSendJointsAndTCPSpeed(idCode, targetJoints, TCPSpeed).c_str());
 
+std::cout << "message to arm " << armSide << std::endl;
+std::cout << message << std::endl;
 	if(sendAndReceive(message, strlen(message), reply, idCode)){
 		//Set current joints, target joints and TCPSpeed
 		//std::cout << "getAndSendJointsAndTCPSpeedToRobot - reply: " << reply << std::endl;

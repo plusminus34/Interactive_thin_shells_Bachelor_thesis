@@ -1105,7 +1105,7 @@ void BenderApp3D::process() {
 
 	if(synchronizePhysicalRobot) {
 		if(robotControlInterface && robotControlInterface->isConnected()) {
-			robotControlInterface->syncPhysicalRobotWithSimRobot(maxRunningTime);
+			robotControlInterface->syncPhysicalRobotWithSimRobot(1.0 / desiredFrameRate);
 		}
 		else {
 			synchronizePhysicalRobot = false;
