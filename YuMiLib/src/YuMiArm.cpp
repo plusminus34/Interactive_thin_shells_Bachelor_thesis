@@ -94,7 +94,7 @@ bool YuMiArm::connectServer(const char* ip, unsigned int port) {
 		if(connection == -1){
 			std::cerr << "Robot could not be connected - Robot controller running?" << std::endl;
 			return false;
-		} else if(connection == 0);
+		} else if(connection == 0)
 			return true;
 	}
 }
