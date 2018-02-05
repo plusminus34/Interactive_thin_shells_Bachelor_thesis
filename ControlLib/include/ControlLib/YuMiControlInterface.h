@@ -14,7 +14,7 @@
 */
 
 class YuMiControlInterface : public RobotControlInterface{
-private:
+protected:
     //arms
     YuMiArm leftArm, rightArm;
 

@@ -10,7 +10,9 @@
 #include <GUILib/GLUtils.h>
 
 #include <RBSimLib/ODERBEngine.h>
-#include <ControlLib/YuMiControlInterface.h>
+//#include <ControlLib/YuMiControlInterface.h>
+#include "IDCustomYuMiControlInterface.h"
+
 
 #include "OptimizationLib/GradientDescentFunctionMinimizer.h"
 #include "OptimizationLib/BFGSFunctionMinimizer.h"
@@ -410,7 +412,8 @@ BenderApp3D::BenderApp3D()
 	///////////////////////////////
 	// Physical robot interface
 	///////////////////////////////
-	robotControlInterface = new YuMiControlInterface(robot);
+	robotControlInterface = new IDCustomYuMiControlInterface(robot, generalizedRobotCoordinates);
+	//robotControlInterface = new YuMiControlInterface(robot);
 
 	robotControlInterface->controlPositionsOnly = true;
 	static_cast<YuMiControlInterface *>(robotControlInterface)->sendControlInputsDelayed = false;
