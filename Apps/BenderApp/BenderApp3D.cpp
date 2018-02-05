@@ -40,9 +40,9 @@ BenderApp3D::BenderApp3D()
 	const double rod_length = 0.3;
 	const P3D rod_center(0.0, 0.35, 0.50);
 
-	double massDensity = 130;//50;
-	double youngsModulus = 3.0e4;//3.0e4;
-	double poissonRatio = 0.25;
+	double massDensity = 43.63;//130;//50;
+	double youngsModulus = 2.135e4;//3.0e4;//3.0e4;
+	double poissonRatio = 0.376;//0.25;
 
 	double shearModulus = youngsModulus / (2 * (1 + poissonRatio));
 	double bulkModulus = youngsModulus / (3 * (1 - 2 * poissonRatio));
@@ -425,7 +425,7 @@ BenderApp3D::BenderApp3D()
 	glfwSetWindowSize(glfwWindow, 1920, 1080);
 	//glfwSetWindowSize(glfwWindow, 1280, 720);
 
-	desiredFrameRate = 30;
+	desiredFrameRate = 5;
 }
 
 
