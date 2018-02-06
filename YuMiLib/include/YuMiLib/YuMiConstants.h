@@ -42,14 +42,13 @@ public:
 	static std::vector<float> HOME_STATE_RIGHT;
 
 	static const unsigned int ID_PING = 0;
-	static const unsigned int ID_GOTO_JOINT_POSE = 2; //2 for unsync, 12 for sync
+	static const unsigned int ID_GOTO_JOINT_POSE = 2;
 	static const unsigned int ID_GET_JOINTS = 4;
 	static const unsigned int ID_SET_SPEED = 8;
-	static const unsigned int ID_GOTO_EXT_AXES = 34;
 	static const unsigned int ID_GRIP_INIT = 60;
 	static const unsigned int ID_GRIP_OPEN = 63;
 	static const unsigned int ID_GRIP_CLOSE = 64;
-	static const unsigned int ID_GET_SEND_JOINTS_SPEED = 70;
+	static const unsigned int ID_GET_SEND_JOINTS = 70;
 	static const unsigned int ID_CLOSE_CONNECTION = 99;
 
 	static const unsigned int MOVE_ZONE = 200; //length of corner path given in mm
