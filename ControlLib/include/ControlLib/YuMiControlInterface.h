@@ -37,6 +37,9 @@ private:
 	TCP globalTCPLeft;
 	TCP globalTCPRight;
 
+	double lengthVecTCPLeft;
+	double lengthVecTCPRight;
+
 	unsigned int minSpeed = 1;
 	unsigned int maxSpeed = 1500;
 	float speedWeight = 1.0f;
@@ -49,7 +52,7 @@ public:
     ~YuMiControlInterface();
 
 	//set motor goals from target values
-	virtual void sendControlInputsToPhysicalRobot();
+	virtual void sendControlInputsToPhysicalRobot(double dt);
 	//read motor positions
 	virtual void readPhysicalRobotMotorPositions();
 	//read motor positions
@@ -68,5 +71,7 @@ public:
 	virtual void printJointValues();
 	bool sendJointInputsCheck(std::string arm);
 	bool sendSpeedInputCheck();
+
+	bool movementCheck(YuMiJoints targetJoints, YuMiJoints savedJoints);
 
 };

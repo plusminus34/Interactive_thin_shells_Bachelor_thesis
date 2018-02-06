@@ -45,7 +45,7 @@ protected:
 	GLConsole* consoleWindow;
 
 	//this is the desired frame rate, specified in FPS
-	double desiredFrameRate = 90; //default: 30
+	double desiredFrameRate = 30; //default: 30
 	double animationSpeedupFactor = 1.0;
 
 	// Sets up various settings for OpenGL

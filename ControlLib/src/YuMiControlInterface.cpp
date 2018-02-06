@@ -8,23 +8,13 @@
 
 
 //Constructor
-YuMiControlInterface::YuMiControlInterface(Robot* robot) : RobotControlInterface(robot) {
-	savedRightJoints = rightArm.convertVectorToYuMiJoints(YuMiConstants::HOME_STATE_RIGHT);
-	savedLeftJoints = leftArm.convertVectorToYuMiJoints(YuMiConstants::HOME_STATE_LEFT);
-
-	tcpSpeedRight.current = 100;
-	tcpSpeedLeft.current = 100;
-}
+YuMiControlInterface::YuMiControlInterface(Robot* robot) : RobotControlInterface(robot) {}
 
 //Destructor
 YuMiControlInterface::~YuMiControlInterface() {}
 
 //set motor goals from target values
-void YuMiControlInterface::sendControlInputsToPhysicalRobot() {
-
-	//Send commands to robot
-	rightArm.getAndSendJointsAndTCPSpeedToRobot(savedRightJoints, tcpSpeedRight.current);
-	leftArm.getAndSendJointsAndTCPSpeedToRobot(savedLeftJoints, tcpSpeedLeft.current);
+void YuMiControlInterface::sendControlInputsToPhysicalRobot(double dt) {
 
 	//Get right and left joint targets
 	YuMiJoints rightTargetJoints, leftTargetJoints;
@@ -45,7 +35,16 @@ void YuMiControlInterface::sendControlInputsToPhysicalRobot() {
 		}
 	}
 
-	//Update current values belonging to calculate TCPSpeed
+	//Send position and velocity commands to robot
+	if(movementCheck(rightTargetJoints, savedRightJoints)){
+		rightArm.sendRobotToJointPose(rightTargetJoints, dt, false);
+	}
+
+	if(movementCheck(leftTargetJoints, savedLeftJoints)){
+		leftArm.sendRobotToJointPose(leftTargetJoints, dt, false);
+	}
+
+	//Update current values
 	savedLeftJoints = leftTargetJoints;
 	savedRightJoints = rightTargetJoints;
 
@@ -105,7 +104,7 @@ void YuMiControlInterface::setTargetMotorValuesFromSimRobotState(double dt) {
 	//Set tcpSpeed
 	globalTCPLeft.target = robot->getRBByName("link_7_l")->getWorldCoordinates(localTCPLeft);
 	V3D vecTCPLeft = globalTCPLeft.target - globalTCPLeft.current;
-	double lengthVecTCPLeft = vecTCPLeft.length();
+	lengthVecTCPLeft = vecTCPLeft.length();
 	tcpSpeedLeft.target = (unsigned int)round(lengthVecTCPLeft*1000.0f/dt*speedWeight);
 
 	if(tcpSpeedLeft.target < minSpeed){
@@ -113,10 +112,11 @@ void YuMiControlInterface::setTargetMotorValuesFromSimRobotState(double dt) {
 	} else if(tcpSpeedLeft.target > maxSpeed){
 		tcpSpeedLeft.target = maxSpeed;
 	}
+	//tcpSpeedLeft.target = 1000000; //RESET
 
 	globalTCPRight.target = robot->getRBByName("link_7_r")->getWorldCoordinates(localTCPRight);
 	V3D vecTCPRight = globalTCPRight.target - globalTCPRight.current;
-	double lengthVecTCPRight = vecTCPRight.length();
+	lengthVecTCPRight = vecTCPRight.length();
 	tcpSpeedRight.target = (unsigned int)round(lengthVecTCPRight*1000.0f/dt*speedWeight);
 
 	if(tcpSpeedRight.target < minSpeed){
@@ -124,6 +124,8 @@ void YuMiControlInterface::setTargetMotorValuesFromSimRobotState(double dt) {
 	} else if(tcpSpeedRight.target > maxSpeed){
 		tcpSpeedRight.target = maxSpeed;
 	}
+	//tcpSpeedRight.target = 1000000; //RESET
+
 
 //	std::cout << "TCPSpeed Target Left: " << tcpSpeedLeft.target << std::endl;
 //	std::cout << "TCPSpeed Target Right: " << tcpSpeedRight.target << std::endl;
@@ -302,6 +304,21 @@ bool YuMiControlInterface::sendSpeedInputCheck(){
 		sendInput = true;
 	}
 	return sendInput;
+}
+
+bool YuMiControlInterface::movementCheck(YuMiJoints targetJoints, YuMiJoints savedJoints){
+	float* targetJointsPtr = &targetJoints.j1;
+	float* savedJointsPtr = &savedJoints.j1;
+
+	for(int i = 0; i < YuMiConstants::NUM_JOINTS; i++){
+		if(*targetJointsPtr != *savedJointsPtr){
+			return true;
+		}
+		targetJointsPtr++;
+		savedJointsPtr++;
+	}
+
+	return false;
 }
 
 

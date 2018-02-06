@@ -21,7 +21,7 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
     showMesh = true;
     showRotationAxes = false;
 
-	//desiredFrameRate = 5;
+	desiredFrameRate = 15;
 
 	mainMenu->addGroup("IK App Visualization options");
 
@@ -56,7 +56,7 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 				ikSolver->ikPlan->setTargetIKStateFromRobot();
 
 				if(syncPhysicalRobot){
-					rci->syncPhysicalRobotWithSimRobot();
+					rci->syncPhysicalRobotWithSimRobot(1.0/desiredFrameRate);
 				}
 			} else { // Option 2: Read robot state from physical YuMi and start simulation from it...
 				rci->syncSimRobotWithPhysicalRobot();
@@ -220,8 +220,8 @@ void PhysicalRobotControlApp::process() {
     if (rci && syncPhysicalRobot) {
 		//updateSpeedParameter();
 
-		//double dt = 1.0 / desiredFrameRate;
-		double dt = t.timeEllapsed();
+		double dt = 1.0 / desiredFrameRate;
+		//double dt = t.timeEllapsed();
         rci->controlPositionsOnly = controlPositionsOnly;
 		t.restart();
         rci->syncPhysicalRobotWithSimRobot(dt);

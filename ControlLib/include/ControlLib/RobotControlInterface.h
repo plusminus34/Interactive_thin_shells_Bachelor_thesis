@@ -97,13 +97,13 @@ public:
 	}
 
 	//the time window dt estimates the amount of time before the next command is issued (or, alternatively, how long we'd expect the physical robot to take before it can match the target values)
-	virtual void syncPhysicalRobotWithSimRobot(double dt = 0.1) {
+	virtual void syncPhysicalRobotWithSimRobot(double dt) {
         setTargetMotorValuesFromSimRobotState(dt);
-		sendControlInputsToPhysicalRobot();
+		sendControlInputsToPhysicalRobot(dt);
 	}
 
 	//set motor goals from target values
-	virtual void sendControlInputsToPhysicalRobot() = 0;
+	virtual void sendControlInputsToPhysicalRobot(double dt) = 0;
 	//read motor positions
 	virtual void readPhysicalRobotMotorPositions() = 0;
 	//read motor positions

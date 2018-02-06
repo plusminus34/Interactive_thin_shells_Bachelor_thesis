@@ -30,8 +30,10 @@ bool YuMiArm::init(std::string arm){
 	const char* ip = YuMiConstants::IP.c_str();
     unsigned int port = 0;
     if(armSide.compare("right") == 0){
+		std::cout << "Right Arm!" << std::endl;
         port = YuMiConstants::PORT_RIGHT_SERVER;
     } else if(armSide.compare("left") == 0){
+		std::cout << "Left Arm!" << std::endl;
         port = YuMiConstants::PORT_LEFT_SERVER;
     } else {
         std::cerr << "This arm does not exist!" << std::endl;
@@ -47,7 +49,7 @@ bool YuMiArm::init(std::string arm){
 
     //Set speed and joint variables
 	bool jointsReceived = getCurrentJointsFromRobot(true);
-	bool tcpSpeedSent = setRobotTCPSpeed(YuMiConstants::INIT_SPEED);
+	bool tcpSpeedSent = setRobotTCPSpeed(YuMiConstants::INIT_SPEED, true);
 
 	//Init gripper
 	//bool gripInit = initGripper();
@@ -117,7 +119,7 @@ bool YuMiArm::closeConnection(){
 bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int idCode){
     bool success = false;
 
-    sendRecvMutex.lock();
+	sendRecvMutex.lock();
     if (send(robotSocket, message, messageLength, 0) == -1){
         if(connected){
             std::cerr << "Failed to send command to robot" << std::endl;
@@ -167,6 +169,18 @@ bool YuMiArm::sendAndReceive(char *message, int messageLength, char* reply, int 
 }
 
 
+//Send message to robot without waiting for an answer
+bool YuMiArm::sendWithoutReceive(char *message, int messageLength){
+
+	std::cout << "message: " << message << std::endl;
+	if (send(robotSocket, message, messageLength, 0) == -1){
+		std::cerr << "Error: sendWithoutReceive" << std::endl;
+		return false;
+	}
+	return true;
+}
+
+
 //Ping Robot
 bool YuMiArm::pingRobot(){
     char message[YuMiConstants::BUFSIZE];
@@ -210,38 +224,59 @@ bool YuMiArm::getCurrentJointsFromRobot(bool setTargetToCurrent){
 }
 
 
-bool YuMiArm::sendRobotToJointPose(YuMiJoints yumiJoints){
+bool YuMiArm::sendRobotToJointPose(YuMiJoints yumiJoints, double moveTime, bool wait){
     char message[YuMiConstants::BUFSIZE];
     char reply[YuMiConstants::BUFSIZE];
     int idCode = YuMiConstants::ID_GOTO_JOINT_POSE;
 
-	strcpy(message, YuMiCom::gotoJointPose(idCode, yumiJoints).c_str());
+	strcpy(message, YuMiCom::gotoJointPose(idCode, yumiJoints, moveTime, wait).c_str());
 
-	if(sendAndReceive(message, strlen(message), reply, idCode)){
-		targetJoints = yumiJoints;
-		//std::cout << "gotoJointPose-reply: " << reply << std::endl;
-        return true;
-    } else {
-        return false;
-    }
+	if(wait){
+		if(sendAndReceive(message, strlen(message), reply, idCode)){
+			targetJoints = yumiJoints;
+			YuMiCom::parseExecTime(reply, execTime);
+			//std::cout << "gotoJointPose-reply: " << reply << std::endl;
+			return true;
+		} else {
+			return false;
+		}
+	} else {
+		if(sendWithoutReceive(message, strlen(message))){
+			targetJoints = yumiJoints;
+			//std::cout << "gotoJointPose-reply: " << reply << std::endl;
+			return true;
+		} else {
+			return false;
+		}
+	}
 }
 
 
-bool YuMiArm::setRobotTCPSpeed(unsigned int speed){
+bool YuMiArm::setRobotTCPSpeed(unsigned int speed, bool wait){
 	if(speed > 0){
         char message[YuMiConstants::BUFSIZE];
         char reply[YuMiConstants::BUFSIZE];
         int idCode = YuMiConstants::ID_SET_SPEED;
 
-		strcpy(message, YuMiCom::setTCPSpeed(idCode, speed).c_str());
+		strcpy(message, YuMiCom::setTCPSpeed(idCode, speed, wait).c_str());
 
-		if(sendAndReceive(message, strlen(message), reply, idCode)){
-			TCPSpeed = speed;
-			//std::cout << "setSpeed-reply: " << reply << std::endl;
-            return true;
-        } else {
-            return false;
-        }
+		if(wait){
+			if(sendAndReceive(message, strlen(message), reply, idCode)){
+				TCPSpeed = speed;
+				//std::cout << "setSpeed-reply: " << reply << std::endl;
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			if(sendWithoutReceive(message, strlen(message))){
+				TCPSpeed = speed;
+				//std::cout << "setSpeed-reply: " << reply << std::endl;
+				return true;
+			} else {
+				return false;
+			}
+		}
     } else {
 		std::cerr << "ERROR in YuMiArm setSpeed -> speed must be larger than 0!" << std::endl;
         return false;
@@ -249,38 +284,21 @@ bool YuMiArm::setRobotTCPSpeed(unsigned int speed){
 }
 
 
-bool YuMiArm::getAndSendJointsAndTCPSpeedToRobot(YuMiJoints yumiJoints, unsigned int speed){
+bool YuMiArm::getAndSendJointsToRobot(YuMiJoints yumiJoints, double moveTime){
 	char message[YuMiConstants::BUFSIZE];
 	char reply[YuMiConstants::BUFSIZE];
-	int idCode = YuMiConstants::ID_GET_SEND_JOINTS_SPEED;
+	int idCode = YuMiConstants::ID_GET_SEND_JOINTS;
 
-	strcpy(message, YuMiCom::getAndSendJointsAndTCPSpeed(idCode, targetJoints, TCPSpeed).c_str());
+	strcpy(message, YuMiCom::gotoJointPose(idCode, targetJoints, moveTime, true).c_str());
 
 	if(sendAndReceive(message, strlen(message), reply, idCode)){
 		//Set current joints, target joints and TCPSpeed
-		//std::cout << "getAndSendJointsAndTCPSpeedToRobot - reply: " << reply << std::endl;
 		targetJoints = yumiJoints;
-		TCPSpeed = speed;
-		YuMiCom::parseJoints(reply, currentJoints);
+		YuMiCom::parseJointsAndExecTime(reply, currentJoints, execTime);
 	} else {
 		if(connected){
 			std::cerr << "ERROR: Something is wrong in YuMiArm send and get joints and speed!" << std::endl;
 		}
-	}
-}
-
-
-bool YuMiArm::sendRobotExtAx(std::vector<float> extAx){
-	char message[YuMiConstants::BUFSIZE];
-	char reply[YuMiConstants::BUFSIZE];
-	int idCode = YuMiConstants::ID_GOTO_EXT_AXES;
-
-	strcpy(message, YuMiCom::gotoExtAx(idCode, extAx).c_str());
-
-	if(sendAndReceive(message, strlen(message), reply, idCode)){
-		return true;
-	} else {
-		return false;
 	}
 }
 
@@ -300,6 +318,7 @@ bool YuMiArm::initGripper(){
 	}
 }
 
+
 bool YuMiArm::openGripper(){
 	char message[YuMiConstants::BUFSIZE];
 	char reply[YuMiConstants::BUFSIZE];
@@ -314,6 +333,7 @@ bool YuMiArm::openGripper(){
 		return false;
 	}
 }
+
 
 bool YuMiArm::closeGripper(){
 	char message[YuMiConstants::BUFSIZE];
@@ -335,6 +355,7 @@ YuMiJoints YuMiArm::getCurrentJointValues(){
 	return currentJoints;
 }
 
+
 unsigned int YuMiArm::getTCPSpeedValue(){
 	return TCPSpeed;
 }
@@ -349,6 +370,7 @@ bool YuMiArm::getGripperOpenValue(){
 	return gripperOpen;
 }
 
+
 YuMiJoints YuMiArm::convertVectorToYuMiJoints(std::vector<float> v){
 	YuMiJoints yumiJoints;
 	float* yumiJointsPtr = &yumiJoints.j1;
@@ -358,4 +380,9 @@ YuMiJoints YuMiArm::convertVectorToYuMiJoints(std::vector<float> v){
 		yumiJointsPtr++;
 	}
 	return yumiJoints;
+}
+
+
+double YuMiArm::getExecTime(){
+	return execTime;
 }
