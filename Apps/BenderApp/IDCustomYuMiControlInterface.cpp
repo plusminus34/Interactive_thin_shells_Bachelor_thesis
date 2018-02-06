@@ -48,12 +48,9 @@ void IDCustomYuMiControlInterface::setTargetMotorValuesFromGCRR(double dt)
 			else if(delta_q < -PI) {
 				delta_q += 2.0*PI;
 			}
-
-			hj->motor.targetMotorAngle = q_GCRR_last[idx_GCRR] + delta_q;
-
-		}
-		else {
+			q_GCRR[idx_GCRR] = q_GCRR_last[idx_GCRR] + delta_q;
 			hj->motor.targetMotorAngle = q_GCRR[idx_GCRR];
+
 		}
 		hj->motor.targetMotorAngle = q_GCRR[idx_GCRR];
 
