@@ -56,7 +56,7 @@ void MountedPointSpring<NDim>::addEnergyHessianTo(const dVector & x,
 }
 
 template <int NDim>
-void MountedPointSpring<NDim>::addDeltaFDeltaXi(std::vector<dVector> & dfdxi)
+void MountedPointSpring<NDim>::addDeltaFDeltaXi(MatrixNxM &dfdxi)
 {
 	if(!mount->active) {return;}
 
@@ -77,7 +77,7 @@ void MountedPointSpring<NDim>::addDeltaFDeltaXi(std::vector<dVector> & dfdxi)
 
 	for(int i = 0; i < dfdmountpar_temp.size(); ++i) {
 		for(int j = 0; j < NDim; ++j) {
-			dfdxi[xi_idx_start + i][data_idx_start + j] += dfdmountpar_temp[i][j];
+			dfdxi(data_idx_start + j, xi_idx_start + i) += dfdmountpar_temp[i][j];
 		}
 	}
 

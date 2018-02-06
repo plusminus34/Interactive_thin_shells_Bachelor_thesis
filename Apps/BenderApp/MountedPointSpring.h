@@ -30,7 +30,7 @@ public:
 									const dVector& X, 
 									std::vector<MTriplet>& hesEntries);
 
-	virtual void addDeltaFDeltaXi(std::vector<dVector> & dfdxi);	// each dVector is the dF for one parameter xi
+	virtual void addDeltaFDeltaXi(MatrixNxM & dfdxi);	// each dVector is the dF for one parameter xi
 	virtual void draw(const dVector& x);
 	void draw(const dVector& x, double size, double r, double g, double b);
 

@@ -102,16 +102,14 @@ void InverseDeformationSolver<NDim>::computeDoDxi(dVector & dodxi)
 	femMesh->computeDoDx(dOdx);
 
 	// compute dF/dxi [length(x) x xi]
-	deltaFdeltaxi.resize(xi.size());
-	for(int i = 0; i < xi.size(); ++i) {
-		deltaFdeltaxi[i].resize(femMesh->x.size());
-		deltaFdeltaxi[i].setZero();
-	}
+	dFdxi.resize(femMesh->x.size(),xi.size());
+	dFdxi.setZero();
+
 	for(BaseEnergyUnit* pin : femMesh->pinnedNodeElements) {
-		dynamic_cast<MountedPointSpring<NDim>* >(pin)->addDeltaFDeltaXi(deltaFdeltaxi);
+		dynamic_cast<MountedPointSpring<NDim>* >(pin)->addDeltaFDeltaXi(dFdxi);
 	}
 
-	// get dF/dx  (Hessian from FEM simulation)  [lengh(x) x length(x)]
+	// get dF/dx  (Hessian from FEM simulation)  [length(x) x length(x)]
 	SparseMatrix H(femMesh->x.size(), femMesh->x.size());
 	DynamicArray<MTriplet> hessianEntries(0);
 
@@ -131,15 +129,11 @@ void InverseDeformationSolver<NDim>::computeDoDxi(dVector & dodxi)
 		exit(1);
 	}
 	// solve for each parameter xi
-	deltaxdeltaxi.resize(xi.size());
-	for(int i = 0; i < xi.size(); ++i) {
-		deltaxdeltaxi[i] = linearSolver.solve(-deltaFdeltaxi[i]);
-	}
+	dxdxi = linearSolver.solve(-dFdxi);
+
 
 	// do/dxi = do/dx * dx/dxi
-	for(int i = 0; i < xi.size(); ++i) {
-		dodxi[i] = dOdx.transpose() * deltaxdeltaxi[i];
-	}
+	dodxi = dOdx.transpose() * dxdxi;
 }
 
 

@@ -25,8 +25,8 @@ public:
 	// helpers for optimization
 	dVector dOdxi;
 	dVector dOdx;
-	std::vector<dVector> deltaFdeltaxi;
-	std::vector<dVector> deltaxdeltaxi;
+	MatrixNxM dFdxi;
+	MatrixNxM dxdxi;
 
 public:
 
