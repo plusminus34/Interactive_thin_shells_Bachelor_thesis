@@ -169,7 +169,7 @@ BenderApp3D::BenderApp3D()
 	////////////////////////
 	
 	// load robot
-	std::string fnameRB = "../data/rbs/yumi/yumi.rbs";
+	std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
 
 	auto loadRobot = [&] (std::string const & fname)
 	{
@@ -271,7 +271,7 @@ BenderApp3D::BenderApp3D()
 		ikSolver->ikEnergyFunction->regularizer = 100;
 		ikSolver->ikOptimizer->checkDerivatives = false;
 		ikSolver->solve();
-		testGeneralizedCoordinateRepresentation(robot);
+// 		testGeneralizedCoordinateRepresentation(robot);
 	}
 
 	// create generalized parametrization of the robot
