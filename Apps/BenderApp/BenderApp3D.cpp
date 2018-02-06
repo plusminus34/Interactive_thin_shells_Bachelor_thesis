@@ -42,9 +42,10 @@ BenderApp3D::BenderApp3D()
 	const double rod_length = 0.3;
 	const P3D rod_center(0.0, 0.35, 0.50);
 
+	// measured (physical) values for "the green foam" are: (density, young, poisson) = (43.63, 2.135, 0.376)
 	double massDensity = 43.63;//130;//50;
-	double youngsModulus = 2.135e4;//3.0e4;//3.0e4;
-	double poissonRatio = 0.376;//0.25;
+	double youngsModulus = 3.6e3;//3.0e4;//3.0e4;
+	double poissonRatio = 0.25;//0.376;//0.25;
 
 	double shearModulus = youngsModulus / (2 * (1 + poissonRatio));
 	double bulkModulus = youngsModulus / (3 * (1 - 2 * poissonRatio));
@@ -80,7 +81,7 @@ BenderApp3D::BenderApp3D()
 	//	}
 	//}
 	{
-		int m = 10;
+		int m = 11;
 		centerlinePts.resize(m);
 		V3D pt1(-0.15, 0.0, 0.0);
 		V3D pt2(0.15, 0.0, 0.0);
@@ -139,7 +140,6 @@ BenderApp3D::BenderApp3D()
 	};
 
 	// add a fiber in Mesh to match
-	DynamicArray<Node *> matchedFiber;
 	node_sequence_from_line_segment(rod_center + P3D(-0.5*rod_length,0.0,0.0),
 									rod_center + P3D(0.5*rod_length,0.0,0.0),
 									0.01*rod_length,
@@ -299,7 +299,7 @@ BenderApp3D::BenderApp3D()
 								   -0.03, 1000.0, 0.03);
 //	inverseDeformationSolver->objectiveFunction->parameterConstraints.push_back(rbsco);
 
-
+	
 	// create a mount on the left gripper
 	femMesh->addMount<RobotMount>(inverseDeformationSolver->parameterSets.back());
 	RobotMount * mount_left_gripper = static_cast<RobotMount*>(femMesh->mounts.back());
@@ -310,7 +310,7 @@ BenderApp3D::BenderApp3D()
 	RobotMount * mount_right_gripper = static_cast<RobotMount*>(femMesh->mounts.back());
 	int mount_id_right_gripper = femMesh->mounts.size()-1;
 	mount_right_gripper->robotPart = right_gripper;
-
+	
 
 	
 	// set rotation mounts
@@ -387,7 +387,7 @@ BenderApp3D::BenderApp3D()
 	mountBaseCoordinatesRB_r = gripper_right_orientation_matrix.inverse()*mountBaseCoordinatesMesh_r;
 
 
-	
+
 	set_robot_mount_from_plane(0, -rod_length*0.5, 0.01*rod_length,
 								mount_id_right_gripper,
 								mountBaseOriginMesh_r, mountBaseCoordinatesMesh_r,
@@ -1023,39 +1023,7 @@ bool BenderApp3D::onCharacterPressedEvent(int key, int mods) {
 	return false;
 }
 
-/*
-void BenderApp3D::loadFile(char* fName) {
-	Logger::consolePrint("Loading file \'%s\'...\n", fName);
-	std::string fileName;
-	fileName.assign(fName);
 
-	std::string fNameExt = fileName.substr(fileName.find_last_of('.') + 1);
-	if (fNameExt == "tri2d") {
-		//delete femMesh;
-		femMesh = new BenderSimulationMesh<3>;
-		femMesh->readMeshFromFile(fName);
-		Logger::consolePrint("...Done!");
-	} else if (fNameExt == "obj") {
-		//delete femMesh;
-		femMesh = new BenderSimulationMesh<3>;
-		femMesh->readMeshFromFile(fName);
-		Logger::consolePrint("...Done!");
-	} else if(fNameExt == "ply") {
-		//delete femMesh;
-		femMesh = new BenderSimulationMesh<3>;
-		femMesh->readMeshFromFile_ply(fName);
-		Logger::consolePrint("...Done!");
-	}	
-	else {
-		Logger::consolePrint("...but how to do with that?");
-	}
-
-}
-
-void BenderApp3D::saveFile(const char* fName) {
-	Logger::consolePrint("SAVE FILE: Do not know what to do with file \'%s\'\n", fName);
-}
-*/
 
 // Run the App tasks
 void BenderApp3D::process() {
@@ -1102,6 +1070,11 @@ void BenderApp3D::process() {
 		}
 	}
 
+	// output diff begin/end of center line
+	V3D delta_centerline = matchedFiber.back()->getWorldPosition() - matchedFiber.front()->getWorldPosition();
+	std::cout << "diff centerline: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
+	delta_centerline = matchedFiber[matchedFiber.size()/2]->getWorldPosition() - matchedFiber.front()->getWorldPosition();
+	std::cout << "diff centerline_half: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
 
 	if(synchronizePhysicalRobot) {
 		if(robotControlInterface && robotControlInterface->isConnected()) {
@@ -1110,8 +1083,8 @@ void BenderApp3D::process() {
 		else {
 			synchronizePhysicalRobot = false;
 		}
-
 	}
+
 	
 }
 

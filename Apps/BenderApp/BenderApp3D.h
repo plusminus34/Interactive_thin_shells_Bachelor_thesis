@@ -55,6 +55,8 @@ V3D mountBaseZDirectionRB_l;
 	Matrix3x3 mountBaseCoordinatesRB_r;
 	Matrix3x3 mountBaseCoordinatesRB_l;
 
+	DynamicArray<Node *> matchedFiber;
+
 	// solver for the inverse problem
 	InverseDeformationSolver<3> * inverseDeformationSolver;
 

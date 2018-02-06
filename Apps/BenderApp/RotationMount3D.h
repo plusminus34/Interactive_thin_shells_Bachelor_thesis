@@ -35,8 +35,8 @@ public:
 class EulerRotationParameters : public ParameterSet {
 
 public:
-	double alpha, beta, gamma;
-	V3D shift;
+	double alpha = 0.0, beta = 0.0, gamma = 0.0;
+	V3D shift = V3D(0.0);
 
 public:
 
