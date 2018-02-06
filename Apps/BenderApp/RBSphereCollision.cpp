@@ -13,8 +13,11 @@ RBSphereCollisionObjective::RBSphereCollisionObjective(RobotParameters * robotPa
 													   double l, double stiffness, double epsilon)
 	: robotParameters(robotParameters), rbs(rbs), constraint(l, stiffness, epsilon)
 {
+	double d_initial_limit = 0.03;
+	
 	// read spheres
 	setSphereCDPsFromFile("../data/rbs/yumi/spheres/");
+
 
 	// construct lookup matrix for which RB pairs to test for distance (exclude direct neighbours);
 	check_collision_RBs = MatrixNxM_bool::Constant(rbs.size(), rbs.size(), true);
@@ -33,8 +36,23 @@ RBSphereCollisionObjective::RBSphereCollisionObjective(RobotParameters * robotPa
 				}
 			}
 		}
+
 		// also: no self collision
 		check_collision_RBs(idx_parent, idx_parent) = false;
+	}
+
+	// further 
+	for(int i = 0; i < rbs.size(); ++i) {
+		RigidBody * rb_i = rbs[i];
+		for(int j = 0; j < rbs.size(); ++j) {
+			RigidBody * rb_j = rbs[j];
+			double d = distance(rb_i, rb_j);
+			if(d < d_initial_limit) {
+				check_collision_RBs(i, j) = false;
+				check_collision_RBs(j, i) = false;
+			}
+
+		}
 	}
 }
 
@@ -135,7 +153,9 @@ void RBSphereCollisionObjective::dDistanceDpar(RigidBody * rb1, RigidBody * rb2,
 	robotParameters->robotParameters->compute_dpdq(cdp1->p, rb1, dc1dq);
 	robotParameters->robotParameters->compute_dpdq(cdp2->p, rb2, dc2dq);
 
-	V3D deltac = (cdp2->p - cdp1->p);
+	P3D c1 = robotParameters->robotParameters->getWorldCoordinatesFor(cdp1->p, rb1);
+	P3D c2 = robotParameters->robotParameters->getWorldCoordinatesFor(cdp2->p, rb2);
+	V3D deltac = (c2 - c1);
 	MatrixNxM ddeltacdq = dc2dq - dc1dq;
 	
 
@@ -180,10 +200,12 @@ void RBSphereCollisionObjective::addGradientTo(dVector& grad, const dVector& p)
 		for(int j = i+1; j < rbs.size(); ++j) {
 			// check if the pair needs to be considered
 			if(!check_collision_RBs(i, j)) {continue;}
-			dVector ddrobotpar;
-			dDistanceDpar(rbs[i], rbs[j], ddrobotpar);
-			for(int k = 0; k < ddrobotpar.size(); ++k) {
-				grad[robotParameters->parametersStartIndex + k] += ddrobotpar[k];
+			double d = distance(rbs[i],rbs[j]);
+			double dOdd = constraint.computeDerivative(d);
+			dVector ddistancedrobotpar;
+			dDistanceDpar(rbs[i], rbs[j], ddistancedrobotpar);
+			for(int k = 0; k < ddistancedrobotpar.size(); ++k) {
+				grad[robotParameters->parametersStartIndex + k] += ddistancedrobotpar[k] * dOdd;
 			}
 		}
 	}
