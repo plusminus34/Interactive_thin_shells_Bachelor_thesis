@@ -18,9 +18,9 @@ IDCustomYuMiControlInterface::IDCustomYuMiControlInterface(Robot * robot, Genera
 
 void IDCustomYuMiControlInterface::syncPhysicalRobotWithSimRobot(double dt) 
 {
-	setTargetMotorValuesFromGCRR(dt);
-	//setTargetMotorValuesFromSimRobotState(dt);
-	sendControlInputsToPhysicalRobot();
+	//setTargetMotorValuesFromGCRR(dt);
+	setTargetMotorValuesFromSimRobotState(dt);
+	sendControlInputsToPhysicalRobot(dt);
 }
 
 
@@ -38,7 +38,7 @@ void IDCustomYuMiControlInterface::setTargetMotorValuesFromGCRR(double dt)
 		if (!hj) continue;
 
 		int idx_GCRR = robotParameters->getQIndexForJoint(hj);
-
+		
 		if(q_GCRR_last.size() > 0) {
 
 			double delta_q = q_GCRR[idx_GCRR] - q_GCRR_last[idx_GCRR];
@@ -52,6 +52,7 @@ void IDCustomYuMiControlInterface::setTargetMotorValuesFromGCRR(double dt)
 			hj->motor.targetMotorAngle = q_GCRR[idx_GCRR];
 
 		}
+
 		hj->motor.targetMotorAngle = q_GCRR[idx_GCRR];
 
 		//we expect we have dt time to go from the current position to the target position... we ideally want to ensure that the motor gets there exactly dt time from now, so we must limit its velocity...
@@ -91,7 +92,7 @@ void IDCustomYuMiControlInterface::setTargetMotorValuesFromGCRR(double dt)
 }
 
 
-void IDCustomYuMiControlInterface::sendControlInputsToPhysicalRobot() {
+void IDCustomYuMiControlInterface::sendControlInputsToPhysicalRobot(double dt) {
 
 	//Get right and left joint targets
 	YuMiJoints rightTargetJoints, leftTargetJoints;
@@ -128,14 +129,14 @@ void IDCustomYuMiControlInterface::sendControlInputsToPhysicalRobot() {
 
 	//Send commands to robot, don't wait for them to be executed
 	
-	auto getAndSendArm = [](YuMiArm * arm, YuMiJoints targetJoints, unsigned int targetSpeed)
+	auto getAndSendArm = [](YuMiArm * arm, YuMiJoints targetJoints, double targetTime)
 	{
-		arm->getAndSendJointsAndTCPSpeedToRobot(targetJoints, targetSpeed);
+		arm->getAndSendJointsToRobot(targetJoints, targetTime);
 	};
 	
 std::cout << "tcpSpeeds r/l : " << tcpSpeedRight.target << " " << tcpSpeedLeft.target << std::endl;
 	
-	arm_left_synchronized = std::async(getAndSendArm, &leftArm, leftTargetJoints, tcpSpeedLeft.target);
-	arm_right_synchronized = std::async(getAndSendArm, &rightArm, rightTargetJoints, tcpSpeedRight.target);
+	arm_left_synchronized = std::async(getAndSendArm, &leftArm, leftTargetJoints, dt);
+	arm_right_synchronized = std::async(getAndSendArm, &rightArm, rightTargetJoints, dt);
 
 }

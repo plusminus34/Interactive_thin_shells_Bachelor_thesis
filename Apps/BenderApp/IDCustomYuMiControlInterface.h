@@ -20,7 +20,7 @@ public:
 	IDCustomYuMiControlInterface(Robot * robot, GeneralizedCoordinatesRobotRepresentation * robotParameters);
 
 	virtual void syncPhysicalRobotWithSimRobot(double dt = 0.1);
-	virtual void sendControlInputsToPhysicalRobot();
+	virtual void sendControlInputsToPhysicalRobot(double dt);
 	
 	void setTargetMotorValuesFromGCRR(double dt);
 
