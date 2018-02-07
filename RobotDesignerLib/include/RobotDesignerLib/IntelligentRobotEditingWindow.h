@@ -1,7 +1,9 @@
 #pragma once
 #include <OptimizationLib/BFGSHessianApproximator.h>
-#include <../Apps/RobotDesignerApp/RobotDesignerApp.h>
+#include "../../Apps/RobotDesignerApp/RobotDesignerApp.h"
 #include <memory>
+
+class RobotDesignerApp;
 class BFGSHessianApproximator;
 class IntelligentRobotEditingWindow : public GLWindow3D {
 public:
