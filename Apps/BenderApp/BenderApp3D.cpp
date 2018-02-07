@@ -428,7 +428,7 @@ BenderApp3D::BenderApp3D()
 	glfwSetWindowSize(glfwWindow, 1920, 1080);
 	//glfwSetWindowSize(glfwWindow, 1280, 720);
 
-	desiredFrameRate = 10;
+	//desiredFrameRate = 10;
 }
 
 
@@ -449,7 +449,7 @@ void BenderApp3D::pushInputTrajectory(Trajectory3Dplus & trajInput)
 void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 {
 
-	
+	menu->addVariable("desired frame rate", desiredFrameRate);
 	// 
 	menu->addGroup("FEM Sim options");
 	{

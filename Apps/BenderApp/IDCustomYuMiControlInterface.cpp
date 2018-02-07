@@ -25,7 +25,7 @@ void IDCustomYuMiControlInterface::syncPhysicalRobotWithSimRobot(double dt)
 
 
 
-
+// TODO: remove (cannot work as expected)
 void IDCustomYuMiControlInterface::setTargetMotorValuesFromGCRR(double dt)
 {
 
