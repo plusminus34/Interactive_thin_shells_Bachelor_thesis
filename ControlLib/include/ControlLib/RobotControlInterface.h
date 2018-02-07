@@ -3,6 +3,7 @@
 #include <GUILib/GLApplication.h>
 #include <string>
 #include <map>
+#include <atomic>
 #include <GUILib/TranslateWidget.h>
 #include <RBSimLib/AbstractRBEngine.h>
 #include <RBSimLib/WorldOracle.h>
@@ -35,7 +36,7 @@ public:
 class RobotControlInterface{
 protected:
 	Robot* robot = NULL;
-	bool connected = false;
+	atomic_bool connected = false;
 	bool motorsOn = false;
 
 	/* This array of joints stores ALL hinge joints (e.g. the ones directly controllable through physical motors) of the robot, including the auxiliary ones... */

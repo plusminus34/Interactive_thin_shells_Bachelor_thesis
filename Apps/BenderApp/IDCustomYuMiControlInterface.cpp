@@ -1,4 +1,6 @@
 
+#include <thread>
+#include <chrono>
 
 #include "IDCustomYuMiControlInterface.h"
 
@@ -14,7 +16,17 @@ IDCustomYuMiControlInterface::IDCustomYuMiControlInterface(Robot * robot, Genera
 }
 
 
+void IDCustomYuMiControlInterface::openCommunicationPort()
+{
+	YuMiControlInterface::openCommunicationPort();
 
+std::cout << "communication port is opened" << std::endl;
+	if(connected) {
+		if(!robotStreamTask_isRunning) {
+			std::async(std::launch::async, &IDCustomYuMiControlInterface::streamToRobotTask, this);
+		}
+	}
+}
 
 void IDCustomYuMiControlInterface::syncPhysicalRobotWithSimRobot(double dt) 
 {
@@ -26,6 +38,7 @@ void IDCustomYuMiControlInterface::syncPhysicalRobotWithSimRobot(double dt)
 
 
 // TODO: remove (cannot work as expected)
+/*
 void IDCustomYuMiControlInterface::setTargetMotorValuesFromGCRR(double dt)
 {
 
@@ -90,6 +103,7 @@ void IDCustomYuMiControlInterface::setTargetMotorValuesFromGCRR(double dt)
 	}
 
 }
+*/
 
 
 void IDCustomYuMiControlInterface::sendControlInputsToPhysicalRobot(double dt) {
@@ -114,6 +128,9 @@ void IDCustomYuMiControlInterface::sendControlInputsToPhysicalRobot(double dt) {
 	}
 
 	
+	commandBuffer.push(leftTargetJoints, rightTargetJoints, dt);
+	
+	/*
 	// check if old robot-communication is still running, wait if necessary
 	if(arm_left_synchronized.valid()) {
 		std::cout << "waiting for left arm ... ";
@@ -138,5 +155,71 @@ std::cout << "tcpSpeeds r/l : " << tcpSpeedRight.target << " " << tcpSpeedLeft.t
 	
 	arm_left_synchronized = std::async(getAndSendArm, &leftArm, leftTargetJoints, dt);
 	arm_right_synchronized = std::async(getAndSendArm, &rightArm, rightTargetJoints, dt);
+	*/
 
+	
 }
+
+
+void IDCustomYuMiControlInterface::streamToRobotTask()//YuMiCommandBuffer* buffer)
+{
+	robotStreamTask_isRunning = true;
+
+	std::cout << "launched async streamer" << std::endl;
+	while(connected)
+	{
+		std::cout << "trying to send commands" << std::endl;
+		commandBuffer.queueAccess.lock();
+		int buffer_size = commandBuffer.targets.size();
+		if(buffer_size > 0) {
+			std::cout <<"    found commands in buffer" << std::endl;
+			// get data from buffer
+			YuMiJointTarget yuMiJointTarget = commandBuffer.targets.front();
+			commandBuffer.targets.pop();
+
+			commandBuffer.queueAccess.unlock();
+
+			// compute control factor for time, to get closer to the target buffer size
+			double target_size = static_cast<double>(commandBuffer.buffer_target_size);
+			double delta = static_cast<double>(buffer_size - target_size);
+			double k = 1.0 + 0.5 * (delta / target_size);
+			double t = k * yuMiJointTarget.targetTime;
+
+			// wait for previous robot-communications to finish
+			if(arm_left_synchronized.valid()) {
+				std::cout << "waiting for left arm ... ";
+				arm_left_synchronized.wait();
+				std::cout << "done" << std::endl;
+			}
+			if(arm_right_synchronized.valid()) {
+				std::cout << "waiting for right arm ... ";
+				arm_right_synchronized.wait();
+				std::cout << "done" << std::endl;
+			}
+			// send new commands to robot
+			arm_left_synchronized = std::async(std::launch::async, &YuMiArm::getAndSendJointsToRobot, &leftArm, yuMiJointTarget.targetJointsLeft, t);
+			arm_right_synchronized = std::async(std::launch::async, &YuMiArm::getAndSendJointsToRobot, &rightArm, yuMiJointTarget.targetJointsRight, t);
+		}
+		else {
+			std::cout <<"    no commands in buffer" << std::endl;
+			commandBuffer.queueAccess.unlock();
+			// wait for further action (buffer is filled, or robot becomes disconnected)
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+	}
+
+	robotStreamTask_isRunning = false;
+}
+
+
+
+void YuMiCommandBuffer::push(YuMiJoints targetJointsLeft, YuMiJoints targetJointsRight, double targetTime)
+{
+	queueAccess.lock();
+	targets.push(YuMiJointTarget({targetJointsLeft, targetJointsRight, targetTime}));
+	queueAccess.unlock();
+}
+
+
+
+
