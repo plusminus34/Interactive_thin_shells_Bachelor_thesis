@@ -968,7 +968,7 @@ void ModularDesignWindow::drawScene() {
 
 	drawBodyFeaturePts();
 
-	if (bodyMeshSelected == false && highlightedFP == false && selectedFP == false)
+	if (bodyMeshSelected == false && highlightedFP == nullptr && selectedFP == nullptr)
 		bodyMesh->setMaterial(bodyMaterial);
 	else {
 		GLShaderMaterial colorMat;

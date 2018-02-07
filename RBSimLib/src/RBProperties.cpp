@@ -19,7 +19,7 @@ V3D RBEndEffector::getWheelTiltAxis() const
 V3D RBEndEffector::getWheelRho() const
 {
 	double wheelRadius = featureSize;
-	return getWheelTiltAxis().cross(getWheelAxis()).normalized() * wheelRadius;
+	return (V3D)(getWheelTiltAxis().cross(getWheelAxis()).normalized() * wheelRadius);
 }
 
 /**

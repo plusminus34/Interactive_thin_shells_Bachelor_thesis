@@ -103,13 +103,12 @@ V3D& V3D::operator *= (double val) {
 
 // return - *this
 V3D V3D::operator - () const {
-
-	return Vector3d::operator-();
+	return (V3D)Vector3d::operator-();
 }
 
 // *this - v
 V3D V3D::operator - (const V3D &v) const {
-	return Vector3d::operator-(v);
+	return (V3D)Vector3d::operator-(v);
 }
 
 double V3D::getComponentAlong(const V3D& other) {

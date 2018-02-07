@@ -111,7 +111,7 @@ class SoftLowerBarrierConstraint {
 
 public:
 
-	SoftLowerBarrierConstraint::SoftLowerBarrierConstraint(double limit);
+	SoftLowerBarrierConstraint(double limit);
 
 	virtual ~SoftLowerBarrierConstraint();
 
@@ -130,7 +130,7 @@ class SoftSymmetricBarrierConstraint {
 
 public:
 
-	SoftSymmetricBarrierConstraint::SoftSymmetricBarrierConstraint(double limit);
+	SoftSymmetricBarrierConstraint(double limit);
 
 	virtual ~SoftSymmetricBarrierConstraint();
 
