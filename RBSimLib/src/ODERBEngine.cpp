@@ -71,7 +71,12 @@ dGeomID ODERBEngine::getBoxGeom(BoxCDP* b) {
 
 void ODERBEngine::setCapsuleGeomTransformation(CapsuleCDP* c, dGeomID g) {
 	V3D ab = V3D(c->p1, c->p2);
-	dGeomCapsuleSetParams(g, c->r, ab.length());
+
+	if(c->hasFlatCaps)
+		dGeomCylinderSetParams(g, c->r, ab.length());
+	else
+		dGeomCapsuleSetParams(g, c->r, ab.length());
+
 	P3D cen = c->p1*0.5 + c->p2*0.5;
 	dGeomSetPosition(g, cen[0], cen[1], cen[2]);
 
@@ -108,7 +113,7 @@ dGeomID ODERBEngine::getCapsuleGeom(CapsuleCDP* c) {
 	if (c->hasFlatCaps)
 		g = dCreateCylinder(0, c->r, ab.length());
 	else
-		g = dCreateCCylinder(0, c->r, ab.length());
+		g = dCreateCapsule(0, c->r, ab.length());
 
 	setCapsuleGeomTransformation(c, g);
 
