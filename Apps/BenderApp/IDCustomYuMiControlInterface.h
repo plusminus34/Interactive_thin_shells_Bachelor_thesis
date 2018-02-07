@@ -23,7 +23,7 @@ class YuMiCommandBuffer
 	friend IDCustomYuMiControlInterface;
 
 protected:
-	atomic_int buffer_target_size = 3;
+	atomic_int buffer_target_size = 4;
 	std::queue<YuMiJointTarget> targets;
 	std::mutex queueAccess;
 
@@ -45,6 +45,7 @@ public:
 	std::future<bool> arm_left_synchronized;
 	std::future<bool> arm_right_synchronized;
 	atomic_bool robotStreamTask_isRunning = false;
+	std::future<void> robotStreamTaskFuture;
 
 	YuMiCommandBuffer commandBuffer;
 

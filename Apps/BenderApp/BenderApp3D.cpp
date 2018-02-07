@@ -1,5 +1,7 @@
 #include <GUILib/GLUtils.h>
 
+#include <Utils/Timer.h>
+
 #include <GUILib/GLMesh.h>
 #include <GUILib/GLContentManager.h>
 #include <MathLib/MathLib.h>
@@ -1030,7 +1032,8 @@ bool BenderApp3D::onCharacterPressedEvent(int key, int mods) {
 void BenderApp3D::process() {
 	//do the work here...
 
-	
+	Timer timer_simulation_one_frame;
+
 	simulationTime = 0;
 	maxRunningTime = 1.0 / desiredFrameRate;
 	femMesh->checkDerivatives = false;
@@ -1073,13 +1076,15 @@ void BenderApp3D::process() {
 
 	// output diff begin/end of center line
 	V3D delta_centerline = matchedFiber.back()->getWorldPosition() - matchedFiber.front()->getWorldPosition();
-	std::cout << "diff centerline: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
+//	std::cout << "diff centerline: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
 	delta_centerline = matchedFiber[matchedFiber.size()/2]->getWorldPosition() - matchedFiber.front()->getWorldPosition();
-	std::cout << "diff centerline_half: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
+//	std::cout << "diff centerline_half: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
+
+	
 
 	if(synchronizePhysicalRobot) {
 		if(robotControlInterface && robotControlInterface->isConnected()) {
-			robotControlInterface->syncPhysicalRobotWithSimRobot(1.0 / desiredFrameRate);
+			robotControlInterface->syncPhysicalRobotWithSimRobot(timer_simulation_one_frame.timeEllapsed());
 		}
 		else {
 			synchronizePhysicalRobot = false;

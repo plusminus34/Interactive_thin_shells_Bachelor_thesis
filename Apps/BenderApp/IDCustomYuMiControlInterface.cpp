@@ -23,7 +23,7 @@ void IDCustomYuMiControlInterface::openCommunicationPort()
 std::cout << "communication port is opened" << std::endl;
 	if(connected) {
 		if(!robotStreamTask_isRunning) {
-			std::async(std::launch::async, &IDCustomYuMiControlInterface::streamToRobotTask, this);
+			robotStreamTaskFuture = std::async(std::launch::async, &IDCustomYuMiControlInterface::streamToRobotTask, this);
 		}
 	}
 }
@@ -165,14 +165,11 @@ void IDCustomYuMiControlInterface::streamToRobotTask()//YuMiCommandBuffer* buffe
 {
 	robotStreamTask_isRunning = true;
 
-	std::cout << "launched async streamer" << std::endl;
 	while(connected)
 	{
-		std::cout << "trying to send commands" << std::endl;
 		commandBuffer.queueAccess.lock();
 		int buffer_size = commandBuffer.targets.size();
 		if(buffer_size > 0) {
-			std::cout <<"    found commands in buffer" << std::endl;
 			// get data from buffer
 			YuMiJointTarget yuMiJointTarget = commandBuffer.targets.front();
 			commandBuffer.targets.pop();
@@ -181,10 +178,11 @@ void IDCustomYuMiControlInterface::streamToRobotTask()//YuMiCommandBuffer* buffe
 
 			// compute control factor for time, to get closer to the target buffer size
 			double target_size = static_cast<double>(commandBuffer.buffer_target_size);
-			double delta = static_cast<double>(buffer_size - target_size);
-			double k = 1.0 + 0.5 * (delta / target_size);
+			double size = static_cast<double>(buffer_size);
+			double k = std::pow(target_size/(std::max(1.0,size)), 1.0);
 			double t = k * yuMiJointTarget.targetTime;
-
+std::cout << "streaming: n_buff = " << buffer_size << "  k = " << k << "  t/t_new = " 
+		  << yuMiJointTarget.targetTime << " / " << t << std::endl;
 			// wait for previous robot-communications to finish
 			if(arm_left_synchronized.valid()) {
 				std::cout << "waiting for left arm ... ";
