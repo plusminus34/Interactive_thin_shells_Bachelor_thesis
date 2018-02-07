@@ -289,7 +289,8 @@ BenderApp3D::BenderApp3D()
 			inverseDeformationSolver->objectiveFunction->parameterConstraints.
 				push_back(new ParameterConstraintObjective(jointAnglePars, i,
 														   true, true,
-														   1000, 0.0873));
+														   1000, 0.0873,
+														   -PI, PI));
 		}
 	}
 
@@ -481,7 +482,7 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 			nanogui::Alignment::Middle, 0, 4));
 		comboBoxOptimizationAlgorithm = new nanogui::ComboBox(selection, { "gradient descent", "quasi Newton: BFGS"});
 		comboBoxOptimizationAlgorithm->setCallback([this](int idx){inverseDeformationSolver->minimizer = minimizers[idx]; });
-		comboBoxOptimizationAlgorithm->setSelectedIndex(0);
+		comboBoxOptimizationAlgorithm->setSelectedIndex(1);
 
 
 		menu->addVariable("max Iterations", maxIterations);
@@ -565,7 +566,7 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 	/////////////////////
 	// second window
 	////////////////////
-	menu->addWindow(Eigen::Vector2i(260, 0), "");
+	menu->addWindow(Eigen::Vector2i(280, 0), "");
 
 	// synchronize physical robot
 	nanogui::Widget *physicalRobotControlTools = new nanogui::Widget(menu->window());

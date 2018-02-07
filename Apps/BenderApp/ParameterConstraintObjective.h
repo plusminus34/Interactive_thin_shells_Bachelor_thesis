@@ -1,5 +1,7 @@
 #pragma once
 
+#include <limits>
+
 #include "OptimizationLib/ObjectiveFunction.h"
 #include "OptimizationLib/SoftUnilateralConstraint.h"
 #include "ParameterSet.h"
@@ -20,7 +22,8 @@ private:
 public : 
 	ParameterConstraintObjective(ParameterSet * parameterSet, int parameterIndexLocal,
 								 bool useLowerLimit, bool useUpperLimit,
-								 double stiffness, double epsilon);
+								 double stiffness, double epsilon,
+								 double cap_lower_limit = std::numeric_limits<double>::lowest(), double cap_upper_limit = std::numeric_limits<double>::max());
 
 	~ParameterConstraintObjective();
 	

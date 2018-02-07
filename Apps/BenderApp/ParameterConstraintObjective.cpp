@@ -7,16 +7,17 @@
 
 ParameterConstraintObjective::ParameterConstraintObjective(ParameterSet * parameterSet, int parameterIndexLocal,
 														   bool useLowerLimit, bool useUpperLimit,
-														   double stiffness, double epsilon)
+														   double stiffness, double epsilon,
+														   double cap_lower_limit, double cap_upper_limit)
 	: parameterSet(parameterSet), parameterIndexLocal(parameterIndexLocal)
 {
 	std::pair<double, double> limits = parameterSet->getParameterLimitsByLocalIdx(parameterIndexLocal);
 
 	if(useLowerLimit) {
-		lowerConstraint = new SoftUnilateralConstraint(limits.first, stiffness, epsilon);
+		lowerConstraint = new SoftUnilateralConstraint(std::max(limits.first, cap_lower_limit), stiffness, epsilon);
 	}
 	if(useUpperLimit) {
-		upperConstraint = new SoftUnilateralUpperConstraint(limits.second, stiffness, epsilon);
+		upperConstraint = new SoftUnilateralUpperConstraint(std::min(limits.second, cap_upper_limit), stiffness, epsilon);
 	}
 }
 
