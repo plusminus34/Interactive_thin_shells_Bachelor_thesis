@@ -39,8 +39,8 @@ public:
 class IDCustomYuMiControlInterface : public YuMiControlInterface {
 
 public:
-	GeneralizedCoordinatesRobotRepresentation * robotParameters;	// TODO: remove
-	dVector q_GCRR_last;
+	//GeneralizedCoordinatesRobotRepresentation * robotParameters;	// TODO: remove
+	//dVector q_GCRR_last;
 
 	std::future<bool> arm_left_synchronized;
 	std::future<bool> arm_right_synchronized;
@@ -50,7 +50,7 @@ public:
 	YuMiCommandBuffer commandBuffer;
 
 public:
-	IDCustomYuMiControlInterface(Robot * robot, GeneralizedCoordinatesRobotRepresentation * robotParameters);
+	IDCustomYuMiControlInterface(Robot * robot);
 
 	virtual void openCommunicationPort();
 	virtual void syncPhysicalRobotWithSimRobot(double dt = 0.1);

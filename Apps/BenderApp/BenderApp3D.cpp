@@ -415,7 +415,7 @@ BenderApp3D::BenderApp3D()
 	///////////////////////////////
 	// Physical robot interface
 	///////////////////////////////
-	robotControlInterface = new IDCustomYuMiControlInterface(robot, generalizedRobotCoordinates);
+	robotControlInterface = new IDCustomYuMiControlInterface(robot);
 	//robotControlInterface = new YuMiControlInterface(robot);
 
 	robotControlInterface->controlPositionsOnly = true;
