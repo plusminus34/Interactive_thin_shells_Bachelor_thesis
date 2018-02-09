@@ -38,14 +38,22 @@ protected:
 
 	void clear();
 
-	// working data: structur-dependent
+	// working data: structur-dependent //////////////////
+	// set in initializeStructure()
+	int n_elements;
+	std::vector<std::array<int, 4> > elementNodes;		// indices of the nodes of each element
+	std::vector<std::array<int, 4> > elementNodeStarts; // indices at which the data for each node of the element starts (e.g. in x, X etc)
 
 
-
-	// working data: state dependent
+	// working data: state dependent /////////////////////
 	double energy;
 	//dVector gradient;
 	//DynamicArray<MTriplet>& hessianTriplets;
+	std::vector<Matrix3x3> dxdX;	// deformation gradient for each element
+	std::vector<double> dxdX_norm2;
+	std::vector<double> dxdX_logdet;
+
+
 
 public:
 	SimulationMesh();
@@ -95,8 +103,11 @@ public:
 	void prepare_upto_energy(dVector const & x);
 	void prepare_upto_hessian(dVector const & x);
 
+	double energyElement_i(int i, dVector const & x);
 	double energyElements(dVector const & x);
 	double energyPinnedNodeElements(dVector const & x);
+
+	void computeDeformationGradients(dVector const & x);
 
 
 };

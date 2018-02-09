@@ -7,11 +7,15 @@
 
 enum MaterialModel3D { MM_LINEAR_ISOTROPIC, MM_STVK, MM_NEO_HOOKEAN };
 
+class SimulationMesh;
+
 /**
 	This class implements Constant Strain Tetrahedral elements in 3D
 */
 class CSTElement3D : public SimMeshElement {
-private:
+friend SimulationMesh;
+
+protected:
     //material parameters...
     double shearModulus, bulkModulus; // -> default values set in constructor (50/50)
     //relates area/volume to the mass of the element
