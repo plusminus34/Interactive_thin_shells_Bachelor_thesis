@@ -38,6 +38,15 @@ protected:
 
 	void clear();
 
+	// working data: structur-dependent
+
+
+
+	// working data: state dependent
+	double energy;
+	//dVector gradient;
+	//DynamicArray<MTriplet>& hessianTriplets;
+
 public:
 	SimulationMesh();
 	~SimulationMesh();
@@ -72,4 +81,22 @@ public:
 			delete *it;
 		pinnedNodeElements.clear();
 	}
+
+	//////////////////////////////////
+	// LazyFEM functions
+	void initializeStructure();
+	void initializeState_xSolver();
+
+	// for structure
+
+
+	// for state
+
+	void prepare_upto_energy(dVector const & x);
+	void prepare_upto_hessian(dVector const & x);
+
+	double energyElements(dVector const & x);
+	double energyPinnedNodeElements(dVector const & x);
+
+
 };

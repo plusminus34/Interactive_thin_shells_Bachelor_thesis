@@ -1,3 +1,6 @@
+
+#include <iostream>
+
 #include <LazyFEMSimLib/CSTSimulationMesh3D.h>
 #include <OptimizationLib/NewtonFunctionMinimizer.h>
 #include <LazyFEMSimLib/CSTElement3D.h>
@@ -36,9 +39,11 @@ void read(FILE *fp, int &x, char &ch)
 
 
 
-//
+
 void CSTSimulationMesh3D::readMeshFromFile(const char* fName)
 {
+std::cerr << "Error: not properly implemented for LazyFEMLib (" << __FILE__ << ":" << __LINE__ << ")" << std::endl;
+exit(3);
 	FILE *fp = fopen(fName, "r");
 	tetgenio input;
 	input.mesh_dim = 3;
@@ -236,8 +241,8 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 												 massDensity, shearModulus, bulkModulus);
 		elements.push_back(newElem);
 	}
-	energyFunction = new FEMEnergyFunction();
-	energyFunction->initialize(this);
+	// initialize the FEM mesh
+	initializeStructure();
 }
 
 void add(std::map<int, int> &num, int k, int &cnt, std::vector<int> &arr)

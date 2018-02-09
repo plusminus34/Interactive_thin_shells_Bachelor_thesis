@@ -27,15 +27,15 @@ void FEMEnergyFunction::estimateNodalAccelerations(const dVector& xNew, dVector&
 	acc = xNew / (timeStep*timeStep) - simMesh->x / (timeStep*timeStep) - simMesh->v / timeStep;
 }
 
-//The net energy is: 1/2 a'M a + E + x'F, where E is the potential energy stored in the various elements
-double FEMEnergyFunction::computeValue(const dVector& s){
-	double totalEnergy = 0;
 
-	for (uint i=0;i<simMesh->elements.size();i++)
-		totalEnergy += simMesh->elements[i]->getEnergy(s, simMesh->X);
-	
-	for (uint i=0;i<simMesh->pinnedNodeElements.size();i++)
-		totalEnergy += simMesh->pinnedNodeElements[i]->getEnergy(s, simMesh->X);
+//The net energy is: 1/2 a'M a + E + x'F, where E is the potential energy stored in the various elements
+double FEMEnergyFunction::computeValue(const dVector& s)
+{
+	double totalEnergy = 0.0;
+
+	// static part of the energy
+	simMesh->prepare_upto_energy(s);
+	totalEnergy += simMesh->energy;
 
 	if (useDynamics){
 		int nDim = simMesh->x.size();
@@ -109,6 +109,8 @@ void FEMEnergyFunction::addGradientTo(dVector& grad, const dVector& s) {
 
 //this method gets called whenever a new best solution to the objective function is found
 void FEMEnergyFunction::setCurrentBestSolution(const dVector& s){
+	simMesh->prepare_upto_energy(s);	// note: this MAYBE could be skipped, since this will usually have been computed already at this point
+	simMesh->prepare_upto_hessian(s);
 	updateRegularizingSolutionTo(s);
 }
 

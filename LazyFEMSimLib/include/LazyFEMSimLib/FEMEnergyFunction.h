@@ -14,6 +14,7 @@ public:
 
 	//regularizer looks like: r/2 * (p-p0)'*(p-p0). This function can update p0 if desired, given the current value of s.
 	void updateRegularizingSolutionTo(const dVector &currentS);
+
 	virtual double computeValue(const dVector& s);
 
 	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& s);

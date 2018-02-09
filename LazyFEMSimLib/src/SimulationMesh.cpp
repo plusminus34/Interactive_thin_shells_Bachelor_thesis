@@ -1,9 +1,12 @@
+
+#include <iostream>
+
 #include <LazyFEMSimLib/SimulationMesh.h>
 #include <OptimizationLib/NewtonFunctionMinimizer.h>
 #include <GUILib/GLUtils.h>
 
 SimulationMesh::SimulationMesh(){
-	energyFunction = NULL;
+	energyFunction = new FEMEnergyFunction();
 	checkDerivatives = false;
 }
 
@@ -129,5 +132,68 @@ void SimulationMesh::fakeContactWithPlane(const Plane& plane){
 		}
 	}
 }
+
+
+
+
+void SimulationMesh::initializeStructure()
+{
+	// initialize the energy Function
+	energyFunction->initialize(this);
+
+	// precomputations based on the structure
+
+
+
+
+	// precomputations based on state
+	xSolver = x;
+	initializeState_xSolver();
+}
+
+
+
+// attention: consideres the sotate of xSolver, NOT of x
+void SimulationMesh::initializeState_xSolver()
+{
+	prepare_upto_energy(xSolver);
+	prepare_upto_hessian(xSolver);
+}
+
+
+void SimulationMesh::prepare_upto_energy(dVector const & x)
+{
+	energy = 0.0;
+	energy += energyElements(x);
+	energy += energyPinnedNodeElements(x);
+}
+
+void SimulationMesh::prepare_upto_hessian(dVector const & x)
+{
+
+}
+
+double SimulationMesh::energyElements(dVector const & x)
+{
+	double result = 0.0;
+	for (uint i = 0; i < elements.size() ;i++)
+		result += elements[i]->getEnergy(x, X);
+	return(result);
+}
+
+double SimulationMesh::energyPinnedNodeElements(dVector const & x)
+{
+	double result = 0.0;
+	for (uint i = 0; i < pinnedNodeElements.size(); i++)
+		result += pinnedNodeElements[i]->getEnergy(x, X);
+	return(result);
+}
+
+
+
+
+
+
+
 
 
