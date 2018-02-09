@@ -300,6 +300,7 @@ bool YuMiArm::getAndSendJointsToRobot(YuMiJoints yumiJoints, double moveTime){
 			std::cerr << "ERROR: Something is wrong in YuMiArm send and get joints and speed!" << std::endl;
 		}
 	}
+	return false;
 }
 
 

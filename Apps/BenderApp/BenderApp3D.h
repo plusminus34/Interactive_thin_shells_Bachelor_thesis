@@ -132,6 +132,14 @@ V3D mountBaseZDirectionRB_l;
 	nanogui::Button *connectRobotButton;
 	nanogui::Button *synchronizeRobotButton;
 
+	// timer for convergence of specific setup
+	bool measure_convergence_time = true;
+	Timer timer_convergence;
+	double timed_convergence_goal = 1e-5;
+	bool timer_is_running = false;
+	int i_step = -1;
+
+
 public:
 	// constructor
 	BenderApp3D();

@@ -15,7 +15,8 @@ public:
     void readMeshFromFile(const char* fName);
 	void readMeshFromFile_ply(char* fName, DynamicArray<P3D> const * add_input_points,
 							  double massDensity, double shearModulus, double bulkModulus,
-							  double scale = 1.0, V3D const & offset = V3D(0.0));
+							  double scale = 1.0, V3D const & offset = V3D(0.0),
+							  double maxTetVolume = -1.0);
 
     static void generateCubeTriMesh(char* fName);
 

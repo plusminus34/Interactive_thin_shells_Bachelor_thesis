@@ -239,6 +239,7 @@ GLMesh* OBJReader::loadOBJFile_slow(const char* fileName) {
 				result->addPoly(temporaryPolygon);
 		}
 	}
+	return(result);
 }
 
 GLMesh* OBJReader::loadOBJFile(const char* fileName){

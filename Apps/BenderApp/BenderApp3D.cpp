@@ -44,10 +44,17 @@ BenderApp3D::BenderApp3D()
 	const double rod_length = 0.3;
 	const P3D rod_center(0.0, 0.35, 0.50);
 
-	// measured (physical) values for "the green foam" are: (density, young, poisson) = (43.63, 2.135, 0.376)
-	double massDensity = 43.63;//130;//50;
-	double youngsModulus = 3.6e3;//3.0e4;//3.0e4;
-	double poissonRatio = 0.25;//0.376;//0.25;
+	// fem mesh coarsness
+	double maxTetVolume = 1.35e-6;
+
+	// measured (physical) values for "the green foam" are: (density, young, poisson) = (43.63, 2.135e4, 0.376)
+	//double massDensity = 43.63;//130;//50;
+	//double youngsModulus = 3.6e3;//3.0e4;//3.0e4;
+	//double poissonRatio = 0.25;//0.376;//0.25;
+
+	double massDensity = 43.63;
+	double youngsModulus = 2.135e4;
+	double poissonRatio = 0.376;
 
 	double shearModulus = youngsModulus / (2 * (1 + poissonRatio));
 	double bulkModulus = youngsModulus / (3 * (1 - 2 * poissonRatio));
@@ -72,16 +79,6 @@ BenderApp3D::BenderApp3D()
 
 	// create some points on centerline of the mesh
 	DynamicArray<P3D> centerlinePts;
-	//{
-	//	int m = 10;
-	//	centerlinePts.resize(m);
-	//	V3D pt1(-1.0, 0.0, 0.0);
-	//	V3D pt2(+1.0, 0.0, 0.0);
-	//	double dt = 1.0 / static_cast<double>(m-1);
-	//	for(int i = 0; i < m; ++i) {
-	//		centerlinePts[i] = pt1 + (pt2 - pt1) * dt*static_cast<double>(i);
-	//	}
-	//}
 	{
 		int m = 11;
 		centerlinePts.resize(m);
@@ -95,57 +92,29 @@ BenderApp3D::BenderApp3D()
 
 	// create mesh
 	femMesh = new BenderSimulationMesh<3>;
-	//femMesh->readMeshFromFile_ply("../data/3dModels/extruded_hexagon_0p1x2.ply", &centerlinePts,
-	//							  massDensity, shearModulus, bulkModulus,
-	//							  1.0/2.0 * rod_length, rod_center);
 	femMesh->readMeshFromFile_ply("../data/3dModels/square_rod_0p03x0p3.ply", &centerlinePts,
 								  massDensity, shearModulus, bulkModulus,
-								  1.0, rod_center);
-	femMesh->addGravityForces(V3D(0, -9.8, 0));
-	//femMesh->addGravityForces(V3D(0, 0.0, 0));
-	
+								  1.0, rod_center,
+								  maxTetVolume);
+	femMesh->addGravityForces(V3D(0, -9.8, 0));	
 
 
-	// create a fiber in mesh for matching objective
-	auto node_sequence_from_line_segment = [&](P3D const & pt1, P3D const & pt2, double tolerance,
-											   DynamicArray<Node*> & fiber)
+	// add a fiber in Mesh to match
+	auto node_sequence_from_points = [&](DynamicArray<P3D> & pts, double tolerance,
+										 DynamicArray<Node*> & fiber)
 	{
-		using T_i_t = std::tuple<int, double>;
-		DynamicArray<T_i_t> nodes_id_and_t(0);
-		//std::vector<double> t(0);
-
-		V3D vec(pt1, pt2);
-		double vec_length = vec.length();
-
-		// find all nodes close to the line segment
-		for(int i = 0; i < femMesh->nodes.size(); ++i) {
-			Node * node = femMesh->nodes[i];
-			P3D pt_node = node->getCoordinates(femMesh->X);
-			V3D pt1ToNode(pt1, pt_node);
-			double d2 = pt1ToNode.cross(vec).squaredNorm() / vec.squaredNorm();
-			if(d2 < tolerance*tolerance) {	// node within cylinder
-				double t_temp = vec.dot(pt1ToNode) / vec.length();
-				if(t_temp > -tolerance && t_temp < vec.length() + tolerance) {
-					nodes_id_and_t.push_back(std::make_tuple(i, t_temp));
+		fiber.resize(0);
+		for(P3D pt : pts) {
+			pt += rod_center;
+			for(Node * node : femMesh->nodes) {
+				if((pt - node->getCoordinates(femMesh->X)).length() < tolerance) {
+					fiber.push_back(node);
+					break;
 				}
 			}
 		}
-		// sort nodes
-		std::sort(nodes_id_and_t.begin(), nodes_id_and_t.end(), 
-			[](T_i_t const & n1, T_i_t const & n2) -> bool {return(std::get<1>(n1) < std::get<1>(n2));});
-
-		// create fiber (sequence of nodes)
-		fiber.resize(0);
-		for(T_i_t i_t : nodes_id_and_t) {
-			fiber.push_back(femMesh->nodes[std::get<0>(i_t)]);
-		}
 	};
-
-	// add a fiber in Mesh to match
-	node_sequence_from_line_segment(rod_center + P3D(-0.5*rod_length,0.0,0.0),
-									rod_center + P3D(0.5*rod_length,0.0,0.0),
-									0.01*rod_length,
-									matchedFiber);
+	node_sequence_from_points(centerlinePts, 0.0001, matchedFiber);
 
 
 	// initialize minimization algorithms
@@ -391,11 +360,11 @@ BenderApp3D::BenderApp3D()
 
 
 
-	set_robot_mount_from_plane(0, -rod_length*0.5, 0.01*rod_length,
+	set_robot_mount_from_plane(0, -rod_length*0.5, 0.001*rod_length,
 								mount_id_right_gripper,
 								mountBaseOriginMesh_r, mountBaseCoordinatesMesh_r,
 								mountBaseOriginRB_r, mountBaseCoordinatesRB_r);
-	set_robot_mount_from_plane(0, +rod_length*0.5, 0.01*rod_length,
+	set_robot_mount_from_plane(0, +rod_length*0.5, 0.001*rod_length,
 								mount_id_left_gripper,
 								mountBaseOriginMesh_l, mountBaseCoordinatesMesh_l,
 								mountBaseOriginRB_l, mountBaseCoordinatesRB_l);
@@ -1052,6 +1021,15 @@ void BenderApp3D::process() {
 			//break;
 		}
 		else if(optimizeObjective) {
+			
+			if(measure_convergence_time && (! timer_is_running))
+			{
+				timer_is_running = true;
+				timer_convergence.restart();
+			}
+			if(timer_is_running) {i_step++;}
+			
+			
 			inverseDeformationSolver->objectiveFunction->setRegularizerValue(xiRegularizerValue);
 			double o_new = 0;
 			o_new = inverseDeformationSolver->solveOptimization(solveResidual,
@@ -1066,6 +1044,13 @@ void BenderApp3D::process() {
 			o_last = o_new;
 			e_last = e_new;
 
+			if(measure_convergence_time && timer_is_running && i_step > 0 && std::fabs(delta_o) < timed_convergence_goal) {
+				double t = timer_convergence.timeEllapsed();
+				std::cout << "converged, time was:" << t << "s  (at step # " << i_step << ")" << std::endl;
+				char c;
+				std::cin >> c;
+			}
+
 			break;
 		}
 		if(!optimizeObjective) {
@@ -1076,9 +1061,9 @@ void BenderApp3D::process() {
 
 	// output diff begin/end of center line
 	V3D delta_centerline = matchedFiber.back()->getWorldPosition() - matchedFiber.front()->getWorldPosition();
-//	std::cout << "diff centerline: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
+	std::cout << "diff centerline: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
 	delta_centerline = matchedFiber[matchedFiber.size()/2]->getWorldPosition() - matchedFiber.front()->getWorldPosition();
-//	std::cout << "diff centerline_half: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
+	std::cout << "diff centerline_half: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
 
 	
 
@@ -1144,7 +1129,7 @@ void BenderApp3D::drawScene() {
 		if(!mp->mount->active) {
 			color = color*0.5 + red*0.5;
 		}
-		if(mp->mount == femMesh->mounts[selected_mount]) {
+		if(selected_mount >= 0 && mp->mount == femMesh->mounts[selected_mount]) {
 			size *= 1.7;
 		}
 

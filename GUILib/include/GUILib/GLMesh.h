@@ -167,7 +167,7 @@ public:
 		default constructor.
 	*/
 	GLIndexedTriangle(int i1, int i2, int i3, bool flipNormal = false){
-		indexes.reserve(3);
+		indexes.resize(3);
 		if (flipNormal == false){
 			indexes[0]=i1; indexes[1] = i2; indexes[2] = i3;
 		}else{

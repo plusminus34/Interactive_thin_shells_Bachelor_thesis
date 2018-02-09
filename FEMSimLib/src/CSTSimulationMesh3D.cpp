@@ -156,7 +156,8 @@ void CSTSimulationMesh3D::readMeshFromFile(const char* fName)
 
 void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> const * add_input_points,
 											   double massDensity, double shearModulus, double bulkModulus,
-											   double scale, V3D const & offset)
+											   double scale, V3D const & offset,
+											   double maxTetVolume)
 {
 	// input objects for tetget
 	tetgenio input, addinput;
@@ -171,8 +172,11 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 	//b.refine = 1;
 	b.quality = 1;
 
-	//b.fixedvolume = 1;
-	//b.maxvolume = 1.35e-6;
+	if(maxTetVolume > 0.0) {
+		b.fixedvolume = 1;
+		b.maxvolume = maxTetVolume;//1.35e-6;
+	}
+
 
 	//b.minratio = 2.0;
 	//b.mindihedral = 1.0;

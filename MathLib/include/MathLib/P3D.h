@@ -45,6 +45,8 @@ public:
 	//return *this + v
 	P3D operator + (const Vector3d &v) const;
 
+	P3D operator + (const V3D &v) const;
+
 	//return *this - p
 	V3D operator - (const P3D &p) const;
 

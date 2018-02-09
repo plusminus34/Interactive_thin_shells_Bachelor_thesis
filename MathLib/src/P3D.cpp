@@ -63,6 +63,11 @@ P3D P3D::operator+(const Vector3d &v) const {
 	return P3D(Vector3d::operator+(v));
 }
 
+//return *this + v
+P3D P3D::operator+(const V3D &v) const {
+	return P3D(Vector3d::operator+(v));
+}
+
 //*this += p
 P3D& P3D::operator += (const P3D& p) {
 	Vector3d::operator+=(p);
