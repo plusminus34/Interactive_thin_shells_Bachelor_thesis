@@ -7,8 +7,8 @@
 #include <MathLib/MathLib.h>
 #include <MathLib/Plane.h>
 
-#include <FEMSimLib/CSTSimulationMesh3D.h>
-#include <FEMSimLib/MassSpringSimulationMesh3D.h>
+#include <LazyFEMSimLib/CSTSimulationMesh3D.h>
+#include <LazyFEMSimLib/MassSpringSimulationMesh3D.h>
 #include <GUILib/GLUtils.h>
 
 #include <RBSimLib/ODERBEngine.h>

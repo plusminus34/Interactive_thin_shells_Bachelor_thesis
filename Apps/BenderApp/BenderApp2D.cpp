@@ -4,9 +4,9 @@
 #include <GUILib/GLContentManager.h>
 #include <MathLib/MathLib.h>
 #include <MathLib/Plane.h>
-#include <FEMSimLib/CSTSimulationMesh2D.h>
-#include <FEMSimLib/CSTSimulationMesh3D.h>
-#include <FEMSimLib/MassSpringSimulationMesh3D.h>
+#include <LazyFEMSimLib/CSTSimulationMesh2D.h>
+#include <LazyFEMSimLib/CSTSimulationMesh3D.h>
+#include <LazyFEMSimLib/MassSpringSimulationMesh3D.h>
 #include <GUILib/GLUtils.h>
 
 #include "OptimizationLib/GradientDescentFunctionMinimizer.h"

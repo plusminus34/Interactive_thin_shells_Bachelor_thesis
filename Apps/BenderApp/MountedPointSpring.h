@@ -1,7 +1,7 @@
 #include <type_traits>
 
-#include "FEMSimLib/FixedPointSpring2D.h"
-#include "FEMSimLib/FixedPointSpring3D.h"
+#include "LazyFEMSimLib/FixedPointSpring2D.h"
+#include "LazyFEMSimLib/FixedPointSpring3D.h"
 #include "Mount.h"
 
 

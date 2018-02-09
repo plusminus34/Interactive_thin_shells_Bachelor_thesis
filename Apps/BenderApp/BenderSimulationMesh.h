@@ -3,8 +3,8 @@
 #include <array>
 #include <type_traits>
 
-#include "FEMSimLib/CSTSimulationMesh2D.h"
-#include "FEMSimLib/CSTSimulationMesh3D.h"
+#include "LazyFEMSimLib/CSTSimulationMesh2D.h"
+#include "LazyFEMSimLib/CSTSimulationMesh3D.h"
 #include "Mount.h"
 
 

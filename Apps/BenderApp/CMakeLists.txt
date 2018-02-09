@@ -11,7 +11,7 @@ target_link_libraries(${PROJECT_NAME}
 	MathLib
 	GUILib
 	OptimizationLib
-	FEMSimLib
+	LazyFEMSimLib
 	RBSimLib
 	ControlLib
 	YuMiLib

@@ -1,7 +1,7 @@
 #include <vector>
 #pragma once
 
-#include "FEMSimLib/SimulationMesh.h"
+#include "LazyFEMSimLib/SimulationMesh.h"
 
 
 class MeshObjective {
