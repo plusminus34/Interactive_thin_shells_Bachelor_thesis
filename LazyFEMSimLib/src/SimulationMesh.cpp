@@ -186,12 +186,26 @@ void SimulationMesh::prepare_upto_energy(dVector const & x)
 
 void SimulationMesh::prepare_upto_hessian(dVector const & x)
 {
+	// prepare (parts of) gradient
+	gradient.resize(x.size());
+	gradient.setZero();
+
+	addGradientElements(x, gradient);
+	addGradientPinnedNodeElements(x, gradient);
+
+	// prepare (parts of) hessian
+	//hessianTriplets_elements.resize(n_elements * n_triplets_element);
+	hessianTriplets.resize(0);
+	addHessianElements(x, hessianTriplets);
+	addHessianPinnedNodeElements(x, hessianTriplets);
 
 }
 
 
 double SimulationMesh::energyElement_i(int i, dVector const & x)
 {
+	// NEO HOOKEAN material model!
+
 	CSTElement3D * element = static_cast<CSTElement3D *>(elements[i]);
 	double shearM = element->shearModulus;
 	double bulkM = element->bulkModulus;
@@ -206,10 +220,9 @@ double SimulationMesh::energyElement_i(int i, dVector const & x)
 
 double SimulationMesh::energyElements(dVector const & x)
 {
-	// NEO HOOKEAN material model!
 	double result = 0.0;
 	
-	for (uint i = 0; i < elements.size() ; i++) {
+	for (size_t i = 0; i < elements.size() ; i++) {
 		result += energyElement_i(i, x);
 	}
 	
@@ -221,10 +234,77 @@ double SimulationMesh::energyElements(dVector const & x)
 double SimulationMesh::energyPinnedNodeElements(dVector const & x)
 {
 	double result = 0.0;
-	for (uint i = 0; i < pinnedNodeElements.size(); i++) {
+	for (size_t i = 0; i < pinnedNodeElements.size(); i++) {
 		result += pinnedNodeElements[i]->getEnergy(x, X);
 	}
 	return(result);
+}
+
+
+void SimulationMesh::addGradientElement_i(int i, dVector const & x, dVector & grad)
+{
+	// NEO HOOKEAN material model!
+
+	CSTElement3D * element = static_cast<CSTElement3D *>(elements[i]);
+	Matrix3x3 & dEdF = element->dEdF;
+	Matrix3x3 & dXInv = element->dXInv;
+	std::array<V3D,4> dEdx;
+
+	double shearM = element->shearModulus;
+	double bulkM = element->bulkModulus;
+	double restShapeVolume = element->restShapeVolume;
+
+	// compute gradient components
+	dEdF = dxdX[i] * shearM + dxdX_invT[i] * (-shearM + bulkM * dxdX_logdet[i]);
+	
+	dEdx[1] = V3D(dEdF(0, 0) * dXInv(0, 0) + dEdF(0, 1) * dXInv(0, 1) + dEdF(0, 2) * dXInv(0, 2), dEdF(1, 0) * dXInv(0, 0) + dEdF(1, 1) * dXInv(0, 1) + dEdF(1, 2) * dXInv(0, 2), dEdF(2, 0) * dXInv(0, 0) + dEdF(2, 1) * dXInv(0, 1) + dEdF(2, 2) * dXInv(0, 2)) * restShapeVolume;
+	dEdx[2] = V3D(dEdF(0, 0) * dXInv(1, 0) + dEdF(0, 1) * dXInv(1, 1) + dEdF(0, 2) * dXInv(1, 2), dEdF(1, 0) * dXInv(1, 0) + dEdF(1, 1) * dXInv(1, 1) + dEdF(1, 2) * dXInv(1, 2), dEdF(2, 0) * dXInv(1, 0) + dEdF(2, 1) * dXInv(1, 1) + dEdF(2, 2) * dXInv(1, 2)) * restShapeVolume;
+	dEdx[3] = V3D(dEdF(0, 0) * dXInv(2, 0) + dEdF(0, 1) * dXInv(2, 1) + dEdF(0, 2) * dXInv(2, 2), dEdF(1, 0) * dXInv(2, 0) + dEdF(1, 1) * dXInv(2, 1) + dEdF(1, 2) * dXInv(2, 2), dEdF(2, 0) * dXInv(2, 0) + dEdF(2, 1) * dXInv(2, 1) + dEdF(2, 2) * dXInv(2, 2)) * restShapeVolume;
+	dEdx[0] = -dEdx[1] - dEdx[2] - dEdx[3];
+
+	for (int j = 0; j<4; j++) {
+		for (int k = 0; k<3; k++) {
+			grad[elementNodeStarts[i][j] + k] += dEdx[j][k];
+		}
+	}
+}
+
+void SimulationMesh::addGradientElements(dVector const & x, dVector & grad)
+{
+	for (size_t i = 0; i < elements.size(); i++) {
+		addGradientElement_i(i, x, grad);
+	}
+}
+
+void SimulationMesh::addGradientPinnedNodeElements(dVector const & x, dVector & grad)
+{
+	for (size_t i = 0; i < pinnedNodeElements.size(); i++) {
+		pinnedNodeElements[i]->addEnergyGradientTo(x, X, grad);
+	}
+}
+
+
+
+void SimulationMesh::addHessianElement_i(int i, dVector const & x, std::vector<MTriplet> & hessianTriplets)
+{
+	// NEO HOOKEAN material model!
+	
+	
+}
+
+void SimulationMesh::addHessianElements(dVector const & x, std::vector<MTriplet> & hessianTriplets)
+{
+	for (size_t i = 0; i < elements.size(); i++) {
+		elements[i]->addEnergyHessianTo(x, X, hessianTriplets);
+	}
+}
+
+
+void SimulationMesh::addHessianPinnedNodeElements(dVector const & x, std::vector<MTriplet> & hessianTriplets)
+{
+	for (size_t i = 0; i < pinnedNodeElements.size(); i++) {
+		pinnedNodeElements[i]->addEnergyHessianTo(x, X, hessianTriplets);
+	}
 }
 
 
@@ -233,6 +313,8 @@ void SimulationMesh::computeDeformationGradients(dVector const & x)
 	dxdX.resize(n_elements);
 	dxdX_norm2.resize(n_elements);
 	dxdX_logdet.resize(n_elements);
+	dxdX_inv.resize(n_elements);
+	dxdX_invT.resize(n_elements);
 	
 	Matrix3x3 dx;
 	for(int i = 0; i < n_elements; ++i) {
@@ -257,6 +339,8 @@ void SimulationMesh::computeDeformationGradients(dVector const & x)
 
 		dxdX_norm2[i] = dxdX[i].squaredNorm();
 		dxdX_logdet[i] = log(dxdX[i].determinant());
+		dxdX_inv[i] = dxdX[i].inverse();
+		dxdX_invT[i] = dxdX_inv[i].transpose();
 	}
 }
 

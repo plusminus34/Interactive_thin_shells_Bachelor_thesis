@@ -57,11 +57,8 @@ double FEMEnergyFunction::computeValue(const dVector& s)
 }
 
 void FEMEnergyFunction::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& s) {
-	for (uint i = 0;i < simMesh->elements.size();i++)
-		simMesh->elements[i]->addEnergyHessianTo(s, simMesh->X, hessianEntries);
 
-	for (uint i = 0;i < simMesh->pinnedNodeElements.size();i++)
-		simMesh->pinnedNodeElements[i]->addEnergyHessianTo(s, simMesh->X, hessianEntries);
+	hessianEntries.insert(hessianEntries.end(), simMesh->hessianTriplets.begin(), simMesh->hessianTriplets.end());
 
 	int nDim = s.size();
 
@@ -79,15 +76,8 @@ void FEMEnergyFunction::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntri
 void FEMEnergyFunction::addGradientTo(dVector& grad, const dVector& s) {
 //	estimateGradientAt(dE_ds, s);
 //	return &dE_ds;
-	if (grad.size() != s.size())
-		resize(grad, s.size());
-
-	//take into account the gradient of the deformation energy
-	for (uint i=0;i<simMesh->elements.size();i++)
-		simMesh->elements[i]->addEnergyGradientTo(s, simMesh->X, grad);
 	
-	for (uint i=0;i<simMesh->pinnedNodeElements.size();i++)
-		simMesh->pinnedNodeElements[i]->addEnergyGradientTo(s, simMesh->X, grad);
+	grad = simMesh->gradient;
 
 	int nDim = simMesh->x.size();
 

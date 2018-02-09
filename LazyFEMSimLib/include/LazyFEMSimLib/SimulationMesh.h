@@ -47,11 +47,15 @@ protected:
 
 	// working data: state dependent /////////////////////
 	double energy;
-	//dVector gradient;
-	//DynamicArray<MTriplet>& hessianTriplets;
+	dVector gradient;
+	//int n_triplets_element = ;
+	std::vector<MTriplet> hessianTriplets;
+
 	std::vector<Matrix3x3> dxdX;	// deformation gradient for each element
 	std::vector<double> dxdX_norm2;
 	std::vector<double> dxdX_logdet;
+	std::vector<Matrix3x3> dxdX_inv;
+	std::vector<Matrix3x3> dxdX_invT;
 
 
 
@@ -106,6 +110,14 @@ public:
 	double energyElement_i(int i, dVector const & x);
 	double energyElements(dVector const & x);
 	double energyPinnedNodeElements(dVector const & x);
+
+	void addGradientElement_i(int i, dVector const & x, dVector & grad);
+	void addGradientElements(dVector const & x, dVector & grad);
+	void addGradientPinnedNodeElements(dVector const & x, dVector & grad);
+
+	void addHessianElement_i(int i, dVector const & x, std::vector<MTriplet> & hessianTriplets);
+	void addHessianElements(dVector const & x, std::vector<MTriplet> & hessianTriplets);
+	void addHessianPinnedNodeElements(dVector const & x, std::vector<MTriplet> & hessianTriplets);
 
 	void computeDeformationGradients(dVector const & x);
 
