@@ -157,6 +157,27 @@ void SimulationMesh::initializeStructure()
 	}
 
 
+	// precompute a term for the Hessian
+	dFdXij_all.resize(n_elements);
+	for(int i_e = 0; i_e < n_elements; ++i_e) {
+		CSTElement3D * element = dynamic_cast<CSTElement3D *>(elements[i_e]);
+		std::array<std::array<Matrix3x3,3>,4> & dFdXij = dFdXij_all[i_e];
+
+		for (int i = 0; i < 4; ++i) {
+			for (int j = 0; j < 3; ++j) {
+				dFdXij[i][j].setZero();
+				if (i > 0) {
+					dFdXij[i][j](j, i - 1) = 1;
+				}
+				else {
+					dFdXij[i][j](j, 0) = dFdXij[i][j](j, 1) = dFdXij[i][j](j, 2) = -1;
+				}
+				dFdXij[i][j] = dFdXij[i][j] * element->dXInv;
+			}
+		}
+	}
+
+
 
 	// precomputations based on state
 	xSolver = x;
@@ -285,17 +306,55 @@ void SimulationMesh::addGradientPinnedNodeElements(dVector const & x, dVector & 
 
 
 
-void SimulationMesh::addHessianElement_i(int i, dVector const & x, std::vector<MTriplet> & hessianTriplets)
+void SimulationMesh::addHessianElement_i(int i_e, dVector const & x, std::vector<MTriplet> & hessianTriplets)
 {
 	// NEO HOOKEAN material model!
-	
-	
+	CSTElement3D * element = static_cast<CSTElement3D *>(elements[i_e]);
+	Matrix3x3 & Finv = dxdX_inv[i_e];
+	Matrix3x3 & FinvT = dxdX_invT[i_e];
+	double Flogdet = dxdX_logdet[i_e];
+	Matrix3x3 & dXInv = element->dXInv;
+	double & shearModulus = element->shearModulus;
+	double & bulkModulus = element->bulkModulus;
+	double & restShapeVolume = element->restShapeVolume;
+
+	std::array<std::array<Matrix3x3,3>,4> & dFdXij = dFdXij_all[i_e];
+
+	for (int i = 0; i < 4; ++i) {
+		for(int j = 0; j < 3; ++j) {
+			Matrix3x3 dF = dFdXij[i][j];
+			Matrix3x3 dP = shearModulus * dF;
+			dP = dP + (shearModulus - bulkModulus * Flogdet) * FinvT * dF.transpose() * FinvT;
+			Matrix3x3 tmpM = Finv * dF;
+			dP = dP + bulkModulus * tmpM.trace() * FinvT;
+			Matrix3x3 dH = restShapeVolume * dP * dXInv.transpose();
+
+			for (int ii = 0;ii < 3;++ii) {
+				for (int jj = 0;jj < 3;++jj) {
+					element->ddEdxdx[ii + 1][i](jj, j) = dH(jj, ii);
+				}
+			}
+			element->ddEdxdx[0][i](0, j) = -dH(0, 2) - dH(0, 1) - dH(0, 0);
+			element->ddEdxdx[0][i](1, j) = -dH(1, 2) - dH(1, 1) - dH(1, 0);
+			element->ddEdxdx[0][i](2, j) = -dH(2, 2) - dH(2, 1) - dH(2, 0);
+		}
+	}
+
+	for (int i = 0;i < 4;i++) {
+		for (int j = 0;j < 4;j++) {
+			addSparseMatrixDenseBlockToTriplet(hessianTriplets, elementNodeStarts[i_e][i], elementNodeStarts[i_e][j], element->ddEdxdx[i][j], true);
+		}
+	}
+
+
+
 }
 
 void SimulationMesh::addHessianElements(dVector const & x, std::vector<MTriplet> & hessianTriplets)
 {
 	for (size_t i = 0; i < elements.size(); i++) {
-		elements[i]->addEnergyHessianTo(x, X, hessianTriplets);
+		//elements[i]->addEnergyHessianTo(x, X, hessianTriplets);
+		addHessianElement_i(i, x, hessianTriplets);
 	}
 }
 

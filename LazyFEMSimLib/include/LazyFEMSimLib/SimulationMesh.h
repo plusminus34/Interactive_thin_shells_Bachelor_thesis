@@ -57,7 +57,7 @@ protected:
 	std::vector<Matrix3x3> dxdX_inv;
 	std::vector<Matrix3x3> dxdX_invT;
 
-
+	std::vector<std::array<std::array<Matrix3x3,3>,4> > dFdXij_all;
 
 public:
 	SimulationMesh();
@@ -96,13 +96,12 @@ public:
 
 	//////////////////////////////////
 	// LazyFEM functions
-	void initializeStructure();
-	void initializeState_xSolver();
 
 	// for structure
-
+	void initializeStructure();
 
 	// for state
+	void initializeState_xSolver();
 
 	void prepare_upto_energy(dVector const & x);
 	void prepare_upto_hessian(dVector const & x);
