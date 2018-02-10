@@ -14,6 +14,7 @@
 #include "BenderSimulationMesh.h"
 #include "Trajectory3Dplus.h"
 #include "InverseDeformationSolver.h"
+#include "RobotMount.h"
 
 
 /**
