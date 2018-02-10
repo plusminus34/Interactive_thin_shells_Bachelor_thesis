@@ -3,10 +3,11 @@
 #include <chrono>
 
 #include "IDCustomYuMiControlInterface.h"
+#include "RobotMount.h"
 
 
-IDCustomYuMiControlInterface::IDCustomYuMiControlInterface(Robot * robot) 
-	: YuMiControlInterface(robot)
+IDCustomYuMiControlInterface::IDCustomYuMiControlInterface(Robot * robot, RobotParameters * robotParameters) 
+	: YuMiControlInterface(robot), robotParameters(robotParameters)
 {
 	globalTCPLeft.target = V3D(0.0, 0.0, 0.0);
 	globalTCPRight.target = V3D(0.0, 0.0, 0.0);
@@ -30,11 +31,57 @@ std::cout << "communication port is opened" << std::endl;
 
 void IDCustomYuMiControlInterface::syncPhysicalRobotWithSimRobot(double dt) 
 {
-	//setTargetMotorValuesFromGCRR(dt);
-	setTargetMotorValuesFromSimRobotState(dt);
+	setTargetMotorValuesIDRobotParameters(dt);
+	//setTargetMotorValuesFromSimRobotState(dt);
 	sendControlInputsToPhysicalRobot(dt);
 }
 
+
+
+void IDCustomYuMiControlInterface::setTargetMotorValuesIDRobotParameters(double dt)
+{
+
+	// the generalized coordinates, i.e. 
+	dVector q_IDRP;
+	robotParameters->pullVec(q_IDRP);
+	// set the target motor values of all joints of the robot, using the values provided by the robotParameter class of the Inverse Deformation App
+	for(int i = 0; i < robot->getJointCount(); ++i) {
+		HingeJoint* hj = dynamic_cast<HingeJoint*>(robot->getJoint(i));
+		if (!hj) continue;
+
+		int idx_GCRR = robotParameters->robotParameters->getQIndexForJoint(hj);
+		int idx_IDRP = idx_GCRR-6;
+
+		hj->motor.targetMotorAngle = q_IDRP[idx_IDRP];
+
+		//we expect we have dt time to go from the current position to the target position... we ideally want to ensure that the motor gets there exactly dt time from now, so we must limit its velocity...
+		double speedLimit = fabs(hj->motor.targetMotorAngle - hj->motor.currentMotorAngle) / dt;
+		hj->motor.targetMotorVelocity = speedLimit;
+	}
+
+	globalTCPLeft.target = robotParameters->robotParameters->getWorldCoordinatesFor(localTCPLeft, robot->getRBByName("link_7_l"));
+	V3D vecTCPLeft = globalTCPLeft.target - globalTCPLeft.current;
+	double lengthVecTCPLeft = vecTCPLeft.length();
+	tcpSpeedLeft.target = (unsigned int)round(lengthVecTCPLeft*1000.0f/dt*speedWeight);
+
+	if(tcpSpeedLeft.target < minSpeed){
+		tcpSpeedLeft.target = minSpeed;
+	} else if(tcpSpeedLeft.target > maxSpeed){
+		tcpSpeedLeft.target = maxSpeed;
+	}
+
+	globalTCPRight.target = robotParameters->robotParameters->getWorldCoordinatesFor(localTCPRight, robot->getRBByName("link_7_r"));
+	V3D vecTCPRight = globalTCPRight.target - globalTCPRight.current;
+	double lengthVecTCPRight = vecTCPRight.length();
+	tcpSpeedRight.target = (unsigned int)round(lengthVecTCPRight*1000.0f/dt*speedWeight);
+
+	if(tcpSpeedRight.target < minSpeed){
+		tcpSpeedRight.target = minSpeed;
+	} else if(tcpSpeedRight.target > maxSpeed){
+		tcpSpeedRight.target = maxSpeed;
+	}
+
+}
 
 
 

@@ -45,7 +45,7 @@ BenderApp3D::BenderApp3D()
 	const P3D rod_center(0.0, 0.35, 0.50);
 
 	// fem mesh coarsness
-	double maxTetVolume = 1.35e-6;
+	double maxTetVolume = -1.35e-6;
 
 	// measured (physical) values for "the green foam" are: (density, young, poisson) = (43.63, 2.135e4, 0.376)
 	//double massDensity = 43.63;//130;//50;
@@ -251,7 +251,9 @@ BenderApp3D::BenderApp3D()
 
 
 	// create a parameter set with the above robot coordinatespr
-	inverseDeformationSolver->parameterSets.push_back(new RobotParameters(generalizedRobotCoordinates));
+	robotMountParameters = new RobotParameters(generalizedRobotCoordinates);
+	inverseDeformationSolver->parameterSets.push_back(robotMountParameters);
+	
 	// create constraints for that parameter set (i.e. the joint angles)
 	{
 		ParameterSet * jointAnglePars = inverseDeformationSolver->parameterSets.back();
@@ -261,7 +263,7 @@ BenderApp3D::BenderApp3D()
 				push_back(new ParameterConstraintObjective(jointAnglePars, i,
 														   true, true,
 														   1000, 0.0873,
-														   -PI, PI));
+														   -2.0*PI, 2.0*PI));
 		}
 	}
 
@@ -384,7 +386,7 @@ BenderApp3D::BenderApp3D()
 	///////////////////////////////
 	// Physical robot interface
 	///////////////////////////////
-	robotControlInterface = new IDCustomYuMiControlInterface(robot);
+	robotControlInterface = new IDCustomYuMiControlInterface(robot, robotMountParameters);
 	//robotControlInterface = new YuMiControlInterface(robot);
 
 	robotControlInterface->controlPositionsOnly = true;

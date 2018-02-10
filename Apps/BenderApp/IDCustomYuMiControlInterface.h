@@ -5,7 +5,7 @@
 #include <queue>
 
 #include "ControlLib/YuMiControlInterface.h"
-#include "ControlLib/GeneralizedCoordinatesRobotRepresentation.h"
+#include "RobotMount.h"
 
 
 class IDCustomYuMiControlInterface;
@@ -38,6 +38,9 @@ public:
 
 class IDCustomYuMiControlInterface : public YuMiControlInterface {
 
+protected:
+	RobotParameters *robotParameters;
+
 public:
 	//GeneralizedCoordinatesRobotRepresentation * robotParameters;	// TODO: remove
 	//dVector q_GCRR_last;
@@ -50,11 +53,13 @@ public:
 	YuMiCommandBuffer commandBuffer;
 
 public:
-	IDCustomYuMiControlInterface(Robot * robot);
+	IDCustomYuMiControlInterface(Robot * robot, RobotParameters * robotParameters);
 
 	virtual void openCommunicationPort();
 	virtual void syncPhysicalRobotWithSimRobot(double dt = 0.1);
 	virtual void sendControlInputsToPhysicalRobot(double dt);
+
+	void setTargetMotorValuesIDRobotParameters(double dt);
 	
 	//void setTargetMotorValuesFromGCRR(double dt);
 

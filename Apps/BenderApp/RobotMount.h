@@ -9,6 +9,7 @@
 #include "ParameterSet.h"
 
 class RBSphereCollisionObjective;
+class IDCustomYuMiControlInterface;
 
 
 class RobotMount : public Mount {
@@ -31,10 +32,12 @@ public:
 class RobotParameters : public ParameterSet {
 	friend RobotMount;
 	friend RBSphereCollisionObjective;
+	friend IDCustomYuMiControlInterface;
 
 protected:
 	GeneralizedCoordinatesRobotRepresentation * robotParameters;
 	bool robot_is_synced = false;
+	std::vector<int> offsetFullRevolutions;
 
 public:
 	RobotParameters(GeneralizedCoordinatesRobotRepresentation * robotParameters);

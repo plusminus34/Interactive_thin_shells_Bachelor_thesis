@@ -32,6 +32,7 @@ public:
 	AbstractRBEngine * rbEngine = NULL;
 	RobotState startState = RobotState();
 	GeneralizedCoordinatesRobotRepresentation * generalizedRobotCoordinates= NULL;
+	RobotParameters * robotMountParameters;
 
 	RobotControlInterface* robotControlInterface = NULL;
 

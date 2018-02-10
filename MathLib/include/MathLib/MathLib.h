@@ -35,7 +35,7 @@ typedef unsigned int uint;
 
 #define TINY 0.0000001
 
-#define PI 3.14159265
+#define PI 3.1415926535897932
 
 /**
 	This macro checks to see if the value of x is zero within epsilon: -epsilon<x<epsilon

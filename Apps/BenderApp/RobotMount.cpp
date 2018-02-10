@@ -72,6 +72,7 @@ void RobotMount::dxDpar(P3D const & x0, ParameterSet * parameters_in, std::vecto
 RobotParameters::RobotParameters(GeneralizedCoordinatesRobotRepresentation * robotParameters)
 	: robotParameters(robotParameters)
 {
+	offsetFullRevolutions.assign(getNPar(), 0);
 	syncRobotStateWithParameters();
 }
 
@@ -84,7 +85,11 @@ void RobotParameters::writeToList(dVector & par, int & cursor_idx_io)
 	int n = robotParameters->getDimensionCount();
 
 	for(int i = 6; i < n; ++i) {
-		par[cursor_idx_io++] = par_local(i);
+		
+		double par_temp = par_local(i);
+		double par_bounded = par_temp - static_cast<int>(par_temp / PI)*PI;
+
+		par[cursor_idx_io++] = par_bounded + PI*offsetFullRevolutions[i-6];
 	}
 }
 
@@ -99,7 +104,23 @@ void RobotParameters::setFromList(dVector const & par, int & cursor_idx_io)
 	robotParameters->getQ(par_local);
 
 	for(int i = 6; i < n; ++i) {
-		par_local(i) = par[cursor_idx_io++];
+		double par_temp = par[cursor_idx_io++];
+		// limit angles to a range [-PI,PI] (the GeneralizedCoordinatesRobotRepresentation only operates with that range)
+		// but: keep track of the full revolutions that were cut off
+		int offsetRevs = static_cast<int>(par_temp / PI);
+		double par_bounded = par_temp - offsetRevs*PI;
+		// prevent dangerous corner case: do not set a parameter in the GeneralizedCoordinatesRobotRepresentation
+		// to precisely PI or -PI, as it is not obvious how accurately it handles that case
+		// (it would be problematic if a parameter is set to -PI, but returned as +PI)
+		if(IS_EQUAL(par_bounded, PI)) {
+			par_bounded -= EPSILON;
+		}
+		else if(IS_EQUAL(par_bounded, -PI)) {
+			par_bounded += EPSILON;
+		}
+
+		par_local(i) = par_bounded;
+		offsetFullRevolutions[i-6] = offsetRevs;
 	}
 
 	robotParameters->setQ(par_local);
