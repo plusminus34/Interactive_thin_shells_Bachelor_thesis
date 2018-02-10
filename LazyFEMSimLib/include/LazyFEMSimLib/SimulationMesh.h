@@ -4,6 +4,7 @@
 #include <LazyFEMSimLib/SimMeshElement.h>
 #include <LazyFEMSimLib/Node.h>
 #include <LazyFEMSimLib/FEMEnergyFunction.h>
+#include <OptimizationLib/LazyNewtonFunctionMinimizer.h>
 #include <MathLib/Ray.h>
 
 /**
@@ -13,7 +14,7 @@ class SimulationMesh{
 	friend class FEMEnergyFunction;
 	friend class Node;
 	friend class FEMSimApp;
-    friend class FEMSim3DApp;
+	friend class FEMSim3DApp;
 	friend class CSTElement2D;
 	friend class CSTElement3D;
 	friend class BilateralSpring3D;
@@ -33,6 +34,8 @@ protected:
 	DynamicArray<BaseEnergyUnit*> pinnedNodeElements;
 	//this is the objective function that we use for simulations...
 	FEMEnergyFunction* energyFunction;
+
+	LazyNewtonFunctionMinimizer minimizer;
 
 	bool checkDerivatives;
 

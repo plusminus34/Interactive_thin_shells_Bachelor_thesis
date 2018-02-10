@@ -3,10 +3,11 @@
 
 #include <LazyFEMSimLib/SimulationMesh.h>
 #include <LazyFEMSimLib/CSTElement3D.h>
-#include <OptimizationLib/NewtonFunctionMinimizer.h>
 #include <GUILib/GLUtils.h>
 
-SimulationMesh::SimulationMesh(){
+SimulationMesh::SimulationMesh()
+	: minimizer(50)
+{
 	energyFunction = new FEMEnergyFunction();
 	checkDerivatives = false;
 }
@@ -36,9 +37,11 @@ void SimulationMesh::drawSimulationMesh(V3D const & edgeColor, double elementSiz
 	for (uint i=0;i<pinnedNodeElements.size();i++)
 		pinnedNodeElements[i]->draw(x);
 	// nodes
+	/*
 	for (uint i = 0; i < nodes.size(); i++) {
 		nodes[i]->draw(nodeColor, nodeSize);
 	}
+	*/
 }
 
 void SimulationMesh::drawExternalForces(){
@@ -77,7 +80,7 @@ void SimulationMesh::solve_dynamics(double dt){
 	double functionValue = energyFunction->computeValue(xSolver);
 //	Logger::consolePrint("energy value before solve: %lf\n", functionValue);
    
-	NewtonFunctionMinimizer minimizer(3);
+	LazyNewtonFunctionMinimizer minimizer(3);
 	minimizer.printOutput = true;
 	minimizer.minimize(energyFunction, xSolver, functionValue);
 
@@ -100,7 +103,6 @@ void SimulationMesh::solve_statics(){
 	double functionValue = energyFunction->computeValue(xSolver);
 //	Logger::consolePrint("energy value before solve: %lf\n", functionValue);
 
-	NewtonFunctionMinimizer minimizer(50);
 	minimizer.printOutput = false;
 	minimizer.minimize(energyFunction, xSolver, functionValue);
 
@@ -141,6 +143,8 @@ void SimulationMesh::initializeStructure()
 {
 	// initialize the energy Function
 	energyFunction->initialize(this);
+
+	minimizer.newHessianStructure = true;
 
 	// precomputations based on the structure
 	n_elements = elements.size();
