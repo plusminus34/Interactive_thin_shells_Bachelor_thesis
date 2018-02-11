@@ -236,7 +236,7 @@ double SimulationMesh::energyElement_i(int i, dVector const & x)
 	double bulkM = element->bulkModulus;
 	double restShapeVolume = element->restShapeVolume;
 
-	double energyDensity = 0.5 * shearM * (dxdX_norm2[i] - 2.0) - shearM * dxdX_logdet[i] + 0.5 * bulkM * dxdX_logdet[i] * dxdX_logdet[i];
+	double energyDensity = 0.5 * shearM * (dxdX_norm2[i] - 3.0) - shearM * dxdX_logdet[i] + 0.5 * bulkM * dxdX_logdet[i] * dxdX_logdet[i];
 	energyDensity *= restShapeVolume;
 
 	return(energyDensity);
@@ -328,9 +328,9 @@ void SimulationMesh::addHessianElement_i(int i_e, dVector const & x, std::vector
 		for(int j = 0; j < 3; ++j) {
 			Matrix3x3 dF = dFdXij[i][j];
 			Matrix3x3 dP = shearModulus * dF;
-			dP = dP + (shearModulus - bulkModulus * Flogdet) * FinvT * dF.transpose() * FinvT;
+			dP += (shearModulus - bulkModulus * Flogdet) * FinvT * dF.transpose() * FinvT;
 			Matrix3x3 tmpM = Finv * dF;
-			dP = dP + bulkModulus * tmpM.trace() * FinvT;
+			dP += bulkModulus * tmpM.trace() * FinvT;
 			Matrix3x3 dH = restShapeVolume * dP * dXInv.transpose();
 
 			for (int ii = 0;ii < 3;++ii) {

@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include "MathLib/P3D.h"
-#include "RBSimLib/HingeJoint.h";
+#include "RBSimLib/HingeJoint.h"
 
 #include "RobotMount.h"
 
@@ -72,7 +72,7 @@ void RobotMount::dxDpar(P3D const & x0, ParameterSet * parameters_in, std::vecto
 RobotParameters::RobotParameters(GeneralizedCoordinatesRobotRepresentation * robotParameters)
 	: robotParameters(robotParameters)
 {
-	offsetFullRevolutions.assign(getNPar(), 0);
+	offsetFullRevolutions.assign(getNPar(), 0.0);
 	syncRobotStateWithParameters();
 }
 
@@ -85,11 +85,8 @@ void RobotParameters::writeToList(dVector & par, int & cursor_idx_io)
 	int n = robotParameters->getDimensionCount();
 
 	for(int i = 6; i < n; ++i) {
-		
 		double par_temp = par_local(i);
-		double par_bounded = par_temp - static_cast<int>(par_temp / PI)*PI;
-
-		par[cursor_idx_io++] = par_bounded + PI*offsetFullRevolutions[i-6];
+		par[cursor_idx_io++] = par_temp + 2.0*PI*offsetFullRevolutions[i-6];
 	}
 }
 
@@ -107,16 +104,19 @@ void RobotParameters::setFromList(dVector const & par, int & cursor_idx_io)
 		double par_temp = par[cursor_idx_io++];
 		// limit angles to a range [-PI,PI] (the GeneralizedCoordinatesRobotRepresentation only operates with that range)
 		// but: keep track of the full revolutions that were cut off
-		int offsetRevs = static_cast<int>(par_temp / PI);
-		double par_bounded = par_temp - offsetRevs*PI;
+		
+		double offsetRevs = std::round(par_temp / (2.0*PI));
+		double par_bounded = par_temp - offsetRevs*2.0*PI;
 		// prevent dangerous corner case: do not set a parameter in the GeneralizedCoordinatesRobotRepresentation
 		// to precisely PI or -PI, as it is not obvious how accurately it handles that case
 		// (it would be problematic if a parameter is set to -PI, but returned as +PI)
 		if(IS_EQUAL(par_bounded, PI)) {
 			par_bounded -= EPSILON;
+			std::cout << "PI MAGIC!!!!!" << std::endl;
 		}
 		else if(IS_EQUAL(par_bounded, -PI)) {
 			par_bounded += EPSILON;
+			std::cout << "PI MAGIC!!!!!" << std::endl;
 		}
 
 		par_local(i) = par_bounded;

@@ -37,7 +37,7 @@ class RobotParameters : public ParameterSet {
 protected:
 	GeneralizedCoordinatesRobotRepresentation * robotParameters;
 	bool robot_is_synced = false;
-	std::vector<int> offsetFullRevolutions;
+	std::vector<double> offsetFullRevolutions;
 
 public:
 	RobotParameters(GeneralizedCoordinatesRobotRepresentation * robotParameters);
