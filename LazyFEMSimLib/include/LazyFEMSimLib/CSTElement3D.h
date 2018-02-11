@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include <LazyFEMSimLib/SimMeshElement.h>
 #include <LazyFEMSimLib/Node.h>
 #include <MathLib/MathLib.h>
@@ -27,20 +29,32 @@ protected:
 
     //the collection of nodes that define the tet element
     Node* n[4];
-    //parameters needed for gradient and hessian of the energy
+
+    // Energy and it's derivatives
+	double E;
     V3D dEdx[4];
     Matrix3x3 ddEdxdx[4][4];
-    //tmp matrices used to speed up computation of the deformation gradient, green strain, etc
-    Matrix3x3 dx, dXInv, F, strain, dEdF, Finv, FinvT;
+    // precomputed for new rest shape (see also below)
+    Matrix3x3 dXInv;
+	// precomputed for new node positions (computeDeformationGradient());
+	Matrix3x3 F, Finv, FinvT;
+	double F_norm2, F_logdet;
+	// temporary helpers used within some computations
+	Matrix3x3 dx, dEdF, strain;
 
+	// also precomputed for new rest shape
+	std::array<std::array<Matrix3x3, 3 >, 4> dFdXij;
+
+protected:
     double computeRestShapeVolume(const dVector& X);
 
     //as a deformation measure, we need to compute the deformation gradient F. F maps deformed vectors dx to undeformed coords dX: dx = F*dX.
     //for linear basis functions, an easy way to compute it is by looking at the matrix that maps deformed traingle/tet edges to their underformed counterparts (F = dx * inv(dX)).
-    void computeDeformationGradient(const dVector& x, const dVector& X, Matrix3x3& dxdX);
+    void computeDeformationGradient(const dVector& x, const dVector& X);
 
-    void computeGradientComponents(const dVector& x, const dVector& X);
-    void computeHessianComponents(const dVector& x, const dVector& X);
+	void computeEnergy();
+    void computeGradientComponents();
+    void computeHessianComponents();
 
     //sets important properties of the rest shape using the set of points passed in as parameters
     virtual void setRestShapeFromCurrentConfiguration();

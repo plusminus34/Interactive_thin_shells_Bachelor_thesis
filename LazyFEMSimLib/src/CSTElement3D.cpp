@@ -45,6 +45,20 @@ void CSTElement3D::setRestShapeFromCurrentConfiguration() {
     //compute the volume of the element...
     restShapeVolume = computeRestShapeVolume(this->simMesh->X);
     //	Logger::logPrint("CSTElement2D Element volume: %lf\n", restShapeVolume);
+
+	// precompute dFdXij (for constructing the hessian)
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 3; ++j) {
+			dFdXij[i][j].setZero();
+			if (i > 0) {
+				dFdXij[i][j](j, i - 1) = 1;
+			}
+			else {
+				dFdXij[i][j](j, 0) = dFdXij[i][j](j, 1) = dFdXij[i][j](j, 2) = -1;
+			}
+			dFdXij[i][j] = dFdXij[i][j] * dXInv;
+		}
+	}
 }
 
 
@@ -64,18 +78,16 @@ double CSTElement3D::computeRestShapeVolume(const dVector& X) {
 
 void CSTElement3D::addEnergyGradientTo(const dVector& x, const dVector& X, dVector& grad) {
     //compute the gradient, and write it out
-    computeGradientComponents(x, X);
-    for (int i = 0;i<4;i++)
-        for (int j = 0;j<3;j++)
-        grad[n[i]->dataStartIndex + j] += dEdx[i][j];
+	for (int i = 0;i<4;i++)
+		for (int j = 0;j<3;j++)
+			grad[n[i]->dataStartIndex + j] += dEdx[i][j];
 }
 
 void CSTElement3D::addEnergyHessianTo(const dVector& x, const dVector& X, std::vector<MTriplet>& hesEntries) {
-    //compute the hessian blocks and
-    computeHessianComponents(x, X);
-    for (int i = 0;i < 4;i++)
-        for (int j = 0;j < 4;j++)
-        addSparseMatrixDenseBlockToTriplet(hesEntries, n[i]->dataStartIndex, n[j]->dataStartIndex, ddEdxdx[i][j], true);
+	//compute the hessian blocks and
+	for (int i = 0;i < 4;i++)
+		for (int j = 0;j < 4;j++)
+			addSparseMatrixDenseBlockToTriplet(hesEntries, n[i]->dataStartIndex, n[j]->dataStartIndex, ddEdxdx[i][j], true);
 }
 
 void CSTElement3D::draw(const dVector& x) {
@@ -111,7 +123,7 @@ For linear basis functions, F is constant throughout the element so an easy way 
 maps deformed traingle/tet edges to their underformed counterparts: v = FV, where v and V are matrices containing edge vectors
 in deformed and undeformed configurations
 */
-void CSTElement3D::computeDeformationGradient(const dVector& x, const dVector& X, Matrix3x3& dxdX) {
+void CSTElement3D::computeDeformationGradient(const dVector& x, const dVector& X) {
     //edge vectors
     V3D v1(n[0]->getCoordinates(x), n[1]->getCoordinates(x));
     V3D v2(n[0]->getCoordinates(x), n[2]->getCoordinates(x));
@@ -119,21 +131,25 @@ void CSTElement3D::computeDeformationGradient(const dVector& x, const dVector& X
     dx << v1[0], v2[0], v3[0],
         v1[1], v2[1], v3[1],
         v1[2], v2[2], v3[2];
-    dxdX = dx * dXInv;
+    F = dx * dXInv;
 
-    //	print("../out/v1.m", v1);
-    //	print("../out/v2.m", v2);
-    //	print("../out/dx.m", dx);
-    //	print("../out/dXInv.m", dXInv);
-    //	print("../out/dxdX.m", dxdX);
+	if (matModel == MM_NEO_HOOKEAN) {
+		Finv = F.inverse();
+		FinvT = Finv.transpose();
+		F_norm2 = F.squaredNorm();
+		F_logdet = log(F.determinant());
+	}
 }
 
 //implements the StVK material model
 double CSTElement3D::getEnergy(const dVector& x, const dVector& X) {
-    //compute the deformation gradient
-    computeDeformationGradient(x, X, F);
-    double energyDensity = 0;
+    return(E);
+}
 
+
+void CSTElement3D::computeEnergy() 
+{
+	double energyDensity = 0;
     if (matModel == MM_STVK) {
         //compute the Green Strain = 1/2 * (F'F-I)
         strain = F * F.transpose(); strain(0, 0) -= 1; strain(1, 1) -= 1; strain(2, 2) -= 1; strain *= 0.5;
@@ -156,24 +172,20 @@ double CSTElement3D::getEnergy(const dVector& x, const dVector& X) {
         energyDensity += bulkModulus / 2 * (strain(0, 0) + strain(1, 1) + strain(2, 2)) * (strain(0, 0) + strain(1, 1) + strain(2, 2));
     }
     else if (matModel == MM_NEO_HOOKEAN) {
-        double normF2 = F.squaredNorm();
-        double detF = F.determinant();
         // here are some diff
-        energyDensity += shearModulus / 2 * (normF2 - 2) - shearModulus * log(detF) + bulkModulus / 2 * log(detF) * log(detF);
+        energyDensity += shearModulus / 2 * (F_norm2 - 3) - shearModulus * F_logdet + bulkModulus / 2 * F_logdet * F_logdet;
     }
 
-    return energyDensity * restShapeVolume;
+    E = energyDensity * restShapeVolume;
 
 }
 
-void CSTElement3D::computeGradientComponents(const dVector& x, const dVector& X) {
+
+void CSTElement3D::computeGradientComponents() 
+{
     //compute the gradient of the energy using the chain rule: dE/dx = dE/dF * dF/dx. dE/dF is the first Piola-Kirchoff stress sensor, for which nice expressions exist.
 
-    //compute the deformation gradient
-    computeDeformationGradient(x, X, F);
     dEdF.setZero();
-    Finv = F.inverse();
-    FinvT = Finv.transpose();
     if (matModel == MM_STVK) {
         strain = F.transpose() * F; strain(0, 0) -= 1; strain(1, 1) -= 1; strain(2, 2) -= 1;
         strain *= 0.5;
@@ -193,10 +205,8 @@ void CSTElement3D::computeGradientComponents(const dVector& x, const dVector& X)
         dEdF(2, 2) += (strain(0, 0) + strain(1, 1) + strain(2, 2)) * bulkModulus;
     }
     else if (matModel == MM_NEO_HOOKEAN) {
-        double normF2 = F.squaredNorm();
-        double detF = F.determinant();
         // here are some diff
-        dEdF = F * shearModulus + FinvT * (-shearModulus + bulkModulus*log(detF));
+        dEdF = F * shearModulus + FinvT * (-shearModulus + bulkModulus*F_logdet);
     }
 
     //dF/dx is going to be some +/- Xinv terms. The forces on nodes 1,2 can be writen as: dE/dF * XInv', while the force on node 0 is -f1-f2;
@@ -206,7 +216,8 @@ void CSTElement3D::computeGradientComponents(const dVector& x, const dVector& X)
     dEdx[0] = -dEdx[1] - dEdx[2] - dEdx[3];
 }
 
-void CSTElement3D::computeHessianComponents(const dVector& x, const dVector& X) {
+void CSTElement3D::computeHessianComponents() 
+{
     Matrix3x3 dFdXij[4][3];
     for (int i = 0;i < 4;++i)
         for (int j = 0;j < 3;++j)
@@ -225,7 +236,6 @@ void CSTElement3D::computeHessianComponents(const dVector& x, const dVector& X) 
         F * (2 * shearModulus * dEdx + bulkModulus * trace(dEdx) * I)
         dEdx = 0.5 * (transpose(dFdx) * F + transpose(F) * dFdx)
         */
-        computeDeformationGradient(x, X, F);
         Matrix3x3 FT = F.transpose();
         Matrix3x3 E = 0.5 * (FT * F);
         E(0, 0) -= 0.5; E(1, 1) -= 0.5; E(2, 2) -= 0.5;
@@ -274,7 +284,6 @@ void CSTElement3D::computeHessianComponents(const dVector& x, const dVector& X) 
         Finv = inverse(F)
         FinvT = transpose(Finv)
         */
-        computeDeformationGradient(x, X, F);
         Finv = F.inverse();
         FinvT = Finv.transpose();
         Matrix3x3 dF, dP, tmpM, dH;

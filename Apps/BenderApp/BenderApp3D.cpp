@@ -402,7 +402,7 @@ BenderApp3D::BenderApp3D()
 	glfwSetWindowSize(glfwWindow, 1920, 1080);
 	//glfwSetWindowSize(glfwWindow, 1280, 720);
 
-	//desiredFrameRate = 10;
+	desiredFrameRate = 90;
 }
 
 

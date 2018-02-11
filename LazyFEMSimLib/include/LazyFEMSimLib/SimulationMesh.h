@@ -51,16 +51,8 @@ protected:
 	// working data: state dependent /////////////////////
 	double energy;
 	dVector gradient;
-	//int n_triplets_element = ;
 	std::vector<MTriplet> hessianTriplets;
 
-	std::vector<Matrix3x3> dxdX;	// deformation gradient for each element
-	std::vector<double> dxdX_norm2;
-	std::vector<double> dxdX_logdet;
-	std::vector<Matrix3x3> dxdX_inv;
-	std::vector<Matrix3x3> dxdX_invT;
-
-	std::vector<std::array<std::array<Matrix3x3,3>,4> > dFdXij_all;
 
 public:
 	SimulationMesh();
