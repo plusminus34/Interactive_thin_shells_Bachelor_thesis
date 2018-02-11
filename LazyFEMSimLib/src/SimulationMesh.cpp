@@ -5,6 +5,8 @@
 #include <LazyFEMSimLib/CSTElement3D.h>
 #include <GUILib/GLUtils.h>
 
+#include <omp.h>
+
 SimulationMesh::SimulationMesh()
 	: minimizer(50)
 {
@@ -177,18 +179,25 @@ void SimulationMesh::initializeState_xSolver()
 
 void SimulationMesh::prepare_upto_energy(dVector const & x)
 {
-	energy = 0.0;
+	double e = 0.0;
 
-	for (size_t i = 0; i < elements.size(); i++) {
+	int n = elements.size();
+
+#pragma omp parallel for default(shared) reduction(+:e) num_threads(2) 
+	for (int i = 0; i < n; i++) {
 		CSTElement3D* element = static_cast<CSTElement3D*>(elements[i]);
 		element->computeDeformationGradient(x, X);
+		element->computeEnergy();
+		e += element->getEnergy(x, X);
 	}
-
+	energy = e;
+	/*
 	for (size_t i = 0; i < elements.size(); i++) {
 		CSTElement3D* element = static_cast<CSTElement3D*>(elements[i]);
 		element->computeEnergy();
 		energy += element->getEnergy(x, X);
 	}
+	*/
 
 	for (size_t i = 0; i < pinnedNodeElements.size(); i++) {
 		energy += pinnedNodeElements[i]->getEnergy(x, X);
@@ -204,7 +213,9 @@ void SimulationMesh::prepare_upto_hessian(dVector const & x)
 	hessianTriplets.resize(0);
 
 	// CST elements: prepare
-	for (size_t i = 0; i < elements.size(); i++) {
+	int n = elements.size();
+#pragma omp parallel for default(shared) num_threads(2)
+	for (int i = 0; i < n; i++) {
 		CSTElement3D* element = static_cast<CSTElement3D*>(elements[i]);
 		element->computeGradientComponents();
 		element->computeHessianComponents();
@@ -223,7 +234,6 @@ void SimulationMesh::prepare_upto_hessian(dVector const & x)
 	// pinned node elements
 	addGradientPinnedNodeElements(x, gradient);
 	addHessianPinnedNodeElements(x, hessianTriplets);
-
 }
 
 

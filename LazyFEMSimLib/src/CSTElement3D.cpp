@@ -184,8 +184,7 @@ void CSTElement3D::computeEnergy()
 void CSTElement3D::computeGradientComponents() 
 {
     //compute the gradient of the energy using the chain rule: dE/dx = dE/dF * dF/dx. dE/dF is the first Piola-Kirchoff stress sensor, for which nice expressions exist.
-
-    dEdF.setZero();
+	/*
     if (matModel == MM_STVK) {
         strain = F.transpose() * F; strain(0, 0) -= 1; strain(1, 1) -= 1; strain(2, 2) -= 1;
         strain *= 0.5;
@@ -204,7 +203,9 @@ void CSTElement3D::computeGradientComponents()
         dEdF(1, 1) += (strain(0, 0) + strain(1, 1) + strain(2, 2)) * bulkModulus;
         dEdF(2, 2) += (strain(0, 0) + strain(1, 1) + strain(2, 2)) * bulkModulus;
     }
-    else if (matModel == MM_NEO_HOOKEAN) {
+    else if (matModel == MM_NEO_HOOKEAN)
+	*/
+	{
         // here are some diff
         dEdF = F * shearModulus + FinvT * (-shearModulus + bulkModulus*F_logdet);
     }
@@ -218,24 +219,14 @@ void CSTElement3D::computeGradientComponents()
 
 void CSTElement3D::computeHessianComponents() 
 {
-    Matrix3x3 dFdXij[4][3];
-    for (int i = 0;i < 4;++i)
-        for (int j = 0;j < 3;++j)
-        {
-            dFdXij[i][j].setZero();
-            if (i > 0)
-                dFdXij[i][j](j, i - 1) = 1;
-            else
-                dFdXij[i][j](j, 0) = dFdXij[i][j](j, 1) = dFdXij[i][j](j, 2) = -1;
-            dFdXij[i][j] = dFdXij[i][j] * dXInv;
-        }
+	/*
     if (matModel == MM_STVK)
     {
-        /*
-        dPdx(F; dFdx) = dFdx * (2 * shearModulus * E + bulkModulus * trace(E) * I) +
-        F * (2 * shearModulus * dEdx + bulkModulus * trace(dEdx) * I)
-        dEdx = 0.5 * (transpose(dFdx) * F + transpose(F) * dFdx)
-        */
+        
+        //dPdx(F; dFdx) = dFdx * (2 * shearModulus * E + bulkModulus * trace(E) * I) +
+        //F * (2 * shearModulus * dEdx + bulkModulus * trace(dEdx) * I)
+        //dEdx = 0.5 * (transpose(dFdx) * F + transpose(F) * dFdx)
+        
         Matrix3x3 FT = F.transpose();
         Matrix3x3 E = 0.5 * (FT * F);
         E(0, 0) -= 0.5; E(1, 1) -= 0.5; E(2, 2) -= 0.5;
@@ -276,32 +267,25 @@ void CSTElement3D::computeHessianComponents()
         }
     }
     else if (matModel == MM_NEO_HOOKEAN)
+	*/
     {
-        /*
-        dPdx(F; dFdx) = shearModulus * dFdx +
-        (shearModulus - bulkModulus * log(det(F))) * FinvT * transpose(dFdx) * FinvT +
-        bulkModulus * trace(Finv * dFdx) * FinvT
-        Finv = inverse(F)
-        FinvT = transpose(Finv)
-        */
-        Finv = F.inverse();
-        FinvT = Finv.transpose();
         Matrix3x3 dF, dP, tmpM, dH;
-        for (int i = 0; i < 12; ++i)
-        {
-            dF = dFdXij[i / 3][i % 3];
+        //for (int i = 0; i < 12; ++i)
+		for(int i = 0; i < 4; ++i) {
+		for(int j = 0; j < 3; ++j) {
+            dF = dFdXij[i][j];
             dP = shearModulus * dF;
-            double J = F.determinant();
-            dP = dP + (shearModulus - bulkModulus * log(J)) * FinvT * dF.transpose() * FinvT;
+            dP = dP + (shearModulus - bulkModulus * F_logdet) * FinvT * dF.transpose() * FinvT;
             tmpM = Finv * dF;
             dP = dP + bulkModulus * tmpM.trace() *FinvT;
             dH = restShapeVolume * dP * dXInv.transpose();
             for (int ii = 0;ii < 3;++ii)
                 for (int jj = 0;jj < 3;++jj)
-                ddEdxdx[ii + 1][i / 3](jj, i % 3) = dH(jj, ii);
-            ddEdxdx[0][i / 3](0, i % 3) = -dH(0, 2) - dH(0, 1) - dH(0, 0);
-            ddEdxdx[0][i / 3](1, i % 3) = -dH(1, 2) - dH(1, 1) - dH(1, 0);
-            ddEdxdx[0][i / 3](2, i % 3) = -dH(2, 2) - dH(2, 1) - dH(2, 0);
+					ddEdxdx[ii + 1][i](jj, j) = dH(jj, ii);
+            ddEdxdx[0][i](0, j) = -dH(0, 2) - dH(0, 1) - dH(0, 0);
+            ddEdxdx[0][i](1, j) = -dH(1, 2) - dH(1, 1) - dH(1, 0);
+            ddEdxdx[0][i](2, j) = -dH(2, 2) - dH(2, 1) - dH(2, 0);
         }
+		}
     }
 }

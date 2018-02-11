@@ -83,6 +83,7 @@ double InverseDeformationSolver<NDim>::solveOptimization(double terminationResid
 template<int NDim>
 void InverseDeformationSolver<NDim>::solveMesh(bool solveStatic, double dt)
 {
+	Eigen::initParallel();
 	if (solveStatic)
 	{
 		femMesh->solve_statics();
