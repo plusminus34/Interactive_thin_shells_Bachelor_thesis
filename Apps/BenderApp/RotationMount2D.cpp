@@ -55,7 +55,7 @@ void RotationMount2D::rotate(P3D const & origin, double alpha)
 
 	V3D shift_old = pars->shift;
 
-    V3D shift_new = T_rot * (shift_old - origin) + origin;
+	V3D shift_new = static_cast<V3D>(T_rot * (shift_old - origin) + origin);
 
 	pars->shift = shift_new;
 }

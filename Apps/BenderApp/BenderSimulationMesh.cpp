@@ -29,10 +29,10 @@ void BenderSimulationMesh<NDim>::removeMount(int mountID)
 	}
 
 	// remove all pins to the mount
-	for(int i = pinnedNodeElements.size()-1; i >= 0; --i) {
-		if(dynamic_cast<MountedPointSpring<NDim> *>(pinnedNodeElements[i])->mount == mounts[mountID]) {
-			delete pinnedNodeElements[i];
-			pinnedNodeElements.erase(pinnedNodeElements.begin()+i);
+	for(int i = this->pinnedNodeElements.size()-1; i >= 0; --i) {
+		if(dynamic_cast<MountedPointSpring<NDim> *>(this->pinnedNodeElements[i])->mount == mounts[mountID]) {
+			delete this->pinnedNodeElements[i];
+			this->pinnedNodeElements.erase(this->pinnedNodeElements.begin()+i);
 		}
 	}
 
@@ -47,19 +47,19 @@ void BenderSimulationMesh<NDim>::setMountedNode(int nodeID, const P3D & x0, int 
 	P3D rp = x0;
 	//rp[2] = 0;
 	constexpr double K = (NDim == 2) ? 10000 : 1000;
-	pinnedNodeElements.push_back(new MountedPointSpring<NDim>(this, nodes[nodeID], rp, mounts[mountID], K));
+	this->pinnedNodeElements.push_back(new MountedPointSpring<NDim>(this, this->nodes[nodeID], rp, mounts[mountID], K));
 }
 
 template<int NDim>
 void BenderSimulationMesh<NDim>::unmountNode(int nodeID, int mountID)
 {
-	Node * node = nodes[nodeID];
+	Node * node = this->nodes[nodeID];
 	Mount * mount = mounts[mountID];
-	for(int i = pinnedNodeElements.size()-1; i >= 0; --i) {
-		MountedPointSpring<NDim> * pin = dynamic_cast<MountedPointSpring<NDim> *>(pinnedNodeElements[i]);
+	for(int i = this->pinnedNodeElements.size()-1; i >= 0; --i) {
+		MountedPointSpring<NDim> * pin = dynamic_cast<MountedPointSpring<NDim> *>(this->pinnedNodeElements[i]);
 		if(pin->node == node && pin->mount == mount) {
-			delete pinnedNodeElements[i];
-			pinnedNodeElements.erase(pinnedNodeElements.begin()+i);
+			delete this->pinnedNodeElements[i];
+			this->pinnedNodeElements.erase(this->pinnedNodeElements.begin()+i);
 		}
 	}
 }
@@ -67,7 +67,7 @@ void BenderSimulationMesh<NDim>::unmountNode(int nodeID, int mountID)
 template<int NDim>
 void BenderSimulationMesh<NDim>::setNodePositionObjective(int nodeID, const P3D & x0) 
 {
-	objectives.push_back(new NodePositionObjective(nodes[nodeID], x0));
+	objectives.push_back(new NodePositionObjective(this->nodes[nodeID], x0));
 }
 
 template<int NDim>
@@ -75,8 +75,8 @@ void BenderSimulationMesh<NDim>::setNodeGlobalNodePositionObjective(dVector cons
 {
 	clearObjectives();
 
-	for(int i = 0; i < nodes.size(); ++i) {
-		setNodePositionObjective(i, nodes[i]->getCoordinates(x));
+	for(int i = 0; i < this->nodes.size(); ++i) {
+		setNodePositionObjective(i, this->nodes[i]->getCoordinates(x));
 	}
 }
 /*
@@ -128,11 +128,11 @@ void BenderSimulationMesh<NDim>::moveAll(V3D v)
 
 template<int NDim>
 int BenderSimulationMesh<NDim>::getMountIdOfNode(int nodeID) {
-	Node * node = nodes[nodeID];
+	Node * node = this->nodes[nodeID];
 	// search pins for node id
 	int pinnedNodeElementID = -1;
-	for(int j = 0; j < pinnedNodeElements.size(); ++j) {
-		BaseEnergyUnit * pin = pinnedNodeElements[j];
+	for(int j = 0; j < this->pinnedNodeElements.size(); ++j) {
+		BaseEnergyUnit * pin = this->pinnedNodeElements[j];
 		if(dynamic_cast<MountedPointSpring<NDim> *>(pin)) {	// check if the pinned node is pinned to a mount
 			if(dynamic_cast<MountedPointSpring<NDim> *>(pin)->node == node) {
 				pinnedNodeElementID = j;
@@ -143,7 +143,7 @@ int BenderSimulationMesh<NDim>::getMountIdOfNode(int nodeID) {
 	// search for mount id
 	if(pinnedNodeElementID >=0) {
 		for(int j = 0; j < mounts.size(); ++j) {
-			if(mounts[j] == dynamic_cast<MountedPointSpring<NDim> *>(pinnedNodeElements[pinnedNodeElementID])->mount) {
+			if(mounts[j] == dynamic_cast<MountedPointSpring<NDim> *>(this->pinnedNodeElements[pinnedNodeElementID])->mount) {
 				return(j);
 			}
 		}
@@ -170,7 +170,7 @@ double BenderSimulationMesh<NDim>::computeO()
 	double o = 0;
 	for(MeshObjective * obj : objectives)
 	{
-		obj->addO(x, X, o);
+		obj->addO(this->x, this->X, o);
 	}
 	return(o);
 }
@@ -180,7 +180,7 @@ double BenderSimulationMesh<NDim>::computeOofx(dVector const & x_in) {
 	double o = 0;
 	for(MeshObjective * obj : objectives)
 	{
-		obj->addO(x_in, X, o);
+		obj->addO(x_in, this->X, o);
 	}
 	return(o);
 }
@@ -189,11 +189,11 @@ double BenderSimulationMesh<NDim>::computeOofx(dVector const & x_in) {
 template<int NDim>
 void BenderSimulationMesh<NDim>::computeDoDx(dVector & dodx)
 {
-	dodx.resize(x.size());
+	dodx.resize(this->x.size());
 	dodx.setZero();
 	for(MeshObjective * obj : objectives)
 	{
-		obj->addDoDx(x, X, dodx);
+		obj->addDoDx(this->x, this->X, dodx);
 	}
 }
 
@@ -204,7 +204,7 @@ double BenderSimulationMesh<NDim>::computeTargetPositionError()
 	int n_obj = 0;
 	for(MeshObjective * obj : objectives)
 	{
-		obj->addError(x, e);
+		obj->addError(this->x, e);
 		++n_obj;
 	}
 	double e_rel = e / static_cast<double>(n_obj);

@@ -138,7 +138,7 @@ P3D RotationMount3D::transformation(P3D const & x0, ParameterSet * parameters_in
 
 	//P3D x;
 	//x = static_cast<V3D>(mat_times_vec(T_rot, static_cast<V3D>(x0)) + shift);
-	V3D x = T_rot * x0 + shift;
+	V3D x = static_cast<V3D>(T_rot * x0 + shift);
 
 	return(static_cast<P3D>(x));
 }
@@ -156,9 +156,9 @@ void RotationMount3D::dxDpar(P3D const & x0, ParameterSet * parameters_in, std::
 	Matrix3x3 dTdc = get_dTdc(pars->alpha, pars->beta, pars->gamma);
 
 	// dx/dalpha
-	V3D dxda = dTda * static_cast<V3D>(x0);
-	V3D dxdb = dTdb * static_cast<V3D>(x0);
-	V3D dxdc = dTdc * static_cast<V3D>(x0);
+	V3D dxda = static_cast<V3D>(dTda * static_cast<V3D>(x0));
+	V3D dxdb = static_cast<V3D>(dTdb * static_cast<V3D>(x0));
+	V3D dxdc = static_cast<V3D>(dTdc * static_cast<V3D>(x0));
 	
 	grad[0] = dxda;
 	grad[1] = dxdb;
@@ -181,7 +181,7 @@ void RotationMount3D::rotate(P3D const & origin, double alpha, double beta, doub
 
 	V3D shift_old(pars->shift);
 
-	V3D shift_new = T_rot * (shift_old - origin) + origin;
+	V3D shift_new = static_cast<V3D>(T_rot * (shift_old - origin) + origin);
 
 	pars->shift = shift_new;
 

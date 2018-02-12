@@ -45,7 +45,7 @@ BenderApp3D::BenderApp3D()
 	const P3D rod_center(0.0, 0.35, 0.50);
 
 	// fem mesh coarsness
-	double maxTetVolume = -1.35e-6;
+    double maxTetVolume = 1.35e-6;
 
 	// measured (physical) values for "the green foam" are: (density, young, poisson) = (43.63, 2.135e4, 0.376)
 	//double massDensity = 43.63;//130;//50;
@@ -314,8 +314,8 @@ BenderApp3D::BenderApp3D()
 										V3D & mount_origin_body, Matrix3x3 & mount_coordinates_body)
 	{
 		V3D x0 = femMesh->nodes[nodeId]->getCoordinates(femMesh->X);
-		V3D x0_mount = mount_coordinates_mesh  * (x0 - mount_origin_mesh);
-		V3D x0_body = mount_coordinates_body * x0_mount + mount_origin_body;
+		V3D x0_mount = static_cast<V3D>(mount_coordinates_mesh  * (x0 - mount_origin_mesh));
+		V3D x0_body = static_cast<V3D>(mount_coordinates_body * x0_mount + mount_origin_body);
 
 		femMesh->setMountedNode(nodeId, static_cast<P3D>(x0_body), mountId);
 	};
