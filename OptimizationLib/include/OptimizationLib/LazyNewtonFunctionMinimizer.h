@@ -34,6 +34,7 @@ public:
 	Timer timerN;
 	SparseMatrix H;
 	DynamicArray<MTriplet> hessianEntries;
+	std::vector<double *> hessianEntries_Hptr;
 
 	bool newHessianStructure = true;
 	Eigen::SimplicialLDLT<SparseMatrix, Eigen::Lower> solver;

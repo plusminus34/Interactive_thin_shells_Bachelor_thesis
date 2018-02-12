@@ -77,7 +77,7 @@ void FEMEnergyFunction::addGradientTo(dVector& grad, const dVector& s) {
 //	estimateGradientAt(dE_ds, s);
 //	return &dE_ds;
 	
-	grad = simMesh->gradient;
+	grad += simMesh->gradient;
 
 	int nDim = simMesh->x.size();
 

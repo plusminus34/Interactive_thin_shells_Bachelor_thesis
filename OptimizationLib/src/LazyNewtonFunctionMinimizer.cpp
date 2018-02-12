@@ -8,30 +8,33 @@
 
 // The search direction is given by -Hinv * g
 void LazyNewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *function, const dVector &p, dVector& dp) {
-	timerN.restart();
-	resize(H, p.size(), p.size());
-	hessianEntries.clear();
 
-	if (printOutput)
-		Logger::logPrint("Time to zero out hessian: %lf\n", timerN.timeEllapsed());
 
-	timerN.restart();
+	// get the hessian entries (as vector of triplets)
+	hessianEntries.resize(0);
 	function->addHessianEntriesTo(hessianEntries, pi);
-	if (printOutput)
-		Logger::logPrint("Time to compute hessian entries: %lf\n", timerN.timeEllapsed());
 
-	timerN.restart();
-	H.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
-	if (printOutput)
-		Logger::logPrint("Time to write out hessian entries: %lf\n", timerN.timeEllapsed());
+	// plug hessian entries into the eigen sparse matrix
+	if (newHessianStructure) {
+		resize(H, p.size(), p.size());
+		H.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
+		// store location of each entry in the hessian
+		hessianEntries_Hptr.resize(hessianEntries.size());
+		for (size_t i = 0; i < hessianEntries.size(); ++i) {
+			hessianEntries_Hptr[i] = &(H.coeffRef(hessianEntries[i].row(), hessianEntries[i].col()));
+		}
+	}
+	else {
+		double * data = H.valuePtr();
+		std::memset(static_cast<void*>(data), 0, H.nonZeros() * sizeof(*(H.valuePtr())));
+		for(size_t i = 0; i < hessianEntries.size(); ++i) {
+			*(hessianEntries_Hptr[i]) += hessianEntries[i].value();
+		}
+	}
 
-// 	print("..\\out\\hes.m", H);
-
-	timerN.restart();
+	// get the gradient
 	resize(gradient, p.size());
 	function->addGradientTo(gradient, pi);
-	if (printOutput)
-		Logger::logPrint("Time to compute gradient: %lf\n", timerN.timeEllapsed());
 
 	//TODO
 /*

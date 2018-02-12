@@ -138,6 +138,7 @@ V3D mountBaseZDirectionRB_l;
 	bool measure_convergence_time = false;
 	Timer timer_convergence;
 	double timed_convergence_goal = 1e-5;
+	int steps_optimization = 33;
 	bool timer_is_running = false;
 	int i_step = -1;
 

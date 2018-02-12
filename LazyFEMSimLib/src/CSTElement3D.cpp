@@ -274,10 +274,9 @@ void CSTElement3D::computeHessianComponents()
 		for(int i = 0; i < 4; ++i) {
 		for(int j = 0; j < 3; ++j) {
             dF = dFdXij[i][j];
-            dP = shearModulus * dF;
-            dP = dP + (shearModulus - bulkModulus * F_logdet) * FinvT * dF.transpose() * FinvT;
-            tmpM = Finv * dF;
-            dP = dP + bulkModulus * tmpM.trace() *FinvT;
+            dP = shearModulus * dF
+               + (shearModulus - bulkModulus * F_logdet) * FinvT * dF.transpose() * FinvT
+               + bulkModulus * (Finv * dF).trace() * FinvT;
             dH = restShapeVolume * dP * dXInv.transpose();
             for (int ii = 0;ii < 3;++ii)
                 for (int jj = 0;jj < 3;++jj)
