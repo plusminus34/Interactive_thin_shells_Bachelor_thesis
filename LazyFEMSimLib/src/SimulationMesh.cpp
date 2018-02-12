@@ -183,7 +183,7 @@ void SimulationMesh::prepare_upto_energy(dVector const & x)
 
 	int n = elements.size();
 
-#pragma omp parallel for default(shared) reduction(+:e) num_threads(2) 
+//#pragma omp parallel for default(shared) reduction(+:e) num_threads(2) 
 	for (int i = 0; i < n; i++) {
 		CSTElement3D* element = static_cast<CSTElement3D*>(elements[i]);
 		element->computeDeformationGradient(x, X);
@@ -214,7 +214,7 @@ void SimulationMesh::prepare_upto_hessian(dVector const & x)
 
 	// CST elements: prepare
 	int n = elements.size();
-#pragma omp parallel for default(shared) num_threads(2)
+//#pragma omp parallel for default(shared) num_threads(2)
 	for (int i = 0; i < n; i++) {
 		CSTElement3D* element = static_cast<CSTElement3D*>(elements[i]);
 		element->computeGradientComponents();
