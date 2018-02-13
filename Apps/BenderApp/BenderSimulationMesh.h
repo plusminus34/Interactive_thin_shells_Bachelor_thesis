@@ -31,7 +31,10 @@ public:
 	void setMountedNode(int nodeID, const P3D & x0, int mountID);
 	void unmountNode(int nodeID, int mountID);
 
-	void setNodePositionObjective(int nodeID, const P3D & x0);
+	int getSelectedNodePositionObjectiveID(Ray const & ray);
+
+	int setNodePositionObjective(int nodeID, const P3D & x0);
+	int setNodePositionObjectiveNoDuplicate(int nodeID, const P3D & x0);
 	void setNodeGlobalNodePositionObjective(dVector const & x);
 
 	//void scaleAll(double s);
@@ -41,6 +44,9 @@ public:
 	int getMountIdOfNode(int nodeID);
 
 	void clearObjectives();
+	void clearNodePositionObjectives();
+	void removeNodePositionObjectivesOfNode(int nodeID);
+	
 
 	double computeO();
 	double computeOofx(dVector const & x_in);

@@ -64,10 +64,41 @@ void BenderSimulationMesh<NDim>::unmountNode(int nodeID, int mountID)
 	}
 }
 
+
 template<int NDim>
-void BenderSimulationMesh<NDim>::setNodePositionObjective(int nodeID, const P3D & x0) 
+int BenderSimulationMesh<NDim>::getSelectedNodePositionObjectiveID(Ray const & ray)
+{
+    int ID = -1;
+    double dis = std::numeric_limits<double>::max();
+    for (uint i = 0; i < objectives.size(); i++) {
+		NodePositionObjective * nodePosObj = dynamic_cast<NodePositionObjective *>(objectives[i]);
+		if(nodePosObj) {
+			P3D tp = nodePosObj->targetPosition;
+			double tDis = ray.getDistanceToPoint(tp) / (sqrt((tp - ray.origin).dot(tp - ray.origin)));
+			//Logger::consolePrint("%lf %lf %lf %lf\n", tp.x(), tp.y(), tp.z(), tDis);
+			if (tDis < 0.01 && tDis < dis) {
+				dis = tDis;
+				ID = i;
+			}
+		}
+    }
+    return ID;
+}
+
+
+template<int NDim>
+int BenderSimulationMesh<NDim>::setNodePositionObjective(int nodeID, const P3D & x0) 
 {
 	objectives.push_back(new NodePositionObjective(this->nodes[nodeID], x0));
+	return(objectives.size() - 1);
+}
+
+template<int NDim>
+int BenderSimulationMesh<NDim>::setNodePositionObjectiveNoDuplicate(int nodeID, const P3D & x0)
+{
+	removeNodePositionObjectivesOfNode(nodeID);
+	int objectiveID = setNodePositionObjective(nodeID, x0);
+	return(objectiveID);
 }
 
 template<int NDim>
@@ -79,52 +110,7 @@ void BenderSimulationMesh<NDim>::setNodeGlobalNodePositionObjective(dVector cons
 		setNodePositionObjective(i, this->nodes[i]->getCoordinates(x));
 	}
 }
-/*
-template<int NDim>
-void BenderSimulationMesh<NDim>::scaleAll(double s)
-{
-	for(size_t i = 0; i < x.size(); ++i) {
-		x[i] *= s;
-	}
-	for(size_t i = 0; i < X.size(); ++i) {
-		X[i] *= s;
-	}
-	for(size_t i = 0; i < m.size(); ++i) {
-		m[i] *= std::pow(s, NDim);
-	}
-	for(size_t i = 0; i < f_ext.size(); ++i) {
-		f_ext[i] *= std::pow(s, NDim + 1);
-	}
-	for(size_t i = 0; i < xSolver.size(); ++i) {
-		xSolver[i] *= s;
-	}
-	energyFunction->initialize(this);
-}
 
-template<int NDim>
-void BenderSimulationMesh<NDim>::moveAll(V3D v)
-{
-	int n = x.size() / NDim;
-	for(int i = 0; i < n; ++i) {
-		for(int j = 0; j < NDim; ++j) {
-			x[i*NDim+j] += v[j];
-		}
-	}
-	n = X.size() / NDim;
-	for(int i = 0; i < n; ++i) {
-		for(int j = 0; j < NDim; ++j) {
-			X[i*NDim+j] += v[j];
-		}
-	}
-	n = xSolver.size() / NDim;
-	for(int i = 0; i < n; ++i) {
-		for(int j = 0; j < NDim; ++j) {
-			xSolver[i*NDim+j] += v[j];
-		}
-	}
-	energyFunction->initialize(this);
-}
-*/
 
 template<int NDim>
 int BenderSimulationMesh<NDim>::getMountIdOfNode(int nodeID) {
@@ -162,6 +148,30 @@ void BenderSimulationMesh<NDim>::clearObjectives()
 		delete obj;
 	}
 	objectives.resize(0);
+}
+
+template<int NDim>
+void BenderSimulationMesh<NDim>::clearNodePositionObjectives()
+{
+	for (int i = objectives.size()-1; i >= 0; --i) {
+		NodePositionObjective * obj = dynamic_cast<NodePositionObjective *>(objectives[i]);
+		if (obj) {
+			delete obj;
+			objectives.erase(objectives.begin() + i);
+		}
+	}
+}
+
+template<int NDim>
+void BenderSimulationMesh<NDim>::removeNodePositionObjectivesOfNode(int nodeID)
+{
+	for (int i = objectives.size() - 1; i >= 0; --i) {
+		NodePositionObjective * obj = dynamic_cast<NodePositionObjective *>(objectives[i]);
+		if (obj && obj->node->nodeIndex == nodeID) {
+			delete obj;
+			objectives.erase(objectives.begin() + i);
+		}
+	}
 }
 
 template<int NDim>

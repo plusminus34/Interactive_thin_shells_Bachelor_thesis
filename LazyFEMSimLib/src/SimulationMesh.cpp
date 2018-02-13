@@ -232,12 +232,6 @@ void SimulationMesh::prepare_upto_hessian(dVector const & x)
 		element->addEnergyGradientTo(x, X, gradient);
 	}
 
-	
-	
-	//for (size_t i = 0; i < n; i++) {
-	//	CSTElement3D* element = static_cast<CSTElement3D*>(elements[i]);
-	//	element->addEnergyHessianTo_fixedPosition(x, X, hessianTriplets, i*nEntriesPerElement);
-	//}
 
 	// pinned node elements
 	addGradientPinnedNodeElements(x, gradient);

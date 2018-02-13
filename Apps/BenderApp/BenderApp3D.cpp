@@ -45,7 +45,7 @@ BenderApp3D::BenderApp3D()
 	const P3D rod_center(0.0, 0.35, 0.50);
 
 	// fem mesh coarsness
-	double maxTetVolume = 0.5e-6;//1.35e-6;
+	double maxTetVolume = -1;//0.5e-6;//1.35e-6;
 
 	// measured (physical) values for "the green foam" are: (density, young, poisson) = (43.63, 2.135e4, 0.376)
 	//double massDensity = 43.63;//130;//50;
@@ -291,7 +291,7 @@ BenderApp3D::BenderApp3D()
 	auto set_rotation_mount_from_plane = [&](int dim, double val, double tolerance) 
 	{
 		std::vector<int> nodes_id(0);
-		for(int i = 0; i < femMesh->nodes.size(); ++i) {
+		for(int i = 0; i < (int)femMesh->nodes.size(); ++i) {
 			P3D pt = femMesh->nodes[i]->getCoordinates(femMesh->X);
 			if(pt[dim] > val-tolerance && pt[dim] < val+tolerance) {
 				nodes_id.push_back(i);
@@ -326,7 +326,7 @@ BenderApp3D::BenderApp3D()
 										V3D & mount_origin_body, Matrix3x3 & mount_coordinates_body)
 	{
 		std::vector<int> nodes_id(0);
-		for(int i = 0; i < femMesh->nodes.size(); ++i) {
+		for(int i = 0; i < (int)femMesh->nodes.size(); ++i) {
 			P3D pt = femMesh->nodes[i]->getCoordinates(femMesh->X);
 			if(pt[dim] > val-tolerance && pt[dim] < val+tolerance) {
 				nodes_id.push_back(i);
@@ -412,12 +412,6 @@ BenderApp3D::~BenderApp3D()
 }
 
 
-void BenderApp3D::pushInputTrajectory(Trajectory3Dplus & trajInput) 
-{
-	trajInput.setTValueToLength();
-	dynamic_cast<MatchScaledTrajObjective *>(femMesh->objectives[0])->setTargetTrajectory(trajInput);
-}
-
 
 
 void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
@@ -467,7 +461,7 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 
 	menu->addGroup("Interaction Mode");
 	// add selection for active interaction object
-	menu->addVariable("Manipulate: ", interactionObject, true)->setItems({"Mounts", "Target Trajectory", "IKROBOT"});
+	menu->addVariable("Manipulate: ", interactionObject, true)->setItems({"Mounts", "Target Trajectory", "Target Node Position", "IKROBOT"});
 	// add selection for interaction mode
 	{
 		nanogui::Widget *modes = new nanogui::Widget(menu->window());
@@ -502,8 +496,8 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 		selection->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 			nanogui::Alignment::Middle, 0, 4));
 		comboBoxMountSelection = new nanogui::ComboBox(selection, { "no mounts available"});
-		comboBoxMountSelection->setCallback([this](int idx){selected_mount = idx;
-		                                                    std::cout << "selected mount: " << selected_mount << std::endl;
+		comboBoxMountSelection->setCallback([this](int idx){selectedMountID = idx;
+		                                                    std::cout << "selected mount: " << selectedMountID << std::endl;
 															});
 	}
 	{
@@ -513,11 +507,11 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 			nanogui::Alignment::Middle, 0, 4));
 		nanogui::Button *b;
 		b = new nanogui::Button(mountStatus, "toogle xi");
-		b->setCallback([this](){femMesh->mounts[selected_mount]->parameterOptimization ^= true;
+		b->setCallback([this](){femMesh->mounts[selectedMountID]->parameterOptimization ^= true;
 		                        updateMountSelectionBox();
 								});
 		b = new nanogui::Button(mountStatus, "toogle active");
-		b->setCallback([this](){femMesh->mounts[selected_mount]->active ^= true;
+		b->setCallback([this](){femMesh->mounts[selectedMountID]->active ^= true;
 								updateMountSelectionBox();
 								});
 	}
@@ -579,7 +573,7 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 void BenderApp3D::updateMountSelectionBox()
 {
 	std::vector<std::string> items(femMesh->mounts.size());
-	for(int i = 0; i < femMesh->mounts.size(); ++i) {
+	for(int i = 0; i < (int)femMesh->mounts.size(); ++i) {
 		std::stringstream item;
 		item << "Mount " << i << " | ";
 		if(femMesh->mounts[i]->parameterOptimization) {
@@ -601,7 +595,7 @@ void BenderApp3D::updateMountSelectionBox()
 	}
 
 	comboBoxMountSelection->setItems(items);
-	selected_mount = comboBoxMountSelection->selectedIndex();
+	selectedMountID = comboBoxMountSelection->selectedIndex();
 
 	menuScreen->performLayout();
 }
@@ -621,9 +615,29 @@ void BenderApp3D::switchInteractionMode(InteractionMode mode)
 void BenderApp3D::setSelectedMount(int mountID)
 {
 	if(mountID >= 0) {
-		selected_mount = mountID;
+		selectedMountID = mountID;
 		comboBoxMountSelection->setSelectedIndex(mountID);
 	}
+}
+
+void BenderApp3D::pushInputTrajectory(Trajectory3Dplus & trajInput) 
+{
+	trajInput.setTValueToLength();
+	for(MeshObjective * objective : femMesh->objectives) {
+		MatchScaledTrajObjective * trajObj = dynamic_cast<MatchScaledTrajObjective *>(objective);
+		if(trajObj) {
+			trajObj->setTargetTrajectory(trajInput);
+			return;
+		}
+	}
+}
+
+P3D BenderApp3D::getRayPointViewNormal(Ray const & ray, P3D const & pointOnPlane)
+{
+	Plane plane(pointOnPlane, V3D(camera->getCameraPosition(), camera->getCameraTarget()).unit());
+	P3D Pt;
+	currentRay.getDistanceToPlane(plane, &Pt);
+	return(Pt);
 }
 
 
@@ -651,7 +665,7 @@ bool BenderApp3D::onMouseMoveEvent(double xPos, double yPos) {
 				currentRay.getDistanceToPlane(plane,&targetPos);
 				lastMovedRay.getDistanceToPlane(plane, &lastPos);
 				V3D delta = targetPos - lastPos;
-				dynamic_cast<RotationMount3D*>(femMesh->mounts[selected_mount])->shift(delta);
+				dynamic_cast<RotationMount3D*>(femMesh->mounts[selectedMountID])->shift(delta);
 			}
 			return(true);
 		}
@@ -663,7 +677,7 @@ bool BenderApp3D::onMouseMoveEvent(double xPos, double yPos) {
 			return(false);
 		}
 	}
-	if(interactionObject == InteractionObject::OBJECTIVE) {
+	if(interactionObject == InteractionObject::OBJECTIVE_TRAJECTORY) {
 		if(interactionMode == InteractionMode::SELECT) {
 			return(true);
 		}
@@ -681,6 +695,26 @@ bool BenderApp3D::onMouseMoveEvent(double xPos, double yPos) {
 		}
 		else if(interactionMode == InteractionMode::DRAW) {
 
+			return(true);
+		}
+		else {
+			return(false);
+		}
+	}
+	if (interactionObject == InteractionObject::OBJECTIVE_NODE) {
+		if (interactionMode == InteractionMode::SELECT) {
+			return(true);
+		}
+		else if (interactionMode == InteractionMode::DRAG ||
+				 interactionMode == InteractionMode::DRAW) {
+			if (selectedObjectiveID >= 0) {
+				NodePositionObjective * objective = dynamic_cast<NodePositionObjective *>(femMesh->objectives[selectedObjectiveID]);
+				if (objective) {
+					P3D targetPosOld = objective->targetPosition;
+					P3D targetPosNew = getRayPointViewNormal(currentRay, targetPosOld);
+					objective->targetPosition = targetPosNew;
+				}
+			}
 			return(true);
 		}
 		else {
@@ -756,7 +790,7 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 			else if(interactionMode == InteractionMode::DRAW) {
 				if(toolMode == ToolMode::PICK_NODE) {
 					int selectedNodeID_temp = femMesh->getSelectedNodeID(lastMovedRay);
-					addMountedNode(selectedNodeID_temp, selected_mount);
+					addMountedNode(selectedNodeID_temp, selectedMountID);
 				}
 				return(true);
 			}
@@ -764,7 +798,7 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 				return(false);
 			}
 		}
-		else if(interactionObject == InteractionObject::OBJECTIVE) {
+		else if(interactionObject == InteractionObject::OBJECTIVE_TRAJECTORY) {
 			if(interactionMode == InteractionMode::SELECT) {
 				return(true);
 			}
@@ -780,7 +814,6 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 			}
 			else if(interactionMode == InteractionMode::DRAW) {
 				if(action == GLFW_PRESS) {
-
 					P3D ref_pt;
 					if(targetTrajectory_input.getKnotCount() == 0) {
 						ref_pt = camera->getCameraTarget();
@@ -793,6 +826,33 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 					currentRay.getDistanceToPlane(plane,&cursorPt);
 					targetTrajectory_input.addKnotInteractive(cursorPt);
 					pushInputTrajectory(targetTrajectory_input);
+				}
+				return(true);
+			}
+			else {
+				return(false);
+			}
+		}
+		else if (interactionObject == InteractionObject::OBJECTIVE_NODE) {
+			if (interactionMode == InteractionMode::SELECT) {
+				return(true);
+			}
+			else if (interactionMode == InteractionMode::DRAG || 
+					 interactionMode == InteractionMode::DRAW) {
+				if (action == GLFW_PRESS) {
+					lastClickedRay = lastMovedRay;
+					int nodeID = femMesh->getSelectedNodeID(lastClickedRay);
+					if(nodeID >= 0) {
+						selectedObjectiveID = femMesh->setNodePositionObjectiveNoDuplicate(nodeID, femMesh->nodes[nodeID]->getWorldPosition());
+						return(true);
+					}
+					else {
+						selectedObjectiveID = femMesh->getSelectedNodePositionObjectiveID(lastClickedRay);
+						return(true);
+					}
+				}
+				else {
+					selectedObjectiveID = -1;
 				}
 				return(true);
 			}
@@ -841,14 +901,14 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 			}
 			else if(interactionMode == InteractionMode::DRAW) {
 				int selectedNodeID_temp = femMesh->getSelectedNodeID(lastMovedRay);
-				unmountNode(selectedNodeID_temp, selected_mount);
+				unmountNode(selectedNodeID_temp, selectedMountID);
 				return(true);
 			}
 			else {
 				return(false);
 			}
 		}
-		else if(interactionObject == InteractionObject::OBJECTIVE) {
+		else if(interactionObject == InteractionObject::OBJECTIVE_TRAJECTORY) {
 			if(interactionMode == InteractionMode::SELECT) {
 				return(true);
 			}
@@ -863,6 +923,21 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 						targetTrajectory_input.removeKnotInteractive(selectedKnotID);
 						pushInputTrajectory(targetTrajectory_input);
 					}
+				}
+				return(true);
+			}
+			else {
+				return(false);
+			}
+		}
+		else if (interactionObject == InteractionObject::OBJECTIVE_NODE) {
+			if (interactionMode == InteractionMode::DRAG || 
+				interactionMode == InteractionMode::DRAW) {
+				if (action == GLFW_PRESS) {
+					lastClickedRay = lastMovedRay;
+					int nodeID = femMesh->getSelectedNodeID(lastClickedRay);
+					femMesh->removeNodePositionObjectivesOfNode(nodeID);
+					selectedObjectiveID = -1;
 				}
 				return(true);
 			}
@@ -911,13 +986,13 @@ bool BenderApp3D::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 			return(true);
 		}
 		else if(interactionMode == InteractionMode::DRAG) {
-			if(selected_mount >= 0) {
+			if(selectedMountID >= 0) {
 				std::cout << "Offsets: " << xOffset << " " << yOffset << std::endl;
 				
 				Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
 				P3D origin; 
 				currentRay.getDistanceToPlane(plane,&origin);
-				dynamic_cast<RotationMount3D*>(femMesh->mounts[selected_mount])->rotate(origin, yOffset * 0.05, 0.0, 0.0);
+				dynamic_cast<RotationMount3D*>(femMesh->mounts[selectedMountID])->rotate(origin, yOffset * 0.05, 0.0, 0.0);
 			}
 			else if(selectedXi >= 0 && selectedXi < inverseDeformationSolver->xi.size()) {
 				std::cout << "yOffset: " << yOffset << std::endl;
@@ -931,20 +1006,6 @@ bool BenderApp3D::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 					m->move(selectedGeneralizedRobotParameter, 0.05*yOffset);
 				}
 			}
-			return(true);
-		}
-		else if(interactionMode == InteractionMode::DRAW) {
-			return(true);
-		}
-		else {
-			return(false);
-		}
-	}
-	else if(interactionObject == InteractionObject::OBJECTIVE) {
-		if(interactionMode == InteractionMode::SELECT) {
-			return(true);
-		}
-		else if(interactionMode == InteractionMode::DRAG) {
 			return(true);
 		}
 		else if(interactionMode == InteractionMode::DRAW) {
@@ -1119,7 +1180,7 @@ void BenderApp3D::drawScene() {
 
 	
 	// draw nodes of mounted points
-	for(int i = 0; i < femMesh->pinnedNodeElements.size(); ++i) {
+	for(int i = 0; i < (int)femMesh->pinnedNodeElements.size(); ++i) {
 		MountedPointSpring<2> * mp = static_cast<MountedPointSpring<2> *>(femMesh->pinnedNodeElements[i]);
 
 		double size = 0.002;
@@ -1132,7 +1193,7 @@ void BenderApp3D::drawScene() {
 		if(!mp->mount->active) {
 			color = color*0.5 + red*0.5;
 		}
-		if(selected_mount >= 0 && mp->mount == femMesh->mounts[selected_mount]) {
+		if(selectedMountID >= 0 && mp->mount == femMesh->mounts[selectedMountID]) {
 			size *= 1.7;
 		}
 
@@ -1205,7 +1266,7 @@ void BenderApp3D::removeSelectedMount()
 	std::cerr << "error: not properly implemented yet" << std::endl;
 	exit(3);
 	
-	femMesh->removeMount(selected_mount);
+	femMesh->removeMount(selectedMountID);
 	inverseDeformationSolver->pullXi();
 	updateMountSelectionBox();
 }

@@ -94,8 +94,8 @@ V3D mountBaseZDirectionRB_l;
 	RigidBody * right_gripper;
 	RigidBody * left_gripper;
 	
-	enum InteractionObject {MOUNTS, OBJECTIVE, IKROBOT};
-	InteractionObject interactionObject = OBJECTIVE;
+	enum InteractionObject {MOUNTS, OBJECTIVE_TRAJECTORY, OBJECTIVE_NODE, IKROBOT};
+	InteractionObject interactionObject = OBJECTIVE_NODE;
 	enum InteractionMode {VIEW, SELECT, DRAG, DRAW};
 	InteractionMode interactionMode = VIEW;
 	enum ToolMode {PICK_NODE, BRUSH};
@@ -121,7 +121,8 @@ V3D mountBaseZDirectionRB_l;
 	Ray currentRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
 	int selectedNodeID = -1;
 	int selectedKnotID = -1;
-	int selected_mount = -1;
+	int selectedMountID = -1;
+	int selectedObjectiveID = -1;
 
 	// menu elements
 	nanogui::Screen *menuScreen2 = nullptr;
@@ -183,14 +184,16 @@ public:
 	
 	//virtual void saveFile(const char* fName);
 	//virtual void loadFile(char* fName);
-
-	void pushInputTrajectory(Trajectory3Dplus & trajInput);
+	
 
 	void initInteractionMenu(nanogui::FormHelper* menu);
 	void updateMountSelectionBox();
 
 	void switchInteractionMode(InteractionMode mode);
 	void setSelectedMount(int mountID);
+	void pushInputTrajectory(Trajectory3Dplus & trajInput);
+
+	P3D getRayPointViewNormal(Ray const & ray, P3D const & pointOnPlane);
 
 };
 

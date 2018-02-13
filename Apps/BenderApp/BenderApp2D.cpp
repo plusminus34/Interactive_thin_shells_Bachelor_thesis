@@ -167,8 +167,8 @@ void BenderApp2D::initInteractionMenu(nanogui::FormHelper* menu)
 		selection->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 			nanogui::Alignment::Middle, 0, 4));
 		comboBoxMountSelection = new nanogui::ComboBox(selection, { "Combo box item 1", "Combo box item 2", "Combo box item 3"});
-		comboBoxMountSelection->setCallback([this](int idx){selected_mount = idx;
-		                                                    std::cout << "selected mount: " << selected_mount << std::endl;
+		comboBoxMountSelection->setCallback([this](int idx){selectedMountID = idx;
+		                                                    std::cout << "selected mount: " << selectedMountID << std::endl;
 															});
 	}
 	{
@@ -178,11 +178,11 @@ void BenderApp2D::initInteractionMenu(nanogui::FormHelper* menu)
 			nanogui::Alignment::Middle, 0, 4));
 		nanogui::Button *b;
 		b = new nanogui::Button(mountStatus, "toogle xi");
-		b->setCallback([this](){femMesh->mounts[selected_mount]->parameterOptimization ^= true;
+		b->setCallback([this](){femMesh->mounts[selectedMountID]->parameterOptimization ^= true;
 		                        updateMountSelectionBox();
 								});
 		b = new nanogui::Button(mountStatus, "toogle active");
-		b->setCallback([this](){femMesh->mounts[selected_mount]->active ^= true;
+		b->setCallback([this](){femMesh->mounts[selectedMountID]->active ^= true;
 								updateMountSelectionBox();
 								});
 	}
@@ -228,7 +228,7 @@ void BenderApp2D::updateMountSelectionBox()
 	}
 
 	comboBoxMountSelection->setItems(items);
-	selected_mount = comboBoxMountSelection->selectedIndex();
+	selectedMountID = comboBoxMountSelection->selectedIndex();
 
 	menuScreen->performLayout();
 }
@@ -248,7 +248,7 @@ void BenderApp2D::switchInteractionMode(InteractionMode mode)
 void BenderApp2D::setSelectedMount(int mountID)
 {
 	if(mountID >= 0) {
-		selected_mount = mountID;
+		selectedMountID = mountID;
 		comboBoxMountSelection->setSelectedIndex(mountID);
 	}
 }
@@ -277,7 +277,7 @@ bool BenderApp2D::onMouseMoveEvent(double xPos, double yPos) {
 				currentRay.getDistanceToPlane(plane,&targetPos);
 				lastMovedRay.getDistanceToPlane(plane, &lastPos);
 				V3D delta = targetPos - lastPos;
-				dynamic_cast<RotationMount2D*>(femMesh->mounts[selected_mount])->shift(delta);
+				dynamic_cast<RotationMount2D*>(femMesh->mounts[selectedMountID])->shift(delta);
 			}
 			return(true);
 		}
@@ -347,7 +347,7 @@ bool BenderApp2D::onMouseButtonEvent(int button, int action, int mods, double xP
 			else if(interactionMode == InteractionMode::DRAW) {
 				if(toolMode == ToolMode::PICK_NODE) {
 					int selectedNodeID_temp = femMesh->getSelectedNodeID(lastMovedRay);
-					addMountedNode(selectedNodeID_temp, selected_mount);
+					addMountedNode(selectedNodeID_temp, selectedMountID);
 				}
 				return(true);
 			}
@@ -400,7 +400,7 @@ bool BenderApp2D::onMouseButtonEvent(int button, int action, int mods, double xP
 			}
 			else if(interactionMode == InteractionMode::DRAW) {
 				int selectedNodeID_temp = femMesh->getSelectedNodeID(lastMovedRay);
-				unmountNode(selectedNodeID_temp, selected_mount);
+				unmountNode(selectedNodeID_temp, selectedMountID);
 				return(true);
 			}
 			else {
@@ -447,12 +447,12 @@ bool BenderApp2D::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 			return(true);
 		}
 		else if(interactionMode == InteractionMode::DRAG) {
-			if (selected_mount >= 0) {
+			if (selectedMountID >= 0) {
 				std::cout << "Offsets: " << xOffset << " " << yOffset << std::endl;
 				Plane plane(camera->getCameraTarget(),V3D(camera->getCameraPosition(),camera->getCameraTarget()).unit());
 				P3D origin; 
 				currentRay.getDistanceToPlane(plane,&origin);
-				dynamic_cast<RotationMount2D*>(femMesh->mounts[selected_mount])->rotate(origin, yOffset * 0.05);
+				dynamic_cast<RotationMount2D*>(femMesh->mounts[selectedMountID])->rotate(origin, yOffset * 0.05);
 			}
 			return(true);
 		}
@@ -603,7 +603,7 @@ void BenderApp2D::drawScene() {
 		if(!mp->mount->active) {
 			color = color*0.5 + red*0.5;
 		}
-		if(mp->mount == femMesh->mounts[selected_mount]) {
+		if(mp->mount == femMesh->mounts[selectedMountID]) {
 			size *= 1.8;
 		}
 
@@ -663,7 +663,7 @@ void BenderApp2D::removeSelectedMount()
 {
 	std::cerr << "error: not properly implemented yet" << std::endl;
 	exit(3);
-	femMesh->removeMount(selected_mount);
+	femMesh->removeMount(selectedMountID);
 	inverseDeformationSolver->pullXi();
 	updateMountSelectionBox();
 }
