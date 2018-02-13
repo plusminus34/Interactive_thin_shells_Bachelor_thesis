@@ -13,7 +13,7 @@ RBSphereCollisionObjective::RBSphereCollisionObjective(RobotParameters * robotPa
 													   double l, double stiffness, double epsilon)
 	: robotParameters(robotParameters), rbs(rbs), constraint(l, stiffness, epsilon)
 {
-	double d_initial_limit = 0.03;
+	double d_margin = 0.03;
 	
 	// read spheres
 	setSphereCDPsFromFile("../data/rbs/yumi/spheres/");
@@ -41,18 +41,20 @@ RBSphereCollisionObjective::RBSphereCollisionObjective(RobotParameters * robotPa
 		check_collision_RBs(idx_parent, idx_parent) = false;
 	}
 
-	// further: ignore all pairs of rb that collide initially (at the time this class is constructed)
+	// further: ignore all pairs of rb that initially collide or are very close (at the time this class is constructed)
 	
 	prepare();
 	for(int i = 0; i < rbs.size(); ++i) {
 		for(int j = 0; j < rbs.size(); ++j) {
 			if(!check_collision_RBs(i,j)){continue;}
-			double d = d_min(i, j);
-			if(d < d_initial_limit) {
-				check_collision_RBs(i, j) = false;
-				check_collision_RBs(j, i) = false;
+			for(auto & sdp : sphereDistPairs(i, j)) {
+				double d = std::get<2>(sdp);
+				if(d < l + epsilon + d_margin) {
+					check_collision_RBs(i, j) = false;
+					check_collision_RBs(j, i) = false;
+					break;
+				}
 			}
-
 		}
 	}
 	
@@ -104,16 +106,6 @@ void RBSphereCollisionObjective::setSphereCDPsFromFile(std::string const & dirNa
 }
 
 
-
-/*
-double RBSphereCollisionObjective::distance(RigidBody * rb1, RigidBody * rb2)
-{
-	SphereCDP * cdp1_min = nullptr;
-	SphereCDP * cdp2_min = nullptr;
-	return(distance(rb1, rb2, cdp1_min, cdp2_min));
-}
-*/
-
 double RBSphereCollisionObjective::distance(int rb1_idx, int rb2_idx, int & cdp1_idx, int & cdp2_idx)
 {
 	double d_min = 1.0e50;
@@ -135,40 +127,8 @@ double RBSphereCollisionObjective::distance(int rb1_idx, int rb2_idx, int & cdp1
 	return(d_min);
 }
 
-/*
-double RBSphereCollisionObjective::distance(RigidBody * rb1, RigidBody * rb2, SphereCDP *& cdp1_min, SphereCDP *& cdp2_min)
+void RBSphereCollisionObjective::dDistanceDpar(int rb1_idx, int rb2_idx, int cdp1_idx, int cdp2_idx, dVector & grad) // gradient with respect to the parameters of the RobotParameters set
 {
-	//double d_min = std::numeric_limits<double>::max();
-	double d_min = 1.0e50;
-	cdp1_min = nullptr;
-	cdp2_min = nullptr;
-	// loop through all pairs of (shperical) cdps between the rigid bodys
-	for(int i = 0; i < rb1->cdps.size(); ++i) {
-		SphereCDP * cdp1 = dynamic_cast<SphereCDP *>(rb1->cdps[i]);
-		if(!cdp1) {continue;}
-		P3D c1 = robotParameters->robotParameters->getWorldCoordinatesFor(cdp1->p, rb1);
-		for(int j = 0; j < rb2->cdps.size(); ++j) {
-			SphereCDP * cdp2 = dynamic_cast<SphereCDP *>(rb2->cdps[i]);
-			if(!cdp2) {continue;}
-			P3D c2 = robotParameters->robotParameters->getWorldCoordinatesFor(cdp2->p, rb2);
-			double d = (c2 - c1).length() - (cdp1->r + cdp2->r);
-			if(d < d_min) {
-				d_min = d;
-				cdp1_min = cdp1;
-				cdp2_min = cdp2;
-			}
-		}
-	}
-	return(d_min);
-}
-*/
-
-void RBSphereCollisionObjective::dDistanceDpar(int rb1_idx, int rb2_idx, dVector & grad) // gradient with respect to the parameters of the RobotParameters set
-{
-	// Sphere pair with minimum distance
-	int cdp1_idx = cdpIdx_d_min[rb1_idx][rb2_idx].first;
-	int cdp2_idx = cdpIdx_d_min[rb1_idx][rb2_idx].second;
-
 	// compute derivative of c with respect to the parameters q
 	MatrixNxM dc1dq;	// dq here refers to the parameter set of the GeneralizedCoordinatesRobotRepresentation
 	MatrixNxM dc2dq;
@@ -181,7 +141,6 @@ void RBSphereCollisionObjective::dDistanceDpar(int rb1_idx, int rb2_idx, dVector
 	V3D deltac = (c2 - c1);
 	MatrixNxM ddeltacdq = dc2dq - dc1dq;
 	
-
 	int n = robotParameters->getNPar();
 	grad.resize(n);
 
@@ -189,35 +148,6 @@ void RBSphereCollisionObjective::dDistanceDpar(int rb1_idx, int rb2_idx, dVector
 		grad[i] = deltac.unit().dot(static_cast<V3D>(ddeltacdq.col(i+6)));
 	}
 }
-/*
-void RBSphereCollisionObjective::dDistanceDpar(RigidBody * rb1, RigidBody * rb2, dVector & grad) // gradient with respect to the parameters of the RobotParameters set
-{
-	// find cdp pair with the minimum distance
-	SphereCDP * cdp1 = nullptr;
-	SphereCDP * cdp2 = nullptr;
-	distance(rb1, rb2, cdp1, cdp2);
-
-	MatrixNxM dc1dq;	// dq here refers to the parameter set of the GeneralizedCoordinatesRobotRepresentation
-	MatrixNxM dc2dq;
-
-	robotParameters->robotParameters->compute_dpdq(cdp1->p, rb1, dc1dq);
-	robotParameters->robotParameters->compute_dpdq(cdp2->p, rb2, dc2dq);
-
-	P3D c1 = robotParameters->robotParameters->getWorldCoordinatesFor(cdp1->p, rb1);
-	P3D c2 = robotParameters->robotParameters->getWorldCoordinatesFor(cdp2->p, rb2);
-	V3D deltac = (c2 - c1);
-	MatrixNxM ddeltacdq = dc2dq - dc1dq;
-	
-
-	int n = robotParameters->getNPar();
-	grad.resize(n);
-
-	for(int i = 0; i < n; ++i) {
-		grad[i] = deltac.unit().dot(static_cast<V3D>(ddeltacdq.col(i+6)));
-	}
-}
-*/
-
 
 double RBSphereCollisionObjective::computeValue(const dVector& p)
 {
@@ -233,8 +163,10 @@ double RBSphereCollisionObjective::computeValue(const dVector& p)
 		for(int j = i+1; j < rbs.size(); ++j) {
 			// check if the pair needs to be considered
 			if(!check_collision_RBs(i, j)) {continue;}
-			double d = d_min(i,j);
-			result += constraint.computeValue(d);
+			for(auto & sdp : sphereDistPairs(i,j)) {
+				double d = std::get<2>(sdp);
+				result += constraint.computeValue(d);
+			}
 		}
 	}
 	return(result);
@@ -248,53 +180,35 @@ void RBSphereCollisionObjective::addGradientTo(dVector& grad, const dVector& p)
 	int i_io = robotParameters->parametersStartIndex;
 	robotParameters->setFromList(p, i_io);
 
+	dVector ddistancedrobotpar;
+	
 	// loop through all pairs of rigid bodies
 	for(int i = 0; i < rbs.size(); ++i) {
 		for(int j = i+1; j < rbs.size(); ++j) {
 			// check if the pair needs to be considered
 			if(!check_collision_RBs(i, j)) {continue;}
-			double d = d_min(i,j);
-			double dOdd = constraint.computeDerivative(d);
-			dVector ddistancedrobotpar;
-			dDistanceDpar(i, j, ddistancedrobotpar);
-			for(int k = 0; k < ddistancedrobotpar.size(); ++k) {
-				grad[robotParameters->parametersStartIndex + k] += ddistancedrobotpar[k] * dOdd;
+			
+			for(auto & sdp : sphereDistPairs(i,j)) {
+				int cdp1_idx = std::get<0>(sdp);
+				int cdp2_idx = std::get<1>(sdp);
+				double d =     std::get<2>(sdp);
+				double dOdd = constraint.computeDerivative(d);
+				dDistanceDpar(i, j, cdp1_idx, cdp2_idx, ddistancedrobotpar);
+				for(int k = 0; k < ddistancedrobotpar.size(); ++k) {
+					grad[robotParameters->parametersStartIndex + k] += ddistancedrobotpar[k] * dOdd;
+				}
+				
 			}
 		}
 	}
 }
-
-/*
-void RBSphereCollisionObjective::addGradientTo(dVector& grad, const dVector& p) 
-{
-	// set (robot joint angle) parameters from global parameter list
-	int i_io = robotParameters->parametersStartIndex;
-	robotParameters->setFromList(p, i_io);
-
-	// loop through all pairs of rigid bodies
-	for(int i = 0; i < rbs.size(); ++i) {
-		for(int j = i+1; j < rbs.size(); ++j) {
-			// check if the pair needs to be considered
-			if(!check_collision_RBs(i, j)) {continue;}
-			double d = distance(rbs[i],rbs[j]);
-			double dOdd = constraint.computeDerivative(d);
-			dVector ddistancedrobotpar;
-			dDistanceDpar(rbs[i], rbs[j], ddistancedrobotpar);
-			for(int k = 0; k < ddistancedrobotpar.size(); ++k) {
-				grad[robotParameters->parametersStartIndex + k] += ddistancedrobotpar[k] * dOdd;
-			}
-		}
-	}
-
-}
-*/
 
 
 
 void RBSphereCollisionObjective::prepare() 
 {
 	precompute_coordinates();
-	precompute_min_distance();
+	precompute_relevant_distances();
 }
 
 
@@ -317,24 +231,26 @@ void RBSphereCollisionObjective::precompute_coordinates()
 }
 
 
-void RBSphereCollisionObjective::precompute_min_distance()
+void RBSphereCollisionObjective::precompute_relevant_distances()
 {
 	// resize
-	d_min.resize(cr.size(), cr.size());
-	cdpIdx_d_min.resize(cr.size());
+	sphereDistPairs.resize(cr.size(), cr.size());
 	for(size_t i = 0; i < cr.size(); ++i) {
-		cdpIdx_d_min[i].resize(cr.size());
+		for(size_t j = i+1; j < cr.size(); ++j) {
+			sphereDistPairs(i,j).resize(0);
+		}
 	}
 
-	// find minimum distances
+	// find relevant distances
 	for(size_t i = 0; i < cr.size(); ++i) {
 		for(size_t j = i+1; j < cr.size(); ++j) {
 			if(!check_collision_RBs(i,j)) {continue;}
 			int i_cdp, j_cdp;
 			double d = distance(i, j, i_cdp, j_cdp);
-			d_min(i,j) = d_min(j,i) = d;
-			cdpIdx_d_min[i][j] = std::pair<int,int>(i_cdp, j_cdp);
-			cdpIdx_d_min[j][i] = std::pair<int,int>(j_cdp, i_cdp);
+			if( ! IS_ZERO(constraint.computeValue(d)) ) {
+				sphereDistPairs(i,j).push_back(std::make_tuple(i_cdp, j_cdp, d));
+				sphereDistPairs(j,i).push_back(std::make_tuple(j_cdp, i_cdp, d));
+			}
 		}
 	}
 	

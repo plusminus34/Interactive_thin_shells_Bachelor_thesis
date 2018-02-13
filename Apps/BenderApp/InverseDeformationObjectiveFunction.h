@@ -16,7 +16,7 @@ public:
 	InverseDeformationSolver<NDim> * idSolver;
 
 	std::vector<ObjectiveFunction *> parameterConstraints;
-	std::vector<ObjectiveFunction *> collisionAvoidance; 
+	std::vector<ObjectiveFunction *> collisionAvoidance;
 
 private:
 	bool use_regularizer = false;

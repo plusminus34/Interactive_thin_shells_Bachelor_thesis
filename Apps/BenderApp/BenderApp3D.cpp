@@ -1154,7 +1154,6 @@ void BenderApp3D::drawScene() {
 	glColor3d(1,1,1);
 	femMesh->drawSimulationMesh();
 
-
 	// draw origin
 	P3D p0(0.0, 0.0, 0.0);
 	double l = 0.1;
