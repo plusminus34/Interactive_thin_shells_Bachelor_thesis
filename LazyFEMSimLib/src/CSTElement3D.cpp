@@ -90,6 +90,14 @@ void CSTElement3D::addEnergyHessianTo(const dVector& x, const dVector& X, std::v
 			addSparseMatrixDenseBlockToTriplet(hesEntries, n[i]->dataStartIndex, n[j]->dataStartIndex, ddEdxdx[i][j], true);
 }
 
+void CSTElement3D::addEnergyHessianTo_fixedPosition(const dVector& x, const dVector& X, std::vector<MTriplet>& hesEntries, int pos_idx) {
+	int pos_idx_cursor = pos_idx;
+	//compute the hessian blocks and
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 4; j++)
+			addSparseMatrixDenseBlockToTripletAtIndex(hesEntries, pos_idx_cursor, n[i]->dataStartIndex, n[j]->dataStartIndex, ddEdxdx[i][j], true);
+}
+
 void CSTElement3D::draw(const dVector& x) {
     //	glColor3d(1, 1, 1);
     glBegin(GL_LINES);

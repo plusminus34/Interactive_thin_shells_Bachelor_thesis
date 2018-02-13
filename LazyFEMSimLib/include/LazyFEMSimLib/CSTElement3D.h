@@ -74,6 +74,7 @@ protected:
     virtual double getEnergy(const dVector& x, const dVector& X);
     virtual void addEnergyGradientTo(const dVector& x, const dVector& X, dVector& grad);
     virtual void addEnergyHessianTo(const dVector& x, const dVector& X, std::vector<MTriplet>& hesEntries);
+	void addEnergyHessianTo_fixedPosition(const dVector& x, const dVector& X, std::vector<MTriplet>& hesEntries, int i);
     virtual void draw(const dVector& x);
     virtual void drawRestConfiguration(const dVector& X);
 

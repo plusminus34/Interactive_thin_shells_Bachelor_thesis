@@ -214,22 +214,30 @@ void SimulationMesh::prepare_upto_hessian(dVector const & x)
 
 	// CST elements: prepare
 	int n = elements.size();
+	int nEntriesPerElement = 78; // each entry has 4x4x3x4 entries; only the lower half is added
+	hessianTriplets.resize(n * nEntriesPerElement);
 #pragma omp parallel for //default(shared) num_threads(2)
 	for (int i = 0; i < n; i++) {
 		CSTElement3D* element = static_cast<CSTElement3D*>(elements[i]);
+		// compute Grad and Hess
 		element->computeGradientComponents();
 		element->computeHessianComponents();
+		// add Hess to triplet list
+		element->addEnergyHessianTo_fixedPosition(x, X, hessianTriplets, i*nEntriesPerElement);
 	}
 
-	// CST elements: add
-	for (size_t i = 0; i < elements.size(); i++) {
+	// CST elements: add Gradient (not concurrent)
+	for (size_t i = 0; i < n; i++) {
 		CSTElement3D* element = static_cast<CSTElement3D*>(elements[i]);
 		element->addEnergyGradientTo(x, X, gradient);
 	}
-	for (size_t i = 0; i < elements.size(); i++) {
-		CSTElement3D* element = static_cast<CSTElement3D*>(elements[i]);
-		element->addEnergyHessianTo(x, X, hessianTriplets);
-	}
+
+	
+	
+	//for (size_t i = 0; i < n; i++) {
+	//	CSTElement3D* element = static_cast<CSTElement3D*>(elements[i]);
+	//	element->addEnergyHessianTo_fixedPosition(x, X, hessianTriplets, i*nEntriesPerElement);
+	//}
 
 	// pinned node elements
 	addGradientPinnedNodeElements(x, gradient);
