@@ -242,7 +242,8 @@ void RBSphereCollisionObjective::precompute_relevant_distances()
 	}
 
 	// find relevant distances
-	for(size_t i = 0; i < cr.size(); ++i) {
+#pragma omp parallel for
+	for(int i = 0; i < (int)cr.size(); ++i) {
 		for(size_t j = i+1; j < cr.size(); ++j) {
 			if(!check_collision_RBs(i,j)) {continue;}
 			int i_cdp, j_cdp;

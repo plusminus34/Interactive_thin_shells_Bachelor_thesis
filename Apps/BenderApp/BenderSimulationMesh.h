@@ -45,7 +45,9 @@ public:
 
 	void clearObjectives();
 	void clearNodePositionObjectives();
+	void removeObjective(int objectiveID);
 	void removeNodePositionObjectivesOfNode(int nodeID);
+
 	
 
 	double computeO();

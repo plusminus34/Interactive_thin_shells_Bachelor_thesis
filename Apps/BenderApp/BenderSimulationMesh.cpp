@@ -163,6 +163,15 @@ void BenderSimulationMesh<NDim>::clearNodePositionObjectives()
 }
 
 template<int NDim>
+void BenderSimulationMesh<NDim>::removeObjective(int objectiveID)
+{
+	if(objectiveID >= 0 && objectiveID < (int)objectives.size()) {
+		delete objectives[objectiveID];
+		objectives.erase(objectives.begin()+objectiveID);
+	}
+}
+
+template<int NDim>
 void BenderSimulationMesh<NDim>::removeNodePositionObjectivesOfNode(int nodeID)
 {
 	for (int i = objectives.size() - 1; i >= 0; --i) {

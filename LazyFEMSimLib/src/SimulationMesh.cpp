@@ -5,7 +5,9 @@
 #include <LazyFEMSimLib/CSTElement3D.h>
 #include <GUILib/GLUtils.h>
 
-#include <omp.h>
+#ifdef _OPENMP_
+#include<omp.h> 
+#endif
 
 SimulationMesh::SimulationMesh()
 	: minimizer(50)

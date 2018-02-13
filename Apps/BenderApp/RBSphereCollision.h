@@ -37,7 +37,6 @@ public:
 	void setSphereCDPsFromFile(std::string const & dirName);
 
 
-
 	//double distance(RigidBody * rb1, RigidBody * rb2);
 	//double distance(RigidBody * rb1, RigidBody * rb2, SphereCDP *& cdp1_min, SphereCDP *& cdp2_min);
 	double distance(int rb1_idx, int rb2_idx,  int & cdp1_idx, int & cdp2_idx);

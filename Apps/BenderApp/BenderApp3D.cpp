@@ -936,8 +936,16 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 				if (action == GLFW_PRESS) {
 					lastClickedRay = lastMovedRay;
 					int nodeID = femMesh->getSelectedNodeID(lastClickedRay);
-					femMesh->removeNodePositionObjectivesOfNode(nodeID);
-					selectedObjectiveID = -1;
+					if(nodeID >= 0) {
+						femMesh->removeNodePositionObjectivesOfNode(nodeID);
+						selectedObjectiveID = -1;
+					}
+					else {
+						selectedObjectiveID = femMesh->getSelectedNodePositionObjectiveID(lastClickedRay);
+						femMesh->removeObjective(selectedObjectiveID);
+						selectedObjectiveID = -1;
+					}
+					return(true);
 				}
 				return(true);
 			}
