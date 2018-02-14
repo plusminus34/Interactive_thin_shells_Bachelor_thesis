@@ -31,22 +31,60 @@ void SimulationMesh::drawSimulationMesh(V3D const & edgeColor, double elementSiz
 {
 
 	// elements
-	glColor3d(edgeColor(0), edgeColor(1), edgeColor(2));
-	glLineWidth((GLfloat)elementSize);
-	for (uint i=0; i<elements.size();i++)
-		elements[i]->draw(x);
-	// pinned nodes (lines only)
-	glColor3d(pinnedNodeColor(0), pinnedNodeColor(1), pinnedNodeColor(2));
-	glLineWidth((GLfloat)pinnedNodeSize);
-	for (uint i=0;i<pinnedNodeElements.size();i++)
-		pinnedNodeElements[i]->draw(x);
-	// nodes
-	/*
-	for (uint i = 0; i < nodes.size(); i++) {
-		nodes[i]->draw(nodeColor, nodeSize);
+	if(elementSize > 0) {
+		glColor3d(edgeColor(0), edgeColor(1), edgeColor(2));
+		glLineWidth((GLfloat)elementSize);
+		for (uint i=0; i<elements.size();i++)
+			elements[i]->draw(x);
 	}
-	*/
+	// pinned nodes (lines only)
+	if(pinnedNodeSize > 0) {
+		glColor3d(pinnedNodeColor(0), pinnedNodeColor(1), pinnedNodeColor(2));
+		glLineWidth((GLfloat)pinnedNodeSize);
+		for (uint i=0;i<pinnedNodeElements.size();i++)
+			pinnedNodeElements[i]->draw(x);
+	}
+	// nodes
+	if(nodeSize > 0) {
+		for (uint i = 0; i < nodes.size(); i++) {
+			nodes[i]->draw(nodeColor, nodeSize);
+		}
+	}
 }
+
+
+void SimulationMesh::drawMeshSurface(dVector const & x) {
+	
+	// construct the gl mesh
+	surfaceMesh->clear();
+
+	for(int i = 0; i < (int)boundaryNodes.size(); ++i) {
+		int j = boundaryNodes[i];
+		surfaceMesh->addVertex(P3D(x[j*3+0], x[j*3+1], x[j*3+2]));
+	}
+	for(int i = 0; i < triSurfBoundary.size(); ++i) {
+		GLIndexedTriangle triangle(triSurfBoundary[i][0], triSurfBoundary[i][1], triSurfBoundary[i][2]);
+		surfaceMesh->addPoly(triangle, true);
+	}
+	surfaceMesh->computeNormals(-1);
+	
+	surfaceMesh->getMaterial().setColor(0.7, 1.0, 0.7, 1.0);
+	
+	
+	//surfaceMesh->setVertexMatrix(x);
+
+	glShadeModel(GL_FLAT);
+	//glShadeModel(GL_SMOOTH);
+	glEnable(GL_LIGHTING);
+
+	//glColor3d(0.72, 0.9, 0.72);
+	surfaceMesh->drawMeshWithLines();
+	//surfaceMesh->drawNormals();
+
+	glDisable(GL_LIGHTING);
+	glShadeModel(GL_SMOOTH);
+}
+
 
 void SimulationMesh::drawExternalForces(){
 	for (uint i=0; i<nodes.size(); i++)

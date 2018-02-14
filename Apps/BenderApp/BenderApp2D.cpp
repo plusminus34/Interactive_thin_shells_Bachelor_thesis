@@ -477,6 +477,8 @@ bool BenderApp2D::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 			return(false);
 		}
 	}
+
+	return(false);
 }
 
 bool BenderApp2D::onKeyEvent(int key, int action, int mods) {	

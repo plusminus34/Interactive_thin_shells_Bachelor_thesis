@@ -45,16 +45,16 @@ BenderApp3D::BenderApp3D()
 	const P3D rod_center(0.0, 0.35, 0.50);
 
 	// fem mesh coarsness
-	double maxTetVolume = -1;//0.5e-6;//1.35e-6;
+	double maxTetVolume = 0.5e-6;1.35e-6;//1.35e-6;
 
 	// measured (physical) values for "the green foam" are: (density, young, poisson) = (43.63, 2.135e4, 0.376)
-	//double massDensity = 43.63;//130;//50;
-	//double youngsModulus = 3.6e3;//3.0e4;//3.0e4;
-	//double poissonRatio = 0.25;//0.376;//0.25;
+	double massDensity = 43.63;//130;//50;
+	double youngsModulus = 1.5e4;//3.0e4;//3.0e4;
+	double poissonRatio = 0.25;//0.376;//0.25;
 
-	double massDensity = 43.63;
-	double youngsModulus = 2.135e4;
-	double poissonRatio = 0.376;
+	//double massDensity = 43.63;
+	//double youngsModulus = 2.135e4;
+	//double poissonRatio = 0.376;
 
 	double shearModulus = youngsModulus / (2 * (1 + poissonRatio));
 	double bulkModulus = youngsModulus / (3 * (1 - 2 * poissonRatio));
@@ -66,7 +66,7 @@ BenderApp3D::BenderApp3D()
 	screenRecorder = new ScreenRecorder();
 
 	////////////////////////
-	// menu
+	// menu 
 	////////////////////////
 
 	initInteractionMenu(mainMenu);
@@ -1082,17 +1082,7 @@ void BenderApp3D::process() {
 	while (simulationTime < 1.0 * maxRunningTime) {
 
 
-		if(runIkSolver) {
-			ikSolver->ikEnergyFunction->regularizer = 100;
-			ikSolver->ikOptimizer->checkDerivatives = false;
-			ikSolver->solve();
-			//testGeneralizedCoordinateRepresentation(robot);
-			// sync the parameters of the BenderApp
-			generalizedRobotCoordinates->syncGeneralizedCoordinatesWithRobotState();
-			//break;
-		}
-		else if(optimizeObjective) {
-			
+	if(optimizeObjective) {	
 			if(measure_convergence_time && (! timer_is_running))
 			{
 				timer_is_running = true;
@@ -1125,6 +1115,15 @@ void BenderApp3D::process() {
 
 			break;
 		}
+		else if(runIkSolver) {
+			ikSolver->ikEnergyFunction->regularizer = 100;
+			ikSolver->ikOptimizer->checkDerivatives = false;
+			ikSolver->solve();
+			//testGeneralizedCoordinateRepresentation(robot);
+			// sync the parameters of the BenderApp
+			generalizedRobotCoordinates->syncGeneralizedCoordinatesWithRobotState();
+			//break;
+		}
 		if(!optimizeObjective) {
 			inverseDeformationSolver->solveMesh(computeStaticSolution, simTimeStep);
 			simulationTime += simTimeStep;
@@ -1141,7 +1140,12 @@ void BenderApp3D::process() {
 
 	if(synchronizePhysicalRobot) {
 		if(robotControlInterface && robotControlInterface->isConnected()) {
-			robotControlInterface->syncPhysicalRobotWithSimRobot(timer_simulation_one_frame.timeEllapsed());
+			static double t_sum = 0;
+			t_sum += timer_simulation_one_frame.timeEllapsed();
+			if(t_sum >= 0.1) {
+				robotControlInterface->syncPhysicalRobotWithSimRobot(t_sum);
+				t_sum = 0.0;
+			}
 		}
 		else {
 			synchronizePhysicalRobot = false;
@@ -1187,24 +1191,26 @@ void BenderApp3D::drawScene() {
 
 	
 	// draw nodes of mounted points
-	for(int i = 0; i < (int)femMesh->pinnedNodeElements.size(); ++i) {
-		MountedPointSpring<2> * mp = static_cast<MountedPointSpring<2> *>(femMesh->pinnedNodeElements[i]);
+	if(true) {
+		for(int i = 0; i < (int)femMesh->pinnedNodeElements.size(); ++i) {
+			MountedPointSpring<2> * mp = static_cast<MountedPointSpring<2> *>(femMesh->pinnedNodeElements[i]);
 
-		double size = 0.002;
-		P3D color(0.5, 0.0, 1.0);
-		P3D white(1.0, 1.0, 1.0);
-		P3D red(1.0, 1.0, 1.0);
-		if(!mp->mount->parameterOptimization) {
-			color = P3D(0.0, 0.0, 0.8);
-		}
-		if(!mp->mount->active) {
-			color = color*0.5 + red*0.5;
-		}
-		if(selectedMountID >= 0 && mp->mount == femMesh->mounts[selectedMountID]) {
-			size *= 1.7;
-		}
+			double size = 0.001;
+			P3D color(0.3, 0.3, 0.3);
+			P3D white(1.0, 1.0, 1.0);
+			P3D red(1.0, 1.0, 1.0);
+			if(!mp->mount->parameterOptimization) {
+				color = P3D(0.0, 0.0, 0.8);
+			}
+			if(!mp->mount->active) {
+				color = color*0.5 + red*0.5;
+			}
+			if(selectedMountID >= 0 && mp->mount == femMesh->mounts[selectedMountID]) {
+				size *= 1.7;
+			}
 
-		mp->draw(femMesh->x, size, color(0), color(1), color(2));
+			mp->draw(femMesh->x, size, color(0), color(1), color(2));
+		}
 	}
 
 	

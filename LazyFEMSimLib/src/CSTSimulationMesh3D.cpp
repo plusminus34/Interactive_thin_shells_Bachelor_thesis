@@ -177,6 +177,8 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 	//b.refine = 1;
 	b.quality = 1;
 
+	//b.facesout = 1;
+
 	if(maxTetVolume > 0.0) {
 		b.fixedvolume = 1;
 		b.maxvolume = maxTetVolume;//1.35e-6;
@@ -241,6 +243,93 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 												 massDensity, shearModulus, bulkModulus);
 		elements.push_back(newElem);
 	}
+
+
+
+	// set up boundary mesh
+	{
+		int faceCount = output.numberoftrifaces;
+		int surfaceTriCount = 0;
+		// find all vertices that are on the surface
+		std::vector<bool> vertex_is_used(nodeCount, false);
+		for(int i = 0; i < faceCount; ++i) {
+			if(output.trifacemarkerlist[i] > 0) {
+				++surfaceTriCount;
+				for(int j = 0; j < 3; ++j) {
+					vertex_is_used[output.trifacelist[i*3+j]] = true;
+				}
+			}
+		}
+		// collect the used vertices, and keep book how many vertices are not used up-to each list entry
+		boundaryNodes.resize(0);
+		std::vector<int> sum_vertices_unused(nodeCount);
+		int count_unused = 0;
+		for(int i = 0; i < nodeCount; ++i) {
+			sum_vertices_unused[i] = count_unused;
+			if(vertex_is_used[i]) {
+				boundaryNodes.push_back(i);
+			}
+			else {
+				++count_unused;
+			}
+		}
+
+		// fill the triSurface list of boundary faces
+		triSurfBoundary.resize(0);
+		for(int i = 0; i < faceCount; ++i) {
+			if(output.trifacemarkerlist[i] > 0) {
+				triSurfBoundary.push_back(std::array<int,3>({output.trifacelist[i*3+0] - sum_vertices_unused[output.trifacelist[i*3+0]],
+															 output.trifacelist[i*3+1] - sum_vertices_unused[output.trifacelist[i*3+1]],
+															 output.trifacelist[i*3+2] - sum_vertices_unused[output.trifacelist[i*3+2]]}));				
+			}
+		}
+
+		// crate the gl mesh initially
+		surfaceMesh = new GLMesh();
+
+
+	}
+
+	
+	//// store surface triangles of the mesh
+	//std::vector<std::array<int, 3> > triSurface;
+	//triSurface.reserve(output.numberoftrifaces);
+	//triSurface.resize(0);
+	//for(int i = 0; i < output.numberoftrifaces; ++i) {
+	//	if(true/*output.trifacemarkerlist[i] > 0*/) {
+	//		triSurface.push_back(std::array<int, 3>());
+	//		triSurface.back()[0] = output.trifacelist[i*3+0];
+	//		triSurface.back()[1] = output.trifacelist[i*3+1];
+	//		triSurface.back()[2] = output.trifacelist[i*3+2];
+	//	}
+	//}
+	//triSurface.shrink_to_fit();
+	//// put into Eigen matrices
+	//MatrixNxM V;
+	//Eigen::MatrixXi F;
+	//V.resize(X.size()/3, 3);
+	//for(int i = 0; i < X.size()/3; ++i) {
+	//	for(int j = 0; j < 3; ++j) {
+	//		V(i,j) = X[i*3+j];
+	//	}
+	//}
+
+	//F.resize(triSurface.size(), 3);
+	//for(int i = 0; i < triSurface.size(); ++i) {
+	//	for(int j = 0; j < 3; ++j) {
+	//		F(i,j) = triSurface[i][j];
+	//	}
+	//}
+	//
+
+	//// create a mesh for rendering
+	//surfaceMesh = new GLMesh(V, F);
+	//surfaceMesh->getMaterial().setColor(0.8, 1.0, 0.8, 1.0);
+	////GLShaderMaterial material;
+	////material.readFromFile("../data/shaders/radialGradient/radialGradient.mat");
+	////surfaceMesh->setMaterial(material);
+	
+
 	// initialize the FEM mesh
 	initializeStructure();
 }

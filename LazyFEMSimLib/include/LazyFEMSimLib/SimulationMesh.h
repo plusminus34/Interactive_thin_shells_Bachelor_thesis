@@ -6,6 +6,7 @@
 #include <LazyFEMSimLib/FEMEnergyFunction.h>
 #include <OptimizationLib/LazyNewtonFunctionMinimizer.h>
 #include <MathLib/Ray.h>
+#include <GUILib/GLMesh.h>
 
 /**
 	This class implements a generic sim mesh for deformable objects: collection of nodes connected to each other using different types of elements
@@ -39,6 +40,12 @@ protected:
 
 	bool checkDerivatives;
 
+	//std::vector<std::array<int,3> > triSurface;	// surface triangles of the mesh
+	std::vector<int> boundaryNodes;
+	std::vector<std::array<int, 3> > triSurfBoundary;	// indices refer to the list boundaryNodes
+
+	GLMesh * surfaceMesh;
+
 	void clear();
 
 	// working data: structur-dependent //////////////////
@@ -62,6 +69,7 @@ public:
 	void drawSimulationMesh(V3D const & edgeColor = V3D(1.0,1.0,1.0), double edgeWidth = 1, 
 							V3D const & pinnedNodeColor = V3D(1.0,0.0,0.0), double pinnedNodeSize = 1,
 							V3D const & nodeColor = V3D(1.0,0.0,0.0), double nodeSize = 0.005);
+	void drawMeshSurface(dVector const & x);
 	void drawExternalForces();
 	void drawRestConfiguration();
 
