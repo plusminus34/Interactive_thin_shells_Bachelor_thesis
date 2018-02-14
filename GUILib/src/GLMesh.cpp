@@ -569,7 +569,8 @@ void GLMesh::drawNormals(){
 	for (int i=0;i<vertexCount;i++){
 		glBegin(GL_LINES);
 			glVertex3dv(&(vertexList.front())+3*i);
-			glVertex3d(vertexList[3*i+0]+normalList[3*i+0],vertexList[3*i+1]+normalList[3*i+1],vertexList[3*i+2]+normalList[3*i+2]);
+			double l = 0.01;
+			glVertex3d(vertexList[3*i+0]+normalList[3*i+0]*l,vertexList[3*i+1]+normalList[3*i+1]*l,vertexList[3*i+2]+normalList[3*i+2]*l);
 		glEnd();
 	}
 }
@@ -623,16 +624,84 @@ void GLMesh::drawMesh() {
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(3, GL_DOUBLE, 0, &(texCoordList.front()));
 	}
-	if (IS_EQUAL(material.a,1))
+	if (IS_EQUAL(material.a,1)) {
 		drawMeshElements();
+	}
 	else {
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_FRONT);
-		drawMeshElements();
+		//drawMeshElements();
 		glCullFace(GL_BACK);
-		drawMeshElements();
+		//drawMeshElements();
 		glDisable(GL_CULL_FACE);
 	}
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+	
+	if (material.hasTextureParam()) {
+		glClientActiveTexture(GL_TEXTURE1);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+
+	if (material.hasTextureParam()) {
+		glClientActiveTexture(GL_TEXTURE0);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+
+	material.end();
+}
+
+void GLMesh::drawMeshWithLines() {
+	material.apply();
+
+	/* enable the vertex array list*/
+	if (vertexList.size() > 0) {
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_DOUBLE, 0, &(vertexList.front()));
+	}
+
+	if (useNormals && normalList.size () > 0) {
+		glEnableClientState(GL_NORMAL_ARRAY);
+		glNormalPointer(GL_DOUBLE, 0, &(normalList.front()));
+	}
+
+	if (material.hasTextureParam() && tangentList.size() > 0) {
+		glClientActiveTexture(GL_TEXTURE1);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(3, GL_DOUBLE, 0, &(tangentList.front()));
+	}
+
+	//glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
+	/* enable the texture coordinates arrays */
+	if (material.hasTextureParam() && texCoordList.size() > 0) {
+		glClientActiveTexture(GL_TEXTURE0);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(3, GL_DOUBLE, 0, &(texCoordList.front()));
+	}
+	if (IS_EQUAL(material.a,1)) {
+		drawMeshElements();
+	}
+	else {
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_FRONT);
+		//drawMeshElements();
+		glCullFace(GL_BACK);
+		//drawMeshElements();
+		glDisable(GL_CULL_FACE);
+	}
+	// draw the lines of all triangles
+	glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+	glEnable(GL_POLYGON_OFFSET_LINE);
+	glPolygonOffset(-1.0,0);
+	float currentColor[4];
+	glGetFloatv(GL_CURRENT_COLOR,currentColor);
+	glColor3d(0.0, 0.0, 0.0);
+	
+	drawMeshElements();
+	glColor3d(currentColor[0], currentColor[1], currentColor[2]);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 	

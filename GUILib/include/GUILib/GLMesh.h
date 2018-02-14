@@ -403,7 +403,7 @@ public:
 	
 	/**
 		This is the method that adds new polygons to the mesh. The polygons have to be populated by the class that reads in the
-		mesh from a file.
+		mesh from a file. 
 	*/
     void addPoly(const GLIndexedPoly &p);
 
@@ -418,6 +418,7 @@ public:
 		This method draws the model.
 	*/
 	void drawMesh();
+	void drawMeshWithLines();
 
 	/**
 		This method prints out the normals of the model - for testing purposes.
@@ -587,7 +588,7 @@ public:
 		for (int i = 0; i < F.rows(); i++)
 		{
 			GLIndexedTriangle triangle(F(i, 0), F(i, 1), F(i, 2));
-			addPoly(triangle);
+			addPoly(triangle, false);
 		}
 
 		computeNormals();
@@ -600,6 +601,11 @@ public:
 			vertexList[3 * i] = V(i, 0);
 			vertexList[3 * i + 1] = V(i, 1);
 			vertexList[3 * i + 2] = V(i, 2);
+		}
+	}
+	void setVertexMatrix(dVector const & V) {
+		for(int i = 0; i < V.size(); ++i) {
+			vertexList[i] = V(i);
 		}
 	}
 
