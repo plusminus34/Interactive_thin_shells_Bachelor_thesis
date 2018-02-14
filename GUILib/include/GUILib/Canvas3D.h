@@ -26,28 +26,56 @@ public:
 
 
 	virtual void setupLights() {
-		GLfloat bright[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+		GLfloat bright[] = { 0.7f, 0.7f, 0.7f, 1.0f };
+		//GLfloat bright[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 		GLfloat mediumbright[] = { 0.3f, 0.3f, 0.3f, 1.0f };
+		//GLfloat mediumbright[] = { 0.1f, 0.1f, 0.1f, 1.0f };
+		GLfloat dark[] = {0.1f, 0.1f, 0.1f, 1.0f};
 
-		glLightfv(GL_LIGHT1, GL_DIFFUSE, bright);
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, bright);
+		glLightfv(GL_LIGHT1, GL_DIFFUSE, dark);
 		glLightfv(GL_LIGHT2, GL_DIFFUSE, mediumbright);
 		glLightfv(GL_LIGHT3, GL_DIFFUSE, mediumbright);
 		glLightfv(GL_LIGHT4, GL_DIFFUSE, mediumbright);
 
-		GLfloat light0_position[] = { 0.0f, 10000.0f, 10000.0f, 0.0f };
-		GLfloat light0_direction[] = { 0.0f, -10000.0f, -10000.0f, 0.0f };
+		//GLfloat light0_position[] = { 0.0f, 10000.0f, 10000.0f, 0.0f };
+		//GLfloat light0_direction[] = { 0.0f, -10000.0f, -10000.0f, 0.0f };
 
-		GLfloat light1_position[] = { 0.0f, 10000.0f, -10000.0f, 0.0f };
-		GLfloat light1_direction[] = { 0.0f, -10000.0f, 10000.0f, 0.0f };
+		//GLfloat light1_position[] = { 0.0f, 10000.0f, -10000.0f, 0.0f };
+		//GLfloat light1_direction[] = { 0.0f, -10000.0f, 10000.0f, 0.0f };
 
-		GLfloat light2_position[] = { 0.0f, -10000.0f, 0.0f, 0.0f };
-		GLfloat light2_direction[] = { 0.0f, 10000.0f, -0.0f, 0.0f };
+		//GLfloat light2_position[] = { 0.0f, -10000.0f, 0.0f, 0.0f };
+		//GLfloat light2_direction[] = { 0.0f, 10000.0f, -0.0f, 0.0f };
 
-		GLfloat light3_position[] = { 10000.0f, -10000.0f, 0.0f, 0.0f };
-		GLfloat light3_direction[] = { -10000.0f, 10000.0f, -0.0f, 0.0f };
+		//GLfloat light3_position[] = { 10000.0f, -10000.0f, 0.0f, 0.0f };
+		//GLfloat light3_direction[] = { -10000.0f, 10000.0f, -0.0f, 0.0f };
 
-		GLfloat light4_position[] = { -10000.0f, -10000.0f, 0.0f, 0.0f };
-		GLfloat light4_direction[] = { 10000.0f, 10000.0f, -0.0f, 0.0f };
+		//GLfloat light4_position[] = { -10000.0f, -10000.0f, 0.0f, 0.0f };
+		//GLfloat light4_direction[] = { 10000.0f, 10000.0f, -0.0f, 0.0f };
+
+
+		//GLfloat light0_position[] = { 0.0f, -10000.0f, 0.0f, 0.0f };
+		//GLfloat light0_direction[] = { 0.0f, 10000.0f, -0.0f, 0.0f };
+		GLfloat light0_position[] = { 6000.0f, 8000.0f, 10000.0f, 0.0f };
+		GLfloat light0_direction[] = {-6000.0f, -8000.0f, -10000.0f, 0.0f };
+
+		//GLfloat light1_position[] = { 0.0f, 10000.0f, -10000.0f, 0.0f };
+		//GLfloat light1_direction[] = { 0.0f, -10000.0f, 10000.0f, 0.0f };
+
+		//GLfloat light2_position[] = { 0.0f, 10000.0f, 10000.0f, 0.0f };
+		//GLfloat light2_direction[] = { 0.0f, -10000.0f, -10000.0f, 0.0f };
+
+		GLfloat light1_position[] = {10000.0f, 10000.0f, 2000.0f, 0.0f };
+		GLfloat light1_direction[] = {-10000.0f, -10000.0f, -2000.0f, 0.0f };
+
+		GLfloat light2_position[] = {-10000.0f, 10000.0f, 4000.0f, 0.0f };
+		GLfloat light2_direction[] = {+10000.0f, -10000.0f, -4000.0f, 0.0f };
+
+		GLfloat light3_position[] = { 10000.0f, -10000.0f, -3000.0f, 0.0f };
+		GLfloat light3_direction[] = { -10000.0f, 10000.0f, 3000.0f, 0.0f };
+
+		GLfloat light4_position[] = { -10000.0f, -10000.0f, -1000.0f, 0.0f };
+		GLfloat light4_direction[] = { 10000.0f, 10000.0f, 1000.0f, 0.0f };
 
 		glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
 		glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
