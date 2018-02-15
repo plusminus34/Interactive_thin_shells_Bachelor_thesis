@@ -1,11 +1,10 @@
-
 #include <OptimizationLib/LazyNewtonFunctionMinimizer.h>
 
 //TODO: try out different linear solvers, with prefactorization and without. Have a way of specifying which one this newton solver should be using...
 //TODO: get a version of the objective functions (and everything else) that works with dense matrices as well...
 
 #include <iostream>
-
+#define USE_PARDISO
 // The search direction is given by -Hinv * g
 void LazyNewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *function, const dVector &p, dVector& dp) {
 
@@ -16,6 +15,17 @@ void LazyNewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *func
 
 	// plug hessian entries into the eigen sparse matrix
 	if (newHessianStructure) {
+#ifdef USE_PARDISO
+		std::vector<int> II, JJ;
+		std::vector<double> SS;
+		for (int i = 0; i < hessianEntries.size(); i++)
+		{
+			JJ.push_back(hessianEntries[i].row());
+			II.push_back(hessianEntries[i].col());
+			SS.push_back(hessianEntries[i].value());
+		}
+		pardiso->set_pattern(II, JJ, SS);
+#else
 		resize(H, p.size(), p.size());
 		H.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
 		// store location of each entry in the hessian
@@ -23,13 +33,33 @@ void LazyNewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *func
 		for (size_t i = 0; i < hessianEntries.size(); ++i) {
 			hessianEntries_Hptr[i] = &(H.coeffRef(hessianEntries[i].row(), hessianEntries[i].col()));
 		}
+#endif // USE_PARDISO
 	}
 	else {
+#ifdef USE_PARDISO
+		std::vector<double> SS;
+		for (int i = 0; i < hessianEntries.size(); i++)
+		{
+			if (!isfinite(hessianEntries[i].value()))
+				return;
+			SS.push_back(hessianEntries[i].value());
+		}
+		pardiso->update_a(SS);
+		try
+		{
+			
+		}
+		catch (std::runtime_error& err)
+		{
+			
+		}
+#else
 		double * data = H.valuePtr();
 		std::memset(static_cast<void*>(data), 0, H.nonZeros() * sizeof(*(H.valuePtr())));
 		for(size_t i = 0; i < hessianEntries.size(); ++i) {
 			*(hessianEntries_Hptr[i]) += hessianEntries[i].value();
 		}
+#endif // USE_PARDISO
 	}
 
 	// get the gradient
@@ -51,11 +81,23 @@ void LazyNewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *func
 
 	//dp = Hes^-1 * grad
 	if(newHessianStructure) {
+#ifdef USE_PARDISO
+		pardiso->analyze_pattern();
+#else
 		solver.analyzePattern(H);
+#endif
 		newHessianStructure = false;
 	}
+#ifdef USE_PARDISO
+	pardiso->factorize();
+	for (int i = 0; i < dp.size(); i++)
+		if (!isfinite(dp(i)))
+			return;
+	pardiso->solve(gradient, dp);
+#else
 	solver.factorize(H);
 	dp = solver.solve(gradient);
+#endif
 	//dp = H.triangularView<Eigen::Lower>().solve(gradient);
 
 	double dotProduct = dp.dot(gradient);
