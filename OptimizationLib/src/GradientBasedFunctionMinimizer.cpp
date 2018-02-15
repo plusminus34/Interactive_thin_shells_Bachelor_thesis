@@ -87,29 +87,31 @@ double GradientBasedFunctionMinimizer::doLineSearch(ObjectiveFunction *function,
 	dVector pc(pi);
 	double initialValue = function->computeValue(pc);
 
+	double newLineSearchValue;
 	for(int j = 0; j < maxLineSearchIterations; j++) {
 		// try a new solution
 		pi = pc - dp * alpha;
 
 		// now check the new function value at this point...
-		double newLineSearchValue = function->computeValue(pi);
+		newLineSearchValue = function->computeValue(pi);
 
 		if (printOutput)
 			Logger::logPrint("\t--> LINE SEARCH iteration %02d: alpha is %10.10lf, function value is: %10.10lf\n", j, alpha, newLineSearchValue);
 
-		if (!isfinite(newLineSearchValue))
-			newLineSearchValue = initialValue + 1.0;
-
-		if(newLineSearchValue > initialValue && j < maxLineSearchIterations -1) {
-			// restore and try again...
-			alpha /= 2.0;
+		if(isfinite(newLineSearchValue) && newLineSearchValue < initialValue) {
+			// found a good value: return it!
+			return(alpha);
 		} else {
-			// found a better solution!
-			return alpha;
+			// no good value: keep searching
+			alpha /= 2.0;
 		}
+
 	}
 
-	// couldn't find a good value. Return what we now have and hope for the best...
+	// no good value could be found at all: return the initial set of parameters
+	alpha = 0.0;
+	pi = pc;
+
 	return alpha;
 }
 
