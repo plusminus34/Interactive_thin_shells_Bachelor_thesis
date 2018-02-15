@@ -1228,10 +1228,20 @@ void BenderApp3D::drawScene() {
 	// draw target trajectory
 	targetTrajectory_input.draw(V3D(0.3, 0.3, 0.3), 2, V3D(0, 0.8, 0), 0.0025);
 	
-	
-	// draw objective
-	for(MeshObjective * o : femMesh->objectives) {
-		o->draw(femMesh->x);
+	glEnable(GL_LIGHTING);
+	// draw objectives
+	for(int i = 0; i < (int)femMesh->objectives.size(); ++i) {
+		MeshObjective * o = femMesh->objectives[i];
+
+		MeshObjective::HighlightLevel level = MeshObjective::HighlightLevel::NONE;
+		if(i == selectedObjectiveID) {
+			level = MeshObjective::HighlightLevel::SELECTED;
+		}
+		else if(i == hoveredObjectiveID) {
+			level = MeshObjective::HighlightLevel::HOVERED;
+		}
+
+		o->draw(femMesh->x, level);
 	}
 
 
@@ -1255,23 +1265,26 @@ void BenderApp3D::drawScene() {
 
 	//glPushMatrix();
 
+	glEnable(GL_LIGHTING);
+
 	// draw hovered-over node
 	if(hoveredNodeID > 0) {
 		// draw node
 		glColor3d(1, 0.5, 0.0);
 		drawSphere(femMesh->nodes[hoveredNodeID]->getWorldPosition(), 0.0015);
 	}
-	// draw hovered-over node-objective
-	if(hoveredObjectiveID > 0) {
-		NodePositionObjective * obj = dynamic_cast<NodePositionObjective *>(femMesh->objectives[hoveredObjectiveID]);
-		if(obj) {
-			// draw node
-			glColor3d(1, 0.5, 0.2);
-			drawSphere(obj->targetPosition, 0.0015);
-		}
-	}
 
-	glEnable(GL_LIGHTING);
+	//// draw hovered-over node-objective
+	//if(hoveredObjectiveID > 0) {
+	//	NodePositionObjective * obj = dynamic_cast<NodePositionObjective *>(femMesh->objectives[hoveredObjectiveID]);
+	//	if(obj) {
+	//		// draw node
+	//		glColor3d(1, 0.5, 0.2);
+	//		drawSphere(obj->targetPosition, 0.0015);
+	//	}
+	//}
+
+	
 	rbEngine->drawRBs(flags);
 
 	

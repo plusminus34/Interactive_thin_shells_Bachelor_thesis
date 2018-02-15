@@ -155,7 +155,7 @@ void MatchScaledTrajObjective::prepareDtTargetDxNode(dVector const & x)
 }
 
 
-void MatchScaledTrajObjective::draw(dVector const & x) {
+void MatchScaledTrajObjective::draw(dVector const & x, HighlightLevel level) {
 	
 	update_tNode(x);
 

@@ -37,13 +37,36 @@ void NodePositionObjective::addError(const dVector & x, double & e)
 
 
 
-void NodePositionObjective::draw(dVector const & x) 
+void NodePositionObjective::draw(dVector const & x, HighlightLevel level) 
 {
-	glColor3d(0, 1, 0);
+	if(level == HighlightLevel::HIDE) {return;}
+
+
 	P3D pi = (node->getCoordinates(x));
 	P3D pj = targetPosition;
-	glBegin(GL_LINES);
-	glVertex3d(pi[0], pi[1], pi[2]);
-	glVertex3d(pj[0], pj[1], pj[2]);
-	glEnd();
+
+	double r = 0.0;
+	if(level ==  HighlightLevel::NONE) {
+		r = 0.001;
+		glColor3d(1.0, 0.5, 0);
+	}
+	if(level ==  HighlightLevel::HOVERED) {
+		r = 0.001;
+		glColor3d(1.0, 0.1, 0);
+	}
+	if(level ==  HighlightLevel::SELECTED) {
+		r = 0.0015;
+		glColor3d(1.0, 0.1, 0);
+	}
+
+	drawArrow(pi, pj, r);
+
+	// sphere on base
+	drawSphere(pi, r*2);
+	// sphere at target
+	if(level == HighlightLevel::HOVERED || level == HighlightLevel::SELECTED) {
+		drawSphere(pj, r*2);
+		
+	}
+
 }

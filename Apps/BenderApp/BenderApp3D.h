@@ -101,6 +101,7 @@ V3D mountBaseZDirectionRB_l;
 	enum ToolMode {PICK_NODE, BRUSH};
 	ToolMode toolMode = PICK_NODE;
 
+
 	// app parameters
 	double simTimeStep = 1/100.0;
 	double simulationTime;
