@@ -154,13 +154,17 @@ void SimulationMesh::solve_statics(){
 	x = xSolver;
 }
 
-Node* SimulationMesh::getNodeIntersectedBy(const Ray& ray){
+Node* SimulationMesh::getNodeIntersectedBy(const Ray& ray)
+{
 	for (uint i=0;i<nodes.size();i++){
 		if (ray.getDistanceToPoint(nodes[i]->getWorldPosition()) < 0.05)
 			return nodes[i];
 	}
 	return NULL;
 }
+
+
+
 
 //projects positions of nodes to lie on the plane, rather than under it, and kills normal component of their velocities
 void SimulationMesh::fakeContactWithPlane(const Plane& plane){
@@ -177,6 +181,7 @@ void SimulationMesh::fakeContactWithPlane(const Plane& plane){
 		}
 	}
 }
+
 
 
 

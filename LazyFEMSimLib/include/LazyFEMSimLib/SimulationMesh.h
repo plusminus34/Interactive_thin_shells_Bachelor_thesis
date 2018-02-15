@@ -89,7 +89,7 @@ public:
 
 	virtual void readMeshFromFile(const char* fName) = 0;
 	
-	virtual int getSelectedNodeID(Ray ray) = 0;
+	virtual int getSelectedNodeID(const Ray& ray) = 0;
 	virtual void setPinnedNode(int ID, const P3D& target) = 0;
 	virtual void removePinnedNodeConstraints() {
 		for (auto it = pinnedNodeElements.begin(); it != pinnedNodeElements.end(); ++it)

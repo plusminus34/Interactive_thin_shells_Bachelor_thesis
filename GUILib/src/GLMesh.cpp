@@ -1067,6 +1067,40 @@ bool GLMesh::getDistanceToRayOriginIfHit(const Ray& ray, double* distToOrigin) {
 	return min_t < 1e10;
 }
 
+
+void GLMesh::getSelectedNode(Ray const & ray, int & node_id, int & triangle_id, int & i_node_in_triangle, bool checkOrientation)
+{
+	node_id = -1;
+	triangle_id = -1;
+	i_node_in_triangle = -1;
+    double dist_min = std::numeric_limits<double>::max();
+	for(int i = 0; i < (int)triangles.size(); ++i) {
+		for(int j = 0; j < 3; ++j) {
+			int nodeID = triangles[i].indexes[j];
+			P3D pt(vertexList[nodeID*3+0], vertexList[nodeID*3+1], vertexList[nodeID*3+2]);
+			double d = ray.getDistanceToPoint(pt) / (sqrt((pt - ray.origin).dot(pt - ray.origin)));
+			if(d < 0.01 && d < dist_min) {
+				if(!checkOrientation) {
+					dist_min = d;
+					node_id = nodeID;
+					triangle_id = i;
+					i_node_in_triangle = j;
+				}
+				else {
+					V3D normal(normalList[nodeID*3+0], normalList[nodeID*3+1], normalList[nodeID*3+2]);
+					if(normal.dot(ray.direction) < 0) {
+						dist_min = d;
+						node_id = nodeID;
+						triangle_id = i;
+						i_node_in_triangle = j;
+					}
+				}
+			}
+		}
+	}
+
+}
+
 void GLMesh::append(GLMesh* mesh, bool flipNormal)
 {
 	uint vStartIndex = getVertexCount();

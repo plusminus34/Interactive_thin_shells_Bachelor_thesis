@@ -420,7 +420,10 @@ void CSTSimulationMesh3D::generateCubeTriMesh(char* fName)
 	fclose(fp);
 }
 
-int CSTSimulationMesh3D::getSelectedNodeID(Ray ray){
+
+
+
+int CSTSimulationMesh3D::getSelectedNodeID(Ray const & ray){
     int ID = -1;
     double dis = 2e9;
     for (uint i = 0; i < nodes.size(); i++) {
@@ -435,6 +438,19 @@ int CSTSimulationMesh3D::getSelectedNodeID(Ray ray){
     return ID;
 }
 
+int CSTSimulationMesh3D::getSelectedSurfaceNodeID(Ray const & ray, bool checkOrientation) 
+{
+	if(!surfaceMesh) {return(-1);}
+	int node_id = -1;
+
+	int glmNodeID, glmTriangleID, glmNodeInTriangleID; 
+	surfaceMesh->getSelectedNode(ray, glmNodeID, glmTriangleID, glmNodeInTriangleID, checkOrientation);
+	if(glmTriangleID > 0) {
+		node_id = boundaryNodes[triSurfBoundary[glmTriangleID][glmNodeInTriangleID]];
+	}
+
+	return(node_id);
+}
 
 void CSTSimulationMesh3D::setPinnedNode(int ID, const P3D& point) {
 	for (auto it = pinnedNodeElements.begin(); it != pinnedNodeElements.end(); ++it){

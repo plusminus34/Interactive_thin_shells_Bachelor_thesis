@@ -20,7 +20,8 @@ public:
 
     static void generateCubeTriMesh(char* fName);
 
-    virtual int getSelectedNodeID(Ray ray);
+    virtual int getSelectedNodeID(Ray const & ray);
+	virtual int getSelectedSurfaceNodeID(Ray const & ray, bool checkOrientation);
 	virtual void setPinnedNode(int ID, const P3D& p);
 };
 

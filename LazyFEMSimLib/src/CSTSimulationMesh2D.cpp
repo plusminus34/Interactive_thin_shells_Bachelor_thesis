@@ -28,7 +28,7 @@ void CSTSimulationMesh2D::generateSquareTriMesh(char* fName, double startX, doub
 	fclose(fp);
 }
 
-int CSTSimulationMesh2D::getSelectedNodeID(Ray ray){
+int CSTSimulationMesh2D::getSelectedNodeID(Ray const & ray){
 	int ID = -1;
 	double dis = 2e9;
 	for (uint i = 0; i < nodes.size(); i++) {

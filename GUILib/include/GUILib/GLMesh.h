@@ -641,6 +641,8 @@ public:
 	//returns the distance from the ray's origin if the ray hits the mesh, or -1 otherwise...
 	bool getDistanceToRayOriginIfHit(const Ray& ray, double* distToOrigin = NULL);
 
+	void getSelectedNode(Ray const & ray, int & node_id, int & triangle_id, int & i_node_in_triangle, bool checkOrientation);
+
 	void writeToOFF(const char* fName);
 	void loadFromOFF(const char* fName);
 

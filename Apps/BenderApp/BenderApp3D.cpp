@@ -647,6 +647,8 @@ bool BenderApp3D::onMouseMoveEvent(double xPos, double yPos) {
 	lastMovedRay = currentRay;
 	currentRay = getRayFromScreenCoords(xPos, yPos);
 	
+	hoveredNodeID = -1;
+
 	if(interactionMode == InteractionMode::VIEW) {
 		return(GLApplication::onMouseMoveEvent(xPos, yPos));
 	}
@@ -713,6 +715,12 @@ bool BenderApp3D::onMouseMoveEvent(double xPos, double yPos) {
 					P3D targetPosOld = objective->targetPosition;
 					P3D targetPosNew = getRayPointViewNormal(currentRay, targetPosOld);
 					objective->targetPosition = targetPosNew;
+				}
+			}
+			else {
+				hoveredObjectiveID = femMesh->getSelectedNodePositionObjectiveID(currentRay);
+				if(hoveredObjectiveID < 0) {
+					hoveredNodeID = femMesh->getSelectedSurfaceNodeID(currentRay, true);
 				}
 			}
 			return(true);
@@ -841,17 +849,17 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 					 interactionMode == InteractionMode::DRAW) {
 				if (action == GLFW_PRESS) {
 					lastClickedRay = lastMovedRay;
-					int nodeID = femMesh->getSelectedNodeID(lastClickedRay);
-					if(nodeID >= 0) {
-						selectedObjectiveID = femMesh->setNodePositionObjectiveNoDuplicate(nodeID, femMesh->nodes[nodeID]->getWorldPosition());
+					if(hoveredObjectiveID >= 0) {
+						selectedObjectiveID = hoveredObjectiveID;
 						return(true);
 					}
-					else {
-						selectedObjectiveID = femMesh->getSelectedNodePositionObjectiveID(lastClickedRay);
+					else if(hoveredNodeID >= 0) {
+						selectedObjectiveID = femMesh->setNodePositionObjectiveNoDuplicate(hoveredNodeID, femMesh->nodes[hoveredNodeID]->getWorldPosition());
 						return(true);
 					}
 				}
 				else {
+					hoveredObjectiveID = selectedObjectiveID;
 					selectedObjectiveID = -1;
 				}
 				return(true);
@@ -935,17 +943,19 @@ bool BenderApp3D::onMouseButtonEvent(int button, int action, int mods, double xP
 				interactionMode == InteractionMode::DRAW) {
 				if (action == GLFW_PRESS) {
 					lastClickedRay = lastMovedRay;
-					int nodeID = femMesh->getSelectedNodeID(lastClickedRay);
-					if(nodeID >= 0) {
-						femMesh->removeNodePositionObjectivesOfNode(nodeID);
+
+					if(hoveredObjectiveID >= 0) {
+						femMesh->removeObjective(hoveredObjectiveID);
 						selectedObjectiveID = -1;
+						hoveredObjectiveID = -1;
 					}
-					else {
-						selectedObjectiveID = femMesh->getSelectedNodePositionObjectiveID(lastClickedRay);
+					else if(hoveredNodeID >= 0) {
+						selectedObjectiveID = femMesh->setNodePositionObjectiveNoDuplicate(hoveredNodeID, femMesh->nodes[hoveredNodeID]->getWorldPosition());
 						femMesh->removeObjective(selectedObjectiveID);
 						selectedObjectiveID = -1;
+						hoveredObjectiveID = -1;
 					}
-					return(true);
+					
 				}
 				return(true);
 			}
@@ -1245,10 +1255,23 @@ void BenderApp3D::drawScene() {
 
 	//glPushMatrix();
 
+	// draw hovered-over node
+	if(hoveredNodeID > 0) {
+		// draw node
+		glColor3d(1, 0.5, 0.0);
+		drawSphere(femMesh->nodes[hoveredNodeID]->getWorldPosition(), 0.0015);
+	}
+	// draw hovered-over node-objective
+	if(hoveredObjectiveID > 0) {
+		NodePositionObjective * obj = dynamic_cast<NodePositionObjective *>(femMesh->objectives[hoveredObjectiveID]);
+		if(obj) {
+			// draw node
+			glColor3d(1, 0.5, 0.2);
+			drawSphere(obj->targetPosition, 0.0015);
+		}
+	}
+
 	glEnable(GL_LIGHTING);
-	//glPushMatrix();
-
-
 	rbEngine->drawRBs(flags);
 
 	
