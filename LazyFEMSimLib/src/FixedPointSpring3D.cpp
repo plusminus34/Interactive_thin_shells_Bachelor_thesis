@@ -2,6 +2,8 @@
 #include <GUILib/GLUtils.h>
 #include <LazyFEMSimLib/SimulationMesh.h>
 
+#include<iostream>
+
 FixedPointSpring3D::FixedPointSpring3D(SimulationMesh* simMesh, Node* node, P3D targetPosition, double K)
 	: node(node), targetPosition(targetPosition), K(K)
 {

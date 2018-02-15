@@ -1,5 +1,6 @@
 #include <LazyFEMSimLib/FEMEnergyFunction.h>
 #include <LazyFEMSimLib/SimulationMesh.h>
+#include <iostream>
 
 FEMEnergyFunction::FEMEnergyFunction(void){
 	setToStaticsMode(0.001);
@@ -37,6 +38,11 @@ double FEMEnergyFunction::computeValue(const dVector& s)
 	simMesh->prepare_upto_energy(s);
 	totalEnergy += simMesh->energy;
 
+if(std::isnan(totalEnergy) )
+{
+	std::cout << "is nan " << __FILE__ << ":" << __LINE__ << std::endl;
+}
+
 	if (useDynamics){
 		int nDim = simMesh->x.size();
 		//estimate the accelerations...
@@ -52,6 +58,11 @@ double FEMEnergyFunction::computeValue(const dVector& s)
 		tmpVec = s - m_s0;
 		totalEnergy += 0.5*regularizer*tmpVec.dot(tmpVec);
 	}
+
+if(std::isnan(totalEnergy) )
+{
+	std::cout << "is nan " << __FILE__ << ":" << __LINE__ << std::endl;
+}
 
 	return totalEnergy;
 }

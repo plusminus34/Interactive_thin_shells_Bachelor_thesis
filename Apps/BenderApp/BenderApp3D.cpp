@@ -124,16 +124,17 @@ BenderApp3D::BenderApp3D()
 	// create ID Solver
 	inverseDeformationSolver = new InverseDeformationSolver<3>(femMesh, minimizers[comboBoxOptimizationAlgorithm->selectedIndex()]);
 	
+	// set the target trajectory
+	if(true){
+		// draw some target trjectory
+		targetTrajectory_input.addKnotBack(rod_center + P3D(-rod_length*0.5, 0.05, 0.0));
+		targetTrajectory_input.addKnotBack(rod_center + P3D( 0.0,  0.1, 0.0));
+		targetTrajectory_input.addKnotBack(rod_center + P3D( rod_length*0.5, 0.05, 0.0));
 
-	// draw some target trjectory
-	targetTrajectory_input.addKnotBack(rod_center + P3D(-rod_length*0.5, 0.05, 0.0));
-	targetTrajectory_input.addKnotBack(rod_center + P3D( 0.0,  0.1, 0.0));
-	targetTrajectory_input.addKnotBack(rod_center + P3D( rod_length*0.5, 0.05, 0.0));
-
-	// add a "MatchScaledTrajObjective"
-	targetTrajectory_input.setTValueToLength();
-	femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
-
+		// add a "MatchScaledTrajObjective"
+		targetTrajectory_input.setTValueToLength();
+		femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
+	}
 
 	////////////////////////
 	// Robot
@@ -1226,7 +1227,9 @@ void BenderApp3D::drawScene() {
 	
 
 	// draw target trajectory
-	targetTrajectory_input.draw(V3D(0.3, 0.3, 0.3), 2, V3D(0, 0.8, 0), 0.0025);
+	if(targetTrajectory_input.getKnotCount() > 0) {
+		targetTrajectory_input.draw(V3D(0.3, 0.3, 0.3), -2, V3D(0, 0.8, 0), 0.0025);
+	}
 	
 	glEnable(GL_LIGHTING);
 	// draw objectives

@@ -162,14 +162,16 @@ void MatchScaledTrajObjective::draw(dVector const & x, HighlightLevel level) {
 	int n = tNodeTarget.size();
 
 	// draw links
-	for(int i = 0; i < n; ++i) {
-		glColor3d(0, 1, 0);
-		P3D pi = (matchedFiber[i]->getCoordinates(x));
-		P3D pj = targetTrajectory.evaluate_catmull_rom(tNodeTarget[i], false);
-		glBegin(GL_LINES);
-		glVertex3d(pi[0], pi[1], pi[2]);
-		glVertex3d(pj[0], pj[1], pj[2]);
-		glEnd();
+	if(false) {
+		for(int i = 0; i < n; ++i) {
+			glColor3d(0, 1, 0);
+			P3D pi = (matchedFiber[i]->getCoordinates(x));
+			P3D pj = targetTrajectory.evaluate_catmull_rom(tNodeTarget[i], false);
+			glBegin(GL_LINES);
+			glVertex3d(pi[0], pi[1], pi[2]);
+			glVertex3d(pj[0], pj[1], pj[2]);
+			glEnd();
+		}
 	}
 
 	// draw target trajectory
