@@ -110,19 +110,19 @@ public:
 	void prepare_upto_energy(dVector const & x);
 	void prepare_upto_hessian(dVector const & x);
 
-	double energyElement_i(int i, dVector const & x);
-	double energyElements(dVector const & x);
-	double energyPinnedNodeElements(dVector const & x);
+	//double energyElement_i(int i, dVector const & x);
+	//double energyElements(dVector const & x);
+	//double energyPinnedNodeElements(dVector const & x);
 
-	void addGradientElement_i(int i, dVector const & x, dVector & grad);
-	void addGradientElements(dVector const & x, dVector & grad);
+	//void addGradientElement_i(int i, dVector const & x, dVector & grad);
+	//void addGradientElements(dVector const & x, dVector & grad);
 	void addGradientPinnedNodeElements(dVector const & x, dVector & grad);
 
-	void addHessianElement_i(int i, dVector const & x, std::vector<MTriplet> & hessianTriplets);
-	void addHessianElements(dVector const & x, std::vector<MTriplet> & hessianTriplets);
+	//void addHessianElement_i(int i, dVector const & x, std::vector<MTriplet> & hessianTriplets);
+	//void addHessianElements(dVector const & x, std::vector<MTriplet> & hessianTriplets);
 	void addHessianPinnedNodeElements(dVector const & x, std::vector<MTriplet> & hessianTriplets);
 
-	void computeDeformationGradients(dVector const & x);
+	//void computeDeformationGradients(dVector const & x);
 
 
 };

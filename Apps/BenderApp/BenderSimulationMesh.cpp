@@ -294,7 +294,7 @@ void  MeshPositionRegularizer::addO(const dVector & x, const dVector & X, double
 {
 	if(r <= 0.0) {return;}
 
-	o += 0.5 * r * (x - X).squaredNorm();
+	o += 0.5 * r * (x - X).squaredNorm() / static_cast<double>((x.size()/3));
 }
 
 
@@ -302,7 +302,7 @@ void MeshPositionRegularizer::addDoDx(const dVector & x, const dVector & X, dVec
 {
 	if(r <= 0.0) {return;}
 
-	dodx += r * (x - X);
+	dodx += r * (x - X) / static_cast<double>((x.size()/3));
 
 }
 
@@ -310,7 +310,7 @@ void  MeshEnergyRegularizer::addO(const dVector & x, const dVector & X, double &
 {
 	if(r <= 0.0) {return;}
 
-	o += r * femMesh->energy;
+	o += r * femMesh->energyFunction->computeValue(x);
 }
 
 
@@ -318,7 +318,15 @@ void MeshEnergyRegularizer::addDoDx(const dVector & x, const dVector & X, dVecto
 {
 	if(r <= 0.0) {return;}
 
-	dodx += r * femMesh->gradient;
+	dVector grad;
+	grad.resize(x.size());
+	grad.setZero();
+
+	femMesh->energyFunction->setToStaticsMode(0.0);
+	femMesh->energyFunction->addGradientTo(grad, x);
+	femMesh->energyFunction->setToStaticsMode(0.01);
+
+	dodx += grad * r;
 
 }
 
