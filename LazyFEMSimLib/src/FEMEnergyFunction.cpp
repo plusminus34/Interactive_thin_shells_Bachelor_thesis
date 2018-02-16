@@ -1,6 +1,7 @@
 #include <LazyFEMSimLib/FEMEnergyFunction.h>
 #include <LazyFEMSimLib/SimulationMesh.h>
 #include <iostream>
+#include <GUILib/GLApplication.h>
 
 FEMEnergyFunction::FEMEnergyFunction(void){
 	setToStaticsMode(0.001);
@@ -41,6 +42,7 @@ double FEMEnergyFunction::computeValue(const dVector& s)
 if(std::isnan(totalEnergy) )
 {
 	std::cout << "is nan " << __FILE__ << ":" << __LINE__ << std::endl;
+	GLApplication::getGLAppInstance()->appIsRunning = false;
 }
 
 	if (useDynamics){
@@ -62,6 +64,7 @@ if(std::isnan(totalEnergy) )
 if(std::isnan(totalEnergy) )
 {
 	std::cout << "is nan " << __FILE__ << ":" << __LINE__ << std::endl;
+	GLApplication::getGLAppInstance()->appIsRunning = false;
 }
 
 	return totalEnergy;

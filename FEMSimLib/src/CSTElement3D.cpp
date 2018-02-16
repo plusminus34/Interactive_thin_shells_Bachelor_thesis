@@ -23,7 +23,7 @@ CSTElement3D::CSTElement3D(SimulationMesh* simMesh, Node* n1, Node* n2, Node* n3
     for (int i = 0;i<4;i++)
         n[i]->addMassContribution(getMass() / 4.0);
 
-    matModel = MM_NEO_HOOKEAN;//MM_STVK;//MM_LINEAR_ISOTROPIC
+    matModel = MM_STVK;//MM_NEO_HOOKEAN;//MM_STVK;//MM_LINEAR_ISOTROPIC
 }
 
 CSTElement3D::~CSTElement3D() {

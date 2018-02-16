@@ -45,7 +45,7 @@ BenderApp3D::BenderApp3D()
 	const P3D rod_center(0.0, 0.35, 0.50);
 
 	// fem mesh coarsness
-	double maxTetVolume = 1.35e-6;//1.35e-6;
+	double maxTetVolume = 0.5e-6;//1.35e-6;
 
 	// measured (physical) values for "the green foam" are: (density, young, poisson) = (43.63, 2.135e4, 0.376)
 	double massDensity = 43.63;//130;//50;
@@ -118,7 +118,7 @@ BenderApp3D::BenderApp3D()
 	inverseDeformationSolver = new InverseDeformationSolver<3>(femMesh, minimizers[selectedMinimizationAlgorithm]);
 	
 	// set the target trajectory
-	if(false){
+	if(true){
 		// draw some target trjectory
 		targetTrajectory_input.addKnotBack(rod_center + P3D(-rod_length*0.5, 0.05, 0.0));
 		targetTrajectory_input.addKnotBack(rod_center + P3D( 0.0,  0.1, 0.0));
@@ -464,6 +464,7 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 		menu->addVariable("regularizer FEM Position", inverseDeformationSolver->femMesh->meshPositionRegularizer.r);
 		menu->addVariable("regularizer FEM Energy", inverseDeformationSolver->femMesh->meshEnergyRegularizer.r);
 		menu->addVariable("regularizer joint angles", inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r);
+		menu->addVariable("regularizer step size", inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r);
 	}
 
 	menu->addGroup("Interaction Mode");

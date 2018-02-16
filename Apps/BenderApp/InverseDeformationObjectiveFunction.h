@@ -20,6 +20,7 @@ public:
 	std::vector<ObjectiveFunction *> parameterConstraints;
 	std::vector<ObjectiveFunction *> collisionAvoidance;
 	ParameterValueRegularizer<NDim> parameterValueRegularizer;
+	ParameterValueRegularizer<NDim> parameterStepSizeRegularizer;
 
 
 private:
@@ -62,3 +63,4 @@ public:
 
 	void setReferenceState(dVector const & p);
 };
+

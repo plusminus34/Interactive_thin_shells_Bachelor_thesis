@@ -26,10 +26,12 @@ double InverseDeformationObjectiveFunction<NDim>::computeValue(const dVector& p)
 
 	// regularizer
 	o += parameterValueRegularizer.computeValue(p);
+	o += parameterStepSizeRegularizer.computeValue(p);
 
-	//// regularizer
-	//dVector deltap = p - p0_reg;
-	//o += 0.5*regularizer*deltap.dot(deltap);
+if(std::isnan(o) )
+{
+	std::cout << "is nan " << __FILE__ << ":" << __LINE__ << std::endl;
+}
 
 	return(o);
 }
@@ -52,23 +54,28 @@ void InverseDeformationObjectiveFunction<NDim>::addGradientTo(dVector& grad, con
 	}
 
 
+	dVector grad_no_reg = grad;
+
+	// regularizer
+	parameterValueRegularizer.addGradientTo(grad, p);
+	parameterStepSizeRegularizer.addGradientTo(grad, p);
+
+	dVector diff_grad = grad - grad_no_reg;
 
 std::cout << "grad without reg: ";
 for(int i = 0; i < grad.size(); ++i) {std::cout << grad[i] << " ";};
 std::cout << std::endl;
 
-	// regularizer
-	parameterValueRegularizer.addGradientTo(grad, p);
-
-
-	//// regularizer
-	//grad += regularizer*(p - p0_reg);
-
-
 
 std::cout << "grad with reg:" << std::endl;
 for(int i = 0; i < grad.size(); ++i) {std::cout << grad[i] << " ";};
 std::cout << std::endl;
+
+std::cout << "grad from reg:" << std::endl;
+for(int i = 0; i < diff_grad.size(); ++i) {std::cout << diff_grad[i] << " ";};
+std::cout << std::endl;
+
+
 }
 
 
@@ -77,7 +84,7 @@ template<int NDim>
 void InverseDeformationObjectiveFunction<NDim>::setCurrentBestSolution(const dVector& p)
 {
 	idSolver->xi = p;
-	//updateRegularizingSolutionTo(p);
+	parameterStepSizeRegularizer.setReferenceState(p);
 	idSolver->pushXi();
 	idSolver->solveMesh(true);
 }
@@ -85,7 +92,8 @@ void InverseDeformationObjectiveFunction<NDim>::setCurrentBestSolution(const dVe
 template<int NDim>
 void InverseDeformationObjectiveFunction<NDim>::setReferenceStateP()
 {
-	parameterValueRegularizer.pRef = idSolver->xi;
+	parameterValueRegularizer.setReferenceState(idSolver->xi);
+	parameterStepSizeRegularizer.setReferenceState(idSolver->xi);
 }
 
 
@@ -160,7 +168,7 @@ double ParameterValueRegularizer<NDim>::computeValue(const dVector& p)
 
 
 template<int NDim>
-void ParameterValueRegularizer<NDim>::addGradientTo(dVector& grad,const dVector& p)
+void ParameterValueRegularizer<NDim>::addGradientTo(dVector& grad, const dVector& p)
 {
 	if(r <= 0 || pRef.size() != p.size()) {return;}
 
