@@ -129,7 +129,14 @@ WheelEE_RMC::WheelEE_RMC(const char* LMType){
 		bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
 		motorBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_wheelMotorBracket_w.obj");
 	}
-	else if (strcmp(trim((char*)LMType), "PassiveWheel_20gServos") == 0) {
+	if (strcmp(trim((char*)LMType), "ActiveWheel_XM430") == 0) {
+		originalWheelMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-wheel3.obj");
+		isActive = true;
+		motorMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_wheelMotor.obj");
+		bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
+		motorBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_wheelMotorBracket_w.obj");
+	}
+	else if (strcmp(trim((char*)LMType), "PassiveWheel") == 0) {
 		originalWheelMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-wheelPassive_w.obj");
 		// uncomment the following line to show passive wheel brackets
 		// motorBracketMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/3DP-passiveWheelBracket_w.obj");
