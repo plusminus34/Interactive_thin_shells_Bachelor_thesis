@@ -12,12 +12,19 @@
 #include "NodePositionObjective.h"
 
 
+
+class MeshPositionRegularizer;
+
+
 template<int NDim>
 class BenderSimulationMesh : public std::conditional<NDim == 2, CSTSimulationMesh2D, CSTSimulationMesh3D>::type {
 
 public:
 	std::vector<Mount*> mounts;
 	std::vector<MeshObjective *> objectives;
+	// regularizers for top-level optimization
+	MeshPositionRegularizer meshPositionRegularizer;
+	MeshEnergyRegularizer meshEnergyRegularizer;
 
 public:
 	BenderSimulationMesh();
@@ -51,7 +58,7 @@ public:
 	
 
 	double computeO();
-	double computeOofx(dVector const & x_in);
+	//double computeOofx(dVector const & x_in);
 
 	void computeDoDx(dVector & dodx);
 
@@ -60,4 +67,40 @@ public:
 
 	void drawSimulationMesh();
 
+};
+
+
+
+
+class MeshPositionRegularizer : public MeshObjective {
+public: 
+	double r = 0;
+
+public:
+
+	virtual void addO(const dVector & x, const dVector & X, double & o) ;
+	virtual void addDoDx(const dVector & x, const dVector & X, dVector & dodx);
+
+
+	virtual void addError(const dVector & x, double & e) {}
+	virtual void draw(dVector const & x, HighlightLevel level = HighlightLevel::NONE) {}
+};
+
+
+
+class MeshEnergyRegularizer : public MeshObjective {
+public: 
+	double r = 0;
+
+	SimulationMesh * femMesh;
+
+public:
+	MeshEnergyRegularizer(SimulationMesh* femMesh) : femMesh(femMesh) {}
+
+	virtual void addO(const dVector & x, const dVector & X, double & o) ;
+	virtual void addDoDx(const dVector & x, const dVector & X, dVector & dodx);
+
+
+	virtual void addError(const dVector & x, double & e) {}
+	virtual void draw(dVector const & x, HighlightLevel level = HighlightLevel::NONE) {}
 };

@@ -29,7 +29,6 @@ void SimulationMesh::drawSimulationMesh(V3D const & edgeColor, double elementSiz
 										V3D const & pinnedNodeColor, double pinnedNodeSize,
 										V3D const & nodeColor, double nodeSize)
 {
-
 	// elements
 	if(elementSize > 0) {
 		glColor3d(edgeColor(0), edgeColor(1), edgeColor(2));
@@ -68,14 +67,15 @@ void SimulationMesh::drawMeshSurface(dVector const & x) {
 	}
 	surfaceMesh->computeNormals(-1);
 	
-	surfaceMesh->getMaterial().setColor(0.7, 1.0, 0.7, 1.0);
 	
+	surfaceMesh->getMaterial().setColor(0.7, 1.0, 0.7, 1.0);
 	
 	//surfaceMesh->setVertexMatrix(x);
 
 	glShadeModel(GL_FLAT);
 	//glShadeModel(GL_SMOOTH);
 	glEnable(GL_LIGHTING);
+	
 
 	//glColor3d(0.72, 0.9, 0.72);
 	surfaceMesh->drawMeshWithLines();

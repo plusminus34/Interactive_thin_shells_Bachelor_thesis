@@ -5,6 +5,7 @@
 
 template<int NDim>
 BenderSimulationMesh<NDim>::BenderSimulationMesh()
+ : meshEnergyRegularizer(this)
 {
 }
 
@@ -191,9 +192,13 @@ double BenderSimulationMesh<NDim>::computeO()
 	{
 		obj->addO(this->x, this->X, o);
 	}
+	// regularizer:
+	meshPositionRegularizer.addO(this->x, this->X, o);
+	meshEnergyRegularizer.addO(this->x, this->X, o);
 	return(o);
 }
 
+/*
 template<int NDim>
 double BenderSimulationMesh<NDim>::computeOofx(dVector const & x_in) {
 	double o = 0;
@@ -203,7 +208,7 @@ double BenderSimulationMesh<NDim>::computeOofx(dVector const & x_in) {
 	}
 	return(o);
 }
-
+*/
 
 template<int NDim>
 void BenderSimulationMesh<NDim>::computeDoDx(dVector & dodx)
@@ -214,11 +219,16 @@ void BenderSimulationMesh<NDim>::computeDoDx(dVector & dodx)
 	{
 		obj->addDoDx(this->x, this->X, dodx);
 	}
+	// regularizer:
+	meshPositionRegularizer.addDoDx(this->x, this->X, dodx);
+	meshEnergyRegularizer.addDoDx(this->x, this->X, dodx);
 }
 
 template<int NDim>
 double BenderSimulationMesh<NDim>::computeTargetPositionError()
 {
+	if(objectives.size() == 0) {return(0.0);}
+
 	double e = 0;
 	int n_obj = 0;
 	for(MeshObjective * obj : objectives)
@@ -246,6 +256,88 @@ void BenderSimulationMesh<NDim>::drawSimulationMesh()
 	//	dynamic_cast<NodePositionObjective *>(obj)->draw(x);
 	//}
 }
+
+
+
+
+
+/*
+template<int NDim>
+double MeshEnergyRegularizer<NDim>::computeValue(const dVector & p) 
+{
+	if(r > 0.0) {
+		return(r * idSolver->femMesh->energy);
+	}
+	else {
+		return(0.0);
+	}
+}
+
+
+template<int NDim>
+void MeshEnergyRegularizer<NDim>::addGradientTo(dVector& grad, const dVector& p)
+{
+	if(r < 0.0) {
+		int n_x = idSolver->femMesh->x.size();
+
+		dVector & dEDx = idSolver->femMesh->gradient;
+
+		dVector dEDp = dEDx.transpose() * idSolver->dxdxi;
+
+		grad += r * dEDp;
+	}
+}
+*/
+
+
+void  MeshPositionRegularizer::addO(const dVector & x, const dVector & X, double & o)
+{
+	if(r <= 0.0) {return;}
+
+	o += 0.5 * r * (x - X).squaredNorm();
+}
+
+
+void MeshPositionRegularizer::addDoDx(const dVector & x, const dVector & X, dVector & dodx)
+{
+	if(r <= 0.0) {return;}
+
+	dodx += r * (x - X);
+
+}
+
+void  MeshEnergyRegularizer::addO(const dVector & x, const dVector & X, double & o)
+{
+	if(r <= 0.0) {return;}
+
+	o += r * femMesh->energy;
+}
+
+
+void MeshEnergyRegularizer::addDoDx(const dVector & x, const dVector & X, dVector & dodx)
+{
+	if(r <= 0.0) {return;}
+
+	dodx += r * femMesh->gradient;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // instantiation of 2D & 3D

@@ -110,7 +110,10 @@ double GradientBasedFunctionMinimizer::doLineSearch(ObjectiveFunction *function,
 
 	// no good value could be found at all: return the initial set of parameters
 	alpha = 0.0;
-	pi = pc;
+	//pi = pc;
+
+	//alpha = 0.0;
+	//pi = pc + dp*alpha;
 
 	return alpha;
 }

@@ -23,6 +23,7 @@ class SimulationMesh{
 	friend class BenderApp3D;
 	template<int NDim> 
 	friend class InverseDeformationSolver;
+	friend class MeshEnergyRegularizer;
 
 protected:
 	//this is the list of nodes in the structure

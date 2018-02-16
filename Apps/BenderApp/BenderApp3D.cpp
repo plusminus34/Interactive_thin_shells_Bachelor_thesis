@@ -65,13 +65,6 @@ BenderApp3D::BenderApp3D()
 	// prepare recording of screen
 	screenRecorder = new ScreenRecorder();
 
-	////////////////////////
-	// menu 
-	////////////////////////
-
-	initInteractionMenu(mainMenu);
-	menuScreen->performLayout();
-
 
 	////////////////////////
 	// FEM Mesh
@@ -122,7 +115,7 @@ BenderApp3D::BenderApp3D()
 	minimizers.push_back(new BFGSFunctionMinimizer           (maxIterations, solveResidual, maxLineSearchIterations, false));
 
 	// create ID Solver
-	inverseDeformationSolver = new InverseDeformationSolver<3>(femMesh, minimizers[comboBoxOptimizationAlgorithm->selectedIndex()]);
+	inverseDeformationSolver = new InverseDeformationSolver<3>(femMesh, minimizers[selectedMinimizationAlgorithm]);
 	
 	// set the target trajectory
 	if(true){
@@ -380,7 +373,7 @@ BenderApp3D::BenderApp3D()
 	// initialize the ID Solver
 	inverseDeformationSolver->pullXi();
 	// set a regularizer for the IDSolver, update the regularizer solution for the IK Solver
-	inverseDeformationSolver->objectiveFunction->setRegularizer(xiRegularizerValue, inverseDeformationSolver->xi);
+	inverseDeformationSolver->objectiveFunction->setReferenceStateP();
 
 
 
@@ -404,6 +397,16 @@ BenderApp3D::BenderApp3D()
 	//glfwSetWindowSize(glfwWindow, 1280, 720);
 
 	desiredFrameRate = 90;
+
+
+	////////////////////////
+	// menu 
+	////////////////////////
+
+	initInteractionMenu(mainMenu);
+	menuScreen->performLayout();
+	updateMountSelectionBox();
+
 }
 
 
@@ -448,16 +451,19 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 		menu->addWidget("", selection);
 		selection->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 			nanogui::Alignment::Middle, 0, 4));
-		comboBoxOptimizationAlgorithm = new nanogui::ComboBox(selection, { "gradient descent", "quasi Newton: BFGS"});
-		comboBoxOptimizationAlgorithm->setCallback([this](int idx){inverseDeformationSolver->minimizer = minimizers[idx]; });
-		comboBoxOptimizationAlgorithm->setSelectedIndex(1);
+		nanogui::ComboBox * comboBoxOptimizationAlgorithm = new nanogui::ComboBox(selection, { "gradient descent", "quasi Newton: BFGS"});
+		comboBoxOptimizationAlgorithm->setCallback([this](int idx){selectedMinimizationAlgorithm = static_cast<OptimizationAlgorithms>(idx);
+		                                                           inverseDeformationSolver->minimizer = minimizers[idx]; });
+		comboBoxOptimizationAlgorithm->setSelectedIndex(selectedMinimizationAlgorithm);
 
 
 		menu->addVariable("max Iterations", maxIterations);
 		menu->addVariable("solve residual", solveResidual);
 		menu->addVariable("line search start val", lineSearchStartValue);
 		menu->addVariable("max linesearch iter", maxLineSearchIterations);
-		menu->addVariable("regularizer xi", xiRegularizerValue);
+		menu->addVariable("regularizer FEM Position", inverseDeformationSolver->femMesh->meshPositionRegularizer.r);
+		menu->addVariable("regularizer FEM Energy", inverseDeformationSolver->femMesh->meshEnergyRegularizer.r);
+		menu->addVariable("regularizer joint angles", inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r);
 	}
 
 	menu->addGroup("Interaction Mode");
@@ -1102,7 +1108,7 @@ void BenderApp3D::process() {
 			if(timer_is_running) {i_step++;}
 			
 			
-			inverseDeformationSolver->objectiveFunction->setRegularizerValue(xiRegularizerValue);
+			//inverseDeformationSolver->objectiveFunction->setRegularizerValue(xiRegularizerValue);
 			double o_new = 0;
 			o_new = inverseDeformationSolver->solveOptimization(solveResidual,
 																maxIterations,

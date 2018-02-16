@@ -63,6 +63,8 @@ V3D mountBaseZDirectionRB_l;
 	InverseDeformationSolver<3> * inverseDeformationSolver;
 
 	// Optimization Algorithms
+	enum OptimizationAlgorithms {GD_MINIMIZER, BFGS_MINIMIZER};
+	OptimizationAlgorithms selectedMinimizationAlgorithm = BFGS_MINIMIZER;
 	std::vector<GradientBasedFunctionMinimizer*> minimizers;
 	int maxIterations = 1;
 	double solveResidual = 1e-5;
@@ -133,7 +135,7 @@ V3D mountBaseZDirectionRB_l;
 
 	nanogui::ComboBox * comboBoxMountSelection;
 	std::array<nanogui::Button *, 4> buttonsInteractionMode;
-	nanogui::ComboBox * comboBoxOptimizationAlgorithm;
+	//nanogui::ComboBox * comboBoxOptimizationAlgorithm;
 
 	nanogui::Button *connectRobotButton;
 	nanogui::Button *synchronizeRobotButton;
