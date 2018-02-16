@@ -120,9 +120,9 @@ RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = 0.75;
 
 #ifdef START_WITH_VISUAL_DESIGNER
-//	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
+	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
 // 	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configTGY306G.cfg");
- 	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configBK3002.cfg");
+// 	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configBK3002.cfg");
 #else
     loadFile("../data/robotsAndMotionPlans/spotMini/robot2.rbs");
     loadFile("../data/robotsAndMotionPlans/spotMini/robot.rs");

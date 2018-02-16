@@ -1,5 +1,8 @@
 #pragma once
 #include <RobotDesignerLib/RMC.h>
+#include <GUILib/GLContentManager.h>
+
+
 
 class SphereEE_RMC : public RMC{
 public:
@@ -102,6 +105,24 @@ public:
 
 		if (strcmp(keyword, "Radius") == 0) {
 			sscanf(line + strlen(keyword), "%lf", &radius);
+			update();
+			return true;
+		}
+
+		if (strcmp(keyword, "MotorMesh") == 0) {
+			motorMesh = GLContentManager::getGLMesh(trim(line + strlen(keyword)));
+			update();
+			return true;
+		}
+
+		if (strcmp(keyword, "MotorBracketMesh") == 0) {
+			motorBracketMesh = GLContentManager::getGLMesh(trim(line + strlen(keyword)));
+			update();
+			return true;
+		}
+
+		if (strcmp(keyword, "WheelMesh") == 0) {
+			originalWheelMesh = GLContentManager::getGLMesh(trim(line + strlen(keyword)));
 			update();
 			return true;
 		}
