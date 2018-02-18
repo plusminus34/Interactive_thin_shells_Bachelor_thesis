@@ -1,4 +1,5 @@
 #include "AppXD.h"
+#include <PlushHelpers\helpers_star.h>
 
 AppXD::AppXD() {
 	setWindowTitle("AppXD");
@@ -10,6 +11,7 @@ AppXD::AppXD() {
 }
 
 void AppXD::drawScene() {
+	draw_floor2d();
 }
 
 void AppXD::process() {

@@ -12,6 +12,7 @@ target_link_libraries(${PROJECT_NAME}
 	GUILib
 	OptimizationLib
 	FEMSimLib
+	PlushHelpers
 )
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Apps")
 
