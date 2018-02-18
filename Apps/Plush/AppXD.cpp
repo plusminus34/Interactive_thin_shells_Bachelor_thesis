@@ -11,7 +11,8 @@ AppXD::AppXD() {
 }
 
 void AppXD::drawScene() {
-	draw_floor2d();
+	PlushApplication::drawScene();
+	// draw_floor2d();
 }
 
 void AppXD::process() {
@@ -19,28 +20,27 @@ void AppXD::process() {
 }
 
 bool AppXD::onMouseMoveEvent(double xPos, double yPos) {
-    return(GLApplication::onMouseMoveEvent(xPos, yPos));
+    return(PlushApplication::onMouseMoveEvent(xPos, yPos));
 }
 
 bool AppXD::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
-    return(GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos));
+    return(PlushApplication::onMouseButtonEvent(button, action, mods, xPos, yPos));
 }
 
 bool AppXD::onMouseWheelScrollEvent(double xOffset, double yOffset) {
-    return(GLApplication::onMouseWheelScrollEvent(xOffset, yOffset));
+    return(PlushApplication::onMouseWheelScrollEvent(xOffset, yOffset));
 }
 
 bool AppXD::onKeyEvent(int key, int action, int mods) {	
-	return GLApplication::onKeyEvent(key, action, mods);
+	return PlushApplication::onKeyEvent(key, action, mods);
 }
 
 bool AppXD::onCharacterPressedEvent(int key, int mods) {
-	return GLApplication::onCharacterPressedEvent(key, mods);
+	return PlushApplication::onCharacterPressedEvent(key, mods);
 }
 
 bool AppXD::processCommandLine(const std::string& cmdLine) {
-	return GLApplication::processCommandLine(cmdLine);
-	return false;
+	return PlushApplication::processCommandLine(cmdLine);
 }
 
 void AppXD::loadFile(const char* fName) { } 

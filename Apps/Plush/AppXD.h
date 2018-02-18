@@ -1,8 +1,8 @@
 #pragma once
 
-#include <GUILib/GLApplication.h>
+#include "PlushApplication.h"
 
-class AppXD : public GLApplication {
+class AppXD : public PlushApplication {
 
 public: 
 	AppXD();
