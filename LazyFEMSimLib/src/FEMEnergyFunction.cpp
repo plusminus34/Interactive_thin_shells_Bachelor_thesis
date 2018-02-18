@@ -39,11 +39,11 @@ double FEMEnergyFunction::computeValue(const dVector& s)
 	simMesh->prepare_upto_energy(s);
 	totalEnergy += simMesh->energy;
 
-if(std::isnan(totalEnergy) )
-{
-	std::cout << "is nan " << __FILE__ << ":" << __LINE__ << std::endl;
-	GLApplication::getGLAppInstance()->appIsRunning = false;
-}
+//if(std::isnan(totalEnergy) )
+//{
+//	std::cout << "is nan " << __FILE__ << ":" << __LINE__ << std::endl;
+//	//GLApplication::getGLAppInstance()->appIsRunning = false;
+//}
 
 	if (useDynamics){
 		int nDim = simMesh->x.size();
@@ -61,11 +61,11 @@ if(std::isnan(totalEnergy) )
 		totalEnergy += 0.5*regularizer*tmpVec.dot(tmpVec);
 	}
 
-if(std::isnan(totalEnergy) )
-{
-	std::cout << "is nan " << __FILE__ << ":" << __LINE__ << std::endl;
-	GLApplication::getGLAppInstance()->appIsRunning = false;
-}
+//if(std::isnan(totalEnergy) )
+//{
+//	std::cout << "is nan " << __FILE__ << ":" << __LINE__ << std::endl;
+//	//GLApplication::getGLAppInstance()->appIsRunning = false;
+//}
 
 	return totalEnergy;
 }

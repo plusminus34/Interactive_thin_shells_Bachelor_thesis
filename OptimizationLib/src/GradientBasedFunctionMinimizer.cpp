@@ -1,5 +1,7 @@
 #include <OptimizationLib/GradientBasedFunctionMinimizer.h>
 
+#include <iostream>
+
 
 GradientBasedFunctionMinimizer::GradientBasedFunctionMinimizer(int p_maxIterations, double p_solveResidual, int p_maxLineSearchIterations, bool p_printOutput){
 	maxIterations = p_maxIterations;
@@ -110,7 +112,7 @@ double GradientBasedFunctionMinimizer::doLineSearch(ObjectiveFunction *function,
 
 	// no good value could be found at all: return the initial set of parameters
 	alpha = 0.0;
-	//pi = pc;
+	pi = pc;
 
 	//alpha = 0.0;
 	//pi = pc + dp*alpha;

@@ -230,19 +230,14 @@ void SimulationMesh::prepare_upto_energy(dVector const & x)
 
 #pragma omp parallel for reduction(+:e) //num_threads(2) default(shared)
 	for (int i = 0; i < n; i++) {
+
 		CSTElement3D* element = static_cast<CSTElement3D*>(elements[i]);
 		element->computeDeformationGradient(x, X);
 		element->computeEnergy();
-		e += element->getEnergy(x, X);
+		e += element->getEnergy(x, X);;
+
 	}
 	energy = e;
-	/*
-	for (size_t i = 0; i < elements.size(); i++) {
-		CSTElement3D* element = static_cast<CSTElement3D*>(elements[i]);
-		element->computeEnergy();
-		energy += element->getEnergy(x, X);
-	}
-	*/
 
 	for (size_t i = 0; i < pinnedNodeElements.size(); i++) {
 		energy += pinnedNodeElements[i]->getEnergy(x, X);

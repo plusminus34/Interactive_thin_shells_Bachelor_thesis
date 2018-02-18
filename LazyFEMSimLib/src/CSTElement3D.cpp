@@ -1,6 +1,7 @@
 #include <GUILib/GLUtils.h>
 #include <LazyFEMSimLib/CSTElement3D.h>
 #include <LazyFEMSimLib/SimulationMesh.h>
+#include <iostream>
 
 #define SCALE_FACTOR 10000000.0
 
@@ -23,7 +24,7 @@ CSTElement3D::CSTElement3D(SimulationMesh* simMesh, Node* n1, Node* n2, Node* n3
     for (int i = 0;i<4;i++)
         n[i]->addMassContribution(getMass() / 4.0);
 
-    matModel = MM_NEO_HOOKEAN;//MM_STVK;//MM_LINEAR_ISOTROPIC
+    matModel = MM_NEO_HOOKEAN;//MM_LINEAR_ISOTROPIC;//MM_NEO_HOOKEAN;//MM_STVK;//
 }
 
 CSTElement3D::~CSTElement3D() {
@@ -141,12 +142,14 @@ void CSTElement3D::computeDeformationGradient(const dVector& x, const dVector& X
         v1[2], v2[2], v3[2];
     F = dx * dXInv;
 
+
 	if (matModel == MM_NEO_HOOKEAN) {
 		Finv = F.inverse();
 		FinvT = Finv.transpose();
 		F_norm2 = F.squaredNorm();
 		F_logdet = log(F.determinant());
 	}
+
 }
 
 //implements the StVK material model
@@ -160,7 +163,11 @@ void CSTElement3D::computeEnergy()
 	double energyDensity = 0;
     if (matModel == MM_STVK) {
         //compute the Green Strain = 1/2 * (F'F-I)
-        strain = F * F.transpose(); strain(0, 0) -= 1; strain(1, 1) -= 1; strain(2, 2) -= 1; strain *= 0.5;
+        strain = F * F.transpose(); 
+		strain(0, 0) -= 1; 
+		strain(1, 1) -= 1; 
+		strain(2, 2) -= 1; 
+		strain *= 0.5;
 
         //add the deviatoric part of the energy, which penalizes the change in the shape of the element - the frobenius norm of E [tr (E'E)] measures just that
         // should be checked
@@ -171,7 +178,10 @@ void CSTElement3D::computeEnergy()
     }
     else if (matModel == MM_LINEAR_ISOTROPIC) {
         //compute the Cauchy strain: 1/2 (F+F') - I
-        strain = (F + F.transpose()) * 0.5; strain(0, 0) -= 1; strain(1, 1) -= 1; strain(2, 2) -= 1;
+        strain = (F + F.transpose()) * 0.5; 
+		strain(0, 0) -= 1; 
+		strain(1, 1) -= 1; 
+		strain(2, 2) -= 1;
 
         //add the deviatoric part of the energy, which penalizes the change in the shape of the element - the frobenius norm of E [tr (E'E)] measures just that
         energyDensity += shearModulus * strain.squaredNorm();
@@ -192,9 +202,12 @@ void CSTElement3D::computeEnergy()
 void CSTElement3D::computeGradientComponents() 
 {
     //compute the gradient of the energy using the chain rule: dE/dx = dE/dF * dF/dx. dE/dF is the first Piola-Kirchoff stress sensor, for which nice expressions exist.
-	/*
+	
     if (matModel == MM_STVK) {
-        strain = F.transpose() * F; strain(0, 0) -= 1; strain(1, 1) -= 1; strain(2, 2) -= 1;
+        strain = F.transpose() * F; 
+		strain(0, 0) -= 1; 
+		strain(1, 1) -= 1; 
+		strain(2, 2) -= 1;
         strain *= 0.5;
         dEdF = strain;
         dEdF *= 2.0 * shearModulus;
@@ -205,14 +218,18 @@ void CSTElement3D::computeGradientComponents()
     }
     else if (matModel == MM_LINEAR_ISOTROPIC) {
         //compute the Cauchy strain: 1/2 (F+F') - I
-        strain = (F + F.transpose()) * 0.5; strain(0, 0) -= 1; strain(1, 1) -= 1; strain(2, 2) -= 1;
-        dEdF = strain; dEdF *= 2 * shearModulus;
+        strain = (F + F.transpose()) * 0.5; 
+		strain(0, 0) -= 1; 
+		strain(1, 1) -= 1; 
+		strain(2, 2) -= 1;
+        dEdF = strain; 
+		dEdF *= 2 * shearModulus;
         dEdF(0, 0) += (strain(0, 0) + strain(1, 1) + strain(2, 2)) * bulkModulus;
         dEdF(1, 1) += (strain(0, 0) + strain(1, 1) + strain(2, 2)) * bulkModulus;
         dEdF(2, 2) += (strain(0, 0) + strain(1, 1) + strain(2, 2)) * bulkModulus;
     }
     else if (matModel == MM_NEO_HOOKEAN)
-	*/
+	
 	{
         // here are some diff
         dEdF = F * shearModulus + FinvT * (-shearModulus + bulkModulus*F_logdet);
@@ -227,7 +244,7 @@ void CSTElement3D::computeGradientComponents()
 
 void CSTElement3D::computeHessianComponents() 
 {
-	/*
+	
     if (matModel == MM_STVK)
     {
         
@@ -275,7 +292,6 @@ void CSTElement3D::computeHessianComponents()
         }
     }
     else if (matModel == MM_NEO_HOOKEAN)
-	*/
     {
         Matrix3x3 dF, dP, tmpM, dH;
         //for (int i = 0; i < 12; ++i)
