@@ -71,7 +71,7 @@ BenderApp3D::BenderApp3D()
 		config.fem_offset = P3D(0.0, 0.35, 0.50);
 
 		// fiber for matched target trajectory
-		config.n_nodes_matched_fiber = 11;
+		config.n_nodes_matched_fiber = 0;
 		config.matched_fiber_start = P3D(-0.15, 0.0, 0.0);
 		config.matched_fiber_end = P3D(+0.15, 0.0, 0.0);
 
@@ -317,7 +317,12 @@ void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
 			// compute gripper origin and orientation with respect to the local coordinates fo the rigedBody
 			P3D gripper_origin_RBLocal = gripperRB->meshTransformations[0].transform(gripper.mount_origin_surfacemesh);
 			Matrix3x3 gripper_orientation_RBLocal = gripperRB->meshTransformations[0].R * gripper.mount_orientation_surfacemesh;
-
+			if(gripper.rigidBody_name == "link_7_r") {
+				V3D mountBaseOriginRB_r = gripper_origin_RBLocal;
+			}
+			if(gripper.rigidBody_name == "link_7_l") {
+				V3D mountBaseOriginRB_l = gripper_origin_RBLocal;
+			}
 			// set the mount: transform to local coordinates of the rigid body of the gripper
 			Transformation rbLocal_to_mountLocal(gripper_orientation_RBLocal.transpose(), - gripper_orientation_RBLocal.transpose()*gripper_origin_RBLocal);
 			Transformation mountLocal_to_rbLocal = rbLocal_to_mountLocal.inverse();
@@ -425,10 +430,10 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 		menu->addVariable("solve residual", solveResidual);
 		menu->addVariable("line search start val", lineSearchStartValue);
 		menu->addVariable("max linesearch iter", maxLineSearchIterations);
-		//menu->addVariable("regularizer FEM Position", inverseDeformationSolver->femMesh->meshPositionRegularizer.r);
-		//menu->addVariable("regularizer FEM Energy", inverseDeformationSolver->femMesh->meshEnergyRegularizer.r);
-		//menu->addVariable("regularizer joint angles", inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r);
-		//menu->addVariable("regularizer step size", inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r);
+		menu->addVariable("regularizer FEM Position", inverseDeformationSolver->femMesh->meshPositionRegularizer.r);
+		menu->addVariable("regularizer FEM Energy", inverseDeformationSolver->femMesh->meshEnergyRegularizer.r);
+		menu->addVariable("regularizer joint angles", inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r);
+		menu->addVariable("regularizer step size", inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r);
 	}
 
 	menu->addGroup("Interaction Mode");
@@ -1113,10 +1118,12 @@ void BenderApp3D::process() {
 	}
 
 	// output diff begin/end of center line
-	V3D delta_centerline = matchedFiber.back()->getWorldPosition() - matchedFiber.front()->getWorldPosition();
-	std::cout << "diff centerline: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
-	delta_centerline = matchedFiber[matchedFiber.size()/2]->getWorldPosition() - matchedFiber.front()->getWorldPosition();
-	std::cout << "diff centerline_half: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
+	if(matchedFiber.size() > 1) {
+		V3D delta_centerline = matchedFiber.back()->getWorldPosition() - matchedFiber.front()->getWorldPosition();
+		std::cout << "diff centerline: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
+		delta_centerline = matchedFiber[matchedFiber.size()/2]->getWorldPosition() - matchedFiber.front()->getWorldPosition();
+		std::cout << "diff centerline_half: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
+	}
 
 	
 

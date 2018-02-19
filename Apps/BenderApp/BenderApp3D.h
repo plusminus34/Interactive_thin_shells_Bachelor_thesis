@@ -42,24 +42,6 @@ public:
 
 	IK_Solver * ikSolver = NULL;
 
-	// mount base in coords of gripper mesh
-
-	V3D mountBaseOriginMesh_r;
-	V3D mountBaseOriginMesh_l;
-	Matrix3x3 mountBaseCoordinatesMesh_r;
-	Matrix3x3 mountBaseCoordinatesMesh_l;
-
-	V3D mountBaseOriginRB_r;
-	V3D mountBaseOriginRB_l;
-
-V3D mountBaseAxialDirectionRB_r;
-V3D mountBaseAxialDirectionRB_l;
-V3D mountBaseZDirectionRB_r;
-V3D mountBaseZDirectionRB_l;
-
-	Matrix3x3 mountBaseCoordinatesRB_r;
-	Matrix3x3 mountBaseCoordinatesRB_l;
-
 	DynamicArray<Node *> matchedFiber;
 
 	// solver for the inverse problem
@@ -131,6 +113,11 @@ V3D mountBaseZDirectionRB_l;
 	int selectedMountID = -1;
 	int selectedObjectiveID = -1;
 	int hoveredObjectiveID = -1;
+
+	// mount base in rigid body coordinates (for manipualation of the IK)
+	V3D mountBaseOriginRB_r;
+	V3D mountBaseOriginRB_l;
+
 
 	// menu elements
 	nanogui::Screen *menuScreen2 = nullptr;
