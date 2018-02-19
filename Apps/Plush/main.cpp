@@ -1,8 +1,9 @@
 #include "AppXD.h"
+#include "AppSoftIK.h"
 
 int main(void){
 
-	AppXD app;
+	AppSoftIK app;
 	app.runMainLoop();
 
 	return 0;
