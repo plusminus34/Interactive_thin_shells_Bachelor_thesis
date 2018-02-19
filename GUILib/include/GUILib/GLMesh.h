@@ -418,7 +418,8 @@ public:
 		This method draws the model.
 	*/
 	void drawMesh();
-	void drawMeshWithLines();
+	void drawMeshWithLines(V3D const & faceColor, bool drawFaces,
+						   V3D const & edgeColor, double edgeSize);
 
 	/**
 		This method prints out the normals of the model - for testing purposes.

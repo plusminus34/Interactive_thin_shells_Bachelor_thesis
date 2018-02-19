@@ -19,6 +19,15 @@ RobotMount::RobotMount(ParameterSet * parameters)
 	}
 }
 
+RobotMount::RobotMount(ParameterSet * parameters, RigidBody * robotPart)
+	: Mount(parameters), robotPart(robotPart)
+{
+	if(! dynamic_cast<RobotParameters *>(parameters)) {
+		std::cerr << "Error:" << __FILE__ << ":" << __LINE__ << std::endl;
+		exit(3);
+	}
+}
+
 
 P3D RobotMount::transformation(P3D const & x0, ParameterSet * parameters_in)
 {

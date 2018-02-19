@@ -651,7 +651,12 @@ void GLMesh::drawMesh() {
 	material.end();
 }
 
-void GLMesh::drawMeshWithLines() {
+void GLMesh::drawMeshWithLines(V3D const & faceColor, bool drawFaces,
+							   V3D const & edgeColor, double edgeSize) {
+	
+	
+	material.setColor(faceColor(0), faceColor(1), faceColor(2), 1.0);
+	
 	material.apply();
 
 	/* enable the vertex array list*/
@@ -679,28 +684,35 @@ void GLMesh::drawMeshWithLines() {
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(3, GL_DOUBLE, 0, &(texCoordList.front()));
 	}
-	if (IS_EQUAL(material.a,1)) {
-		drawMeshElements();
+
+	// draw the faces
+	if(drawFaces) {
+		if (IS_EQUAL(material.a,1)) {
+			drawMeshElements();
+		}
+		else {
+			glEnable(GL_CULL_FACE);
+			glCullFace(GL_FRONT);
+			drawMeshElements();
+			glCullFace(GL_BACK);
+			drawMeshElements();
+			glDisable(GL_CULL_FACE);
+		}
 	}
-	else {
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_FRONT);
-		//drawMeshElements();
-		glCullFace(GL_BACK);
-		//drawMeshElements();
-		glDisable(GL_CULL_FACE);
-	}
+
 	// draw the lines of all triangles
-	glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-	glEnable(GL_POLYGON_OFFSET_LINE);
-	glPolygonOffset(-1.0,0);
-	float currentColor[4];
-	glGetFloatv(GL_CURRENT_COLOR,currentColor);
-	glColor3d(0.0, 0.0, 0.0);
-	
-	drawMeshElements();
-	glColor3d(currentColor[0], currentColor[1], currentColor[2]);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if(edgeSize > 0) {
+		glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+		glEnable(GL_POLYGON_OFFSET_LINE);
+		glPolygonOffset(-1.0,0);
+		float currentColor[4];
+		glGetFloatv(GL_CURRENT_COLOR,currentColor);
+		glColor3d(edgeColor(0), edgeColor(1), edgeColor(2));
+		glLineWidth((GLfloat)edgeSize);
+		drawMeshElements();
+		glColor3d(currentColor[0], currentColor[1], currentColor[2]);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);

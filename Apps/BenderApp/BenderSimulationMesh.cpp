@@ -249,7 +249,9 @@ void BenderSimulationMesh<NDim>::drawSimulationMesh()
 									   V3D(1.0,0.0,0.0), 1.0,
 									   V3D(1.0,0.0,0.0), 0.002);
 	*/
-	SimulationMesh::drawMeshSurface(this->x);
+	SimulationMesh::drawMeshSurface(V3D(0.7, 1.0, 0.7), false,
+									V3D(0.0, 0.0, 0.0), 1,
+									V3D(1.0, 0.0, 0.0), 1);
 
 
 	//for(MeshObjective * obj : objectives) {

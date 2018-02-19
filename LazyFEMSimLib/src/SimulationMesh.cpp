@@ -52,7 +52,10 @@ void SimulationMesh::drawSimulationMesh(V3D const & edgeColor, double elementSiz
 }
 
 
-void SimulationMesh::drawMeshSurface(dVector const & x) {
+void SimulationMesh::drawMeshSurface(V3D const & faceColor, bool drawFaces,
+									 V3D const & edgeColor, double edgeSize, 
+									 V3D const & pinnedNodeColor, double pinnedNodeSize)
+{
 	
 	// construct the gl mesh
 	surfaceMesh->clear();
@@ -68,21 +71,34 @@ void SimulationMesh::drawMeshSurface(dVector const & x) {
 	surfaceMesh->computeNormals(-1);
 	
 	
-	surfaceMesh->getMaterial().setColor(0.7, 1.0, 0.7, 1.0);
+	//surfaceMesh->getMaterial().setColor(0.7, 1.0, 0.7, 1.0);
+	if(drawFaces) {
+		surfaceMesh->getMaterial().setColor(faceColor(0), faceColor(1), faceColor(2), 1.0);
+	}
+	else {
+		surfaceMesh->getMaterial().setColor(faceColor(0), faceColor(1), faceColor(2), 0.0);
+	}
 	
 	//surfaceMesh->setVertexMatrix(x);
 
 	glShadeModel(GL_FLAT);
-	//glShadeModel(GL_SMOOTH);
 	glEnable(GL_LIGHTING);
-	
 
-	//glColor3d(0.72, 0.9, 0.72);
-	surfaceMesh->drawMeshWithLines();
-	//surfaceMesh->drawNormals();
+	
+	surfaceMesh->drawMeshWithLines(faceColor, drawFaces,
+								   edgeColor, edgeSize);
 
 	glDisable(GL_LIGHTING);
 	glShadeModel(GL_SMOOTH);
+
+
+	// pinned nodes (lines only)
+	if(pinnedNodeSize > 0) {
+		glColor3d(pinnedNodeColor(0), pinnedNodeColor(1), pinnedNodeColor(2));
+		glLineWidth((GLfloat)pinnedNodeSize);
+		for (uint i=0;i<pinnedNodeElements.size();i++)
+			pinnedNodeElements[i]->draw(x);
+	}
 }
 
 
@@ -134,6 +150,7 @@ void SimulationMesh::solve_dynamics(double dt){
 }
 
 void SimulationMesh::solve_statics(){
+	SimulationMesh * that = this;
 	xSolver = x;
 	energyFunction->setToStaticsMode(0.01);
 

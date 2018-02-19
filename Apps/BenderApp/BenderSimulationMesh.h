@@ -33,6 +33,8 @@ public:
 	// mesh manipulation
 	template<typename TMount> 
 	void addMount(ParameterSet * parameters) {mounts.push_back(new TMount(parameters));}
+	template<typename TMount> 
+	void addMount(TMount * mount) {mounts.push_back(mount);}
 	void removeMount(int mountID);
 
 	void setMountedNode(int nodeID, const P3D & x0, int mountID);

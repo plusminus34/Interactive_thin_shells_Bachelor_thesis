@@ -17,6 +17,9 @@
 #include "RobotMount.h"
 
 
+class BenderExperimentConfiguration;
+
+
 /**
  * Test App
  */
@@ -191,6 +194,8 @@ public:
 	//virtual void loadFile(char* fName);
 	
 
+	void setupExperiment(BenderExperimentConfiguration & config);
+
 	void initInteractionMenu(nanogui::FormHelper* menu);
 	void updateMountSelectionBox();
 
@@ -203,4 +208,63 @@ public:
 };
 
 
+class Gripper;
+class FemMount;
 
+class BenderExperimentConfiguration{
+
+public:
+
+	V3D gravity;
+	bool use_joint_angle_constraints = true;
+	bool use_collision_avoidance = true;
+	bool initialize_robot_state_with_IK = true;
+
+	// fem mesh
+	double maxTetVolume = 0.5e-6;
+
+	double massDensity = 43.63;
+	double youngsModulus = 2.135e4;
+	double poissonRatio = 0.376;
+
+	std::string fem_model_filename;
+	P3D fem_offset;
+	std::vector<FemMount> femMounts;
+	
+	int n_nodes_matched_fiber = -1;
+	P3D matched_fiber_start;
+	P3D matched_fiber_end;
+
+	// Grippers
+	std::vector<Gripper> grippers;
+
+
+public:
+
+
+};
+
+
+class Gripper {
+public:
+	P3D mount_origin_surfacemesh;				// defined with respect to the surface-mash of the model
+	Matrix3x3 mount_orientation_surfacemesh;
+	//RigidBody * gripper_body;
+	std::string rigidBody_name;
+
+	std::vector<AxisAlignedBoundingBox> contact_regions;	// relative to the mount_origin & mount_orientation
+
+public:
+	Gripper(P3D origin, V3D dir_1, V3D dir_2, std::string const & rigidBody_name);
+
+	void addContactRegion(P3D pt1, P3D pt2);
+
+};
+
+class FemMount {
+public:
+	P3D mount_origin;
+	Matrix3x3 mount_orientation;
+public: 
+	FemMount(P3D origin, V3D dir_1, V3D dir_2);
+};

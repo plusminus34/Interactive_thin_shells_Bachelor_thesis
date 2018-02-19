@@ -41,335 +41,71 @@
 BenderApp3D::BenderApp3D() 
 {
 
-	Eigen::initParallel();
-
-	const double rod_length = 0.3;
-	const P3D rod_center(0.0, 0.35, 0.50);
-
-	// fem mesh coarsness
-	double maxTetVolume = 0.5e-6;
-
-	// measured (physical) values for "the green foam" are: (density, young, poisson) = (43.63, 2.135e4, 0.376)
-	//double massDensity = 43.63;//130;//50;
-	//double youngsModulus = 3.0e5;//1.5e4;//3.0e4;//3.0e4;
-	//double poissonRatio = 0.25;//0.376;//0.25;
-
-	double massDensity = 43.63;
-	double youngsModulus = 2.135e4;
-	double poissonRatio = 0.376;
-
-	double shearModulus = youngsModulus / (2 * (1 + poissonRatio));
-	double bulkModulus = youngsModulus / (3 * (1 - 2 * poissonRatio));
-
-
 	setWindowTitle("Test FEM Sim Application...");
-
+	Eigen::initParallel();
 	// prepare recording of screen
 	screenRecorder = new ScreenRecorder();
 
 
-	////////////////////////
-	// FEM Mesh
-	////////////////////////
-
-	// create some points on centerline of the mesh
-	DynamicArray<P3D> centerlinePts;
-	{
-		int m = 11;
-		centerlinePts.resize(m);
-		V3D pt1(-0.15, 0.0, 0.0);
-		V3D pt2(0.15, 0.0, 0.0);
-		double dt = 1.0 / static_cast<double>(m-1);
-		for(int i = 0; i < m; ++i) {
-			centerlinePts[i] = pt1 + (pt2 - pt1) * dt*static_cast<double>(i);
-		}
-	}
-
-	// create mesh
-	femMesh = new BenderSimulationMesh<3>;
-	femMesh->readMeshFromFile_ply("../data/3dModels/square_rod_0p03x0p3.ply", &centerlinePts,
-								  massDensity, shearModulus, bulkModulus,
-								  1.0, rod_center,
-								  maxTetVolume);
-	femMesh->addGravityForces(V3D(0, -9.8, 0));	
-
-
-	// add a fiber in Mesh to match
-	auto node_sequence_from_points = [&](DynamicArray<P3D> & pts, double tolerance,
-										 DynamicArray<Node*> & fiber)
-	{
-		fiber.resize(0);
-		for(P3D pt : pts) {
-			pt += rod_center;
-			for(Node * node : femMesh->nodes) {
-				if((pt - node->getCoordinates(femMesh->X)).length() < tolerance) {
-					fiber.push_back(node);
-					break;
-				}
-			}
-		}
-	};
-	node_sequence_from_points(centerlinePts, 0.0001, matchedFiber);
-
-
+	/////////////////////////////
+	// solvers
+	////////////////////////////
 	// initialize minimization algorithms
 	minimizers.push_back(new GradientDescentFunctionMinimizer(maxIterations, solveResidual, maxLineSearchIterations, false));
 	minimizers.push_back(new BFGSFunctionMinimizer           (maxIterations, solveResidual, maxLineSearchIterations, false));
 
-	// create ID Solver
+	// create a mesh
+	femMesh = new BenderSimulationMesh<3>;
+	// create the ID solver
 	inverseDeformationSolver = new InverseDeformationSolver<3>(femMesh, minimizers[selectedMinimizationAlgorithm]);
-	
-	// set the target trajectory
-	if(false){
-		// draw some target trjectory
-		targetTrajectory_input.addKnotBack(rod_center + P3D(-rod_length*0.5, 0.05, 0.0));
-		targetTrajectory_input.addKnotBack(rod_center + P3D( 0.0,  0.1, 0.0));
-		targetTrajectory_input.addKnotBack(rod_center + P3D( rod_length*0.5, 0.05, 0.0));
 
-		// add a "MatchScaledTrajObjective"
-		targetTrajectory_input.setTValueToLength();
-		femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
+
+
+	////////////////////////
+	// setup the experiment
+	////////////////////////
+	BenderExperimentConfiguration config;
+	{
+		config.gravity = V3D(0.0, -9.8, 0.0);
+		config.fem_model_filename = "../data/3dModels/square_rod_0p03x0p3.ply";
+		config.fem_offset = P3D(0.0, 0.35, 0.50);
+
+		// fiber for matched target trajectory
+		config.n_nodes_matched_fiber = 11;
+		config.matched_fiber_start = P3D(-0.15, 0.0, 0.0);
+		config.matched_fiber_end = P3D(+0.15, 0.0, 0.0);
+
+		// fem mounts
+		config.femMounts.push_back(FemMount(P3D(-0.15, 0.0, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
+		config.femMounts.push_back(FemMount(P3D(+0.15, 0.0, 0.0), V3D(-1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
+
+		// grippers
+		P3D origin_r = (P3D(0.634457, 0.093577, 0.335758) + P3D(0.656349, 0.0844, 0.348425)) * 0.5;
+		V3D dir1_r = (P3D(0.627,0.084,0.344) - P3D(0.619,0.076,0.351));
+		V3D dir2_r = -(P3D(0.656349, 0.0844, 0.348425) - P3D(0.634457, 0.093577, 0.335758));
+		config.grippers.push_back(Gripper(origin_r, dir1_r, dir2_r, "link_7_r"));
+		config.grippers.back().addContactRegion(P3D(-0.001, -1.0, -1.0), P3D(0.001, 1.0, 1.0));
+
+		P3D origin_l = (P3D(0.634453, -0.093602, 0.335783) + P3D(0.656353, -0.084374, 0.3484)) * 0.5;
+		V3D dir1_l = (P3D(0.647,-0.075,0.356) - P3D(0.639,-0.067,0.363));
+		V3D dir2_l = -(P3D(0.656353, -0.084374, 0.3484) - P3D(0.634453, -0.093602, 0.335783));
+		config.grippers.push_back(Gripper(origin_l, dir1_l, dir2_l, "link_7_l"));
+		config.grippers.back().addContactRegion(P3D(-0.001, -1.0, -1.0), P3D(0.001, 1.0, 1.0));
+
 	}
 
-	////////////////////////
-	// Robot
-	////////////////////////
-	
-	// load robot
-	std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
-
-	auto loadRobot = [&] (std::string const & fname)
-	{
-		delete robot;
-		delete rbEngine;
-
-		rbEngine = new ODERBEngine();
-		rbEngine->loadRBsFromFile(fname.c_str());
-		robot = new Robot(rbEngine->rbs[0]);
-		startState = RobotState(robot);
-		setupSimpleRobotStructure(robot);
-	};
-	loadRobot(fnameRB);
-
-	right_gripper = rbEngine->getRBByName("link_7_r");
-	left_gripper = rbEngine->getRBByName("link_7_l");
-	
-
-	robot->setHeading(-PI / 2.0);
+	setupExperiment(config);
 
 
-	// find mount point on gripper
-
-	//P3D mount_point_surfacemesh_r = (P3D(0.628,0.085,0.344) + P3D(0.647,0.075,0.356)) * 0.5;
-	//P3D mount_point_surfacemesh_l = (P3D(0.628,-0.085,0.344) + P3D(0.647,-0.075,0.356)) * 0.5;
-	P3D mount_point_surfacemesh_r = (P3D(0.634457, 0.093577, 0.335758) + P3D(0.656349, 0.0844, 0.348425)) * 0.5;
-	P3D mount_point_surfacemesh_l = (P3D(0.634453, -0.093602, 0.335783) + P3D(0.656353, -0.084374, 0.3484)) * 0.5;
-
-	V3D mount_axialDirection_surfacemesh_r = (P3D(0.627,0.084,0.344) - P3D(0.619,0.076,0.351)).unit();
-	V3D mount_axialDirection_surfacemesh_l = (P3D(0.647,-0.075,0.356) - P3D(0.639,-0.067,0.363)).unit();
-
-	//V3D mount_zDirection_r = -(P3D(0.628,0.085,0.344) - P3D(0.647,0.075,0.356));
-	//V3D mount_zDirection_l = -(P3D(0.628,-0.085,0.344) - P3D(0.647,-0.075,0.356));
-	V3D mount_zDirection_r = -(P3D(0.656349, 0.0844, 0.348425) - P3D(0.634457, 0.093577, 0.335758)).unit();
-	V3D mount_zDirection_l = -(P3D(0.656353, -0.084374, 0.3484) - P3D(0.634453, -0.093602, 0.335783)).unit();
-
-	mountBaseOriginRB_r = right_gripper->meshTransformations[0].transform(mount_point_surfacemesh_r);
-	mountBaseOriginRB_l = left_gripper->meshTransformations[0].transform(mount_point_surfacemesh_l);
-
-
-	mountBaseAxialDirectionRB_r = right_gripper->meshTransformations[0].transform(mount_axialDirection_surfacemesh_r);
-	mountBaseAxialDirectionRB_l = right_gripper->meshTransformations[0].transform(mount_axialDirection_surfacemesh_l);
-
-	mountBaseZDirectionRB_r = right_gripper->meshTransformations[0].transform(mount_zDirection_r);
-	mountBaseZDirectionRB_l = right_gripper->meshTransformations[0].transform(mount_zDirection_l);
-
-	//mountBaseOriginRB_l = V3D(0.0);
-	mountBaseCoordinatesRB_l << 0.0, 0.0, 1.0,
-		0.0, -1.0, 0.0,
-		1.0, 0.0, 0.0;
-
-	//mountBaseOriginRB_r = V3D(0.0);
-	mountBaseCoordinatesRB_r << 0.0, 0.0, 1.0,
-		0.0, -1.0, 0.0,
-		1.0, 0.0, 0.0;
-
-	////////////////////////
-	// IK Solver for Robot
-	////////////////////////
-	delete ikSolver;
-	ikSolver = new IK_Solver(robot, true);
-	// new target: right gripper
-	ikSolver->ikPlan->endEffectors.push_back(IK_EndEffector());
-	ikSolver->ikPlan->endEffectors.back().endEffectorRB = right_gripper;
-
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = mountBaseOriginRB_r;
-	ikSolver->ikPlan->endEffectors.back().targetEEPos = P3D(-rod_length*0.5, 0.0, 0.0) + rod_center;
-
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = mountBaseAxialDirectionRB_r;
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(1) = V3D(0.0, 1.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(2) = mountBaseZDirectionRB_r;
-	ikSolver->ikPlan->endEffectors.back().orientationMask = V3D(1.0, 0.0, 1.0);
-
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(1.0, 0.0, 0.0).unit();
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(1) = V3D(0.0, 1.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(2) = V3D(0.0, 0.0, 1.0);
-
-	ikSolver->ikPlan->endEffectors.back().lengthScaleOrientation = +0.5;
-
-	// new target: left gripper
-	ikSolver->ikPlan->endEffectors.push_back(IK_EndEffector());
-	ikSolver->ikPlan->endEffectors.back().endEffectorRB = left_gripper;
-
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = mountBaseOriginRB_l;
-	ikSolver->ikPlan->endEffectors.back().targetEEPos = P3D(+rod_length*0.5, 0.0, 0.0) + rod_center;
-
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = mountBaseAxialDirectionRB_l;
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(1) = V3D(0.0, 1.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(2) = mountBaseZDirectionRB_l;
-	ikSolver->ikPlan->endEffectors.back().orientationMask = V3D(1.0, 0.0, 1.0);
-
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = V3D(-1.0, 0.0, 0.0).unit();
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(1) = V3D(0.0, 1.0, 0.0);
-	ikSolver->ikPlan->endEffectors.back().targetEEOrientation(2) = V3D(0.0, 0.0, 1.0);
-
-	ikSolver->ikPlan->endEffectors.back().lengthScaleOrientation = +0.5;
-
+	// move robot to initial configuration with IK solver
 	for(int i = 0; i < 100; ++i) {
 		ikSolver->ikEnergyFunction->regularizer = 100;
 		ikSolver->ikOptimizer->checkDerivatives = false;
 		ikSolver->solve();
 // 		testGeneralizedCoordinateRepresentation(robot);
 	}
-
-	// create generalized parametrization of the robot
-	generalizedRobotCoordinates = new GeneralizedCoordinatesRobotRepresentation(robot);
-
-
-
-	// create a parameter set with the above robot coordinatespr
-	robotMountParameters = new RobotParameters(generalizedRobotCoordinates);
-	inverseDeformationSolver->parameterSets.push_back(robotMountParameters);
-	
-	// create constraints for that parameter set (i.e. the joint angles)
-	{
-		ParameterSet * jointAnglePars = inverseDeformationSolver->parameterSets.back();
-		int n = jointAnglePars->getNPar();
-		for(int i = 0; i < n; ++i) {
-			inverseDeformationSolver->objectiveFunction->parameterConstraints.
-				push_back(new ParameterConstraintObjective(jointAnglePars, i,
-														   true, true,
-														   1000, 0.0873,
-														   -2.0*PI, 2.0*PI));
-		}
-	}
-
-	// create Collision avoidance Objective
-	RBSphereCollisionObjective * rbsco = new RBSphereCollisionObjective(static_cast<RobotParameters*>(inverseDeformationSolver->parameterSets.back()),
-								   rbEngine->rbs,
-								   0.00, 10000.0, 0.002);
-	inverseDeformationSolver->objectiveFunction->parameterConstraints.push_back(rbsco);
-
-	
-	// create a mount on the left gripper
-	femMesh->addMount<RobotMount>(inverseDeformationSolver->parameterSets.back());
-	RobotMount * mount_left_gripper = static_cast<RobotMount*>(femMesh->mounts.back());
-	int mount_id_left_gripper = femMesh->mounts.size()-1;
-	mount_left_gripper->robotPart = left_gripper;
-	// create a mount on the right gripper
-	femMesh->addMount<RobotMount>(inverseDeformationSolver->parameterSets.back());
-	RobotMount * mount_right_gripper = static_cast<RobotMount*>(femMesh->mounts.back());
-	int mount_id_right_gripper = femMesh->mounts.size()-1;
-	mount_right_gripper->robotPart = right_gripper;
-	
-
-	
-	// set rotation mounts
-	auto set_rotation_mount_from_plane = [&](int dim, double val, double tolerance) 
-	{
-		std::vector<int> nodes_id(0);
-		for(int i = 0; i < (int)femMesh->nodes.size(); ++i) {
-			P3D pt = femMesh->nodes[i]->getCoordinates(femMesh->X);
-			if(pt[dim] > val-tolerance && pt[dim] < val+tolerance) {
-				nodes_id.push_back(i);
-			}
-		}
-		if(nodes_id.size() > 0) {
-			addRotationMount();
-			int i_mount = femMesh->mounts.size()-1;
-			for(int i : nodes_id) {
-				addMountedNode(i, i_mount);
-			}
-		}
-	};
-
-
-	
-	// set robot mount
-	auto add_node_to_robot_mount = [&](int nodeId, int mountId, 
-										V3D & mount_origin_mesh, Matrix3x3 & mount_coordinates_mesh, 
-										V3D & mount_origin_body, Matrix3x3 & mount_coordinates_body)
-	{
-		V3D x0 = femMesh->nodes[nodeId]->getCoordinates(femMesh->X);
-		V3D x0_mount = static_cast<V3D>(mount_coordinates_mesh  * (x0 - mount_origin_mesh));
-		V3D x0_body = static_cast<V3D>(mount_coordinates_body * x0_mount + mount_origin_body);
-
-		femMesh->setMountedNode(nodeId, static_cast<P3D>(x0_body), mountId);
-	};
-
-	auto set_robot_mount_from_plane = [&](int dim, double val, double tolerance,
-										int mountId, 
-										V3D & mount_origin_mesh, Matrix3x3 & mount_coordinates_mesh, 
-										V3D & mount_origin_body, Matrix3x3 & mount_coordinates_body)
-	{
-		std::vector<int> nodes_id(0);
-		for(int i = 0; i < (int)femMesh->nodes.size(); ++i) {
-			P3D pt = femMesh->nodes[i]->getCoordinates(femMesh->X);
-			if(pt[dim] > val-tolerance && pt[dim] < val+tolerance) {
-				nodes_id.push_back(i);
-			}
-		}
-
-		for(int i : nodes_id) {
-			add_node_to_robot_mount(i, mountId,
-									mount_origin_mesh, mount_coordinates_mesh,
-									mount_origin_body, mount_coordinates_body);
-		}
-	};
-
-	mountBaseOriginMesh_r = V3D(-rod_length*0.5, 0.0, 0.0) + rod_center + V3D(-0.005, 0.0, 0.0);
-	mountBaseCoordinatesMesh_r << 0.0, 0.0, 1.0,
-									0.0, -1.0, 0.0,
-									1.0, 0.0, 0.0;
-
-	mountBaseOriginMesh_l = V3D(+rod_length*0.5, 0.0, 0.0) + rod_center + V3D(+0.005, 0.0, 0.0);
-	mountBaseCoordinatesMesh_l << 0.0, 0.0, 1.0,
-								0.0, -1.0, 0.0,
-								1.0, 0.0, 0.0;
-
-
-	//mountBaseOriginRB_l = V3D(0.0);
-	Quaternion gripper_left_orientation = left_gripper->state.orientation;
-	Matrix3x3 gripper_left_orientation_matrix = gripper_left_orientation.getRotationMatrix();
-	mountBaseCoordinatesRB_l = gripper_left_orientation_matrix.inverse()*mountBaseCoordinatesMesh_l;
-	//mountBaseOriginRB_r = V3D(0.0);
-	Quaternion gripper_right_orientation = right_gripper->state.orientation;
-	Matrix3x3 gripper_right_orientation_matrix = gripper_right_orientation.getRotationMatrix();
-	mountBaseCoordinatesRB_r = gripper_right_orientation_matrix.inverse()*mountBaseCoordinatesMesh_r;
-
-
-
-	set_robot_mount_from_plane(0, -rod_length*0.5, 0.001*rod_length,
-								mount_id_right_gripper,
-								mountBaseOriginMesh_r, mountBaseCoordinatesMesh_r,
-								mountBaseOriginRB_r, mountBaseCoordinatesRB_r);
-	set_robot_mount_from_plane(0, +rod_length*0.5, 0.001*rod_length,
-								mount_id_left_gripper,
-								mountBaseOriginMesh_l, mountBaseCoordinatesMesh_l,
-								mountBaseOriginRB_l, mountBaseCoordinatesRB_l);
-
-
-	//set_rotation_mount_from_plane(0, -rod_length/2.0, 0.01);
-	//set_rotation_mount_from_plane(0, +rod_length/2.0, 0.01);
+	// sync the generalized coordinates with the new state
+	generalizedRobotCoordinates->syncGeneralizedCoordinatesWithRobotState();
 
 
 	// initialize the ID Solver
@@ -393,7 +129,7 @@ BenderApp3D::BenderApp3D()
 	///////////////////////////////
 
 	// camera view
-	camera->setCameraTarget(P3D(rod_center) - V3D(0.0, 0.0, 0.25));
+	//camera->setCameraTarget(P3D(rod_center) - V3D(0.0, 0.0, 0.25));
 
 	glfwSetWindowSize(glfwWindow, 1920, 1080);
 	//glfwSetWindowSize(glfwWindow, 1280, 720);
@@ -412,11 +148,237 @@ BenderApp3D::BenderApp3D()
 }
 
 
+
 BenderApp3D::~BenderApp3D()
 {
 	delete screenRecorder;
 }
 
+
+void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
+{
+
+	////////////////////////
+	// FEM Mesh
+	////////////////////////
+	{
+		double shearModulus = config.youngsModulus / (2 * (1 + config.poissonRatio));
+		double bulkModulus = config.youngsModulus / (3 * (1 - 2 * config.poissonRatio));
+
+		// create some points on a line in the mesh
+		DynamicArray<P3D> centerlinePts(0);
+		if(config.n_nodes_matched_fiber > 1) {
+			int m = config.n_nodes_matched_fiber;
+			centerlinePts.resize(m);
+			V3D pt1 = config.matched_fiber_start;
+			V3D pt2 = config.matched_fiber_end;
+			double dt = 1.0 / static_cast<double>(m-1);
+			for(int i = 0; i < m; ++i) {
+				centerlinePts[i] = pt1 + (pt2 - pt1) * dt*static_cast<double>(i);
+			}
+		}
+
+		// create mesh
+		femMesh->readMeshFromFile_ply(const_cast<char*>(config.fem_model_filename.c_str()), &centerlinePts,
+									  config.massDensity, shearModulus, bulkModulus,
+									  1.0, config.fem_offset,
+									  config.maxTetVolume);
+
+		// add gravity
+		femMesh->addGravityForces(config.gravity);
+
+		// add a fiber in Mesh to match
+		if(config.n_nodes_matched_fiber > 1) {
+			auto node_sequence_from_points = [&](DynamicArray<P3D> & pts, double tolerance,
+												 DynamicArray<Node*> & fiber)
+			{
+				fiber.resize(0);
+				for(P3D pt : pts) {
+					pt += config.fem_offset;
+					for(Node * node : femMesh->nodes) {
+						if((pt - node->getCoordinates(femMesh->X)).length() < tolerance) {
+							fiber.push_back(node);
+							break;
+						}
+					}
+				}
+			};
+			node_sequence_from_points(centerlinePts, 0.0001, matchedFiber);
+	
+	
+			// draw some target trjectory
+			targetTrajectory_input.addKnotBack(config.matched_fiber_start + config.fem_offset + P3D(0.0, 0.05, 0.0));
+			targetTrajectory_input.addKnotBack((config.matched_fiber_start + config.matched_fiber_end)*0.5 + config.fem_offset + P3D( 0.0,  0.1, 0.0));
+			targetTrajectory_input.addKnotBack(config.matched_fiber_end + config.fem_offset + P3D(0.0, 0.05, 0.0));
+
+			// add a "MatchScaledTrajObjective"
+			targetTrajectory_input.setTValueToLength();
+			femMesh->objectives.push_back(new MatchScaledTrajObjective(matchedFiber, targetTrajectory_input));
+	
+		}
+	}
+
+
+	////////////////////////
+	// Robot
+	////////////////////////
+	{
+		// load robot
+		std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
+
+		auto loadRobot = [&] (std::string const & fname)
+		{
+			delete robot;
+			delete rbEngine;
+
+			rbEngine = new ODERBEngine();
+			rbEngine->loadRBsFromFile(fname.c_str());
+			robot = new Robot(rbEngine->rbs[0]);
+			startState = RobotState(robot);
+			setupSimpleRobotStructure(robot);
+		};
+		loadRobot(fnameRB);
+
+		right_gripper = rbEngine->getRBByName("link_7_r");
+		left_gripper = rbEngine->getRBByName("link_7_l");
+	
+		robot->setHeading(-PI / 2.0);
+
+		// IK Solver for Robot
+		delete ikSolver;
+		ikSolver = new IK_Solver(robot, true);
+
+
+		// create generalized parametrization of the robot
+		generalizedRobotCoordinates = new GeneralizedCoordinatesRobotRepresentation(robot);
+
+		// create a parameter set with the above robot coordinates
+		robotMountParameters = new RobotParameters(generalizedRobotCoordinates);
+		inverseDeformationSolver->parameterSets.push_back(robotMountParameters);
+
+	}
+
+	/////////////////////////
+	// constraints for solver
+	////////////////////////
+	{
+		// create constraints for that parameter set (i.e. the joint angles)
+		if(config.use_joint_angle_constraints)
+		{
+			ParameterSet * jointAnglePars = inverseDeformationSolver->parameterSets.back();
+			int n = jointAnglePars->getNPar();
+			for(int i = 0; i < n; ++i) {
+				inverseDeformationSolver->objectiveFunction->parameterConstraints.
+					push_back(new ParameterConstraintObjective(jointAnglePars, i,
+															   true, true,
+															   1000, 0.0873,
+															   -2.0*PI, 2.0*PI));
+			}
+		}
+
+		// create Collision avoidance Objective
+		if(config.use_collision_avoidance) {
+			RBSphereCollisionObjective * rbsco = new RBSphereCollisionObjective(static_cast<RobotParameters*>(inverseDeformationSolver->parameterSets.back()),
+										   rbEngine->rbs,
+										   0.00, 10000.0, 0.002);
+			inverseDeformationSolver->objectiveFunction->parameterConstraints.push_back(rbsco);
+		}
+	}
+
+
+	///////////////////////
+	// attach fem to robot-mounts
+	////////////////////////
+	{
+		auto attach_fem_mounts = [&](Gripper gripper, FemMount femMount)
+		{		
+			// find all points on the fem-mesh that lie within the contact-region
+			std::vector<int> contactNodeIDs(0);
+			for(AxisAlignedBoundingBox region : gripper.contact_regions) {
+				for(int i = 0; i < (int)femMesh->nodes.size(); ++i) {
+					Node * node = femMesh->nodes[i];
+					P3D pt_mountlocal = static_cast<Vector3d>((node->getWorldPosition()-config.fem_offset - femMount.mount_origin)).transpose() * femMount.mount_orientation;
+					if(region.isInside(pt_mountlocal)) {
+						contactNodeIDs.push_back(i);
+					}
+				}
+			}
+
+			if(! (contactNodeIDs.size() > 0)) {
+				std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << std::endl;
+				exit(1);
+			}
+
+			// create the mount
+			RigidBody * gripperRB = rbEngine->getRBByName(gripper.rigidBody_name.c_str());
+			femMesh->addMount<RobotMount>(new RobotMount(robotMountParameters, gripperRB));
+			int mountId = femMesh->mounts.size()-1;
+
+			// compute gripper origin and orientation with respect to the local coordinates fo the rigedBody
+			P3D gripper_origin_RBLocal = gripperRB->meshTransformations[0].transform(gripper.mount_origin_surfacemesh);
+			Matrix3x3 gripper_orientation_RBLocal = gripperRB->meshTransformations[0].R * gripper.mount_orientation_surfacemesh;
+
+			// set the mount: transform to local coordinates of the rigid body of the gripper
+			Transformation rbLocal_to_mountLocal(gripper_orientation_RBLocal.transpose(), - gripper_orientation_RBLocal.transpose()*gripper_origin_RBLocal);
+			Transformation mountLocal_to_rbLocal = rbLocal_to_mountLocal.inverse();
+			for(int i = 0; i < (int)contactNodeIDs.size(); ++i) {
+				// node in mount-local coordinates
+				Node * node = femMesh->nodes[contactNodeIDs[i]];
+				P3D pt_mountlocal = static_cast<Vector3d>((node->getWorldPosition()-config.fem_offset - femMount.mount_origin)).transpose() * femMount.mount_orientation;
+				// node in RB-local coordinates
+				P3D pt_rblocal = mountLocal_to_rbLocal.transform(pt_mountlocal);
+
+				femMesh->setMountedNode(contactNodeIDs[i], pt_rblocal, mountId);
+			}
+		};
+
+		if(config.femMounts.size() != config.grippers.size()) {
+				std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << std::endl;
+				exit(1);
+		}
+
+		// attach
+		for(int i = 0; i < (int)config.grippers.size(); ++i) {
+			attach_fem_mounts(config.grippers[i], config.femMounts[i]);
+		}
+	}
+
+
+	///////////////////
+	// initialize with IK solver
+	/////////////////////////
+	if(config.initialize_robot_state_with_IK) {
+		// find RBs thate are used for robot mounts
+		for(int i = 0; i < (int)config.grippers.size(); ++i) {
+			Gripper & gripper = config.grippers[i];
+			RigidBody * gripperRB = rbEngine->getRBByName(gripper.rigidBody_name.c_str());
+			FemMount & femMount = config.femMounts[i];
+				
+			if(gripperRB == right_gripper || gripperRB == left_gripper) {
+				// create the IK target
+				ikSolver->ikPlan->endEffectors.push_back(IK_EndEffector());
+				ikSolver->ikPlan->endEffectors.back().endEffectorRB = gripperRB;
+
+				ikSolver->ikPlan->endEffectors.back().endEffectorLocalCoords = gripperRB->meshTransformations[0].transform(gripper.mount_origin_surfacemesh);
+				ikSolver->ikPlan->endEffectors.back().targetEEPos = femMount.mount_origin + config.fem_offset;
+
+
+				Matrix3x3 gripper_orientation_RBLocal = gripperRB->meshTransformations[0].R * gripper.mount_orientation_surfacemesh;
+				ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(0) = static_cast<V3D>(gripper_orientation_RBLocal.col(0));
+				ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(1) = static_cast<V3D>(gripper_orientation_RBLocal.col(1));
+				ikSolver->ikPlan->endEffectors.back().endEffectorLocalOrientation(2) = static_cast<V3D>(gripper_orientation_RBLocal.col(2));
+
+				ikSolver->ikPlan->endEffectors.back().targetEEOrientation(0) = static_cast<V3D>(femMount.mount_orientation.col(0));
+				ikSolver->ikPlan->endEffectors.back().targetEEOrientation(1) = static_cast<V3D>(femMount.mount_orientation.col(1));
+				ikSolver->ikPlan->endEffectors.back().targetEEOrientation(2) = static_cast<V3D>(femMount.mount_orientation.col(2));
+
+				ikSolver->ikPlan->endEffectors.back().orientationMask = V3D(1.0, 1.0, 0.0);
+				ikSolver->ikPlan->endEffectors.back().lengthScaleOrientation = +0.5;
+
+			}
+		}
+	}
+}
 
 
 
@@ -463,10 +425,10 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 		menu->addVariable("solve residual", solveResidual);
 		menu->addVariable("line search start val", lineSearchStartValue);
 		menu->addVariable("max linesearch iter", maxLineSearchIterations);
-		menu->addVariable("regularizer FEM Position", inverseDeformationSolver->femMesh->meshPositionRegularizer.r);
-		menu->addVariable("regularizer FEM Energy", inverseDeformationSolver->femMesh->meshEnergyRegularizer.r);
-		menu->addVariable("regularizer joint angles", inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r);
-		menu->addVariable("regularizer step size", inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r);
+		//menu->addVariable("regularizer FEM Position", inverseDeformationSolver->femMesh->meshPositionRegularizer.r);
+		//menu->addVariable("regularizer FEM Energy", inverseDeformationSolver->femMesh->meshEnergyRegularizer.r);
+		//menu->addVariable("regularizer joint angles", inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r);
+		//menu->addVariable("regularizer step size", inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r);
 	}
 
 	menu->addGroup("Interaction Mode");
@@ -1354,4 +1316,36 @@ bool BenderApp3D::processCommandLine(const std::string& cmdLine)
 {
 	if (GLApplication::processCommandLine(cmdLine)) return true;
 	return false;
+}
+
+
+
+Gripper::Gripper(P3D origin, V3D dir_1, V3D dir_2, std::string const & rigidBody_name)
+	: mount_origin_surfacemesh(origin), rigidBody_name(rigidBody_name)
+{
+	dir_1.toUnit();
+	dir_2.toUnit();
+	V3D dir_3 = dir_1.cross(dir_2);
+
+	mount_orientation_surfacemesh.col(0) = dir_1;
+	mount_orientation_surfacemesh.col(1) = dir_2;
+	mount_orientation_surfacemesh.col(2) = dir_3;
+}
+
+void Gripper::addContactRegion(P3D pt1, P3D pt2)
+{
+	contact_regions.push_back(AxisAlignedBoundingBox(pt1, pt2));
+}
+
+
+FemMount::FemMount(P3D origin, V3D dir_1, V3D dir_2)
+	: mount_origin(origin)
+{
+	dir_1.toUnit();
+	dir_2.toUnit();
+	V3D dir_3 = dir_1.cross(dir_2);
+
+	mount_orientation.col(0) = dir_1;
+	mount_orientation.col(1) = dir_2;
+	mount_orientation.col(2) = dir_3;
 }

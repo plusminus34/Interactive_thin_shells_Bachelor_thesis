@@ -70,7 +70,9 @@ public:
 	void drawSimulationMesh(V3D const & edgeColor = V3D(1.0,1.0,1.0), double edgeWidth = 1, 
 							V3D const & pinnedNodeColor = V3D(1.0,0.0,0.0), double pinnedNodeSize = 1,
 							V3D const & nodeColor = V3D(1.0,0.0,0.0), double nodeSize = 0.005);
-	void drawMeshSurface(dVector const & x);
+	void drawMeshSurface(V3D const & faceColor, bool drawFaces,
+						V3D const & edgeColor, double edgeSize, 
+						V3D const & pinnedNodeColor, double pinnedNodeSize);
 	void drawExternalForces();
 	void drawRestConfiguration();
 

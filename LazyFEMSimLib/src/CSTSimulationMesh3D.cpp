@@ -164,6 +164,8 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 											   double scale, V3D const & offset,
 											   double maxTetVolume)
 {
+	SimulationMesh * that = this;
+
 	// input objects for tetget
 	tetgenio input, addinput;
 	input.mesh_dim = 3;

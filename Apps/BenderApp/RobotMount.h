@@ -19,6 +19,7 @@ public:
 
 public:
 	RobotMount(ParameterSet * parameters);
+	RobotMount(ParameterSet * parameters, RigidBody * robotPart);
 
 	virtual P3D transformation(P3D const & x0, ParameterSet * parameters_in);
 	virtual void dxDpar(P3D const & x0, ParameterSet * parameters_in, std::vector<V3D> & grad);
