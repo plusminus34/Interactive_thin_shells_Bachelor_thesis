@@ -22,6 +22,16 @@ PlushApplication::PlushApplication() {
 	mainMenu->addVariable("PRINT_CAMERA", PRINT_CAMERA);
 	mainMenu->addVariable("STEP", STEP);
 	mainMenu->addVariable("RECORD", RECORD_VIDEO);
+
+	glEnable(GL_POINT_SMOOTH);
+	glEnable(GL_LINE_SMOOTH);
+	// glEnable(GL_POLYGON_SMOOTH);
+	// --
+	glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	// glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+
+
 }
 
 void PlushApplication::drawScene() {
@@ -31,13 +41,15 @@ void PlushApplication::drawScene() {
 	flashError(); 
 	if (DRAW_HANDLERS) { drawHandlers(); }
 
-	glMasterPush();  {
-		glPointSize(15.); set_color(WHITE);
-		glBegin(GL_POINTS); { glP3D(test_P3D); } glEnd();
-		// --
-		glPointSize(10.); set_color(BLACK);
-		glBegin(GL_POINTS); { glP3D(test_P3D); } glEnd();
-	} glMasterPop();
+	if (DRAW_TEST_POINT) {
+		glMasterPush(); {
+			glPointSize(15.); set_color(WHITE);
+			glBegin(GL_POINTS); { glP3D(test_P3D); } glEnd();
+			// --
+			glPointSize(10.); set_color(BLACK);
+			glBegin(GL_POINTS); { glP3D(test_P3D); } glEnd();
+		} glMasterPop();
+	}
 
 	if (!appIsRunning) {
 		if (STEP) {

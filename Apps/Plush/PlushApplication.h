@@ -28,6 +28,7 @@ public:
 	void drawHandlers();
 	// --
 	bool DRAW_HANDLERS = true;
+	bool DRAW_TEST_POINT = false;
 
 public:
     virtual void process();
