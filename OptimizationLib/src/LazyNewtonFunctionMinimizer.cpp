@@ -4,7 +4,7 @@
 //TODO: get a version of the objective functions (and everything else) that works with dense matrices as well...
 
 #include <iostream>
-#define USE_PARDISO
+
 // The search direction is given by -Hinv * g
 void LazyNewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *function, const dVector &p, dVector& dp) {
 

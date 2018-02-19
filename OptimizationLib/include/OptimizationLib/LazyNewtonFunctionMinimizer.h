@@ -1,10 +1,18 @@
 #pragma once
 
+//#define USE_PARDISO
+
 #include <OptimizationLib/ObjectiveFunction.h>
 #include <Utils/Timer.h>
 #include <OptimizationLib/GradientBasedFunctionMinimizer.h>
-#include <OptimizationLib/PardisoSolver.h>
 #include <memory>
+
+#ifdef USE_PARDISO
+#include <OptimizationLib/PardisoSolver.h>
+#endif
+
+
+
 /**
 	use Newton's method to optimize a function. p will store the final value that minimizes the function, and its initial value
 	is used to start the optimization method.
@@ -18,8 +26,10 @@ class LazyNewtonFunctionMinimizer : public GradientBasedFunctionMinimizer {
 public:
 	LazyNewtonFunctionMinimizer(int p_maxIterations = 100, double p_solveResidual = 0.0001, int p_maxLineSearchIterations = 15, bool p_printOutput = false) : GradientBasedFunctionMinimizer(p_maxIterations, p_solveResidual, p_maxLineSearchIterations, p_printOutput) {
 		optName = "Newton\'s method";
+#ifdef USE_PARDISO
 		pardiso = std::make_unique<PardisoSolver<std::vector<int>, std::vector<double>>>();
 		pardiso->set_type(2, true);
+#endif
 	}
 
 
@@ -50,5 +60,7 @@ public:
 		Projection
 	};
 	HessCorrectionMethod hessCorrectionMethod = None;
+#ifdef USE_PARDISO
 	std::unique_ptr<PardisoSolver<std::vector<int>, std::vector<double>>> pardiso = nullptr;
+#endif
 };
