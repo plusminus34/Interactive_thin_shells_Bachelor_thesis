@@ -83,7 +83,6 @@ void SimulationMesh::drawMeshSurface(V3D const & faceColor, bool drawFaces,
 
 	glShadeModel(GL_FLAT);
 	glEnable(GL_LIGHTING);
-
 	
 	surfaceMesh->drawMeshWithLines(faceColor, drawFaces,
 								   edgeColor, edgeSize);

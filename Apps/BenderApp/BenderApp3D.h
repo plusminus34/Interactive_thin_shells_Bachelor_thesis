@@ -95,9 +95,9 @@ public:
 	double maxRunningTime;
 
 	// visualization robot
-	bool showMesh = false;
-	bool showAbstract = true;
-	bool showRotationAxes = true;
+	bool showMesh = true;
+	bool showAbstract = false;
+	bool showRotationAxes = false;
 	bool highlightSelected = true;
 	bool showMOI = false;
 	bool showCDPs = false;

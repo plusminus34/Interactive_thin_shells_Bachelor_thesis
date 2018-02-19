@@ -244,14 +244,15 @@ double BenderSimulationMesh<NDim>::computeTargetPositionError()
 template<int NDim>
 void BenderSimulationMesh<NDim>::drawSimulationMesh() 
 {
+
 	/*
 	SimulationMesh::drawSimulationMesh(V3D(0.9,0.97,1.0), 1.0,
 									   V3D(1.0,0.0,0.0), 1.0,
 									   V3D(1.0,0.0,0.0), 0.002);
 	*/
-	SimulationMesh::drawMeshSurface(V3D(0.7, 1.0, 0.7), false,
+	SimulationMesh::drawMeshSurface(V3D(0.7, 1.0, 0.7), true,
 									V3D(0.0, 0.0, 0.0), 1,
-									V3D(1.0, 0.0, 0.0), 1);
+									V3D(1.0, 0.0, 0.0), -1);
 
 
 	//for(MeshObjective * obj : objectives) {

@@ -129,7 +129,7 @@ BenderApp3D::BenderApp3D()
 	///////////////////////////////
 
 	// camera view
-	//camera->setCameraTarget(P3D(rod_center) - V3D(0.0, 0.0, 0.25));
+	camera->setCameraTarget(config.fem_offset - V3D(0.0, 0.0, 0.25));
 
 	glfwSetWindowSize(glfwWindow, 1920, 1080);
 	//glfwSetWindowSize(glfwWindow, 1280, 720);
@@ -543,7 +543,7 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 
 	// screen recorder
 	
-	screenRecorder->attachToNanoGui(menu);
+//	screenRecorder->attachToNanoGui(menu);
 
 };
 
@@ -1147,6 +1147,8 @@ void BenderApp3D::process() {
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
 void BenderApp3D::drawScene() {
 	
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
 
 	// draw mesh
 	glDisable(GL_TEXTURE_2D);
@@ -1252,7 +1254,7 @@ void BenderApp3D::drawScene() {
 	if(hoveredNodeID > 0) {
 		// draw node
 		glColor3d(1, 0.5, 0.0);
-		drawSphere(femMesh->nodes[hoveredNodeID]->getWorldPosition(), 0.0015);
+		drawSphere(femMesh->nodes[hoveredNodeID]->getWorldPosition(), 0.00151);
 	}
 
 	//// draw hovered-over node-objective
