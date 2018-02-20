@@ -112,28 +112,16 @@ void IDCustomYuMiControlInterface::sendControlInputsToPhysicalRobot(double dt) {
 }
 
 
-void IDCustomYuMiControlInterface::streamToRobotTask()//YuMiCommandBuffer* buffer)
+void IDCustomYuMiControlInterface::streamToRobotTask()
 {
 	robotStreamTask_isRunning = true;
 
 	while(connected)
 	{
-		commandBuffer.queueAccess.lock();
-		int buffer_size = commandBuffer.targets.size();
-		if(buffer_size > 0) {
-			// get data from buffer
-			YuMiJointTarget yuMiJointTarget = commandBuffer.targets.front();
-			commandBuffer.targets.pop();
+		YuMiJointTarget yuMiJointTarget;
+		bool target_available = commandBuffer.getAdjustedCommand(yuMiJointTarget);
 
-			commandBuffer.queueAccess.unlock();
-
-			// compute control factor for time, to get closer to the target buffer size
-			double target_size = static_cast<double>(commandBuffer.buffer_target_size);
-			double size = static_cast<double>(buffer_size);
-			double k = std::pow(target_size/(std::max(1.0,size)), 1.0);
-			double t = k * yuMiJointTarget.targetTime;
-			//std::cout << "streaming: n_buff = " << buffer_size << "  k = " << k << "  t/t_new = " << yuMiJointTarget.targetTime << " / " << t << std::endl;
-			// wait for previous robot-communications to finish
+		if(target_available) {
 			if(arm_left_synchronized.valid()) {
 				arm_left_synchronized.wait();
 			}
@@ -141,11 +129,12 @@ void IDCustomYuMiControlInterface::streamToRobotTask()//YuMiCommandBuffer* buffe
 				arm_right_synchronized.wait();
 			}
 			// send new commands to robot
-			arm_left_synchronized = std::async(std::launch::async, &YuMiArm::getAndSendJointsToRobot, &leftArm, yuMiJointTarget.targetJointsLeft, t);
-			arm_right_synchronized = std::async(std::launch::async, &YuMiArm::getAndSendJointsToRobot, &rightArm, yuMiJointTarget.targetJointsRight, t);
+			arm_left_synchronized = std::async(std::launch::async, &YuMiArm::getAndSendJointsToRobot, 
+																	&leftArm, yuMiJointTarget.targetJointsLeft, yuMiJointTarget.targetTime);
+			arm_right_synchronized = std::async(std::launch::async, &YuMiArm::getAndSendJointsToRobot, 
+																	&rightArm, yuMiJointTarget.targetJointsRight, yuMiJointTarget.targetTime);
 		}
 		else {
-			commandBuffer.queueAccess.unlock();
 			// wait for further action (buffer is filled, or robot becomes disconnected)
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
@@ -155,14 +144,57 @@ void IDCustomYuMiControlInterface::streamToRobotTask()//YuMiCommandBuffer* buffe
 }
 
 
-
 void YuMiCommandBuffer::push(YuMiJoints targetJointsLeft, YuMiJoints targetJointsRight, double targetTime)
 {
 	queueAccess.lock();
-	targets.push(YuMiJointTarget({targetJointsLeft, targetJointsRight, targetTime}));
+	targets.push_back(YuMiJointTarget({targetJointsLeft, targetJointsRight, targetTime}));
 	queueAccess.unlock();
 }
 
 
+bool YuMiCommandBuffer::getAdjustedCommand(YuMiJointTarget & yuMiJointTarget)
+{
 
+	double t_queue;
+	queueAccess.lock();
+	if(targets.size() > 0) {
+		t_queue = bufferedTime();
+		yuMiJointTarget = targets.front();
+		targets.pop_front();
+		queueAccess.unlock();
+	}
+	else {
+		queueAccess.unlock();
+		return(false);
+	}
+
+	double tgt_delay = target_delay;
+	double dt_assumed = 1.0 / assumed_sync_framerate;
+	double uncertainty = sync_framerate_uncerteinty;
+
+	double k;
+	double time_ratio = std::max(t_queue, 0.01) / tgt_delay;
+	if(t_queue < 0.5*tgt_delay) {	// buffer smaller than the target: move to roughly match an estimated frame rate
+		double uncertainty_adjustment = uncertainty;// * (1.0 - time_ratio);
+		k = (1.0 + uncertainty_adjustment); // slow down a bit when the buffer is close to empty
+		yuMiJointTarget.targetTime = k * dt_assumed;
+	}
+	else {	// buffer us bigger than the target: aim to empty the buffer within the target_delay
+		k = 1.0 / time_ratio;
+		yuMiJointTarget.targetTime *= k;
+
+	}
+	
+	return(true);
+}
+
+
+double YuMiCommandBuffer::bufferedTime()
+{
+	double t_tot = 0.0;
+	for(YuMiJointTarget & target : targets) {
+		t_tot += target.targetTime;
+	}
+	return(t_tot);
+}
 

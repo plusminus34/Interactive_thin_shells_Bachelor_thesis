@@ -38,7 +38,7 @@ public:
 	GeneralizedCoordinatesRobotRepresentation * generalizedRobotCoordinates= NULL;
 	RobotParameters * robotMountParameters;
 
-	RobotControlInterface* robotControlInterface = NULL;
+	IDCustomYuMiControlInterface* robotControlInterface = NULL;
 
 	IK_Solver * ikSolver = NULL;
 

@@ -2,7 +2,7 @@
 
 #include <future>
 #include <atomic>
-#include <queue>
+#include <deque>
 
 #include "ControlLib/YuMiControlInterface.h"
 #include "RobotMount.h"
@@ -18,20 +18,28 @@ public:
 	double targetTime;
 };
 
+
 class YuMiCommandBuffer 
 {
 	friend IDCustomYuMiControlInterface;
 
+public:
+	atomic<double> target_delay = {0.30};
+	atomic<double> assumed_sync_framerate = {12};
+	atomic<double> sync_framerate_uncerteinty = {1.0};
+
 protected:
-	atomic_int buffer_target_size = {4};
-	std::queue<YuMiJointTarget> targets;
+	
+	//atomic_int buffer_target_size = {4};
+
+	std::deque<YuMiJointTarget> targets;
 	std::mutex queueAccess;
 
 public:
 	void push(YuMiJoints targetJointsLeft, YuMiJoints targetJointsRight, double targetTime);
+	bool getAdjustedCommand(YuMiJointTarget & yuMiJointTarget);
 
-	
-
+	double bufferedTime();
 };
 
 

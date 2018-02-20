@@ -77,7 +77,7 @@ BenderApp3D::BenderApp3D()
 		config.maxTetVolume = 1.0e-6;
 
 		// fiber for matched target trajectory
-		config.n_nodes_matched_fiber = 11;
+		config.n_nodes_matched_fiber = 0;
 		config.matched_fiber_start = P3D(-0.15, 0.0, 0.0);
 		config.matched_fiber_end = P3D(+0.15, 0.0, 0.0);
 
@@ -551,6 +551,17 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 	});
 
 	menu->addVariable("Sync. Robot", synchronizePhysicalRobot);
+	menu->addVariable<double>("buffer time", [&](const double & v) { robotControlInterface->commandBuffer.target_delay = v; },
+									 [&]() -> double { return robotControlInterface->commandBuffer.target_delay; });
+
+	menu->addVariable<double>("assumed sync rate", [&](const double & v) { robotControlInterface->commandBuffer.assumed_sync_framerate = v; },
+									 [&]() -> double { return robotControlInterface->commandBuffer.assumed_sync_framerate; });
+	menu->addVariable<double>("sync rate uncertainty", [&](const double & v) { robotControlInterface->commandBuffer.sync_framerate_uncerteinty = v; },
+									 [&]() -> double { return robotControlInterface->commandBuffer.sync_framerate_uncerteinty; });
+
+
+
+
 
 
 
@@ -1145,7 +1156,7 @@ void BenderApp3D::process() {
 		if(robotControlInterface && robotControlInterface->isConnected()) {
 			static double t_sum = 0;
 			t_sum += timer_simulation_one_frame.timeEllapsed();
-			if(t_sum >= 0.1) {
+			if(t_sum >= 0.9*1.0/robotControlInterface->commandBuffer.assumed_sync_framerate) {
 				robotControlInterface->syncPhysicalRobotWithSimRobot(t_sum);
 				t_sum = 0.0;
 			}
