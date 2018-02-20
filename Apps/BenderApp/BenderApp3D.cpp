@@ -77,7 +77,7 @@ BenderApp3D::BenderApp3D()
 		config.maxTetVolume = 1.0e-6;
 
 		// fiber for matched target trajectory
-		config.n_nodes_matched_fiber = 0;
+		config.n_nodes_matched_fiber = 11;
 		config.matched_fiber_start = P3D(-0.15, 0.0, 0.0);
 		config.matched_fiber_end = P3D(+0.15, 0.0, 0.0);
 
@@ -402,6 +402,8 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 	menu->addGroup("FEM Sim options");
 	{
 		menu->addVariable("Static solve", computeStaticSolution);
+		
+		menu->addVariable("adaptive line search", femMesh->minimizer.adaptiveLineSearch);
 	}
 	//
 	menu->addGroup("Robot Visualization");
@@ -438,8 +440,13 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 
 		menu->addVariable("max Iterations", maxIterations);
 		menu->addVariable("solve residual", solveResidual);
-		menu->addVariable("line search start val", lineSearchStartValue);
-		menu->addVariable("max linesearch iter", maxLineSearchIterations);
+
+		menu->addVariable("line search start val", inverseDeformationSolver->minimizer->lineSearchStartValue);
+		//menu->addVariable("max linesearch iter", maxLineSearchIterations);
+		menu->addVariable("line search end val", inverseDeformationSolver->minimizer->lineSearchEndValue);
+		menu->addVariable("adaptive line search", inverseDeformationSolver->minimizer->adaptiveLineSearch);
+		menu->addVariable("abs limit line search", inverseDeformationSolver->minimizer->lineSearchValuesAbsolute);
+
 		menu->addVariable("regularizer FEM Position", inverseDeformationSolver->femMesh->meshPositionRegularizer.r);
 		menu->addVariable("regularizer FEM Energy", inverseDeformationSolver->femMesh->meshEnergyRegularizer.r);
 		menu->addVariable("regularizer joint angles", inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r);

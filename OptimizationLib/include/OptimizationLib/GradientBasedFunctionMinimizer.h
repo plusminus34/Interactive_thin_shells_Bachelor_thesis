@@ -21,6 +21,10 @@ public:
 
 public:
 	double lineSearchStartValue = 1.0;
+	double lineSearchEndValue = 3.0e-5;
+	bool adaptiveLineSearch = false;
+	bool lineSearchValuesAbsolute = false;
+
 	double solveResidual = 1e-5;
 	int maxIterations = 100;
 	int maxLineSearchIterations = 15;
@@ -30,5 +34,7 @@ public:
 protected:
 	dVector pi, dp, gradient;
 	Timer timer;
+protected:
+	double lineSearchValueOld = -1.0;
 };
 

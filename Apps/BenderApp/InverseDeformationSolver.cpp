@@ -65,9 +65,9 @@ double InverseDeformationSolver<NDim>::solveOptimization(double terminationResid
 {
 	// settings for optimization algorithm 
 	minimizer->solveResidual = terminationResidual;
-	minimizer->maxIterations = maxIterations;
-	minimizer->lineSearchStartValue = lineSearchStartValue;
-	minimizer->maxLineSearchIterations = maxLineSearchIterations;
+	//minimizer->maxIterations = maxIterations;
+	//minimizer->lineSearchStartValue = lineSearchStartValue;
+	//minimizer->maxLineSearchIterations = maxLineSearchIterations;
 
 	// update list of free optimization parameters
 	pullXi();
