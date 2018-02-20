@@ -589,7 +589,7 @@ void BenderApp2D::drawScene() {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glColor3d(1,1,1);
-	femMesh->drawSimulationMesh();
+	femMesh->drawSimulationMesh(false);
 
 	// draw nodes of mounted points
 	for(int i = 0; i < femMesh->pinnedNodeElements.size(); ++i) {

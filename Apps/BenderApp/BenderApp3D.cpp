@@ -70,8 +70,14 @@ BenderApp3D::BenderApp3D()
 		config.fem_model_filename = "../data/3dModels/square_rod_0p03x0p3.ply";
 		config.fem_offset = P3D(0.0, 0.35, 0.50);
 
+		config.massDensity = 43.63;
+		config.youngsModulus = 3e3;//2.135e4;
+		config.poissonRatio = 0.376;
+
+		config.maxTetVolume = 1.0e-6;
+
 		// fiber for matched target trajectory
-		config.n_nodes_matched_fiber = 0;
+		config.n_nodes_matched_fiber = 11;
 		config.matched_fiber_start = P3D(-0.15, 0.0, 0.0);
 		config.matched_fiber_end = P3D(+0.15, 0.0, 0.0);
 
@@ -224,7 +230,8 @@ void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
 	////////////////////////
 	{
 		// load robot
-		std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
+		//std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
+		std::string fnameRB = "../data/rbs/yumi/yumi.rbs";
 
 		auto loadRobot = [&] (std::string const & fname)
 		{
@@ -404,6 +411,9 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 	menu->addVariable("Highlight selected", highlightSelected);
 	menu->addVariable("Show MOI", showMOI);
 	menu->addVariable("Show CDP", showCDPs);
+	// 
+	menu->addGroup("FEM Visualization");
+	menu->addVariable("Show surface", showFEMSurface);
 
 
 
@@ -466,6 +476,7 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 	}
 
 	// add combo box for selected mount/handle
+	
 	menu->addGroup("Mounts");
 	{
 		nanogui::Widget *selection = new nanogui::Widget(menu->window());
@@ -474,43 +485,46 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 			nanogui::Alignment::Middle, 0, 4));
 		comboBoxMountSelection = new nanogui::ComboBox(selection, { "no mounts available"});
 		comboBoxMountSelection->setCallback([this](int idx){selectedMountID = idx;
-		                                                    std::cout << "selected mount: " << selectedMountID << std::endl;
+															std::cout << "selected mount: " << selectedMountID << std::endl;
 															});
 	}
-	{
-		nanogui::Widget *mountStatus = new nanogui::Widget(menu->window());
-		menu->addWidget("", mountStatus);
-		mountStatus->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
-			nanogui::Alignment::Middle, 0, 4));
-		nanogui::Button *b;
-		b = new nanogui::Button(mountStatus, "toogle xi");
-		b->setCallback([this](){femMesh->mounts[selectedMountID]->parameterOptimization ^= true;
-		                        updateMountSelectionBox();
-								});
-		b = new nanogui::Button(mountStatus, "toogle active");
-		b->setCallback([this](){femMesh->mounts[selectedMountID]->active ^= true;
-								updateMountSelectionBox();
-								});
-	}
-	{
-		nanogui::Widget *mountAdd = new nanogui::Widget(menu->window());
-		menu->addWidget("", mountAdd);
-		mountAdd->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
-			nanogui::Alignment::Middle, 0, 4));
-		nanogui::Button *b;
-		b = new nanogui::Button(mountAdd, "add mount");
-		b->setCallback([this](){addRotationMount();});
-		b = new nanogui::Button(mountAdd, "remove mount");
-		b->setCallback([this](){removeSelectedMount();});
+		if(false) {
+		{
+			nanogui::Widget *mountStatus = new nanogui::Widget(menu->window());
+			menu->addWidget("", mountStatus);
+			mountStatus->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+				nanogui::Alignment::Middle, 0, 4));
+			nanogui::Button *b;
+			b = new nanogui::Button(mountStatus, "toogle xi");
+			b->setCallback([this](){femMesh->mounts[selectedMountID]->parameterOptimization ^= true;
+									updateMountSelectionBox();
+									});
+			b = new nanogui::Button(mountStatus, "toogle active");
+			b->setCallback([this](){femMesh->mounts[selectedMountID]->active ^= true;
+									updateMountSelectionBox();
+									});
+		}
+		{
+			nanogui::Widget *mountAdd = new nanogui::Widget(menu->window());
+			menu->addWidget("", mountAdd);
+			mountAdd->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+				nanogui::Alignment::Middle, 0, 4));
+			nanogui::Button *b;
+			b = new nanogui::Button(mountAdd, "add mount");
+			b->setCallback([this](){addRotationMount();});
+			b = new nanogui::Button(mountAdd, "remove mount");
+			b->setCallback([this](){removeSelectedMount();});
+		}
+
+		menu->addGroup("Tools");
+		menu->addVariable("Add/remove nodes", toolMode, true) -> setItems({"pick single node", "brush"});
+	
 	}
 
-	menu->addGroup("Tools");
-	menu->addVariable("Add/remove nodes", toolMode, true) -> setItems({"pick single node", "brush"});
-	
 	/////////////////////
 	// second window
 	////////////////////
-	menu->addWindow(Eigen::Vector2i(280, 0), "");
+	menu->addWindow(Eigen::Vector2i(330, 0), "");
 
 	// synchronize physical robot
 	nanogui::Widget *physicalRobotControlTools = new nanogui::Widget(menu->window());
@@ -1155,7 +1169,7 @@ void BenderApp3D::drawScene() {
 	glDisable(GL_LIGHTING);
 	//glColor3d(0.8,0.8,1);
 	glColor3d(1,1,1);
-	femMesh->drawSimulationMesh();
+	femMesh->drawSimulationMesh(showFEMSurface);
 
 	// draw origin
 	P3D p0(0.0, 0.0, 0.0);
@@ -1254,19 +1268,8 @@ void BenderApp3D::drawScene() {
 	if(hoveredNodeID > 0) {
 		// draw node
 		glColor3d(1, 0.5, 0.0);
-		drawSphere(femMesh->nodes[hoveredNodeID]->getWorldPosition(), 0.00151);
+		drawSphere(femMesh->nodes[hoveredNodeID]->getWorldPosition(), 0.002);
 	}
-
-	//// draw hovered-over node-objective
-	//if(hoveredObjectiveID > 0) {
-	//	NodePositionObjective * obj = dynamic_cast<NodePositionObjective *>(femMesh->objectives[hoveredObjectiveID]);
-	//	if(obj) {
-	//		// draw node
-	//		glColor3d(1, 0.5, 0.2);
-	//		drawSphere(obj->targetPosition, 0.0015);
-	//	}
-	//}
-
 	
 	rbEngine->drawRBs(flags);
 

@@ -47,25 +47,25 @@ void NodePositionObjective::draw(dVector const & x, HighlightLevel level)
 
 	double r = 0.0;
 	if(level ==  HighlightLevel::NONE) {
-		r = 0.001;
+		r = 0.002;
 		glColor3d(1.0, 0.5, 0);
 	}
 	if(level ==  HighlightLevel::HOVERED) {
-		r = 0.001;
+		r = 0.002;
 		glColor3d(1.0, 0.1, 0);
 	}
 	if(level ==  HighlightLevel::SELECTED) {
-		r = 0.0015;
+		r = 0.0025;
 		glColor3d(1.0, 0.1, 0);
 	}
 
-	drawArrow(pi, pj, r);
+	drawArrow(pi, pj, r*0.75);
 
 	// sphere on base
-	drawSphere(pi, r*2);
+	drawSphere(pi, r);
 	// sphere at target
 	if(level == HighlightLevel::HOVERED || level == HighlightLevel::SELECTED) {
-		drawSphere(pj, r*2);
+		drawSphere(pj, r);
 		
 	}
 

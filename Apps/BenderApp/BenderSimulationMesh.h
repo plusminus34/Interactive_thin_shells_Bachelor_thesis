@@ -67,7 +67,7 @@ public:
 	// diagnostics
 	double computeTargetPositionError();
 
-	void drawSimulationMesh();
+	void drawSimulationMesh(bool drawSurface);
 
 };
 

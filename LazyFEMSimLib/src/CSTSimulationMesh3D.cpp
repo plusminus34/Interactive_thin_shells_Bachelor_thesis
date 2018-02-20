@@ -178,8 +178,8 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 	b.coarsen = 1;
 	//b.refine = 1;
 	b.quality = 1;
-	//b.minratio = 3.0;
-	//b.mindihedral = 0.0;
+	b.minratio = 1.5;
+	b.mindihedral = 0.0;
 	//b.facesout = 1;
 
 	if(maxTetVolume > 0.0) {

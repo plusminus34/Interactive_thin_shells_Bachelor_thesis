@@ -101,6 +101,9 @@ public:
 	bool highlightSelected = true;
 	bool showMOI = false;
 	bool showCDPs = false;
+
+	// visualize FEM mesh
+	bool showFEMSurface = true;
 	
 
 	// Interaction
