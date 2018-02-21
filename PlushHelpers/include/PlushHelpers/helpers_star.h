@@ -10,8 +10,11 @@
 #include <stack>
 #include <memory>
 #include <numeric> 
+#include <string>
+#include <map>
 
 #include <MathLib/MathLib.h>
+#include <MathLib/Plane.h>
 #include <MathLib/P3D.h>
 #include <MathLib/Ray.h>
 #include <MathLib/Quaternion.h>
