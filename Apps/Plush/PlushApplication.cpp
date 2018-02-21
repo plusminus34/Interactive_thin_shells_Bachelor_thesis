@@ -13,15 +13,15 @@ PlushApplication::PlushApplication() {
 	// --
 	push_back_handler(new P2DDragger({ &test_P3D }));
 	// --
-	menuScreen->removeChild(0);
-	mainMenu->addWindow(Eigen::Vector2i(0, 0), "Main Menu");
-	mainMenu->addGroup("basic");
-	mainMenu->addVariable("test_int", test_int);
-	mainMenu->addVariable("test_double", test_double);
-	mainMenu->addVariable("RESET_CAMERA", RESET_CAMERA);
-	mainMenu->addVariable("PRINT_CAMERA", PRINT_CAMERA);
-	mainMenu->addVariable("STEP", STEP);
-	mainMenu->addVariable("RECORD", RECORD_VIDEO);
+	// menuScreen->removeChild(0);
+	// mainMenu->addWindow(Eigen::Vector2i(0, 0), "Main Menu");
+	// mainMenu->addGroup("basic");
+	// mainMenu->addVariable("test_int", test_int);
+	// mainMenu->addVariable("test_double", test_double);
+	// mainMenu->addVariable("RESET_CAMERA", RESET_CAMERA);
+	// mainMenu->addVariable("PRINT_CAMERA", PRINT_CAMERA);
+	// mainMenu->addVariable("STEP", STEP);
+	// mainMenu->addVariable("RECORD", RECORD_VIDEO);
 
 	glEnable(GL_POINT_SMOOTH);
 	glEnable(GL_LINE_SMOOTH);

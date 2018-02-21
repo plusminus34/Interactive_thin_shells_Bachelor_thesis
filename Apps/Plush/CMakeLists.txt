@@ -5,6 +5,7 @@ project(Plush)
 file(GLOB sources
 		${CMAKE_CURRENT_SOURCE_DIR}/*.h
 		${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/main.txt
 	)
 add_executable(${PROJECT_NAME} ${sources})
 target_link_libraries(${PROJECT_NAME}

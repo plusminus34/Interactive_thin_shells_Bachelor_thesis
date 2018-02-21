@@ -82,6 +82,12 @@ const auto matrix_equality_check = [] (const MatrixNxM &fd, const MatrixNxM &ana
 
 	return ret;
 };
+ 
+const auto cout_path = []() {
+	// https://stackoverflow.com/questions/143174/how-do-i-get-the-directory-that-a-program-is-running-from
+	char result[MAX_PATH];
+	cout << std::string(result, GetModuleFileName(NULL, result, MAX_PATH)) << endl;
+}; 
 
 ////////////////////////////////////////////////////////////////////////////////
 // internal helpers_error handling /////////////////////////////////////////////////////

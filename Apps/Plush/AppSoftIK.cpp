@@ -8,7 +8,8 @@ AppSoftIK::AppSoftIK() {
 	this->showReflections = false;
 	this->showGroundPlane = false;
 
-	string TEST_CASE = "ik"; 
+	// string TEST_CASE = "ik";
+	string TEST_CASE = "3ball";
 
 	// -- // mesh
 	mesh = new CSTSimulationMesh2D();
@@ -18,10 +19,16 @@ AppSoftIK::AppSoftIK() {
 	mesh->applyYoungsModulusAndPoissonsRatio(3e4, .25);
 	mesh->addGravityForces(V3D(0., -10.));
 	// mesh->add_contacts_to_boundary_nodes();
-	mesh->pinToFloor(); 
-	mesh->rig_boundary_simplices();
-	// --
-	mesh->relax_tendons(); mesh->xvPair_INTO_Mesh(mesh->solve_statics());
+
+	if (TEST_CASE == "ik") {
+		mesh->pinToFloor();
+		mesh->rig_boundary_simplices();
+		// --
+		mesh->relax_tendons();
+		mesh->xvPair_INTO_Mesh(mesh->solve_statics());
+	} else if (TEST_CASE == "3ball") {
+		mesh->add_contacts_to_boundary_nodes();
+	}
 
 	// -- // ik
 	ik = new SoftIKSolver(mesh);
@@ -36,27 +43,19 @@ AppSoftIK::AppSoftIK() {
 	// inspector = new Inspector(mesh);
 	// push_back_handler(inspector);
  
-	/*
-	TwAddVarRW(mainMenuBar, "SOLVE_IK", TW_TYPE_BOOLCPP, &SOLVE_IK, "key=I");
-	TwAddVarRW(mainMenuBar, "SOLVE_DYNAMICS", TW_TYPE_BOOLCPP, &SOLVE_DYNAMICS, "key=S");
-	TwAddSeparator(mainMenuBar, "ik:general", "");
-	TwAddVarRW(mainMenuBar, "mode", TW_TYPE_INT32, &ik->mode, "key=TAB min=0 max=1");
-	TwAddVarRW(mainMenuBar, "NUM_ITERS_PER_STEP"FREESTYLE TW_TYPE_INT32, &ik->NUM_ITERS_PER_STEP, "");
-	TwAddVarRW(mainMenuBar, "LINEAR_APPROX", TW_TYPE_BOOLCPP, &ik->LINEAR_APPROX, "");
-	TwAddVarRW(mainMenuBar, "PROJECT", TW_TYPE_BOOLCPP, &ik->PROJECT, "");
-	TwAddVarRW(mainMenuBar, "UNILATERAL_TENDONS", TW_TYPE_BOOLCPP, &mesh->UNILATERAL_TENDONS, "");
-	TwAddVarRW(mainMenuBar, "HIGH_PRECISION_NEWTON", TW_TYPE_BOOLCPP, &mesh->HIGH_PRECISION_NEWTON, "");
-	TwAddSeparator(mainMenuBar, "ik:reg", "");
-	TwAddVarRW(mainMenuBar, "?_alphac_   ", TW_TYPE_BOOLCPP, &ik->REGULARIZE_alphac, "");
-	TwAddVarRW(mainMenuBar, "c_alphac_   ", TW_TYPE_DOUBLE,  &ik->c_alphac_, "");
-	*/
-	mainMenu->addGroup("AppSoftIK");
+	mainMenu->addGroup("app");
+	mainMenu->addVariable("SOLVE_IK", SOLVE_IK);
 	mainMenu->addVariable("SOLVE_DYNAMICS", SOLVE_DYNAMICS);
+	mainMenu->addVariable("UNILATERAL_TENDONS", mesh->UNILATERAL_TENDONS);
+	mainMenu->addGroup("ik");
 	mainMenu->addVariable("SPEC_COM", ik->SPEC_COM);
 	mainMenu->addVariable("SPEC_FREESTYLE", ik->SPEC_FREESTYLE);
+	mainMenu->addVariable("NUM_ITERS_PER_STEP", ik->NUM_ITERS_PER_STEP);
+	mainMenu->addVariable("LINEAR_APPROX", ik->LINEAR_APPROX);
+	mainMenu->addVariable("PROJECT", ik->PROJECT);
+	mainMenu->addVariable("HIGH_PRECISION_NEWTON", mesh->HIGH_PRECISION_NEWTON);
 	mainMenu->addVariable("c_alphac_", ik->c_alphac_);
 	menuScreen->performLayout(); 
-
 }
 
 void AppSoftIK::processToggles() {

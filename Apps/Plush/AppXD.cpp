@@ -20,7 +20,7 @@ AppXD::AppXD() {
 	tet_mesh->applyYoungsModulusAndPoissonsRatio(1e4, .25);
 	tet_mesh->pinToCeiling(); 
 
-	mainMenu->addGroup("AppXD");
+	mainMenu->addGroup("app");
 	mainMenu->addVariable("Draw F2D", tri_mesh->DRAW_NODAL_FORCES);
 	mainMenu->addVariable("Draw F3D", tet_mesh->DRAW_NODAL_FORCES);
 	mainMenu->addVariable("Transparent 3D", tet_mesh->DRAW_BOUNDARY_TRANSPARENT);
