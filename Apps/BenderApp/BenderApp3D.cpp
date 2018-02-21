@@ -32,7 +32,10 @@
 #include "ParameterConstraintObjective.h"
 #include "RBSphereCollision.h"
 
+#include "BenderAppGlobals.h"
+
 #include "BenderApp3D.h"
+
 
 #define EDIT_BOUNDARY_CONDITIONS
 
@@ -86,17 +89,27 @@ BenderApp3D::BenderApp3D()
 		config.femMounts.push_back(FemMount(P3D(+0.15, 0.0, 0.0), V3D(-1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
 
 		// grippers
-		P3D origin_r = (P3D(0.634457, 0.093577, 0.335758) + P3D(0.656349, 0.0844, 0.348425)) * 0.5;
-		V3D dir1_r = (P3D(0.627,0.084,0.344) - P3D(0.619,0.076,0.351));
-		V3D dir2_r = -(P3D(0.656349, 0.0844, 0.348425) - P3D(0.634457, 0.093577, 0.335758));
-		config.grippers.push_back(Gripper(origin_r, dir1_r, dir2_r, "link_7_r"));
-		config.grippers.back().addContactRegion(P3D(-0.001, -1.0, -1.0), P3D(0.001, 1.0, 1.0));
+		//P3D origin_r = (P3D(0.634457, 0.093577, 0.335758) + P3D(0.656349, 0.0844, 0.348425)) * 0.5;
+		//V3D dir1_r = (P3D(0.627,0.084,0.344) - P3D(0.619,0.076,0.351));
+		//V3D dir2_r = -(P3D(0.656349, 0.0844, 0.348425) - P3D(0.634457, 0.093577, 0.335758));
+		//config.grippers.push_back(Gripper(origin_r, dir1_r, dir2_r, "link_7_r"));
+		//config.grippers.back().addContactRegion(P3D(-0.001, -1.0, -1.0), P3D(0.001, 1.0, 1.0));
 
-		P3D origin_l = (P3D(0.634453, -0.093602, 0.335783) + P3D(0.656353, -0.084374, 0.3484)) * 0.5;
-		V3D dir1_l = (P3D(0.647,-0.075,0.356) - P3D(0.639,-0.067,0.363));
-		V3D dir2_l = -(P3D(0.656353, -0.084374, 0.3484) - P3D(0.634453, -0.093602, 0.335783));
-		config.grippers.push_back(Gripper(origin_l, dir1_l, dir2_l, "link_7_l"));
-		config.grippers.back().addContactRegion(P3D(-0.001, -1.0, -1.0), P3D(0.001, 1.0, 1.0));
+		//P3D origin_l = (P3D(0.634453, -0.093602, 0.335783) + P3D(0.656353, -0.084374, 0.3484)) * 0.5;
+		//V3D dir1_l = (P3D(0.647,-0.075,0.356) - P3D(0.639,-0.067,0.363));
+		//V3D dir2_l = -(P3D(0.656353, -0.084374, 0.3484) - P3D(0.634453, -0.093602, 0.335783));
+		//config.grippers.push_back(Gripper(origin_l, dir1_l, dir2_l, "link_7_l"));
+		//config.grippers.back().addContactRegion(P3D(-0.001, -1.0, -1.0), P3D(0.001, 1.0, 1.0));
+
+		config.grippers.push_back(Gripper());
+		config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::PLANE_ABB_FINGERTIPS_PLUS_5, 0.03);
+		config.grippers.push_back(Gripper());
+		config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::PLANE_ABB_FINGERTIPS_PLUS_5, 0.03);
+
+		//config.grippers.push_back(Gripper());
+		//config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::WAFFLE_40x40, 0.03);
+		//config.grippers.push_back(Gripper());
+		//config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::WAFFLE_40x40, 0.03);
 
 	}
 
@@ -1234,7 +1247,7 @@ void BenderApp3D::drawScene() {
 		for(int i = 0; i < (int)femMesh->pinnedNodeElements.size(); ++i) {
 			MountedPointSpring<2> * mp = static_cast<MountedPointSpring<2> *>(femMesh->pinnedNodeElements[i]);
 
-			double size = 0.001;
+			double size = 0.0015;
 			P3D color(0.3, 0.3, 0.3);
 			P3D white(1.0, 1.0, 1.0);
 			P3D red(1.0, 1.0, 1.0);
@@ -1244,8 +1257,8 @@ void BenderApp3D::drawScene() {
 			if(!mp->mount->active) {
 				color = color*0.5 + red*0.5;
 			}
-			if(selectedMountID >= 0 && mp->mount == femMesh->mounts[selectedMountID]) {
-				size *= 1.7;
+			if(selectedMountID >= 0 && interactionObject == MOUNTS && mp->mount == femMesh->mounts[selectedMountID]) {
+				size *= 1.5;
 			}
 
 			mp->draw(femMesh->x, size, color(0), color(1), color(2));
@@ -1256,11 +1269,12 @@ void BenderApp3D::drawScene() {
 
 	// draw target trajectory
 	if(targetTrajectory_input.getKnotCount() > 0) {
-		targetTrajectory_input.draw(V3D(0.3, 0.3, 0.3), -2, V3D(0, 0.8, 0), 0.0025);
+		targetTrajectory_input.draw(V3D(0.3, 0.3, 0.3), -2, V3D(0, 0.8, 0), 0.0025*SYMBOL_SCALE);
 	}
 	
-	glEnable(GL_LIGHTING);
+	
 	// draw objectives
+	glEnable(GL_LIGHTING);
 	for(int i = 0; i < (int)femMesh->objectives.size(); ++i) {
 		MeshObjective * o = femMesh->objectives[i];
 
@@ -1302,7 +1316,7 @@ void BenderApp3D::drawScene() {
 	if(hoveredNodeID > 0) {
 		// draw node
 		glColor3d(1, 0.5, 0.0);
-		drawSphere(femMesh->nodes[hoveredNodeID]->getWorldPosition(), 0.002);
+		drawSphere(femMesh->nodes[hoveredNodeID]->getWorldPosition(), 0.002*SYMBOL_SCALE);
 	}
 	
 	rbEngine->drawRBs(flags);
@@ -1382,6 +1396,108 @@ void Gripper::addContactRegion(P3D pt1, P3D pt2)
 {
 	contact_regions.push_back(AxisAlignedBoundingBox(pt1, pt2));
 }
+
+
+
+
+
+
+void Gripper::makeYuMiGripper(P3D mountOrigin_baseplate, Side side, FingerType type, double gripper_width)
+{
+
+
+	P3D origin_baseplate;	// with respect to the surfacemesh of the gripper model
+	V3D dir_1, dir_2;
+
+	if(side == Side::RIGHT) {
+		rigidBody_name = "link_7_r";
+		origin_baseplate = (P3D(0.62417, 0.060613, 0.383752) + P3D(0.607064, 0.052777, 0.356598)) * 0.5;
+		dir_1 = (P3D(0.627,0.084,0.344) - P3D(0.619,0.076,0.351));
+		dir_2 = (P3D(0.656349, 0.0844, 0.348425) - P3D(0.634457, 0.093577, 0.335758));
+		
+	}
+	else if(side == Side::LEFT) {
+		rigidBody_name = "link_7_l";
+		origin_baseplate = (P3D(0.604639, -0.068822, 0.372476) + P3D(0.626594, -0.044569, 0.367874)) * 0.5;
+		dir_1 = (P3D(0.647,-0.075,0.356) - P3D(0.639,-0.067,0.363));
+		dir_2 = (P3D(0.656353, -0.084374, 0.3484) - P3D(0.634453, -0.093602, 0.335783));
+	}
+	else {
+		std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << std::endl;
+		exit(1);
+	}
+
+	dir_1.toUnit();
+	dir_2.toUnit();
+	V3D dir_3 = dir_1.cross(dir_2);
+	mount_orientation_surfacemesh.col(0) = dir_1;
+	mount_orientation_surfacemesh.col(1) = dir_2;
+	mount_orientation_surfacemesh.col(2) = dir_3;
+
+	mount_origin_surfacemesh = origin_baseplate + mount_orientation_surfacemesh.inverse().transpose() * mountOrigin_baseplate; 
+
+	setContactRegions(side, type, gripper_width, mountOrigin_baseplate);
+
+}
+
+
+void Gripper::makeYuMiGripper_default_mounting(Side side, FingerType type, double gripper_width)
+{
+	P3D mountOrigin_baseplate;
+
+	if(type == FINGER_ABB_STANDARD) {
+		std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << std::endl;
+		exit(1);
+	}
+	else if(type == PLANE_ABB_FINGERTIPS_PLUS_5) {
+		mountOrigin_baseplate = P3D(0.052017 + 0.005, 0.0, 0.0);
+	}
+	else if(type == WAFFLE_40x40) {
+		mountOrigin_baseplate = P3D(0.0175, 0.0, 0.0);
+	}
+	else {
+		std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << std::endl;
+		exit(1);
+	}
+
+	makeYuMiGripper(mountOrigin_baseplate, side, type, gripper_width);
+}
+
+
+void Gripper::setContactRegions(Side side, FingerType type, double gripper_width, P3D mountOrigin_baseplate)
+{
+
+
+	if(type == FINGER_ABB_STANDARD) {
+		std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << std::endl;
+		exit(1);
+	}
+	else if(type == PLANE_ABB_FINGERTIPS_PLUS_5) {
+		double dx = 0.052017 + 0.005;
+		P3D pt1(dx-0.001, -1.0, -1.0);
+		P3D pt2(dx+0.001, 1.0, 1.0);
+		addContactRegion(pt1-mountOrigin_baseplate, pt2-mountOrigin_baseplate);
+	}
+	else if(type == WAFFLE_40x40) {
+		double dx = 0.0175;
+		double dy = gripper_width/2.0;
+		P3D pt1_1(dx     , dy-0.001, -0.0201);
+		P3D pt2_1(dx+0.04, dy+0.001, +0.0201);
+		P3D pt1_2(dx     , -(dy-0.001), -0.0201);
+		P3D pt2_2(dx+0.04, -(dy+0.001), +0.0201);
+		addContactRegion(pt1_1-mountOrigin_baseplate, pt2_1-mountOrigin_baseplate);
+		addContactRegion(pt1_2-mountOrigin_baseplate, pt2_2-mountOrigin_baseplate);
+	}
+	else {
+		std::cerr << "Error: " << __FILE__ << ":" << __LINE__ << std::endl;
+		exit(1);
+	}
+
+}
+
+
+
+
 
 
 FemMount::FemMount(P3D origin, V3D dir_1, V3D dir_2)

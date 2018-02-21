@@ -165,7 +165,7 @@ if(is_bsfg) {std::cout << "    line search succeeded (alpa = " << alpha << ")" <
 		}
 
 		if((lineSearchIterationLimit > 0) && (++j >= lineSearchIterationLimit)) {
-			alpha /= 2.0;
+			alpha /= 4.0;
 if(is_bsfg) {std::cout << "    break search: hit IT limit";}
 			break;
 		}

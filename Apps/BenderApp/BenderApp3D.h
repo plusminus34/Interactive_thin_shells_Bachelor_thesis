@@ -244,8 +244,16 @@ public:
 
 	std::vector<AxisAlignedBoundingBox> contact_regions;	// relative to the mount_origin & mount_orientation
 
+	enum Side {RIGHT, LEFT};
+	enum FingerType {FINGER_ABB_STANDARD, PLANE_ABB_FINGERTIPS_PLUS_5, WAFFLE_40x40};
+
 public:
+	Gripper() {};
 	Gripper(P3D origin, V3D dir_1, V3D dir_2, std::string const & rigidBody_name);
+
+	void makeYuMiGripper(P3D mountOrigin_baseplate, Side side, FingerType type, double gripper_width);
+	void makeYuMiGripper_default_mounting(Side side, FingerType type, double gripper_width);
+	void setContactRegions(Side side, FingerType type, double gripper_width, P3D mountOrigin_baseplate);
 
 	void addContactRegion(P3D pt1, P3D pt2);
 

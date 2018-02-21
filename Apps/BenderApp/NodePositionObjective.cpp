@@ -2,7 +2,9 @@
 #include <cmath>
 
 #include <GUILib/GLUtils.h>
-#include "MathLib/V3D.h"
+#include <MathLib/V3D.h>
+
+#include "BenderAppGlobals.h"
 
 #include "NodePositionObjective.h"
 
@@ -58,6 +60,7 @@ void NodePositionObjective::draw(dVector const & x, HighlightLevel level)
 		r = 0.0025;
 		glColor3d(1.0, 0.1, 0);
 	}
+	r *= SYMBOL_SCALE;
 
 	drawArrow(pi, pj, r*0.75);
 

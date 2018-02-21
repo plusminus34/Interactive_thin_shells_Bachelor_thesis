@@ -3,6 +3,8 @@
 
 #include <GUILib/GLUtils.h>
 
+#include "BenderAppGlobals.h"
+
 #include "MatchScaledTrajObjective.h"
 
 
@@ -174,12 +176,14 @@ void MatchScaledTrajObjective::draw(dVector const & x, HighlightLevel level) {
 		}
 	}
 
+	double line_width = 2.0 * SYMBOL_SCALE;
+
 	// draw target trajectory
-	targetTrajectory.draw(V3D(0.0, 0.0, 1.0), 2, V3D(0, 0.8, 0), -0.003);
+	targetTrajectory.draw(V3D(0.0, 0.0, 1.0), line_width, V3D(0, 0.8, 0), -0.003);
 
 	// draw matched fiber
 	glColor3d(0.0, 0.5, 1.0);
-	glLineWidth((GLfloat)2.0);
+	glLineWidth((GLfloat)line_width);
 	glBegin(GL_LINE_STRIP);
 	for(Node * node : matchedFiber) {
 		P3D pt = node->getCoordinates(x);
