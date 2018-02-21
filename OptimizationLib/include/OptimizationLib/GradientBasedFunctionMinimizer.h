@@ -23,7 +23,9 @@ public:
 	double lineSearchStartValue = 1.0;
 	double lineSearchEndValue = 3.0e-5;
 	bool adaptiveLineSearch = false;
-	bool lineSearchValuesAbsolute = false;
+	int lineSearchIterationLimit = -1;
+
+	//bool lineSearchValuesAbsolute = false;
 
 	double solveResidual = 1e-5;
 	int maxIterations = 100;

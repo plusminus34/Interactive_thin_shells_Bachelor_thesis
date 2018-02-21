@@ -62,18 +62,18 @@ void InverseDeformationObjectiveFunction<NDim>::addGradientTo(dVector& grad, con
 
 	dVector diff_grad = grad - grad_no_reg;
 
-std::cout << "grad without reg: ";
-for(int i = 0; i < grad.size(); ++i) {std::cout << grad[i] << " ";};
-std::cout << std::endl;
-
-
-std::cout << "grad with reg:" << std::endl;
-for(int i = 0; i < grad.size(); ++i) {std::cout << grad[i] << " ";};
-std::cout << std::endl;
-
-std::cout << "grad from reg:" << std::endl;
-for(int i = 0; i < diff_grad.size(); ++i) {std::cout << diff_grad[i] << " ";};
-std::cout << std::endl;
+//std::cout << "grad without reg: ";
+//for(int i = 0; i < grad.size(); ++i) {std::cout << grad[i] << " ";};
+//std::cout << std::endl;
+//
+//
+//std::cout << "grad with reg:" << std::endl;
+//for(int i = 0; i < grad.size(); ++i) {std::cout << grad[i] << " ";};
+//std::cout << std::endl;
+//
+//std::cout << "grad from reg:" << std::endl;
+//for(int i = 0; i < diff_grad.size(); ++i) {std::cout << diff_grad[i] << " ";};
+//std::cout << std::endl;
 
 
 }

@@ -151,6 +151,21 @@ BenderApp3D::BenderApp3D()
 	menuScreen->performLayout();
 	updateMountSelectionBox();
 
+
+	////////////////////////
+	// process defaults
+	////////////////////////
+	inverseDeformationSolver->minimizer->lineSearchStartValue = 0.2;
+
+	inverseDeformationSolver->minimizer->lineSearchEndValue = 3e-5;
+	inverseDeformationSolver->minimizer->adaptiveLineSearch = true;
+	inverseDeformationSolver->minimizer->lineSearchIterationLimit = 5;
+
+	inverseDeformationSolver->femMesh->meshPositionRegularizer.r = 0.0;
+	inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.001;
+	inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.0001;
+	inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r = 0.0;
+
 }
 
 
@@ -230,8 +245,8 @@ void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
 	////////////////////////
 	{
 		// load robot
-		//std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
-		std::string fnameRB = "../data/rbs/yumi/yumi.rbs";
+		std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
+		//std::string fnameRB = "../data/rbs/yumi/yumi.rbs";
 
 		auto loadRobot = [&] (std::string const & fname)
 		{
@@ -445,7 +460,8 @@ void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 		//menu->addVariable("max linesearch iter", maxLineSearchIterations);
 		menu->addVariable("line search end val", inverseDeformationSolver->minimizer->lineSearchEndValue);
 		menu->addVariable("adaptive line search", inverseDeformationSolver->minimizer->adaptiveLineSearch);
-		menu->addVariable("abs limit line search", inverseDeformationSolver->minimizer->lineSearchValuesAbsolute);
+		menu->addVariable("line search it limit", inverseDeformationSolver->minimizer->lineSearchIterationLimit);
+		//menu->addVariable("abs limit line search", inverseDeformationSolver->minimizer->lineSearchValuesAbsolute);
 
 		menu->addVariable("regularizer FEM Position", inverseDeformationSolver->femMesh->meshPositionRegularizer.r);
 		menu->addVariable("regularizer FEM Energy", inverseDeformationSolver->femMesh->meshEnergyRegularizer.r);
@@ -1151,10 +1167,10 @@ void BenderApp3D::process() {
 
 	// output diff begin/end of center line
 	if(matchedFiber.size() > 1) {
-		V3D delta_centerline = matchedFiber.back()->getWorldPosition() - matchedFiber.front()->getWorldPosition();
-		std::cout << "diff centerline: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
-		delta_centerline = matchedFiber[matchedFiber.size()/2]->getWorldPosition() - matchedFiber.front()->getWorldPosition();
-		std::cout << "diff centerline_half: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
+		//V3D delta_centerline = matchedFiber.back()->getWorldPosition() - matchedFiber.front()->getWorldPosition();
+		//std::cout << "diff centerline: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
+		//delta_centerline = matchedFiber[matchedFiber.size()/2]->getWorldPosition() - matchedFiber.front()->getWorldPosition();
+		//std::cout << "diff centerline_half: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
 	}
 
 	
