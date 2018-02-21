@@ -8,3 +8,5 @@ data/FEM/2d/triMeshTMP.tri2d
 
 *.un~
 *.txt~
+*.h~
+*.cpp~

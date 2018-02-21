@@ -8,8 +8,8 @@ AppSoftIK::AppSoftIK() {
 	this->showReflections = false;
 	this->showGroundPlane = false;
 
-	// string TEST_CASE = "ik";
-	string TEST_CASE = "3ball";
+	string TEST_CASE = "ik";
+	// string TEST_CASE = "3ball";
 
 	// -- // mesh
 	mesh = new CSTSimulationMesh2D();

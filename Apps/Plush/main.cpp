@@ -6,6 +6,8 @@
 #include "AppSoftIK.h"
 #include "AppEditor2D.h"
 
+// TODO: PlushApplication sets current direction to your data folder.
+
 int main() {
 
 	const int APP_XD_ID          = 0;
