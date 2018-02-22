@@ -9,6 +9,7 @@
 #include "ParameterSet.h"
 
 class RBSphereCollisionObjective;
+class RBPointDistanceObjective;
 class IDCustomYuMiControlInterface;
 
 
@@ -33,6 +34,7 @@ public:
 class RobotParameters : public ParameterSet {
 	friend RobotMount;
 	friend RBSphereCollisionObjective;
+	friend RBPointDistanceObjective;
 	friend IDCustomYuMiControlInterface;
 
 protected:

@@ -229,6 +229,9 @@ public:
 	// Grippers
 	std::vector<Gripper> grippers;
 
+	// limits for distance between grippers (namely, the mount-point-origins of the grippers)
+	std::vector<std::tuple<int, int, double, double, double, double> > distanceLimitsGrippers;	// contains: pair i,j of grippers; lower limit; upper limit; stiffness; epsilon
+
 
 public:
 

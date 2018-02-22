@@ -1,4 +1,4 @@
-
+#pragma once
 
 //#include "RBSimLib/AbstractRBEngine.h"
 #include <OptimizationLib/ObjectiveFunction.h>

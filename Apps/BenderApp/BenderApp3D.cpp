@@ -31,6 +31,7 @@
 #include "MatchScaledTrajObjective.h"
 #include "ParameterConstraintObjective.h"
 #include "RBSphereCollision.h"
+#include "RBPointDistanceObjective.h"
 
 #include "BenderAppGlobals.h"
 
@@ -74,9 +75,10 @@ BenderApp3D::BenderApp3D()
 		config.gravity = V3D(0.0, -9.8, 0.0);
 		config.fem_model_filename = "../data/3dModels/square_rod_0p03x0p3.ply";
 		config.fem_offset = P3D(0.0, 0.35, 0.50);
+		config.fem_scale = 1.0;
 
 		config.massDensity = 43.63;
-		config.youngsModulus = 3e3;//2.135e4;
+		config.youngsModulus = 4e3;//2.135e4;//3e3;;
 		config.poissonRatio = 0.376;
 
 		config.maxTetVolume = 1.35e-6;//1.0e-6;
@@ -95,6 +97,9 @@ BenderApp3D::BenderApp3D()
 		config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::PLANE_ABB_FINGERTIPS_PLUS_5, 0.03);
 		config.grippers.push_back(Gripper());
 		config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::PLANE_ABB_FINGERTIPS_PLUS_5, 0.03);
+
+		// limit distance between grippers
+		config.distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.1, 0.32, 1000.0, 0.005));
 	}
 
 	// twisted X
@@ -187,8 +192,8 @@ BenderApp3D::BenderApp3D()
 	inverseDeformationSolver->minimizer->lineSearchIterationLimit = 5;
 
 	inverseDeformationSolver->femMesh->meshPositionRegularizer.r = 0.0;
-	inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.0001;
-	inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.0001;
+	inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.001;
+	inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.001;
 	inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r = 0.0;
 
 
@@ -312,32 +317,7 @@ void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
 
 	}
 
-	/////////////////////////
-	// constraints for solver
-	////////////////////////
-	{
-		// create constraints for that parameter set (i.e. the joint angles)
-		if(config.use_joint_angle_constraints)
-		{
-			ParameterSet * jointAnglePars = inverseDeformationSolver->parameterSets.back();
-			int n = jointAnglePars->getNPar();
-			for(int i = 0; i < n; ++i) {
-				inverseDeformationSolver->objectiveFunction->parameterConstraints.
-					push_back(new ParameterConstraintObjective(jointAnglePars, i,
-															   true, true,
-															   1000, 0.0873,
-															   -2.0*PI, 2.0*PI));
-			}
-		}
 
-		// create Collision avoidance Objective
-		if(config.use_collision_avoidance) {
-			RBSphereCollisionObjective * rbsco = new RBSphereCollisionObjective(static_cast<RobotParameters*>(inverseDeformationSolver->parameterSets.back()),
-										   rbEngine->rbs,
-										   0.00, 10000.0, 0.002);
-			inverseDeformationSolver->objectiveFunction->parameterConstraints.push_back(rbsco);
-		}
-	}
 
 
 	///////////////////////
@@ -402,6 +382,56 @@ void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
 		}
 	}
 
+
+	/////////////////////////
+	// constraints for solver
+	////////////////////////
+	{
+		// create constraints for that parameter set (i.e. the joint angles)
+		if(config.use_joint_angle_constraints)
+		{
+			ParameterSet * jointAnglePars = inverseDeformationSolver->parameterSets.back();
+			int n = jointAnglePars->getNPar();
+			for(int i = 0; i < n; ++i) {
+				inverseDeformationSolver->objectiveFunction->parameterConstraints.
+					push_back(new ParameterConstraintObjective(jointAnglePars, i,
+															   true, true,
+															   1000, 0.0873,
+															   -2.0*PI, 2.0*PI));
+			}
+		}
+
+		// create Collision avoidance Objective
+		if(config.use_collision_avoidance) {
+			RBSphereCollisionObjective * rbsco = new RBSphereCollisionObjective(static_cast<RobotParameters*>(inverseDeformationSolver->parameterSets.back()),
+										   rbEngine->rbs,
+										   0.00, 1000.0, 0.002);
+			inverseDeformationSolver->objectiveFunction->collisionAvoidance.push_back(rbsco);
+		}
+
+		// create limits for gripper-distances
+		auto addGripperDistanceLimit = [&](int idGripper1, int idGripper2, double lower, double upper, double stiffness, double epsilon)
+		{
+			Gripper & g1 = config.grippers[idGripper1];
+			Gripper & g2 = config.grippers[idGripper2];
+			RigidBody * rb1 = rbEngine->getRBByName(g1.rigidBody_name.c_str());
+			RigidBody * rb2 = rbEngine->getRBByName(g2.rigidBody_name.c_str());
+			P3D pt1 = rb1->meshTransformations[0].transform(g1.mount_origin_surfacemesh);	// in local coordinates of the rigid body
+			P3D pt2 = rb2->meshTransformations[0].transform(g2.mount_origin_surfacemesh);
+
+			RBPointDistanceObjective * rbpdo = new RBPointDistanceObjective(static_cast<RobotParameters*>(inverseDeformationSolver->parameterSets.back()),
+																			rb1, rb2,
+																			pt1, pt2,
+																			lower, upper,
+																			stiffness, epsilon);
+			inverseDeformationSolver->objectiveFunction->collisionAvoidance.push_back(rbpdo);
+		};
+
+		for(auto & distLim : config.distanceLimitsGrippers) {
+			addGripperDistanceLimit(std::get<0>(distLim), std::get<1>(distLim), std::get<2>(distLim), std::get<3>(distLim), std::get<4>(distLim), std::get<5>(distLim));
+		}
+
+	}
 
 	///////////////////
 	// initialize with IK solver
@@ -1198,12 +1228,12 @@ void BenderApp3D::process() {
 	}
 
 	// output diff begin/end of center line
-	if(matchedFiber.size() > 1) {
-		//V3D delta_centerline = matchedFiber.back()->getWorldPosition() - matchedFiber.front()->getWorldPosition();
-		//std::cout << "diff centerline: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
-		//delta_centerline = matchedFiber[matchedFiber.size()/2]->getWorldPosition() - matchedFiber.front()->getWorldPosition();
-		//std::cout << "diff centerline_half: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
-	}
+	//if(matchedFiber.size() > 1) {
+	//	V3D delta_centerline = matchedFiber.back()->getWorldPosition() - matchedFiber.front()->getWorldPosition();
+	//	std::cout << "diff centerline: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
+	//	delta_centerline = matchedFiber[matchedFiber.size()/2]->getWorldPosition() - matchedFiber.front()->getWorldPosition();
+	//	std::cout << "diff centerline_half: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
+	//}
 
 	
 
