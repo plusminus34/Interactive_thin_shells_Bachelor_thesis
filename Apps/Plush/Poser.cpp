@@ -65,7 +65,7 @@ void Poser::move_node_target(Node *node, const P3D &target) {
 	selected_node->setTargetPosition(target);
 }
 
-bool Poser::mouse_move(double xPos, double yPos) {
+bool Poser::mouse_move_(double xPos, double yPos) {
 	if (LEFT_CLICKED) {
 		if (selected_node != nullptr) {
 			move_node_target(selected_node, get_xy0(xPos, yPos));
@@ -75,7 +75,7 @@ bool Poser::mouse_move(double xPos, double yPos) {
 	return false;
 }
 
-bool Poser::mouse_button(int button, int action, int mods, double xPos, double yPos) {
+bool Poser::mouse_button_(int button, int action, int mods, double xPos, double yPos) {
 	if (action == GLFW_PRESS) {
 		if (button == GLFW_MOUSE_BUTTON_LEFT) {
 			LEFT_CLICKED = true;

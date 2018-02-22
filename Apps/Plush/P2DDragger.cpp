@@ -33,7 +33,7 @@ int P2DDragger::get_closest_point_i(double xPos, double yPos) {
 	}
 }
 
-bool P2DDragger::mouse_move(double xPos, double yPos) {
+bool P2DDragger::mouse_move_(double xPos, double yPos) {
 	if (LEFT_CLICKED) {
 		if (selected_point_i != -1) {
 			*points[selected_point_i] = get_xy0(xPos, yPos);
@@ -43,7 +43,7 @@ bool P2DDragger::mouse_move(double xPos, double yPos) {
 	return false;
 }
 
-bool P2DDragger::mouse_button(int button, int action, int mods, double xPos, double yPos) {
+bool P2DDragger::mouse_button_(int button, int action, int mods, double xPos, double yPos) {
 	if (action == GLFW_PRESS) {
 		if (button == GLFW_MOUSE_BUTTON_LEFT) {
 			LEFT_CLICKED = true;
