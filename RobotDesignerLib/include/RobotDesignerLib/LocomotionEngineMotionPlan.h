@@ -201,8 +201,17 @@ public:
 
 	virtual ~LocomotionEngineMotionPlan(void);
 
-	void drawMotionPlan(double f, int animationCycle = 0, bool drawRobot = true, bool drawSkeleton = false, bool drawPlanDetails = false, bool drawContactForces = false, bool drawOrientation = false);
-	void drawMotionPlan2(double f, int animationCycle = 0, bool drawRobotPose = true, bool drawPlanDetails = false);
+	void drawMotionPlan(double f, 
+		bool drawRobotMesh = true, 
+		bool drawSkeleton = false, 
+		bool drawAxesOfRotation = false,
+		bool drawWheels = false,
+		bool drawContactForces = false,
+		bool drawSupportPolygon = false,
+		bool drawEndEffectorTrajectories = false,
+		bool drawCOMTrajectory = false,
+		bool drawOrientation = false
+		);
 
 	double motionPlanDuration = 0.8; //1.5
 	double swingFootHeight = 0.02;	

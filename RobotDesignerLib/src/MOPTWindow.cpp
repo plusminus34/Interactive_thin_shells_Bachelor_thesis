@@ -349,12 +349,38 @@ void MOPTWindow::loadFFPFromFile(const char* fName){
 
 void MOPTWindow::drawScene() {
 	glColor3d(1, 1, 1);
-	glDisable(GL_LIGHTING);
-	drawGround();
 	glEnable(GL_LIGHTING);
 
 	if (locomotionManager){
-		locomotionManager->drawMotionPlan(moptParams.phase, moptParams.gaitCycle, moptParams.drawRobotPose, moptParams.drawPlanDetails, moptParams.drawContactForces, moptParams.drawOrientation);
+		showGroundPlane = true;
+		showReflections = true;
+
+		//hacks...
+		{
+			moptParams.drawRobotMesh = moptParams.drawSkeleton = moptParams.drawAxesOfRotation = moptParams.drawWheels = moptParams.drawContactForces = moptParams.drawSupportPolygon = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawOrientation = false;
+			if (moptParams.gaitCycle == 0) {
+				moptParams.drawEndEffectorTrajectories = true;
+			}
+			else if (moptParams.gaitCycle == 1) {
+				moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = true;
+			}
+			else if (moptParams.gaitCycle == 2) {
+				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = true;
+			}
+			else if (moptParams.gaitCycle == 3) {
+				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawOrientation = true;
+			}
+			else if (moptParams.gaitCycle == 4) {
+				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawWheels = true;
+			}
+			else if (moptParams.gaitCycle == 5) {
+				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawWheels = moptParams.drawSkeleton = true;
+			}
+			else
+				moptParams.drawRobotMesh = true;
+		}
+
+		locomotionManager->motionPlan->drawMotionPlan(moptParams.phase, moptParams.drawRobotMesh, moptParams.drawSkeleton, moptParams.drawAxesOfRotation, moptParams.drawWheels, moptParams.drawContactForces, moptParams.drawSupportPolygon, moptParams.drawEndEffectorTrajectories, moptParams.drawCOMTrajectory, moptParams.drawOrientation);
 
 		int startIndex = locomotionManager->motionPlan->wrapAroundBoundaryIndex;
 		if (startIndex < 0)  startIndex = 0;
@@ -415,7 +441,7 @@ bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
 		}
 		if (key == GLFW_KEY_L && action == GLFW_PRESS)
 		{
-			int timeStep = round(moptParams.phase*nTimeSteps);
+			int timeStep = (int)round(moptParams.phase*nTimeSteps);
 			Logger::consolePrint("Picked body at time step %d", timeStep);
 			auto widget = std::make_shared<TranslateWidget>(AXIS_X | AXIS_Y | AXIS_Z);
 			COMWidgets.push_back(widget);
@@ -452,9 +478,9 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	robot->setState(&oldState);
 
 	DynamicArray<LocomotionEngine_EndEffectorTrajectory> &EET = locomotionManager->motionPlan->endEffectorTrajectories;
-	int i;
+
 	endEffectorInd = -1;
-	for (i = 0; i < EET.size(); i++) {
+	for (uint i = 0; i < EET.size(); i++) {
 		EET[i].isHighlighted = false;
 		P3D p;
 		P3D EEPos = EET[i].getEEPositionAt(moptParams.phase);
@@ -538,7 +564,7 @@ bool MOPTWindow::onMouseButtonEvent(int button, int action, int mods, double xPo
 	}
 	if (action == GLFW_PRESS && endEffectorInd > -1)
 	{
-		int timeStep = round(moptParams.phase*nTimeSteps);
+		int timeStep = (int)round(moptParams.phase*nTimeSteps);
 
 		for (const auto &EEPosObj: locomotionManager->motionPlan->EEPosObjectives)
 			if(EEPosObj->endEffectorInd == endEffectorInd && EEPosObj->sampleNum == timeStep)

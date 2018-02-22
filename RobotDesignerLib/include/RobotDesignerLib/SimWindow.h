@@ -19,7 +19,7 @@ public:
 
 	Robot* robot = NULL;
 
-	bool drawMeshes = true, drawMOIs = false, drawCDPs = false, drawSkeletonView = false, drawContactForces = true, drawOrientation = true;
+	bool drawMeshes = true, drawMOIs = false, drawCDPs = false, drawSkeletonView = true, drawContactForces = true, drawOrientation = true;
 
 	void addMenuItems();
 
@@ -53,7 +53,8 @@ public:
 	Robot* loadRobot(const char*);
 	void loadMotionPlan(LocomotionEngineMotionPlan* mp);
 
-	void advanceSimulation(double dt);
+	//returns true if the motion plan finished/motion phase was reset, false otherwise...
+	bool advanceSimulation(double dt);
 
 	void reset();
 

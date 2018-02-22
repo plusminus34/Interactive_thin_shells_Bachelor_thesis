@@ -10,12 +10,17 @@
 struct MOPTParams {
 	double phase = 0;
 
-	int gaitCycle = 0;
+	bool drawRobotMesh = true;
+	bool drawSkeleton = true;
+	bool drawAxesOfRotation = false;
+	bool drawWheels = true;
+	bool drawContactForces = false;
+	bool drawSupportPolygon = false;
+	bool drawEndEffectorTrajectories = true;
+	bool drawCOMTrajectory = true;
+	bool drawOrientation = false;
 
-	bool drawRobotPose = false;
-	bool drawPlanDetails = true;
-	bool drawContactForces = true;
-	bool drawOrientation = true;
+	int gaitCycle = 0;
 
 	double swingFootHeight = 0.02;
 	double desTravelDistX = 0;

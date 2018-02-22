@@ -1,0 +1,7 @@
+load ..\data\rbs\anymalWithWheels.rbs
+toSim
+
+load ..\data\robotDesigner\motions\AnymalWithWheels.p
+
+end
+

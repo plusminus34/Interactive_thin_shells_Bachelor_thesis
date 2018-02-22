@@ -12,9 +12,10 @@ void KinematicRobotController::draw() {
 
 }
 
-void KinematicRobotController::advanceInTime(double timeStep) {
+bool KinematicRobotController::advanceInTime(double timeStep) {
 //	vRel = V3D();
 //	qRel = Quaternion();
+	bool resetPhase = false;
 	V3D posOffset;
 	Quaternion qHeadingOffset = Quaternion();
 
@@ -28,6 +29,7 @@ void KinematicRobotController::advanceInTime(double timeStep) {
 
 	if (stridePhase > 1.0) {
 		stridePhase -= 1.0;
+		resetPhase = true;
 	}
 	else {
 		motionPlan->robotStateTrajectory.getRobotPoseAt(stridePhase, nextMPState);
@@ -38,6 +40,7 @@ void KinematicRobotController::advanceInTime(double timeStep) {
 	posInPlane += overallHeading * computeHeading(currentMPState.getOrientation(), V3D(0, 1, 0)).getInverse() * posOffset;
 	overallHeading = qHeadingOffset * overallHeading;
 
+	return resetPhase;
 }
 
 void KinematicRobotController::computeDesiredState() {
