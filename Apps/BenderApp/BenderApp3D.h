@@ -219,6 +219,7 @@ public:
 
 	std::string fem_model_filename;
 	P3D fem_offset;
+	double fem_scale = 1.0;
 	std::vector<FemMount> femMounts;
 	
 	int n_nodes_matched_fiber = -1;
@@ -253,6 +254,7 @@ public:
 
 	void makeYuMiGripper(P3D mountOrigin_baseplate, Side side, FingerType type, double gripper_width);
 	void makeYuMiGripper_default_mounting(Side side, FingerType type, double gripper_width);
+	void makeFloorGripper(P3D mountOrigin_baseplate);
 	void setContactRegions(Side side, FingerType type, double gripper_width, P3D mountOrigin_baseplate);
 
 	void addContactRegion(P3D pt1, P3D pt2);

@@ -255,9 +255,9 @@ void BenderSimulationMesh<NDim>::drawSimulationMesh(bool drawSurface)
 									V3D(1.0, 0.0, 0.0), -1);
 
 
-	//for(MeshObjective * obj : objectives) {
-	//	dynamic_cast<NodePositionObjective *>(obj)->draw(x);
-	//}
+	for(MeshObjective * obj : objectives) {
+		dynamic_cast<NodePositionObjective *>(obj)->draw(x);
+	}
 }
 
 

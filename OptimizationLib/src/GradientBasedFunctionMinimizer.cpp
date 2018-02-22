@@ -127,6 +127,8 @@ double GradientBasedFunctionMinimizer::doLineSearch(ObjectiveFunction *function,
 double GradientBasedFunctionMinimizer::doLineSearch(ObjectiveFunction *function, dVector& pi, const dVector& dp){
 	
 	bool is_bsfg = dynamic_cast<BFGSFunctionMinimizer*>(this);
+	bool came_close = false;
+	double alpha_close;
 
 	if(lineSearchIterationLimit > 0) {adaptiveLineSearch = true;}
 
@@ -154,18 +156,26 @@ if(is_bsfg) {std::cout << "    tried new alpha = " << alpha << "  O = " << newLi
 		//if (printOutput)
 		//	Logger::logPrint("\t--> LINE SEARCH iteration %02d: alpha is %10.10lf, function value is: %10.10lf\n", j, alpha, newLineSearchValue);
 
-		if(isfinite(newLineSearchValue) && newLineSearchValue < (initialValue+TINY)) {
+		if(isfinite(newLineSearchValue) && newLineSearchValue < (initialValue)) {
 			// found a good value: return it!
 			lineSearchValueOld = alpha;
 if(is_bsfg) {std::cout << "    line search succeeded (alpa = " << alpha << ")" << std::endl;}
 			return(alpha);
-		} else {
+		}
+		else if((!came_close) && isfinite(newLineSearchValue) && newLineSearchValue < (initialValue+TINY)) {
+			came_close = true;
+			alpha_close = alpha;
+if(is_bsfg) {std::cout << "    almost succeeded (alpa = " << alpha << ")" << std::endl;}
+
+			alpha /= 2.0;
+		}
+		else {
 			// no good value: keep searching
 			alpha /= 2.0;
 		}
 
 		if((lineSearchIterationLimit > 0) && (++j >= lineSearchIterationLimit)) {
-			alpha /= 4.0;
+			alpha /= 2.0;
 if(is_bsfg) {std::cout << "    break search: hit IT limit";}
 			break;
 		}
@@ -173,7 +183,13 @@ if(is_bsfg) {std::cout << "    break search: hit IT limit";}
 
 if(is_bsfg) {std::cout << "    give up line search";}
 if(is_bsfg) {std::cout << " (alpha = " << alpha << ")" << std::endl;}
-	lineSearchValueOld = alpha;//* 2.0;
+
+	if(came_close) {
+		lineSearchValueOld = alpha_close;
+	}
+	else {
+		lineSearchValueOld = alpha* 2.0;
+	}
 
 	pi = pc;
 	return(0.0);

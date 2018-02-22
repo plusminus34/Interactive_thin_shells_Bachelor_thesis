@@ -67,6 +67,8 @@ BenderApp3D::BenderApp3D()
 	////////////////////////
 	// setup the experiment
 	////////////////////////
+
+	// Rod example
 	BenderExperimentConfiguration config;
 	{
 		config.gravity = V3D(0.0, -9.8, 0.0);
@@ -77,10 +79,10 @@ BenderApp3D::BenderApp3D()
 		config.youngsModulus = 3e3;//2.135e4;
 		config.poissonRatio = 0.376;
 
-		config.maxTetVolume = 1.0e-6;
+		config.maxTetVolume = 1.35e-6;//1.0e-6;
 
 		// fiber for matched target trajectory
-		config.n_nodes_matched_fiber = 11;
+		config.n_nodes_matched_fiber = 0;
 		config.matched_fiber_start = P3D(-0.15, 0.0, 0.0);
 		config.matched_fiber_end = P3D(+0.15, 0.0, 0.0);
 
@@ -89,29 +91,39 @@ BenderApp3D::BenderApp3D()
 		config.femMounts.push_back(FemMount(P3D(+0.15, 0.0, 0.0), V3D(-1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
 
 		// grippers
-		//P3D origin_r = (P3D(0.634457, 0.093577, 0.335758) + P3D(0.656349, 0.0844, 0.348425)) * 0.5;
-		//V3D dir1_r = (P3D(0.627,0.084,0.344) - P3D(0.619,0.076,0.351));
-		//V3D dir2_r = -(P3D(0.656349, 0.0844, 0.348425) - P3D(0.634457, 0.093577, 0.335758));
-		//config.grippers.push_back(Gripper(origin_r, dir1_r, dir2_r, "link_7_r"));
-		//config.grippers.back().addContactRegion(P3D(-0.001, -1.0, -1.0), P3D(0.001, 1.0, 1.0));
-
-		//P3D origin_l = (P3D(0.634453, -0.093602, 0.335783) + P3D(0.656353, -0.084374, 0.3484)) * 0.5;
-		//V3D dir1_l = (P3D(0.647,-0.075,0.356) - P3D(0.639,-0.067,0.363));
-		//V3D dir2_l = -(P3D(0.656353, -0.084374, 0.3484) - P3D(0.634453, -0.093602, 0.335783));
-		//config.grippers.push_back(Gripper(origin_l, dir1_l, dir2_l, "link_7_l"));
-		//config.grippers.back().addContactRegion(P3D(-0.001, -1.0, -1.0), P3D(0.001, 1.0, 1.0));
-
 		config.grippers.push_back(Gripper());
 		config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::PLANE_ABB_FINGERTIPS_PLUS_5, 0.03);
 		config.grippers.push_back(Gripper());
 		config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::PLANE_ABB_FINGERTIPS_PLUS_5, 0.03);
-
-		//config.grippers.push_back(Gripper());
-		//config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::WAFFLE_40x40, 0.03);
-		//config.grippers.push_back(Gripper());
-		//config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::WAFFLE_40x40, 0.03);
-
 	}
+
+	// twisted X
+	//BenderExperimentConfiguration config;
+	//{
+	//	config.gravity = V3D(0.0, -9.8, 0.0);
+	//	config.fem_model_filename = "../data/3dModels/twistedX.ply";
+	//	config.fem_offset = P3D(0.0, 0.0, 0.50);
+	//	config.fem_scale = 0.001;
+
+	//	config.massDensity = 43.63;
+	//	config.youngsModulus = 3e3;//2.135e4;
+	//	config.poissonRatio = 0.376;
+
+	//	config.maxTetVolume = 4.0e-6;
+
+	//	// fem mounts
+	//	config.femMounts.push_back(FemMount(P3D(-0.1116, 0.3433, 0.0), V3D(0.5, -1.0/sqrt(2), 0.0), V3D(0.0, 0.0, 1.0)));
+	//	config.femMounts.push_back(FemMount(P3D(+0.1116, 0.3433, 0.0), V3D(-0.5,-1.0/sqrt(2), 0.0), V3D(0.0, 0.0, 1.0)));
+	//	config.femMounts.push_back(FemMount(P3D(0.0, 0.0, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, 1.0, 0.0)));
+
+	//	// grippers
+	//	config.grippers.push_back(Gripper());
+	//	config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::WAFFLE_40x40, 0.03);
+	//	config.grippers.push_back(Gripper());
+	//	config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::WAFFLE_40x40, 0.03);
+	//	config.grippers.push_back(Gripper());
+	//	config.grippers.back().makeFloorGripper(config.fem_offset);
+	//}
 
 	setupExperiment(config);
 
@@ -175,9 +187,16 @@ BenderApp3D::BenderApp3D()
 	inverseDeformationSolver->minimizer->lineSearchIterationLimit = 5;
 
 	inverseDeformationSolver->femMesh->meshPositionRegularizer.r = 0.0;
-	inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.001;
+	inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.0001;
 	inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.0001;
 	inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r = 0.0;
+
+
+	///////////////////////
+	// GUI defaults
+	///////////////////////
+	showGroundPlane = true;
+	showConsole = false;
 
 }
 
@@ -215,7 +234,7 @@ void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
 		// create mesh
 		femMesh->readMeshFromFile_ply(const_cast<char*>(config.fem_model_filename.c_str()), &centerlinePts,
 									  config.massDensity, shearModulus, bulkModulus,
-									  1.0, config.fem_offset,
+									  config.fem_scale, config.fem_offset,
 									  config.maxTetVolume);
 
 		// add gravity
@@ -258,8 +277,8 @@ void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
 	////////////////////////
 	{
 		// load robot
-		std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
-		//std::string fnameRB = "../data/rbs/yumi/yumi.rbs";
+		//std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
+		std::string fnameRB = "../data/rbs/yumi/yumi.rbs";
 
 		auto loadRobot = [&] (std::string const & fname)
 		{
@@ -1462,6 +1481,36 @@ void Gripper::makeYuMiGripper_default_mounting(Side side, FingerType type, doubl
 
 	makeYuMiGripper(mountOrigin_baseplate, side, type, gripper_width);
 }
+
+
+void Gripper::makeFloorGripper(P3D mountOrigin_baseplate)
+{
+	
+
+
+	rigidBody_name = "body";
+	P3D origin_baseplate(0.0, 0.0, 0.0);	// with respect to the surfacemesh of the gripper model
+	V3D dir_1(0.0, 1.0, 0.0);
+	V3D dir_2(0.0, 0.0, 1.0);
+
+	dir_1.toUnit();
+	dir_2.toUnit();
+	V3D dir_3 = dir_1.cross(dir_2);
+	mount_orientation_surfacemesh.col(0) = dir_1;
+	mount_orientation_surfacemesh.col(1) = dir_2;
+	mount_orientation_surfacemesh.col(2) = dir_3;
+
+
+	mount_origin_surfacemesh = origin_baseplate + mount_orientation_surfacemesh.inverse().transpose() * mountOrigin_baseplate;
+
+
+	P3D pt1 = mount_origin_surfacemesh - P3D(10.0, 0.001, 10.0);
+	P3D pt2 = mount_origin_surfacemesh + P3D(10.0, 0.001, 10.0);
+	addContactRegion(pt1-mountOrigin_baseplate, pt2-mountOrigin_baseplate);
+}
+
+
+
 
 
 void Gripper::setContactRegions(Side side, FingerType type, double gripper_width, P3D mountOrigin_baseplate)

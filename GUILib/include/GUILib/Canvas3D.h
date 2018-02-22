@@ -157,7 +157,8 @@ public:
 	}
 
 	virtual void drawGround() {
-		drawTexturedGround(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
+		//drawTexturedGround(GLContentManager::getTexture("../data/textures/ground_TileLight2.bmp"));
+		drawTexturedGround(GLContentManager::getTexture("../data/textures/ground_TileLight.bmp"));
 	}
 
 	virtual void drawScene() {};

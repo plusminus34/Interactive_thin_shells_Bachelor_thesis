@@ -184,7 +184,7 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 
 	if(maxTetVolume > 0.0) {
 		b.fixedvolume = 1;
-		b.maxvolume = maxTetVolume;//1.35e-6;
+		b.maxvolume = maxTetVolume / (scale*scale*scale);//1.35e-6;
 	}
 
 
@@ -201,7 +201,7 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 		addinput.numberofpoints = m;
 		for(int i = 0; i < m; ++i) {
 			for(int j = 0; j < 3; ++j) {
-				addinput.pointlist[i*3+j] = (*add_input_points)[i][j];
+				addinput.pointlist[i*3+j] = (*add_input_points)[i][j] / scale;
 				addinput.pointmarkerlist[i] = 1;
 			}
 		}
