@@ -189,7 +189,7 @@ pair<dVector, dVector> SimulationMesh::solve_statics(const dVector &x_0, const d
 	return pair<dVector, dVector>(x_new, v_ZERO);
 }
 
-pair<dVector, dVector> SimulationMesh::solve_dynamics(double dt, const dVector &x_0, const dVector &v_0, const dVector &balphac) { 
+pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const dVector &v_0, const dVector &balphac) { 
 	dVector x_push       = this->x;
 	dVector v_push       = this->v;
 	dVector balphac_push = this->balphac;
@@ -198,7 +198,7 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(double dt, const dVector &
 	dVector v_new;
 	{
 
-		energyFunction->setToDynamicsMode(dt);
+		energyFunction->setToDynamicsMode(timeStep);
 
 		this->x = x_0;
 		this->update_contacts(x_0);
@@ -228,7 +228,7 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(double dt, const dVector &
 		minimizer.minimize(energyFunction, xSolver, functionValue);
 
 		x_new = xSolver;
-		v_new = (x_new - x_0) / dt;
+		v_new = (x_new - x_0) / timeStep;
 
 		if (is_nan(x_new)) { error("x_new is NaN"); }
 
@@ -244,8 +244,8 @@ pair<dVector, dVector> SimulationMesh::solve_statics() {
 	return solve_statics(this->x, this->balphac); 
 }
 
-pair<dVector, dVector> SimulationMesh::solve_dynamics(double dt) {
-	return solve_dynamics(dt, this->x, this->v, this->balphac); 
+pair<dVector, dVector> SimulationMesh::solve_dynamics() {
+	return solve_dynamics(this->x, this->v, this->balphac); 
 }
 
 /*

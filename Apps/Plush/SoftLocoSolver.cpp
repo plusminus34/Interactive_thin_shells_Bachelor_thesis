@@ -7,15 +7,18 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	x_0 = mesh->x;
 	v_0 = mesh->v;
 
-	dVector SLACK_; resize_fill(SLACK_, T(), -100.);
-	for (int _ = 0; _ < K; ++_) { alphacJ_curr.push_back(SLACK_); }
-	xJ_curr = solve_trajectory(timeStep, x_0, v_0, alphacJ_curr);
-	// --
-	resize_zero(alphac_curr, T());
-	x_curr = x_of_alphac(alphac_curr); 
+	resize_zero(alphac_curr, T());     // FORNOW
+	x_curr = x_of_alphac(alphac_curr); // FORNOW
+
+	for (int _ = 0; _ < K; ++_) { dVector SLACK_; resize_fill(SLACK_, T(), -100.); alphacJ_curr.push_back(SLACK_); }
+	xJ_curr = xJ_of_alphacJ(alphacJ_curr); 
+
+	for (int _ = 0; _ < K; ++_) { SPEC_FREESTYLE_J.push_back(false); }
+	for (int _ = 0; _ < K; ++_) { SPEC_COM_J.push_back(true); }
+	for (int i = 0; i < K; ++i) { COMpJ.push_back(mesh->get_COM(xJ_curr[i])); }
 
 	construct_alphac_barrierFuncs(); 
-	COMp = mesh->get_COM(mesh->X); 
+	COMp_FORNOW = mesh->get_COM(mesh->X); 
 }
 
 void SoftLocoSolver::draw() {
@@ -76,7 +79,7 @@ void SoftLocoSolver::draw() {
 			glLineWidth(4);
 			glBegin(GL_LINE_STRIP); {
 				for (auto &node : bs->nodes) {
-					glP3D(node->getCoordinates(xJ_curr.back()));
+					glP3D(node->getCoordinates(xJ_curr[SELECTED_FRAME_i]));
 				}
 			} glEnd();
 		}
@@ -89,11 +92,16 @@ void SoftLocoSolver::draw() {
 		// --
 		glPointSize(10);
 		glLineWidth(5);
-		for (auto &GL_PRIMITIVE : { GL_LINES, GL_POINTS }) {
-			glBegin(GL_PRIMITIVE); {
-				set_color(PUMPKIN);     glP3D(mesh->get_COM(xJ_curr.back()));
-				set_color(RATIONALITY); glP3D(COMp);
-			} glEnd();
+		for (int i = 0; i < K; ++i) {
+			bool SELECTED = (i == SELECTED_FRAME_i);
+			if (SPEC_COM_J[i]) {
+				for (auto &GL_PRIMITIVE : { GL_LINES, GL_POINTS }) {
+					glBegin(GL_PRIMITIVE); {
+						set_color(SELECTED ? PUMPKIN     : DARK_CLAY); glP3D(mesh->get_COM(xJ_curr[i]));
+						set_color(SELECTED ? RATIONALITY : CLAY     ); glP3D(COMpJ[i]);
+					} glEnd();
+				}
+			}
 		}
 	} glMasterPop();
 					
@@ -107,7 +115,7 @@ Traj SoftLocoSolver::solve_trajectory(double dt, const dVector &x_0, const dVect
 		const dVector x_im1 = (x_tmp.empty()) ? x_0 : x_tmp.back();
 		const dVector v_im1 = (v_tmp.empty()) ? v_0 : v_tmp.back();
 		dVector alphac_i = alphacJ[i];
-		auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(timeStep, x_im1, v_im1, alphac_i) : mesh->solve_statics(x_im1, alphac_i);
+		auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_im1, v_im1, alphac_i) : mesh->solve_statics(x_im1, alphac_i);
 		x_tmp.push_back(xv.first );
 		v_tmp.push_back(xv.second);
 	}
@@ -116,19 +124,18 @@ Traj SoftLocoSolver::solve_trajectory(double dt, const dVector &x_0, const dVect
 }
 
 void SoftLocoSolver::step() {
-	mesh->update_contacts(x_0);
-	if (PROJECT) { project(); }
-	for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
-		iterate();
-	}
+	 mesh->update_contacts(x_0);
+	 if (PROJECT) { project(); }
+	 for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
+		 iterate();
+	 }
 }
 
 void SoftLocoSolver::iterate() {
-	alphac_curr = alphac_next(alphac_curr, x_curr);
-	x_curr  = x_of_alphac(alphac_curr); 
-	// --
 	alphacJ_curr = alphacJ_next(alphacJ_curr, xJ_curr);
 	xJ_curr = xJ_of_alphacJ(alphacJ_curr);
+	// alphac_curr = alphac_next(alphac_curr, x_curr);
+	// x_curr  = x_of_alphac(alphac_curr); 
 }
 
 void SoftLocoSolver::project() { 
@@ -219,7 +226,7 @@ Traj SoftLocoSolver::xJ_of_alphacJ(const Traj &alphacJ) {
 }
 
 dVector SoftLocoSolver::x_of_alphac(const dVector &alphac) { // FORNOW
-	auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(timeStep, x_0, v_0, alphac) : mesh->solve_statics(x_0, alphac);
+	auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_0, v_0, alphac) : mesh->solve_statics(x_0, alphac);
 	return xv.first;
 }
 
@@ -250,8 +257,9 @@ double SoftLocoSolver::calculate_Q_approx(const dVector &alphac) {
 }
 
 double SoftLocoSolver::calculate_Q_of_x(const dVector &x) {
+	// TODO: Freestyle
 	// (*) D()-invariant hack
-	V3D DeltaCOM_ = V3D(COMp, mesh->get_COM(x));
+	V3D DeltaCOM_ = V3D(COMp_FORNOW, mesh->get_COM(x));
 	return .5*DeltaCOM_.squaredNorm();
 }
  
@@ -307,7 +315,7 @@ Traj SoftLocoSolver::calculate_dQdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 dVector SoftLocoSolver::calculate_dQdx(const dVector &alphac, const dVector &x) { 
 	dVector dQdx;
 	{
-		V3D DeltaCOM_ = V3D(COMp, mesh->get_COM(x));
+		V3D DeltaCOM_ = V3D(COMp_FORNOW, mesh->get_COM(x));
 		dVector DeltaCOM; resize_zero(DeltaCOM, D());
 		for (int i = 0; i < D(); ++i) { DeltaCOM[i] = DeltaCOM_[i]; }
 		// --

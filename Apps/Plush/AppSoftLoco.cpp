@@ -26,7 +26,7 @@ AppSoftLoco::AppSoftLoco() {
 		mesh->pinToLeftWall();
 		mesh->relax_tendons();
 		// mesh->xvPair_INTO_Mesh(mesh->solve_statics());
-		timeStep = .1;
+		mesh->timeStep = .1;
 	}
 
 	// -- // ik
@@ -39,15 +39,16 @@ AppSoftLoco::AppSoftLoco() {
 	ik->LINEAR_APPROX     = true;
 	ik->REGULARIZE_alphac = true;
 
+
 	if (TEST_CASE == "swingup") { 
 		ik->c_alphac_ = 1.;
 	}
  
 	mainMenu->addGroup("app");
 	mainMenu->addVariable("SOLVE_IK", SOLVE_IK);
-	mainMenu->addVariable("SOLVE_DYNAMICS", SOLVE_DYNAMICS);
+	mainMenu->addVariable("SOLVE_DYNAMICS", ik->SOLVE_DYNAMICS);
 	mainMenu->addVariable("UNILATERAL_TENDONS", mesh->UNILATERAL_TENDONS);
-	mainMenu->addVariable("timeStep", timeStep);
+	// mainMenu->addVariable("timeStep", timeStep); // TODO
 	mainMenu->addGroup("ik");
 	// mainMenu->addVariable("SPEC_COM", ik->SPEC_COM);
 	// mainMenu->addVariable("SPEC_FREESTYLE", ik->SPEC_FREESTYLE);
@@ -58,7 +59,20 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("INTEGRATE_FORWARD_IN_TIME", INTEGRATE_FORWARD_IN_TIME);
 	mainMenu->addVariable("HIGH_PRECISION_NEWTON", mesh->HIGH_PRECISION_NEWTON);
 	mainMenu->addVariable("LINEAR_APPROX", ik->LINEAR_APPROX);
+	mainMenu->addGroup("loco");
+	mainMenu->addVariable("SELECTED_FRAME_i", ik->SELECTED_FRAME_i);
+
 	menuScreen->performLayout(); 
+
+	{
+		using namespace nanogui;
+		ref<Window> window = mainMenu->addWindow(Eigen::Vector2i(275, 0), "ikMenu");
+		mainMenu->addGroup("Group 1");
+		mainMenu->addGroup("Group 2");
+		menuScreen->performLayout(); 
+		// menuScreen->removeChild(window);
+	}
+
 }
 
 void AppSoftLoco::processToggles() {
@@ -75,12 +89,9 @@ void AppSoftLoco::drawScene() {
 }
 
 void AppSoftLoco::process() { 
-		ik->SOLVE_DYNAMICS = SOLVE_DYNAMICS;
-		ik->timeStep = timeStep;
-		// --
-		ik->x_0 = mesh->x; ik->v_0 = mesh->v;
-		ik->step();
-		if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->timeStep, ik->x_0, ik->v_0, ik->alphacJ_curr[0]) : mesh->solve_statics(ik->x_0, ik->alphacJ_curr[0])); }
+	if (INTEGRATE_FORWARD_IN_TIME) { ik->x_0 = mesh->x; ik->v_0 = mesh->v; } // FORNOW
+	ik->step();
+	if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->x_0, ik->v_0, ik->alphacJ_curr[0]) : mesh->solve_statics(ik->x_0, ik->alphacJ_curr[0])); }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

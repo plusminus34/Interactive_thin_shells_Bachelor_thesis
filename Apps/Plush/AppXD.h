@@ -15,7 +15,6 @@ public:
 public:
     CSTSimulationMesh2D *tri_mesh;
     CSTSimulationMesh3D *tet_mesh; 
-	double timeStep = .01;
 
 public:
     bool TEST = false;

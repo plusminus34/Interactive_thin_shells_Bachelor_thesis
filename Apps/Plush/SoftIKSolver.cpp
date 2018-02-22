@@ -147,7 +147,7 @@ double SoftIKSolver::calculate_gamma(const dVector &alphac, const dVector &dOdal
 // -- //
 
 dVector SoftIKSolver::x_of_alphac(const dVector &alphac) { // FORNOW
-	auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(timeStep, x_0, v_0, alphac) : mesh->solve_statics(x_0, alphac);
+	auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_0, v_0, alphac) : mesh->solve_statics(x_0, alphac);
 	return xv.first;
 }
 

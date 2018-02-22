@@ -13,9 +13,11 @@ class SoftLocoSolver {
 	friend class SimulationMesh; 
 
 public:
-	enum Mode { Freestyle, COM };
-	Mode mode = COM;
-	P3D COMp = P3D();
+	P3D COMp_FORNOW = P3D();
+
+	vector<bool> SPEC_FREESTYLE_J;
+	vector<bool> SPEC_COM_J;
+	vector<P3D> COMpJ;
 
 public:
 	SoftLocoSolver(SimulationMesh *);
@@ -24,15 +26,19 @@ public:
 
 public:
 	SimulationMesh *mesh;
+
+public:
+
+	int SELECTED_FRAME_i = 0;
  
 public:
 	double timeStep = .01;
 	// --
 	bool PROJECT = false;
 	bool CHECK_GRADIENT = false;
-	bool SOLVE_DYNAMICS = false;
 	bool LINEAR_APPROX = true;
 	bool VERBOSE = false;
+	bool SOLVE_DYNAMICS = true;
 
 public:
 	int D();

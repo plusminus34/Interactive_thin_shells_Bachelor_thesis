@@ -100,7 +100,7 @@ void AppSoftIK::process() {
 		// --
 		ik->x_0 = mesh->x; ik->v_0 = mesh->v;
 		ik->step();
-		if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->timeStep, ik->x_0, ik->v_0, ik->alphac_curr) : mesh->solve_statics(ik->x_0, ik->alphac_curr)); }
+		if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->x_0, ik->v_0, ik->alphac_curr) : mesh->solve_statics(ik->x_0, ik->alphac_curr)); }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
