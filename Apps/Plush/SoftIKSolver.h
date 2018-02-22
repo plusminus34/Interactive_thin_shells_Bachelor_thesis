@@ -35,10 +35,9 @@ public:
 	double timeStep = .01;
 	// --
 	bool PROJECT = false;
-	// TODO: bool CHECK_GRADIENT = false;
+	bool CHECK_IK_GRADIENT = false;
 	bool SOLVE_DYNAMICS = false;
 	bool LINEAR_APPROX = true;
-	bool VERBOSE = false;
 
 public:
 	int D();
@@ -47,11 +46,11 @@ public:
 
 public:
 	double     calculate_O(const dVector &alphac);
-	double     calculate_Q(const dVector &x);
-	double     calculate_R(const dVector &alphac, bool verbose);
+	double     calculate_Q(const dVector &alphac);
+	double     calculate_R(const dVector &alphac);
 	// --
-	double calculate_Q_formal(const dVector &alphac, bool verbose);
-	double calculate_Q_approx(const dVector &alphac, bool verbose);
+	double calculate_Q_formal(const dVector &alphac);
+	double calculate_Q_approx(const dVector &alphac);
 
 
 public:
@@ -73,13 +72,18 @@ public:
 
 	dVector calculate_dOdalphac(const dVector &alphac, const dVector &x);
 	double calculate_gamma(const dVector &alphac, const dVector &dOdalphac);
+	// --
+	bool check_gradient(const dVector &alphac, const dVector &x);
 
 	dVector x_of_alphac(const dVector &alphac);
 
-	dVector calculate_dQdx(const dVector &alphac, const dVector &x);
-	MatrixNxM calculate_dxdalphac(const dVector &alphac, const dVector &x);
+	dVector calculate_dQdalphac(const dVector &alphac, const dVector &x);
 	dVector calculate_dRdalphac(const dVector &alphac, const dVector &x);
 
+	dVector calculate_dQdx(const dVector &alphac, const dVector &x);
+	MatrixNxM calculate_dxdalphac(const dVector &alphac, const dVector &x);
+
+	double calculate_Q_of_x(const dVector &x);
 	SparseMatrix calculate_A(const dVector &x);
 	SparseMatrix calculate_H(const dVector &x, const dVector &alphac);
 
@@ -92,10 +96,8 @@ public:
 	bool REGULARIZE_alphac = true;
 	double c_alphac_ = .01;// 2.e-1;
 	Quadratic *alphac_regFunc = new Quadratic(&c_alphac_);
-
-	// NOTE(*): Honey regularizer
-	bool REGULARIZE_honey = false;
-	dVector x_honey;
-	double c_honey_ = 1.e2;
-	Quadratic *honey_regFunc = new Quadratic(&c_honey_);
+ 
+	bool HONEY_alphac = true;
+	double h_alphac_ = .01;
+	Quadratic *alphac_honeyFunc = new Quadratic(&h_alphac_);
 };

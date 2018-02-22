@@ -387,13 +387,12 @@ const auto mat_spy = [](const MatrixNxM &M) {
 	cout << spy << endl;
 };
 
-const auto vec_FD = [] (dVector s0, auto O_of_s) {
+const auto vec_FD = [] (dVector s0, auto O_of_s, double d=1e-3) {
 	// ~ dOds|s0
 	int n = s0.size();
 	dVector vec;
 	resize_zero(vec, n);
 
-	double d = 10e-4;
 	for (int i = 0; i < n; ++i) {
 		double s0i = s0[i];
 

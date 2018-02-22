@@ -59,6 +59,7 @@ void SoftIKSolver::draw() {
  
 void SoftIKSolver::step() {
 	mesh->update_contacts(x_0); // FORNOW
+	if (CHECK_IK_GRADIENT) { check_gradient(alphac_curr, x_curr); }
 	if (PROJECT) { project(); }
 	for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
 		iterate();
@@ -102,10 +103,17 @@ dVector SoftIKSolver::alphac_next(const dVector &alphac, const dVector &x) {
 }
 
 dVector SoftIKSolver::calculate_dOdalphac(const dVector &alphac, const dVector &x) {
-	// dVector dQdalphac = calculate_dQdalphac(alphac, x, true);
-	dVector dQdalphac = calculate_dxdalphac(alphac, x) * calculate_dQdx(alphac, x);
-	dVector dRdalphac = calculate_dRdalphac(alphac, x);
+	dVector dQdalphac = calculate_dQdalphac(alphac, x); 
+	dVector dRdalphac = calculate_dRdalphac(alphac, x); 
 	return dQdalphac + dRdalphac;
+}
+
+bool SoftIKSolver::check_gradient(const dVector &alphac, const dVector &x) {
+		auto Q_wrapper = [this](const dVector &alphac) { return calculate_Q(alphac); };
+		auto R_wrapper = [this](const dVector &alphac) { return calculate_R(alphac); };
+		cout << "Checking Q..." << endl; bool Q_passes = vector_equality_check(vec_FD(alphac, Q_wrapper, 5e-5), calculate_dQdalphac(alphac, x));
+		cout << "Checking R..." << endl; bool R_passes = vector_equality_check(vec_FD(alphac, R_wrapper, 5e-5), calculate_dRdalphac(alphac, x)); 
+		return (Q_passes && R_passes);
 }
 
 double SoftIKSolver::calculate_gamma(const dVector &alphac, const dVector &dOdalphac) {
@@ -128,7 +136,6 @@ double SoftIKSolver::calculate_gamma(const dVector &alphac, const dVector &dOdal
 			gamma_k /= 2.0;
 		} else {
 			// success
-			if (VERBOSE && LINEAR_APPROX) { cout << "O_approx  " << O_k << endl; }
 			return gamma_k;
 		}
 	}
@@ -147,79 +154,56 @@ dVector SoftIKSolver::x_of_alphac(const dVector &alphac) { // FORNOW
 // -- //
 
 double SoftIKSolver::calculate_O(const dVector &alphac) {
-	double Q = (LINEAR_APPROX) ? calculate_Q_approx(alphac, false) : calculate_Q_formal(alphac, false);
-	return Q + calculate_R(alphac, false);
+	return calculate_Q(alphac) + calculate_R(alphac);
+}
+
+double SoftIKSolver::calculate_Q(const dVector &alphac) {
+	return (LINEAR_APPROX) ? calculate_Q_approx(alphac) : calculate_Q_formal(alphac);
 }
  
-double SoftIKSolver::calculate_Q(const dVector &x) {
-	double Q = 0.;
-
-	if (SPEC_FREESTYLE) {
-		dVector Deltax_ = mesh->x_prime - x;
-		Q += .5*Deltax_.transpose()*Z().asDiagonal()*Deltax_;
-	}
-
-	if (SPEC_COM) {
-		// (*) D()-invariant hack
-		V3D DeltaCOM_ = V3D(COMp, mesh->get_COM(x));
-		Q += .5*DeltaCOM_.squaredNorm();
-	}
-
-	return Q;
-}
- 
-double SoftIKSolver::calculate_Q_formal(const dVector &alphac, bool verbose) {
+double SoftIKSolver::calculate_Q_formal(const dVector &alphac) {
 	dVector x = x_of_alphac(alphac);
-	double Q_formal  = calculate_Q(x);
-	if (verbose) { cout << "Q_formal  " << Q_formal << endl; }
+	double Q_formal  = calculate_Q_of_x(x);
 	return Q_formal;
 }
 
-double SoftIKSolver::calculate_Q_approx(const dVector &alphac, bool verbose) { 
+double SoftIKSolver::calculate_Q_approx(const dVector &alphac) { 
 	dVector dalphac = alphac - alphac_curr;
 	dVector x_approx = x_curr + dxdalphac.transpose() * dalphac; 
-	double Q_approx = calculate_Q(x_approx); 
-	if (verbose) { cout << "Q_approx  " << Q_approx << endl; }
+	double Q_approx = calculate_Q_of_x(x_approx); 
 	return Q_approx;
 }
 
-double SoftIKSolver::calculate_R(const dVector &alphac, bool verbose) {
+double SoftIKSolver::calculate_R(const dVector &alphac) {
 
 	double ret = 0.;
 	double tmp = 0.;
-
-	auto report = [verbose, &tmp, &ret](string name) {
-		if (verbose) {
-			cout << name << ret - tmp << endl;
-			tmp = ret;
-		}
-	};
 
 	{
 		for (int i = 0; i < T(); ++i) {
 			ret += alphac_barrierFuncs[i]->computeValue(alphac[i]);
 		}
-		report("R_barrier  ");
+	}
+
+	if (HONEY_alphac) {
+		for (int i = 0; i < T(); ++i) {
+			ret += alphac_honeyFunc->computeValue(alphac[i] - alphac_curr[i]);
+		}
 	}
 
 	if (REGULARIZE_alphac) {
 		for (int i = 0; i < T(); ++i) {
 			ret += alphac_regFunc->computeValue(alphac[i]);
 		}
-		report("R_alphac   ");
-	}
-
-	if (REGULARIZE_honey) {
-		dVector x = x_of_alphac(alphac);
-		for (int i = 0; i < D()*N(); ++i) {
-			ret += honey_regFunc->computeValue(x[i] - x_honey[i]);
-		} 
-		report("R_honey   ");
 	}
 
 	return ret; 
 }
 
+dVector SoftIKSolver::calculate_dQdalphac(const dVector &alphac, const dVector &x) {
+	return calculate_dxdalphac(alphac, x) * calculate_dQdx(alphac, x);
+}
+ 
 dVector SoftIKSolver::calculate_dQdx(const dVector &alphac, const dVector &x) { 
 	dVector dQdx; resize_zero(dQdx, D()*N());
 
@@ -297,6 +281,16 @@ dVector SoftIKSolver::calculate_dRdalphac(const dVector &alphac, const dVector &
 		dRdalphac += dalphacBarrierdalphac;
 	}
 
+	if (HONEY_alphac) {
+		dVector dalphacHoneydalphac; resize_zero(dalphacHoneydalphac, T());
+		{
+			for (int i = 0; i < T(); ++i) {
+				dalphacHoneydalphac[i] += alphac_honeyFunc->computeDerivative(alphac[i] - alphac_curr[i]);
+			}
+		} 
+		dRdalphac += dalphacHoneydalphac;
+	}
+
 	if (REGULARIZE_alphac) { 
 		dVector dalphacRegdalphac; resize_zero(dalphacRegdalphac, T());
 		{
@@ -307,16 +301,6 @@ dVector SoftIKSolver::calculate_dRdalphac(const dVector &alphac, const dVector &
 		dRdalphac += dalphacRegdalphac;
 	}
  
-	if (REGULARIZE_honey) {
-		dVector dhoneyRegdx; resize_zero(dhoneyRegdx, D()*N());
-		{
-			for (int i = 0; i < D()*N(); ++i) {
-				dhoneyRegdx[i] += honey_regFunc->computeValue(x[i] - x_honey[i]);
-			}
-		}
-		dRdalphac += dxdalphac * dhoneyRegdx;
-	}
-
 	return dRdalphac; 
 }
 
@@ -352,6 +336,23 @@ void SoftIKSolver::toggle_Z(Node *node) {
 	Z_01_bool_spoof[node->nodeIndex] +=  1;
 }
 
+double SoftIKSolver::calculate_Q_of_x(const dVector &x) {
+	double Q = 0.;
+
+	if (SPEC_FREESTYLE) {
+		dVector Deltax_ = mesh->x_prime - x;
+		Q += .5*Deltax_.transpose()*Z().asDiagonal()*Deltax_;
+	}
+
+	if (SPEC_COM) {
+		// (*) D()-invariant hack
+		V3D DeltaCOM_ = V3D(COMp, mesh->get_COM(x));
+		Q += .5*DeltaCOM_.squaredNorm();
+	}
+
+	return Q;
+}
+ 
  
 SparseMatrix SoftIKSolver::calculate_A(const dVector &x) {
 	SparseMatrix A;

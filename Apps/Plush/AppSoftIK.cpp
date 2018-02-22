@@ -8,8 +8,12 @@ AppSoftIK::AppSoftIK() {
 	this->showReflections = false;
 	this->showGroundPlane = false;
 
-	string TEST_CASE = "ik";
-	// string TEST_CASE = "3ball";
+	const vector<string> TEST_CASES = {
+		"tentacle", // 0
+		"3ball",    // 1
+		"tri"       // 2
+	};
+	string TEST_CASE = TEST_CASES[1];
 
 	// -- // mesh
 	mesh = new CSTSimulationMesh2D();
@@ -20,7 +24,7 @@ AppSoftIK::AppSoftIK() {
 	mesh->addGravityForces(V3D(0., -10.));
 	// mesh->add_contacts_to_boundary_nodes();
 
-	if (TEST_CASE == "ik") {
+	if (TEST_CASE == "tentacle") {
 		mesh->pinToFloor();
 		mesh->rig_boundary_simplices();
 		// --
@@ -28,6 +32,9 @@ AppSoftIK::AppSoftIK() {
 		mesh->xvPair_INTO_Mesh(mesh->solve_statics());
 	} else if (TEST_CASE == "3ball") {
 		mesh->add_contacts_to_boundary_nodes();
+	} else if (TEST_CASE == "tri") {
+		mesh->pinToFloor();
+		mesh->rig_boundary_simplices();
 	}
 
 	// -- // ik
@@ -35,9 +42,21 @@ AppSoftIK::AppSoftIK() {
 	push_back_handler(new P2DDragger(&ik->COMp));
 	push_back_handler(new Poser(mesh, ik));
 	// -- 
-	ik->PROJECT = true;
-	ik->REGULARIZE_alphac = true; ik->c_alphac_ = .01;
-	ik->REGULARIZE_honey = false;
+	ik->PROJECT           = true;
+	ik->LINEAR_APPROX     = true;
+	ik->REGULARIZE_alphac = true;
+	ik->HONEY_alphac      = true;
+
+	if (TEST_CASE == "tentacle") { 
+		ik->c_alphac_ = 1;
+		ik->h_alphac_ = 1000;
+	} else if (TEST_CASE == "3ball") {
+		ik->c_alphac_ = .5;
+		ik->h_alphac_ = 10.; 
+	} else if (TEST_CASE == "tri") {
+		ik->c_alphac_ = 1.;
+		ik->h_alphac_ = 1.; 
+	}
  
 	// -- // inspector
 	// inspector = new Inspector(mesh);
@@ -51,10 +70,14 @@ AppSoftIK::AppSoftIK() {
 	mainMenu->addVariable("SPEC_COM", ik->SPEC_COM);
 	mainMenu->addVariable("SPEC_FREESTYLE", ik->SPEC_FREESTYLE);
 	mainMenu->addVariable("NUM_ITERS_PER_STEP", ik->NUM_ITERS_PER_STEP);
-	mainMenu->addVariable("LINEAR_APPROX", ik->LINEAR_APPROX);
 	mainMenu->addVariable("PROJECT", ik->PROJECT);
-	mainMenu->addVariable("HIGH_PRECISION_NEWTON", mesh->HIGH_PRECISION_NEWTON);
 	mainMenu->addVariable("c_alphac_", ik->c_alphac_);
+	mainMenu->addVariable("h_alphac_", ik->h_alphac_);
+	mainMenu->addGroup("testing"); 
+	mainMenu->addVariable("INTEGRATE_FORWARD_IN_TIME", INTEGRATE_FORWARD_IN_TIME);
+	mainMenu->addVariable("CHECK_IK_GRADIENT", ik->CHECK_IK_GRADIENT);
+	mainMenu->addVariable("HIGH_PRECISION_NEWTON", mesh->HIGH_PRECISION_NEWTON);
+	mainMenu->addVariable("LINEAR_APPROX", ik->LINEAR_APPROX);
 	menuScreen->performLayout(); 
 }
 
@@ -77,7 +100,7 @@ void AppSoftIK::process() {
 		// --
 		ik->x_0 = mesh->x; ik->v_0 = mesh->v;
 		ik->step();
-		mesh->xvPair_INTO_Mesh((SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->timeStep, ik->x_0, ik->v_0, ik->alphac_curr) : mesh->solve_statics(ik->x_0, ik->alphac_curr));
+		if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->timeStep, ik->x_0, ik->v_0, ik->alphac_curr) : mesh->solve_statics(ik->x_0, ik->alphac_curr)); }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
