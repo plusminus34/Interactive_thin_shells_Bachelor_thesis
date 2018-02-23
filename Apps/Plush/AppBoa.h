@@ -16,7 +16,7 @@ public:
 	bool   connect2Arduino();
 	bool   connect2MCDC3006();
 	void   flushArduino();
-	void   flushMCDC();
+	bool   flushMCDC();
 	int    queryArduino();            // String pot voltage
 	double queryMCDC();               // Motor encoder position
 	void   setPosition(const double &); // Motor encoder position
@@ -24,6 +24,12 @@ public:
 	bool CONNECTED2ARDUINO = false;
 	bool CONNECTED2MCDC = false;
 
+// FORNOW MCDC
+public:
+	int COM_PORT = 4;
+	HANDLE hComm = INVALID_HANDLE_VALUE;
+	DWORD read, written; // FORNOW
+ 
 public:
 	double currentReading = 0;
 	int poseState = 0;
@@ -38,6 +44,7 @@ public:
 	vector<P3D> POSE_COLORS = { GOLDCLOVER, PUMPKIN, CLAY, ORCHID };
 
 public:
+	double currentPosition = 0;
 	SimpleSerialPort *ASP;
 	const static int ARDUINO_LEN = 4096;
 	char arduinoBuffer[ARDUINO_LEN] = "";
@@ -63,6 +70,51 @@ public:
 	
 	virtual void saveFile(const char* fName);
 	virtual void loadFile(const char* fName);
+
+//Returns the last Win32 error, in string format. Returns an empty string if there is no error.
+std::string GetLastErrorAsString() {
+    //Get the error message, if any.
+    DWORD errorMessageID = ::GetLastError();
+    if(errorMessageID == 0)
+        return std::string(); //No error message has been recorded
+
+    LPSTR messageBuffer = nullptr;
+    size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                 NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+
+    std::string message(messageBuffer, size);
+
+    //Free the buffer.
+    LocalFree(messageBuffer);
+
+    return message;
+} 
+
+void CoutLastError() { 
+	cout_warning(GetLastErrorAsString());
+}
+
+void cout_failure(std::string msg) {
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hConsole, 12);
+	cout << msg;
+	SetConsoleTextAttribute(hConsole, 15);
+}
+
+void cout_success(std::string msg) {
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hConsole, 10);
+	cout << msg;
+	SetConsoleTextAttribute(hConsole, 15);
+}
+
+void cout_warning(std::string msg) {
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hConsole, 14);
+	cout << msg;
+	SetConsoleTextAttribute(hConsole, 15);
+} 
+
 
 };
 

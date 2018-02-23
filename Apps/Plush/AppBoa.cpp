@@ -21,7 +21,7 @@ AppBoa::AppBoa() {
 
 	mainMenu->addGroup("app");
 	mainMenu->addButton("connect2Arduino", [this]() { if (!CONNECTED2ARDUINO) { CONNECTED2ARDUINO = this->connect2Arduino(); } });
-	mainMenu->addButton("connect2MCDC",    [this]() { this->connect2MCDC3006(); });
+	mainMenu->addButton("connect2MCDC",    [this]() { if (!CONNECTED2MCDC)    { CONNECTED2MCDC    = this->connect2MCDC3006(); }});
 	mainMenu->addButton("flushArduino",    [this]() { this->flushArduino(); });
 	mainMenu->addButton("flushMCDC",       [this]() { this->flushMCDC(); });
 	mainMenu->addButton("queryArduino",    [this]() { this->queryArduino(); });
@@ -51,8 +51,8 @@ void AppBoa::process() {
 	}
 
 	if (CONNECTED2MCDC) {
-		contraction = sin(t);
-		tendon_plot->add_new_data_point(contraction);
+		currentPosition = queryMCDC() / 10000000.;
+		tendon_plot->add_new_data_point(currentPosition);
 	}
 } 
 
@@ -62,15 +62,73 @@ bool AppBoa::connect2Arduino() {
 }
 
 bool AppBoa::connect2MCDC3006() {
-	return false;
+	cout << "Initiating connection on COM" << COM_PORT << "..." << endl; 
+	cout << "--- Opening port..." << endl;
+	std::wstring comPrefix = L"\\\\.\\COM";
+	std::wostringstream tmp;
+	tmp << COM_PORT;
+	const std::wstring comSuffix(tmp.str()); 
+	std::wstring port_spec = comPrefix + comSuffix;
+	// https://support.microsoft.com/en-us/help/115831/howto-specify-serial-ports-larger-than-com9
+	hComm = CreateFileW(
+		port_spec.c_str(),
+		GENERIC_READ | GENERIC_WRITE,
+		0,
+		0,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		0);
+	if (hComm == INVALID_HANDLE_VALUE) {
+		return false;
+	}
+
+	cout << "--- Applying settings..." << endl;
+	std::wstring dcb_spec = L"9600, n, 8, 1";
+	DCB dcb;
+	FillMemory(&dcb, sizeof(dcb), 0);
+	dcb.DCBlength = sizeof(dcb);
+	if (!BuildCommDCBW(dcb_spec.c_str(), &dcb)) {
+		return false;
+	}
+	if (!SetCommState(hComm, &dcb)) {
+		return false;
+	}
+
+	cout << "--- Specifying timeouts..." << endl;
+    COMMTIMEOUTS timeouts;
+	timeouts.ReadIntervalTimeout = 20; 
+	timeouts.ReadTotalTimeoutMultiplier = 0;
+	timeouts.ReadTotalTimeoutConstant = 100;
+	timeouts.WriteTotalTimeoutMultiplier = 10;
+	timeouts.WriteTotalTimeoutConstant = 100;
+	if (!SetCommTimeouts(hComm, &timeouts)) {
+		return false;
+	}
+
+	cout_success("Successfully initiated connection.\n");
+	return true; 
 }
 
 void AppBoa::flushArduino() {
 	while (ASP->ReadData(arduinoBuffer, ARDUINO_LEN - 1) != 0); 
 }
 
-void AppBoa::flushMCDC() {
+bool AppBoa::flushMCDC() { 
+	cout << "Flushing buffer..." << endl;
 
+	char read_buffer[1024];
+	DWORD bytesRead = 0;
+	if (!ReadFile(hComm, read_buffer, sizeof(read_buffer), &bytesRead, NULL)) {
+		CoutLastError();
+		return false;
+	}
+
+	for (int i = 0; i < (int)bytesRead; ++i) {
+		cout << read_buffer[i];
+	}
+
+	cout_success("Successfully flushed buffer.\n");
+	return true; 
 }
 
 int AppBoa::queryArduino() {
@@ -83,7 +141,28 @@ int AppBoa::queryArduino() {
 }
 
 double AppBoa::queryMCDC() {
-	return 0.0; 
+	cout << "Querying position." << endl;
+
+	char write_buffer[] = "POS\r\n";
+	if (!WriteFile(hComm, write_buffer, sizeof(write_buffer), &written, NULL)) {
+		CoutLastError();
+		return false; 
+	}
+	char read_buffer[128];
+	DWORD bytesRead = 0;
+	if (!ReadFile(hComm, read_buffer, sizeof(read_buffer), &bytesRead, NULL)) {
+		CoutLastError();
+		return false;
+	}
+
+	read_buffer[(int)bytesRead - 2] = 0; // Killing off carriage return
+	cout << "Position: " << read_buffer << endl;
+
+	cout_success("Successfully queried position.\n");
+
+	int ret;
+	sscanf(read_buffer, "%d", &ret); 
+	return double(ret);
 }
  
 void AppBoa::updatePlushieState(const double &reading) {
