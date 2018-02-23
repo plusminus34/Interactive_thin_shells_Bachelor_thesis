@@ -6,3 +6,7 @@ out/
 data/FEM/2d/triMeshTMP.tri2d
 /CMakeLists.txt.user
 
+*.un~
+*.txt~
+*.h~
+*.cpp~
