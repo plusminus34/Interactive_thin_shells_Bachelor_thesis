@@ -1,6 +1,7 @@
 build*
 out/
 screenShots/*
+data/3dModels/*.prt
 
 /.vs/SCP/v14/.suo
 
