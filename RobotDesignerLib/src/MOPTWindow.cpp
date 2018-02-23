@@ -14,6 +14,11 @@ MOPTWindow::MOPTWindow(int x, int y, int w, int h, GLApplication* glApp) : GLWin
 	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutRightAxis = 0.25;
 	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutUpAxis = 0.95;
 	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -1.5;
+	
+
+	showGroundPlane = true;
+	showReflections = true;
+
 }
 
 void MOPTWindow::addMenuItems() {
@@ -142,8 +147,8 @@ void MOPTWindow::addMenuItems() {
 		using namespace nanogui;
 
 		Window *window = new Window(glApp->menuScreen, "MOPT Energy");
-		window->setPosition(Eigen::Vector2i(glApp->getMainWindowWidth() / glApp->menuScreen->pixelRatio() - 200, 0));
 		window->setWidth(300);
+		window->setPosition(Eigen::Vector2i(glApp->getMainWindowWidth() / glApp->menuScreen->pixelRatio() - 220, 20));
 		window->setLayout(new GroupLayout());
 
 		energyGraph = window->add<Graph>("Energy function");
@@ -352,11 +357,9 @@ void MOPTWindow::drawScene() {
 	glEnable(GL_LIGHTING);
 
 	if (locomotionManager){
-		showGroundPlane = true;
-		showReflections = true;
 
 		//hacks...
-		{
+		if (0){
 			moptParams.drawRobotMesh = moptParams.drawSkeleton = moptParams.drawAxesOfRotation = moptParams.drawWheels = moptParams.drawContactForces = moptParams.drawSupportPolygon = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawOrientation = false;
 			if (moptParams.gaitCycle == 0) {
 				moptParams.drawEndEffectorTrajectories = true;
@@ -371,10 +374,10 @@ void MOPTWindow::drawScene() {
 				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawOrientation = true;
 			}
 			else if (moptParams.gaitCycle == 4) {
-				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawWheels = true;
+				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawOrientation = moptParams.drawWheels = true;
 			}
 			else if (moptParams.gaitCycle == 5) {
-				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawWheels = moptParams.drawSkeleton = true;
+				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawWheels = moptParams.drawSkeleton = moptParams.drawOrientation = true;
 			}
 			else
 				moptParams.drawRobotMesh = true;
@@ -410,7 +413,7 @@ void MOPTWindow::drawAuxiliarySceneInfo(){
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	preDraw();
-	ffpViewer->draw();
+	if (showFFPViewer) ffpViewer->draw();
 	postDraw();
 
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -419,7 +422,7 @@ void MOPTWindow::drawAuxiliarySceneInfo(){
 
 //any time a physical key is pressed, this event will trigger. Useful for reading off special keys...
 bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
-	if (initialized && ffpViewer) {
+	if (initialized && ffpViewer && showFFPViewer) {
 		if (ffpViewer->onKeyEvent(key, action, mods))
 			return true;
 		if (key == GLFW_KEY_DELETE && action == GLFW_PRESS)
@@ -460,7 +463,7 @@ bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
 
 bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	if (initialized) {
-		if (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging())
+		if (showFFPViewer && (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging()))
 			if (ffpViewer->onMouseMoveEvent(xPos, yPos)) return true;
 	}
 
@@ -559,7 +562,7 @@ void MOPTWindow::updateJointVelocityProfileWindowOnMouseMove(Ray &ray, double xP
 bool MOPTWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos)
 {
 	if (initialized) {
-		if (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging())
+		if (showFFPViewer && (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging()))
 			if (ffpViewer->onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
 	}
 	if (action == GLFW_PRESS && endEffectorInd > -1)

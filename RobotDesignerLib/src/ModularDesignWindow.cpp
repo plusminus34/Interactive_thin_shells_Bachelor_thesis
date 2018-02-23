@@ -75,6 +75,7 @@ ModularDesignWindow::ModularDesignWindow(int x, int y, int w, int h, GLApplicati
 	string mat = "../data/textures/matcap/black2.bmp";
 	bodyMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
 	bodyMaterial.setTextureParam(mat.c_str(), GLContentManager::getTexture(mat.c_str()));
+	bodyMesh->setMaterial(bodyMaterial);
 
 	sphereMesh = new GLMesh();
 	sphereMesh->addSphere(P3D(), 1, 12);

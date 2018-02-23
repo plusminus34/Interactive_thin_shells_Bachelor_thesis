@@ -117,7 +117,9 @@ RobotDesignerApp::RobotDesignerApp(){
 	simWindow->addMenuItems();
 
 	showGroundPlane = false;
-	bgColorR = bgColorG = bgColorB = 0.75;
+//	bgColorR = bgColorG = bgColorB = 0.75;
+
+	bgColorR = bgColorG = bgColorB = 249.0 / 255.0;
 
 #ifdef START_WITH_VISUAL_DESIGNER
 //	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
@@ -183,7 +185,9 @@ void RobotDesignerApp::setupWindows() {
 	}
 	else if (viewOptions == MOPT_WINDOW_ONLY && moptWindow) {
 		moptWindow->setViewportParameters(offset, 0, w, h);
-		moptWindow->ffpViewer->setViewportParameters(offset, 0, w, h / 4);
+		moptWindow->ffpViewer->setViewportParameters(offset, 0, w/2, h / 4);
+		showConsole = false;
+		moptWindow->showFFPViewer = false;
 	}
 	else {
 		consoleWindow->setViewportParameters(offset, 0, w, 280);
@@ -622,7 +626,7 @@ void RobotDesignerApp::process() {
 			DoMOPTStep();
 
 		double dt = 1.0 / desiredFrameRate;
-		if (slowMo) dt /= 5.0;
+		if (slowMo) dt /= 2.5;
 
 		bool motionPhaseReset = simWindow->advanceSimulation(dt);
 		if (motionPhaseReset)

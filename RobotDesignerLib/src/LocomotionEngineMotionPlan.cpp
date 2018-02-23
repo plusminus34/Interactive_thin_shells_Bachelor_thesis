@@ -33,6 +33,10 @@ void LocomotionEngine_EndEffectorTrajectory::initialize(int nPos){
 }
 
 V3D LocomotionEngine_EndEffectorTrajectory::getContactForceAt(double t) {
+	int tIndex = (int)(t * (double)(contactFlag.size() - 1));
+	if (contactFlag[tIndex] == 0)
+		return V3D(0, 0, 0);
+
 	//very slow method, but easy to implement...
 	Trajectory3D traj;
 	for (uint i = 0; i<contactForce.size(); i++)
@@ -1521,7 +1525,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f,
 
 	if (drawEndEffectorTrajectories) {
 		//draw end effector trajectories
-		glColor3d(0.3, 0.3, 0.8);
+		glColor3d(0.5, 0.5, 1.0);
 		glEnable(GL_LIGHTING);
 		for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
 			P3D lastPoint = endEffectorTrajectories[i].getEEPositionAt(0);
@@ -1531,6 +1535,8 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f,
 				lastPoint = p;
 			}
 		}
+
+		glColor3d(0.0, 0.0, 1.0);
 		//draw end effector positions...
 		for (uint i = 0; i < endEffectorTrajectories.size(); i++)
 		{
@@ -1549,7 +1555,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f,
 
 	if (drawCOMTrajectory) {
 		//draw the COM trajectory
-		glColor3d(1, 0, 0);
+		glColor3d(1, 0.0, 0.0);
 		P3D comP = COMTrajectory.getCOMPositionAt(f);
 		drawSphere(comP, 0.007, 12);
 
@@ -1566,7 +1572,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f,
 		glLineWidth(1.0);
 */
 //		glLineWidth(5);
-		glColor3d(0.0, 0.5, 0.0);
+		glColor3d(1.0, 0.5, 0.5);
 //		glBegin(GL_LINE_STRIP);
 		for (int i = 1; i < nSamplePoints; i++) {
 			//glVertex3d(COMTrajectory.pos[0][i], COMTrajectory.pos[1][i], COMTrajectory.pos[2][i]);
@@ -1671,7 +1677,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f,
 		for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
 			V3D contactForce = endEffectorTrajectories[i].getContactForceAt(f);
 			P3D EEPos = endEffectorTrajectories[i].getEEPositionAt(f);
-			drawArrow(EEPos, EEPos + contactForce * 0.05, 0.005, 12);
+			drawArrow(EEPos, EEPos + contactForce * 0.05, 0.003, 12);
 		}
 	}
 
@@ -1722,9 +1728,22 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f,
 		Quaternion q = COMTrajectory.getCOMOrientationAt(f);
 		q.getAxisAngle(rotAxis, rotAngle);
 		glRotated(DEG(rotAngle), rotAxis[0], rotAxis[1], rotAxis[2]);
+		glEnable(GL_BLEND);
+		glColor4d(0.5, 0.5, 0.5, 0.2);
 
-		glColor4d(0.0, 1.0, 1.0, 0.3);
-		drawMOIApproximation(Matrix3x3::Identity() * totalInertia, totalMass);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_FRONT);
+
+		Matrix3x3 moi = Matrix3x3::Identity();
+		moi(2, 2) /= 2.5;
+		moi(1, 1) *= 1.6;
+		moi(0, 0) *= 1.4;
+
+		drawMOIApproximation(moi * totalInertia, totalMass);
+		glCullFace(GL_BACK);
+		drawMOIApproximation(moi * totalInertia, totalMass);
+		glDisable(GL_CULL_FACE);
+
 		/*glColor3d(1.0, 1.0, 0.0);
 		drawArrow(P3D(), P3D(0.1, 0, 0), 0.005, 12);
 		glColor3d(0.0, 1.0, 1.0);

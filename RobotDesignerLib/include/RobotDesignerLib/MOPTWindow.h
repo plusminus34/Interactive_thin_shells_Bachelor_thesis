@@ -72,6 +72,7 @@ public:
 
 	FootFallPattern footFallPattern;
 	FootFallPatternViewer* ffpViewer = nullptr;
+	bool showFFPViewer = true;
 	LocomotionEngineManager* locomotionManager = nullptr;
 
 	enum OPT_OPTIONS {
@@ -129,7 +130,7 @@ public:
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
 	virtual void drawGround() {
-		drawTexturedGround(GLContentManager::getTexture("../data/textures/grid.bmp"));
+		drawTexturedGround(GLContentManager::getTexture("../data/textures/lightGray.bmp"));
 	}
 private:
 
