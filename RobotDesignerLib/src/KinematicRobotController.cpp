@@ -28,7 +28,7 @@ bool KinematicRobotController::advanceInTime(double timeStep) {
 	stridePhase += timeStep / this->motionPlan->motionPlanDuration;
 
 	if (stridePhase > 1.0) {
-		stridePhase -= 1.0;
+		stridePhase = 0.0;
 		resetPhase = true;
 	}
 	else {

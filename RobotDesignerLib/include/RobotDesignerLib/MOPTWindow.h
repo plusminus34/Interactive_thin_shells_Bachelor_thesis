@@ -52,11 +52,12 @@ struct MOPTParams {
 	double externalForceZ = 0;
 };
 
+class RobotDesignerApp;
 
 class MOPTWindow : public GLWindow3D {
 public:
 	bool initialized = false;
-	GLApplication* glApp;
+	RobotDesignerApp* theApp;
 
 	int nTimeSteps = 12;
 	double globalMOPTRegularizer = 0.01;
@@ -91,7 +92,7 @@ public:
 	std::list<shared_ptr<TranslateWidget>> EEwidgets;
 	std::list<shared_ptr<TranslateWidget>> COMWidgets;
 public:
-	MOPTWindow(int x, int y, int w, int h, GLApplication* glApp);
+	MOPTWindow(int x, int y, int w, int h, RobotDesignerApp* glApp);
 	~MOPTWindow();
 
 	void clear();

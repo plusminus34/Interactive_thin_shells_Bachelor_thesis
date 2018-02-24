@@ -140,9 +140,7 @@ void RBSimApp::process() {
 	double maxRunningTime = 1.0 / desiredFrameRate;
 
 	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
-	while (simulationTime / maxRunningTime < animationSpeedupFactor)
-	{
-
+	while (simulationTime < maxRunningTime){
 		simulationTime += simTimeStep;
 		rbEngine->step(simTimeStep);
 	}

@@ -88,6 +88,8 @@ public:
 #endif
 	bool doDebug = false;
 
+	double slowMoFactor = 5.0;
+
 public:
 	// constructor
 	RobotDesignerApp();

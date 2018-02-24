@@ -626,7 +626,8 @@ void RobotDesignerApp::process() {
 			DoMOPTStep();
 
 		double dt = 1.0 / desiredFrameRate;
-		if (slowMo) dt /= 2.5;
+		if (slowMo) 
+			dt /= slowMoFactor;
 
 		bool motionPhaseReset = simWindow->advanceSimulation(dt);
 		if (motionPhaseReset)
