@@ -67,7 +67,7 @@ public:
 	// diagnostics
 	double computeTargetPositionError();
 
-	void drawSimulationMesh(bool drawSurface);
+	void drawSimulationMesh(bool drawSurface, V3D color);
 
 };
 

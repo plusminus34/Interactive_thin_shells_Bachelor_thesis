@@ -242,7 +242,7 @@ double BenderSimulationMesh<NDim>::computeTargetPositionError()
 
 
 template<int NDim>
-void BenderSimulationMesh<NDim>::drawSimulationMesh(bool drawSurface) 
+void BenderSimulationMesh<NDim>::drawSimulationMesh(bool drawSurface, V3D color) 
 {
 
 	/*
@@ -250,7 +250,7 @@ void BenderSimulationMesh<NDim>::drawSimulationMesh(bool drawSurface)
 									   V3D(1.0,0.0,0.0), 1.0,
 									   V3D(1.0,0.0,0.0), 0.002);
 	*/
-	SimulationMesh::drawMeshSurface(V3D(0.7, 1.0, 0.7), drawSurface,
+	SimulationMesh::drawMeshSurface(color, drawSurface,
 									V3D(0.0, 0.0, 0.0), 1,
 									V3D(1.0, 0.0, 0.0), -1);
 

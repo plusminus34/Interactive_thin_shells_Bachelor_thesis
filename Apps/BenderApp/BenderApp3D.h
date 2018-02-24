@@ -25,6 +25,7 @@ class BenderExperimentConfiguration;
  */
 class BenderApp3D : public GLApplication {
 public:
+
 	// Geometry & physics
 	BenderSimulationMesh<3> * femMesh;
 
@@ -46,6 +47,9 @@ public:
 
 	// solver for the inverse problem
 	InverseDeformationSolver<3> * inverseDeformationSolver;
+
+	// Experiment setup
+	BenderExperimentConfiguration * config;
 
 	// Optimization Algorithms
 	enum OptimizationAlgorithms {GD_MINIMIZER, BFGS_MINIMIZER};
@@ -232,6 +236,8 @@ public:
 	// limits for distance between grippers (namely, the mount-point-origins of the grippers)
 	std::vector<std::tuple<int, int, double, double, double, double> > distanceLimitsGrippers;	// contains: pair i,j of grippers; lower limit; upper limit; stiffness; epsilon
 
+	// color
+	V3D femObjColor = V3D(0.7, 1.0, 0.7);
 
 public:
 

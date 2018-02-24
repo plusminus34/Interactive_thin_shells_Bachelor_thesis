@@ -69,158 +69,231 @@ BenderApp3D::BenderApp3D()
 	// setup the experiment
 	////////////////////////
 
+	config = new BenderExperimentConfiguration;
+
 	// Rod example
-	//BenderExperimentConfiguration config;
 	//{
-	//	config.gravity = V3D(0.0, -9.8, 0.0);
-	//	config.fem_model_filename = "../data/3dModels/square_rod_0p03x0p3.ply";
-	//	config.fem_offset = P3D(0.0, 0.35, 0.50);
-	//	config.fem_scale = 1.0;
+	//	config->gravity = V3D(0.0, -9.8, 0.0);
+	//	config->fem_model_filename = "../data/3dModels/square_rod_0p03x0p3.ply";
+	//	config->fem_offset = P3D(0.0, 0.35, 0.50);
+	//	config->fem_scale = 1.0;
 
-	//	config.massDensity = 43.63;
-	//	config.youngsModulus = 4.0e3;//4e3;//2.135e4;//3e3;;
-	//	config.poissonRatio = 0.376;
+	//	config->massDensity = 43.63;
+	//	config->youngsModulus = 4.0e3;//4e3;//2.135e4;//3e3;;
+	//	config->poissonRatio = 0.376;
 
-	//	config.maxTetVolume = 1.35e-6;//1.0e-6;
+	//	config->maxTetVolume = 1.35e-6;//1.0e-6;
 
 	//	// fiber for matched target trajectory
-	//	config.n_nodes_matched_fiber = 0;
-	//	config.matched_fiber_start = P3D(-0.15, 0.0, 0.0);
-	//	config.matched_fiber_end = P3D(+0.15, 0.0, 0.0);
+	//	config->n_nodes_matched_fiber = 0;
+	//	config->matched_fiber_start = P3D(-0.15, 0.0, 0.0);
+	//	config->matched_fiber_end = P3D(+0.15, 0.0, 0.0);
 
 	//	// fem mounts
-	//	config.femMounts.push_back(FemMount(P3D(-0.15, 0.0, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
-	//	config.femMounts.push_back(FemMount(P3D(+0.15, 0.0, 0.0), V3D(-1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
+	//	config->femMounts.push_back(FemMount(P3D(-0.15, 0.0, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
+	//	config->femMounts.push_back(FemMount(P3D(+0.15, 0.0, 0.0), V3D(-1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
 
 	//	// grippers
-	//	config.grippers.push_back(Gripper());
-	//	config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::PLANE_ABB_FINGERTIPS_PLUS_5, 0.03);
-	//	config.grippers.push_back(Gripper());
-	//	config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::PLANE_ABB_FINGERTIPS_PLUS_5, 0.03);
+	//	config->grippers.push_back(Gripper());
+	//	config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::PLANE_ABB_FINGERTIPS_PLUS_5, 0.03);
+	//	config->grippers.push_back(Gripper());
+	//	config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::PLANE_ABB_FINGERTIPS_PLUS_5, 0.03);
 
 	//	// limit distance between grippers
-	//	config.distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.1, 0.315, 1000.0, 0.005));
+	//	config->distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.1, 0.315, 1000.0, 0.005));
 	//}
+
+	//// rod 2
+	//{
+	//	config->gravity = V3D(0.0, -9.8, 0.0);
+	//	config->fem_model_filename = "../data/3dModels/rod2.ply";
+	//	config->fem_offset = P3D(0.0, 0.35, 0.50);
+	//	config->fem_scale = 0.001;
+
+	//	config->massDensity = 43.63;
+	//	config->youngsModulus = 4.0e3;//4e3;//2.135e4;//3e3;;
+	//	config->poissonRatio = 0.376;
+
+	//	config->maxTetVolume = 2e-6;//1.0e-6;
+
+	//	// fiber for matched target trajectory
+	//	config->n_nodes_matched_fiber = 0;
+	//	config->matched_fiber_start = P3D(-0.15, 0.0, 0.0);
+	//	config->matched_fiber_end = P3D(+0.15, 0.0, 0.0);
+
+	//	// fem mounts
+	//	config->femMounts.push_back(FemMount(P3D(-(0.190), 0.0, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
+	//	config->femMounts.push_back(FemMount(P3D( (0.190), 0.0, 0.0), V3D(-1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
+
+	//	// grippers
+	//	config->grippers.push_back(Gripper());
+	//	config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::WAFFLE_40x40, 0.03);
+	//	config->grippers.push_back(Gripper());
+	//	config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::WAFFLE_40x40, 0.03);
+
+	//	// limit distance between grippers
+	//	config->distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.1, 0.400, 1000.0, 0.005));
+	//}
+
+	// rod 3
+	{
+		config->gravity = V3D(0.0, -9.8, 0.0);
+		config->fem_model_filename = "../data/3dModels/rod3.ply";
+		config->fem_offset = P3D(0.0, 0.35, 0.50);
+		config->fem_scale = 0.001;
+
+		config->massDensity = 43.63;
+		config->youngsModulus = 2.0e4;//4e3;//2.135e4;//3e3;;
+		config->poissonRatio = 0.376;
+
+		config->maxTetVolume = 1.0e-6;//1.0e-6;
+
+		// fiber for matched target trajectory
+		config->n_nodes_matched_fiber = 0;
+		config->matched_fiber_start = P3D(-0.15, 0.0, 0.0);
+		config->matched_fiber_end = P3D(+0.15, 0.0, 0.0);
+
+		// fem mounts
+		config->femMounts.push_back(FemMount(P3D(-(0.200), 0.0, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
+		config->femMounts.push_back(FemMount(P3D( (0.200), 0.0, 0.0), V3D(-1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
+
+		// grippers
+		config->grippers.push_back(Gripper());
+		config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::WAFFLE_40x40, 0.03);
+		config->grippers.push_back(Gripper());
+		config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::WAFFLE_40x40, 0.03);
+
+		// limit distance between grippers
+		config->distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.1, 0.415, 1000.0, 0.005));
+
+		config->femObjColor = V3D(0.82,0.81,0.8);
+	}
 
 	////// twisted X
 	//BenderExperimentConfiguration config;
 	//{
-	//	config.gravity = V3D(0.0, -9.8, 0.0);
-	//	config.fem_model_filename = "../data/3dModels/twistedX.ply";
-	//	config.fem_offset = P3D(0.0, 0.0, 0.50);
-	//	config.fem_scale = 0.001;
+	//	config->gravity = V3D(0.0, -9.8, 0.0);
+	//	config->fem_model_filename = "../data/3dModels/twistedX.ply";
+	//	config->fem_offset = P3D(0.0, 0.0, 0.50);
+	//	config->fem_scale = 0.001;
 
-	//	config.massDensity = 43.63;
-	//	config.youngsModulus = 4e3;//2.135e4;
-	//	config.poissonRatio = 0.376;
+	//	config->massDensity = 43.63;
+	//	config->youngsModulus = 4e3;//2.135e4;
+	//	config->poissonRatio = 0.376;
 
-	//	config.maxTetVolume = 3.0e-6;
+	//	config->maxTetVolume = 3.0e-6;
 
 	//	// fem mounts
-	//	config.femMounts.push_back(FemMount(P3D(-0.1116, 0.3433, 0.0), V3D(0.5, -1.0/sqrt(2), 0.0), V3D(0.0, 0.0, 1.0)));
-	//	config.femMounts.push_back(FemMount(P3D(+0.1116, 0.3433, 0.0), V3D(-0.5,-1.0/sqrt(2), 0.0), V3D(0.0, 0.0, 1.0)));
-	//	config.femMounts.push_back(FemMount(P3D(0.0, 0.0, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, 1.0, 0.0)));
+	//	config->femMounts.push_back(FemMount(P3D(-0.1116, 0.3433, 0.0), V3D(0.5, -1.0/sqrt(2), 0.0), V3D(0.0, 0.0, 1.0)));
+	//	config->femMounts.push_back(FemMount(P3D(+0.1116, 0.3433, 0.0), V3D(-0.5,-1.0/sqrt(2), 0.0), V3D(0.0, 0.0, 1.0)));
+	//	config->femMounts.push_back(FemMount(P3D(0.0, 0.0, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, 1.0, 0.0)));
 
 	//	// grippers
-	//	config.grippers.push_back(Gripper());
-	//	config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::WAFFLE_40x40, 0.03);
-	//	config.grippers.push_back(Gripper());
-	//	config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::WAFFLE_40x40, 0.03);
-	//	config.grippers.push_back(Gripper());
-	//	config.grippers.back().makeFloorGripper(config.fem_offset);
+	//	config->grippers.push_back(Gripper());
+	//	config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::WAFFLE_40x40, 0.03);
+	//	config->grippers.push_back(Gripper());
+	//	config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::WAFFLE_40x40, 0.03);
+	//	config->grippers.push_back(Gripper());
+	//	config->grippers.back().makeFloorGripper(config->fem_offset);
 
 	//	// limit distance between grippers
-	//	config.distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.1, 0.36, 1000.0, 0.005));
-	//	config.distanceLimitsGrippers.push_back(std::make_tuple(0, 2, 0.1, 0.36, 1000.0, 0.005));
-	//	config.distanceLimitsGrippers.push_back(std::make_tuple(1, 2, 0.1, 0.36, 1000.0, 0.005));
+	//	config->distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.1, 0.36, 1000.0, 0.005));
+	//	config->distanceLimitsGrippers.push_back(std::make_tuple(0, 2, 0.1, 0.36, 1000.0, 0.005));
+	//	config->distanceLimitsGrippers.push_back(std::make_tuple(1, 2, 0.1, 0.36, 1000.0, 0.005));
 	//}
 
 	//// frame
-	BenderExperimentConfiguration config;
-	{
-		config.gravity = V3D(0.0, -9.8, 0.0);
-		config.fem_model_filename = "../data/3dModels/frame_with_strut.ply";
-		config.fem_model_filename = "../data/3dModels/frame_rectangular.ply";
-		config.fem_offset = P3D(0.0, 0.35, 0.50);
-		config.fem_scale = 0.001;
+	//BenderExperimentConfiguration config;
+	//{
+	//	config->gravity = V3D(0.0, -9.8, 0.0);
+	//	config->fem_model_filename = "../data/3dModels/frame_with_strut.ply";
+	//	config->fem_model_filename = "../data/3dModels/frame_rectangular.ply";
+	//	config->fem_offset = P3D(0.0, 0.35, 0.50);
+	//	config->fem_scale = 0.001;
 
-		config.massDensity = 43.63;
-		config.youngsModulus = 6e3;//2.135e4;
-		config.poissonRatio = 0.376;
+	//	config->massDensity = 43.63;
+	//	config->youngsModulus = 8e3;//2.135e4;
+	//	config->poissonRatio = 0.376;
 
-		config.maxTetVolume = 3.0e-6;
+	//	config->maxTetVolume = 3.0e-6;
 
-		// fem mounts
-		config.femMounts.push_back(FemMount(P3D(-(0.275/2.0 + 0.015), 0.0, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
-		config.femMounts.push_back(FemMount(P3D( (0.275/2.0 + 0.015), 0.0, 0.0), V3D(-1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
+	//	// fem mounts
+	//	config->femMounts.push_back(FemMount(P3D(-(0.270/2.0), 0.0, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
+	//	config->femMounts.push_back(FemMount(P3D( (0.270/2.0), 0.0, 0.0), V3D(-1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
 
-		// grippers
-		config.grippers.push_back(Gripper());
-		config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::WAFFLE_40x40, 0.03);
-		config.grippers.push_back(Gripper());
-		config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::WAFFLE_40x40, 0.03);
+	//	// grippers
+	//	config->grippers.push_back(Gripper());
+	//	config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::WAFFLE_40x40, 0.03);
+	//	config->grippers.push_back(Gripper());
+	//	config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::WAFFLE_40x40, 0.03);
 
-		// limit distance between grippers
-		config.distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.10, 0.38, 1000.0, 0.005));
-	}
+	//	// limit distance between grippers
+	//	config->distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.10, 0.42, 1000.0, 0.005));
+	//}
 
 	// plate
-	//BenderExperimentConfiguration config;
 	//{
-	//	config.gravity = V3D(0.0, -9.8, 0.0);
-	//	config.fem_model_filename = "../data/3dModels/plate_thin.ply";
-	//	config.fem_offset = P3D(0.0, 0.2, 0.35);
-	//	config.fem_scale = 0.001;
+	//	config->gravity = V3D(0.0, -9.8, 0.0);
+	//	config->fem_model_filename = "../data/3dModels/plate_thin.ply";
+	//	config->fem_offset = P3D(0.0, 0.3, 0.45);
+	//	config->fem_scale = 0.001;
 
-	//	config.massDensity = 43.63;
-	//	config.youngsModulus = 1e4;//2.135e4;
-	//	config.poissonRatio = 0.376;
+	//	config->massDensity = 43.63;
+	//	config->youngsModulus = 1.0e4;//2.135e4;
+	//	config->poissonRatio = 0.376;
 
-	//	config.maxTetVolume = 10e-6;
+	//	config->maxTetVolume = 10e-6;
 
 	//	// fem mounts
-	//	config.femMounts.push_back(FemMount(P3D(-(0.3/2.0), 0.0, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, -1.0, 0.0)));
-	//	config.femMounts.push_back(FemMount(P3D( (0.3/2.0), 0.0, 0.0), V3D(-1.0, 0.0, 0.0), V3D(0.0, -1.0, 0.0)));
+	//	config->femMounts.push_back(FemMount(P3D(-(0.3/2.0), 0.0, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, -1.0, 0.0)));
+	//	config->femMounts.push_back(FemMount(P3D( (0.3/2.0), 0.0, 0.0), V3D(-1.0, 0.0, 0.0), V3D(0.0, -1.0, 0.0)));
 
 	//	// grippers
-	//	config.grippers.push_back(Gripper());
-	//	config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::WAFFLE_40x40, 0.01);
-	//	config.grippers.push_back(Gripper());
-	//	config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::WAFFLE_40x40, 0.01);
+	//	config->grippers.push_back(Gripper());
+	//	config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::WAFFLE_40x40, 0.01);
+	//	config->grippers.push_back(Gripper());
+	//	config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::WAFFLE_40x40, 0.01);
 
 	//	// limit distance between grippersv
-	//	config.distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.1, 0.31, 1000.0, 0.005));
+	//	config->distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.1, 0.325, 1000.0, 0.005));
+
+	//	// color
+	//	config->femObjColor = V3D(0.7,0.87,1.0);
 	//}
 
-	//BenderExperimentConfiguration config;
+	// Teddy
 	//{
-	//	config.gravity = V3D(0.0, -9.8, 0.0);
-	//	//config.fem_model_filename = "../data/3dModels/teddy2.ply";
-	//	config.fem_model_filename = "../data/3dModels/teddy2_big.ply";
-	//	config.fem_offset = P3D(0.0, 0.35, 0.45);
-	//	config.fem_scale = 0.001;
 
-	//	config.massDensity = 43.63;
-	//	config.youngsModulus = 1e4;//2.135e4;
-	//	config.poissonRatio = 0.376;
+	//	config->gravity = V3D(0.0, -9.8, 0.0);
+	//	//config->fem_model_filename = "../data/3dModels/teddy2.ply";
+	//	config->fem_model_filename = "../data/3dModels/teddy2_big.ply";
+	//	config->fem_offset = P3D(0.0, 0.35, 0.45);
+	//	config->fem_scale = 0.001;
 
-	//	config.maxTetVolume = 4e-6;//10e-6;//4e-6;
+	//	config->massDensity = 43.63;
+	//	config->youngsModulus = 8e3;//2.135e4;
+	//	config->poissonRatio = 0.376;
+
+	//	config->maxTetVolume = 4e-6;//10e-6;//4e-6;
 
 	//	// fem mounts
-	//	config.femMounts.push_back(FemMount(P3D(-(0.104), -0.092, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
-	//	config.femMounts.push_back(FemMount(P3D( (0.115), 0.07, 0.0), V3D(-1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
+	//	config->femMounts.push_back(FemMount(P3D(-(0.104), -0.092, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
+	//	config->femMounts.push_back(FemMount(P3D( (0.115), 0.07, 0.0), V3D(-1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
 
 	//	// grippers
-	//	config.grippers.push_back(Gripper());
-	//	config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::WAFFLE_40x40, 0.02);
-	//	config.grippers.push_back(Gripper());
-	//	config.grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::WAFFLE_40x40, 0.02);
+	//	config->grippers.push_back(Gripper());
+	//	config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::RIGHT, Gripper::FingerType::WAFFLE_40x40, 0.02);
+	//	config->grippers.push_back(Gripper());
+	//	config->grippers.back().makeYuMiGripper_default_mounting(Gripper::Side::LEFT, Gripper::FingerType::WAFFLE_40x40, 0.02);
 
 	//	// limit distance between grippersv
-	//	config.distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.1, 0.31, 1000.0, 0.005));
+	//	config->distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.1, 0.32, 1000.0, 0.005));
+
+	//	// color
+	//	config->femObjColor = V3D(0.7,0.87,1.0);
 	//}
 
-	setupExperiment(config);
+	setupExperiment(*config);
 
 
 	// move robot to initial configuration with IK solver
@@ -255,7 +328,7 @@ BenderApp3D::BenderApp3D()
 	///////////////////////////////
 
 	// camera view
-	camera->setCameraTarget(config.fem_offset - V3D(0.0, 0.0, 0.25));
+	camera->setCameraTarget(config->fem_offset - V3D(0.0, 0.0, 0.25));
 
 	glfwSetWindowSize(glfwWindow, 1920, 1080);
 	//glfwSetWindowSize(glfwWindow, 1280, 720);
@@ -1355,7 +1428,7 @@ void BenderApp3D::drawScene() {
 	glDisable(GL_LIGHTING);
 	//glColor3d(0.8,0.8,1);
 	glColor3d(1,1,1);
-	femMesh->drawSimulationMesh(showFEMSurface);
+	femMesh->drawSimulationMesh(showFEMSurface, config->femObjColor);
 
 	// draw origin
 	P3D p0(0.0, 0.0, 0.0);
