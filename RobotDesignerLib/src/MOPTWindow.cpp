@@ -447,8 +447,8 @@ void MOPTWindow::drawAuxiliarySceneInfo(){
 
 //any time a physical key is pressed, this event will trigger. Useful for reading off special keys...
 bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
-	if (initialized && ffpViewer && showFFPViewer) {
-		if (ffpViewer->onKeyEvent(key, action, mods))
+	if (initialized) {
+		if (ffpViewer && showFFPViewer && ffpViewer->onKeyEvent(key, action, mods))
 			return true;
 		if (key == GLFW_KEY_DELETE && action == GLFW_PRESS)
 		{
