@@ -186,8 +186,8 @@ void RobotDesignerApp::setupWindows() {
 	else if (viewOptions == MOPT_WINDOW_ONLY && moptWindow) {
 		moptWindow->setViewportParameters(offset, 0, w, h);
 		moptWindow->ffpViewer->setViewportParameters(offset, 0, w/2, h / 4);
-		showConsole = false;
-		moptWindow->showFFPViewer = false;
+//		showConsole = false;
+//		moptWindow->showFFPViewer = false;
 	}
 	else {
 		consoleWindow->setViewportParameters(offset, 0, w, 280);
