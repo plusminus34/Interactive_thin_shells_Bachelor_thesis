@@ -19,6 +19,7 @@
 #include "OptimizationLib/GradientDescentFunctionMinimizer.h"
 #include "OptimizationLib/BFGSFunctionMinimizer.h"
 #include "MathLib/Transformation.h"
+#include <GUILib/GLTrackingCamera.h>
 
 #include <algorithm>
 #include <cmath>
@@ -143,15 +144,15 @@ BenderApp3D::BenderApp3D()
 		config->fem_scale = 0.001;
 
 		config->massDensity = 43.63;
-		config->youngsModulus = 2.0e4;//4e3;//2.135e4;//3e3;;
+		config->youngsModulus = 1.0e4;//4e3;//2.135e4;//3e3;;
 		config->poissonRatio = 0.376;
 
 		config->maxTetVolume = 1.0e-6;//1.0e-6;
 
 		// fiber for matched target trajectory
-		config->n_nodes_matched_fiber = 0;
-		config->matched_fiber_start = P3D(-0.15, 0.0, 0.0);
-		config->matched_fiber_end = P3D(+0.15, 0.0, 0.0);
+		config->n_nodes_matched_fiber = 11;
+		config->matched_fiber_start = P3D(-0.16, 0.0, 0.0);
+		config->matched_fiber_end = P3D(+0.16, 0.0, 0.0);
 
 		// fem mounts
 		config->femMounts.push_back(FemMount(P3D(-(0.200), 0.0, 0.0), V3D(1.0, 0.0, 0.0), V3D(0.0, 0.0, 1.0)));
@@ -330,11 +331,27 @@ BenderApp3D::BenderApp3D()
 	// camera view
 	camera->setCameraTarget(config->fem_offset - V3D(0.0, 0.0, 0.25));
 
-	glfwSetWindowSize(glfwWindow, 1920, 1080);
+	glfwSetWindowSize(glfwWindow, 2560, 1440);
+	//glfwSetWindowSize(glfwWindow, 1920, 1080);
 	//glfwSetWindowSize(glfwWindow, 1280, 720);
 
 	desiredFrameRate = 90;
 
+	// set results-camera
+	{
+		GLTrackingCamera * cam = dynamic_cast<GLTrackingCamera *>(camera);
+		
+		double dist_to_yumi = 2.0;
+		double dist_to_target = 4.0;
+
+		cam->camDistance = -dist_to_target;
+		cam->setCameraTarget(P3D(0.0, 0.3, 0.0 -(dist_to_target - dist_to_yumi)));
+
+		cam->camViewDirection = V3D(0, 0, -1);
+		cam->camUpAxis = V3D(0, 1, 0);
+
+		
+	}
 
 	////////////////////////
 	// menu 
@@ -355,7 +372,7 @@ BenderApp3D::BenderApp3D()
 	inverseDeformationSolver->minimizer->lineSearchIterationLimit = 5;
 
 	inverseDeformationSolver->femMesh->meshPositionRegularizer.r = 0.0;
-	inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.01;
+	inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.06;
 	inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.0001;
 	inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r = 0.0;
 
@@ -429,7 +446,7 @@ void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
 	
 			// draw some target trjectory
 			targetTrajectory_input.addKnotBack(config.matched_fiber_start + config.fem_offset + P3D(0.0, 0.05, 0.0));
-			targetTrajectory_input.addKnotBack((config.matched_fiber_start + config.matched_fiber_end)*0.5 + config.fem_offset + P3D( 0.0,  0.1, 0.0));
+			targetTrajectory_input.addKnotBack((config.matched_fiber_start + config.matched_fiber_end)*0.5 + config.fem_offset + P3D( 0.0,  0.12, 0.0));
 			targetTrajectory_input.addKnotBack(config.matched_fiber_end + config.fem_offset + P3D(0.0, 0.05, 0.0));
 
 			// add a "MatchScaledTrajObjective"

@@ -610,7 +610,8 @@ void GLApplication::draw(){
 	glViewport(0, 0, viewportWidth, viewportHeight);
 	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
 	glLoadIdentity();									// Reset The Projection Matrix
-	gluPerspective(45.0, (double)viewportWidth / viewportHeight, 0.05, 500.0);
+	//gluPerspective(45.0, (double)viewportWidth / viewportHeight, 0.05, 500.0);
+	gluPerspective(25.0, (double)viewportWidth / viewportHeight, 0.05, 500.0);
 	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
 	glLoadIdentity();									// Reset The Modelview Matrix
 
