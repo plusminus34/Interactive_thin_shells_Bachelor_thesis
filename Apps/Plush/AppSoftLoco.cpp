@@ -1,7 +1,6 @@
 #include "AppSoftLoco.h"
-// --
-#include "P2DDragger.h"
-#include "Poser.h"
+
+using namespace nanogui;
 
 AppSoftLoco::AppSoftLoco() {
     setWindowTitle("AppSoftLoco");
@@ -31,15 +30,19 @@ AppSoftLoco::AppSoftLoco() {
 
 	// -- // ik
 	ik = new SoftLocoSolver(mesh);
-	// push_back_handler(new P2DDragger(&ik->COMp));
-	// push_back_handler(new Poser(mesh, ik));
+	{
+		for (auto &COMp : ik->COMpJ) {
+			auto COM_handler = new P2DDragger(&COMp);
+			COM_handlers.push_back(COM_handler);
+			push_back_handler(COM_handler);
+		}
+		// push_back_handler(new Poser(mesh, ik));
+	}
 	// -- 
 	INTEGRATE_FORWARD_IN_TIME = false;
 	ik->PROJECT           = true;
 	ik->LINEAR_APPROX     = true;
 	ik->REGULARIZE_alphac = true;
-
-
 	if (TEST_CASE == "swingup") { 
 		ik->c_alphac_ = 1.;
 	}
@@ -60,8 +63,7 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("HIGH_PRECISION_NEWTON", mesh->HIGH_PRECISION_NEWTON);
 	mainMenu->addVariable("LINEAR_APPROX", ik->LINEAR_APPROX);
 	mainMenu->addGroup("loco");
-	mainMenu->addVariable("SELECTED_FRAME_i", ik->SELECTED_FRAME_i);
-
+	auto tmp = mainMenu->addVariable("SELECTED_FRAME_i", ik->SELECTED_FRAME_i);
 	menuScreen->performLayout(); 
 
 	{
@@ -80,6 +82,13 @@ void AppSoftLoco::processToggles() {
 }
 
 void AppSoftLoco::drawScene() {
+	resetCamera();
+	{
+		for (size_t i = 0; i < COM_handlers.size(); ++i) {
+			COM_handlers[i]->ACTIVE = (i == ik->SELECTED_FRAME_i);
+		}
+	}
+
 	DRAW_HANDLERS = false;
 	PlushApplication::drawScene(); 
 	draw_floor2d();
@@ -119,6 +128,20 @@ bool AppSoftLoco::onKeyEvent(int key, int action, int mods) {
 }
 
 bool AppSoftLoco::onCharacterPressedEvent(int key, int mods) {
+	if (key == 'l') {
+		if (ik->SELECTED_FRAME_i == ik->K - 1) {
+			ik->SELECTED_FRAME_i = 0;
+		} else {
+			ik->SELECTED_FRAME_i += 1;
+		}
+	} else if (key == 'h') {
+		if (ik->SELECTED_FRAME_i == 0) {
+			ik->SELECTED_FRAME_i = ik->K - 1;
+		} else {
+			ik->SELECTED_FRAME_i -= 1;
+		}
+	}
+	// --
 	if (PlushApplication::onCharacterPressedEvent(key, mods)) { return true; } 
     return false;
 } 

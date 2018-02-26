@@ -1,4 +1,4 @@
-4
+3
 
 // --
 
@@ -6,4 +6,4 @@ const int APP_XD_ID          = 0;
 const int APP_IK_ID          = 1;
 const int APP_EDITOR2D_ID    = 2;
 const int APP_LOCO_ID        = 3;
-const int APP_BOA_ID        = 3;
+const int APP_BOA_ID         = 4;

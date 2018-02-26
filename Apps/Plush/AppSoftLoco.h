@@ -6,6 +6,8 @@
 #include "SoftLocoSolver.h"
 #include "CSTSimulationMesh2D.h"
 #include "CSTSimulationMesh3D.h"
+#include "P2DDragger.h"
+#include "Poser.h"
 
 class AppSoftLoco : public PlushApplication {
 
@@ -16,6 +18,9 @@ public:
 public:
     SimulationMesh *mesh;
 	SoftLocoSolver *ik;
+
+public:
+	vector<P2DDragger *> COM_handlers;
 
 public:
 	bool SOLVE_IK = true;
