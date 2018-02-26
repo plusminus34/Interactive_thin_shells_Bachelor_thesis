@@ -64,6 +64,8 @@ void SoftIKSolver::step() {
 	for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
 		iterate();
 	}
+	// NOTE!
+	cout << calculate_O(alphac_curr) << endl;
 }
 
 void SoftIKSolver::iterate() {

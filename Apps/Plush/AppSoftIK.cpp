@@ -11,9 +11,10 @@ AppSoftIK::AppSoftIK() {
 	const vector<string> TEST_CASES = {
 		"tentacle", // 0
 		"3ball",    // 1
-		"tri"       // 2
+		"tri",      // 2
+		"swingup"   // 3
 	};
-	string TEST_CASE = TEST_CASES[1];
+	string TEST_CASE = TEST_CASES[3];
 
 	// -- // mesh
 	mesh = new CSTSimulationMesh2D();
@@ -35,6 +36,12 @@ AppSoftIK::AppSoftIK() {
 	} else if (TEST_CASE == "tri") {
 		mesh->pinToFloor();
 		mesh->rig_boundary_simplices();
+	} else if (TEST_CASE == "swingup") {
+		mesh->pinToLeftWall();
+		mesh->relax_tendons();
+		mesh->xvPair_INTO_Mesh(mesh->solve_statics());
+		mesh->timeStep = .1;
+		INTEGRATE_FORWARD_IN_TIME = false;
 	}
 
 	// -- // ik
@@ -56,6 +63,9 @@ AppSoftIK::AppSoftIK() {
 	} else if (TEST_CASE == "tri") {
 		ik->c_alphac_ = 1.;
 		ik->h_alphac_ = 1.; 
+	} else if (TEST_CASE == "swingup") {
+		ik->c_alphac_ = 1.;
+		ik->h_alphac_ = 0.; 
 	}
  
 	// -- // inspector
@@ -91,6 +101,28 @@ void AppSoftIK::drawScene() {
 	draw_floor2d();
 	mesh->draw();
 	ik->draw(); 
+	{
+		for (auto &bs : mesh->boundary_simplices) {
+			set_color(ORCHID);
+			glLineWidth(4);
+			glBegin(GL_LINE_STRIP); {
+				for (auto &node : bs->nodes) {
+					glP3D(node->getCoordinates(ik->x_curr));
+				}
+			} glEnd();
+			glPointSize(10);
+			// ik COM
+			glBegin(GL_POINTS); {
+				glP3D(mesh->get_COM(ik->x_curr));
+			} glEnd();
+			// ref COM
+			set_color(GOLDCLOVER);
+			glBegin(GL_POINTS); {
+				dVector SLACK_; resize_fill(SLACK_, ik->T(), -1000.);
+				glP3D(mesh->get_COM(ik->x_of_alphac(SLACK_)));
+			} glEnd();
+		}
+	}
 	PlushApplication::recordVideo();
 }
 
@@ -98,8 +130,8 @@ void AppSoftIK::process() {
 		ik->SOLVE_DYNAMICS = SOLVE_DYNAMICS;
 		ik->timeStep = timeStep;
 		// --
-		ik->x_0 = mesh->x; ik->v_0 = mesh->v;
-		ik->step();
+		if (INTEGRATE_FORWARD_IN_TIME) { ik->x_0 = mesh->x; ik->v_0 = mesh->v; }
+		if (SOLVE_IK) { ik->step(); }
 		if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->x_0, ik->v_0, ik->alphac_curr) : mesh->solve_statics(ik->x_0, ik->alphac_curr)); }
 }
 

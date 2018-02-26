@@ -163,6 +163,10 @@ bool PlushApplication::onKeyEvent(int key, int action, int mods) {
 }
  
 bool PlushApplication::onCharacterPressedEvent(int key, int mods) {
+	if (key == 'c') {
+		resetCamera();
+		return true;
+	}
 	// -- //
 	if (GLApplication::onCharacterPressedEvent(key, mods)) { return true; } 
 	return false;

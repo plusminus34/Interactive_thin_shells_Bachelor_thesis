@@ -82,7 +82,6 @@ void AppSoftLoco::processToggles() {
 }
 
 void AppSoftLoco::drawScene() {
-	resetCamera();
 	{
 		for (size_t i = 0; i < COM_handlers.size(); ++i) {
 			COM_handlers[i]->ACTIVE = (i == ik->SELECTED_FRAME_i);
@@ -99,7 +98,7 @@ void AppSoftLoco::drawScene() {
 
 void AppSoftLoco::process() { 
 	if (INTEGRATE_FORWARD_IN_TIME) { ik->x_0 = mesh->x; ik->v_0 = mesh->v; } // FORNOW
-	ik->step();
+	if (SOLVE_IK) { ik->step(); }
 	if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->x_0, ik->v_0, ik->alphacJ_curr[0]) : mesh->solve_statics(ik->x_0, ik->alphacJ_curr[0])); }
 }
 
