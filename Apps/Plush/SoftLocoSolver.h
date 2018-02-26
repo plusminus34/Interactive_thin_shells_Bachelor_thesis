@@ -44,9 +44,10 @@ public:
 	int D();
 	int N();
 	int T();
-	const int K = 4; // HORIZON
+	const int K = 1; // HORIZON
 
 public:
+	double     calculate_OJ(const Traj &alphac);
 	double     calculate_O(const dVector &alphac);
 	double     calculate_Q(const dVector &alphac);
 	double     calculate_R(const dVector &alphac);
@@ -78,20 +79,25 @@ public:
 	void iterate();
 	void project();
  
+
 	Traj alphacJ_next(const Traj &alphacJ, const Traj &xJ);
-	dVector alphac_next(const dVector &alphac, const dVector &x);
-
-	dVector calculate_dOdalphac(const dVector &alphac, const dVector &x);
-	double calculate_gamma(const dVector &alphac, const dVector &dOdalphac);
-
+	double calculate_gammaJ(const Traj &alphacJ, const Traj &dOdalphacJ);
 	Traj xJ_of_alphacJ(const Traj &alphacJ);
+
+	dVector alphac_next(const dVector &alphac, const dVector &x); 
+	double calculate_gamma(const dVector &alphac, const dVector &dOdalphac); 
 	dVector x_of_alphac(const dVector &alphac);
 
 	// -- //
+	Traj calculate_dOdalphacJ(const Traj &alphacJ, const Traj &xJ);
 	Traj calculate_dQdalphacJ(const Traj &alphacJ, const Traj &xJ);
+	Traj calculate_dRdalphacJ(const Traj &alphacJ);
+
+	dVector calculate_dOdalphac(const dVector &alphac, const dVector &x);
+	dVector calculate_dQdalphac(const dVector &alphac, const dVector &x);
 	dVector calculate_dQdx(const dVector &alphac, const dVector &x);
 	MatrixNxM calculate_dxdalphac(const dVector &alphac, const dVector &x);
-	dVector calculate_dRdalphac(const dVector &alphac, const dVector &x);
+	dVector calculate_dRdalphac(const dVector &alphac);
 
 	// -- //
 
