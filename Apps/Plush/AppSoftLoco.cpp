@@ -85,23 +85,24 @@ void AppSoftLoco::drawScene() {
 	DRAW_HANDLERS = false;
 	PlushApplication::drawScene(); 
 	draw_floor2d();
-	// mesh->draw(); // FORNOW
-	ik->draw(); 
+
+	mesh->draw(); // FORNOW
+
 	glMasterPush(); {
 		glTranslated(1., 0., 0.);
-		Zik->draw();
-		{
+		glLineWidth(9);
+		set_color(GOLDCLOVER);
+		glBegin(GL_LINE_STRIP); {
 			for (auto &bs : Zmesh->boundary_simplices) {
-				set_color(ORCHID);
-				glLineWidth(8);
-				glBegin(GL_LINE_STRIP); {
-					for (auto &node : bs->nodes) {
-						glP3D(node->getCoordinates(Zik->x_curr));
-					}
-				} glEnd();
+				for (auto &node : bs->nodes) {
+					glP3D(node->getCoordinates(Zik->x_curr));
+				}
 			}
-		}
+		} glEnd();
 	} glMasterPop();
+
+	ik->draw(); 
+
 	PlushApplication::recordVideo();
 }
 
@@ -111,9 +112,9 @@ void AppSoftLoco::process() {
 	// -- 
 	if (INTEGRATE_FORWARD_IN_TIME) { ik->x_0 = mesh->x; ik->v_0 = mesh->v; } // FORNOW
 	if (SOLVE_IK) {
-		cout << "--> loco" << endl;
+		cout << endl << "--> loco" << endl;
 		ik->step();
-		cout << "--> Z_ik" << endl;
+		// cout << endl << "--> Z_ik" << endl;
 		Zik->step();
 		// getchar();
 	}
