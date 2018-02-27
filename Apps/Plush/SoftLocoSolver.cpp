@@ -221,6 +221,8 @@ void SoftLocoSolver::project() {
 }
 
 void SoftLocoSolver::projectJ() { 
+
+	/*
 	dVector alphac_proj = alphacJ_curr[0];
 	while (true) {
 		bool PROJECTED = false;
@@ -243,45 +245,44 @@ void SoftLocoSolver::projectJ() {
 	} 
 	alphacJ_curr[0] = alphac_proj;
 	xJ_curr[0]      = x_of_alphac(alphacJ_curr[0]);
+	*/
 
 	// TODO:!!!
-	// alphac_curr = alphac_proj;
-	// x_curr  = x_of_alphac(alphac_curr);
-	// Traj x_tmp;
-	// Traj v_tmp;
-	// for (int i = 0; i < K; ++i) {
-	// 	dVector *alphac_ptr = &alphacJ_curr[i];
-	// 	dVector *x_ptr = &xJ_curr[i];
-	// 	const dVector x_start = (x_tmp.empty()) ? x_0 : x_tmp.back();
-	// 	const dVector v_start = (v_tmp.empty()) ? v_0 : v_tmp.back();
-	// 	// --
-	// 	dVector alphac_proj = *alphac_ptr;
-	// 	while (true) {
-	// 		bool PROJECTED = false;
+	Traj x_tmp;
+	Traj v_tmp;
+	for (int i = 0; i < K; ++i) {
+		dVector *alphac_ptr = &alphacJ_curr[i];
+		dVector *x_ptr = &xJ_curr[i];
+		const dVector x_start = (x_tmp.empty()) ? x_0 : x_tmp.back();
+		const dVector v_start = (v_tmp.empty()) ? v_0 : v_tmp.back();
+		// --
+		dVector alphac_proj = *alphac_ptr;
+		while (true) {
+			bool PROJECTED = false;
 
-	// 		auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_start, v_start, alphac_proj) : mesh->solve_statics(x_start, alphac_proj);
-	// 		dVector x_proj = xv.first;
+			auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_start, v_start, alphac_proj) : mesh->solve_statics(x_start, alphac_proj);
+			dVector x_proj = xv.first;
 
-	// 		for (int i = 0; i < T(); ++i) {
-	// 			double Gamma_i;
-	// 			Gamma_i = mesh->tendons[i]->get_Gamma(x_proj, alphac_proj);
+			for (int i = 0; i < T(); ++i) {
+				double Gamma_i;
+				Gamma_i = mesh->tendons[i]->get_Gamma(x_proj, alphac_proj);
 
-	// 			if (Gamma_i < 0) {
-	// 				PROJECTED = true;
-	// 				alphac_proj[i] += abs(Gamma_i) + .001;
-	// 			}
-	// 		}
+				if (Gamma_i < 0) {
+					PROJECTED = true;
+					alphac_proj[i] += abs(Gamma_i) + .001;
+				}
+			}
 
-	// 		if (!PROJECTED) {
-	// 			break;
-	// 		}
-	// 	}
-	// 	auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_start, v_start, alphac_proj) : mesh->solve_statics(x_start, alphac_proj);
-	// 	x_tmp.push_back(xv.first);
-	// 	v_tmp.push_back(xv.second);
-	// 	*alphac_ptr = alphac_proj;
-	// 	*x_ptr = xv.first;
-	// }
+			if (!PROJECTED) {
+				break;
+			}
+		}
+		auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_start, v_start, alphac_proj) : mesh->solve_statics(x_start, alphac_proj);
+		x_tmp.push_back(xv.first);
+		v_tmp.push_back(xv.second);
+		*alphac_ptr = alphac_proj;
+		*x_ptr = xv.first;
+	}
 }
 
 Traj SoftLocoSolver::alphacJ_next(const Traj &alphacJ, const Traj &xJ) { 
@@ -506,26 +507,19 @@ Traj SoftLocoSolver::calculate_dOdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 
 Traj SoftLocoSolver::calculate_dQdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 
+	/*
 	Traj dQJdalphacJ;
 	MatrixNxM dxdalphac_0_SAFE = calculate_dxdalphac(alphacJ[0], xJ[0]);
 	dQJdalphacJ.push_back(dxdalphac_0_SAFE * calculate_dQdx(alphacJ[0], xJ[0], COMpJ[0])); 
 	dxdalphacJ_SAVED.clear();
 	dxdalphacJ_SAVED.push_back(dxdalphac_0_SAFE);
 	return dQJdalphacJ;
+	*/
 
 	// TODO:!!!
 	// MatrixNxM calculate_dxdalphac(const dVector &x, const dVector &alphac);
 	// MatrixNxM calculate_dxkdxkm1(const dVector &x_k);
 
-	// // FORNOW
-	// auto calculate_dxkdxkm1 = [this](const dVector xk, const dVector &alphack) -> MatrixNxM {
-	// 	double c = (2. / (timeStep*timeStep));
-	// 	MatrixNxM invHk = calculate_H(xk, alphack).toDense().inverse();
-	// 	dVector &M_diag = mesh->m;
-	// 	MatrixNxM dxkdxkm1 = c * invHk * M_diag.asDiagonal();
-	// 	return dxkdxkm1;
-	// };
- 
 	// dVector dQdx_K = calculate_dQdx(alphacJ.back(), xJ.back()); // FORNOW
 	// dVector dx1dx0 = calculate_dxkdxkm1(xJ[0], alphacJ[0]);
 	// return Traj();
@@ -540,21 +534,35 @@ Traj SoftLocoSolver::calculate_dQdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 	// 	dQdalphacJ.push_back(tmp); 
 	// }
 
-	// Traj dQJdalphacJ;
-	// for (int i = 0; i < K; ++i) {
-	// 	dVector dxdalphac_i = calculate_dxdalphac(alphacJ[i], xJ[i]);
-	// 	dVector dQJdx_i; resize_zero(dQJdx_i, D()*N());
-	// 	for (int j = i; j < K; ++j) {
-	// 		dVector dQdx_j = calculate_dQdx(alphacJ[j], xJ[j], COMpJ[j]);
-	// 		MatrixNxM dx_jdx_i; dx_jdx_i.setIdentity(D()*N(), D()*N()); // (*)
-	// 		for (int k = i + 1; k < j; ++k) {
-	// 			dx_jdx_i *= calculate_dxkdxkm1(alphacJ[k], xJ[k]);
-	// 		}
-	// 		dQJdx_i += dx_jdx_i * dQdx_j;
-	// 	}
-	// 	dVector dQdalphac_i = dxdalphac_i * dQJdx_i;
-	// 	dQJdalphacJ.push_back(dQdalphac_i); 
-	// } 
+	// FORNOW
+	auto calculate_dxkdxkm1 = [this](const dVector xk, const dVector &alphack) -> MatrixNxM {
+		double c = (2. / (timeStep*timeStep));
+		MatrixNxM invHk = calculate_H(xk, alphack).toDense().inverse();
+		dVector &M_diag = mesh->m;
+		MatrixNxM dxkdxkm1 = c * invHk * M_diag.asDiagonal();
+		return dxkdxkm1;
+	}; 
+
+	Traj dQJdalphacJ;
+	dxdalphacJ_SAVED.clear();
+	for (int i = 0; i < K; ++i) {
+		MatrixNxM dxdalphac_i = calculate_dxdalphac(alphacJ[i], xJ[i]); 
+		{
+			dxdalphacJ_SAVED.push_back(dxdalphac_i);
+		}
+		dVector dQJdx_i; resize_zero(dQJdx_i, D()*N());
+		for (int j = i; j < K; ++j) {
+			dVector dQdx_j = calculate_dQdx(alphacJ[j], xJ[j], COMpJ[j]);
+			MatrixNxM dx_jdx_i; dx_jdx_i.setIdentity(D()*N(), D()*N()); // (*)
+			for (int k = i + 1; k < j; ++k) {
+				dx_jdx_i *= calculate_dxkdxkm1(alphacJ[k], xJ[k]);
+			}
+			dQJdx_i += dx_jdx_i * dQdx_j;
+		}
+		dVector dQdalphac_i = dxdalphac_i * dQJdx_i;
+		dQJdalphacJ.push_back(dQdalphac_i); 
+	} 
+	return dQJdalphacJ;
 }
 
 Traj SoftLocoSolver::calculate_dRdalphacJ(const Traj &alphacJ) {

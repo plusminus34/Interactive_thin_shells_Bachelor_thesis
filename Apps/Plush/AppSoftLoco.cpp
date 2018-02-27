@@ -9,7 +9,8 @@ AppSoftLoco::AppSoftLoco() {
 
 	const vector<string> TEST_CASES = {
 		"swingup", // 0
-		"tri"      // 1
+		"tri",     // 1
+		"tentacle" // 2
 	};
 	string TEST_CASE = TEST_CASES[1];
 
