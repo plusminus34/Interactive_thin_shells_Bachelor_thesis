@@ -148,7 +148,7 @@ BenderApp3D::BenderApp3D()
 		config->poissonRatio = 0.376;
 
 		//config->maxTetVolume = 1.0e-6;
-		config->maxTetVolume = 0.33e-6;
+		config->maxTetVolume = 1.0e-6;
 		// -1.0, 30.0, 10.0, 3.3, 2.0, 1.0, 0.45, 0.33, 0.1, 0.033
 
 		// fiber for matched target trajectory
@@ -403,6 +403,9 @@ BenderApp3D::BenderApp3D()
 	inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.0000;
 	inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r = 0.0;
 
+
+	femMesh->minimizer.lineSearchEndValue = 1e-9;
+	femMesh->minimizer.solveResidual = 1e-9;
 
 	///////////////////////
 	// GUI defaults
@@ -1439,6 +1442,18 @@ void BenderApp3D::process() {
 	//	delta_centerline = matchedFiber[matchedFiber.size()/2]->getWorldPosition() - matchedFiber.front()->getWorldPosition();
 	//	std::cout << "diff centerline_half: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
 	//}
+	// output centerline to file
+	if(true && matchedFiber.size() > 1 && ++i_temp == 5) {
+		std::fstream outfile("../out/centerline_initial_state_buckled.txt", std::ios_base::app);
+		// mesh info
+		outfile << femMesh->nodes.size() << " " << femMesh->elements.size() << "    ";
+		outfile << matchedFiber.size() << "    ";
+		for(int i = 0; i < matchedFiber.size(); ++i) {
+				outfile << matchedFiber[i]->getWorldPosition()[0] << " " << matchedFiber[i]->getWorldPosition()[1] << " " << matchedFiber[i]->getWorldPosition()[2] << " ";
+		}
+		outfile << std::endl;
+		exit(0);
+	}
 
 	
 

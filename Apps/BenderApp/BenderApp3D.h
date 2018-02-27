@@ -193,6 +193,8 @@ public:
 	//bool timer_is_running = false;
 	//int i_step = -1;
 
+	int i_temp = 0;
+
 
 public:
 	// constructor

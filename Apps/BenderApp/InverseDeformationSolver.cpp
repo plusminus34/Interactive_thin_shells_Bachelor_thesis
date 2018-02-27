@@ -110,7 +110,7 @@ void InverseDeformationSolver<NDim>::computeDoDxi(dVector & dodxi)
 	}
 
 	// dxdxi: sensitivity analysis
-	if(false) {
+	if(true) {
 
 		// get dF/dx  (Hessian from FEM simulation)  [length(x) x length(x)]
 		SparseMatrix H(femMesh->x.size(), femMesh->x.size());
