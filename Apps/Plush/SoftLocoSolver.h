@@ -71,7 +71,8 @@ public:
 
 public:
 	// MatrixNxM       dtaudalphac;
-	MatrixNxM       dxdalphac;
+	MatrixNxM         dxdalphac_SAVED;
+	vector<MatrixNxM> dxdalphacJ_SAVED;
 	// TODO: How do we LINEAR_APPROX on a trajectory? Answer: Just store the relavent Jacobians yo.
 
 public:

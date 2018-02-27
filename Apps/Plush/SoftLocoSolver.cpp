@@ -243,6 +243,8 @@ void SoftLocoSolver::projectJ() {
 	} 
 	alphacJ_curr[0] = alphac_proj;
 	xJ_curr[0]      = x_of_alphac(alphacJ_curr[0]);
+
+	// TODO:!!!
 	// alphac_curr = alphac_proj;
 	// x_curr  = x_of_alphac(alphac_curr);
 	// Traj x_tmp;
@@ -284,13 +286,13 @@ void SoftLocoSolver::projectJ() {
 
 Traj SoftLocoSolver::alphacJ_next(const Traj &alphacJ, const Traj &xJ) { 
 	Traj dOdalphacJ = calculate_dOdalphacJ(alphacJ, xJ);
-	cout << " dOdalphac: " << endl << dOdalphacJ[0] << endl;
 	double gammaJ = calculate_gammaJ(alphacJ, dOdalphacJ);
-	cout << " gamma:     " << endl << gammaJ << endl;
 	Traj alphacJ_next;
 	for (int i = 0; i < K; ++i) {
 		alphacJ_next.push_back(alphacJ[i] - gammaJ * dOdalphacJ[i]);
 	}
+	// cout << " dOdalphac: " << endl << dOdalphacJ[0] << endl;
+	// cout << " gamma:     " << endl << gammaJ << endl;
 	return alphacJ_next;
 }
 
@@ -390,11 +392,29 @@ double SoftLocoSolver::calculate_OJ(const Traj &alphacJ) {
 }
 
 double SoftLocoSolver::calculate_QJ(const Traj &alphacJ) {
+
+	// Traj xJ;
+	// if (!LINEAR_APPROX) {
+	// 	xJ = xJ_of_alphacJ(alphacJ);
+	// } else { 
+	// 	Traj dalphacJ;
+	// 	for (int i = 0; i < K; ++i) {
+	// 		dalphacJ.push_back(alphacJ[i] - alphacJ_curr[i]);
+	// 	}
+
+	// 	// FORNOW: (ignoring cross terms) TODO: Tensor Product
+	// 	for (int i = 0; i < K; ++i) {
+	// 		xJ.push_back(xJ_curr[i] + dxdalphacJ_SAVED[i].transpose() * dalphacJ[i]); 
+	// 	} 
+	// }
 	Traj xJ = xJ_of_alphacJ(alphacJ);
+
 	double QJ = 0.;
 	for (int i = 0; i < K; ++i) {
+		// TODO: Inactive Widgets.
 		QJ += calculate_Q_of_x(xJ[i], COMpJ[i]);
 	}
+
 	return QJ;
 }
 
@@ -439,7 +459,7 @@ double SoftLocoSolver::calculate_Q_approx(const dVector &alphac) {
 	check_alphac_size(alphac);
 	// --
 	dVector dalphac = alphac - alphac_curr;
-	dVector x_approx = x_curr + dxdalphac.transpose() * dalphac; 
+	dVector x_approx = x_curr + dxdalphac_SAVED.transpose() * dalphac; 
 	double Q_approx = calculate_Q_of_x(x_approx, COMp_FORNOW); 
 	return Q_approx;
 }
@@ -487,33 +507,39 @@ Traj SoftLocoSolver::calculate_dOdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 
 Traj SoftLocoSolver::calculate_dQdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 
+	Traj dQJdalphacJ;
+	MatrixNxM dxdalphac_0_SAFE = calculate_dxdalphac(alphacJ[0], xJ[0]);
+	dQJdalphacJ.push_back(dxdalphac_0_SAFE * calculate_dQdx(alphacJ[0], xJ[0], COMpJ[0])); 
+	dxdalphacJ_SAVED.clear();
+	dxdalphacJ_SAVED.push_back(dxdalphac_0_SAFE);
+	return dQJdalphacJ;
+
+	// TODO:!!!
 	// MatrixNxM calculate_dxdalphac(const dVector &x, const dVector &alphac);
 	// MatrixNxM calculate_dxkdxkm1(const dVector &x_k);
 
-	// FORNOW
-	auto calculate_dxkdxkm1 = [this](const dVector xk, const dVector &alphack) -> MatrixNxM {
-		double c = (2. / (timeStep*timeStep));
-		MatrixNxM invHk = calculate_H(xk, alphack).toDense().inverse();
-		dVector &M_diag = mesh->m;
-		MatrixNxM dxkdxkm1 = c * invHk * M_diag.asDiagonal();
-		return dxkdxkm1;
-	};
+	// // FORNOW
+	// auto calculate_dxkdxkm1 = [this](const dVector xk, const dVector &alphack) -> MatrixNxM {
+	// 	double c = (2. / (timeStep*timeStep));
+	// 	MatrixNxM invHk = calculate_H(xk, alphack).toDense().inverse();
+	// 	dVector &M_diag = mesh->m;
+	// 	MatrixNxM dxkdxkm1 = c * invHk * M_diag.asDiagonal();
+	// 	return dxkdxkm1;
+	// };
  
-	{
-		// dVector dQdx_K = calculate_dQdx(alphacJ.back(), xJ.back()); // FORNOW
-		// dVector dx1dx0 = calculate_dxkdxkm1(xJ[0], alphacJ[0]);
-		// return Traj();
+	// dVector dQdx_K = calculate_dQdx(alphacJ.back(), xJ.back()); // FORNOW
+	// dVector dx1dx0 = calculate_dxkdxkm1(xJ[0], alphacJ[0]);
+	// return Traj();
 
-		// Traj dQdalphacJ;
-		// for (int k = 0; k < K; ++k) {
-		// 	dVector tmp = dQdx_K; // dVector dQdalphac_k:
-		// 	for (int j = K; j > k; --j) {
-		// 		tmp = calculate_dxkdxkm1(xJ[j], alphacJ[j]) * tmp;
-		// 	}
-		// 	tmp = calculate_dxdalphac(xJ[k], alphacJ[k]) * tmp;
-		// 	dQdalphacJ.push_back(tmp); 
-		// }
-	}
+	// Traj dQdalphacJ;
+	// for (int k = 0; k < K; ++k) {
+	// 	dVector tmp = dQdx_K; // dVector dQdalphac_k:
+	// 	for (int j = K; j > k; --j) {
+	// 		tmp = calculate_dxkdxkm1(xJ[j], alphacJ[j]) * tmp;
+	// 	}
+	// 	tmp = calculate_dxdalphac(xJ[k], alphacJ[k]) * tmp;
+	// 	dQdalphacJ.push_back(tmp); 
+	// }
 
 	// Traj dQJdalphacJ;
 	// for (int i = 0; i < K; ++i) {
@@ -529,13 +555,7 @@ Traj SoftLocoSolver::calculate_dQdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 	// 	}
 	// 	dVector dQdalphac_i = dxdalphac_i * dQJdx_i;
 	// 	dQJdalphacJ.push_back(dQdalphac_i); 
-	// }
-
-	Traj dQJdalphacJ;
-	dQJdalphacJ.push_back(calculate_dxdalphac(alphacJ[0], xJ[0]) * calculate_dQdx(alphacJ[0], xJ[0], COMpJ[0]));
-
-
-	return dQJdalphacJ;
+	// } 
 }
 
 Traj SoftLocoSolver::calculate_dRdalphacJ(const Traj &alphacJ) {
@@ -559,7 +579,8 @@ dVector SoftLocoSolver::calculate_dQdalphac(const dVector &alphac, const dVector
 	check_x_size(x);
 	check_alphac_size(alphac);
 	// --
-	return calculate_dxdalphac(alphac, x) * calculate_dQdx(alphac, x, COMp_FORNOW);
+	dxdalphac_SAVED = calculate_dxdalphac(alphac, x);
+	return dxdalphac_SAVED * calculate_dQdx(alphac, x, COMp_FORNOW);
 }
 
 dVector SoftLocoSolver::calculate_dQdx(const dVector &alphac, const dVector &x, const P3D &COMp) { 
@@ -624,8 +645,7 @@ MatrixNxM SoftLocoSolver::calculate_dxdalphac(const dVector &alphac, const dVect
 	}
  
 	MatrixNxM dtaudalphac  = dtaudGamma_diag.asDiagonal(); // NOTE: dGammadalphac = I
-	dxdalphac = dtaudalphac     * dxdtau;
-
+	MatrixNxM dxdalphac = dtaudalphac * dxdtau;
 	return dxdalphac;
 }
 
