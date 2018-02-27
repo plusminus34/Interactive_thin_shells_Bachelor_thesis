@@ -109,28 +109,72 @@ void InverseDeformationSolver<NDim>::computeDoDxi(dVector & dodxi)
 		dynamic_cast<MountedPointSpring<NDim>* >(pin)->addDeltaFDeltaXi(dFdxi);
 	}
 
-	// get dF/dx  (Hessian from FEM simulation)  [length(x) x length(x)]
-	SparseMatrix H(femMesh->x.size(), femMesh->x.size());
-	DynamicArray<MTriplet> hessianEntries(0);
+	// dxdxi: sensitivity analysis
+	if(false) {
 
-	//double regularizer_temp = dynamic_cast<FEMEnergyFunction *>(femMesh->energyFunction)->regularizer;
-	femMesh->energyFunction->setToStaticsMode(0.0);
-	femMesh->energyFunction->addHessianEntriesTo(hessianEntries, femMesh->x);
-	femMesh->energyFunction->setToStaticsMode(0.01);
+		// get dF/dx  (Hessian from FEM simulation)  [length(x) x length(x)]
+		SparseMatrix H(femMesh->x.size(), femMesh->x.size());
+		DynamicArray<MTriplet> hessianEntries(0);
 
-	H.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
+		//double regularizer_temp = dynamic_cast<FEMEnergyFunction *>(femMesh->energyFunction)->regularizer;
+		femMesh->energyFunction->setToStaticsMode(0.0);
+		femMesh->energyFunction->addHessianEntriesTo(hessianEntries, femMesh->x);
+		femMesh->energyFunction->setToStaticsMode(0.01);
 
-	// solve dF/dx * y = dF/dxi		(y is dx/dxi)
-	Eigen::SimplicialLDLT<SparseMatrix> linearSolver;
-	H *= -1.0;
-	linearSolver.compute(H);
-	if (linearSolver.info() != Eigen::Success) {
-		std::cerr << "Eigen::SimplicialLDLT decomposition failed." << std::endl;
-		exit(1);
+		H.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
+
+		// solve dF/dx * y = dF/dxi		(y is dx/dxi)
+		Eigen::SimplicialLDLT<SparseMatrix> linearSolver;
+		H *= -1.0;
+		linearSolver.compute(H);
+		if (linearSolver.info() != Eigen::Success) {
+			std::cerr << "Eigen::SimplicialLDLT decomposition failed." << std::endl;
+			exit(1);
+		}
+		// solve for each parameter xi
+		dxdxi = linearSolver.solve(-dFdxi);
 	}
-	// solve for each parameter xi
-	dxdxi = linearSolver.solve(-dFdxi);
+	else {
+		double delta = 5.5e-3;//5e-3;
+		dVector xi_initial = xi;
 
+		dVector x_temp = femMesh->x;
+		dVector f_ext_temp = femMesh->f_ext;
+		dVector xSolver_temp = femMesh->xSolver;
+
+		dxdxi.resize(femMesh->x.size(),xi.size());
+		
+		for(int i = 0; i < xi.size(); ++i) {
+			xi = xi_initial;
+			// +delta
+			xi(i) += delta;
+			pushXi();
+			solveMesh(true);
+			x_xipdelta = femMesh->x;
+			// -delta
+			femMesh->x = x_temp;
+			femMesh->xSolver = xSolver_temp;
+			femMesh->f_ext = f_ext_temp;
+
+			xi = xi_initial;
+			xi(i) -= delta;
+			pushXi();
+			solveMesh(true);
+			x_ximdelta = femMesh->x;
+
+			femMesh->x = x_temp;
+			femMesh->xSolver = xSolver_temp;
+			femMesh->f_ext = f_ext_temp;
+
+			dxdxi.col(i) = (x_xipdelta - x_ximdelta) / (2.0 * delta);
+
+
+		}
+
+		// restore initial state of mesh and xi
+		xi = xi_initial;
+		pushXi();
+	}
 
 	// do/dxi = do/dx * dx/dxi
 	dodxi = dOdx.transpose() * dxdxi;

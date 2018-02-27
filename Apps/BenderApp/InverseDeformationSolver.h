@@ -28,6 +28,10 @@ public:
 	MatrixNxM dFdxi;
 	MatrixNxM dxdxi;
 
+	// helpers for finite differences
+	dVector x_xipdelta;
+	dVector x_ximdelta;
+
 public:
 
 	InverseDeformationSolver();
