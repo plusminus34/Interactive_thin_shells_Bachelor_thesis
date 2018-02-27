@@ -147,7 +147,9 @@ BenderApp3D::BenderApp3D()
 		config->youngsModulus = 1.0e4;//4e3;//2.135e4;//3e3;;
 		config->poissonRatio = 0.376;
 
-		config->maxTetVolume = 1.0e-6;//1.0e-6;
+		//config->maxTetVolume = 1.0e-6;
+		config->maxTetVolume = -1.0e-6;
+		// -1.0, 30.0, 10.0, 3.3, 2.0, 1.0, 0.45, 0.33, 0.1, 0.033
 
 		// fiber for matched target trajectory
 		config->n_nodes_matched_fiber = 11;
@@ -204,7 +206,6 @@ BenderApp3D::BenderApp3D()
 	//}
 
 	//// frame
-	//BenderExperimentConfiguration config;
 	//{
 	//	config->gravity = V3D(0.0, -9.8, 0.0);
 	//	config->fem_model_filename = "../data/3dModels/frame_with_strut.ply";
@@ -331,27 +332,42 @@ BenderApp3D::BenderApp3D()
 	// camera view
 	camera->setCameraTarget(config->fem_offset - V3D(0.0, 0.0, 0.25));
 
-	glfwSetWindowSize(glfwWindow, 2560, 1440);
-	//glfwSetWindowSize(glfwWindow, 1920, 1080);
+	//glfwSetWindowSize(glfwWindow, 2560, 1440);
+	glfwSetWindowSize(glfwWindow, 1920, 1080);
 	//glfwSetWindowSize(glfwWindow, 1280, 720);
 
 	desiredFrameRate = 90;
 
-	// set results-camera
-	{
-		GLTrackingCamera * cam = dynamic_cast<GLTrackingCamera *>(camera);
-		
-		double dist_to_yumi = 2.0;
-		double dist_to_target = 4.0;
+	//// set camera side-by-side comparison
+	//{
+	//	GLTrackingCamera * cam = dynamic_cast<GLTrackingCamera *>(camera);
+	//	
+	//	double dist_to_yumi = 2.0;
+	//	double dist_to_target = 4.0;
 
-		cam->camDistance = -dist_to_target;
-		cam->setCameraTarget(P3D(0.0, 0.3, 0.0 -(dist_to_target - dist_to_yumi)));
+	//	cam->camDistance = -dist_to_target;
+	//	cam->setCameraTarget(P3D(0.0, 0.3, 0.0 -(dist_to_target - dist_to_yumi)));
 
-		cam->camViewDirection = V3D(0, 0, -1);
-		cam->camUpAxis = V3D(0, 1, 0);
+	//	cam->camViewDirection = V3D(0, 0, -1);
+	//	cam->camUpAxis = V3D(0, 1, 0);
 
-		
-	}
+	//}
+
+	//// set camera gripper detail
+	//{
+	//	GLTrackingCamera * cam = dynamic_cast<GLTrackingCamera *>(camera);
+	//	
+	//	//double dist_to_yumi = 2.0;
+	//	double dist_to_target = 1.2;
+
+	//	cam->camDistance = -dist_to_target;
+	//	cam->setCameraTarget(config->fem_offset + P3D(0.2, 0.0, 0.0));
+
+	//	cam->camViewDirection = V3D(0, 0, -1);
+	//	cam->camUpAxis = V3D(0, 1, 0);
+
+	//}
+
 
 	////////////////////////
 	// menu 
@@ -365,15 +381,26 @@ BenderApp3D::BenderApp3D()
 	////////////////////////
 	// process defaults
 	////////////////////////
-	inverseDeformationSolver->minimizer->lineSearchStartValue = 0.2;
+	//inverseDeformationSolver->minimizer->lineSearchStartValue = 0.2;
+
+	//inverseDeformationSolver->minimizer->lineSearchEndValue = 1e-5;
+	//inverseDeformationSolver->minimizer->adaptiveLineSearch = true;
+	//inverseDeformationSolver->minimizer->lineSearchIterationLimit = 5;
+
+	//inverseDeformationSolver->femMesh->meshPositionRegularizer.r = 0.0;
+	//inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.06;
+	//inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.0001;
+	//inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r = 0.0;
+
+	inverseDeformationSolver->minimizer->lineSearchStartValue = 1.0;
 
 	inverseDeformationSolver->minimizer->lineSearchEndValue = 1e-5;
-	inverseDeformationSolver->minimizer->adaptiveLineSearch = true;
-	inverseDeformationSolver->minimizer->lineSearchIterationLimit = 5;
+	inverseDeformationSolver->minimizer->adaptiveLineSearch = false;
+	inverseDeformationSolver->minimizer->lineSearchIterationLimit = 0;
 
 	inverseDeformationSolver->femMesh->meshPositionRegularizer.r = 0.0;
-	inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.06;
-	inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.0001;
+	inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.00;
+	inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.0000;
 	inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r = 0.0;
 
 
@@ -445,9 +472,9 @@ void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
 	
 	
 			// draw some target trjectory
-			targetTrajectory_input.addKnotBack(config.matched_fiber_start + config.fem_offset + P3D(0.0, 0.05, 0.0));
-			targetTrajectory_input.addKnotBack((config.matched_fiber_start + config.matched_fiber_end)*0.5 + config.fem_offset + P3D( 0.0,  0.12, 0.0));
-			targetTrajectory_input.addKnotBack(config.matched_fiber_end + config.fem_offset + P3D(0.0, 0.05, 0.0));
+			targetTrajectory_input.addKnotBack(config.matched_fiber_start + config.fem_offset + P3D(0.0, -0.05, 0.0));
+			targetTrajectory_input.addKnotBack((config.matched_fiber_start + config.matched_fiber_end)*0.5 + config.fem_offset + P3D( 0.0,  -0.12, 0.0));
+			targetTrajectory_input.addKnotBack(config.matched_fiber_end + config.fem_offset + P3D(0.0, -0.05, 0.0));
 
 			// add a "MatchScaledTrajObjective"
 			targetTrajectory_input.setTValueToLength();
@@ -462,8 +489,8 @@ void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
 	////////////////////////
 	{
 		// load robot
-		//std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
-		std::string fnameRB = "../data/rbs/yumi/yumi.rbs";
+		std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
+		//std::string fnameRB = "../data/rbs/yumi/yumi.rbs";
 
 		auto loadRobot = [&] (std::string const & fname)
 		{
@@ -1359,38 +1386,36 @@ void BenderApp3D::process() {
 	while (simulationTime < 1.0 * maxRunningTime) {
 
 
-	if(optimizeObjective) {	
-			if(measure_convergence_time && (! timer_is_running))
-			{
-				timer_is_running = true;
-				timer_convergence.restart();
-			}
-			if(timer_is_running) {i_step++;}
-			
-			
-			//inverseDeformationSolver->objectiveFunction->setRegularizerValue(xiRegularizerValue);
-			double o_new = 0;
-			o_new = inverseDeformationSolver->solveOptimization(solveResidual,
-																maxIterations,
-																lineSearchStartValue,
-																maxLineSearchIterations);
+	if(optimizeObjective) {
+		if(do_performance_study) {performanceStudy.start();}
+		
+		//inverseDeformationSolver->objectiveFunction->setRegularizerValue(xiRegularizerValue);
+		double o_new = 0;
+		o_new = inverseDeformationSolver->solveOptimization(solveResidual,
+															maxIterations,
+															lineSearchStartValue,
+															maxLineSearchIterations);
 
-			double e_new = femMesh->computeTargetPositionError();
-			double delta_o = o_new - o_last;
-			double delta_e = e_new - e_last;
-			Logger::consolePrint("o | e | delta o | delta e = %10f | %10f | %+-10.7f | %+-10.7f \n", o_new, e_new, delta_o, delta_e);
-			o_last = o_new;
-			e_last = e_new;
+		double e_new = femMesh->computeTargetPositionError();
+		double delta_o = o_new - o_last;
+		double delta_e = e_new - e_last;
+		Logger::consolePrint("o | e | delta o | delta e = %10f | %10f | %+-10.7f | %+-10.7f \n", o_new, e_new, delta_o, delta_e);
+		o_last = o_new;
+		e_last = e_new;
 
-			if (measure_convergence_time && timer_is_running && i_step == steps_optimization) {
-			//if(measure_convergence_time && timer_is_running && i_step > 0 && std::fabs(delta_o) < timed_convergence_goal) {
-				double t = timer_convergence.timeEllapsed();
-				std::cout << "converged, time was:" << t << "s  (at step # " << i_step << ")" << std::endl;
+		//if (measure_convergence_time && timer_is_running && i_step == steps_optimization) {
+		if(do_performance_study) {
+			bool status = performanceStudy.post(e_new);
+			if(status) {
+				write_performance_study_to_file("../out/perfdata_rod_sensitivity_analysis.txt");
+				do_performance_study = false;
+				std::cout << "converged" << std::endl;
 				char c;
 				std::cin >> c;
 			}
+		}
 
-			break;
+		break;
 		}
 		else if(runIkSolver) {
 			ikSolver->ikEnergyFunction->regularizer = 100;
@@ -1478,6 +1503,7 @@ void BenderApp3D::drawScene() {
 
 			double size = 0.0015;
 			P3D color(0.3, 0.3, 0.3);
+			//P3D color(0.9, 0.15, 0.15);
 			P3D white(1.0, 1.0, 1.0);
 			P3D red(1.0, 1.0, 1.0);
 			if(!mp->mount->parameterOptimization) {
@@ -1609,6 +1635,160 @@ bool BenderApp3D::processCommandLine(const std::string& cmdLine)
 
 
 
+
+
+PerformanceStudy::PerformanceStudy()
+{
+	convergence_goals = std::vector<double>({1e-4, 3.3e-5, 1e-5, 3.3e-6, 1e-6, 3.3e-7, 1e-7, 3.3e-8, 1e-8, 3.3e-9, 1e-9});
+	time_convergence_goals.assign(convergence_goals.size(), std::numeric_limits<double>::quiet_NaN() );
+	it_convergence_goals.assign(convergence_goals.size(), -1 );
+	convergence_goals_reached = 0;
+
+	//error_goal = 0.005;
+	error_goals = std::vector<double>({0.01, 0.009, 0.008, 0.007, 0.006, 0.005});
+	time_error_goals.assign(error_goals.size(), std::numeric_limits<double>::quiet_NaN() );
+	it_error_goals.assign(error_goals.size(), -1 );
+	error_goals_reached = 0;
+
+	it = 0;
+
+}
+
+void PerformanceStudy::start()
+{
+	timer.restart();
+	has_been_started = true;
+}
+
+
+bool PerformanceStudy::post(double e)
+{
+	++it;
+
+	t += timer.timeEllapsed();
+
+	
+	if(it > 1) {
+
+		
+
+		// convergence goals
+		{
+			double residual = std::fabs(e - e_last);
+			int n_reached = convergence_goals_reached;
+			for(int i = convergence_goals_reached; i < convergence_goals.size(); ++i) {
+				if(residual < convergence_goals[i]) {
+					n_reached++;
+				}
+				else {
+					break;
+				}
+			}
+			for(int i = convergence_goals_reached; i < n_reached; ++i) {
+				time_convergence_goals[i] = t;
+				it_convergence_goals[i] = it;
+			}
+			convergence_goals_reached = n_reached;
+		}
+
+		// convergence goals
+		{
+			int n_reached = error_goals_reached;
+			for(int i = error_goals_reached; i < error_goals.size(); ++i) {
+				if(e < error_goals[i]) {
+					n_reached++;
+				}
+				else {
+					break;
+				}
+			}
+			for(int i = error_goals_reached; i < n_reached; ++i) {
+				time_error_goals[i] = t;
+				it_error_goals[i] = it;
+			}
+			error_goals_reached = n_reached;
+		}
+
+	}
+
+	e_last = e;
+
+	// stopcriterion
+	if(convergence_goals_reached >= convergence_goals.size()) {
+		if(error_converged < 0.0) {
+			error_converged = e;
+		}
+		//if(error_goal_reached) {
+		//	return(true);
+		//}
+		return(true);
+	}
+
+	return(false);
+}
+
+
+
+void BenderApp3D::write_performance_study_to_file(std::string const & fileName)
+{
+	PerformanceStudy & ps = performanceStudy;
+
+	std::ofstream outfile(fileName, std::ios_base::app);
+
+	// grid info
+	outfile << femMesh->nodes.size() << " " << femMesh->elements.size() << "    ";
+	// error at convergence
+	outfile << ps.error_converged << "    ";
+
+	//// error-goal: iteration, time
+	//outfile << ps.it_error_goal << " " << ps.time_error_goal << " " << ps.error_goal << " ";
+
+	// error goals: iteration, time, goal
+	for(int i = 0; i < ps.error_goals.size(); ++i) {
+		outfile << ps.it_error_goals[i] << " ";
+	}
+	for(int i = 0; i < ps.error_goals.size(); ++i) {
+		outfile << ps.time_error_goals[i] << " ";
+	}
+	for(int i = 0; i < ps.error_goals.size(); ++i) {
+		outfile << ps.error_goals[i] << " ";
+	}
+
+	// convergence goals: iteration, time, goal
+	for(int i = 0; i < ps.convergence_goals.size(); ++i) {
+		outfile << ps.it_convergence_goals[i] << " ";
+	}
+	for(int i = 0; i < ps.convergence_goals.size(); ++i) {
+		outfile << ps.time_convergence_goals[i] << " ";
+	}
+	for(int i = 0; i < ps.convergence_goals.size(); ++i) {
+		outfile << ps.convergence_goals[i] << " ";
+	}
+
+	outfile << std::endl;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Gripper::Gripper(P3D origin, V3D dir_1, V3D dir_2, std::string const & rigidBody_name)
 	: mount_origin_surfacemesh(origin), rigidBody_name(rigidBody_name)
 {
@@ -1625,10 +1805,6 @@ void Gripper::addContactRegion(P3D pt1, P3D pt2)
 {
 	contact_regions.push_back(AxisAlignedBoundingBox(pt1, pt2));
 }
-
-
-
-
 
 
 void Gripper::makeYuMiGripper(P3D mountOrigin_baseplate, Side side, FingerType type, double gripper_width)

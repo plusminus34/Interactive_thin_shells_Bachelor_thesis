@@ -41,6 +41,18 @@ void MatchScaledTrajObjective::addDoDx(const dVector & x, const dVector & X, dVe
 
 void MatchScaledTrajObjective::addError(const dVector & x, double & e)
 {
+	update_tNode(x);
+
+	double e_sum = 0.0;
+
+	int n = matchedFiber.size();
+	for(int i = 0; i < n; ++i) {
+		double o;
+		o = computeOofNode(i, x);
+		e_sum += sqrt(o);
+	}
+
+	e += e_sum / n;
 }
 
 
@@ -60,6 +72,7 @@ double MatchScaledTrajObjective::computeOofNode(int nodeID_local, const dVector 
 	double o = 0.5 * (pt_tgt - pt_node).length2();
 	return(o);
 }
+
 
 
 void MatchScaledTrajObjective::addDoDxEachNode(int nodeID_local, const dVector & x, dVector & dodx)

@@ -16,8 +16,51 @@
 #include "InverseDeformationSolver.h"
 #include "RobotMount.h"
 
-
 class BenderExperimentConfiguration;
+
+
+class PerformanceStudy {
+
+
+public:
+
+	Timer timer;
+	bool has_been_started = false;
+	//double timed_convergence_goal = 1e-8;
+
+	std::vector<double> convergence_goals;
+	std::vector<double> time_convergence_goals;
+	std::vector<int> it_convergence_goals;
+	int convergence_goals_reached;
+
+	std::vector<double> error_goals;
+	std::vector<double> time_error_goals;
+	std::vector<int> it_error_goals;
+	int error_goals_reached;
+
+	//double error_goal;
+	//double time_error_goal;
+	//int it_error_goal;
+	//bool error_goal_reached;
+
+	double error_converged = -1;
+
+	
+
+	int it = 0;
+	double t = 0;
+	double e_last;
+
+public:
+	
+	PerformanceStudy();
+
+	void start();
+
+	bool post(double e);
+
+};
+
 
 
 /**
@@ -137,13 +180,18 @@ public:
 	nanogui::Button *connectRobotButton;
 	nanogui::Button *synchronizeRobotButton;
 
-	// timer for convergence of specific setup
-	bool measure_convergence_time = false;
-	Timer timer_convergence;
-	double timed_convergence_goal = 1e-5;
-	int steps_optimization = 33;
-	bool timer_is_running = false;
-	int i_step = -1;
+
+	bool do_performance_study = true;
+	PerformanceStudy performanceStudy;
+	//// timer for convergence of specific setup
+	//bool measure_convergence_time = true;
+	//Timer timer_convergence;
+	////double timed_convergence_goal = 1e-8;
+	//std::vector<double> convergence_goals = {1e-4, 3.3e-5, 1e-5, 3.3e-6, 1e-6, 3.3e-7, 1e-7, 3.3e-8, 1e-8, 3.3e-9, 1e-9};
+	//double error_goals = 
+	//int steps_optimization = 33;
+	//bool timer_is_running = false;
+	//int i_step = -1;
 
 
 public:
@@ -199,7 +247,14 @@ public:
 
 	P3D getRayPointViewNormal(Ray const & ray, P3D const & pointOnPlane);
 
+
+	void write_performance_study_to_file(std::string const & fileName);
+
 };
+
+
+
+
 
 
 class Gripper;
