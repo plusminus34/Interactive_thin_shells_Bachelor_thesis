@@ -14,7 +14,7 @@ AppSoftIK::AppSoftIK() {
 		"tri",      // 2
 		"swingup"   // 3
 	};
-	string TEST_CASE = TEST_CASES[3];
+	string TEST_CASE = TEST_CASES[2];
 
 	// -- // mesh
 	mesh = new CSTSimulationMesh2D();
@@ -36,13 +36,14 @@ AppSoftIK::AppSoftIK() {
 	} else if (TEST_CASE == "tri") {
 		mesh->pinToFloor();
 		mesh->rig_boundary_simplices();
+		INTEGRATE_FORWARD_IN_TIME = false;
 	} else if (TEST_CASE == "swingup") {
 		mesh->pinToLeftWall();
 		mesh->relax_tendons();
 		mesh->xvPair_INTO_Mesh(mesh->solve_statics());
 		mesh->timeStep = .1;
-		INTEGRATE_FORWARD_IN_TIME = false;
 	}
+
 
 	// -- // ik
 	ik = new SoftIKSolver(mesh);
@@ -53,6 +54,7 @@ AppSoftIK::AppSoftIK() {
 	ik->LINEAR_APPROX     = true;
 	ik->REGULARIZE_alphac = true;
 	ik->HONEY_alphac      = true;
+	ik->NUM_ITERS_PER_STEP = 1;
 
 	if (TEST_CASE == "tentacle") { 
 		ik->c_alphac_ = 1;
@@ -61,8 +63,8 @@ AppSoftIK::AppSoftIK() {
 		ik->c_alphac_ = .5;
 		ik->h_alphac_ = 10.; 
 	} else if (TEST_CASE == "tri") {
-		ik->c_alphac_ = 1.;
-		ik->h_alphac_ = 1.; 
+		ik->REGULARIZE_alphac = false;
+		ik->HONEY_alphac = false;
 	} else if (TEST_CASE == "swingup") {
 		ik->c_alphac_ = 1.;
 		ik->h_alphac_ = 0.; 
@@ -110,7 +112,7 @@ void AppSoftIK::drawScene() {
 					glP3D(node->getCoordinates(ik->x_curr));
 				}
 			} glEnd();
-			glPointSize(10);
+			glPointSize(15);
 			// ik COM
 			glBegin(GL_POINTS); {
 				glP3D(mesh->get_COM(ik->x_curr));

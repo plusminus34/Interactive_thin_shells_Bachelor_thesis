@@ -39,6 +39,7 @@ using std::pair;
 using std::make_pair;
 using std::string;
 using std::shared_ptr;
+using std::to_string;
 
 const auto vector_equality_check = [] (const auto &fd, const auto &anal) {
 	bool ret = true;
@@ -241,6 +242,16 @@ const auto find_min_i = [](const vector<double> &v) {
 ////////////////////////////////////////////////////////////////////////////////
 // eigen wrappers //////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+const auto matRCstr = [](MatrixNxM m) -> string {
+	string ret = "";
+	ret.append("(");
+	ret.append(to_string(m.rows()));
+	ret.append(", ");
+	ret.append(to_string(m.cols()));
+	ret.append(")");
+	return ret;
+};
 
 // construct w st v x w is 1.
 const auto construct_perp2d = [](V3D v) -> V3D {

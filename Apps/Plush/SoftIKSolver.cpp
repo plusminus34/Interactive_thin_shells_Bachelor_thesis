@@ -65,7 +65,7 @@ void SoftIKSolver::step() {
 		iterate();
 	}
 	// NOTE!
-	cout << calculate_O(alphac_curr) << endl;
+	// cout << calculate_O(alphac_curr) << endl;
 }
 
 void SoftIKSolver::iterate() {
@@ -179,7 +179,6 @@ double SoftIKSolver::calculate_Q_approx(const dVector &alphac) {
 double SoftIKSolver::calculate_R(const dVector &alphac) {
 
 	double ret = 0.;
-	double tmp = 0.;
 
 	{
 		for (int i = 0; i < T(); ++i) {
@@ -267,7 +266,7 @@ MatrixNxM SoftIKSolver::calculate_dxdalphac(const dVector &alphac, const dVector
 	}
  
 	dtaudalphac  = dtaudGamma_diag.asDiagonal(); // NOTE: dGammadalphac = I
-	dxdalphac    = dtaudalphac     * dxdtau;
+	dxdalphac    = dtaudalphac * dxdtau;
 
 	return dxdalphac;
 }

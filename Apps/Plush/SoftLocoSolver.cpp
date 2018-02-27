@@ -10,7 +10,8 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	resize_zero(alphac_curr, T());     // FORNOW
 	x_curr = x_of_alphac(alphac_curr); // FORNOW
 
-	for (int _ = 0; _ < K; ++_) { dVector SLACK_; resize_fill(SLACK_, T(), -100.); alphacJ_curr.push_back(SLACK_); }
+
+	for (int _ = 0; _ < K; ++_) { dVector ZERO_; resize_zero(ZERO_, T()); alphacJ_curr.push_back(ZERO_); }
 	xJ_curr = xJ_of_alphacJ(alphacJ_curr); 
 
 	for (int _ = 0; _ < K; ++_) { SPEC_FREESTYLE_J.push_back(false); }
@@ -19,15 +20,17 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 
 	construct_alphac_barrierFuncs(); 
 	COMp_FORNOW = mesh->get_COM(mesh->X); 
+
+	cout << "Zalphac_curr: " << alphac_curr.transpose() << endl;
+	cout << " alphac_curr: " << alphacJ_curr[0].transpose() << endl;
 }
 
 void SoftLocoSolver::draw() {
 
-	COMp_FORNOW = COMpJ[0];
 	glMasterPush(); {
 		glPointSize(10);
 		glLineWidth(5);
-		glTranslated(2., 0., 0.);
+		glTranslated(1., 0., 0.);
 		// --
 		mesh->draw(x_curr, alphac_curr); 
 		for (auto &gl_begin : { GL_LINES, GL_POINTS }) {
@@ -145,10 +148,7 @@ Traj SoftLocoSolver::solve_trajectory(double dt, const dVector &x_0, const dVect
 void SoftLocoSolver::step() {
 
 	mesh->update_contacts(x_0);
-	if (PROJECT) {
-		project(); // FORNOW
-		// projectJ();
-	}
+	if (PROJECT) { project(); projectJ(); }
 	for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
 		iterate();
 	}
@@ -158,8 +158,8 @@ void SoftLocoSolver::iterate() {
 	alphac_curr = alphac_next(alphac_curr, x_curr); // FORNOW
 	x_curr  = x_of_alphac(alphac_curr); // FORNOW
 	// --
-	// alphacJ_curr = alphacJ_next(alphacJ_curr, xJ_curr);
-	// xJ_curr = xJ_of_alphacJ(alphacJ_curr);
+	alphacJ_curr = alphacJ_next(alphacJ_curr, xJ_curr);
+	xJ_curr = xJ_of_alphacJ(alphacJ_curr);
 }
 
 void SoftLocoSolver::project() { 
@@ -562,7 +562,7 @@ MatrixNxM SoftLocoSolver::calculate_dxdalphac(const dVector &alphac, const dVect
 		}
 	}
  
-	dVector dtaudalphac  = dtaudGamma_diag.asDiagonal(); // NOTE: dGammadalphac = I
+	MatrixNxM dtaudalphac  = dtaudGamma_diag.asDiagonal(); // NOTE: dGammadalphac = I
 	dxdalphac = dtaudalphac     * dxdtau;
 
 	return dxdalphac;

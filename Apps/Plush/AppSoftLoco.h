@@ -20,6 +20,10 @@ public:
 	SoftLocoSolver *ik;
 
 public:
+	SimulationMesh *Zmesh;
+	SoftIKSolver   *Zik;
+
+public:
 	vector<P2DDragger *> COM_handlers;
 
 public:
