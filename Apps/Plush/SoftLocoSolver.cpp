@@ -393,21 +393,20 @@ double SoftLocoSolver::calculate_OJ(const Traj &alphacJ) {
 
 double SoftLocoSolver::calculate_QJ(const Traj &alphacJ) {
 
-	// Traj xJ;
-	// if (!LINEAR_APPROX) {
-	// 	xJ = xJ_of_alphacJ(alphacJ);
-	// } else { 
-	// 	Traj dalphacJ;
-	// 	for (int i = 0; i < K; ++i) {
-	// 		dalphacJ.push_back(alphacJ[i] - alphacJ_curr[i]);
-	// 	}
+	Traj xJ;
+	if (!LINEAR_APPROX) {
+		xJ = xJ_of_alphacJ(alphacJ);
+	} else { 
+		Traj dalphacJ;
+		for (int i = 0; i < K; ++i) {
+			dalphacJ.push_back(alphacJ[i] - alphacJ_curr[i]);
+		}
 
-	// 	// FORNOW: (ignoring cross terms) TODO: Tensor Product
-	// 	for (int i = 0; i < K; ++i) {
-	// 		xJ.push_back(xJ_curr[i] + dxdalphacJ_SAVED[i].transpose() * dalphacJ[i]); 
-	// 	} 
-	// }
-	Traj xJ = xJ_of_alphacJ(alphacJ);
+		// FORNOW: (ignoring cross terms) TODO: Tensor Product
+		for (int i = 0; i < K; ++i) {
+			xJ.push_back(xJ_curr[i] + dxdalphacJ_SAVED[i].transpose() * dalphacJ[i]); 
+		} 
+	}
 
 	double QJ = 0.;
 	for (int i = 0; i < K; ++i) {
