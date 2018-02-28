@@ -152,7 +152,7 @@ BenderApp3D::BenderApp3D()
 		// -1.0, 30.0, 10.0, 3.3, 2.0, 1.0, 0.45, 0.33, 0.1, 0.033
 
 		// fiber for matched target trajectory
-		config->n_nodes_matched_fiber = 11;
+		config->n_nodes_matched_fiber = 0;
 		config->matched_fiber_start = P3D(-0.16, 0.0, 0.0);
 		config->matched_fiber_end = P3D(+0.16, 0.0, 0.0);
 
@@ -208,7 +208,7 @@ BenderApp3D::BenderApp3D()
 	//// frame
 	//{
 	//	config->gravity = V3D(0.0, -9.8, 0.0);
-	//	config->fem_model_filename = "../data/3dModels/frame_with_strut.ply";
+	//	//config->fem_model_filename = "../data/3dModels/frame_with_strut.ply";
 	//	config->fem_model_filename = "../data/3dModels/frame_rectangular.ply";
 	//	config->fem_offset = P3D(0.0, 0.35, 0.50);
 	//	config->fem_scale = 0.001;
@@ -381,31 +381,31 @@ BenderApp3D::BenderApp3D()
 	////////////////////////
 	// process defaults
 	////////////////////////
-	//inverseDeformationSolver->minimizer->lineSearchStartValue = 0.2;
-
-	//inverseDeformationSolver->minimizer->lineSearchEndValue = 1e-5;
-	//inverseDeformationSolver->minimizer->adaptiveLineSearch = true;
-	//inverseDeformationSolver->minimizer->lineSearchIterationLimit = 5;
-
-	//inverseDeformationSolver->femMesh->meshPositionRegularizer.r = 0.0;
-	//inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.06;
-	//inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.0001;
-	//inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r = 0.0;
-
-	inverseDeformationSolver->minimizer->lineSearchStartValue = 1.0;
+	inverseDeformationSolver->minimizer->lineSearchStartValue = 0.3;
 
 	inverseDeformationSolver->minimizer->lineSearchEndValue = 1e-5;
-	inverseDeformationSolver->minimizer->adaptiveLineSearch = false;
-	inverseDeformationSolver->minimizer->lineSearchIterationLimit = 0;
+	inverseDeformationSolver->minimizer->adaptiveLineSearch = true;
+	inverseDeformationSolver->minimizer->lineSearchIterationLimit = 5;
 
 	inverseDeformationSolver->femMesh->meshPositionRegularizer.r = 0.0;
-	inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.00;
-	inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.0000;
+	inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.06;
+	inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.0001;
 	inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r = 0.0;
 
+	//inverseDeformationSolver->minimizer->lineSearchStartValue = 1.0;
 
-	femMesh->minimizer.lineSearchEndValue = 1e-9;
-	femMesh->minimizer.solveResidual = 1e-9;
+	//inverseDeformationSolver->minimizer->lineSearchEndValue = 1e-5;
+	//inverseDeformationSolver->minimizer->adaptiveLineSearch = false;
+	//inverseDeformationSolver->minimizer->lineSearchIterationLimit = 0;
+
+	//inverseDeformationSolver->femMesh->meshPositionRegularizer.r = 0.0;
+	//inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.00;
+	//inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.0000;
+	//inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r = 0.0;
+
+
+	//femMesh->minimizer.lineSearchEndValue = 1e-9;
+	//femMesh->minimizer.solveResidual = 1e-9;
 
 	///////////////////////
 	// GUI defaults
@@ -492,8 +492,8 @@ void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
 	////////////////////////
 	{
 		// load robot
-		std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
-		//std::string fnameRB = "../data/rbs/yumi/yumi.rbs";
+		//std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
+		std::string fnameRB = "../data/rbs/yumi/yumi.rbs";
 
 		auto loadRobot = [&] (std::string const & fname)
 		{
@@ -1380,6 +1380,7 @@ void BenderApp3D::process() {
 	//do the work here...
 
 	Timer timer_simulation_one_frame;
+	Timer time_step;
 
 	simulationTime = 0;
 	maxRunningTime = 1.0 / desiredFrameRate;
@@ -1391,6 +1392,18 @@ void BenderApp3D::process() {
 
 	if(optimizeObjective) {
 		if(do_performance_study) {performanceStudy.start();}
+
+		if(true && !outfile_convergence.is_open()) {
+			outfile_convergence.open("../out/o_over_t.txt", std::ios_base::out);
+			outfile_convergence.setf(std::ios::scientific);
+			outfile_convergence.precision(12);
+			double o_initial = inverseDeformationSolver->peekOofXi(inverseDeformationSolver->xi);
+			double e_initial = femMesh->computeTargetPositionError();
+			outfile_convergence << "# mesh: " << femMesh->nodes.size() << " nodes, " << femMesh->elements.size() << " elements" << std::endl;
+			outfile_convergence << "dt o e" << std::endl;
+			outfile_convergence << 0.0 << " " << o_initial << " " << e_initial << std::endl;
+			time_step.restart();
+		}
 		
 		//inverseDeformationSolver->objectiveFunction->setRegularizerValue(xiRegularizerValue);
 		double o_new = 0;
@@ -1418,6 +1431,12 @@ void BenderApp3D::process() {
 			}
 		}
 
+		// output convergence: dt, o, e,
+		if(true) {
+			double dt = time_step.timeEllapsed();
+			outfile_convergence << dt << " " << o_new << " " << e_new << std::endl;
+		}
+
 		break;
 		}
 		else if(runIkSolver) {
@@ -1442,8 +1461,9 @@ void BenderApp3D::process() {
 	//	delta_centerline = matchedFiber[matchedFiber.size()/2]->getWorldPosition() - matchedFiber.front()->getWorldPosition();
 	//	std::cout << "diff centerline_half: " << delta_centerline(0) << " " << delta_centerline(1) << " " << delta_centerline(2) << std::endl;
 	//}
+
 	// output centerline to file
-	if(true && matchedFiber.size() > 1 && ++i_temp == 5) {
+	if(false && matchedFiber.size() > 1 && ++i_temp == 5) {
 		std::fstream outfile("../out/centerline_initial_state_buckled.txt", std::ios_base::app);
 		// mesh info
 		outfile << femMesh->nodes.size() << " " << femMesh->elements.size() << "    ";
@@ -1454,6 +1474,7 @@ void BenderApp3D::process() {
 		outfile << std::endl;
 		exit(0);
 	}
+
 
 	
 
@@ -1539,7 +1560,8 @@ void BenderApp3D::drawScene() {
 
 	// draw target trajectory
 	if(targetTrajectory_input.getKnotCount() > 0) {
-		targetTrajectory_input.draw(V3D(0.3, 0.3, 0.3), -2, V3D(0, 0.8, 0), 0.0025*SYMBOL_SCALE);
+		//targetTrajectory_input.draw(V3D(0.3, 0.3, 0.3), -2, V3D(0, 0.8, 0), 0.0025*SYMBOL_SCALE);
+		targetTrajectory_input.draw(V3D(0.3, 0.3, 0.3), -2, V3D(1.0, 0.1, 0), 0.0025*SYMBOL_SCALE);
 	}
 	
 	

@@ -192,7 +192,10 @@ void MatchScaledTrajObjective::draw(dVector const & x, HighlightLevel level) {
 	double line_width = 2.0 * SYMBOL_SCALE;
 
 	// draw target trajectory
-	targetTrajectory.draw(V3D(0.0, 0.0, 1.0), line_width, V3D(0, 0.8, 0), -0.003);
+	//targetTrajectory.draw(V3D(0.0, 0.0, 1.0), line_width, V3D(0, 0.8, 0), -0.003);
+	glDisable(GL_LIGHTING);
+	targetTrajectory.draw(V3D(1.0, 0.5, 0.0), line_width, V3D(0, 0.8, 0), -0.003);
+	glEnable(GL_LIGHTING);
 
 	// draw matched fiber
 	glColor3d(0.0, 0.5, 1.0);

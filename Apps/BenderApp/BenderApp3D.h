@@ -181,7 +181,7 @@ public:
 	nanogui::Button *synchronizeRobotButton;
 
 
-	bool do_performance_study = true;
+	bool do_performance_study = false;
 	PerformanceStudy performanceStudy;
 	//// timer for convergence of specific setup
 	//bool measure_convergence_time = true;
@@ -194,6 +194,8 @@ public:
 	//int i_step = -1;
 
 	int i_temp = 0;
+
+	std::fstream outfile_convergence;
 
 
 public:
