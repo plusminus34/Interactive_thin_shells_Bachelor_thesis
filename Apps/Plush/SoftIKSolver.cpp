@@ -84,9 +84,9 @@ void SoftIKSolver::project() {
 			double Gamma_i;
 			Gamma_i = mesh->tendons[i]->get_Gamma(x_proj, alphac_proj);
 
-			if (Gamma_i < 0) {
+			if (Gamma_i < .0005) {
 				PROJECTED = true;
-				alphac_proj[i] += abs(Gamma_i) + .001;
+				alphac_proj[i] += (.001 - Gamma_i);
 			}
 		}
 

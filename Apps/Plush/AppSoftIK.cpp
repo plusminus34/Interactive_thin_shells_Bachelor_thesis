@@ -14,7 +14,7 @@ AppSoftIK::AppSoftIK() {
 		"tri",      // 2
 		"swingup"   // 3
 	};
-	string TEST_CASE = TEST_CASES[2];
+	string TEST_CASE = TEST_CASES[3];
 
 	// -- // mesh
 	mesh = new CSTSimulationMesh2D();
@@ -22,7 +22,7 @@ AppSoftIK::AppSoftIK() {
 	mesh->spawnSavedMesh(fName);
 	mesh->nudge_mesh_up();
 	mesh->applyYoungsModulusAndPoissonsRatio(3e4, .25);
-	mesh->addGravityForces(V3D(0., -10.));
+	// mesh->addGravityForces(V3D(0., -10.));
 	// mesh->add_contacts_to_boundary_nodes();
 
 	if (TEST_CASE == "tentacle") {

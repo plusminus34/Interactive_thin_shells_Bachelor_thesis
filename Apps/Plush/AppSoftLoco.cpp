@@ -12,24 +12,29 @@ AppSoftLoco::AppSoftLoco() {
 		"tri",     // 1
 		"tentacle" // 2
 	};
-	string TEST_CASE = TEST_CASES[1];
+	string TEST_CASE = TEST_CASES[0];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
 	for (auto ptr : { &mesh, &Zmesh }) {
 		*ptr = new CSTSimulationMesh2D();
 		(*ptr)->spawnSavedMesh(fName);
-		// (*ptr)->nudge_mesh_up();
+		(*ptr)->nudge_mesh_up();
 		(*ptr)->applyYoungsModulusAndPoissonsRatio(3e4, .25);
-		(*ptr)->addGravityForces(V3D(0., -10.)); 
-		(*ptr)->pinToFloor(); 
-		(*ptr)->rig_boundary_simplices();
+		// (*ptr)->addGravityForces(V3D(0., -10.)); 
+		// (*ptr)->pinToFloor(); 
+		(*ptr)->pinToLeftWall(); 
+		(*ptr)->xvPair_INTO_Mesh((*ptr)->solve_statics());
+		// (*ptr)->rig_boundary_simplices();
 	}
 
 	// -- // ik
 	ik = new SoftLocoSolver(mesh);
 	{
-		for (auto &COMp : ik->COMpJ) {
+		for (int i = 0; i < ik->K; ++i) {
+			if (i != 0) { continue; } // !!!
+			// if (i != ik->K - 1) { continue; } // !!!
+			auto &COMp = ik->COMpJ[i];
 			auto COM_handler = new P2DDragger(&COMp);
 			COM_handlers.push_back(COM_handler);
 			push_back_handler(COM_handler);
@@ -38,12 +43,14 @@ AppSoftLoco::AppSoftLoco() {
 	INTEGRATE_FORWARD_IN_TIME = false;
 
 	ik->PROJECT = true;
-	ik->REGULARIZE_alphac = false;
+	ik->REGULARIZE_alphac = true;
+	ik->c_alphac_ = .1;
 	ik->NUM_ITERS_PER_STEP = 1;
 	{
 		Zik = new SoftIKSolver(Zmesh);
 		Zik->PROJECT = true;
-		Zik->REGULARIZE_alphac = false;
+		Zik->REGULARIZE_alphac = true;
+		Zik->c_alphac_ = .1;
 		Zik->HONEY_alphac = false;
 		Zik->NUM_ITERS_PER_STEP = 1;
 	}
@@ -78,9 +85,9 @@ void AppSoftLoco::processToggles() {
 
 void AppSoftLoco::drawScene() {
 	{
-		for (size_t i = 0; i < COM_handlers.size(); ++i) {
-			COM_handlers[i]->ACTIVE = (i == ik->SELECTED_FRAME_i);
-		}
+		// for (size_t i = 0; i < COM_handlers.size(); ++i) {
+		// 	COM_handlers[i]->ACTIVE = (i == ik->SELECTED_FRAME_i);
+		// }
 	}
 
 	DRAW_HANDLERS = false;
@@ -110,8 +117,11 @@ void AppSoftLoco::drawScene() {
 void AppSoftLoco::process() { 
 	ik->COMp_FORNOW = ik->COMpJ[0];
 	Zik->COMp       = ik->COMpJ[0];
+	// --
+	Zik->SOLVE_DYNAMICS = ik->SOLVE_DYNAMICS;
 	// -- 
-	if (INTEGRATE_FORWARD_IN_TIME) { ik->x_0 = mesh->x; ik->v_0 = mesh->v; } // FORNOW
+	if (INTEGRATE_FORWARD_IN_TIME) { ik->x_0 = mesh->x; ik->v_0 = mesh->v; } 
+	if (INTEGRATE_FORWARD_IN_TIME) { Zik->x_0 = mesh->x; Zik->v_0 = mesh->v; } // FORNOW
 	if (SOLVE_IK) {
 		cout << endl << "--> loco" << endl;
 		ik->step();
@@ -120,6 +130,7 @@ void AppSoftLoco::process() {
 		// getchar();
 	}
 	if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->x_0, ik->v_0, ik->alphacJ_curr[0]) : mesh->solve_statics(ik->x_0, ik->alphacJ_curr[0])); }
+	if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((Zik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(Zik->x_0, Zik->v_0, Zik->alphac_curr) : mesh->solve_statics(Zik->x_0, Zik->alphac_curr)); } // FORNOW
 }
 
 ////////////////////////////////////////////////////////////////////////////////

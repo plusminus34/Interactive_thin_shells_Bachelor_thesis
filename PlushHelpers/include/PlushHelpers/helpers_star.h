@@ -582,6 +582,14 @@ const auto MatrixLowerTriangleEquality = [](const MatrixNxM &FDHessian, const au
 	return ret;
 };
 
+const auto dVector2vecDouble = [](const dVector &in) -> vector<double> {
+	vector<double> out;
+	for (int i = 0; i < in.size(); ++i) {
+		out.push_back(in[i]);
+	}
+	return out;
+};
+
  const auto stack_vec_dVector = [](const vector<dVector> &in) -> dVector {
 
 	int N = 0;

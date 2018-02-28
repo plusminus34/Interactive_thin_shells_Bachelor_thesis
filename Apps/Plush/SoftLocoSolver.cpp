@@ -1,6 +1,7 @@
 #include "SoftLocoSolver.h"
 #include <PlushHelpers/helpers_star.h>
 #include <Eigen/SparseCholesky>
+#include "XYPlot.h"
 
 SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	this->mesh = mesh; 
@@ -104,7 +105,10 @@ void SoftLocoSolver::draw() {
 		glPointSize(10);
 		glLineWidth(5);
 		for (int i = 0; i < K; ++i) {
-			bool SELECTED = (i == SELECTED_FRAME_i);
+			// bool SELECTED = (i == SELECTED_FRAME_i);
+			bool SELECTED = true;
+			if (i != 0) { continue; } // !!!
+			// if (i != K - 1) { continue; } // !!!
 			if (SPEC_COM_J[i]) {
 				for (auto &GL_PRIMITIVE : { GL_LINES, GL_POINTS }) {
 					glBegin(GL_PRIMITIVE); {
@@ -142,12 +146,68 @@ void SoftLocoSolver::draw() {
 		glBegin(GL_LINE_STRIP); {
 			for (auto &bs : mesh->boundary_simplices) {
 					for (auto &node : bs->nodes) {
-						glP3D(node->getCoordinates(xJ_curr[SELECTED_FRAME_i]));
+						glP3D(node->getCoordinates(xJ_curr[0]));
 					}
 			}
 		} glEnd();
 	} glMasterPop(); 
 
+	// Debug
+	glMasterPush(); {
+		glTranslated(1., 0., 0.);
+
+		for (int i = 0; i < K; ++i) {
+			set_color(color_swirl(.5*dfrac(i, K), ORCHID, BLACK));
+			if (i != 0) { set_color(LIGHT_CLAY); } // !!!
+			glLineWidth(2); 
+			glBegin(GL_LINE_STRIP); {
+				for (auto &bs : mesh->boundary_simplices) {
+					for (auto &node : bs->nodes) {
+						glP3D(node->getCoordinates(xJ_curr[i]));
+					}
+				}
+			} glEnd();
+			// --
+			glPointSize(10);
+			glLineWidth(5); 
+			for (auto &GL_PRIMITIVE : { GL_POINTS, GL_LINES }) {
+				glBegin(GL_PRIMITIVE); {
+					set_color(color_swirl(.5*dfrac(i, K), ORCHID, BLACK));
+					if (i != 0) { set_color(LIGHT_CLAY); } // !!!
+					glP3D(mesh->get_COM(xJ_curr[i]));
+					set_color(color_swirl(.5*dfrac(i, K), RATIONALITY, BLACK));
+					if (i != 0) { set_color(LIGHT_CLAY); } // !!!
+					glP3D(COMpJ[i]);
+				} glEnd();
+			}
+		}
+		
+	} glMasterPop(); 
+
+	auto time = linspace(K, 0., 1.);
+	vector<XYPlot*> plots;
+	for (int t = 0; t < T(); ++t) {
+		vector<double> F_t;
+		for (int k = 0; k < K; ++k) {
+			F_t.push_back(alphacJ_curr[k][t] / mesh->balphaz[t]);
+		}
+		XYPlot *plot = new XYPlot(time, F_t);
+		plot->SPEC_COLOR = kelly_color(t);
+		plots.push_back(plot);
+	}
+	dVector ONE;  resize_fill(ONE,  K, 1);
+	dVector ZERO; resize_zero(ZERO, K);
+	plots.push_back(new XYPlot(time, dVector2vecDouble(-ONE)));
+	plots.push_back(new XYPlot(time, dVector2vecDouble(ZERO)));
+	plots.push_back(new XYPlot(time, dVector2vecDouble(ONE)));
+	XYPlot::uniformize_axes(plots);
+	for (auto &plot : plots) {*plot->origin = P3D(-1.5, -1.);
+							  *plot->top_right = P3D(-.5, 1.);
+	};
+	for (auto &plot : plots) (plot->draw());
+	for (auto &plot : plots) {
+		delete plot;
+	}
 					
 }
  
@@ -206,9 +266,9 @@ void SoftLocoSolver::project() {
 			double Gamma_i;
 			Gamma_i = mesh->tendons[i]->get_Gamma(x_proj, alphac_proj);
 
-			if (Gamma_i < 0) {
+			if (Gamma_i < .0005) {
 				PROJECTED = true;
-				alphac_proj[i] += abs(Gamma_i) + .001;
+				alphac_proj[i] += (.001 - Gamma_i);
 			}
 		}
 
@@ -267,9 +327,9 @@ void SoftLocoSolver::projectJ() {
 				double Gamma_i;
 				Gamma_i = mesh->tendons[i]->get_Gamma(x_proj, alphac_proj);
 
-				if (Gamma_i < 0) {
+				if (Gamma_i < .0005) {
 					PROJECTED = true;
-					alphac_proj[i] += abs(Gamma_i) + .001;
+					alphac_proj[i] += (.001 - Gamma_i);
 				}
 			}
 
@@ -411,6 +471,8 @@ double SoftLocoSolver::calculate_QJ(const Traj &alphacJ) {
 
 	double QJ = 0.;
 	for (int i = 0; i < K; ++i) {
+		if (i != 0) { continue; } // !!!
+		// if (i != K - 1) { continue; } // !!!
 		// TODO: Inactive Widgets.
 		QJ += calculate_Q_of_x(xJ[i], COMpJ[i]);
 	}
@@ -535,7 +597,7 @@ Traj SoftLocoSolver::calculate_dQdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 	// }
 
 	// FORNOW
-	auto calculate_dxkdxkm1 = [this](const dVector xk, const dVector &alphack) -> MatrixNxM {
+	auto calculate_dxkdxkm1 = [this](const dVector alphack, const dVector &xk) -> MatrixNxM {
 		double c = (2. / (timeStep*timeStep));
 		MatrixNxM invHk = calculate_H(xk, alphack).toDense().inverse();
 		dVector &M_diag = mesh->m;
@@ -552,6 +614,9 @@ Traj SoftLocoSolver::calculate_dQdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 		}
 		dVector dQJdx_i; resize_zero(dQJdx_i, D()*N());
 		for (int j = i; j < K; ++j) {
+			if (j != 0) { continue; } // !!!
+			// if (j != K - 1) { continue; } // !!!
+			// 
 			dVector dQdx_j = calculate_dQdx(alphacJ[j], xJ[j], COMpJ[j]);
 			MatrixNxM dx_jdx_i; dx_jdx_i.setIdentity(D()*N(), D()*N()); // (*)
 			for (int k = i + 1; k < j; ++k) {
