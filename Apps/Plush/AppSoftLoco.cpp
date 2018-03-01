@@ -12,7 +12,7 @@ AppSoftLoco::AppSoftLoco() {
 		"tri",     // 1
 		"tentacle" // 2
 	};
-	string TEST_CASE = TEST_CASES[0];
+	string TEST_CASE = TEST_CASES[1];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
@@ -21,19 +21,19 @@ AppSoftLoco::AppSoftLoco() {
 		(*ptr)->spawnSavedMesh(fName);
 		(*ptr)->nudge_mesh_up();
 		(*ptr)->applyYoungsModulusAndPoissonsRatio(3e4, .25);
-		// (*ptr)->addGravityForces(V3D(0., -10.)); 
-		// (*ptr)->pinToFloor(); 
-		(*ptr)->pinToLeftWall(); 
+		(*ptr)->addGravityForces(V3D(0., -10.)); 
+		(*ptr)->pinToFloor(); 
+		// (*ptr)->pinToLeftWall(); 
 		(*ptr)->xvPair_INTO_Mesh((*ptr)->solve_statics());
-		// (*ptr)->rig_boundary_simplices();
+		(*ptr)->rig_boundary_simplices();
 	}
 
 	// -- // ik
 	ik = new SoftLocoSolver(mesh);
 	{
 		for (int i = 0; i < ik->K; ++i) {
-			if (i != 0) { continue; } // !!!
-			// if (i != ik->K - 1) { continue; } // !!!
+			// if (i != 0) { continue; } // !!!
+			if (i != ik->K - 1) { continue; }
 			auto &COMp = ik->COMpJ[i];
 			auto COM_handler = new P2DDragger(&COMp);
 			COM_handlers.push_back(COM_handler);
@@ -43,13 +43,15 @@ AppSoftLoco::AppSoftLoco() {
 	INTEGRATE_FORWARD_IN_TIME = false;
 
 	ik->PROJECT = true;
-	ik->REGULARIZE_alphac = true;
+	ik->REGULARIZE_alphac = false;
+	ik->LINEAR_APPROX = false;
 	ik->c_alphac_ = .1;
 	ik->NUM_ITERS_PER_STEP = 1;
 	{
 		Zik = new SoftIKSolver(Zmesh);
 		Zik->PROJECT = true;
-		Zik->REGULARIZE_alphac = true;
+		Zik->REGULARIZE_alphac = false;
+		Zik->LINEAR_APPROX = false;
 		Zik->c_alphac_ = .1;
 		Zik->HONEY_alphac = false;
 		Zik->NUM_ITERS_PER_STEP = 1;
@@ -115,8 +117,10 @@ void AppSoftLoco::drawScene() {
 }
 
 void AppSoftLoco::process() { 
-	ik->COMp_FORNOW = ik->COMpJ[0];
-	Zik->COMp       = ik->COMpJ[0];
+	// ik->COMp_FORNOW = ik->COMpJ[0]; // !!!
+	// Zik->COMp       = ik->COMpJ[0]; // !!!
+	ik->COMp_FORNOW = ik->COMpJ[ik->K - 1]; // !!!
+	Zik->COMp       = ik->COMpJ[ik->K - 1]; // !!!
 	// --
 	Zik->SOLVE_DYNAMICS = ik->SOLVE_DYNAMICS;
 	// -- 

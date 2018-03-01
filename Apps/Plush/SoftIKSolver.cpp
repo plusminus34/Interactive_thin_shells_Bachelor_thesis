@@ -451,7 +451,7 @@ SparseMatrix SoftIKSolver::calculate_H(const dVector &x, const dVector &alphac) 
 void SoftIKSolver::construct_alphac_barrierFuncs() {
 	this->alphac_barrierFuncs.clear(); 
 	for (auto &tendon : mesh->tendons) {
-		double ALPHAC_MAX = .33*tendon->get_alphaz();
+		double ALPHAC_MAX = .66*tendon->get_alphaz();
 		alphac_barrierFuncs.push_back(new ZeroCubicQuadratic(1e5, .01, V3D(ALPHAC_MAX, 0.), false, false));
 	}
 }

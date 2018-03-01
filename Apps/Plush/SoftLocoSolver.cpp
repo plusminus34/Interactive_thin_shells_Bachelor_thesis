@@ -22,8 +22,8 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	construct_alphac_barrierFuncs(); 
 	COMp_FORNOW = mesh->get_COM(mesh->X); 
 
-	cout << "Zalphac_curr: " << alphac_curr.transpose() << endl;
-	cout << " alphac_curr: " << alphacJ_curr[0].transpose() << endl;
+	// cout << "Zalphac_curr: " << alphac_curr.transpose() << endl;
+	// cout << " alphac_curr: " << alphacJ_curr[0].transpose() << endl;
 }
 
 void SoftLocoSolver::draw() { 
@@ -107,8 +107,8 @@ void SoftLocoSolver::draw() {
 		for (int i = 0; i < K; ++i) {
 			// bool SELECTED = (i == SELECTED_FRAME_i);
 			bool SELECTED = true;
-			if (i != 0) { continue; } // !!!
-			// if (i != K - 1) { continue; } // !!!
+			// if (i != 0) { continue; } // !!!
+			if (i != K - 1) { continue; } // !!!
 			if (SPEC_COM_J[i]) {
 				for (auto &GL_PRIMITIVE : { GL_LINES, GL_POINTS }) {
 					glBegin(GL_PRIMITIVE); {
@@ -125,8 +125,9 @@ void SoftLocoSolver::draw() {
 		glDisable(GL_STENCIL_TEST);
 		glDisable(GL_DEPTH_TEST);
 		glLineWidth(6);
+		glPointSize(10);
 		glTranslated(1., 0., 0.);
-		set_color(RATIONALITY);
+		set_color(HENN1NK);
 		glBegin(GL_LINE_STRIP); {
 			for (auto &bs : mesh->boundary_simplices) {
 				for (auto &node : bs->nodes) {
@@ -134,9 +135,12 @@ void SoftLocoSolver::draw() {
 				}
 			}
 		} glEnd();
+		glBegin(GL_POINTS); {
+			glP3D(mesh->get_COM(x_curr)); 
+		} glEnd();
 	} glMasterPop();
 
-	// Debug
+	/* // Debug
 	glMasterPush(); {
 		glDisable(GL_STENCIL_TEST);
 		glDisable(GL_DEPTH_TEST);
@@ -150,15 +154,18 @@ void SoftLocoSolver::draw() {
 					}
 			}
 		} glEnd();
-	} glMasterPop(); 
+	} glMasterPop(); */
 
 	// Debug
 	glMasterPush(); {
+		glDisable(GL_STENCIL_TEST);
+		glDisable(GL_DEPTH_TEST);
 		glTranslated(1., 0., 0.);
 
 		for (int i = 0; i < K; ++i) {
 			set_color(color_swirl(.5*dfrac(i, K), ORCHID, BLACK));
-			if (i != 0) { set_color(LIGHT_CLAY); } // !!!
+			// if (i != 0) { set_color(LIGHT_CLAY); } // !!!
+			if (i != K - 1) { set_color(LIGHT_CLAY); } // !!!
 			glLineWidth(2); 
 			glBegin(GL_LINE_STRIP); {
 				for (auto &bs : mesh->boundary_simplices) {
@@ -170,13 +177,14 @@ void SoftLocoSolver::draw() {
 			// --
 			glPointSize(10);
 			glLineWidth(5); 
+			if (i != K - 1) { continue;  } // !!!
 			for (auto &GL_PRIMITIVE : { GL_POINTS, GL_LINES }) {
 				glBegin(GL_PRIMITIVE); {
-					set_color(color_swirl(.5*dfrac(i, K), ORCHID, BLACK));
-					if (i != 0) { set_color(LIGHT_CLAY); } // !!!
+					// set_color(color_swirl(.5*dfrac(i, K), ORCHID, BLACK));
+					set_color(PUMPKIN);
 					glP3D(mesh->get_COM(xJ_curr[i]));
-					set_color(color_swirl(.5*dfrac(i, K), RATIONALITY, BLACK));
-					if (i != 0) { set_color(LIGHT_CLAY); } // !!!
+					// set_color(color_swirl(.5*dfrac(i, K), RATIONALITY, BLACK));
+					set_color(RATIONALITY);
 					glP3D(COMpJ[i]);
 				} glEnd();
 			}
@@ -362,9 +370,9 @@ dVector SoftLocoSolver::alphac_next(const dVector &alphac, const dVector &x) {
 	check_x_size(x);
 	// --
 	dVector dOdalphac = calculate_dOdalphac(alphac, x);
-	cout << "ZdOdalphac: " << endl << dOdalphac << endl;
+	// cout << "ZdOdalphac: " << endl << dOdalphac << endl;
 	double gamma = calculate_gamma(alphac, dOdalphac);
-	cout << "Zgamma:     " << endl << gamma << endl;
+	// cout << "Zgamma:     " << endl << gamma << endl;
 	return alphac - gamma * dOdalphac; 
 }
 
@@ -471,8 +479,8 @@ double SoftLocoSolver::calculate_QJ(const Traj &alphacJ) {
 
 	double QJ = 0.;
 	for (int i = 0; i < K; ++i) {
-		if (i != 0) { continue; } // !!!
-		// if (i != K - 1) { continue; } // !!!
+		// if (i != 0) { continue; } // !!!
+		if (i != K - 1) { continue; } // !!!
 		// TODO: Inactive Widgets.
 		QJ += calculate_Q_of_x(xJ[i], COMpJ[i]);
 	}
@@ -596,6 +604,30 @@ Traj SoftLocoSolver::calculate_dQdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 	// 	dQdalphacJ.push_back(tmp); 
 	// }
 
+	auto unstack_Traj = [this](const dVector &fooJ_d) -> vector<dVector> {
+		Traj fooJ;
+		int LEN = fooJ_d.size() / K;
+		for (int i = 0; i < K; ++i) {
+			fooJ.push_back(fooJ_d.segment(i*LEN, LEN));
+		} 
+		return fooJ;
+	};
+
+	auto calculate_dQJdalphacJ_FD = [&](const Traj &alphacJ, const Traj &xJ) -> Traj {
+		auto Q_wrapper = [&](const dVector alphacJ_d) -> double {
+			return calculate_QJ(unstack_Traj(alphacJ_d)); 
+		};
+		return unstack_Traj(vec_FD(stack_vec_dVector(alphacJ), Q_wrapper, 5e-5));
+	};
+
+	auto Traj_equality_check = [&](const Traj &T1, const Traj &T2) -> void {
+		if (T1.size() != T2.size()) { error("SizeMismatchError"); }
+		for (size_t i = 0; i < T1.size(); ++i) {
+			cout << "--> i = " << i << endl;
+			vector_equality_check(T1[i], T2[i]);
+		}
+	};
+
 	// FORNOW
 	auto calculate_dxkdxkm1 = [this](const dVector alphack, const dVector &xk) -> MatrixNxM {
 		double c = (2. / (timeStep*timeStep));
@@ -614,8 +646,8 @@ Traj SoftLocoSolver::calculate_dQdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 		}
 		dVector dQJdx_i; resize_zero(dQJdx_i, D()*N());
 		for (int j = i; j < K; ++j) {
-			if (j != 0) { continue; } // !!!
-			// if (j != K - 1) { continue; } // !!!
+			// if (j != 0) { continue; } // !!!
+			if (j != K - 1) { continue; } // !!!
 			// 
 			dVector dQdx_j = calculate_dQdx(alphacJ[j], xJ[j], COMpJ[j]);
 			MatrixNxM dx_jdx_i; dx_jdx_i.setIdentity(D()*N(), D()*N()); // (*)
@@ -627,7 +659,11 @@ Traj SoftLocoSolver::calculate_dQdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 		dVector dQdalphac_i = dxdalphac_i * dQJdx_i;
 		dQJdalphacJ.push_back(dQdalphac_i); 
 	} 
-	return dQJdalphacJ;
+
+	Traj FD = calculate_dQJdalphacJ_FD(alphacJ, xJ);
+	Traj_equality_check(dQJdalphacJ, FD);
+
+	return FD;
 }
 
 Traj SoftLocoSolver::calculate_dRdalphacJ(const Traj &alphacJ) {
@@ -848,7 +884,7 @@ SparseMatrix SoftLocoSolver::calculate_H(const dVector &x, const dVector &alphac
 void SoftLocoSolver::construct_alphac_barrierFuncs() {
 	this->alphac_barrierFuncs.clear(); 
 	for (auto &tendon : mesh->tendons) {
-		double ALPHAC_MAX = .33*tendon->get_alphaz();
+		double ALPHAC_MAX = .66*tendon->get_alphaz();
 		alphac_barrierFuncs.push_back(new ZeroCubicQuadratic(1e5, .01, V3D(ALPHAC_MAX, 0.), false, false));
 	}
 }
