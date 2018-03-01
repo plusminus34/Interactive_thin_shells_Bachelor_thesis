@@ -368,6 +368,8 @@ BenderApp3D::BenderApp3D()
 
 	//}
 
+	setCameraPosition(cameraView);
+
 
 	////////////////////////
 	// menu 
@@ -412,6 +414,43 @@ BenderApp3D::BenderApp3D()
 	///////////////////////
 	showGroundPlane = true;
 	showConsole = false;
+
+}
+
+
+void BenderApp3D::setCameraPosition(CameraView cameraView)
+{
+
+	GLTrackingCamera * cam = dynamic_cast<GLTrackingCamera *>(camera);
+
+	P3D cameraTarget(0.0, 0.3, 0.2);
+	V3D viewDirection;
+	V3D upAxis;//(0, 1, 0);
+
+	double dist_to_target = 1.8;
+
+	if(cameraView == CameraView::FRONT) {
+		viewDirection = V3D(0, 0, -1);
+	}
+	if(cameraView == CameraView::RIGHT) {
+		viewDirection = V3D(1, 0, 0);
+	}
+	if(cameraView == CameraView::FRONTRIGHT) {
+		viewDirection = V3D(1, 0, -1);
+	}
+	if(cameraView == CameraView::FRONTRIGHTABOVE) {
+		double dy = 0.3;
+		viewDirection = V3D(1, -dy, -1);
+	}
+
+	V3D sideAxis = viewDirection.cross(V3D(0, 1, 0));
+	upAxis = sideAxis.cross(viewDirection);
+	upAxis.toUnit();
+
+	cam->setCameraTarget(cameraTarget);
+	cam->camDistance = -dist_to_target;
+	cam->camViewDirection = viewDirection;
+	cam->camUpAxis = upAxis;
 
 }
 
@@ -683,7 +722,9 @@ void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
 
 void BenderApp3D::initInteractionMenu(nanogui::FormHelper* menu)
 {
-
+	menu->addVariable("camera view", cameraView, true)->setItems({"Front", "Right", "Frontright", "Frontrightabove"});
+	menu->addButton("reset view", [this](){this->setCameraPosition(this->cameraView);});
+	
 	menu->addVariable("desired frame rate", desiredFrameRate);
 	// 
 	menu->addGroup("FEM Sim options");

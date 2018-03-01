@@ -135,6 +135,9 @@ public:
 	enum ToolMode {PICK_NODE, BRUSH};
 	ToolMode toolMode = PICK_NODE;
 
+	enum CameraView {FRONT, RIGHT, FRONTRIGHT, FRONTRIGHTABOVE};
+	CameraView cameraView = FRONT;
+
 
 	// app parameters
 	double simTimeStep = 1/100.0;
@@ -251,6 +254,7 @@ public:
 
 	P3D getRayPointViewNormal(Ray const & ray, P3D const & pointOnPlane);
 
+	void setCameraPosition(CameraView cameraView);
 
 	void write_performance_study_to_file(std::string const & fileName);
 
