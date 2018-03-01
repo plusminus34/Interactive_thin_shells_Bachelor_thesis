@@ -44,6 +44,7 @@ bool AppXD::onMouseMoveEvent(double xPos, double yPos) {
 }
 
 bool AppXD::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
+	tri_mesh->nudge_mesh(V3D(1., 0.));
     return(PlushApplication::onMouseButtonEvent(button, action, mods, xPos, yPos));
 }
 
