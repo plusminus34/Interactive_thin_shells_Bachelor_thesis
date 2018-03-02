@@ -614,10 +614,29 @@ Traj SoftLocoSolver::calculate_dQdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 	};
 
 	auto calculate_dQJdalphacJ_FD = [&](const Traj &alphacJ, const Traj &xJ) -> Traj {
-		auto Q_wrapper = [&](const dVector alphacJ_d) -> double {
+		auto QJ_wrapper = [&](const dVector alphacJ_d) -> double {
 			return calculate_QJ(unstack_Traj(alphacJ_d)); 
 		};
-		return unstack_Traj(vec_FD(stack_vec_dVector(alphacJ), Q_wrapper, 5e-5));
+		return unstack_Traj(vec_FD(stack_vec_dVector(alphacJ), QJ_wrapper, 5e-4));
+	};
+
+	auto calculate_dQJdxJ_FD = [&](const Traj &alphacJ, const Traj &xJ) -> Traj {
+
+		Traj dQJdxJ_FD;
+		for (int i = 0; i < K; ++i) {
+			dVector dQJdx_i; resize_zero(dQJdx_i, D()*N());
+
+			if (i == K - 1) { // !!!
+				P3D COMp = COMpJ[i];
+				auto Q_wrapper = [&](const dVector x) -> double {
+					return calculate_Q_of_x(x, COMp);
+				};
+				dQJdx_i = vec_FD(xJ[i], Q_wrapper, 5e-5);
+			}
+
+			dQJdxJ_FD.push_back(dQJdx_i); 
+		}
+		return dQJdxJ_FD;
 	};
 
 	auto Traj_equality_check = [&](const Traj &T1, const Traj &T2) -> void {
@@ -628,42 +647,63 @@ Traj SoftLocoSolver::calculate_dQdalphacJ(const Traj &alphacJ, const Traj &xJ) {
 		}
 	};
 
-	// FORNOW
-	auto calculate_dxkdxkm1 = [this](const dVector alphack, const dVector &xk) -> MatrixNxM {
-		double c = (2. / (timeStep*timeStep));
-		MatrixNxM invHk = calculate_H(xk, alphack).toDense().inverse();
-		dVector &M_diag = mesh->m;
-		MatrixNxM dxkdxkm1 = c * invHk * M_diag.asDiagonal();
-		return dxkdxkm1;
+	vector<MatrixNxM> dxidxj;
+	// TODO
+
+	vector<MatrixNxM> dxidalphaci;
+	for (int i = 0; i < K; ++i) {
+		dxidalphaci.push_back(calculate_dxdalphac(alphacJ[i], xJ[i]));
+	}
+	
+	vector<MatrixNxM> dxidalphacj;
+
+
+
+	dxdalphacJ_SAVED = dxidalphaci; // (***)
+
+	// auto calculate_dxkdxkm1 = [this](const dVector alphack, const dVector &xk) -> MatrixNxM {
+	// 	double c = (2. / (timeStep*timeStep));
+	// 	MatrixNxM invHk = calculate_H(xk, alphack).toDense().inverse();
+	// 	dVector &M_diag = mesh->m;
+	// 	MatrixNxM dxkdxkm1 = c * invHk * M_diag.asDiagonal();
+	// 	return dxkdxkm1;
+	// }; 
+
+	// Traj dQJdxJ;
+	// for (int i = 0; i < K; ++i) { 
+	// 	dVector dQJdx_i; resize_zero(dQJdx_i, D()*N());
+	// 	for (int j = i; j < K; ++j) {
+	// 		// if (j != 0) { continue; } // !!!
+	// 		if (j != K - 1) { continue; } // !!! => j <- (K - 1)
+	// 		// 
+	// 		dVector dQdx_j = calculate_dQdx(alphacJ[j], xJ[j], COMpJ[j]);
+	// 		MatrixNxM dx_jdx_i; dx_jdx_i.setIdentity(D()*N(), D()*N()); // (*)
+	// 		for (int k = i + 1; k < j; ++k) {
+	// 			dx_jdx_i *= calculate_dxkdxkm1(alphacJ[k], xJ[k]);
+	// 		}
+	// 		dQJdx_i += dx_jdx_i * dQdx_j;
+	// 	}
+	// 	dQJdxJ.push_back(dQJdx_i); 
+	// } 
+
+	Traj dQJdxJ_FD = calculate_dQJdxJ_FD(alphacJ, xJ); 
+
+	auto vMvD2Traj = [](const vector<MatrixNxM> &vM, const Traj &vD) {
+		Traj ret;
+		if (vM.size() != vD.size()) { error("SizeMismatchError"); }
+		for (size_t i = 0; i < vM.size(); ++i) {
+			ret.push_back(vM[i] * vD[i]);
+		}
+		return ret; 
 	}; 
 
-	Traj dQJdalphacJ;
-	dxdalphacJ_SAVED.clear();
-	for (int i = 0; i < K; ++i) {
-		MatrixNxM dxdalphac_i = calculate_dxdalphac(alphacJ[i], xJ[i]); 
-		{
-			dxdalphacJ_SAVED.push_back(dxdalphac_i);
-		}
-		dVector dQJdx_i; resize_zero(dQJdx_i, D()*N());
-		for (int j = i; j < K; ++j) {
-			// if (j != 0) { continue; } // !!!
-			if (j != K - 1) { continue; } // !!!
-			// 
-			dVector dQdx_j = calculate_dQdx(alphacJ[j], xJ[j], COMpJ[j]);
-			MatrixNxM dx_jdx_i; dx_jdx_i.setIdentity(D()*N(), D()*N()); // (*)
-			for (int k = i + 1; k < j; ++k) {
-				dx_jdx_i *= calculate_dxkdxkm1(alphacJ[k], xJ[k]);
-			}
-			dQJdx_i += dx_jdx_i * dQdx_j;
-		}
-		dVector dQdalphac_i = dxdalphac_i * dQJdx_i;
-		dQJdalphacJ.push_back(dQdalphac_i); 
-	} 
+	Traj STEP0 = calculate_dQJdalphacJ_FD(alphacJ, xJ); 
+	Traj STEP1 = vMvD2Traj(dxJdalphacJ, dQJdxJ_FD);
+	// Traj STEPX = vMvD2Traj(dxJdalphacJ, dQJdxJ);
 
-	Traj FD = calculate_dQJdalphacJ_FD(alphacJ, xJ);
-	Traj_equality_check(dQJdalphacJ, FD);
+	Traj_equality_check(STEP0, STEP1);
 
-	return FD;
+	return STEP0;
 }
 
 Traj SoftLocoSolver::calculate_dRdalphacJ(const Traj &alphacJ) {
