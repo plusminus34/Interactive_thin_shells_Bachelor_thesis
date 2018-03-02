@@ -43,9 +43,9 @@ AppSoftLoco::AppSoftLoco() {
 	INTEGRATE_FORWARD_IN_TIME = false;
 
 	ik->PROJECT = true;
-	ik->REGULARIZE_alphac = false;
+	ik->REGULARIZE_u = false;
 	ik->LINEAR_APPROX = false;
-	ik->c_alphac_ = .1;
+	ik->c_u_ = .1;
 	ik->NUM_ITERS_PER_STEP = 1;
 	{
 		Zik = new SoftIKSolver(Zmesh);
@@ -67,7 +67,7 @@ AppSoftLoco::AppSoftLoco() {
 	// mainMenu->addVariable("SPEC_FREESTYLE", ik->SPEC_FREESTYLE);
 	// mainMenu->addVariable("NUM_ITERS_PER_STEP", ik->NUM_ITERS_PER_STEP);
 	mainMenu->addVariable("PROJECT", ik->PROJECT);
-	mainMenu->addVariable("c_alphac_", ik->c_alphac_);
+	mainMenu->addVariable("c_alphac_", ik->c_u_);
 	mainMenu->addGroup("testing"); 
 	mainMenu->addVariable("INTEGRATE_FORWARD_IN_TIME", INTEGRATE_FORWARD_IN_TIME);
 	mainMenu->addVariable("HIGH_PRECISION_NEWTON", mesh->HIGH_PRECISION_NEWTON);
@@ -133,7 +133,7 @@ void AppSoftLoco::process() {
 		Zik->step();
 		// getchar();
 	}
-	if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->x_0, ik->v_0, ik->alphacJ_curr[0]) : mesh->solve_statics(ik->x_0, ik->alphacJ_curr[0])); }
+	if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->x_0, ik->v_0, ik->uJ_curr[0]) : mesh->solve_statics(ik->x_0, ik->uJ_curr[0])); }
 	if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((Zik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(Zik->x_0, Zik->v_0, Zik->alphac_curr) : mesh->solve_statics(Zik->x_0, Zik->alphac_curr)); } // FORNOW
 }
 
