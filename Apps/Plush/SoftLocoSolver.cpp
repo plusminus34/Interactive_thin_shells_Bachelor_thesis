@@ -613,6 +613,17 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	};
 
 	auto calculate_dQJduJ_FD = [&](const Traj &uJ, const Traj &xJ) -> Traj {
+		// TODO: This is wrong!  I think.  Kinda delirious.
+		// What I'm thinking is like...
+		// You should _not_ be invoking solve_trajectory (done in call to calculate_QJ)
+		// Since that's no longer a partial.
+		// Maybe.
+		// It actually might be fine as is.
+		// It depends if what you're doing is equivalent to:
+		// dQJduk <- ...
+		// (1) Vary u[k]
+		// (2) ... ???
+		// TODO: Compare this to the partial computation of dQkduk or whatever and really think it through.
 		auto QJ_wrapper = [&](const dVector uJ_d) -> double {
 			return calculate_QJ(unstack_Traj(uJ_d)); 
 		};
@@ -706,18 +717,6 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		dxkduk.push_back(calculate_dxdu(uJ[k], xJ[k]));
 	}
 	
-	// cout << "dxiduj" << endl;
-	vector<vector<MatrixNxM>> dxiduj;
-	// dxjduj dxidxj
-	for (int i = 0; i < K; ++i) {
-		vector<MatrixNxM> row;
-		for (int j = 0; j < K; ++j) {
-			MatrixNxM entry = dxkduk[j] * dxidxj[i][j];
-			row.push_back(entry);
-		}
-		dxiduj.push_back(row);
-	} 
-
 	// cout << "dQkdxk" << endl;
 	vector<dVector> dQkdxk;
 	for (int k = 0; k < K; ++k) {
@@ -732,11 +731,11 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 
 	// cout << "dQiduj" << endl;
 	vector<vector<dVector>> dQiduj;
-	// sum_j {dxiduj dQidxi}
+	// dxjduj dxidxj dQidxi
 	for (int i = 0; i < K; ++i) {
 		vector<dVector> row;
 		for (int j = 0; j < K; ++j) {
-			row.push_back(dxiduj[i][j] * dQkdxk[i]);
+			row.push_back(dxkduk[j] * dxidxj[i][j] * dQkdxk[i]);
 		}
 		dQiduj.push_back(row);
 	}
@@ -779,13 +778,13 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		}
 		return ret; 
 	}; 
-	// Traj STEP0 = calculate_dQJduJ_FD(uJ, xJ); 
+	Traj STEP0 = calculate_dQJduJ_FD(uJ, xJ); 
 	// Traj STEP1 = vMvD2Traj(dxidui, dQJdxJ_FD);
 	// Traj STEPX = vMvD2Traj(dxJduJ, dQJdxJ);
 
 	cout << "BEG.................................................." << endl;
 	// MTraj_equality_check(dxkdxkm1, dxkdxkm1_FD);
-	// Traj_equality_check(STEP0, STEPX);
+	Traj_equality_check(STEP0, STEPX);
 	cout << "..................................................END" << endl;
 
 	// TODO: FIXME
