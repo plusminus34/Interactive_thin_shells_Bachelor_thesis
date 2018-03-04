@@ -7,6 +7,7 @@
 class SimulationMesh;
 
 typedef vector<dVector> Traj;
+typedef vector<MatrixNxM> MTraj;
 
 class SoftLocoSolver {
 
@@ -32,8 +33,6 @@ public:
 	int SELECTED_FRAME_i = 0;
  
 public:
-	double timeStep = .01;
-	// --
 	bool PROJECT = false;
 	bool CHECK_GRADIENT = false;
 	bool LINEAR_APPROX = true;
@@ -44,7 +43,7 @@ public:
 	int D();
 	int N();
 	int T();
-	const int K = 2; // HORIZON
+	const int K = 5; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
@@ -63,7 +62,7 @@ public:
 
 
 public:
-	dVector x_0, v_0;
+	dVector xm1_curr, vm1_curr; // TODO: rename xm1, vm
 	Traj uJ_curr;
 	Traj xJ_curr;
 	// --
@@ -76,7 +75,7 @@ public:
 	// TODO: How do we LINEAR_APPROX on a trajectory? Answer: Just store the relavent Jacobians yo.
 
 public:
-	Traj solve_trajectory(double dt, const dVector &x_0, const dVector &v_0, const Traj &uJ);
+	Traj solve_trajectory(double dt, const dVector &x_S, const dVector &v_S, const Traj &uJ);
  
 public:
 	void step();

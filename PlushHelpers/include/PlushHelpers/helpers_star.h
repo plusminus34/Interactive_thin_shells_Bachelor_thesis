@@ -420,7 +420,7 @@ const auto vec_FD = [] (dVector s0, auto O_of_s, double d=1e-3) {
 	return vec;
 };
 
-const auto mat_FD = [] (dVector s0, auto f_of_s) {
+const auto mat_FD = [] (dVector s0, auto f_of_s, double d=1e-3) {
 	// ~ dfds|s0
 
 	dVector f0 = f_of_s(s0);
@@ -431,7 +431,6 @@ const auto mat_FD = [] (dVector s0, auto f_of_s) {
 	MatrixNxM mat;
 	mat_resize_zero(mat, r, c);
 
-	double d = 10e-4;
 	for (int i = 0; i < r; ++i) {
 		double s0i = s0[i];
 

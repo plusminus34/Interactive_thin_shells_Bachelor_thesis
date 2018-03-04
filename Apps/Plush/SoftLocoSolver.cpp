@@ -5,8 +5,8 @@
 
 SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	this->mesh = mesh; 
-	x_0 = mesh->x;
-	v_0 = mesh->v;
+	xm1_curr = mesh->x;
+	vm1_curr = mesh->v;
 
 	resize_zero(u_curr, T());     // FORNOW
 	x_curr = x_of_u(u_curr); // FORNOW
@@ -235,9 +235,8 @@ Traj SoftLocoSolver::solve_trajectory(double dt, const dVector &x_0, const dVect
 	return x_tmp;
 }
 
-void SoftLocoSolver::step() {
-
-	mesh->update_contacts(x_0);
+void SoftLocoSolver::step() { 
+	mesh->update_contacts(xm1_curr);
 	if (PROJECT) { project(); projectJ(); }
 	for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
 		iterate();
@@ -321,8 +320,8 @@ void SoftLocoSolver::projectJ() {
 	for (int i = 0; i < K; ++i) {
 		dVector *u_ptr = &uJ_curr[i];
 		dVector *x_ptr = &xJ_curr[i];
-		const dVector x_start = (x_tmp.empty()) ? x_0 : x_tmp.back();
-		const dVector v_start = (v_tmp.empty()) ? v_0 : v_tmp.back();
+		const dVector x_start = (x_tmp.empty()) ? xm1_curr : x_tmp.back();
+		const dVector v_start = (v_tmp.empty()) ? vm1_curr : v_tmp.back();
 		// --
 		dVector u_proj = *u_ptr;
 		while (true) {
@@ -440,7 +439,7 @@ double SoftLocoSolver::calculate_gammaJ(const Traj &uJ, const Traj &dOduJ) {
 // -- //
 
 Traj SoftLocoSolver::xJ_of_uJ(const Traj &uJ) {
-	return solve_trajectory(timeStep, x_0, v_0, uJ);
+	return solve_trajectory(mesh->timeStep, xm1_curr, vm1_curr, uJ);
 }
 
 dVector SoftLocoSolver::x_of_u(const dVector &u) { // FORNOW
@@ -448,7 +447,7 @@ dVector SoftLocoSolver::x_of_u(const dVector &u) { // FORNOW
 	// --
 	check_u_size(u);
 	// --
-	auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_0, v_0, u) : mesh->solve_statics(x_0, u);
+	auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(xm1_curr, vm1_curr, u) : mesh->solve_statics(xm1_curr, u);
 	return xv.first;
 }
 
@@ -647,7 +646,50 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		}
 	};
 
-	vector<MatrixNxM> dxidxj;
+	auto MTraj_equality_check = [&](const MTraj &T1, const MTraj &T2) -> void {
+		if (T1.size() != T2.size()) { error("SizeMismatchError"); }
+		for (size_t i = 0; i < T1.size(); ++i) {
+			cout << "--> i = " << i << endl;
+			matrix_equality_check(T1[i], T2[i]);
+		}
+	};
+
+	vector<MatrixNxM> dxkdxkm1; {
+		for (int k = 1; k < K; ++k) {
+			double h = mesh->timeStep;
+			MatrixNxM H = calculate_H(xJ[k], uJ[k]).toDense();
+			MatrixNxM Hinv = H.inverse();
+			MatrixNxM M = mesh->m.asDiagonal();
+			MatrixNxM I; I.setIdentity(D()*N(), D()*N());
+			// dxkdxkm1.push_back((I - (1./h*h)*Hinv*M).inverse() * ((2./(h*h))*Hinv*M));
+			dxkdxkm1.push_back((2./(h*h))*Hinv*M); // NOTE: ~
+			// --
+			// double c = (2. / (mesh->timeStep*mesh->timeStep));
+			// MatrixNxM invHk = calculate_H(xJ[k], uJ[k]).toDense().inverse();
+			// dVector &M_diag = mesh->m;
+			// dxkdxkm1.push_back(c * invHk * M_diag.asDiagonal());
+		}
+	}
+
+	vector<MatrixNxM> dxkdxkm1_FD; {
+		for (int k = 1; k < K; ++k) {
+			dVector xkm2 = (k == 1) ? xm1_curr : xJ[k - 2];
+			dVector uk   = uJ[k];
+			auto xk_wrapper = [&](const dVector &xkm1) -> dVector {
+				dVector vkm1 = (xkm1 - xkm2) / mesh->timeStep; // v_new = (x_new - x_0) / mesh->timeStep;
+				auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(xkm1, vkm1, uk) : mesh->solve_statics(xkm1, uk);
+				return xv.first;
+			};
+			dxkdxkm1_FD.push_back(mat_FD(xJ[k - 1], xk_wrapper, 5e-5));
+		}
+	}
+
+	cout << "BEG.................................................." << endl;
+	MTraj_equality_check(dxkdxkm1, dxkdxkm1_FD);
+	cout << "..................................................END" << endl;
+
+
+	vector<vector<MatrixNxM>> dxidxj;
 	// TODO
 
 	vector<MatrixNxM> dxidui;
@@ -655,19 +697,10 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		dxidui.push_back(calculate_dxdu(uJ[i], xJ[i]));
 	}
 	
-	vector<MatrixNxM> dxiduj;
+	vector<vector<MatrixNxM>> dxiduj;
+ 
+	dxduJ_SAVED = dxidui; // (***) // TODO: Store vector<vector<MatrixNxM>> dxidxj
 
-
-
-	dxduJ_SAVED = dxidui; // (***)
-
-	// auto calculate_dxkdxkm1 = [this](const dVector uk, const dVector &xk) -> MatrixNxM {
-	// 	double c = (2. / (timeStep*timeStep));
-	// 	MatrixNxM invHk = calculate_H(xk, uk).toDense().inverse();
-	// 	dVector &M_diag = mesh->m;
-	// 	MatrixNxM dxkdxkm1 = c * invHk * M_diag.asDiagonal();
-	// 	return dxkdxkm1;
-	// }; 
 
 	// Traj dQJdxJ;
 	// for (int i = 0; i < K; ++i) { 
@@ -698,10 +731,10 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	}; 
 
 	Traj STEP0 = calculate_dQJduJ_FD(uJ, xJ); 
-	Traj STEP1 = vMvD2Traj(dxidui, dQJdxJ_FD);
+	// Traj STEP1 = vMvD2Traj(dxidui, dQJdxJ_FD);
 	// Traj STEPX = vMvD2Traj(dxJduJ, dQJdxJ);
 
-	Traj_equality_check(STEP0, STEP1);
+	// Traj_equality_check(STEP0, STEP1);
 
 	return STEP0;
 }
@@ -891,8 +924,6 @@ SparseMatrix SoftLocoSolver::calculate_H(const dVector &x, const dVector &u) {
 	check_x_size(x);
 	check_u_size(u);
 	// --
-	SparseMatrix H_sparse(D()*N(), D()*N());
-	// --
 	vector<MTriplet> triplets;
 	{ 
 		dVector u_push = mesh->balphac; {
@@ -900,21 +931,23 @@ SparseMatrix SoftLocoSolver::calculate_H(const dVector &x, const dVector &u) {
 			// mesh->x = x_0; mesh->v = v_0; // NOTE: This won't actually do anything since dynamics contrib to H is constant.
 			// --
 			auto &E = mesh->energyFunction;
-			(SOLVE_DYNAMICS) ? E->setToDynamicsMode(timeStep) : E->setToStaticsMode(0.);
+			(SOLVE_DYNAMICS) ? E->setToDynamicsMode(mesh->timeStep) : E->setToStaticsMode(0.);
 			E->addHessianEntriesTo(triplets, x);
 		} mesh->balphac = u_push;
 	}
-	H_sparse.setZero(); // (*)
-	H_sparse.setFromTriplets(triplets.begin(), triplets.end());
+	// H_sparse.setZero(); // (*)
+	// H_sparse.setFromTriplets(triplets.begin(), triplets.end());
 
+	// FORNOW; TODO: DupFuntor
 	int NUM_TRIPLETS = triplets.size(); // (*)
 	for (int i = 0; i < NUM_TRIPLETS; ++i) {
 		const auto &triplet = triplets[i];
-		if (triplet.row() != triplet.col()) { // FORNOW
+		if (triplet.row() != triplet.col()) {
 			triplets.push_back(MTriplet(triplet.col(), triplet.row(), triplet.value()));
 		}
 	} 
 
+	SparseMatrix H_sparse(D()*N(), D()*N());
 	H_sparse.resize(D()*N(), D()*N());
 	H_sparse.setFromTriplets(triplets.begin(), triplets.end());
 
