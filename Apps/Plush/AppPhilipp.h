@@ -18,6 +18,13 @@ public:
 	QueuePlot *plot;
 
 public:
+	// std::vector (C++ version of a C array)
+	vector<double> u_vec;
+	vector<double> t_vec;
+	const int NUM_KEYFRAMES = 10;
+	P3D xy0 = P3D();
+
+public:
     bool TEST = false;
 public:
 	inline virtual void drawAuxiliarySceneInfo() {}

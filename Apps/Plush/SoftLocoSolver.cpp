@@ -288,42 +288,14 @@ void SoftLocoSolver::project() {
 }
 
 void SoftLocoSolver::projectJ() { 
-
-	/*
-	dVector u_proj = uJ_curr[0];
-	while (true) {
-		bool PROJECTED = false;
-
-		dVector x_proj = x_of_u(u_proj);
-
-		for (int i = 0; i < T(); ++i) { 
-			double Gamma_i;
-			Gamma_i = mesh->tendons[i]->get_Gamma(x_proj, u_proj);
-
-			if (Gamma_i < 0) {
-				PROJECTED = true;
-				u_proj[i] += abs(Gamma_i) + .001;
-			}
-		}
-
-		if (!PROJECTED) {
-			break;
-		}
-	} 
-	uJ_curr[0] = u_proj;
-	xJ_curr[0]      = x_of_u(uJ_curr[0]);
-	*/
-
-	// TODO:!!!
+	// TODO (CHECKME)
 	Traj x_tmp;
 	Traj v_tmp;
 	for (int i = 0; i < K; ++i) {
-		dVector *u_ptr = &uJ_curr[i];
-		dVector *x_ptr = &xJ_curr[i];
 		const dVector x_start = (x_tmp.empty()) ? xm1_curr : x_tmp.back();
 		const dVector v_start = (v_tmp.empty()) ? vm1_curr : v_tmp.back();
 		// --
-		dVector u_proj = *u_ptr;
+		dVector u_proj = uJ_curr[i];
 		while (true) {
 			bool PROJECTED = false;
 
@@ -347,8 +319,8 @@ void SoftLocoSolver::projectJ() {
 		auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_start, v_start, u_proj) : mesh->solve_statics(x_start, u_proj);
 		x_tmp.push_back(xv.first);
 		v_tmp.push_back(xv.second);
-		*u_ptr = u_proj;
-		*x_ptr = xv.first;
+		uJ_curr[i] = u_proj;
+		xJ_curr[i] = xv.first;
 	}
 }
 
@@ -576,33 +548,6 @@ Traj SoftLocoSolver::calculate_dOduJ(const Traj &uJ, const Traj &xJ) {
 
 Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 
-	/*
-	Traj dQJduJ;
-	MatrixNxM dxdu_0_SAFE = calculate_dxdu(uJ[0], xJ[0]);
-	dQJduJ.push_back(dxdu_0_SAFE * calculate_dQdx(uJ[0], xJ[0], COMpJ[0])); 
-	dxduJ_SAVED.clear();
-	dxduJ_SAVED.push_back(dxdu_0_SAFE);
-	return dQJduJ;
-	*/
-
-	// TODO:!!!
-	// MatrixNxM calculate_dxdu(const dVector &x, const dVector &u);
-	// MatrixNxM calculate_dxkdxkm1(const dVector &x_k);
-
-	// dVector dQdx_K = calculate_dQdx(uJ.back(), xJ.back()); // FORNOW
-	// dVector dx1dx0 = calculate_dxkdxkm1(xJ[0], uJ[0]);
-	// return Traj();
-
-	// Traj dQduJ;
-	// for (int k = 0; k < K; ++k) {
-	// 	dVector tmp = dQdx_K; // dVector dQdu_k:
-	// 	for (int j = K; j > k; --j) {
-	// 		tmp = calculate_dxkdxkm1(xJ[j], uJ[j]) * tmp;
-	// 	}
-	// 	tmp = calculate_dxdu(xJ[k], uJ[k]) * tmp;
-	// 	dQduJ.push_back(tmp); 
-	// }
-
 	auto unstack_Traj = [this](const dVector &fooJ_d) -> vector<dVector> {
 		Traj fooJ;
 		int LEN = fooJ_d.size() / K;
@@ -634,7 +579,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 
 		Traj dQJdxJ_FD;
 		for (int i = 0; i < K; ++i) {
-			dVector dQJdx_i; resize_zero(dQJdx_i, D()*N());
+			dVector dQJdx_i; resize_zero(dQJdx_i, DN());
 
 			if (i == K - 1) { // !!!
 				P3D COMp = COMpJ[i];
@@ -677,6 +622,16 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	// 		dxkdxkm1_FD.push_back(mat_FD(xJ[k - 1], xk_wrapper, 5e-5));
 	// 	}
 	// }
+	vector<MatrixNxM> dxkduk_FD;
+	for (int k = 0; k < K; ++k) {
+		dVector xkm1 = (k == 0) ? xm1_curr : xJ[k - 1];
+		dVector vkm1 = (k == 0) ? vm1_curr : (xJ[k] - xkm1) / mesh->timeStep;
+		auto xk_wrapper = [&](const dVector &uk) -> dVector {
+			auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(xkm1, vkm1, uk) : mesh->solve_statics(xkm1, uk);
+			return xv.first;
+		};
+		dxkduk_FD.push_back(mat_FD(uJ[k], xk_wrapper, 5e-5));
+	}
 
 	// cout << "dxkdxkm1" << endl;
 	vector<MatrixNxM> dxkdxkm1_INDEX_AT_km1; {
@@ -685,12 +640,12 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 			MatrixNxM H = calculate_H(xJ[k], uJ[k]).toDense();
 			MatrixNxM Hinv = H.inverse();
 			MatrixNxM M = mesh->m.asDiagonal();
-			MatrixNxM I; I.setIdentity(D()*N(), D()*N());
+			MatrixNxM I; I.setIdentity(DN(), DN());
 			// dxkdxkm1_INDEX_AT_km1.push_back((I - (1./h*h)*Hinv*M).inverse() * ((2./(h*h))*Hinv*M));
 			dxkdxkm1_INDEX_AT_km1.push_back((2./(h*h))*Hinv*M); // NOTE: ~
 		}
 	} 
- 
+
 	// cout << "dxidxj" << endl;
 	vector<vector<MatrixNxM>> dxidxj;
 	// dxjp1dxj ... dxidxim1
@@ -699,9 +654,9 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		for (int j = 0; j < K; ++j) {
 			MatrixNxM entry;
 			if (i < j) { 
-				entry.setZero(D()*N(), D()*N());
+				entry.setZero(DN(), DN());
 			} else {
-				entry.setIdentity(D()*N(), D()*N());
+				entry.setIdentity(DN(), DN());
 				for (int k = j + 1; k <= i; ++k) {
 					entry *= dxkdxkm1_INDEX_AT_km1[k - 1]; // (*)
 				}
@@ -717,12 +672,16 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		dxkduk.push_back(calculate_dxdu(uJ[k], xJ[k]));
 	}
 	
+	cout << "BEG.................................................." << endl;
+	MTraj_equality_check(dxkduk_FD, dxkduk);
+	cout << "..................................................END" << endl;
+ 
 	// cout << "dQkdxk" << endl;
 	vector<dVector> dQkdxk;
 	for (int k = 0; k < K; ++k) {
 		dVector entry;
 		if (k != K - 1) {
-			resize_zero(entry, D()*N());
+			resize_zero(entry, DN());
 		} else {
 			entry = calculate_dQdx(uJ[k], xJ[k], COMpJ[k]);
 		}
@@ -753,13 +712,13 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 
 	// Traj dQJdxJ;
 	// for (int i = 0; i < K; ++i) { 
-	// 	dVector dQJdx_i; resize_zero(dQJdx_i, D()*N());
+	// 	dVector dQJdx_i; resize_zero(dQJdx_i, DN());
 	// 	for (int j = i; j < K; ++j) {
 	// 		// if (j != 0) { continue; } // !!!
 	// 		if (j != K - 1) { continue; } // !!! => j <- (K - 1)
 	// 		// 
 	// 		dVector dQdx_j = calculate_dQdx(uJ[j], xJ[j], COMpJ[j]);
-	// 		MatrixNxM dx_jdx_i; dx_jdx_i.setIdentity(D()*N(), D()*N()); // (*)
+	// 		MatrixNxM dx_jdx_i; dx_jdx_i.setIdentity(DN(), DN()); // (*)
 	// 		for (int k = i + 1; k < j; ++k) {
 	// 			dx_jdx_i *= calculate_dxkdxkm1(uJ[k], xJ[k]);
 	// 		}
@@ -782,10 +741,8 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	// Traj STEP1 = vMvD2Traj(dxidui, dQJdxJ_FD);
 	// Traj STEPX = vMvD2Traj(dxJduJ, dQJdxJ);
 
-	cout << "BEG.................................................." << endl;
-	// MTraj_equality_check(dxkdxkm1, dxkdxkm1_FD);
-	Traj_equality_check(STEP0, STEPX);
-	cout << "..................................................END" << endl;
+
+	// Traj_equality_check(STEP0, STEPX);
 
 	// TODO: FIXME
 	dxduJ_SAVED = dxkduk; // (***) // TODO: Store vector<vector<MatrixNxM>> dxiduj
@@ -914,7 +871,7 @@ SparseMatrix SoftLocoSolver::calculate_A(const dVector &x) {
 	check_x_size(x);
 	// --
 	SparseMatrix A;
-	A.resize(D()*N(), T());
+	A.resize(DN(), T());
 	A.setZero();
 	vector<MTriplet> triplets;
 
@@ -980,14 +937,23 @@ SparseMatrix SoftLocoSolver::calculate_H(const dVector &x, const dVector &u) {
 	// --
 	vector<MTriplet> triplets;
 	{ 
-		dVector u_push = mesh->balphac; {
+		dVector u_push = mesh->balphac;
+		// dVector x_push = mesh->x;
+		// dVector v_push = mesh->v;
+		{
 			mesh->balphac = u; // (*)
+			// mesh->x.fill(1000.);
+			// mesh->v.fill(1000.);
 			// mesh->x = x_0; mesh->v = v_0; // NOTE: This won't actually do anything since dynamics contrib to H is constant.
 			// --
 			auto &E = mesh->energyFunction;
 			(SOLVE_DYNAMICS) ? E->setToDynamicsMode(mesh->timeStep) : E->setToStaticsMode(0.);
 			E->addHessianEntriesTo(triplets, x);
-		} mesh->balphac = u_push;
+		}
+		mesh->balphac = u_push;
+		// mesh->x = x_push;
+		// mesh->v = v_push;
+
 	}
 	// H_sparse.setZero(); // (*)
 	// H_sparse.setFromTriplets(triplets.begin(), triplets.end());
@@ -1001,8 +967,8 @@ SparseMatrix SoftLocoSolver::calculate_H(const dVector &x, const dVector &u) {
 		}
 	} 
 
-	SparseMatrix H_sparse(D()*N(), D()*N());
-	H_sparse.resize(D()*N(), D()*N());
+	SparseMatrix H_sparse(DN(), DN());
+	H_sparse.resize(DN(), DN());
 	H_sparse.setFromTriplets(triplets.begin(), triplets.end());
 
 	return H_sparse; 

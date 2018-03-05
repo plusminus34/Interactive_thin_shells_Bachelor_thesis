@@ -15,7 +15,7 @@ AppSoftIK::AppSoftIK() {
 		"swingup",  // 3
 		"sugar"   // 4
 	};
-	string TEST_CASE = TEST_CASES[0];
+	string TEST_CASE = TEST_CASES[4];
 
 	// -- // mesh
 	mesh = new CSTSimulationMesh2D();
@@ -23,7 +23,7 @@ AppSoftIK::AppSoftIK() {
 	mesh->spawnSavedMesh(fName);
 	mesh->nudge_mesh_up();
 	mesh->applyYoungsModulusAndPoissonsRatio(3e4, .25);
-	mesh->addGravityForces(V3D(0., -10.));
+	// mesh->addGravityForces(V3D(0., -10.));
 	// mesh->add_contacts_to_boundary_nodes();
 
 	if (TEST_CASE == "tentacle") {
@@ -44,7 +44,8 @@ AppSoftIK::AppSoftIK() {
 		mesh->xvPair_INTO_Mesh(mesh->solve_statics());
 		mesh->timeStep = .1;
 	} else if (TEST_CASE == "sugar") {
-		mesh->add_contacts_to_boundary_nodes();
+		// mesh->add_contacts_to_boundary_nodes();
+		mesh->pinToLeftWall();
 		mesh->timeStep = .01; 
 	}
 
