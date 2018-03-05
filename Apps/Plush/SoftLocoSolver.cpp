@@ -616,7 +616,14 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	vector<MatrixNxM> dxkduk_FD;
 	for (int k = 0; k < K; ++k) {
 		dVector xkm1 = (k == 0) ? xm1_curr : xJ[k - 1];
-		dVector vkm1 = (k == 0) ? vm1_curr : (xJ[k] - xkm1) / mesh->timeStep;
+		dVector vkm1;
+		if (k == 0) {
+			vkm1 = vm1_curr;
+		} else if (k == 1) {
+			vkm1 = (xJ[0] - xm1_curr) / mesh->timeStep; 
+		} else {
+			vkm1 = (xJ[k - 1] - xJ[k - 2]) / mesh->timeStep; 
+		}
 		auto xk_wrapper = [&](const dVector &uk) -> dVector {
 			auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(xkm1, vkm1, uk) : mesh->solve_statics(xkm1, uk);
 			return xv.first;
