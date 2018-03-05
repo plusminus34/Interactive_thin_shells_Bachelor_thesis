@@ -933,6 +933,7 @@ void SoftLocoSolver::construct_u_barrierFuncs() {
 
 int SoftLocoSolver::D() { return mesh->D(); } 
 int SoftLocoSolver::N() { return mesh->N(); } 
+int SoftLocoSolver::DN() { return D()*N(); } 
 int SoftLocoSolver::T() { return mesh->tendons.size(); }
 
 bool SoftLocoSolver::check_x_size(const dVector &x) {

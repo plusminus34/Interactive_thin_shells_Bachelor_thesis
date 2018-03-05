@@ -43,6 +43,7 @@ public:
 public:
 	int D();
 	int N();
+	int DN();
 	int T();
 	const int K = 2; // HORIZON
 	// --
