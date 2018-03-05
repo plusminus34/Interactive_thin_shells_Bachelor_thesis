@@ -43,11 +43,32 @@ void CSTElement3D::setRestShapeFromCurrentConfiguration() {
 
     dXInv = dX.inverse();
 
+	for(int i = 0; i < 3; ++i) {
+		dXInv_colsum(i) = 0.0;
+		for(int j = 0; j < 3; ++j) {
+			dXInv_colsum(i) += dXInv(j, i);
+		}
+	}
+
+	dXInv_dXInvT = dXInv * dXInv.transpose();
+	for(int i = 0; i < 3; ++i) {
+		dXInv_dxInvT_colsum(i) = 0.0;
+		for(int j = 0; j < 3; ++j) {
+			dXInv_dxInvT_colsum(i) += dXInv_dXInvT(j, i);
+		}
+	}
+
+
+
     //compute the volume of the element...
     restShapeVolume = computeRestShapeVolume(this->simMesh->X);
     //	Logger::logPrint("CSTElement2D Element volume: %lf\n", restShapeVolume);
 
+
+
+
 	// precompute dFdXij (for constructing the hessian)
+	/*
 	for (int i = 0; i < 4; ++i) {
 		for (int j = 0; j < 3; ++j) {
 			dFdXij[i][j].setZero();
@@ -60,6 +81,7 @@ void CSTElement3D::setRestShapeFromCurrentConfiguration() {
 			dFdXij[i][j] = dFdXij[i][j] * dXInv;
 		}
 	}
+	*/
 }
 
 
@@ -141,7 +163,6 @@ void CSTElement3D::computeDeformationGradient(const dVector& x, const dVector& X
         v1[1], v2[1], v3[1],
         v1[2], v2[2], v3[2];
     F = dx * dXInv;
-
 
 	if (matModel == MM_NEO_HOOKEAN) {
 		Finv = F.inverse();
@@ -244,7 +265,7 @@ void CSTElement3D::computeGradientComponents()
 
 void CSTElement3D::computeHessianComponents() 
 {
-	
+	/*
     if (matModel == MM_STVK)
     {
         
@@ -302,13 +323,94 @@ void CSTElement3D::computeHessianComponents()
                + (shearModulus - bulkModulus * F_logdet) * FinvT * dF.transpose() * FinvT
                + bulkModulus * (Finv * dF).trace() * FinvT;
             dH = restShapeVolume * dP * dXInv.transpose();
-            for (int ii = 0;ii < 3;++ii)
-                for (int jj = 0;jj < 3;++jj)
+            for (int ii = 0;ii < 3;++ii) {
+                for (int jj = 0;jj < 3;++jj) {
 					ddEdxdx[ii + 1][i](jj, j) = dH(jj, ii);
+				}
+			}
             ddEdxdx[0][i](0, j) = -dH(0, 2) - dH(0, 1) - dH(0, 0);
             ddEdxdx[0][i](1, j) = -dH(1, 2) - dH(1, 1) - dH(1, 0);
             ddEdxdx[0][i](2, j) = -dH(2, 2) - dH(2, 1) - dH(2, 0);
         }
 		}
     }
+	
+	else */if(matModel == MM_NEO_HOOKEAN)
+	{
+		Matrix3x3 dH;//, dP;
+
+		Matrix3x3 A;	// FinvT * dF.transpose() * FinvT
+
+		Matrix3x3 dxInvT = dx.inverse().transpose();
+		V3D dxInvT_rowsum;
+		for(int i = 0; i < 3; ++i) {
+			dxInvT_rowsum(i) = dxInvT.row(i).sum();
+		}
+
+		//V3D dF_jth_row;	// note: for all dFdXij only the j^th row is occupied; the rest is zero
+		V3D c;		// this is the jth column of FinvT * dF.transpose()
+		V3D dF_dXInvT_jth_row;
+
+
+		for(int i = 0; i < 4; ++i) {
+			if(i == 0) {
+				//dF_jth_row = - dXInv_colsum;
+				c = -dxInvT_rowsum;
+				dF_dXInvT_jth_row = -dXInv_dxInvT_colsum;
+			}
+			else {
+				//dF_jth_row = static_cast<V3D>(dXInv.row(i-1));
+				c = static_cast<V3D>(dxInvT.col(i-1));
+				dF_dXInvT_jth_row = static_cast<V3D>(dXInv_dXInvT.row(i-1));
+			}		
+			//V3D c = FinvT * dF_jth_row;	// this is the jth column of FinvT * dF.transpose()
+			for(int j = 0; j < 3; ++j) {
+				// second summand
+				for(int k = 0; k < 3; ++k) {
+					A.row(k) = c(k) * dxInvT.row(j);
+				}
+				//dH = (shearModulus - bulkModulus * F_logdet) * A;
+				// third summand
+				//double tr = Finv.col(j).dot(dF_jth_row); // (Finv * dF).trace()
+				double tr = 0.0;
+				if(i == 0) {
+					tr = - dxInvT.row(j).sum();
+				}
+				else {
+					tr = dxInvT(j, i-1);
+				}
+				//dH += bulkModulus * tr * dxInvT;
+				// second and third summand
+				dH = restShapeVolume * ((shearModulus - bulkModulus * F_logdet) * A + bulkModulus * tr * dxInvT);
+				// first summand
+				dH.row(j) += restShapeVolume * shearModulus * dF_dXInvT_jth_row;
+
+				//dH *= restShapeVolume;
+
+				// assign to right place
+				for (int ii = 0;ii < 3;++ii) {
+					for (int jj = 0;jj < 3;++jj) {
+						ddEdxdx[ii + 1][i](jj, j) = dH(jj, ii);
+					}
+				}
+				ddEdxdx[0][i](0, j) = -dH(0, 2) - dH(0, 1) - dH(0, 0);
+				ddEdxdx[0][i](1, j) = -dH(1, 2) - dH(1, 1) - dH(1, 0);
+				ddEdxdx[0][i](2, j) = -dH(2, 2) - dH(2, 1) - dH(2, 0);
+
+			}
+		}
+
+
+
+
+
+
+	}
+
+
+
+
+
+
+
 }

@@ -36,7 +36,7 @@ double RBPointDistanceObjective::computeValue(const dVector& p)
 	double e = 0.0;
 	e += lowerConstraint.computeValue(d);
 	e += upperConstraint.computeValue(d);
-std::cout << "gripper distance : " << d << "    (e = " << e << ")" << std::endl;
+
 	return(e);
 }
 

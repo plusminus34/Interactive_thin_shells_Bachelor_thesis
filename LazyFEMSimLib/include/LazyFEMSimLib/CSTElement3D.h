@@ -36,14 +36,19 @@ protected:
     Matrix3x3 ddEdxdx[4][4];
     // precomputed for new rest shape (see also below)
     Matrix3x3 dXInv;
+	Matrix3x3 dXInv_dXInvT;
+	V3D dXInv_colsum;
+	V3D dXInv_dxInvT_colsum;
+	//V3D dxInvT_rowsum;
 	// precomputed for new node positions (computeDeformationGradient());
+	//Matrix3x3 dxInvT;
 	Matrix3x3 F, Finv, FinvT;
 	double F_norm2, F_logdet;
 	// temporary helpers used within some computations
 	Matrix3x3 dx, dEdF, strain;
 
 	// also precomputed for new rest shape
-	std::array<std::array<Matrix3x3, 3 >, 4> dFdXij;
+	//std::array<std::array<Matrix3x3, 3 >, 4> dFdXij;
 
 protected:
     double computeRestShapeVolume(const dVector& X);

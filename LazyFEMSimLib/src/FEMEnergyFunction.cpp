@@ -72,6 +72,7 @@ double FEMEnergyFunction::computeValue(const dVector& s)
 
 void FEMEnergyFunction::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& s) {
 
+	hessianEntries.reserve(simMesh->hessianTriplets.size());
 	hessianEntries.insert(hessianEntries.end(), simMesh->hessianTriplets.begin(), simMesh->hessianTriplets.end());
 
 	int nDim = s.size();

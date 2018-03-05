@@ -148,7 +148,7 @@ BenderApp3D::BenderApp3D()
 		config->poissonRatio = 0.376;
 
 		//config->maxTetVolume = 1.0e-6;
-		config->maxTetVolume = 1.0e-6;
+		config->maxTetVolume = 0.5e-6;
 		// -1.0, 30.0, 10.0, 3.3, 2.0, 1.0, 0.45, 0.33, 0.1, 0.033
 
 		// fiber for matched target trajectory
@@ -233,7 +233,7 @@ BenderApp3D::BenderApp3D()
 	//	config->distanceLimitsGrippers.push_back(std::make_tuple(0, 1, 0.10, 0.42, 1000.0, 0.005));
 	//}
 
-	// plate
+	//// plate
 	//{
 	//	config->gravity = V3D(0.0, -9.8, 0.0);
 	//	config->fem_model_filename = "../data/3dModels/plate_thin.ply";
@@ -415,6 +415,7 @@ BenderApp3D::BenderApp3D()
 	showGroundPlane = true;
 	showConsole = false;
 
+
 }
 
 
@@ -443,15 +444,19 @@ void BenderApp3D::setCameraPosition(CameraView cameraView)
 		viewDirection = V3D(1, -dy, -1);
 	}
 
+	viewDirection.toUnit();
 	V3D sideAxis = viewDirection.cross(V3D(0, 1, 0));
 	upAxis = sideAxis.cross(viewDirection);
 	upAxis.toUnit();
 
-	cam->setCameraTarget(cameraTarget);
+	
+	cam->rotAboutUpAxis = 0;
+	cam->rotAboutRightAxis = 0;
+
 	cam->camDistance = -dist_to_target;
 	cam->camViewDirection = viewDirection;
 	cam->camUpAxis = upAxis;
-
+	cam->setCameraTarget(cameraTarget);
 }
 
 
@@ -531,8 +536,8 @@ void BenderApp3D::setupExperiment(BenderExperimentConfiguration & config)
 	////////////////////////
 	{
 		// load robot
-		//std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
-		std::string fnameRB = "../data/rbs/yumi/yumi.rbs";
+		std::string fnameRB = "../data/rbs/yumi/yumi_simplified.rbs";
+		//std::string fnameRB = "../data/rbs/yumi/yumi.rbs";
 
 		auto loadRobot = [&] (std::string const & fname)
 		{

@@ -266,7 +266,7 @@ void SimulationMesh::prepare_upto_hessian(dVector const & x)
 	// prepare (parts of) gradient
 	gradient.resize(x.size());
 	gradient.setZero();
-	hessianTriplets.resize(0);
+	//hessianTriplets.resize(0);
 
 	// CST elements: prepare
 	int n = elements.size();
