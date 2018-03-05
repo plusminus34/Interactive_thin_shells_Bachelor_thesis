@@ -579,9 +579,10 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		auto QJ_wrapper = [&](const dVector uJ_d) -> double {
 			return calculate_QJ(unstack_Traj(uJ_d)); 
 		};
-		return unstack_Traj(vec_FD(stack_vec_dVector(uJ), QJ_wrapper, 5e-5));
+		return unstack_Traj(vec_FD(stack_vec_dVector(uJ), QJ_wrapper, 1e-5));
 	};
-
+ 
+	// NOTE: Unuused
 	auto calculate_dQJdxJ_FD = [&](const Traj &uJ, const Traj &xJ) -> Traj {
 
 		Traj dQJdxJ_FD;
@@ -613,6 +614,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	// 		dxkdxkm1_FD.push_back(mat_FD(xJ[k - 1], xk_wrapper, 5e-5));
 	// 	}
 	// }
+
 	vector<MatrixNxM> dxkduk_FD;
 	for (int k = 0; k < K; ++k) {
 		dVector xkm1 = (k == 0) ? xm1_curr : xJ[k - 1];
@@ -670,9 +672,9 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		dxkduk.push_back(calculate_dxdu(uJ[k], xJ[k]));
 	}
 	
-	cout << "BEG.................................................." << endl;
-	MTraj_equality_check(dxkduk_FD, dxkduk);
-	cout << "..................................................END" << endl;
+	// cout << "BEG.................................................." << endl;
+	// MTraj_equality_check(dxkduk_FD, dxkduk);
+	// cout << "..................................................END" << endl;
  
 	// cout << "dQkdxk" << endl;
 	vector<dVector> dQkdxk;
@@ -739,9 +741,9 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	// Traj STEP1 = vMvD2Traj(dxidui, dQJdxJ_FD);
 	// Traj STEPX = vMvD2Traj(dxJduJ, dQJdxJ);
 
-	// cout << "BEG.................................................." << endl;
-	// Traj_equality_check(STEP0, STEPX);
-	// cout << "..................................................END" << endl; 
+	cout << "BEG.................................................." << endl;
+	Traj_equality_check(STEP0, STEPX);
+	cout << "..................................................END" << endl; 
 
 	// TODO: FIXME
 	dxduJ_SAVED = dxkduk; // (***) // TODO: Store vector<vector<MatrixNxM>> dxiduj
