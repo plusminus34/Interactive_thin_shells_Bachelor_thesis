@@ -44,7 +44,7 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 3; // HORIZON
+	const int K = 10; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
@@ -119,6 +119,11 @@ public:
 	bool REGULARIZE_u = true;
 	double c_u_ = .01;// 2.e-1;
 	Quadratic *u_regFunc = new Quadratic(&c_u_);
+
+public:
+	void Traj_equality_check(const Traj &, const Traj &);
+	void MTraj_equality_check(const MTraj &, const MTraj &);
+
 
 };
 

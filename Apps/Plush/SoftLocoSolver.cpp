@@ -322,6 +322,13 @@ void SoftLocoSolver::projectJ() {
 		uJ_curr[i] = u_proj;
 		xJ_curr[i] = xv.first;
 	}
+
+	if (false) { // VALIDATE_PROJECTION
+		Traj xJ_CHECK = solve_trajectory(mesh->timeStep, xm1_curr, vm1_curr, uJ_curr);
+		cout << "^^^" << endl;
+		Traj_equality_check(xJ_curr, xJ_CHECK);
+		cout << "vvv" << endl;
+	}
 }
 
 Traj SoftLocoSolver::uJ_next(const Traj &uJ, const Traj &xJ) { 
@@ -594,22 +601,6 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		return dQJdxJ_FD;
 	};
 
-	auto Traj_equality_check = [&](const Traj &T1, const Traj &T2) -> void {
-		if (T1.size() != T2.size()) { error("SizeMismatchError"); }
-		for (size_t i = 0; i < T1.size(); ++i) {
-			cout << "--> i = " << i << endl;
-			vector_equality_check(T1[i], T2[i]);
-		}
-	};
-
-	auto MTraj_equality_check = [&](const MTraj &T1, const MTraj &T2) -> void {
-		if (T1.size() != T2.size()) { error("SizeMismatchError"); }
-		for (size_t i = 0; i < T1.size(); ++i) {
-			cout << "--> i = " << i << endl;
-			matrix_equality_check(T1[i], T2[i]);
-		}
-	};
-
 	// vector<MatrixNxM> dxkdxkm1_FD; {
 	// 	for (int k = 1; k < K; ++k) {
 	// 		dVector xkm2 = (k == 1) ? xm1_curr : xJ[k - 2];
@@ -630,7 +621,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 			auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(xkm1, vkm1, uk) : mesh->solve_statics(xkm1, uk);
 			return xv.first;
 		};
-		dxkduk_FD.push_back(mat_FD(uJ[k], xk_wrapper, 5e-5));
+		dxkduk_FD.push_back(mat_FD(uJ[k], xk_wrapper, 1e-4));
 	}
 
 	// cout << "dxkdxkm1" << endl;
@@ -694,7 +685,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	for (int i = 0; i < K; ++i) {
 		vector<dVector> row;
 		for (int j = 0; j < K; ++j) {
-			row.push_back(dxkduk[j] * dxidxj[i][j] * dQkdxk[i]);
+			row.push_back(dxkduk[j] * dxidxj[i][j] * dQkdxk[i]); // FORNOW
 		}
 		dQiduj.push_back(row);
 	}
@@ -741,8 +732,9 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	// Traj STEP1 = vMvD2Traj(dxidui, dQJdxJ_FD);
 	// Traj STEPX = vMvD2Traj(dxJduJ, dQJdxJ);
 
-
+	// cout << "BEG.................................................." << endl;
 	// Traj_equality_check(STEP0, STEPX);
+	// cout << "..................................................END" << endl; 
 
 	// TODO: FIXME
 	dxduJ_SAVED = dxkduk; // (***) // TODO: Store vector<vector<MatrixNxM>> dxiduj
@@ -1017,3 +1009,19 @@ bool SoftLocoSolver::check_u_size(const dVector &u) {
 		mesh->draw(xJ_curr[i], uJ_curr[i]);
 	} 
 */
+
+void SoftLocoSolver::Traj_equality_check(const Traj &T1, const Traj &T2) {
+	if (T1.size() != T2.size()) { error("SizeMismatchError"); }
+	for (size_t i = 0; i < T1.size(); ++i) {
+		cout << "--> i = " << i << endl;
+		vector_equality_check(T1[i], T2[i]);
+	}
+};
+
+void SoftLocoSolver::MTraj_equality_check(const MTraj &T1, const MTraj &T2) {
+	if (T1.size() != T2.size()) { error("SizeMismatchError"); }
+	for (size_t i = 0; i < T1.size(); ++i) {
+		cout << "--> i = " << i << endl;
+		matrix_equality_check(T1[i], T2[i]);
+	}
+};
