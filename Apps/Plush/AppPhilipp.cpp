@@ -98,6 +98,7 @@ bool AppPhilipp::onMouseMoveEvent(double xPos, double yPos) {
 	// -- TODO: 
 	Ray ray = InteractiveWidget::getRayFromScreenCoords(xPos, yPos);
 	xy0 = xy0_from_ray(ray); 
+	return false;
 }
 
 bool AppPhilipp::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {

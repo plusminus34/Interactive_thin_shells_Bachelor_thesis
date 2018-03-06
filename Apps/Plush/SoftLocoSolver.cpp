@@ -655,16 +655,29 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		}
 	}
 
+
 	// cout << "dxkdxkm1" << endl;
 	vector<MatrixNxM> dxkdxkm1_INDEX_AT_km1; {
 		for (int k = 1; k < K; ++k) {
 			double h = mesh->timeStep;
+			MatrixNxM M = mesh->m.asDiagonal();
 			MatrixNxM H = calculate_H(xJ[k], uJ[k]).toDense();
 			MatrixNxM Hinv = H.inverse();
-			MatrixNxM M = mesh->m.asDiagonal();
 			MatrixNxM I; I.setIdentity(DN(), DN());
-			// dxkdxkm1_INDEX_AT_km1.push_back((I - (1./h*h)*Hinv*M).inverse() * ((2./(h*h))*Hinv*M));
-			dxkdxkm1_INDEX_AT_km1.push_back((2./(h*h))*Hinv*M); // NOTE: ~
+			dxkdxkm1_INDEX_AT_km1.push_back(2./(h*h)*Hinv*M);
+		}
+	} 
+
+	// cout << "dxkdxkm1" << endl;
+	vector<MatrixNxM> dxkdxkm2_INDEX_AT_km2; {
+		for (int k = 2; k < K; ++k) {
+			double h = mesh->timeStep;
+			MatrixNxM M = mesh->m.asDiagonal();
+			MatrixNxM H = calculate_H(xJ[k], uJ[k]).toDense();
+			MatrixNxM Hinv = H.inverse();
+			MatrixNxM I; I.setIdentity(DN(), DN());
+			MatrixNxM R = 2.*dxkdxkm1_INDEX_AT_km1[k - 2] - I; 
+			dxkdxkm2_INDEX_AT_km2.push_back(pow(h, -2)*Hinv*M*R); // NOTE: ~
 		}
 	} 
  
@@ -678,12 +691,14 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 			MatrixNxM entry;
 			if (i < j) { 
 				entry.setZero(DN(), DN());
-			} else {
+			} else if (i == j) {
 				entry.setIdentity(DN(), DN());
-				for (int k = j + 1; k <= i; ++k) {
-				// for (int k = i; k >= j + 1; --k) {
-					entry *= dxkdxkm1_INDEX_AT_km1[k - 1]; // (*)
-				}
+			} else if (i - j == 1) {
+				entry = dxkdxkm1_INDEX_AT_km1[i - 1]; // (*)
+			} else if (i - j == 2) {
+				entry = dxkdxkm2_INDEX_AT_km2[i - 2]; // (*)
+			} else {
+				error("[dxidj] NotImplementedError");
 			}
 			row.push_back(entry);
 		}
