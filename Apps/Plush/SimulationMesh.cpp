@@ -171,7 +171,8 @@ pair<dVector, dVector> SimulationMesh::solve_statics(const dVector &x_0, const d
 
 		int    MAX_ITERATIONS = 10;
 		double SOLVE_RESIDUAL = 10e-5;
-		if (HIGH_PRECISION_NEWTON) { MAX_ITERATIONS = 100; SOLVE_RESIDUAL = 10e-50; }
+		// if (HIGH_PRECISION_NEWTON) { MAX_ITERATIONS = 100; SOLVE_RESIDUAL = 10e-50; }
+		if (HIGH_PRECISION_NEWTON) { MAX_ITERATIONS = 1000; SOLVE_RESIDUAL = 10e-50; }
 		NewtonFunctionMinimizer minimizer(MAX_ITERATIONS);
 		minimizer.solveResidual = SOLVE_RESIDUAL;
 
@@ -219,7 +220,7 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const 
 
 		int    MAX_ITERATIONS = 10;
 		double SOLVE_RESIDUAL = 10e-5;
-		if (HIGH_PRECISION_NEWTON) { MAX_ITERATIONS = 100; SOLVE_RESIDUAL = 10e-50; }
+		if (HIGH_PRECISION_NEWTON) { MAX_ITERATIONS = 1000; SOLVE_RESIDUAL = 10e-50; }
 		NewtonFunctionMinimizer minimizer(MAX_ITERATIONS);
 		minimizer.solveResidual = SOLVE_RESIDUAL;
 		minimizer.printOutput = true;
