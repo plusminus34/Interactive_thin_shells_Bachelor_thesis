@@ -19,12 +19,12 @@ AppSoftLoco::AppSoftLoco() {
 	for (auto ptr : { &mesh, &Zmesh }) {
 		*ptr = new CSTSimulationMesh2D();
 		(*ptr)->spawnSavedMesh(fName);
-		(*ptr)->nudge_mesh_up();
+		// (*ptr)->nudge_mesh_up();
 		(*ptr)->applyYoungsModulusAndPoissonsRatio(3e4, .25);
 		(*ptr)->addGravityForces(V3D(0., -10.)); 
-		(*ptr)->pinToFloor(); 
+		// (*ptr)->pinToFloor(); 
 		// (*ptr)->pinToLeftWall(); 
-		(*ptr)->xvPair_INTO_Mesh((*ptr)->solve_statics());
+		// (*ptr)->xvPair_INTO_Mesh((*ptr)->solve_statics());
 		// (*ptr)->rig_boundary_simplices();
 	}
 
@@ -48,13 +48,13 @@ AppSoftLoco::AppSoftLoco() {
 	ik->c_u_ = .1;
 	ik->NUM_ITERS_PER_STEP = 1;
 	{
-		Zik = new SoftIKSolver(Zmesh);
-		Zik->PROJECT = true;
-		Zik->REGULARIZE_alphac = false;
-		Zik->LINEAR_APPROX = false;
-		Zik->c_alphac_ = .1;
-		Zik->HONEY_alphac = false;
-		Zik->NUM_ITERS_PER_STEP = 1;
+		// Zik = new SoftIKSolver(Zmesh);
+		// Zik->PROJECT = true;
+		// Zik->REGULARIZE_alphac = false;
+		// Zik->LINEAR_APPROX = false;
+		// Zik->c_alphac_ = .1;
+		// Zik->HONEY_alphac = false;
+		// Zik->NUM_ITERS_PER_STEP = 1;
 	}
  
 	mainMenu->addGroup("app");
@@ -98,18 +98,18 @@ void AppSoftLoco::drawScene() {
 
 	mesh->draw(); // FORNOW
 
-	glMasterPush(); {
-		glTranslated(1., 0., 0.);
-		glLineWidth(9);
-		set_color(GOLDCLOVER);
-		glBegin(GL_LINE_STRIP); {
-			for (auto &bs : Zmesh->boundary_simplices) {
-				for (auto &node : bs->nodes) {
-					glP3D(node->getCoordinates(Zik->x_curr));
-				}
-			}
-		} glEnd();
-	} glMasterPop();
+	// glMasterPush(); {
+	// 	glTranslated(1., 0., 0.);
+	// 	glLineWidth(9);
+	// 	set_color(GOLDCLOVER);
+	// 	glBegin(GL_LINE_STRIP); {
+	// 		for (auto &bs : Zmesh->boundary_simplices) {
+	// 			for (auto &node : bs->nodes) {
+	// 				glP3D(node->getCoordinates(Zik->x_curr));
+	// 			}
+	// 		}
+	// 	} glEnd();
+	// } glMasterPop();
 
 	ik->draw(); 
 
@@ -120,21 +120,21 @@ void AppSoftLoco::process() {
 	// ik->COMp_FORNOW = ik->COMpJ[0]; // !!!
 	// Zik->COMp       = ik->COMpJ[0]; // !!!
 	ik->COMp_FORNOW = ik->COMpJ[ik->K - 1]; // !!!
-	Zik->COMp       = ik->COMpJ[ik->K - 1]; // !!!
+	// Zik->COMp       = ik->COMpJ[ik->K - 1]; // !!!
 	// --
-	Zik->SOLVE_DYNAMICS = ik->SOLVE_DYNAMICS;
+	// Zik->SOLVE_DYNAMICS = ik->SOLVE_DYNAMICS;
 	// -- 
 	if (INTEGRATE_FORWARD_IN_TIME) { ik->xm1_curr = mesh->x; ik->vm1_curr = mesh->v; } 
-	if (INTEGRATE_FORWARD_IN_TIME) { Zik->x_0 = mesh->x; Zik->v_0 = mesh->v; } // FORNOW
+	// if (INTEGRATE_FORWARD_IN_TIME) { Zik->x_0 = mesh->x; Zik->v_0 = mesh->v; } // FORNOW
 	if (SOLVE_IK) {
 		cout << endl << "--> loco" << endl;
 		ik->step();
 		// cout << endl << "--> Z_ik" << endl;
-		Zik->step();
+		// Zik->step();
 		// getchar();
 	}
 	if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, ik->uJ_curr[0]) : mesh->solve_statics(ik->xm1_curr, ik->uJ_curr[0])); }
-	if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((Zik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(Zik->x_0, Zik->v_0, Zik->alphac_curr) : mesh->solve_statics(Zik->x_0, Zik->alphac_curr)); } // FORNOW
+	// if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((Zik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(Zik->x_0, Zik->v_0, Zik->alphac_curr) : mesh->solve_statics(Zik->x_0, Zik->alphac_curr)); } // FORNOW
 }
 
 ////////////////////////////////////////////////////////////////////////////////

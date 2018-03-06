@@ -201,11 +201,13 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const 
 
 		energyFunction->setToDynamicsMode(timeStep);
 
-		this->x = x_0;
+		// cout << x_0.transpose() << endl;
 		this->update_contacts(x_0);
 		this->v = v_0;
 		this->balphac = balphac;
-		this->xSolver = x_0;
+		this->x = x_0; // TODO: CHECKME
+		// this->xSolver = x_0;
+		this->xSolver = X;
 
 		if (checkDerivatives) {
 			energyFunction->testGradientWithFD(xSolver);
@@ -223,9 +225,9 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const 
 		int MAX_LINE_SEARCH_ITERATIONS = 15;
 		double LINE_SEARCH_START_VALUE = 1.;
 		if (HIGH_PRECISION_NEWTON) {
-			MAX_ITERATIONS = 10000;
-			SOLVE_RESIDUAL = 10e-50;
-			MAX_LINE_SEARCH_ITERATIONS = 166;
+			MAX_ITERATIONS = 4000;
+			SOLVE_RESIDUAL = 1e-10;
+			MAX_LINE_SEARCH_ITERATIONS = 48;
 			LINE_SEARCH_START_VALUE = 1.;
 		}
 		NewtonFunctionMinimizer minimizer(MAX_ITERATIONS);

@@ -236,8 +236,12 @@ Traj SoftLocoSolver::solve_trajectory(double dt, const dVector &x_0, const dVect
 }
 
 void SoftLocoSolver::step() { 
-	mesh->update_contacts(xm1_curr);
-	if (PROJECT) { project(); projectJ(); }
+	if (!mesh->contacts.empty()) { error("[SoftLocoSolver::step()] NotImplementedErro."); }
+	// mesh->update_contacts(xm1_curr);
+	if (PROJECT) {
+		// project();
+		projectJ();
+	}
 	for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
 		iterate();
 	}
@@ -249,8 +253,8 @@ void SoftLocoSolver::iterate() {
 	// cout << " u_pre: " << uJ_curr[0].transpose() << endl;
 	// cout << " x_pre:      " << xJ_curr[0].transpose() << endl;
 
-	u_curr = u_next(u_curr, x_curr); // FORNOW
-	x_curr  = x_of_u(u_curr); // FORNOW
+	// u_curr = u_next(u_curr, x_curr); // FORNOW
+	// x_curr  = x_of_u(u_curr); // FORNOW
 	// --
 	uJ_curr = uJ_next(uJ_curr, xJ_curr);
 	xJ_curr = xJ_of_uJ(uJ_curr);
@@ -576,7 +580,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	vector<vector<MatrixNxM>> dxidxj_FD; 
 	vector<MatrixNxM> dxkduk_FD; 
 	if (TEST_FD) {
-		{
+		if (false) {
 			for (int k = 0; k < K; ++k) {
 				dVector entry; resize_zero(entry, DN());
 				if (k == K - 1) {
@@ -589,7 +593,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 			}
 		}
 
-		{
+		if (false) {
 			for (int k = 1; k < K; ++k) {
 				dVector xkm2 = (k == 1) ? xm1_curr : xJ[k - 2];
 				dVector uk   = uJ[k];
@@ -623,7 +627,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 							}
 							return xk;
 						};
-						entry = mat_FD(xJ[j], xi_wrapper, 1e-8);
+						entry = mat_FD(xJ[j], xi_wrapper, 5e-5);
 					}
 					row.push_back(entry);
 				}
@@ -631,7 +635,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 			}
 		}
 
-		{
+		if (false) {
 			for (int k = 0; k < K; ++k) {
 				dVector xkm1 = (k == 0) ? xm1_curr : xJ[k - 1];
 				dVector vkm1;
@@ -728,25 +732,43 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 
 	if (TEST_FD) {
 		cout << "BEG.................................................." << endl;
-		cout << "--> dxkduk" << endl;
-		MTraj_equality_check(dxkduk_FD, dxkduk);
+		// cout << "--> dxkduk" << endl;
+		// MTraj_equality_check(dxkduk_FD, dxkduk);
 		cout << "--> dxkdxkm1" << endl;
-		MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
-		cout << "--> dxidxj" << endl;
+		// MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
+		// cout << "--> dxidxj" << endl;
+		cout << "--------------------------------------------------------------------------------" << endl;
+		cout << "dx1dx0" << endl;
+		cout << dxidxj[1][0] << endl;
+		cout << "--------------------------------------------------------------------------------" << endl;
+		cout << "dx1dx0_FD" << endl;
+		cout << dxidxj_FD[1][0] << endl;
+		cout << "--------------------------------------------------------------------------------" << endl;
+		cout << "dx2dx1" << endl;
+		cout << dxidxj[2][1] << endl;
+		cout << "--------------------------------------------------------------------------------" << endl;
+		cout << "dx2dx1_FD" << endl;
+		cout << dxidxj_FD[2][1] << endl;
+		cout << "--------------------------------------------------------------------------------" << endl;
+		cout << "dx2dx0" << endl;
+		cout << dxidxj[2][0] << endl;
+		cout << "--------------------------------------------------------------------------------" << endl;
+		cout << "dx2dx0_FD" << endl;
+		cout << dxidxj_FD[2][0] << endl;
 		for (int i = 0; i < K; ++i) {
 			cout << "----> ii = " << i << endl;
 			MTraj_equality_check(dxidxj_FD[i], dxidxj[i]);
 		}
-		cout << "--> dQkdxk" << endl;
-		Traj_equality_check(dQkdxk_FD, dQkdxk);
+		// cout << "--> dQkdxk" << endl;
+		// Traj_equality_check(dQkdxk_FD, dQkdxk);
 		cout << "..................................................END" << endl;
 	}
  
 	if (TEST_FD) {
-		cout << "XXX.................................................." << endl;
-		Traj STEP0 = calculate_dQJduJ_FD(uJ, xJ);
-		Traj_equality_check(STEP0, STEPX);
-		cout << "..................................................XXX" << endl;
+		// cout << "XXX.................................................." << endl;
+		// Traj STEP0 = calculate_dQJduJ_FD(uJ, xJ);
+		// Traj_equality_check(STEP0, STEPX);
+		// cout << "..................................................XXX" << endl;
 	}
 
 	// TODO: FIXME

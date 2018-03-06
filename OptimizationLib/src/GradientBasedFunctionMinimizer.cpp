@@ -1,6 +1,6 @@
 #include <OptimizationLib/GradientBasedFunctionMinimizer.h>
-
-
+#include <iostream>
+ 
 GradientBasedFunctionMinimizer::GradientBasedFunctionMinimizer(int p_maxIterations, double p_solveResidual, int p_maxLineSearchIterations, bool p_printOutput){
 	maxIterations = p_maxIterations;
 	maxLineSearchIterations = p_maxLineSearchIterations;
@@ -59,6 +59,12 @@ bool GradientBasedFunctionMinimizer::minimize(ObjectiveFunction *function, dVect
 		function->setCurrentBestSolution(pi);
 	}
 
+	if (!optimizationConverged) {
+		std:: cout << "XXX residual: " << dp.norm() << std::endl;
+	} else {
+		std:: cout << "..." << dp.norm() << std::endl; 
+	}
+
 	functionValue = function->computeValue(pi);
 
 	if(printOutput) {
@@ -109,6 +115,7 @@ double GradientBasedFunctionMinimizer::doLineSearch(ObjectiveFunction *function,
 	}
 
 	// couldn't find a good value. Return what we now have and hope for the best...
+	std::cout << "line search failed." << std::endl;
 	return alpha;
 }
 
