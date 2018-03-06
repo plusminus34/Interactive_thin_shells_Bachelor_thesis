@@ -12,6 +12,14 @@ void LazyNewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *func
 	// get the hessian entries (as vector of triplets)
 	hessianEntries.resize(0);
 	function->addHessianEntriesTo(hessianEntries, pi);
+// mirror:
+hessianEntries.reserve(hessianEntries.size()*2);
+for(MTriplet trip : hessianEntries) {
+	if(trip.row() != trip.col()) {
+		hessianEntries.push_back(MTriplet(trip.col(), trip.row(), trip.value()));
+	}
+}
+
 
 	// plug hessian entries into the eigen sparse matrix
 	if (newHessianStructure) {
@@ -96,7 +104,15 @@ void LazyNewtonFunctionMinimizer::computeSearchDirection(ObjectiveFunction *func
 	pardiso->solve(gradient, dp);
 #else
 	solver.factorize(H);
-	dp = solver.solve(gradient);
+	//if(dp_old.size() > 0) {
+	//	solver.setTolerance(1e-9);
+	//	dp = solver.solveWithGuess(gradient, dp_old);
+	//}
+	//else {
+		solver.setTolerance(1e-9);
+		dp = solver.solve(gradient);
+	//}
+	//dp_old = dp;
 #endif
 	//dp = H.triangularView<Eigen::Lower>().solve(gradient);
 

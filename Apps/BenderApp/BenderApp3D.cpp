@@ -148,7 +148,7 @@ BenderApp3D::BenderApp3D()
 		config->poissonRatio = 0.376;
 
 		//config->maxTetVolume = 1.0e-6;
-		config->maxTetVolume = 0.5e-6;
+		config->maxTetVolume = 0.25e-6;
 		// -1.0, 30.0, 10.0, 3.3, 2.0, 1.0, 0.45, 0.33, 0.1, 0.033
 
 		// fiber for matched target trajectory

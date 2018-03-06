@@ -24,7 +24,7 @@ endif()
 find_package(Eigen3 3.3.4 REQUIRED)
 
 # use openmp
-if (FALSE)
+if (TRUE)
 find_package(OpenMP)
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")

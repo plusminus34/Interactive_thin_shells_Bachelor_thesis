@@ -7,6 +7,10 @@
 #include <OptimizationLib/GradientBasedFunctionMinimizer.h>
 #include <memory>
 
+#include <Eigen/IterativeLinearSolvers>
+
+
+
 #ifdef USE_PARDISO
 #include <OptimizationLib/PardisoSolver.h>
 #endif
@@ -50,7 +54,11 @@ public:
 	std::vector<double *> hessianEntries_Hptr;
 
 	bool newHessianStructure = true;
-	Eigen::SimplicialLDLT<SparseMatrix, Eigen::Lower> solver;
+	//Eigen::SimplicialLDLT<SparseMatrix, Eigen::Lower> solver;
+	//Eigen::ConjugateGradient<SparseMatrix, Eigen::Lower|Eigen::Upper> solver;
+	Eigen::BiCGSTAB<SparseMatrix, Eigen::IncompleteLUT<double> > solver;
+
+	dVector dp_old;
 
 	int nMaxStabSteps = 10;		// maximum number of stabilization steps
 	double stabValue = 1e-4;	// value that gets added to hessian diagonal during stabilization step
