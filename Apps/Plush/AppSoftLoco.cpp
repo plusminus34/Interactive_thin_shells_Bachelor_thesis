@@ -25,7 +25,7 @@ AppSoftLoco::AppSoftLoco() {
 		(*ptr)->pinToFloor(); 
 		// (*ptr)->pinToLeftWall(); 
 		(*ptr)->xvPair_INTO_Mesh((*ptr)->solve_statics());
-		(*ptr)->rig_boundary_simplices();
+		// (*ptr)->rig_boundary_simplices();
 	}
 
 	// -- // ik

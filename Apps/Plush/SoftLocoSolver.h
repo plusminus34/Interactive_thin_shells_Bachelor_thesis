@@ -38,6 +38,7 @@ public:
 	bool LINEAR_APPROX = true;
 	bool VERBOSE = false;
 	bool SOLVE_DYNAMICS = true;
+	bool TEST_FD = true;
 
 public:
 	int D();

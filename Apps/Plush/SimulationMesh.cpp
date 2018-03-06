@@ -220,9 +220,18 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const 
 
 		int    MAX_ITERATIONS = 10;
 		double SOLVE_RESIDUAL = 10e-5;
-		if (HIGH_PRECISION_NEWTON) { MAX_ITERATIONS = 1000; SOLVE_RESIDUAL = 10e-50; }
+		int MAX_LINE_SEARCH_ITERATIONS = 15;
+		double LINE_SEARCH_START_VALUE = 1.;
+		if (HIGH_PRECISION_NEWTON) {
+			MAX_ITERATIONS = 10000;
+			SOLVE_RESIDUAL = 10e-50;
+			MAX_LINE_SEARCH_ITERATIONS = 166;
+			LINE_SEARCH_START_VALUE = 1.;
+		}
 		NewtonFunctionMinimizer minimizer(MAX_ITERATIONS);
 		minimizer.solveResidual = SOLVE_RESIDUAL;
+		minimizer.maxLineSearchIterations = MAX_LINE_SEARCH_ITERATIONS;
+		minimizer.lineSearchStartValue = LINE_SEARCH_START_VALUE;
 		minimizer.printOutput = true;
 
 		double functionValue = energyFunction->computeValue(xSolver); // TODO:See AppSoftIK notes.

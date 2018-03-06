@@ -385,8 +385,8 @@ double SoftLocoSolver::calculate_gamma(const dVector &u, const dVector &dOdu) {
 }
 
 double SoftLocoSolver::calculate_gammaJ(const Traj &uJ, const Traj &dOduJ) {
-	double gammaJ_0 = 1.;
-	int maxLineSearchIterations = 10;
+	double gammaJ_0 = .01;
+	int maxLineSearchIterations = 100;
 
 	Traj uJ_0 = uJ;
 	double O_0 = calculate_OJ(uJ_0); 
@@ -571,77 +571,84 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		return unstack_Traj(vec_FD(stack_vec_dVector(uJ), QJ_wrapper, 1e-8));
 	};
  
-	vector<dVector> dQkdxk_FD;
-	for (int k = 0; k < K; ++k) {
-		dVector entry; resize_zero(entry, DN());
-		if (k == K - 1) {
-			auto Q_wrapper = [&](const dVector x) -> double {
-				return calculate_Q_of_x(x, COMpJ[k]);
-			};
-			entry = vec_FD(xJ[k], Q_wrapper, 5e-5);
-		}
-		dQkdxk_FD.push_back(entry);
-	}
-
-	vector<MatrixNxM> dxkdxkm1_FD; {
-		for (int k = 1; k < K; ++k) {
-			dVector xkm2 = (k == 1) ? xm1_curr : xJ[k - 2];
-			dVector uk   = uJ[k];
-			auto xk_wrapper = [&](const dVector &xkm1) -> dVector {
-				dVector vkm1 = (xkm1 - xkm2) / mesh->timeStep; // v_new = (x_new - x_0) / mesh->timeStep;
-				auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(xkm1, vkm1, uk) : mesh->solve_statics(xkm1, uk);
-				return xv.first;
-			};
-			dxkdxkm1_FD.push_back(mat_FD(xJ[k - 1], xk_wrapper, 5e-5));
-		}
-	}
-
-	vector<vector<MatrixNxM>> dxidxj_FD; {
-		for (int i = 0; i < K; ++i) {
-			vector<MatrixNxM> row;
-			for (int j = 0; j < K; ++j) {
-				MatrixNxM entry;
-				if (i < j) {
-					entry.setZero(DN(), DN());
-				} else {
-					auto xi_wrapper = [&](const dVector &xj) -> dVector {
-						dVector xk   = xj;
-						dVector xkm1 = (j == 0) ? xm1_curr : xJ[j - 1];
-						for (int k = j; k < i; ++k) {
-							dVector ukp1 = uJ[k + 1];
-							dVector vk = (xk - xkm1) / mesh->timeStep; // v_new = (x_new - x_0) / mesh->timeStep;
-							auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(xk, vk, ukp1) : mesh->solve_statics(xkm1, ukp1);
-							dVector xkp1 = xv.first;
-							// --
-							xkm1 = xk;
-							xk = xkp1;
-						}
-						return xk;
+	vector<dVector> dQkdxk_FD; 
+	vector<MatrixNxM> dxkdxkm1_FD; 
+	vector<vector<MatrixNxM>> dxidxj_FD; 
+	vector<MatrixNxM> dxkduk_FD; 
+	if (TEST_FD) {
+		{
+			for (int k = 0; k < K; ++k) {
+				dVector entry; resize_zero(entry, DN());
+				if (k == K - 1) {
+					auto Q_wrapper = [&](const dVector x) -> double {
+						return calculate_Q_of_x(x, COMpJ[k]);
 					};
-					entry = mat_FD(xJ[j], xi_wrapper, 5e-5);
+					entry = vec_FD(xJ[k], Q_wrapper, 5e-5);
 				}
-				row.push_back(entry);
+				dQkdxk_FD.push_back(entry);
 			}
-			dxidxj_FD.push_back(row);
 		}
-	}
 
-	vector<MatrixNxM> dxkduk_FD;
-	for (int k = 0; k < K; ++k) {
-		dVector xkm1 = (k == 0) ? xm1_curr : xJ[k - 1];
-		dVector vkm1;
-		if (k == 0) {
-			vkm1 = vm1_curr;
-		} else if (k == 1) {
-			vkm1 = (xJ[0] - xm1_curr) / mesh->timeStep; 
-		} else {
-			vkm1 = (xJ[k - 1] - xJ[k - 2]) / mesh->timeStep; 
+		{
+			for (int k = 1; k < K; ++k) {
+				dVector xkm2 = (k == 1) ? xm1_curr : xJ[k - 2];
+				dVector uk   = uJ[k];
+				auto xk_wrapper = [&](const dVector &xkm1) -> dVector {
+					dVector vkm1 = (xkm1 - xkm2) / mesh->timeStep; // v_new = (x_new - x_0) / mesh->timeStep;
+					auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(xkm1, vkm1, uk) : mesh->solve_statics(xkm1, uk);
+					return xv.first;
+				};
+				dxkdxkm1_FD.push_back(mat_FD(xJ[k - 1], xk_wrapper, 5e-5));
+			}
 		}
-		auto xk_wrapper = [&](const dVector &uk) -> dVector {
-			auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(xkm1, vkm1, uk) : mesh->solve_statics(xkm1, uk);
-			return xv.first;
-		};
-		dxkduk_FD.push_back(mat_FD(uJ[k], xk_wrapper, 1e-4));
+
+		{
+			for (int i = 0; i < K; ++i) {
+				vector<MatrixNxM> row;
+				for (int j = 0; j < K; ++j) {
+					MatrixNxM entry;
+					if (i < j) {
+						entry.setZero(DN(), DN());
+					} else {
+						auto xi_wrapper = [&](const dVector &xj) -> dVector {
+							dVector xk   = xj;
+							dVector xkm1 = (j == 0) ? xm1_curr : xJ[j - 1];
+							dVector vk = (xk - xkm1) / mesh->timeStep; // v_new = (x_new - x_0) / mesh->timeStep;
+							for (int k = j; k < i; ++k) {
+								dVector ukp1 = uJ[k + 1];
+								auto xvp1 = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(xk, vk, ukp1) : mesh->solve_statics(xk, ukp1);
+								// --
+								xk = xvp1.first;
+								vk = xvp1.second;
+							}
+							return xk;
+						};
+						entry = mat_FD(xJ[j], xi_wrapper, 1e-8);
+					}
+					row.push_back(entry);
+				}
+				dxidxj_FD.push_back(row);
+			}
+		}
+
+		{
+			for (int k = 0; k < K; ++k) {
+				dVector xkm1 = (k == 0) ? xm1_curr : xJ[k - 1];
+				dVector vkm1;
+				if (k == 0) {
+					vkm1 = vm1_curr;
+				} else if (k == 1) {
+					vkm1 = (xJ[0] - xm1_curr) / mesh->timeStep; 
+				} else {
+					vkm1 = (xJ[k - 1] - xJ[k - 2]) / mesh->timeStep; 
+				}
+				auto xk_wrapper = [&](const dVector &uk) -> dVector {
+					auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(xkm1, vkm1, uk) : mesh->solve_statics(xkm1, uk);
+					return xv.first;
+				};
+				dxkduk_FD.push_back(mat_FD(uJ[k], xk_wrapper, 1e-4));
+			}
+		}
 	}
 
 	// cout << "dxkdxkm1" << endl;
@@ -656,10 +663,11 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 			dxkdxkm1_INDEX_AT_km1.push_back((2./(h*h))*Hinv*M); // NOTE: ~
 		}
 	} 
-
-	// cout << "dxidxj" << endl;
+ 
+	cout << "dxidxj" << endl;
 	vector<vector<MatrixNxM>> dxidxj;
-	// dxjp1dxj ... dxidxim1
+	// dxjp1dxj ... dxidxim1 = dxidxj
+	//           dxdtau dFdx = dFdtau
 	for (int i = 0; i < K; ++i) {
 		vector<MatrixNxM> row;
 		for (int j = 0; j < K; ++j) {
@@ -669,6 +677,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 			} else {
 				entry.setIdentity(DN(), DN());
 				for (int k = j + 1; k <= i; ++k) {
+				// for (int k = i; k >= j + 1; --k) {
 					entry *= dxkdxkm1_INDEX_AT_km1[k - 1]; // (*)
 				}
 			}
@@ -717,55 +726,28 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		STEPX.push_back(entry);
 	}
 
-	cout << "BEG.................................................." << endl;
-	cout << "--> dxkduk" << endl;
-	MTraj_equality_check(dxkduk_FD, dxkduk);
-	cout << "--> dxkdxkm1" << endl;
-	MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
-	cout << "--> dxidxj" << endl;
-	for (int i = 0; i < K; ++i) {
-		cout << "----> ii = " << i << endl;
-		MTraj_equality_check(dxidxj_FD[i], dxidxj[i]); 
-	}
-	cout << "--> dQkdxk" << endl;
-	Traj_equality_check(dQkdxk_FD, dQkdxk);
-	cout << "..................................................END" << endl;
- 
-
-	// Traj dQJdxJ;
-	// for (int i = 0; i < K; ++i) { 
-	// 	dVector dQJdx_i; resize_zero(dQJdx_i, DN());
-	// 	for (int j = i; j < K; ++j) {
-	// 		// if (j != 0) { continue; } // !!!
-	// 		if (j != K - 1) { continue; } // !!! => j <- (K - 1)
-	// 		// 
-	// 		dVector dQdx_j = calculate_dQdx(uJ[j], xJ[j], COMpJ[j]);
-	// 		MatrixNxM dx_jdx_i; dx_jdx_i.setIdentity(DN(), DN()); // (*)
-	// 		for (int k = i + 1; k < j; ++k) {
-	// 			dx_jdx_i *= calculate_dxkdxkm1(uJ[k], xJ[k]);
-	// 		}
-	// 		dQJdx_i += dx_jdx_i * dQdx_j;
-	// 	}
-	// 	dQJdxJ.push_back(dQJdx_i); 
-	// } 
-
-	// Traj dQJdxJ_FD = calculate_dQJdxJ_FD(uJ, xJ); 
-
-	auto vMvD2Traj = [](const vector<MatrixNxM> &vM, const Traj &vD) {
-		Traj ret;
-		if (vM.size() != vD.size()) { error("SizeMismatchError"); }
-		for (size_t i = 0; i < vM.size(); ++i) {
-			ret.push_back(vM[i] * vD[i]);
+	if (TEST_FD) {
+		cout << "BEG.................................................." << endl;
+		cout << "--> dxkduk" << endl;
+		MTraj_equality_check(dxkduk_FD, dxkduk);
+		cout << "--> dxkdxkm1" << endl;
+		MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
+		cout << "--> dxidxj" << endl;
+		for (int i = 0; i < K; ++i) {
+			cout << "----> ii = " << i << endl;
+			MTraj_equality_check(dxidxj_FD[i], dxidxj[i]);
 		}
-		return ret; 
-	}; 
-	Traj STEP0 = calculate_dQJduJ_FD(uJ, xJ); 
-	// Traj STEP1 = vMvD2Traj(dxidui, dQJdxJ_FD);
-	// Traj STEPX = vMvD2Traj(dxJduJ, dQJdxJ);
-
-	cout << "XXX.................................................." << endl;
-	Traj_equality_check(STEP0, STEPX);
-	cout << "..................................................XXX" << endl; 
+		cout << "--> dQkdxk" << endl;
+		Traj_equality_check(dQkdxk_FD, dQkdxk);
+		cout << "..................................................END" << endl;
+	}
+ 
+	if (TEST_FD) {
+		cout << "XXX.................................................." << endl;
+		Traj STEP0 = calculate_dQJduJ_FD(uJ, xJ);
+		Traj_equality_check(STEP0, STEPX);
+		cout << "..................................................XXX" << endl;
+	}
 
 	// TODO: FIXME
 	dxduJ_SAVED = dxkduk; // (***) // TODO: Store vector<vector<MatrixNxM>> dxiduj
@@ -1044,7 +1026,7 @@ bool SoftLocoSolver::check_u_size(const dVector &u) {
 void SoftLocoSolver::Traj_equality_check(const Traj &T1, const Traj &T2) {
 	if (T1.size() != T2.size()) { error("SizeMismatchError"); }
 	for (size_t i = 0; i < T1.size(); ++i) {
-		cout << "--> i = " << i << " // ";
+		cout << "--> k = " << i << " // ";
 		vector_equality_check(T1[i], T2[i]);
 	}
 };
@@ -1052,7 +1034,16 @@ void SoftLocoSolver::Traj_equality_check(const Traj &T1, const Traj &T2) {
 void SoftLocoSolver::MTraj_equality_check(const MTraj &T1, const MTraj &T2) {
 	if (T1.size() != T2.size()) { error("SizeMismatchError"); }
 	for (size_t i = 0; i < T1.size(); ++i) {
-		cout << "--> i = " << i << " // ";
+		cout << "--> k = " << i << " // ";
 		matrix_equality_check(T1[i], T2[i]);
 	}
 };
+
+// auto vMvD2Traj = [](const vector<MatrixNxM> &vM, const Traj &vD) {
+// 	Traj ret;
+// 	if (vM.size() != vD.size()) { error("SizeMismatchError"); }
+// 	for (size_t i = 0; i < vM.size(); ++i) {
+// 		ret.push_back(vM[i] * vD[i]);
+// 	}
+// 	return ret; 
+// }; 
