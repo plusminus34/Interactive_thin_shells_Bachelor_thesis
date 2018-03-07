@@ -389,8 +389,8 @@ double SoftLocoSolver::calculate_gamma(const dVector &u, const dVector &dOdu) {
 }
 
 double SoftLocoSolver::calculate_gammaJ(const Traj &uJ, const Traj &dOduJ) {
-	double gammaJ_0 = .01;
-	int maxLineSearchIterations = 100;
+	double gammaJ_0 = 1.;
+	int maxLineSearchIterations = 48;
 
 	Traj uJ_0 = uJ;
 	double O_0 = calculate_OJ(uJ_0); 
@@ -415,7 +415,7 @@ double SoftLocoSolver::calculate_gammaJ(const Traj &uJ, const Traj &dOduJ) {
 		}
 	}
 
-	// error("Line search failed.");
+	error("SoftLoco line search failed.");
 	return gammaJ_k; 
 }
 
@@ -453,9 +453,13 @@ double SoftLocoSolver::calculate_QJ(const Traj &uJ) {
 			duJ.push_back(uJ[i] - uJ_curr[i]);
 		}
 
-		// FORNOW: (ignoring cross terms) TODO: Tensor Product
+		// CHECKME
 		for (int i = 0; i < K; ++i) {
-			xJ.push_back(xJ_curr[i] + dxduJ_SAVED[i].transpose() * duJ[i]); 
+			MatrixNxM entry = xJ_curr[i];
+			for (int j = 0; j < K; ++j) {
+				entry += dxiduj_SAVED[i][j].transpose() * duJ[j];
+			}
+			xJ.push_back(entry);
 		} 
 	}
 
@@ -800,8 +804,14 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		cout << "..................................................XXX" << endl;
 	}
 
-	// TODO: FIXME
-	dxduJ_SAVED = dxkduk; // (***) // TODO: Store vector<vector<MatrixNxM>> dxiduj
+	dxiduj_SAVED.clear();
+	for (int i = 0; i < K; ++i) {
+		vector<MatrixNxM> row;
+		for (int j = 0; j < K; ++j) {
+			row.push_back(dxkduk[j] * dxidxj[i][j]);
+		}
+		dxiduj_SAVED.push_back(row);;
+	}
 
 	return STEPX;
 }

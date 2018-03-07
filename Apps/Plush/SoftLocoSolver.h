@@ -38,7 +38,7 @@ public:
 	bool LINEAR_APPROX = true;
 	bool VERBOSE = false;
 	bool SOLVE_DYNAMICS = true;
-	bool TEST_FD = true;
+	bool TEST_FD = false;
 
 public:
 	int D();
@@ -72,8 +72,8 @@ public:
 
 public:
 	// MatrixNxM       dtaudu;
-	MatrixNxM         dxdu_SAVED;
-	vector<MatrixNxM> dxduJ_SAVED;
+	vector<vector<MatrixNxM>> dxiduj_SAVED;
+	MatrixNxM dxdu_SAVED;
 	// TODO: How do we LINEAR_APPROX on a trajectory? Answer: Just store the relavent Jacobians yo.
 
 public:

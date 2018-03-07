@@ -12,7 +12,7 @@ AppSoftLoco::AppSoftLoco() {
 		"tri",     // 1
 		"tentacle" // 2
 	};
-	string TEST_CASE = TEST_CASES[1];
+	string TEST_CASE = TEST_CASES[0];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
@@ -22,10 +22,10 @@ AppSoftLoco::AppSoftLoco() {
 		// (*ptr)->nudge_mesh_up();
 		(*ptr)->applyYoungsModulusAndPoissonsRatio(3e4, .25);
 		(*ptr)->addGravityForces(V3D(0., -10.)); 
-		(*ptr)->pinToFloor(); 
-		// (*ptr)->pinToLeftWall(); 
+		// (*ptr)->pinToFloor(); 
+		(*ptr)->pinToLeftWall(); 
 		// (*ptr)->xvPair_INTO_Mesh((*ptr)->solve_statics());
-		(*ptr)->rig_boundary_simplices();
+		// (*ptr)->rig_boundary_simplices();
 	}
 
 	// -- // ik
@@ -72,6 +72,7 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("INTEGRATE_FORWARD_IN_TIME", INTEGRATE_FORWARD_IN_TIME);
 	mainMenu->addVariable("HIGH_PRECISION_NEWTON", mesh->HIGH_PRECISION_NEWTON);
 	mainMenu->addVariable("LINEAR_APPROX", ik->LINEAR_APPROX);
+	mainMenu->addVariable("REGULARIZE_U", ik->REGULARIZE_u);
 	mainMenu->addGroup("loco");
 	mainMenu->addVariable("SELECTED_FRAME_i", ik->SELECTED_FRAME_i);
 	mainMenu->addGroup("z");
