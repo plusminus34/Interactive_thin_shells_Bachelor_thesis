@@ -656,14 +656,18 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	}
 
 
+	double h = mesh->timeStep;
+	MatrixNxM M = mesh->m.asDiagonal();
+	MatrixNxM I; I.setIdentity(DN(), DN());
+	vector<MatrixNxM> vecHinv;
+	for (int k = 0; k < K; ++k) {
+		vecHinv.push_back(calculate_H(xJ[k], uJ[k]).toDense().inverse());
+	}
+
 	// cout << "dxkdxkm1" << endl;
 	vector<MatrixNxM> dxkdxkm1_INDEX_AT_km1; {
 		for (int k = 1; k < K; ++k) {
-			double h = mesh->timeStep;
-			MatrixNxM M = mesh->m.asDiagonal();
-			MatrixNxM H = calculate_H(xJ[k], uJ[k]).toDense();
-			MatrixNxM Hinv = H.inverse();
-			MatrixNxM I; I.setIdentity(DN(), DN());
+			MatrixNxM &Hinv = vecHinv[k];
 			dxkdxkm1_INDEX_AT_km1.push_back(2./(h*h)*Hinv*M); // TODO <--
 		}
 	} 
@@ -672,37 +676,47 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	vector<MatrixNxM> dxkdxkm2_INDEX_AT_km2; {
 		for (int k = 2; k < K; ++k) {
 			double h = mesh->timeStep;
-			MatrixNxM M = mesh->m.asDiagonal();
-			MatrixNxM H = calculate_H(xJ[k], uJ[k]).toDense();
-			MatrixNxM Hinv = H.inverse();
-			MatrixNxM I; I.setIdentity(DN(), DN());
+			MatrixNxM &Hinv = vecHinv[k];
 			MatrixNxM R = 2.*dxkdxkm1_INDEX_AT_km1[k - 2] - I; 
 			dxkdxkm2_INDEX_AT_km2.push_back(1./(h*h)*R*Hinv*M); // TODO <--
 		}
 	} 
  
 	cout << "dxidxj" << endl;
+	
+	// -- // Seed.
+	auto &D1 = [&](int k) { return dxkdxkm1_INDEX_AT_km1[k - 1]; };
+	auto &D2 = [&](int k) { return dxkdxkm2_INDEX_AT_km2[k - 2]; };
+	// --
 	vector<vector<MatrixNxM>> dxidxj;
-	// dxjp1dxj ... dxidxim1 = dxidxj
-	//           dxdtau dFdx = dFdtau
 	for (int i = 0; i < K; ++i) {
 		vector<MatrixNxM> row;
 		for (int j = 0; j < K; ++j) {
-			MatrixNxM entry;
-			if (i < j) { 
-				entry.setZero(DN(), DN());
-			} else if (i == j) {
+			int imj = i - j;
+			MatrixNxM entry; entry.setZero(DN(), DN());
+			if (imj == 0) {
 				entry.setIdentity(DN(), DN());
-			} else if (i - j == 1) {
-				entry = dxkdxkm1_INDEX_AT_km1[i - 1]; // (*)
-			} else if (i - j == 2) {
-				entry = dxkdxkm2_INDEX_AT_km2[i - 2]; // (*)
-			} else {
-				error("[dxidj] NotImplementedError");
+			} else if (imj == 1) {
+				entry = D1(i); // dxkdxkm1_INDEX_AT_km1[i - 1]; // (*)
+			} else if (imj == 2) {
+				entry = D2(i); // M = dxkdxkm2_INDEX_AT_km2[i - 2]; // (*)
 			}
 			row.push_back(entry);
 		}
 		dxidxj.push_back(row);
+	}
+
+	// -- // Grow.
+	auto &XX = dxidxj;
+	// --
+	for (int j = 0; j < K; ++j) {
+		for (int i = j + 3; i < K; ++i) { 
+
+			MatrixNxM &Hinv = vecHinv[i];
+			// --
+			dxidxj[i][j] = 1. / (h*h)*(2 * XX[i - 1][j] - XX[i - 2][j])*Hinv*M;
+
+		}
 	}
 
 	// cout << "dxkduk" << endl;

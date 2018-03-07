@@ -59,11 +59,11 @@ bool GradientBasedFunctionMinimizer::minimize(ObjectiveFunction *function, dVect
 		function->setCurrentBestSolution(pi);
 	}
 
-	if (!optimizationConverged) {
-		std:: cout << "XXX residual: " << dp.norm() << std::endl;
-	} else {
-		std:: cout << "..." << dp.norm() << std::endl; 
-	}
+	// if (!optimizationConverged) {
+	// 	std:: cout << "XXX residual: " << dp.norm() << std::endl;
+	// } else {
+	// 	std:: cout << "..." << dp.norm() << std::endl; 
+	// }
 
 	functionValue = function->computeValue(pi);
 
