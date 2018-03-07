@@ -27,6 +27,14 @@ public:
 	vector<P2DDragger *> COM_handlers;
 
 public:
+	bool REPLAY = false;
+	bool POPULATED_REPLAY_TRAJEC = false;
+	const int LEADIN_FRAMES = 30;
+	int REPLAY_i = -LEADIN_FRAMES;
+	vector<dVector> uJsafe;
+	vector<dVector> xJsafe;
+
+public:
 	bool SOLVE_IK = true;
 	bool INTEGRATE_FORWARD_IN_TIME = true;
 

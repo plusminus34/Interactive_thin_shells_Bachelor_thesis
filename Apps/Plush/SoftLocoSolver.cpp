@@ -686,7 +686,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		}
 	} 
  
-	cout << "dxidxj" << endl;
+	// cout << "dxidxj" << endl;
 	
 	// -- // Seed.
 	auto &D1 = [&](int k) { return dxkdxkm1_INDEX_AT_km1[k - 1]; };

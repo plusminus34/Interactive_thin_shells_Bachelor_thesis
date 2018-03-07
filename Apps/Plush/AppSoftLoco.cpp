@@ -26,6 +26,7 @@ AppSoftLoco::AppSoftLoco() {
 		(*ptr)->pinToLeftWall(); 
 		// (*ptr)->xvPair_INTO_Mesh((*ptr)->solve_statics());
 		// (*ptr)->rig_boundary_simplices();
+		// (*ptr)->rig_boundary_simplices();
 	}
 
 	// -- // ik
@@ -78,6 +79,7 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addGroup("z");
 	mainMenu->addVariable("appIsRunnig", appIsRunning);
 	mainMenu->addVariable("STEP", STEP);
+	mainMenu->addVariable("REPLAY", REPLAY);
 	menuScreen->performLayout(); 
 	appIsRunning = false;
 }
@@ -95,47 +97,56 @@ void AppSoftLoco::drawScene() {
 
 	DRAW_HANDLERS = false;
 	PlushApplication::drawScene(); 
-	draw_floor2d();
+	// draw_floor2d();
 
-	mesh->draw(); // FORNOW
+	if (!REPLAY) {
+		REPLAY_i = -LEADIN_FRAMES;
+		mesh->draw(); // FORNOW 
+		ik->draw();
+	} else {
 
-	// glMasterPush(); {
-	// 	glTranslated(1., 0., 0.);
-	// 	glLineWidth(9);
-	// 	set_color(GOLDCLOVER);
-	// 	glBegin(GL_LINE_STRIP); {
-	// 		for (auto &bs : Zmesh->boundary_simplices) {
-	// 			for (auto &node : bs->nodes) {
-	// 				glP3D(node->getCoordinates(Zik->x_curr));
-	// 			}
-	// 		}
-	// 	} glEnd();
-	// } glMasterPop();
+		if (!POPULATED_REPLAY_TRAJEC) {
+			POPULATED_REPLAY_TRAJEC = true;
+			uJsafe = ik->uJ_curr;
+			xJsafe = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJsafe); 
+		} 
 
-	ik->draw(); 
+		REPLAY_i++;
+		if (REPLAY_i < 0) {
+			mesh->draw(ik->xm1_curr);
+		} else if (REPLAY_i < ik->K) {
+			mesh->draw(xJsafe[REPLAY_i], uJsafe[REPLAY_i]); 
+		} else {
+			mesh->draw(xJsafe.back(), uJsafe.back()); 
+		}
+
+	}
 
 	PlushApplication::recordVideo();
 }
 
 void AppSoftLoco::process() { 
-	// ik->COMp_FORNOW = ik->COMpJ[0]; // !!!
-	// Zik->COMp       = ik->COMpJ[0]; // !!!
-	ik->COMp_FORNOW = ik->COMpJ[ik->K - 1]; // !!!
-	// Zik->COMp       = ik->COMpJ[ik->K - 1]; // !!!
-	// --
-	// Zik->SOLVE_DYNAMICS = ik->SOLVE_DYNAMICS;
-	// -- 
-	if (INTEGRATE_FORWARD_IN_TIME) { ik->xm1_curr = mesh->x; ik->vm1_curr = mesh->v; } 
-	// if (INTEGRATE_FORWARD_IN_TIME) { Zik->x_0 = mesh->x; Zik->v_0 = mesh->v; } // FORNOW
-	if (SOLVE_IK) {
-		cout << endl << "--> loco" << endl;
-		ik->step();
-		// cout << endl << "--> Z_ik" << endl;
-		// Zik->step();
-		// getchar();
+	if (!REPLAY) {
+		POPULATED_REPLAY_TRAJEC = false;
+		// ik->COMp_FORNOW = ik->COMpJ[0]; // !!!
+		// Zik->COMp       = ik->COMpJ[0]; // !!!
+		ik->COMp_FORNOW = ik->COMpJ[ik->K - 1]; // !!!
+		// Zik->COMp       = ik->COMpJ[ik->K - 1]; // !!!
+		// --
+		// Zik->SOLVE_DYNAMICS = ik->SOLVE_DYNAMICS;
+		// -- 
+		if (INTEGRATE_FORWARD_IN_TIME) { ik->xm1_curr = mesh->x; ik->vm1_curr = mesh->v; }
+		// if (INTEGRATE_FORWARD_IN_TIME) { Zik->x_0 = mesh->x; Zik->v_0 = mesh->v; } // FORNOW
+		if (SOLVE_IK) {
+			// cout << endl << "--> loco" << endl;
+			ik->step();
+			// cout << endl << "--> Z_ik" << endl;
+			// Zik->step();
+			// getchar();
+		}
+		if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, ik->uJ_curr[0]) : mesh->solve_statics(ik->xm1_curr, ik->uJ_curr[0])); }
+		// if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((Zik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(Zik->x_0, Zik->v_0, Zik->alphac_curr) : mesh->solve_statics(Zik->x_0, Zik->alphac_curr)); } // FORNOW
 	}
-	if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, ik->uJ_curr[0]) : mesh->solve_statics(ik->xm1_curr, ik->uJ_curr[0])); }
-	// if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((Zik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(Zik->x_0, Zik->v_0, Zik->alphac_curr) : mesh->solve_statics(Zik->x_0, Zik->alphac_curr)); } // FORNOW
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -187,3 +198,16 @@ bool AppSoftLoco::onCharacterPressedEvent(int key, int mods) {
 			(*ptr)->timeStep = .01;
 		} else if (TEST_CASE == "tri") {
 */
+	// glMasterPush(); {
+	// 	glTranslated(1., 0., 0.);
+	// 	glLineWidth(9);
+	// 	set_color(GOLDCLOVER);
+	// 	glBegin(GL_LINE_STRIP); {
+	// 		for (auto &bs : Zmesh->boundary_simplices) {
+	// 			for (auto &node : bs->nodes) {
+	// 				glP3D(node->getCoordinates(Zik->x_curr));
+	// 			}
+	// 		}
+	// 	} glEnd();
+	// } glMasterPop();
+
