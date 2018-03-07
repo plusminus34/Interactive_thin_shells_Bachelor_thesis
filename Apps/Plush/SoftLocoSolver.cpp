@@ -664,7 +664,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 			MatrixNxM H = calculate_H(xJ[k], uJ[k]).toDense();
 			MatrixNxM Hinv = H.inverse();
 			MatrixNxM I; I.setIdentity(DN(), DN());
-			dxkdxkm1_INDEX_AT_km1.push_back(2./(h*h)*Hinv*M);
+			dxkdxkm1_INDEX_AT_km1.push_back(2./(h*h)*Hinv*M); // TODO <--
 		}
 	} 
 
@@ -677,7 +677,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 			MatrixNxM Hinv = H.inverse();
 			MatrixNxM I; I.setIdentity(DN(), DN());
 			MatrixNxM R = 2.*dxkdxkm1_INDEX_AT_km1[k - 2] - I; 
-			dxkdxkm2_INDEX_AT_km2.push_back(1./(h*h)*Hinv*M*R);
+			dxkdxkm2_INDEX_AT_km2.push_back(1./(h*h)*R*Hinv*M); // TODO <--
 		}
 	} 
  
