@@ -59,29 +59,11 @@ void CSTElement3D::setRestShapeFromCurrentConfiguration() {
 	}
 
 
-
     //compute the volume of the element...
     restShapeVolume = computeRestShapeVolume(this->simMesh->X);
+
     //	Logger::logPrint("CSTElement2D Element volume: %lf\n", restShapeVolume);
 
-
-
-
-	// precompute dFdXij (for constructing the hessian)
-	/*
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 3; ++j) {
-			dFdXij[i][j].setZero();
-			if (i > 0) {
-				dFdXij[i][j](j, i - 1) = 1;
-			}
-			else {
-				dFdXij[i][j](j, 0) = dFdXij[i][j](j, 1) = dFdXij[i][j](j, 2) = -1;
-			}
-			dFdXij[i][j] = dFdXij[i][j] * dXInv;
-		}
-	}
-	*/
 }
 
 
@@ -165,12 +147,15 @@ void CSTElement3D::computeDeformationGradient(const dVector& x, const dVector& X
     F = dx * dXInv;
 
 	if (matModel == MM_NEO_HOOKEAN) {
-		Finv = F.inverse();
-		FinvT = Finv.transpose();
 		F_norm2 = F.squaredNorm();
 		F_logdet = log(F.determinant());
 	}
+}
 
+
+void CSTElement3D::computeCommonGradHess() 
+{
+	FinvT = F.inverse().transpose();
 }
 
 //implements the StVK material model
@@ -216,7 +201,6 @@ void CSTElement3D::computeEnergy()
     }
 
     E = energyDensity * restShapeVolume;
-
 }
 
 
@@ -268,7 +252,19 @@ void CSTElement3D::computeHessianComponents()
 	/*
     if (matModel == MM_STVK)
     {
-        
+		std::array<std::array<Matrix3x3, 3 >, 4> dFdXij;
+        for (int i = 0; i < 4; ++i) {
+			for (int j = 0; j < 3; ++j) {
+				dFdXij[i][j].setZero();
+				if (i > 0) {
+					dFdXij[i][j](j, i - 1) = 1;
+				}
+				else {
+					dFdXij[i][j](j, 0) = dFdXij[i][j](j, 1) = dFdXij[i][j](j, 2) = -1;
+				}
+				dFdXij[i][j] = dFdXij[i][j] * dXInv;
+			}
+		}
         //dPdx(F; dFdx) = dFdx * (2 * shearModulus * E + bulkModulus * trace(E) * I) +
         //F * (2 * shearModulus * dEdx + bulkModulus * trace(dEdx) * I)
         //dEdx = 0.5 * (transpose(dFdx) * F + transpose(F) * dFdx)
@@ -295,6 +291,19 @@ void CSTElement3D::computeHessianComponents()
     }
     else if (matModel == MM_LINEAR_ISOTROPIC)
     {
+		std::array<std::array<Matrix3x3, 3 >, 4> dFdXij;
+        for (int i = 0; i < 4; ++i) {
+			for (int j = 0; j < 3; ++j) {
+				dFdXij[i][j].setZero();
+				if (i > 0) {
+					dFdXij[i][j](j, i - 1) = 1;
+				}
+				else {
+					dFdXij[i][j](j, 0) = dFdXij[i][j](j, 1) = dFdXij[i][j](j, 2) = -1;
+				}
+				dFdXij[i][j] = dFdXij[i][j] * dXInv;
+			}
+		}
         //dPdx(F; dFdx) = shearModulus * (dFdx + transpose(dFdx)) + bulkModulus * trace(dFdx) * I
         Matrix3x3 dSdX[6], dFdX, dPdX, dHdX;
         Matrix3x3 MI;
@@ -312,6 +321,7 @@ void CSTElement3D::computeHessianComponents()
             ddEdxdx[0][i % 4](2, i / 4) = -dHdX(2, 2) - dHdX(2, 1) - dHdX(2, 0);
         }
     }
+	
     else if (matModel == MM_NEO_HOOKEAN)
     {
         Matrix3x3 dF, dP, tmpM, dH;
@@ -335,11 +345,11 @@ void CSTElement3D::computeHessianComponents()
 		}
     }
 	
-	else */if(matModel == MM_NEO_HOOKEAN)
+	else*/ if(matModel == MM_NEO_HOOKEAN)
 	{
 		Matrix3x3 dH;//, dP;
 
-		Matrix3x3 A;	// FinvT * dF.transpose() * FinvT
+		Matrix3x3 A;	// FinvT * dF.transpose() * FinvT * dXInvT
 
 		Matrix3x3 dxInvT = dx.inverse().transpose();
 		V3D dxInvT_rowsum;
@@ -399,13 +409,8 @@ void CSTElement3D::computeHessianComponents()
 
 			}
 		}
-
-
-
-
-
-
 	}
+	
 
 
 

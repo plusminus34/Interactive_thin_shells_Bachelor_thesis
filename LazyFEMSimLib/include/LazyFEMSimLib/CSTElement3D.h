@@ -41,8 +41,7 @@ protected:
 	V3D dXInv_dxInvT_colsum;
 	//V3D dxInvT_rowsum;
 	// precomputed for new node positions (computeDeformationGradient());
-	//Matrix3x3 dxInvT;
-	Matrix3x3 F, Finv, FinvT;
+	Matrix3x3 F, /*Finv,*/ FinvT;
 	double F_norm2, F_logdet;
 	// temporary helpers used within some computations
 	Matrix3x3 dx, dEdF, strain;
@@ -56,6 +55,7 @@ protected:
     //as a deformation measure, we need to compute the deformation gradient F. F maps deformed vectors dx to undeformed coords dX: dx = F*dX.
     //for linear basis functions, an easy way to compute it is by looking at the matrix that maps deformed traingle/tet edges to their underformed counterparts (F = dx * inv(dX)).
     void computeDeformationGradient(const dVector& x, const dVector& X);
+	void computeCommonGradHess();
 
 	void computeEnergy();
     void computeGradientComponents();

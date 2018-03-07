@@ -274,6 +274,7 @@ void SimulationMesh::prepare_upto_hessian(dVector const & x)
 	for (int i = 0; i < n; i++) {
 		CSTElement3D* element = static_cast<CSTElement3D*>(elements[i]);
 		// compute Grad and Hess
+		element->computeCommonGradHess();
 		element->computeGradientComponents();
 		element->computeHessianComponents();
 		// add Hess to triplet list
