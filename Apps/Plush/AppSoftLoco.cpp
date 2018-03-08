@@ -12,22 +12,20 @@ AppSoftLoco::AppSoftLoco() {
 		"tri",     // 1
 		"tentacle" // 2
 	};
-	string TEST_CASE = TEST_CASES[0];
+	string TEST_CASE = TEST_CASES[2];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
-	for (auto ptr : { &mesh, &Zmesh }) {
-		*ptr = new CSTSimulationMesh2D();
-		(*ptr)->spawnSavedMesh(fName);
-		// (*ptr)->nudge_mesh_up();
-		(*ptr)->applyYoungsModulusAndPoissonsRatio(3e4, .25);
-		(*ptr)->addGravityForces(V3D(0., -10.)); 
-		// (*ptr)->pinToFloor(); 
-		(*ptr)->pinToLeftWall(); 
-		// (*ptr)->xvPair_INTO_Mesh((*ptr)->solve_statics());
-		// (*ptr)->rig_boundary_simplices();
-		// (*ptr)->rig_boundary_simplices();
-	}
+	mesh = new CSTSimulationMesh2D();
+	mesh->spawnSavedMesh(fName);
+	mesh->nudge_mesh_up();
+	mesh->applyYoungsModulusAndPoissonsRatio(3e4, .25);
+	mesh->addGravityForces(V3D(0., -10.)); 
+	mesh->pinToFloor(); 
+	// mesh->pinToLeftWall(); 
+	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
+	// mesh->rig_boundary_simplices();
+	mesh->rig_boundary_simplices();
 
 	// -- // ik
 	ik = new SoftLocoSolver(mesh);
@@ -44,9 +42,9 @@ AppSoftLoco::AppSoftLoco() {
 	INTEGRATE_FORWARD_IN_TIME = false;
 
 	ik->PROJECT = true;
-	ik->REGULARIZE_u = false;
+	// ik->REGULARIZE_u = false;
 	ik->LINEAR_APPROX = false;
-	ik->c_u_ = .1;
+	// ik->r_u_ = .1;
 	ik->NUM_ITERS_PER_STEP = 1;
 	{
 		// Zik = new SoftIKSolver(Zmesh);
@@ -68,12 +66,16 @@ AppSoftLoco::AppSoftLoco() {
 	// mainMenu->addVariable("SPEC_FREESTYLE", ik->SPEC_FREESTYLE);
 	// mainMenu->addVariable("NUM_ITERS_PER_STEP", ik->NUM_ITERS_PER_STEP);
 	mainMenu->addVariable("PROJECT", ik->PROJECT);
-	mainMenu->addVariable("c_alphac_", ik->c_u_);
 	mainMenu->addGroup("testing"); 
 	mainMenu->addVariable("INTEGRATE_FORWARD_IN_TIME", INTEGRATE_FORWARD_IN_TIME);
+	mainMenu->addVariable("TEST_Q_FD", ik->TEST_Q_FD);
+	mainMenu->addVariable("TEST_R_FD", ik->TEST_R_FD);
 	mainMenu->addVariable("HIGH_PRECISION_NEWTON", mesh->HIGH_PRECISION_NEWTON);
 	mainMenu->addVariable("LINEAR_APPROX", ik->LINEAR_APPROX);
 	mainMenu->addVariable("REGULARIZE_U", ik->REGULARIZE_u);
+	mainMenu->addVariable("r_u_", ik->r_u_);
+	mainMenu->addVariable("SUBSEQUENT_U", ik->SUBSEQUENT_u);
+	mainMenu->addVariable("s_u_", ik->s_u_);
 	mainMenu->addGroup("loco");
 	mainMenu->addVariable("SELECTED_FRAME_i", ik->SELECTED_FRAME_i);
 	mainMenu->addGroup("z");

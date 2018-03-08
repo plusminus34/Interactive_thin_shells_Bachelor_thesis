@@ -38,7 +38,8 @@ public:
 	bool LINEAR_APPROX = true;
 	bool VERBOSE = false;
 	bool SOLVE_DYNAMICS = true;
-	bool TEST_FD = false;
+	bool TEST_Q_FD = false;
+	bool TEST_R_FD = false;
 	bool REPLAY = false;
 
 public:
@@ -55,21 +56,22 @@ public:
 	double     calculate_OJ(const Traj &u);
 	double     calculate_QJ(const Traj &u);
 	double     calculate_RJ(const Traj &u);
-	double     calculate_O(const dVector &u);
-	double     calculate_Q(const dVector &u);
 	double     calculate_R(const dVector &u);
-	// --
-	double calculate_Q_formal(const dVector &u);
-	double calculate_Q_approx(const dVector &u);
 	double calculate_Q_of_x(const dVector &x, const P3D &COMp);
+
+	// double     calculate_O(const dVector &u);
+	// double     calculate_Q(const dVector &u);
+	// double calculate_Q_formal(const dVector &u);
+	// double calculate_Q_approx(const dVector &u);
 
 
 public:
 	dVector xm1_curr, vm1_curr; // TODO: rename xm1, vm
+	dVector um1_curr;
 	Traj uJ_curr;
 	Traj xJ_curr;
 	// --
-	dVector u_curr; dVector x_curr;
+	// dVector u_curr; dVector x_curr;
 
 public:
 	// MatrixNxM       dtaudu;
@@ -86,16 +88,16 @@ public:
 
 public:
 	void iterate();
-	void project(); 
+	// void project(); 
 	void projectJ(); 
 
 	Traj uJ_next(const Traj &uJ, const Traj &xJ);
 	double calculate_gammaJ(const Traj &uJ, const Traj &dOduJ);
 	Traj xJ_of_uJ(const Traj &uJ);
 
-	dVector u_next(const dVector &u, const dVector &x); 
-	double calculate_gamma(const dVector &u, const dVector &dOdu); 
-	dVector x_of_u(const dVector &u);
+	// dVector u_next(const dVector &u, const dVector &x); 
+	// double calculate_gamma(const dVector &u, const dVector &dOdu); 
+	// dVector x_of_u(const dVector &u);
 
 	// -- //
 	Traj calculate_dOduJ(const Traj &uJ, const Traj &xJ);
@@ -117,14 +119,18 @@ public:
 	vector<ZeroCubicQuadratic *> u_barrierFuncs;
 	void construct_u_barrierFuncs();
 
-	// NOTE(*): For bringing back to alpha <- alphaz
 	bool REGULARIZE_u = true;
-	double c_u_ = .01;// 2.e-1;
-	Quadratic *u_regFunc = new Quadratic(&c_u_);
+	double r_u_ = .01;
+	Quadratic *u_regFunc = new Quadratic(&r_u_);
+
+	bool SUBSEQUENT_u = true;
+	double s_u_ = .33;
+	Quadratic *u_subFunc = new Quadratic(&s_u_);
 
 public:
 	void Traj_equality_check(const Traj &, const Traj &);
 	void MTraj_equality_check(const MTraj &, const MTraj &);
+	Traj unstack_Traj(const dVector &);
 
 
 };
