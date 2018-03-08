@@ -4,7 +4,7 @@
 #include <LazyFEMSimLib/SimMeshElement.h>
 #include <LazyFEMSimLib/Node.h>
 #include <LazyFEMSimLib/FEMEnergyFunction.h>
-#include <OptimizationLib/LazyNewtonFunctionMinimizer.h>
+#include <LazyFEMSimLib/LazyNewtonFunctionMinimizer.h>
 #include <MathLib/Ray.h>
 #include <GUILib/GLMesh.h>
 
