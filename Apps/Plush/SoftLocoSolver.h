@@ -47,7 +47,7 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 24; // HORIZON
+	const int K = 4; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
@@ -126,6 +126,10 @@ public:
 	bool SUBSEQUENT_u = true;
 	double s_u_ = .33;
 	Quadratic *u_subFunc = new Quadratic(&s_u_);
+
+	// bool END_AT_REST = true;
+	double c_endAtRest = 1.;
+	Quadratic *endAtRestFunc = new Quadratic(&c_endAtRest);
 
 public:
 	void Traj_equality_check(const Traj &, const Traj &);

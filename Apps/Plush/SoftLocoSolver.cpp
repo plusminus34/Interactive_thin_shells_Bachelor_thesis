@@ -470,6 +470,14 @@ double SoftLocoSolver::calculate_QJ(const Traj &uJ) {
 		QJ += calculate_Q_of_x(xJ[i], COMpJ[i]);
 	}
 
+	// // BEG:S
+	dVector &xLast = xJ[K - 1];
+	dVector &x2ndToLast = (K > 1) ? xJ[K - 2] : xm1_curr;
+	for (int i = 0; i < DN(); ++i) {
+		QJ += endAtRestFunc->computeValue(xLast[i] - x2ndToLast[i]);
+	} 
+	// END:S
+
 	return QJ;
 }
 
@@ -591,6 +599,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 				dVector entry; resize_zero(entry, DN());
 				if (k == K - 1) {
 					auto Q_wrapper = [&](const dVector x) -> double {
+						error("[TEST_Q_FD:Q_wrapper] NotImplementedError");
 						return calculate_Q_of_x(x, COMpJ[k]);
 					};
 					entry = vec_FD(xJ[k], Q_wrapper, 5e-5);
@@ -661,7 +670,6 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		}
 	}
 
-
 	double h = mesh->timeStep;
 	MatrixNxM M = mesh->m.asDiagonal();
 	MatrixNxM I; I.setIdentity(DN(), DN());
@@ -688,12 +696,10 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		}
 	} 
  
-	// cout << "dxidxj" << endl;
-	
-	// -- // Seed.
+	// // cout << "dxidxj" << endl; 
+	// Seed.
 	auto &D1 = [&](int k) { return dxkdxkm1_INDEX_AT_km1[k - 1]; };
 	auto &D2 = [&](int k) { return dxkdxkm2_INDEX_AT_km2[k - 2]; };
-	// --
 	vector<vector<MatrixNxM>> dxidxj;
 	for (int i = 0; i < K; ++i) {
 		vector<MatrixNxM> row;
@@ -703,18 +709,16 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 			if (imj == 0) {
 				entry.setIdentity(DN(), DN());
 			} else if (imj == 1) {
-				entry = D1(i); // dxkdxkm1_INDEX_AT_km1[i - 1]; // (*)
+				entry = D1(i);
 			} else if (imj == 2) {
-				entry = D2(i); // M = dxkdxkm2_INDEX_AT_km2[i - 2]; // (*)
+				entry = D2(i);
 			}
 			row.push_back(entry);
 		}
 		dxidxj.push_back(row);
-	}
-
-	// -- // Grow.
+	} 
+	// Grow.
 	auto &XX = dxidxj;
-	// --
 	for (int j = 0; j < K; ++j) {
 		for (int i = j + 3; i < K; ++i) { 
 
@@ -732,7 +736,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	}
 	
 	// cout << "dQkdxk" << endl;
-	vector<dVector> dQkdxk;
+	vector<dVector> dQdxk;
 	for (int k = 0; k < K; ++k) {
 		dVector entry;
 		if (k != K - 1) {
@@ -740,30 +744,30 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		} else {
 			entry = calculate_dQdx(uJ[k], xJ[k], COMpJ[k]);
 		}
-		dQkdxk.push_back(entry);
+		dQdxk.push_back(entry);
 	}
+ 
+	// // BEG:S
+	dVector xLast = xJ[K - 1];
+	dVector x2ndToLast = (K >=2) ? xJ[K - 2] : xm1_curr;
+	// --
+	dVector mainPiece; resize_zero(mainPiece, DN());
+	for (int i = 0; i < DN(); ++i) { mainPiece[i] = endAtRestFunc->computeDerivative(xLast[i] - x2ndToLast[i]); } 
+	// --	
+	if ( true ) { dQdxk[K - 1] += mainPiece; }
+	if (K >= 2) { dQdxk[K - 2] -= mainPiece; } 
+	// // END:S
 
 	// cout << "dQiduj" << endl;
-	vector<vector<dVector>> dQiduj;
-	// dxjduj dxidxj dQidxi
-	for (int i = 0; i < K; ++i) {
-		vector<dVector> row;
-		for (int j = 0; j < K; ++j) {
-			row.push_back(dxkduk[j] * dxidxj[i][j] * dQkdxk[i]); // FORNOW
-		}
-		dQiduj.push_back(row);
-	}
-
-	// cout << "dQJduj" << endl;
-	Traj STEPX;
-	// Traj[j] = sum_i {dQiduj}
+	Traj dQduJ;
 	for (int j = 0; j < K; ++j) {
 		dVector entry; resize_zero(entry, T());
 		for (int i = 0; i < K; ++i) {
-			entry += dQiduj[i][j];
+			entry += dxkduk[j] * dxidxj[i][j] * dQdxk[i];
 		}
-		STEPX.push_back(entry);
+		dQduJ.push_back(entry);
 	}
+
 
 	if (TEST_Q_FD) {
 		cout << "BEG.................................................." << endl;
@@ -795,17 +799,17 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 			MTraj_equality_check(dxidxj_FD[i], dxidxj[i]);
 		}
 		cout << "--> dQkdxk" << endl;
-		Traj_equality_check(dQkdxk_FD, dQkdxk);
+		Traj_equality_check(dQkdxk_FD, dQdxk);
 		cout << "..................................................END" << endl;
-	}
- 
-	if (TEST_Q_FD) {
+
+		// -- //
 		cout << "XXX.................................................." << endl;
 		Traj STEP0 = calculate_dQJduJ_FD(uJ, xJ);
-		Traj_equality_check(STEP0, STEPX);
+		Traj_equality_check(STEP0, dQduJ);
 		cout << "..................................................XXX" << endl;
 	}
 
+	// LINEAR_APPROX
 	dxiduj_SAVED.clear();
 	for (int i = 0; i < K; ++i) {
 		vector<MatrixNxM> row;
@@ -815,7 +819,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		dxiduj_SAVED.push_back(row);;
 	}
 
-	return STEPX;
+	return dQduJ;
 }
 
 Traj SoftLocoSolver::calculate_dRduJ(const Traj &uJ) {
