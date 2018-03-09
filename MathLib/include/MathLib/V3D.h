@@ -12,12 +12,12 @@ class P3D;
 /**
 * Vector in 3d.
 */
-class V3D : public V3T<double> {
+class V3D : public Vector3d {
 public:
 
-/**
+	/**
 	Contructors and destructor
-*/
+	*/
 
 	V3D();
 
@@ -39,13 +39,9 @@ public:
 
 	~V3D();
 
-/**
+	/**
 	operators
-*/
-
-	V3D& operator = (const V3D& other);
-
-	V3D& operator = (const P3D& other);
+	*/
 
 	bool operator == (const V3D& v) const;
 
@@ -82,9 +78,9 @@ public:
 	// return - *this
 	V3D operator - () const;
 
-/**
+	/**
 	useful methods
-*/
+	*/
 
 	double getComponentAlong(const V3D& other);
 

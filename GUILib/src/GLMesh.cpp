@@ -356,25 +356,25 @@ void GLMesh::addPoly(const GLIndexedPoly &p){
 		n2index = p.indexes[(i-1+p.indexes.size())%p.indexes.size()];
 		if (index<0 || index >= vertexCount ||n1index<0 || n1index >= vertexCount ||n2index<0 || n2index >= vertexCount)
 			return;
-		sharedVertices[index]->addVertexInfo(VertexNeighbourInfo(n1index, n2index));
+		sharedVertices[index]->addVertexInfo(n1index, n2index);
 	}
 	polygons->addPoly(p);
 	nrPolys++;
 	//printf("%d ", p.indexes.size());
 	//keep track of the individual triangles...
 	if (p.indexes.size() == 3)
-		triangles.push_back(GLIndexedTriangle(p.indexes[0], p.indexes[1], p.indexes[2]));
+		triangles.emplace_back(p.indexes[0], p.indexes[1], p.indexes[2]);
 
 	if (p.indexes.size() == 4){
-		triangles.push_back(GLIndexedTriangle(p.indexes[0], p.indexes[1], p.indexes[2]));
-		triangles.push_back(GLIndexedTriangle(p.indexes[0], p.indexes[2], p.indexes[3]));
+		triangles.emplace_back(p.indexes[0], p.indexes[1], p.indexes[2]);
+		triangles.emplace_back(p.indexes[0], p.indexes[2], p.indexes[3]);
 	}
 
 	if (p.indexes.size() > 4)
 	{
 		for (int i = 1; i < (int)p.indexes.size() - 1; i++)
 		{
-			triangles.push_back(GLIndexedTriangle(p.indexes[0], p.indexes[i], p.indexes[i+1]));
+			triangles.emplace_back(p.indexes[0], p.indexes[i], p.indexes[i+1]);
 		}
     }
 }

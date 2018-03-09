@@ -85,8 +85,8 @@ private:
 	/**
 		Adding a new VertexNeighbourInfo object.
 	*/
-	void addVertexInfo(const VertexNeighbourInfo &vi){
-		vertexInstances.push_back(vi);
+	void addVertexInfo(int vi, int vj){
+		vertexInstances.emplace_back(vi, vj);
 	}
 };
 
@@ -167,10 +167,11 @@ public:
 		default constructor.
 	*/
 	GLIndexedTriangle(int i1, int i2, int i3, bool flipNormal = false){
+		indexes.reserve(3);
 		if (flipNormal == false){
-			addVertexIndex(i1); addVertexIndex(i2); addVertexIndex(i3);
+			indexes[0]=i1; indexes[1] = i2; indexes[2] = i3;
 		}else{
-			addVertexIndex(i1); addVertexIndex(i3); addVertexIndex(i2);
+			indexes[0] = i1; indexes[1] = i3; indexes[2] = i2;
 		}
 	}
 	/**
