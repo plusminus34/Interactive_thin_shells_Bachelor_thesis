@@ -10,7 +10,7 @@
 struct MOPTParams {
 	double phase = 0;
 
-	bool drawRobotMesh = true;
+	bool drawRobotMesh = false;
 	bool drawSkeleton = true;
 	bool drawAxesOfRotation = false;
 	bool drawWheels = true;

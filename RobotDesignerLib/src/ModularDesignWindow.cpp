@@ -125,8 +125,6 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 	hightlightedRobot = NULL;
 	highlightedFP = NULL;
 
-	bool bodyChanged = false;
-
 	bool tWidgetActive = tWidget->onMouseMoveEvent(xPos, yPos) == true;
 	bool rWidgetActive = rWidget->onMouseMoveEvent(xPos, yPos) == true;
 
@@ -154,7 +152,7 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 		if (selectedFP && tWidgetActive) {
 			selectedFP->coords = tWidget->pos;
 			propagatePosToMirrorFp(selectedFP);
-			bodyChanged = true;
+			createBodyMesh3D();
 		}
 	
 		if (selectedRobot && isSelectedRMCMovable()){
@@ -192,6 +190,13 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 
 	Ray mouseRay = camera->getRayFromScreenCoords(xPos, yPos);
 	popViewportTransformation();
+
+	bodyMeshSelected = false;
+//	Logger::consolePrint("checking for body intersections\n");
+	if (bodyMesh && bodyMesh->getDistanceToRayOriginIfHit(mouseRay)) {
+//		Logger::consolePrint("and a hit...\n");
+		bodyMeshSelected = true;
+	}
 
 	if (windowSelectedRobot){
 		if (!possibleConnections.empty()){
@@ -1515,6 +1520,7 @@ void ModularDesignWindow::createBodyMesh3D()
 
 	ConvexHull3D::computeConvexHullFromSetOfPoints(points, bodyMesh, false);
 
+	bodyMesh->calBoundingBox();
 	bodyMesh->computeNormals();
 }
 
@@ -1765,9 +1771,7 @@ void ModularDesignWindow::updateParentConnector(RMC* rmc)
 void ModularDesignWindow::pickBodyFeaturePts(Ray& ray)
 {
 
-	bodyMeshSelected = false;
-	if (bodyMesh && bodyMesh->getDistanceToRayOriginIfHit(ray))
-		bodyMeshSelected = true;
+
 
 	double closestDist = 1e10;
 

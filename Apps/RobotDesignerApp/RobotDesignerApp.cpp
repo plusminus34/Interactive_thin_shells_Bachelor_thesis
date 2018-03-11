@@ -186,8 +186,8 @@ void RobotDesignerApp::setupWindows() {
 	else if (viewOptions == MOPT_WINDOW_ONLY && moptWindow) {
 		moptWindow->setViewportParameters(offset, 0, w, h);
 		moptWindow->ffpViewer->setViewportParameters(offset, 0, w/2, h / 4);
-		showConsole = false;
-		moptWindow->showFFPViewer = false;
+//		showConsole = false;
+//		moptWindow->showFFPViewer = false;
 	}
 	else {
 		consoleWindow->setViewportParameters(offset, 0, w, 280);
@@ -341,9 +341,9 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 	if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
 //		loadFile("..\\data\\RobotDesigner\\TGYDemo1.batch");
 //		loadFile("..\\data\\RobotDesigner\\SpotMiniDemo.batch");
-//		loadFile("..\\data\\RobotDesigner\\Anymal.batch");
+		loadFile("..\\data\\RobotDesigner\\Anymal.batch");
 //		loadFile("..\\data\\RobotDesigner\\skaterbot.batch");
-		loadFile("..\\data\\RobotDesigner\\activeBot.batch");
+//		loadFile("..\\data\\RobotDesigner\\activeBot.batch");
 	}
 
 	if (key == GLFW_KEY_M && action == GLFW_PRESS) {

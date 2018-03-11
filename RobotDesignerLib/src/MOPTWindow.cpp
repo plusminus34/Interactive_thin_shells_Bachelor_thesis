@@ -542,6 +542,8 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 
 void MOPTWindow::updateJointVelocityProfileWindowOnMouseMove(Ray &ray, double xPos, double yPos)
 {
+	return;
+
 	Joint* joint;
 	dVector velocity;
 	double tMinJ = DBL_MAX;
