@@ -12,7 +12,7 @@ AppSoftLoco::AppSoftLoco() {
 		"tri",     // 1
 		"tentacle" // 2
 	};
-	string TEST_CASE = TEST_CASES[0];
+	string TEST_CASE = TEST_CASES[1];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
@@ -21,10 +21,10 @@ AppSoftLoco::AppSoftLoco() {
 	mesh->nudge_mesh_up();
 	mesh->applyYoungsModulusAndPoissonsRatio(3e4, .25);
 	mesh->addGravityForces(V3D(0., -10.)); 
-	// mesh->pinToFloor(); 
-    mesh->pinToLeftWall(); 
+	mesh->pinToFloor(); 
+    // mesh->pinToLeftWall(); 
 	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
-	// mesh->rig_boundary_simplices();
+	mesh->rig_boundary_simplices();
 
 	// -- // ik
 	ik = new SoftLocoSolver(mesh);
@@ -103,7 +103,6 @@ void AppSoftLoco::drawScene() {
 	// draw_floor2d();
 
 	if (!REPLAY) {
-		POPULATED_REPLAY_TRAJEC = false;
 		REPLAY_i = -LEADIN_FRAMES;
 		mesh->draw(); // FORNOW 
 		ik->draw();
@@ -113,21 +112,12 @@ void AppSoftLoco::drawScene() {
 			POPULATED_REPLAY_TRAJEC = true;
 			uJsafe = ik->uJ_curr;
 			xJsafe = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJsafe); 
-			for (int i = 0; i < STABLE_FRAMES; ++i) {
-				dVector u = uJsafe.back();
-				dVector xm1 = xJsafe[xJsafe.size() - 1];
-				dVector xm2 = xJsafe[xJsafe.size() - 2];
-				dVector vm1 = (xm1 - xm2) / mesh->timeStep;
-				auto tmp = mesh->solve_dynamics(xm1, vm1, u);
-				uJsafe.push_back(u);
-				xJsafe.push_back(tmp.first);
-			}
 		} 
 
 		REPLAY_i++;
 		if (REPLAY_i < 0) {
 			mesh->draw(ik->xm1_curr);
-		} else if (REPLAY_i < (int)xJsafe.size()) {
+		} else if (REPLAY_i < ik->K) {
 			mesh->draw(xJsafe[REPLAY_i], uJsafe[REPLAY_i]); 
 		} else {
 			mesh->draw(xJsafe.back(), uJsafe.back()); 
@@ -140,6 +130,7 @@ void AppSoftLoco::drawScene() {
 
 void AppSoftLoco::process() { 
 	if (!REPLAY) {
+		POPULATED_REPLAY_TRAJEC = false;
 		// ik->COMp_FORNOW = ik->COMpJ[0]; // !!!
 		// Zik->COMp       = ik->COMpJ[0]; // !!!
 		ik->COMp_FORNOW = ik->COMpJ[ik->K - 1]; // !!!

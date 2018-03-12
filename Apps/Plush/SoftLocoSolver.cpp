@@ -465,9 +465,9 @@ double SoftLocoSolver::calculate_QJ(const Traj &uJ) {
 	double QJ = 0.;
 	for (int i = 0; i < K; ++i) {
 		// if (i != 0) { continue; } // !!!
-		// if (i != K - 1) { continue; } // !!!
+		if (i != K - 1) { continue; } // !!!
 		// TODO: Inactive Widgets.
-		QJ += (1 - pow(.9, i))*calculate_Q_of_x(xJ[i], COMpJ[K - 1]); // FORNOW
+		QJ += calculate_Q_of_x(xJ[i], COMpJ[i]);
 	}
 
 	// // BEG:S
@@ -597,13 +597,13 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		if (true) {
 			for (int k = 0; k < K; ++k) {
 				dVector entry; resize_zero(entry, DN());
-				// if (k == K - 1) {
+				if (k == K - 1) {
 					auto Q_wrapper = [&](const dVector x) -> double {
 						error("[TEST_Q_FD:Q_wrapper] NotImplementedError");
-						return (1 - pow(.9, k))*calculate_Q_of_x(x, COMpJ[K - 1]); // FORNOW
+						return calculate_Q_of_x(x, COMpJ[k]);
 					};
 					entry = vec_FD(xJ[k], Q_wrapper, 5e-5);
-				// }
+				}
 				dQkdxk_FD.push_back(entry);
 			}
 		}
@@ -739,11 +739,11 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	vector<dVector> dQdxk;
 	for (int k = 0; k < K; ++k) {
 		dVector entry;
-		// if (k != K - 1) {
-		// 	resize_zero(entry, DN());
-		// } else {
-			entry = (1 - pow(.9, k))*calculate_dQdx(uJ[k], xJ[k], COMpJ[K - 1]); // FORNOW
-		// }
+		if (k != K - 1) {
+			resize_zero(entry, DN());
+		} else {
+			entry = calculate_dQdx(uJ[k], xJ[k], COMpJ[k]);
+		}
 		dQdxk.push_back(entry);
 	}
  
@@ -855,22 +855,22 @@ Traj SoftLocoSolver::calculate_dRduJ(const Traj &uJ) {
 	return dRduJ;
 }
 
-// dVector SoftLocoSolver::calculate_dOdu(const dVector &u, const dVector &x) {
-// 	check_x_size(x);
-// 	check_u_size(u);
-// 	// --
-// 	dVector dQdu = calculate_dQdu(u, x);
-// 	dVector dRdu = calculate_dRdu(u);
-// 	return dQdu + dRdu;
-// } 
+dVector SoftLocoSolver::calculate_dOdu(const dVector &u, const dVector &x) {
+	check_x_size(x);
+	check_u_size(u);
+	// --
+	dVector dQdu = calculate_dQdu(u, x);
+	dVector dRdu = calculate_dRdu(u);
+	return dQdu + dRdu;
+} 
 
-// dVector SoftLocoSolver::calculate_dQdu(const dVector &u, const dVector &x) {
-// 	check_x_size(x);
-// 	check_u_size(u);
-// 	// --
-// 	dxdu_SAVED = calculate_dxdu(u, x);
-// 	return dxdu_SAVED * calculate_dQdx(u, x, COMp_FORNOW);
-// }
+dVector SoftLocoSolver::calculate_dQdu(const dVector &u, const dVector &x) {
+	check_x_size(x);
+	check_u_size(u);
+	// --
+	dxdu_SAVED = calculate_dxdu(u, x);
+	return dxdu_SAVED * calculate_dQdx(u, x, COMp_FORNOW);
+}
 
 dVector SoftLocoSolver::calculate_dQdx(const dVector &u, const dVector &x, const P3D &COMp) { 
 	check_x_size(x);

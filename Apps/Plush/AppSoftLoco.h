@@ -31,7 +31,6 @@ public:
 	bool POPULATED_REPLAY_TRAJEC = false;
 	const int LEADIN_FRAMES = 30;
 	int REPLAY_i = -LEADIN_FRAMES;
-	const int STABLE_FRAMES = 30;
 	vector<dVector> uJsafe;
 	vector<dVector> xJsafe;
 

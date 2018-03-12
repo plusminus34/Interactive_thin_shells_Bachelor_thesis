@@ -47,7 +47,7 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 24; // HORIZON
+	const int K = 4; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
@@ -104,8 +104,8 @@ public:
 	Traj calculate_dQduJ(const Traj &uJ, const Traj &xJ);
 	Traj calculate_dRduJ(const Traj &uJ);
 
-	// dVector calculate_dOdu(const dVector &u, const dVector &x);
-	// dVector calculate_dQdu(const dVector &u, const dVector &x);
+	dVector calculate_dOdu(const dVector &u, const dVector &x);
+	dVector calculate_dQdu(const dVector &u, const dVector &x);
 	dVector calculate_dQdx(const dVector &u, const dVector &x, const P3D &COMp);
 	MatrixNxM calculate_dxdu(const dVector &u, const dVector &x);
 	dVector calculate_dRdu(const dVector &u);
