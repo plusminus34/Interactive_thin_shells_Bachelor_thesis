@@ -9,9 +9,11 @@
 #include <ControlLib/PololuServoControlInterface.h>
 #include <ControlLib/YuMiControlInterface.h>
 
-#include <unistd.h>
 #include <sys/types.h>
+#ifdef __unix__
+#include <unistd.h>
 #include <pwd.h>
+#endif
 
 PhysicalRobotControlApp::PhysicalRobotControlApp() {
 	setWindowTitle("Physical Robot Control");
@@ -43,8 +45,12 @@ PhysicalRobotControlApp::PhysicalRobotControlApp() {
 			RobotState rs(robot);
 
 			//File path to load home position
+#ifdef __unix__
 			struct passwd *pw = getpwuid(getuid());
 			std::string homeDir = pw->pw_dir;
+#else
+			std::string homeDir = "../";
+#endif
 			std::string homePath = homeDir + homeFilePath;
 			const char* homeStatePath = homePath.c_str();
 

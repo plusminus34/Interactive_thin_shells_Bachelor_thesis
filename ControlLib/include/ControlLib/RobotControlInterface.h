@@ -85,7 +85,7 @@ public:
 			Quaternion q = robot->getRelativeOrientationForJoint(hj.j);
 			V3D w = robot->getRelativeLocalCoordsAngularVelocityForJoint(hj.j);
 			hj.j->motor.targetMotorAngle = q.getRotationAngle(hj.j->rotationAxis);
-			//hj.j->motor.targetMotorVelocity = w.dot(hj.j->rotationAxis);
+			hj.j->motor.targetMotorVelocity = w.dot(hj.j->rotationAxis);
 		}
 	}
 
@@ -114,10 +114,10 @@ public:
 	virtual void closeCommunicationPort() = 0;
 	virtual void driveMotorPositionsToZero() = 0;
 
-	virtual void driveMotorPositionsToTestPos1(IK_Solver* ikSolverPtr) = 0;
-	virtual void driveMotorPositionsToTestPos2(IK_Solver* ikSolverPtr) = 0;
-	virtual void grip(std::string arm) = 0;
-	virtual void printJointValues() = 0;
+	virtual void driveMotorPositionsToTestPos1(IK_Solver* ikSolverPtr) {};
+	virtual void driveMotorPositionsToTestPos2(IK_Solver* ikSolverPtr)  {};
+	virtual void grip(std::string arm) {};
+	virtual void printJointValues() {};
 
 	void toggleMotorPower() {
 		motorsOn = !motorsOn;

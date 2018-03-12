@@ -54,7 +54,7 @@ public:
 	void createMultiWriteClusters();
 
 	//set motor goals from target values
-	virtual void sendControlInputsToPhysicalRobot();
+	virtual void sendControlInputsToPhysicalRobot(double dt);
 	//read motor positions
 	virtual void readPhysicalRobotMotorPositions();
 	//read motor positions

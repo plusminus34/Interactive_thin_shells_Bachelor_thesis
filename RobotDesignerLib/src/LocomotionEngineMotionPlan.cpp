@@ -490,7 +490,7 @@ void LocomotionEngineMotionPlan::addIKInitEE(RigidBody* rb, IK_Plan* ikPlan) {
 		ikPlan->endEffectors.back().endEffectorLocalCoords = eeLocalCoords;
 		ikPlan->endEffectors.back().endEffectorRB = rb;
 		ikPlan->endEffectors.back().targetEEPos = eeWorldCoords;
-		ikPlan->endEffectors.back().mask = V3D(0, 1, 0);
+		ikPlan->endEffectors.back().positionMask = V3D(0, 1, 0);
 	}
 }
 
