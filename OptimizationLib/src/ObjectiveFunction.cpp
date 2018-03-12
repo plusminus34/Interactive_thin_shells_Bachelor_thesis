@@ -79,7 +79,7 @@ void ObjectiveFunction::testGradientWithFD(const dVector& p){
 	addGradientTo(analyticGradient, p);
 
     Logger::logPrint("Objective Function: testing gradients...\n");
-    //Logger::print("Objective Function: testing gradients...norms: analytic: %lf, FD: %lf\n", analyticGradient.norm(), FDGradient.norm());
+    Logger::print("Objective Function: testing gradients...norms: analytic: %lf, FD: %lf\n", analyticGradient.norm(), FDGradient.norm());
 	for (int i=0;i<p.size();i++){
 		double absErr = std::abs(FDGradient[i] - analyticGradient[i]);
 		double relError = 2 * absErr / (eps + analyticGradient[i] + FDGradient[i]);
@@ -104,7 +104,7 @@ void ObjectiveFunction::testHessianWithFD(const dVector& p){
 	addHessianEntriesTo(hessianEntries, p);
 	analyticHessian.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
 	Logger::logPrint("Objective Function: testing hessians...\n");
-    //Logger::print("Objective Function: testing hessians...\n");
+    Logger::print("Objective Function: testing hessians...\n");
 	for (int i=0;i<p.size();i++){
 		for (int j=0;j<p.size();j++){
 			double absErr = std::abs(FDHessian.coeff(i, j) - analyticHessian.coeff(i, j));

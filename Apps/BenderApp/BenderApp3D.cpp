@@ -383,6 +383,7 @@ BenderApp3D::BenderApp3D()
 	////////////////////////
 	// process defaults
 	////////////////////////
+	inverseDeformationSolver->minimizer->useTweakedLineSearch = true;
 	inverseDeformationSolver->minimizer->lineSearchStartValue = 0.3;
 
 	inverseDeformationSolver->minimizer->lineSearchEndValue = 1e-5;
@@ -393,6 +394,8 @@ BenderApp3D::BenderApp3D()
 	inverseDeformationSolver->femMesh->meshEnergyRegularizer.r = 0.06;
 	inverseDeformationSolver->objectiveFunction->parameterValueRegularizer.r = 0.0001;
 	inverseDeformationSolver->objectiveFunction->parameterStepSizeRegularizer.r = 0.0;
+
+	inverseDeformationSolver->femMesh->minimizer.useTweakedLineSearch = true;
 
 	//inverseDeformationSolver->minimizer->lineSearchStartValue = 1.0;
 
