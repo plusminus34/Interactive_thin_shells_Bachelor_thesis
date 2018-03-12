@@ -71,8 +71,10 @@ double LocomotionEngineManager::runMOPTStep() {
 
 	double energyVal = optimizeMoptionPlan();
 	writeParamsToFile = printDebugInfo;
-	if(writeParamsToFile)
+	if (writeParamsToFile) {
 		motionPlan->writeParamsToFile("..//out//MPParams.p");
+		motionPlan->writeRobotMotionTrajectoriesToFile("..//out//robotMotion.traj");
+	}
 
 	if (printDebugInfo)
 		Logger::consolePrint("total time elapsed: %lfs\n", timer.timeEllapsed());

@@ -61,10 +61,10 @@ public:
 	static vector<vector<int>> loop_edges(const vector<P3D> &points);
 
 public:
-	bool mouse_move(double xPos, double yPos);
-	bool mouse_button(int button, int action, int mods, double xPos, double yPos);
-	bool mouse_wheel(double xOffset, double yOffset);
-	bool key_event(int key, int action, int mods);
+	bool mouse_move_(double xPos, double yPos);
+	bool mouse_button_(int button, int action, int mods, double xPos, double yPos);
+	bool mouse_wheel_(double xOffset, double yOffset);
+	bool key_event_(int key, int action, int mods);
 
 public: 
 	int ADD_TDN_i = 0;

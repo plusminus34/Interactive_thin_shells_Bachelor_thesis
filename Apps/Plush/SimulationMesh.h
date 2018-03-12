@@ -28,6 +28,7 @@ public:
 // FORNOW
 public:
 	bool UNILATERAL_TENDONS = true;
+	double timeStep = .005;
 
 // core suite
 public:
@@ -171,10 +172,10 @@ public:
 public: 
 	bool HIGH_PRECISION_NEWTON = false;
 	pair<dVector, dVector> solve_statics(const dVector &x_0, const dVector &balphac);
-	pair<dVector, dVector> solve_dynamics(double dt, const dVector &x_0, const dVector &v_0, const dVector &balphac);
+	pair<dVector, dVector> solve_dynamics(const dVector &x_0, const dVector &v_0, const dVector &balphac);
 	// --
 	pair<dVector, dVector> solve_statics();
-	pair<dVector, dVector> solve_dynamics(double dt);
+	pair<dVector, dVector> solve_dynamics();
 	// --
 	void xvPair_INTO_Mesh(const pair<dVector, dVector> &xv) {
 		this->x = xv.first;

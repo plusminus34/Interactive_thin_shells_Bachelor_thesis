@@ -168,7 +168,7 @@ RigidBody
 		jointAxes 1 0 0
 		jointPPos 0.2629 0 0.1150 
 		jointCPos -0.0542  0.0 0.0136
-		jointLimits -1.5 1.5
+#		jointLimits -1.5 1.5
 	/Joint
 	
 	hingeJoint
@@ -178,7 +178,7 @@ RigidBody
 		jointPPos 0.0043  0.0000 0.0451
 		jointCPos -0.0008 0.1975 -0.0545
 		jointAxes 0 0 1
-		jointLimits -1.5 1.5
+#		jointLimits -1.5 1.5
 	/Joint	
 
 	hingeJoint
@@ -188,7 +188,7 @@ RigidBody
 		jointPPos -0.0008 -0.0525 0.0565 
 		jointCPos -0.0683 0.0995 0.0109
 		jointAxes 0 0 1
-		jointLimits 0 2.5
+#		jointLimits 0 2.5
 	/Joint	
 
 	hingeJoint
@@ -198,7 +198,7 @@ RigidBody
 		jointAxes 1 0 0
 		jointPPos 0.2629 0.0 -0.1150
 		jointCPos -0.0542 0.0 -0.0136
-		jointLimits -1.5 1.5
+#		jointLimits -1.5 1.5
 	/Joint
 	
 	hingeJoint
@@ -208,7 +208,7 @@ RigidBody
 		jointPPos 0.0043 0.0000 -0.0451
 		jointCPos -0.0008 0.1975 0.0545
 		jointAxes 0 0 1
-		jointLimits -1.5 1.5
+#		jointLimits -1.5 1.5
 	/Joint	
 
 	hingeJoint
@@ -218,7 +218,7 @@ RigidBody
 		jointPPos -0.0008 -0.0525 -0.0565 
 		jointCPos -0.0683 0.0995 -0.0109
 		jointAxes 0 0 1
-		jointLimits 0 2.5
+#		jointLimits 0 2.5
 	/Joint	
 
 	hingeJoint
@@ -228,7 +228,7 @@ RigidBody
 		jointAxes 1 0 0
 		jointPPos -0.2629 0.0 0.1150
 		jointCPos 0.0542 0.0 0.0136
-		jointLimits -1.5 1.5
+#		jointLimits -1.5 1.5
 	/Joint
 	
 	hingeJoint
@@ -238,7 +238,7 @@ RigidBody
 		jointAxes 0 0 1
 		jointPPos -0.0043 0.0000 0.0451
 		jointCPos 0.0008 0.1975 -0.0545
-		jointLimits -1.5 1.5
+#		jointLimits -1.5 1.5
 	/Joint	
 
 	hingeJoint
@@ -248,7 +248,7 @@ RigidBody
 		jointAxes 0 0 1
 		jointPPos 0.0008 -0.0525 0.0565 
 		jointCPos 0.0683 0.0995 0.0109
-		jointLimits -2.5 0
+#		jointLimits -2.5 0
 	/Joint	
 	
 	hingeJoint
@@ -258,7 +258,7 @@ RigidBody
 		jointAxes 1 0 0 
 		jointPPos -0.2629 0.0 -0.1150
 		jointCPos 0.0542 0.0 -0.0136
-		jointLimits -1.5 1.5
+#		jointLimits -1.5 1.5
 	/Joint
 	
 	hingeJoint 
@@ -268,7 +268,7 @@ RigidBody
 		jointAxes 0 0 1
 		jointPPos -0.0043 0.0000 -0.0451
 		jointCPos 0.0008 0.1975 0.0545
-		jointLimits -1.5 1.5
+#		jointLimits -1.5 1.5
 	/Joint	
 
 	hingeJoint
@@ -278,7 +278,7 @@ RigidBody
 		jointAxes 0 0 1
 		jointPPos 0.0008 -0.0525 -0.0565 
 		jointCPos 0.0683 0.0995 -0.0109
-		jointLimits -2.5 0
+#		jointLimits -2.5 0
 	/Joint	
 
 

@@ -316,30 +316,19 @@ void LocomotionEngine_RobotStateTrajectory::getRobotStateAt(double t, double mot
 	}
 }
 
-void LocomotionEngine_RobotStateTrajectory::writeRobotMotionTrajectoriesToFile(const char *fName) {
+void LocomotionEngine_RobotStateTrajectory::writeRobotMotionTrajectoriesToFile(const char *fName, Robot* robot, double mpDuration) {
 	FILE* fp = fopen(fName, "w");
 
-	fprintf(fp, "%d\n", qArray.size());
+	fprintf(fp, "# every line describes the angle trajectory for a specific joint. Each trajectory is described by n points equally distributed over a planning horizon with length t. These two parameters are provided below.\n");
+
+	fprintf(fp, "%d %lf\n\n", qArray.size(), mpDuration);
 	//every line in the file will correspond to the angle trajectory for one of the joints
-	for (int j = 0; j<nStateDim; j++) {
-		for (uint i = 0; i<qArray.size(); i++)
-			fprintf(fp, "%lf\t", qArray[i][j]);
+	for (int j = 0; j < robot->getJointCount(); j++) {
+		fprintf(fp, "%s:\t", robot->getJoint(j)->name.c_str());
+		int nSamples = (int)qArray.size();
+		for (int i = 0; i<nSamples; i++)
+			fprintf(fp, "%lf\t", qArray[i][robotRepresentation->getQIndexForJoint(robot->getJoint(j))]);
 		fprintf(fp, "\n");
-	}
-	fclose(fp);
-}
-
-void LocomotionEngine_RobotStateTrajectory::loadRobotMotionTrajectoriesToFile(const char *fName) {
-	FILE* fp = fopen(fName, "r");
-
-	int nSamples;
-	fscanf(fp, "%d", &nSamples);
-	initialize(nSamples);
-
-	//every line in the file will correspond to the angle trajectory for one of the joints
-	for (int j = 0; j<nStateDim; j++) {
-		for (uint i = 0; i<qArray.size(); i++)
-			fscanf(fp, "%lf", &qArray[i][j]);
 	}
 	fclose(fp);
 }

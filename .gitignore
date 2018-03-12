@@ -12,3 +12,4 @@ data/FEM/2d/triMeshTMP.tri2d
 *.txt~
 *.h~
 *.cpp~
+*.swp

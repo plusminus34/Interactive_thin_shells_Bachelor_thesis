@@ -175,9 +175,7 @@ public:
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
 	void getRobotStateAt(double t, double motionPlanDuration, RobotState& robotState);
 
-	void writeRobotMotionTrajectoriesToFile(const char* fName);
-
-	void loadRobotMotionTrajectoriesToFile(const char* fName);
+	void writeRobotMotionTrajectoriesToFile(const char* fName, Robot* robot, double mpDuration);
 
 	void getQAtTimeIndex(int j, dVector& q_t);
 
@@ -335,6 +333,10 @@ public:
 	void writeParamsToFile(FILE* fp);
 
 	void writeParamsToFile(const char* fName);
+
+	void writeRobotMotionTrajectoriesToFile(const char* fName) {
+		robotStateTrajectory.writeRobotMotionTrajectoriesToFile(fName, robot, motionPlanDuration);
+	}
 
 	void readParamsFromFile(FILE* fp);
 

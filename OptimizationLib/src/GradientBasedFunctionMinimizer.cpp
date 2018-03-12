@@ -1,8 +1,6 @@
 #include <OptimizationLib/GradientBasedFunctionMinimizer.h>
-#include <OptimizationLib/BFGSFunctionMinimizer.h>
 
 #include <iostream>
-
 
 GradientBasedFunctionMinimizer::GradientBasedFunctionMinimizer(int p_maxIterations, double p_solveResidual, int p_maxLineSearchIterations, bool p_printOutput){
 	maxIterations = p_maxIterations;
@@ -62,6 +60,7 @@ bool GradientBasedFunctionMinimizer::minimize(ObjectiveFunction *function, dVect
 
 		function->setCurrentBestSolution(pi);
 	}
+
 
 	functionValue = function->computeValue(pi);
 
@@ -127,6 +126,7 @@ double GradientBasedFunctionMinimizer::doLineSearchStandard(ObjectiveFunction *f
 	}
 
 	// couldn't find a good value. Return what we now have and hope for the best...
+	std::cout << "line search failed." << std::endl;
 	return alpha;
 }
 

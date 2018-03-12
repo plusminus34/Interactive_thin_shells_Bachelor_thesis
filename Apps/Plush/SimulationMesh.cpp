@@ -171,7 +171,8 @@ pair<dVector, dVector> SimulationMesh::solve_statics(const dVector &x_0, const d
 
 		int    MAX_ITERATIONS = 10;
 		double SOLVE_RESIDUAL = 10e-5;
-		if (HIGH_PRECISION_NEWTON) { MAX_ITERATIONS = 100; SOLVE_RESIDUAL = 10e-50; }
+		// if (HIGH_PRECISION_NEWTON) { MAX_ITERATIONS = 100; SOLVE_RESIDUAL = 10e-50; }
+		if (HIGH_PRECISION_NEWTON) { MAX_ITERATIONS = 1000; SOLVE_RESIDUAL = 10e-50; }
 		NewtonFunctionMinimizer minimizer(MAX_ITERATIONS);
 		minimizer.solveResidual = SOLVE_RESIDUAL;
 
@@ -189,7 +190,7 @@ pair<dVector, dVector> SimulationMesh::solve_statics(const dVector &x_0, const d
 	return pair<dVector, dVector>(x_new, v_ZERO);
 }
 
-pair<dVector, dVector> SimulationMesh::solve_dynamics(double dt, const dVector &x_0, const dVector &v_0, const dVector &balphac) { 
+pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const dVector &v_0, const dVector &balphac) { 
 	dVector x_push       = this->x;
 	dVector v_push       = this->v;
 	dVector balphac_push = this->balphac;
@@ -198,13 +199,15 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(double dt, const dVector &
 	dVector v_new;
 	{
 
-		energyFunction->setToDynamicsMode(dt);
+		energyFunction->setToDynamicsMode(timeStep);
 
-		this->x = x_0;
+		// cout << x_0.transpose() << endl;
 		this->update_contacts(x_0);
 		this->v = v_0;
 		this->balphac = balphac;
-		this->xSolver = x_0;
+		this->x = x_0; // TODO: CHECKME
+		// this->xSolver = x_0;
+		this->xSolver = X;
 
 		if (checkDerivatives) {
 			energyFunction->testGradientWithFD(xSolver);
@@ -219,16 +222,25 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(double dt, const dVector &
 
 		int    MAX_ITERATIONS = 10;
 		double SOLVE_RESIDUAL = 10e-5;
-		if (HIGH_PRECISION_NEWTON) { MAX_ITERATIONS = 100; SOLVE_RESIDUAL = 10e-50; }
+		int MAX_LINE_SEARCH_ITERATIONS = 15;
+		double LINE_SEARCH_START_VALUE = 1.;
+		if (HIGH_PRECISION_NEWTON) {
+			MAX_ITERATIONS = 1000;
+			SOLVE_RESIDUAL = 1e-8;
+			MAX_LINE_SEARCH_ITERATIONS = 48;
+			LINE_SEARCH_START_VALUE = 1.;
+		}
 		NewtonFunctionMinimizer minimizer(MAX_ITERATIONS);
 		minimizer.solveResidual = SOLVE_RESIDUAL;
+		minimizer.maxLineSearchIterations = MAX_LINE_SEARCH_ITERATIONS;
+		minimizer.lineSearchStartValue = LINE_SEARCH_START_VALUE;
 		minimizer.printOutput = true;
 
 		double functionValue = energyFunction->computeValue(xSolver); // TODO:See AppSoftIK notes.
 		minimizer.minimize(energyFunction, xSolver, functionValue);
 
 		x_new = xSolver;
-		v_new = (x_new - x_0) / dt;
+		v_new = (x_new - x_0) / timeStep;
 
 		if (is_nan(x_new)) { error("x_new is NaN"); }
 
@@ -244,8 +256,8 @@ pair<dVector, dVector> SimulationMesh::solve_statics() {
 	return solve_statics(this->x, this->balphac); 
 }
 
-pair<dVector, dVector> SimulationMesh::solve_dynamics(double dt) {
-	return solve_dynamics(dt, this->x, this->v, this->balphac); 
+pair<dVector, dVector> SimulationMesh::solve_dynamics() {
+	return solve_dynamics(this->x, this->v, this->balphac); 
 }
 
 /*

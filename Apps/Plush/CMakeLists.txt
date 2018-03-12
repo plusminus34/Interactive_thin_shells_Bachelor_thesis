@@ -23,3 +23,12 @@ if(WIN32)
 	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/ignore:4006 /ignore:4088")
 
 endif()
+
+if(WIN32)
+    add_custom_command(
+            TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+                    ${FREETYPE_DLLS}
+                    ${CMAKE_CURRENT_BINARY_DIR}
+    )
+endif()
