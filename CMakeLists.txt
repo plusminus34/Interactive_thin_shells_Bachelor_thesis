@@ -48,6 +48,7 @@ add_subdirectory(ControlLib)
 add_subdirectory(FEMSimLib)
 add_subdirectory(BulletCollision)
 add_subdirectory(RobotDesignerLib)
+add_subdirectory(PlushHelpers)
 add_subdirectory(Apps)
 add_subdirectory(YuMiLib)
 

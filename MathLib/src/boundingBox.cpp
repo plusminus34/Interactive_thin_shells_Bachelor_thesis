@@ -35,7 +35,7 @@ void AxisAlignedBoundingBox::regularize() {
 
   P3D cubeHalf_ = P3D(maxHalf,maxHalf,maxHalf);
 
-  bmin_ = center_ - cubeHalf_;
+  bmin_ = P3D(center_ - cubeHalf_);
   bmax_ = center_ + cubeHalf_;
 
   updateData();

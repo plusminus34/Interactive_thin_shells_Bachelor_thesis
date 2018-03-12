@@ -21,7 +21,10 @@ GLWindow3D::GLWindow3D() : GLWindow() {
 }
 
 void GLWindow3D::draw() {
+	clear();
 	preDraw();
+	setupLights();
+
 
 	if (showGroundPlane)
 		drawGroundAndReflections();
@@ -35,12 +38,16 @@ void GLWindow3D::init() {
 	camera = new GLTrackingCamera();
 }
 
-void GLWindow3D::preDraw() {
-	glPushAttrib(GL_ENABLE_BIT | GL_TRANSFORM_BIT | GL_VIEWPORT_BIT | GL_SCISSOR_BIT | GL_POINT_BIT | GL_LINE_BIT | GL_TRANSFORM_BIT);
+void GLWindow3D::clear() {
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(viewportX, viewportY, viewportWidth, viewportHeight);
+	glClearColor((GLfloat)bgColorR, (GLfloat)bgColorG, (GLfloat)bgColorB, (GLfloat)bgColorA);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	glDisable(GL_SCISSOR_TEST);
+}
 
-	glDisable(GL_LIGHTING);
-	glDisable(GL_TEXTURE_2D);
-
+void GLWindow3D::pushViewportTransformation() {
+	glPushAttrib(GL_TRANSFORM_BIT | GL_VIEWPORT_BIT);
 	// set viewport
 	glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
 
@@ -57,17 +64,23 @@ void GLWindow3D::preDraw() {
 
 	if (camera)
 		camera->applyCameraTransformations();
-
-	setupLights();
 }
 
-// clean up
-void GLWindow3D::postDraw() {
+void GLWindow3D::popViewportTransformation() {
 	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
 	glPopMatrix();
 	glPopAttrib();
+}
+
+void GLWindow3D::preDraw() {
+	pushViewportTransformation();
+}
+
+// clean up
+void GLWindow3D::postDraw() {
+	popViewportTransformation();
 }
 
 //all these methods should returns true if the event is processed, false otherwise...

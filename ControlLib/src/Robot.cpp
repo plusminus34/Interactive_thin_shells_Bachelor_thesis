@@ -237,7 +237,7 @@ void Robot::addWheelsAsAuxiliaryRBs(AbstractRBEngine* rbEngine) {
 				wheelRB->rbProperties.MOI_local.coeffRef(0, 0) = wheelRB->rbProperties.MOI_local.coeffRef(1, 1) = wheelRB->rbProperties.MOI_local.coeffRef(2, 2) = 2.0/5.0 * wheelRB->rbProperties.mass * radius * radius;
 				wheelRB->name = rb->name + "_wheel_" + std::to_string(j);
 //				wheelRB->cdps.push_back(new SphereCDP(P3D(), radius));
-				wheelRB->cdps.push_back(new CapsuleCDP(P3D() - axis * 0.01, P3D() + axis * 0.01, radius, true));
+				wheelRB->cdps.push_back(new CapsuleCDP(P3D() - axis * 0.003, P3D() + axis * 0.003, radius, true));
 
 				wheelRB->state.orientation = rb->state.orientation;
 

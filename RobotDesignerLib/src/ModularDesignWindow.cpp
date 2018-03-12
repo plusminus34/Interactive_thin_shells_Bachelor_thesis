@@ -11,13 +11,11 @@
 #include <iostream>
 #include <RobotDesignerLib/LivingMotor.h>
 #include <RobotDesignerLib/LivingConnector.h>
-#include <RobotDesignerLib/LivingSphereEE.h>
+#include <RobotDesignerLib/LivingEE.h>
+
+//TODO: parts of this code are still messy... although functional, it would benefit from some cleanup...
 
 /*
-To test:
-- can we still export the entire mesh for a robot?
-- have two kinds of wheels, one active (e.g. with a motor) and one passive (e.g. as it is now)
-- finally get a design file for servomotors
 - add eyes...
 */
 
@@ -45,19 +43,17 @@ TIP 2: Hold ALT while changing the position and orientation of motors to keep ch
 TIP 3: Hold CTRL to change the orientation of motors discretely.
 TIP 4: When selecting body plates, use CTRL to create only 1, or otherwise a symmetric pair will be generated.
 TIP 5: With a motor selected, F1/F2 change its angle value, while F3 resets it to zero. This does not change the assembly configuration!
-
-
 */
 
 using namespace std;
 
 ModularDesignWindow::ModularDesignWindow(int x, int y, int w, int h, GLApplication* glApp, const char* libraryDefinitionFileName) : AbstractDesignWindow(x, y, w, h){
 	this->glApp = glApp;
-	((GLTrackingCamera*)camera)->camDistance = -0.5;
+	((GLTrackingCamera*)camera)->camDistance = -1.5;
 	((GLTrackingCamera*)camera)->rotAboutRightAxis = 0.3;
 	((GLTrackingCamera*)camera)->rotAboutUpAxis = 0.3;
 
-	componentLibrary = new GLWindowContainer(3, 3, x, (int)(h * 3.0 / 4), (int)(w), (int)(h /4.0));
+	componentLibrary = new GLWindowContainer(2, 4, x, (int)(h * 3.0 / 4), (int)(w), (int)(h /4.0));
 
 	tWidget = new TranslateWidget(AXIS_X | AXIS_Y | AXIS_Z);
 	//	rWidget = new RotateWidgetV1();
@@ -73,14 +69,19 @@ ModularDesignWindow::ModularDesignWindow(int x, int y, int w, int h, GLApplicati
 		componentLibrary->addSubWindow(new ModuleDisplayWindow(rmcWarehouse[i]));
 	}
 
-	string bodyTexture = "../data/textures/matcap/whitefluff2.bmp";
 	bodyMesh = new GLMesh();
 	bodyMesh->path = robotMeshDir + "BodyMesh.obj";
 	
-	bodyMesh->getMaterial().setColor(1.0, 1.0, 1.0, 0.8);
+	string mat = "../data/textures/matcap/black2.bmp";
+	bodyMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
+	bodyMaterial.setTextureParam(mat.c_str(), GLContentManager::getTexture(mat.c_str()));
+	bodyMesh->setMaterial(bodyMaterial);
 
 	sphereMesh = new GLMesh();
 	sphereMesh->addSphere(P3D(), 1, 12);
+
+	bgColorR = bgColorG = bgColorB = bgColorA = 1.0;
+
 }
 
 ModularDesignWindow::~ModularDesignWindow(void){
@@ -117,132 +118,94 @@ bool ModularDesignWindow::process() {
 //triggered when mouse moves
 bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 	if (componentLibrary->onMouseMoveEvent(xPos, yPos) == true) return true;
-	preDraw();
-
-    PressedModifier mod = getPressedModifier(glApp->glfwWindow);
+	pushViewportTransformation();
 
 	for (uint i = 0; i < rmcRobots.size(); i++)
 		rmcRobots[i]->highlightedRMC = NULL;
 	hightlightedRobot = NULL;
 	highlightedFP = NULL;
 
-	bool bodyChanged = false;
-	if (tWidget->onMouseMoveEvent(xPos, yPos) == true && dragging) {
+	bool tWidgetActive = tWidget->onMouseMoveEvent(xPos, yPos) == true;
+	bool rWidgetActive = rWidget->onMouseMoveEvent(xPos, yPos) == true;
+
+	if ((tWidgetActive || rWidgetActive) && dragging) {
+		Quaternion q = rWidget->getOrientation();
+
+		if (glfwGetKey(glApp->glfwWindow, GLFW_KEY_LEFT_CONTROL)) {
+			V3D axis = q.v; axis.toUnit();
+			double rotAngle = q.getRotationAngle(axis);
+			if (rotAngle < 0) {
+				rotAngle = -rotAngle;
+				axis = -axis;
+			}
+
+			if (rotAngle < RAD(30)) {
+				popViewportTransformation();
+				return true;
+			}
+			else {
+				q = getRotationQuaternion(RAD(30), axis);
+			}
+		}
+
 		// move selected body feature points
-		if (selectedFP)
-		{
+		if (selectedFP && tWidgetActive) {
 			selectedFP->coords = tWidget->pos;
 			propagatePosToMirrorFp(selectedFP);
-			bodyChanged = true;
+			createBodyMesh3D();
 		}
-		
-		if (selectedRobot){
-
-			if (isSelectedRMCMovable() && selectedRobot->selectedRMC != selectedRobot->root){
-				P3D pos = selectedRobot->selectedRMC->state.position = rWidget->pos = tWidget->pos;
-				propagatePosToMirrorRMC(selectedRobot->selectedRMC);
-//				if (GetAsyncKeyState(VK_LMENU) < 0)
-                if(mod == PressedModifier::LEFT_ALT)
-                {
-					updateParentConnector(selectedRobot->selectedRMC);
-					if (rmcMirrorMap.count(selectedRobot->selectedRMC))
-						updateParentConnector(rmcMirrorMap[selectedRobot->selectedRMC]);
-				}
-				else
-					updateLivingBracket();
-			}
+	
+		if (selectedRobot && isSelectedRMCMovable()){
+			if (tWidgetActive)
+				selectedRobot->selectedRMC->state.position = rWidget->pos = tWidget->pos;
 			else {
-				if (selectedRobot->getRoot()->type == PLATE_RMC) {
-					tWidget->pos[1] = bodyPlaneHeight;
-					if (mirrorMap.count(selectedRobot) && mirrorMap[selectedRobot] && mirrorMap[selectedRobot]->root) {
-						mirrorMap[selectedRobot]->root->state.position = tWidget->pos;
-						mirrorMap[selectedRobot]->root->state.position[0] *= -1;
-						mirrorMap[selectedRobot]->fixJointConstraints();
-					}
-					bodyChanged = true;
-				}
-				selectedRobot->root->state.position = rWidget->pos = tWidget->pos;
+				selectedRobot->selectedRMC->state.orientation = q * selectedRobot->selectedRMC->state.orientation;
+				rWidget->setOrientation(Quaternion());
 			}
-			for (auto robot : rmcRobots)
-				robot->fixJointConstraints();
+
+			propagatePosToMirrorRMC(selectedRobot->selectedRMC);
+			propagateOrientToMirrorRMC(selectedRobot->selectedRMC);
+
+			if (glfwGetKey(glApp->glfwWindow, GLFW_KEY_LEFT_ALT)) {
+				updateParentConnector(selectedRobot->selectedRMC);
+				if (rmcMirrorMap.count(selectedRobot->selectedRMC))
+					updateParentConnector(rmcMirrorMap[selectedRobot->selectedRMC]);
+			}
+
+			for (auto robot : rmcRobots) {
+				if (!glfwGetKey(glApp->glfwWindow, GLFW_KEY_LEFT_ALT))
+					robot->updateComponents();
+				robot->fixConstraints();
+				robot->updateComponents();
+			}
+			createBodyMesh3D();
 		}
-		if (pickedGuidingMesh){
-			guidingMeshPos = rWidget->pos = tWidget->pos;
-		}
 
-		if (bodyChanged) createBodyMesh3D();
-
-		postDraw();
-		return true;
-	}
-	if (rWidget->onMouseMoveEvent(xPos, yPos) == true && dragging) {
-		if (selectedRobot) {
-			Quaternion q = rWidget->getOrientation();
-//			if (GetAsyncKeyState(VK_LCONTROL) < 0)
-            if(mod == PressedModifier::LEFT_CTRL)
-			{
-				V3D axis = q.v; axis.toUnit();
-				double rotAngle = q.getRotationAngle(axis);
-				if (rotAngle < 0) {
-					rotAngle = -rotAngle;
-					axis = -axis;
-				}
-
-				if (rotAngle < RAD(30)) {
-					postDraw();
-					return true;
-				}
-				else {
-					q = getRotationQuaternion(RAD(30), axis);
-				}
-			}
-			
-			if (isSelectedRMCMovable() && selectedRobot->selectedRMC != selectedRobot->root)
-			{
-				Quaternion tQ = selectedRobot->selectedRMC->state.orientation = q * selectedRobot->selectedRMC->state.orientation;
-				propagateOrientToMirrorRMC(selectedRobot->selectedRMC);
-//				if (GetAsyncKeyState(VK_LMENU) < 0)
-                if(mod == PressedModifier::LEFT_ALT)
-				{
-					updateParentConnector(selectedRobot->selectedRMC);
-					if (rmcMirrorMap.count(selectedRobot->selectedRMC))
-						updateParentConnector(rmcMirrorMap[selectedRobot->selectedRMC]);
-				}
-				else
-					updateLivingBracket();
-			}
-			else {
-				selectedRobot->root->state.orientation = q * selectedRobot->root->state.orientation;
-				if (selectedRobot->getRoot()->type == PLATE_RMC) {
-					propagateOrientToMirrorRMC(selectedRobot->root);
-					bodyChanged = true;
-				}
-			}
-			rWidget->setOrientation(Quaternion());
-			for (auto robot : rmcRobots)
-				robot->fixJointConstraints();
-
-			if (bodyChanged) createBodyMesh3D();
-		}
 		if (pickedGuidingMesh)
-		{
-			guidingMeshRot = rWidget->getOrientation();
-		}
-		postDraw();
+			guidingMeshPos = rWidget->pos = tWidget->pos;
+
+		popViewportTransformation();
 		return true;
 	}
-	Ray mouseRay = camera->getRayFromScreenCoords(xPos, yPos);
-	postDraw();
 
-	if (windowSelectedRobot)
-	{
+	Ray mouseRay = camera->getRayFromScreenCoords(xPos, yPos);
+	popViewportTransformation();
+
+	bodyMeshSelected = false;
+//	Logger::consolePrint("checking for body intersections\n");
+	if (bodyMesh && bodyMesh->getDistanceToRayOriginIfHit(mouseRay)) {
+//		Logger::consolePrint("and a hit...\n");
+		bodyMeshSelected = true;
+	}
+
+	if (windowSelectedRobot){
 		if (!possibleConnections.empty()){
 			double closestDist;
 			P3D closestPoint;
 			PossibleConnection* closestConnection = getClosestConnnection(mouseRay, possibleConnections, closestPoint, closestDist);
 			windowSelectedRobot->getRoot()->state.orientation = closestConnection->orientation;
 			windowSelectedRobot->getRoot()->state.position = closestPoint;
-			windowSelectedRobot->fixJointConstraints();
+			windowSelectedRobot->fixConstraints();
 			snappable = closestDist < SNAP_THRESHOLD;
 		}
 		else {
@@ -262,15 +225,13 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 	}
 	
 	// pick highlighted body feature points
-	if (!dragging) 
-	{
+	if (!dragging) {
 		pickBodyFeaturePts(mouseRay);
 		if (highlightedFP) return true;
 	}
 
 	// only triggered when dragging
-	if (dragging)
-	{
+	if (dragging){
 		snappable = false;
 		if (selectedRobot && selectedRobot->selectedPin && possibleConnections.size() > 0)
 		{
@@ -279,15 +240,14 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 			PossibleConnection* closestConnection = getClosestConnnection(mouseRay, possibleConnections, closestPoint, closestDist);
 			selectedRobot->getRoot()->state.orientation = closestConnection->orientation;
 			selectedRobot->getRoot()->state.position = closestPoint;
-			selectedRobot->fixJointConstraints();
+			selectedRobot->fixConstraints();
 			snappable = closestDist < SNAP_THRESHOLD;
 				
 			return true;
 		}
 	}
 	else {
-		for (uint i = 0; i < rmcRobots.size(); i++)
-		{
+		for (uint i = 0; i < rmcRobots.size(); i++)	{
 			if (rmcRobots[i]->getRoot()->type == PLATE_RMC) continue;
 			
 			rmcRobots[i]->highlightedRMC = NULL;
@@ -299,8 +259,7 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 		}
 
 		double closestDist = 1e10;
-		for (uint i = 0; i < rmcRobots.size(); i++)
-		{
+		for (uint i = 0; i < rmcRobots.size(); i++)	{
 			double dist;
 			bool res = rmcRobots[i]->pickRMC(mouseRay, &dist);
 			if (res && dist < closestDist)
@@ -314,11 +273,10 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 			}
 			else {
 				rmcRobots[i]->highlightedRMC = NULL;
-		}
+			}
 		}
 		if (hightlightedRobot)
 			return true;
-
 	}
 	
 
@@ -330,24 +288,22 @@ bool ModularDesignWindow::onMouseMoveEvent(double xPos, double yPos) {
 //triggered when mouse buttons are pressed
 bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
 	
-	preDraw();
+	pushViewportTransformation();
 	Ray mouseRay = camera->getRayFromScreenCoords(xPos, yPos);
-	postDraw();
+	popViewportTransformation();
 
-	// new RMCRobot initialization
+	// picking a new component from the RMC shelf...
 	if (componentLibrary->onMouseButtonEvent(button, action, mods, xPos, yPos)) {
-		if (action == 1){
+		if (action == GLFW_PRESS){
 
 			if (selectedRobot && selectedRobot->selectedRMC){
-				unloadParametersForLivingBracket();
 				selectedRobot->selectedRMC = NULL;
 				selectedRobot = NULL;
 				rWidget->visible = tWidget->visible = false;
 			}
 
 			int selectedRMC = -1;
-			for (uint i = 0; i < componentLibrary->subWindows.size(); i++)
-			{
+			for (uint i = 0; i < componentLibrary->subWindows.size(); i++){
 				if (componentLibrary->subWindows[i]->isSelected()) {
 					selectedRMC = i;
 					break;
@@ -357,7 +313,7 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 			if (selectedRMC >= 0){
 				delete windowSelectedRobot;
 				windowSelectedRobot = new RMCRobot(rmcWarehouse[selectedRMC]->clone(), transformationMap);
-				noMirror = (bool)(mods == GLFW_MOD_CONTROL);
+				noMirror = (bool)(mods & GLFW_MOD_CONTROL);
 				
 				if (windowSelectedRobot->getRoot()->type == PLATE_RMC) {
 					windowSelectedRobot->root->state.position = V3D(0, 100, 0);
@@ -397,7 +353,8 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 			return true;
 		}
 	}
-	else if (windowSelectedRobot) {
+	else //instantiate the RMC...
+		if (windowSelectedRobot) {
 		
 		double closestDist;
 		P3D closestPoint;
@@ -443,36 +400,26 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 		{
 			dragging = true;
 
-			preDraw();
+			pushViewportTransformation();
 			bool res = rWidget->onMouseMoveEvent(xPos, yPos);
-			postDraw();
+			popViewportTransformation();
 			if (res) return true;
 
-			preDraw();
+			pushViewportTransformation();
 			res = tWidget->onMouseMoveEvent(xPos, yPos);
-			postDraw();
+			popViewportTransformation();
 			if (res) return	true;
 
 			tWidget->visible = rWidget->visible = false;
 			pickedGuidingMesh = false;
 
 			if (((mods & GLFW_MOD_SHIFT) > 0) && hightlightedRobot && hightlightedRobot->highlightedRMC
-				&& selectedRobot && selectedRobot->selectedRMC)
-			{
-				makeSelectedRMCSymmtry();
+				&& selectedRobot && selectedRobot->selectedRMC){
+				makeSelectedRMCSymmetric();
 			}
 
-			if (((mods & GLFW_MOD_SHIFT) > 0) && highlightedFP && selectedFP)
-			{
-				makeSelectedFpSymmtry();
-			}
-
-			// reset pick pointers
-			unloadParametersForLivingBracket();
-			if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_MOTOR)
-			{
-//				TwRemoveVar(glApp->mainMenuBar, "motor rotation angle");
-				motorRotAngle = 0;
+			if (((mods & GLFW_MOD_SHIFT) > 0) && highlightedFP && selectedFP){
+				makeSelectedFPSymmtric();
 			}
 
 			for (uint i = 0; i < rmcRobots.size(); i++) {
@@ -540,18 +487,10 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 			{
 				Logger::consolePrint("Select RMC %s\n", selectedRobot->selectedRMC->name.c_str());
 
-				if (showWidgets)
-				{
-					rWidget->visible = tWidget->visible = true;
+				if (rWidget->visible || tWidget->visible){
 					rWidget->pos = tWidget->pos = isSelectedRMCMovable() ? selectedRobot->selectedRMC->state.position : selectedRobot->root->state.position;
 					rWidget->setOrientation(Quaternion());
 				}
-				loadParametersForLivingBracket();
-				if (selectedRobot->selectedRMC->type == LIVING_MOTOR) {
-					motorStartOrient = selectedRobot->selectedRMC->state.orientation;
-					motorRotAngle = 0;
-//					TwAddVarRW(glApp->mainMenuBar, "motor rotation angle", TW_TYPE_DOUBLE, &motorRotAngle, "min=-180 max=180 step=1 group='LivingBracket'");
-				}					
 			}
 
 			if (selectedRobot && (selectedRobot->selectedRMC || selectedRobot->selectedPin))
@@ -564,9 +503,7 @@ bool ModularDesignWindow::onMouseButtonEvent(int button, int action, int mods, d
 			}
 				
 			if (pickedGuidingMesh) {
-				if (showWidgets)
-				{
-					rWidget->visible = tWidget->visible = true;
+				if (rWidget->visible || tWidget->visible){
 					rWidget->pos = tWidget->pos = guidingMeshPos;
 					rWidget->setOrientation(guidingMeshRot);
 				}
@@ -631,6 +568,18 @@ bool ModularDesignWindow::onMouseWheelScrollEvent(double xOffset, double yOffset
 	return false;
 }
 
+void ModularDesignWindow::makeRMCsSymmetricRecursive(RMC* originalRMC, RMC* mirroredRMC) {
+	rmcMirrorMap[originalRMC] = mirroredRMC;
+	rmcMirrorMap[mirroredRMC] = originalRMC;
+	propagatePosToMirrorRMC(originalRMC);
+	propagateOrientToMirrorRMC(originalRMC);
+	mirroredRMC->syncSymmParameters(originalRMC);
+
+	if (originalRMC->getChildJointCount() == mirroredRMC->getChildJointCount())
+		for (int i = 0; i < originalRMC->getChildJointCount(); i++)
+			makeRMCsSymmetricRecursive(originalRMC->getChildJoint(i)->getChild(), mirroredRMC->getChildJoint(i)->getChild());
+}
+
 bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 	if (componentLibrary->onKeyEvent(key, action, mods)) return true;
 
@@ -641,35 +590,44 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 
 	// clone the picked robot
 	if (key == GLFW_KEY_Q && action == GLFW_PRESS){
-		Logger::consolePrint("Cloning selected robot...\n");
 		if (selectedRobot && selectedRobot->selectedRMC){
-			RMCRobot* newRobot = selectedRobot->cloneSubTree(selectedRobot->selectedRMC);
-			rmcRobots.push_back(newRobot);	
+			if (selectedRobot->selectedRMC->type == PLATE_RMC && mirrorMap.count(selectedRobot) && mirrorMap[selectedRobot]->jointList.size() == 0 && selectedRobot->selectedRMC->getChildJointCount() == 1) {
+				Logger::consolePrint("Transplanting selected robot...\n");
+				//we need to transplant the duplicated robot
+				RMCRobot* parent = mirrorMap[selectedRobot];
+				RMCRobot* newRobot = selectedRobot->cloneSubTree(selectedRobot->selectedRMC->getChildJoint(0)->getChild());
+				int childId = selectedRobot->selectedRMC->getChildJoint(0)->childPin->id;
+				int parentId = selectedRobot->selectedRMC->getChildJoint(0)->parentPin->id;
+				parent->connectRMCRobot(newRobot, &parent->root->pins[parentId], &newRobot->root->pins[childId]);
+				parent->fixConstraints();
 
-			if (selectedRobot->selectedRMC->type == PLATE_RMC)
-				newRobot->root->state.position = selectedRobot->root->state.position + V3D(0, 0, -0.05);
-			else
-				newRobot->root->state.position = P3D(0, 0.05, 0);
-			newRobot->fixJointConstraints();
+				makeRMCsSymmetricRecursive(selectedRobot->selectedRMC->getChildJoint(0)->getChild(), parent->root->getChildJoint(0)->getChild());
+			}
+			else {
+				Logger::consolePrint("Cloning selected robot...\n");
 
-			// mirror new robot
-			if (selectedRobot->selectedRMC->type == PLATE_RMC &&
-				selectedRobot->selectedRMC == selectedRobot->root && mirrorMap.count(selectedRobot))
-			{
-				RMCRobot* mirrorSelRobot = mirrorMap[selectedRobot];
-				RMCRobot* mirrorNewRobot = mirrorSelRobot->cloneSubTree(mirrorSelRobot->root);
-				rmcRobots.push_back(mirrorNewRobot);
+				RMCRobot* newRobot = selectedRobot->cloneSubTree(selectedRobot->selectedRMC);
+				rmcRobots.push_back(newRobot);
 
-				if (mirrorSelRobot->root->type == PLATE_RMC)
-					mirrorNewRobot->root->state.position = mirrorSelRobot->root->state.position + V3D(0, 0, -0.05);
+				if (selectedRobot->selectedRMC->type == PLATE_RMC)
+					newRobot->root->state.position = selectedRobot->root->state.position + V3D(0, 0, -0.05);
 				else
-					mirrorNewRobot->root->state.position = P3D(0, 0.05, 0);
-				mirrorNewRobot->fixJointConstraints();
+					newRobot->root->state.position = P3D(0, 0.05, 0);
+				newRobot->fixConstraints();
 
-				mirrorMap[newRobot] = mirrorNewRobot;
-				mirrorMap[mirrorNewRobot] = newRobot;
-				rmcMirrorMap[newRobot->root] = mirrorNewRobot->root;
-				rmcMirrorMap[mirrorNewRobot->root] = newRobot->root;
+				if (selectedRobot->selectedRMC->type == PLATE_RMC && mirrorMap.count(selectedRobot)){
+					RMCRobot* mirrorSelRobot = mirrorMap[selectedRobot];
+					RMCRobot* mirrorNewRobot = mirrorSelRobot->cloneSubTree(mirrorSelRobot->root);
+					rmcRobots.push_back(mirrorNewRobot);
+
+					mirrorNewRobot->root->state.position = mirrorSelRobot->root->state.position + V3D(0, 0, -0.05);
+					mirrorNewRobot->fixConstraints();
+
+					mirrorMap[newRobot] = mirrorNewRobot;
+					mirrorMap[mirrorNewRobot] = newRobot;
+					rmcMirrorMap[newRobot->root] = mirrorNewRobot->root;
+					rmcMirrorMap[mirrorNewRobot->root] = newRobot->root;
+				}
 			}
 
 			if (selectedRobot->selectedRMC->type == PLATE_RMC)
@@ -694,10 +652,12 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 			buildRMCMirrorMap();
 		}
 
-		if (selectedRobot && selectedRobot->selectedRMC)
-		{
-			unloadParametersForLivingBracket();
-			if (selectedRobot->selectedRMC == selectedRobot->root) {
+		if (selectedRobot && selectedRobot->selectedRMC){
+			RMC* rmcToDelete = selectedRobot->selectedRMC;
+			if (rmcToDelete->getParentJoint() && rmcToDelete->getParentJoint()->getParent() && rmcToDelete->getParentJoint()->getParent()->type == LIVING_CONNECTOR)
+				rmcToDelete = rmcToDelete->getParentJoint()->getParent();
+
+			if (rmcToDelete == selectedRobot->root) {
 				removeRMCRobot(selectedRobot);
 				if (mirrorMap.count(selectedRobot))
 				{
@@ -706,7 +666,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 					mirrorMap.erase(selectedRobot);
 					mirrorMap.erase(mirrorRobot);
 				}
-				if (selectedRobot->selectedRMC->type == PLATE_RMC)
+				if (rmcToDelete->type == PLATE_RMC)
 					createBodyMesh3D();
 
 				rWidget->visible = tWidget->visible = false;
@@ -716,7 +676,7 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 				if (isSelectedRMCMovable()) {
 					rWidget->visible = tWidget->visible = false;
 				}
-				selectedRobot->deleteSubTree(selectedRobot->selectedRMC->getParentJoint());
+				selectedRobot->deleteSubTree(rmcToDelete->getParentJoint());
 				selectedRobot->selectedRMC = NULL;
 			}
 			buildRMCMirrorMap();
@@ -733,188 +693,79 @@ bool ModularDesignWindow::onKeyEvent(int key, int action, int mods) {
 		saveFile("../out/tmpModularRobotDesign.dsn");
 	}
 
+	if (selectedRobot && selectedRobot->selectedRMC && action == GLFW_PRESS) {
+		selectedRobot->selectedRMC->processInputKeyPress(key);
+		selectedRobot->selectedRMC->update();
+
+		if (rmcMirrorMap.count(selectedRobot->selectedRMC)){
+			rmcMirrorMap[selectedRobot->selectedRMC]->syncSymmParameters(selectedRobot->selectedRMC);
+			rmcMirrorMap[selectedRobot->selectedRMC]->update();
+		}
+
+		//this will propagate changes as needed...
+		for (auto robot : rmcRobots){
+			if (selectedRobot->selectedRMC->type == MOTOR_RMC)
+				robot->fixConstraints();
+			else
+				robot->updateComponents();
+		}
+	}
+
 	if (key == GLFW_KEY_MINUS && action == GLFW_PRESS) {
 		if (selectedFP){
 			selectedFP->featureSize = max(0.005, selectedFP->featureSize - 0.005);
 			createBodyMesh3D();
 		}
-		if (selectedRobot && selectedRobot->selectedRMC) {
-			if (LivingSphereEE* selectedSphere = dynamic_cast<LivingSphereEE*> (selectedRobot->selectedRMC)) {
-				selectedSphere->sphereRadius = max(0.005, selectedSphere->sphereRadius - 0.005);
-				selectedSphere->update();
-				updateLivingBracket();
-			}
-		}
-		if (selectedRobot && selectedRobot->selectedRMC) {
-			if (LivingWheelEE* selectedWheel = dynamic_cast<LivingWheelEE*> (selectedRobot->selectedRMC)) {
-				selectedWheel->radius = max(0.01, selectedWheel->radius - 0.005);
-				selectedWheel->update();
-				updateLivingBracket();
-			}
-		}
 	}
-
 
 	if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS) {
 		if (selectedFP) {
 			selectedFP->featureSize = selectedFP->featureSize + 0.005;
 			createBodyMesh3D();
 		}
-		if (selectedRobot && selectedRobot->selectedRMC) {
-			if (LivingSphereEE* selectedSphere = dynamic_cast<LivingSphereEE*> (selectedRobot->selectedRMC)) {
-				selectedSphere->sphereRadius = selectedSphere->sphereRadius + 0.005;
-				selectedSphere->update();
-				updateLivingBracket();
-			}
-		}
-		if (selectedRobot && selectedRobot->selectedRMC) {
-			if (LivingWheelEE* selectedWheel = dynamic_cast<LivingWheelEE*> (selectedRobot->selectedRMC)) {
-				selectedWheel->radius = selectedWheel->radius + 0.005;
-				selectedWheel->update();
-				updateLivingBracket();
-			}
-		}
 	}
 
-
-	if (selectedRobot && selectedRobot->selectedRMC && action == GLFW_PRESS) {
-		if (LivingMotor* selectedMotor = dynamic_cast<LivingMotor*> (selectedRobot->selectedRMC)) {
-			if (key == GLFW_KEY_LEFT_BRACKET){
-				selectedMotor->hornBracket->goToNextMountingPosition();
-				Logger::consolePrint("horn bracket mounting angle: %lf\n", selectedMotor->hornBracket->bracketMountingAngle);
-			}
-			if (key == GLFW_KEY_RIGHT_BRACKET){
-				selectedMotor->hornBracket->goToPreviousMountingPosition();
-				Logger::consolePrint("horn bracket moounting angle: %lf\n", selectedMotor->hornBracket->bracketMountingAngle);
-			}
-
-			selectedMotor->update();
-			updateLivingBracket();
-		}
-	}
-
-
-
-	if (key == GLFW_KEY_Z && action == GLFW_PRESS)
-	{
+	if (key == GLFW_KEY_Z && action == GLFW_PRESS){
 		bodyFeaturePts.push_back(RBFeaturePoint(P3D(0, 0, 0), 0.02));
 		createBodyMesh3D();
 	}
 
 	if (key == GLFW_KEY_X && action == GLFW_PRESS){
-		showWidgets = !showWidgets;
-		if (showWidgets && selectedRobot && selectedRobot->selectedRMC)
-		{
-			rWidget->visible = tWidget->visible = true;
+		tWidget->visible = !tWidget->visible;
+		if (tWidget->visible && selectedRobot && selectedRobot->selectedRMC){
 			rWidget->pos = tWidget->pos = isSelectedRMCMovable() ? selectedRobot->selectedRMC->state.position : selectedRobot->root->state.position;
 			rWidget->setOrientation(Quaternion());
 		}
-		if (showWidgets && pickedGuidingMesh)
-		{
-			rWidget->visible = tWidget->visible = true;
+		if (tWidget->visible && pickedGuidingMesh){
 			rWidget->pos = tWidget->pos = guidingMeshPos;
 			rWidget->setOrientation(guidingMeshRot);
 		}
-		if (!showWidgets)
-		{
-			rWidget->visible = tWidget->visible = false;
+	}
+
+	if (key == GLFW_KEY_C && action == GLFW_PRESS) {
+		rWidget->visible = !rWidget->visible;
+		if (rWidget->visible && selectedRobot && selectedRobot->selectedRMC) {
+			rWidget->pos = tWidget->pos = isSelectedRMCMovable() ? selectedRobot->selectedRMC->state.position : selectedRobot->root->state.position;
+			rWidget->setOrientation(Quaternion());
+		}
+		if (rWidget->visible && pickedGuidingMesh) {
+			rWidget->pos = tWidget->pos = guidingMeshPos;
+			rWidget->setOrientation(guidingMeshRot);
 		}
 	}
 
-	if (key == GLFW_KEY_V && action == GLFW_PRESS)
-	{
+	if (key == GLFW_KEY_V && action == GLFW_PRESS){
 		createBodyMesh3D();
 	}
 
-	if (key == GLFW_KEY_Z && action == GLFW_PRESS)
-	{
-		if (selectedRobot && selectedRobot->selectedRMC && mirrorMap.count(selectedRobot) == 0)
-		{
+	if (key == GLFW_KEY_Z && action == GLFW_PRESS){
+		if (selectedRobot && selectedRobot->selectedRMC && mirrorMap.count(selectedRobot) == 0){
 			selectedRobot->getRoot()->state.position[0] = 0;
-			selectedRobot->fixJointConstraints();
+			selectedRobot->fixConstraints();
 			createBodyMesh3D();
 			rWidget->pos = tWidget->pos = selectedRobot->getRoot()->state.position;
 		}
 	}
-
-
-	if (key == GLFW_KEY_MINUS && (action == GLFW_REPEAT || action == GLFW_PRESS))
-	{
-		if (selectedRobot && selectedRobot->selectedRMC && (selectedRobot->selectedRMC->type == MOTOR_RMC
-			|| selectedRobot->selectedRMC->type == LIVING_MOTOR))
-		{
-			selectedRobot->selectedRMC->motorAngle += 5;
-			Logger::consolePrint("Motor angle is now: %lf\n", selectedRobot->selectedRMC->motorAngle);
-			selectedRobot->selectedRMC->update();
-
-			// ******************* handle mirror RMC *******************
-			if (rmcMirrorMap.count(selectedRobot->selectedRMC))
-			{
-				RMC* mirrorRMC = rmcMirrorMap[selectedRobot->selectedRMC];
-				mirrorRMC->motorAngle -= 5;
-				mirrorRMC->update();
-			}
-
-			for (auto robot : rmcRobots)
-				robot->fixJointConstraints();
-		}
-	}
-
-	if (key == GLFW_KEY_EQUAL && (action == GLFW_REPEAT || action == GLFW_PRESS))
-	{
-		if (selectedRobot && selectedRobot->selectedRMC && (selectedRobot->selectedRMC->type == MOTOR_RMC
-			|| selectedRobot->selectedRMC->type == LIVING_MOTOR))
-		{
-			selectedRobot->selectedRMC->motorAngle -= 5;
-			Logger::consolePrint("Motor angle is now: %lf\n", selectedRobot->selectedRMC->motorAngle);
-			selectedRobot->selectedRMC->update();
-			
-			// ******************* handle mirror RMC *******************
-			if (rmcMirrorMap.count(selectedRobot->selectedRMC))
-			{
-				RMC* mirrorRMC = rmcMirrorMap[selectedRobot->selectedRMC];
-				mirrorRMC->motorAngle += 5;
-				mirrorRMC->update();
-			}
-
-			for (auto robot : rmcRobots)
-				robot->fixJointConstraints();
-		}
-	}
-
-	if (key == GLFW_KEY_0 && (action == GLFW_REPEAT || action == GLFW_PRESS))
-	{
-		if (selectedRobot && selectedRobot->selectedRMC && (selectedRobot->selectedRMC->type == MOTOR_RMC
-			|| selectedRobot->selectedRMC->type == LIVING_MOTOR))
-		{
-			selectedRobot->selectedRMC->motorAngle = 0.0;
-			selectedRobot->selectedRMC->update();
-
-			// ******************* handle mirror RMC *******************
-			if (rmcMirrorMap.count(selectedRobot->selectedRMC))
-			{
-				RMC* mirrorRMC = rmcMirrorMap[selectedRobot->selectedRMC];
-				mirrorRMC->motorAngle = 0.0;
-				mirrorRMC->update();
-			}
-
-			for (auto robot : rmcRobots)
-				robot->fixJointConstraints();
-		}
-
-	}
-
-/*
-	if (key == GLFW_KEY_F4 && (action == GLFW_REPEAT || action == GLFW_PRESS))
-	{
-		if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->isMovable())
-		{
-			selectedRobot->selectedRMC->state.orientation = getRotationQuaternion(RAD(90), V3D(0, 0, 1)) * selectedRobot->selectedRMC->state.orientation;
-			selectedRobot->updateAllLivingMotor();
-			selectedRobot->fixJointConstraints();
-		}
-	}
-*/
 
 	if (GLWindow3D::onKeyEvent(key, action, mods)) return true;
 
@@ -978,7 +829,14 @@ void ModularDesignWindow::drawRefAxis(const P3D& pos)
 
 void ModularDesignWindow::drawRMCRobot()
 {
-	updateLivingBracket();
+/* - these should already be updated. If they're not, nothaving this in will hopefully help with debugging...
+	{
+		for (auto robot : rmcRobots) {
+			robot->updateAllComponents();
+			robot->fixJointConstraints();
+		}
+	}
+*/
 
 	for (uint i = 0; i < rmcRobots.size(); i++)
 	{
@@ -1004,12 +862,12 @@ void ModularDesignWindow::drawConnectionPreview()
 		{
 			selectedRobot->root->state.position = possibleConnections[i].position;
 			selectedRobot->root->state.orientation = possibleConnections[i].orientation;
-			selectedRobot->fixJointConstraints();
+			selectedRobot->fixConstraints();
 			selectedRobot->draw(SHOW_MESH, Vector4d(1, 0, 0, 0.4), Vector4d(1, 0, 0, 0.4), Vector4d(1, 0, 0, 0.4));
 		}
 
 		selectedRobot->root->state = origState;
-		selectedRobot->fixJointConstraints();
+		selectedRobot->fixConstraints();
 	}
 }
 
@@ -1038,7 +896,7 @@ void ModularDesignWindow::drawWindowRMCConnectionPreview()
 		{
 			windowSelectedRobot->root->state.position = possibleConnections[i].position;
 			windowSelectedRobot->root->state.orientation = possibleConnections[i].orientation;
-			windowSelectedRobot->fixJointConstraints();
+			windowSelectedRobot->fixConstraints();
 			windowSelectedRobot->draw(SHOW_MESH, Vector4d(1, 0, 0, 0.4), Vector4d(1, 0, 0, 0.4), Vector4d(1, 0, 0, 0.4));
 		}
 		windowSelectedRobot->root->state = origState;
@@ -1095,6 +953,10 @@ void ModularDesignWindow::drawBodyFeaturePts()
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
 void ModularDesignWindow::drawScene() {
+//	for (auto robot : rmcRobots) {
+//		robot->fixConstraints();
+//		robot->updateComponents();
+//	}
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_CULL_FACE);
@@ -1102,18 +964,35 @@ void ModularDesignWindow::drawScene() {
  
 	glEnable(GL_LIGHTING);
 
+
+//	drawDesignEnvironment();
+
 	drawRMCRobot();
 	
 	drawConnectionPreview();
 	drawWindowRMCConnectionPreview();
 
 	drawBodyFeaturePts();
+
+	if (bodyMeshSelected == false && highlightedFP == nullptr && selectedFP == nullptr)
+		bodyMesh->setMaterial(bodyMaterial);
+	else {
+		GLShaderMaterial colorMat;
+		colorMat.setColor(1.0, 1.0, 1.0, 0.7);
+		bodyMesh->setMaterial(colorMat);
+	}
+
+
 	if (bodyMesh)
 		bodyMesh->drawMesh();
 
 	drawGuildingMesh();
 
 	drawBodyPlane();
+
+	//draw a little blob so we know where the origin is...
+	glColor4d(0.8, 0.8, 0.8, 0.2);
+	drawSphere(P3D(), 0.005, 12);
 }
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
@@ -1134,9 +1013,7 @@ void ModularDesignWindow::drawAuxiliarySceneInfo() {
 	
 }
 
-
-void ModularDesignWindow::loadConfig(const char* fName)
-{
+void ModularDesignWindow::loadConfig(const char* fName){
 	configFileName = fName;
 
 	FILE* fp = fopen(fName, "r");
@@ -1156,83 +1033,41 @@ void ModularDesignWindow::loadConfig(const char* fName)
 		sscanf(line, "%s", keyword);
 		Logger::print("%s\n", keyword);
 
+		RMC* rmc = NULL;
+
 		if (strcmp(keyword, "RMC") == 0)
-		{
-			RMC* rmc = new RMC();
-			rmcWarehouse.push_back(rmc);
-			rmcWarehouse.back()->loadFromFile(fp);
-			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;
-			
-			for (uint i = 0; i < rmc->pins.size(); i++)
-			{
-				rmcPinNameMap[rmc->pins[i].name] = &rmc->pins[i];
-			}
-		}
-		else if (strncmp(keyword, "LivingMotor", strlen("LivingMotor")) == 0)
-		{
-			RMC* rmc = new LivingMotor(line + strlen(keyword));
-			rmcWarehouse.push_back(rmc);
-			rmcWarehouse.back()->loadFromFile(fp);
-			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;
-
-			for (uint i = 0; i < rmc->pins.size(); i++)
-			{
-				rmcPinNameMap[rmc->pins[i].name] = &rmc->pins[i];
-			}
-		}
+			rmc = new RMC();
+		else if (strncmp(keyword, "Motor", strlen("Motor")) == 0)
+			rmc = new Motor_RMC(line + strlen(keyword));
 		else if (strcmp(keyword, "LivingConnector") == 0)
-		{
-			RMC* rmc = new LivingConnector(line + strlen(keyword));
-			rmcWarehouse.push_back(rmc);
-			rmcWarehouse.back()->loadFromFile(fp);
-			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;
-
-			for (uint i = 0; i < rmc->pins.size(); i++)
-			{
-				rmcPinNameMap[rmc->pins[i].name] = &rmc->pins[i];
-			}
-		}
-		else if (strcmp(keyword, "LivingSphereEE") == 0)
-		{
-			RMC* rmc = new LivingSphereEE();
-			rmcWarehouse.push_back(rmc);
-			rmcWarehouse.back()->loadFromFile(fp);
-			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;
-
-			for (uint i = 0; i < rmc->pins.size(); i++)
-			{
-				rmcPinNameMap[rmc->pins[i].name] = &rmc->pins[i];
-			}
-		}
-		else if (strcmp(keyword, "LivingWheelEE") == 0)
-		{
-			RMC* rmc = new LivingWheelEE(line + strlen(keyword));
-			rmcWarehouse.push_back(rmc);
-			rmcWarehouse.back()->loadFromFile(fp);
-			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;
-
-			for (uint i = 0; i < rmc->pins.size(); i++)
-			{
-				rmcPinNameMap[rmc->pins[i].name] = &rmc->pins[i];
-			}
-		}
-		else if (strcmp(keyword, "RobotMeshDir") == 0)
-		{
+			rmc = new LivingConnector();
+		else if (strcmp(keyword, "SphereEE") == 0)
+			rmc = new SphereEE_RMC();
+		else if (strcmp(keyword, "ConnectorHUB") == 0)
+			rmc = new ConnectorHUB_RMC();
+		else if (strcmp(keyword, "WheelEE") == 0)
+			rmc = new WheelEE_RMC(line + strlen(keyword));
+		else if (strcmp(keyword, "RobotMeshDir") == 0)		{
 			char content[200];
 			int num = sscanf(line + strlen(keyword), "%s", content);
 			robotMeshDir = content;
-		}
-		else if (strcmp(keyword, "TransformationMap") == 0)
-		{
+		} else if (strcmp(keyword, "TransformationMap") == 0)
 			loadTransformationMap(fp);
+
+		if (rmc) {
+			rmcWarehouse.push_back(rmc);
+			rmcWarehouse.back()->loadFromFile(fp);
+			rmcNameMap[rmcWarehouse.back()->getName()] = rmc;
+
+			for (uint i = 0; i < rmc->pins.size(); i++)
+				rmcPinNameMap[rmc->pins[i].name] = &rmc->pins[i];
 		}
 	}
 
 	fclose(fp);
 }
 
-void ModularDesignWindow::loadTransformationMap(FILE* fp)
-{
+void ModularDesignWindow::loadTransformationMap(FILE* fp){
 	char buffer[200];
 	char keyword[50];
 	vector<Transformation>* transList1 = NULL;
@@ -1436,7 +1271,6 @@ void ModularDesignWindow::loadDesignFromFile(const char* fName)
 	rmcRobots.clear();
 	int startIndex = (int)rmcRobots.size();
 
-	unloadParametersForLivingBracket();
 	selectedRobot = NULL;
 	rWidget->visible = tWidget->visible = false;
 
@@ -1494,24 +1328,13 @@ void ModularDesignWindow::loadDesignFromFile(const char* fName)
 	buildRMCMirrorMap();
 }
 
-bool ModularDesignWindow::previewConnectRMCRobot(RMCPin* parentPin, RMCPin* childPin, RMCRobot* childRobot, bool rotationOnly)
-{
+bool ModularDesignWindow::previewConnectRMCRobot(RMCPin* parentPin, RMCPin* childPin, RMCRobot* childRobot, bool rotationOnly){
 	string key = parentPin->name + '+' + childPin->name;
 	Transformation trans;
 	
 	if (transformationMap.count(key)) {
 		Transformation parentTrans = parentPin->transformation;
 		Transformation childTrans = childPin->transformation;
-		if (parentPin->rmc->type == MOTOR_RMC && parentPin->type == HORN_PIN)
-		{
-			RMC* parentRMC = parentPin->rmc;
-			parentTrans *= Transformation(getRotationQuaternion(RAD(parentRMC->motorAngle), parentRMC->motorAxis).getRotationMatrix());
-		}
-		if (childPin->rmc->type == MOTOR_RMC && childPin->type == HORN_PIN)
-		{
-			RMC* childRMC = childPin->rmc;
-			childTrans *= Transformation(getRotationQuaternion(RAD(childRMC->motorAngle), childRMC->motorAxis).getRotationMatrix());
-		}
 		trans = parentTrans * transformationMap[key][0] * childTrans.inverse();
 	}
 	else return false;
@@ -1523,7 +1346,7 @@ bool ModularDesignWindow::previewConnectRMCRobot(RMCPin* parentPin, RMCPin* chil
 	if (!rotationOnly)
 		childState.position = parentState.position + parentState.orientation.rotate(trans.T);
 
-	childRobot->fixJointConstraints();
+	childRobot->fixConstraints();
 
 	return true;
 }
@@ -1574,7 +1397,7 @@ void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot)
 		for (int j = 0; j < rmcRobot->getRMCCount(); j++)
 		{
 			RMC* rmc = rmcRobot->getRMC(j);
-			if (rmc->type == MOTOR_RMC || rmc->type == LIVING_MOTOR || rmc->type == EE_RMC)
+			if (rmc->type == MOTOR_RMC || rmc->type == EE_RMC)
 			{
 				rmc->mappingInfo.index1 = i;
 				rmc->mappingInfo.index2 = j;
@@ -1589,7 +1412,7 @@ void ModularDesignWindow::saveToRBSFile(const char* fName, Robot* templateRobot)
 			robot->connectRMCRobotDirectly(rmcRobots[i]->clone(), robot->getRoot());
 		}
 	}
-	robot->fixJointConstraints();
+	robot->fixConstraints();
 
 	robot->saveToRBSFile(fName, robotMeshDir, templateRobot, freezeRobotRoot);
 
@@ -1695,115 +1518,17 @@ void ModularDesignWindow::createBodyMesh3D()
 
 	if (points.size() < 4) return;
 
-	ConvexHull3D::computeConvexHullFromSetOfPoints(points, bodyMesh, true);
+	ConvexHull3D::computeConvexHullFromSetOfPoints(points, bodyMesh, false);
 
+	bodyMesh->calBoundingBox();
 	bodyMesh->computeNormals();
-}
-
-
-void ModularDesignWindow::loadParametersForLivingBracket()
-{
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_MOTOR)
-	{
-//		LivingHornBracket* lbh = ((LivingMotor*)selectedRobot->selectedRMC)->hornBracket;
-//		TwAddVarRW(glApp->mainMenuBar, "initial angle", TW_TYPE_DOUBLE, &lbh->bracketInitialAngle, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
-//		TwAddVarRW(glApp->mainMenuBar, "motor angle min", TW_TYPE_DOUBLE, &lbh->motor->rotAngleMin, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
-//		TwAddVarRW(glApp->mainMenuBar, "motor angle max", TW_TYPE_DOUBLE, &lbh->motor->rotAngleMax, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
-//		TwAddVarRW(glApp->mainMenuBar, "bracket connector angle", TW_TYPE_DOUBLE, &lbh->bracketConnectorAngle, "min=-3.14 max=3.14 step=0.1 group='LivingBracket'");
-	}
-
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_SPHERE_EE)
-	{
-		LivingSphereEE* sphereEE = dynamic_cast<LivingSphereEE*>(selectedRobot->selectedRMC);
-//		TwAddVarRW(glApp->mainMenuBar, "sphere radius", TW_TYPE_DOUBLE, &(sphereEE->sphereRadius), "min=0.001 max=0.1 step=0.001 group='LivingBracket'");
-	}
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_WHEEL_EE)
-	{
-		LivingWheelEE* wheelEE = dynamic_cast<LivingWheelEE*>(selectedRobot->selectedRMC);
-//		TwAddVarRW(glApp->mainMenuBar, "wheel radius", TW_TYPE_DOUBLE, &(wheelEE->radius), "min=0.001 max=0.1 step=0.001 group='LivingBracket'");
-	}
-
-}
-
-void ModularDesignWindow::unloadParametersForLivingBracket()
-{
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_MOTOR)
-	{
-//		TwRemoveVar(glApp->mainMenuBar, "initial angle");
-//		TwRemoveVar(glApp->mainMenuBar, "motor angle min");
-//		TwRemoveVar(glApp->mainMenuBar, "motor angle max");
-//		TwRemoveVar(glApp->mainMenuBar, "bracket connector angle");
-	}
-
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_SPHERE_EE)
-	{
-		//		TwRemoveVar(glApp->mainMenuBar, "sphere radius");
-	}
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_WHEEL_EE)
-	{
-		//		TwRemoveVar(glApp->mainMenuBar, "wheel radius");
-	}
-}
-
-void ModularDesignWindow::updateLivingBracket(){
-    PressedModifier mod = getPressedModifier(glApp->glfwWindow);
-
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_MOTOR)
-	{
-		if (rmcMirrorMap.count(selectedRobot->selectedRMC))
-		{
-			RMC* mirrorRMC = rmcMirrorMap[selectedRobot->selectedRMC];
-			dynamic_cast<LivingMotor*>(mirrorRMC)->syncSymmParameters(dynamic_cast<LivingMotor*>(selectedRobot->selectedRMC));
-		}
-
-		if (motorRotAngle != 0)
-		{
-			V3D axis = selectedRobot->selectedRMC->state.getWorldCoordinates(selectedRobot->selectedRMC->motorAxis).normalized();
-			Quaternion motorRotQ = getRotationQuaternion(RAD(motorRotAngle), axis);
-			selectedRobot->selectedRMC->state.orientation = motorRotQ * motorStartOrient;
-			propagateOrientToMirrorRMC(selectedRobot->selectedRMC);
-			
-//			if (GetAsyncKeyState(VK_LMENU) < 0)
-            if(mod == PressedModifier::LEFT_ALT)
-			{
-				updateParentConnector(selectedRobot->selectedRMC);
-				if (rmcMirrorMap.count(selectedRobot->selectedRMC))
-					updateParentConnector(rmcMirrorMap[selectedRobot->selectedRMC]);
-				for (auto robot : rmcRobots)
-					robot->fixJointConstraints();
-			}
-		}
-	}
-
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_SPHERE_EE)
-	{
-		if (rmcMirrorMap.count(selectedRobot->selectedRMC))
-		{
-			RMC* mirrorRMC = rmcMirrorMap[selectedRobot->selectedRMC];
-			dynamic_cast<LivingSphereEE*>(mirrorRMC)->syncSymmParameters(dynamic_cast<LivingSphereEE*>(selectedRobot->selectedRMC));
-		}
-	}
-
-	if (selectedRobot && selectedRobot->selectedRMC && selectedRobot->selectedRMC->type == LIVING_WHEEL_EE)
-	{
-		if (rmcMirrorMap.count(selectedRobot->selectedRMC))
-		{
-			RMC* mirrorRMC = rmcMirrorMap[selectedRobot->selectedRMC];
-			dynamic_cast<LivingWheelEE*>(mirrorRMC)->syncSymmParameters(dynamic_cast<LivingWheelEE*>(selectedRobot->selectedRMC));
-		}
-	}
-
-	for (auto robot : rmcRobots)
-	{
-		robot->updateAllLivingMotor();
-		robot->fixJointConstraints();
-	}
 }
 
 bool ModularDesignWindow::isSelectedRMCMovable(){
 	return selectedRobot->selectedRMC->isMovable();
 }
 
+//TODO: This method no longer works, but it is very useful, so it should get fixed at some point!!!
 void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot, RobotState* initialRobotState){
 	bool incompatible = false;
 
@@ -1870,12 +1595,18 @@ void ModularDesignWindow::matchDesignWithRobot(Robot* tRobot, RobotState* initia
 	}
 
 	// move the plates with motors
-	for (auto rmcRobot : rmcRobots)
-	{
+	for (auto rmcRobot : rmcRobots)	{
 		rmcRobot->fixPlateStateByMotor();
 	}
 
-	updateLivingBracket();
+	{
+		if (rmcMirrorMap.count(selectedRobot->selectedRMC))
+			rmcMirrorMap[selectedRobot->selectedRMC]->syncSymmParameters(selectedRobot->selectedRMC);
+		for (auto robot : rmcRobots) {
+			robot->updateComponents();
+			robot->fixConstraints();
+		}
+	}
 
 	createBodyMesh3D();
 
@@ -1972,7 +1703,7 @@ void ModularDesignWindow::buildRMCMirrorMap()
 	// Logger::print("mirror map size: %d\n", rmcMirrorMap.size());
 }
 
-void ModularDesignWindow::makeSelectedRMCSymmtry()
+void ModularDesignWindow::makeSelectedRMCSymmetric()
 {
 	if (selectedRobot->selectedRMC->type == PLATE_RMC && hightlightedRobot->highlightedRMC->type == PLATE_RMC)
 	{
@@ -1982,8 +1713,9 @@ void ModularDesignWindow::makeSelectedRMCSymmtry()
 		rmcMirrorMap[hightlightedRobot->highlightedRMC] = selectedRobot->selectedRMC;
 		propagatePosToMirrorRMC(selectedRobot->selectedRMC);
 		propagateOrientToMirrorRMC(selectedRobot->selectedRMC);
-		hightlightedRobot->fixJointConstraints();
+		hightlightedRobot->fixConstraints();
 		createBodyMesh3D();
+		Logger::consolePrint("Body plates are now symmetric!\n");
 	}
 	else if (selectedRobot->selectedRMC->isMovable() && hightlightedRobot->highlightedRMC->isMovable())
 	{
@@ -1991,9 +1723,14 @@ void ModularDesignWindow::makeSelectedRMCSymmtry()
 		rmcMirrorMap[hightlightedRobot->highlightedRMC] = selectedRobot->selectedRMC;
 		propagatePosToMirrorRMC(selectedRobot->selectedRMC);
 		propagateOrientToMirrorRMC(selectedRobot->selectedRMC);
-		updateLivingBracket();
-	}
 
+		rmcMirrorMap[selectedRobot->selectedRMC]->syncSymmParameters(selectedRobot->selectedRMC);
+		for (auto robot : rmcRobots) {
+			robot->updateComponents();
+			robot->fixConstraints();
+		}
+		Logger::consolePrint("Components are now symmetric!\n");
+	}
 	
 }
 
@@ -2008,8 +1745,7 @@ void ModularDesignWindow::propagatePosToMirrorRMC(RMC* rmc)
 	}
 }
 
-void ModularDesignWindow::propagateOrientToMirrorRMC(RMC* rmc)
-{
+void ModularDesignWindow::propagateOrientToMirrorRMC(RMC* rmc){
 	Quaternion q = rmc->state.orientation;
 	if (rmcMirrorMap.count(rmc))
 	{
@@ -2034,6 +1770,9 @@ void ModularDesignWindow::updateParentConnector(RMC* rmc)
 
 void ModularDesignWindow::pickBodyFeaturePts(Ray& ray)
 {
+
+
+
 	double closestDist = 1e10;
 
 	for (auto& fp : bodyFeaturePts)
@@ -2047,7 +1786,7 @@ void ModularDesignWindow::pickBodyFeaturePts(Ray& ray)
 	}
 }
 
-void ModularDesignWindow::makeSelectedFpSymmtry()
+void ModularDesignWindow::makeSelectedFPSymmtric()
 {
 	bodyFpMirrorMap[selectedFP] = highlightedFP;
 	bodyFpMirrorMap[highlightedFP] = selectedFP;
@@ -2066,12 +1805,4 @@ void ModularDesignWindow::propagatePosToMirrorFp(RBFeaturePoint* fp)
 		mirrorFp->coords = pos;
 		mirrorFp->featureSize = fp->featureSize;
     }
-}
-
-ModularDesignWindow::PressedModifier ModularDesignWindow::getPressedModifier(GLFWwindow *window){
-	if (glfwGetKey(window, GLFW_KEY_LEFT_ALT)) return PressedModifier::LEFT_ALT;
-	if (glfwGetKey(window, GLFW_KEY_RIGHT_ALT)) return PressedModifier::RIGHT_ALT;
-	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL)) return PressedModifier::LEFT_CTRL;
-
-    return PressedModifier::NONE;
 }

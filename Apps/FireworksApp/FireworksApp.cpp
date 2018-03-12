@@ -111,7 +111,7 @@ void FireworksApp::process() {
 	double simTimeStep = 0.01;
 
 	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
-	while (simulationTime / maxRunningTime < animationSpeedupFactor) {
+	while (simulationTime < maxRunningTime) {
 		simulationTime += simTimeStep;
 
 		for (uint i = 0; i < particles.size(); i++)

@@ -3,9 +3,10 @@
 #include <RobotDesignerLib/MOPTWindow.h>
 #include <RobotDesignerLib/LocomotionEngineManagerGRF.h>
 #include <RobotDesignerLib/LocomotionEngineManagerIP.h>
+#include "../Apps/RobotDesignerApp/RobotDesignerApp.h"
 
-MOPTWindow::MOPTWindow(int x, int y, int w, int h, GLApplication* glApp) : GLWindow3D(x, y, w, h) {
-	this->glApp = glApp;
+MOPTWindow::MOPTWindow(int x, int y, int w, int h, RobotDesignerApp* theApp) : GLWindow3D(x, y, w, h) {
+	this->theApp = theApp;
 
 	ffpViewer = new FootFallPatternViewer(x, 0, (int)(w), (int)(h / 4.0));
 	ffpViewer->ffp = &footFallPattern;
@@ -14,15 +15,20 @@ MOPTWindow::MOPTWindow(int x, int y, int w, int h, GLApplication* glApp) : GLWin
 	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutRightAxis = 0.25;
 	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutUpAxis = 0.95;
 	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -1.5;
+	
+
+	showGroundPlane = true;
+	showReflections = true;
+
 }
 
 void MOPTWindow::addMenuItems() {
 /*
-	auto tmp = new nanoFui::Label(glApp->mainMenu->window(), "Popup buttons", "sans-bold");
-	glApp->mainMenu->addWidget("", tmp);
+	auto tmp = new nanoFui::Label(theApp->mainMenu->window(), "Popup buttons", "sans-bold");
+	theApp->mainMenu->addWidget("", tmp);
 
-	nanogui::PopupButton *popupBtn = new nanogui::PopupButton(glApp->mainMenu->window(), "Popup", ENTYPO_ICON_EXPORT);
-	glApp->mainMenu->addWidget("", popupBtn);
+	nanogui::PopupButton *popupBtn = new nanogui::PopupButton(theApp->mainMenu->window(), "Popup", ENTYPO_ICON_EXPORT);
+	theApp->mainMenu->addWidget("", popupBtn);
 
 	nanogui::Popup *popup = popupBtn->popup();
 	popup->setLayout(new nanogui::GroupLayout());
@@ -31,111 +37,119 @@ void MOPTWindow::addMenuItems() {
 */
 
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("generate periodic motion", periodicMotion);
+		auto tmpVar = theApp->mainMenu->addVariable("generate periodic motion", periodicMotion);
 	}
 
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("# of MOPT sample points", nTimeSteps);
+		auto tmpVar = theApp->mainMenu->addVariable("# of MOPT sample points", nTimeSteps);
 		tmpVar->setSpinnable(true);
 	}
 
-	glApp->mainMenu->addVariable("Allow Dynamic regularization", moptParams.hessCorrectionMethod)->setItems({ "None", "DynamicRegularization", "Projection"});
+	theApp->mainMenu->addVariable("Allow Dynamic regularization", moptParams.hessCorrectionMethod)->setItems({ "None", "DynamicRegularization", "Projection"});
 
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("globalMOPTRegularizer", globalMOPTRegularizer);
+		auto tmpVar = theApp->mainMenu->addVariable("globalMOPTRegularizer", globalMOPTRegularizer);
 		tmpVar->setSpinnable(false); tmpVar->setMinValue(0); tmpVar->setMaxValue(100);
 	}
 
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("swingFootHeight", moptParams.swingFootHeight);
+		auto tmpVar = theApp->mainMenu->addVariable("swingFootHeight", moptParams.swingFootHeight);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
 	}
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("des speed X", moptParams.desTravelDistX);
+		auto tmpVar = theApp->mainMenu->addVariable("des speed X", moptParams.desTravelDistX);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 
-	glApp->mainMenu->addVariable("curr speed X", COMSpeed(0))->setEditable(false);
+	theApp->mainMenu->addVariable("curr speed X", COMSpeed(0))->setEditable(false);
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("des Speed Z", moptParams.desTravelDistZ);
+		auto tmpVar = theApp->mainMenu->addVariable("des Speed Z", moptParams.desTravelDistZ);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
-	glApp->mainMenu->addVariable("curr speed Z", COMSpeed(2))->setEditable(false);
+	theApp->mainMenu->addVariable("curr speed Z", COMSpeed(2))->setEditable(false);
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("des turning angle", moptParams.desTurningAngle);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
-	}
-	{
-		auto tmpVar = glApp->mainMenu->addVariable("Ext force X", moptParams.externalForceX);
+		auto tmpVar = theApp->mainMenu->addVariable("des turning angle", moptParams.desTurningAngle);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("Ext force Z", moptParams.externalForceZ);
+		auto tmpVar = theApp->mainMenu->addVariable("Ext force X", moptParams.externalForceX);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("gait duration", moptParams.motionPlanDuration);
+		auto tmpVar = theApp->mainMenu->addVariable("Ext force Z", moptParams.externalForceZ);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("joint velocity limit", moptParams.jointVelocityLimit);
+		auto tmpVar = theApp->mainMenu->addVariable("gait duration", moptParams.motionPlanDuration);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
+		auto tmpVar = theApp->mainMenu->addVariable("joint velocity limit", moptParams.jointVelocityLimit);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
 	}
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("joint velocity epsilon", moptParams.jointVelocityEpsilon);
+		auto tmpVar = theApp->mainMenu->addVariable("joint velocity epsilon", moptParams.jointVelocityEpsilon);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
 	}
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("wheel speed limit", moptParams.wheelSpeedLimit);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
-	}
-	{
-		auto tmpVar = glApp->mainMenu->addVariable("wheel speed epsilon", moptParams.wheelSpeedEpsilon);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
-	}
-	{
-		auto tmpVar = glApp->mainMenu->addVariable("wheel accel. limit", moptParams.wheelAccelLimit);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
-	}
-	{
-		auto tmpVar = glApp->mainMenu->addVariable("wheel accel. epsilon", moptParams.wheelAccelEpsilon);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
-	}
-	{
-		auto tmpVar = glApp->mainMenu->addVariable("joint velocity L0 delta", moptParams.jointL0Delta);
+		auto tmpVar = theApp->mainMenu->addVariable("EE min distance", moptParams.EEminDistance);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 	{
-		auto tmpVar = glApp->mainMenu->addVariable("friction coeff", moptParams.frictionCoeff);
+		auto tmpVar = theApp->mainMenu->addVariable("joint angle limit", moptParams.jointAngleLimit);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
+	}
+	{
+		auto tmpVar = theApp->mainMenu->addVariable("wheel speed limit", moptParams.wheelSpeedLimit);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
+	}
+	{
+		auto tmpVar = theApp->mainMenu->addVariable("wheel speed epsilon", moptParams.wheelSpeedEpsilon);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
+	}
+	{
+		auto tmpVar = theApp->mainMenu->addVariable("wheel accel. limit", moptParams.wheelAccelLimit);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
+	}
+	{
+		auto tmpVar = theApp->mainMenu->addVariable("wheel accel. epsilon", moptParams.wheelAccelEpsilon);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
+	}
+	{
+		auto tmpVar = theApp->mainMenu->addVariable("joint velocity L0 delta", moptParams.jointL0Delta);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 	{
-		glApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
+		auto tmpVar = theApp->mainMenu->addVariable("friction coeff", moptParams.frictionCoeff);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
+		theApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
 	}
 
-	glApp->mainMenu->addButton("Check Derivatives", [this]() {
+	theApp->mainMenu->addButton("Check Derivatives", [this]() {
 		bool temp = moptParams.checkDerivatives; moptParams.checkDerivatives = true;
 		runMOPTStep();
 		moptParams.checkDerivatives = temp;
 	});
 
-	glApp->mainMenu->addButton("Check Hessians PSD", [this]() {
+	theApp->mainMenu->addButton("Check Hessians PSD", [this]() {
 		bool temp = moptParams.checkHessianPSD; moptParams.checkHessianPSD = true;
 		runMOPTStep();
 		moptParams.checkHessianPSD = temp;
 	});
 
-	glApp->mainMenu->addVariable<bool>("Log data",
+	theApp->mainMenu->addVariable<bool>("Log data",
 		[this](bool val) {if (locomotionManager) locomotionManager->printDebugInfo = val; },
 		[this] { if (locomotionManager) return locomotionManager->printDebugInfo; else return false; });
-	glApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "IPv1", "IPv2" });
+	theApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "IPv1", "IPv2" });
 
 	{
 		using namespace nanogui;
 
-		Window *window = new Window(glApp->menuScreen, "MOPT Energy");
-		window->setPosition(Eigen::Vector2i(0, 0));
+		Window *window = new Window(theApp->menuScreen, "MOPT Energy");
 		window->setWidth(300);
+		window->setPosition(Eigen::Vector2i(theApp->getMainWindowWidth() / theApp->menuScreen->pixelRatio() - 220, 20));
 		window->setLayout(new GroupLayout());
 
 		energyGraph = window->add<Graph>("Energy function");
@@ -143,9 +157,9 @@ void MOPTWindow::addMenuItems() {
 
 /*
 	//this is the slider for the phase...
-	new nanogui::Label(glApp->mainMenu->window(), "Slider and text box", "sans-bold");
+	new nanogui::Label(theApp->mainMenu->window(), "Slider and text box", "sans-bold");
 
-	nanogui::Widget *panel = new nanogui::Widget(glApp->mainMenu->window());
+	nanogui::Widget *panel = new nanogui::Widget(theApp->mainMenu->window());
 	panel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 		nanogui::Alignment::Middle, 0, 20));
 
@@ -191,12 +205,14 @@ void MOPTWindow::loadRobot(Robot* robot){
 	// ******************* footfall patern *******************
 	footFallPattern = FootFallPattern();
 
-	int iMin = 0, iMax = nTimeSteps / nLegs - 1;
-	footFallPattern.strideSamplePoints = nTimeSteps;
-	for (int j = 0; j < nLegs; j++)
-		footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nTimeSteps / nLegs, iMax + j*nTimeSteps / nLegs);
+	if (nLegs > 0){
+		int iMin = 0, iMax = nTimeSteps / nLegs - 1;
+		footFallPattern.strideSamplePoints = nTimeSteps;
+		for (int j = 0; j < nLegs; j++)
+			footFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*nTimeSteps / nLegs, iMax + j*nTimeSteps / nLegs);
 
-	footFallPattern.loadFromFile("../out/tmpFFP.ffp");
+		footFallPattern.loadFromFile("../out/tmpFFP.ffp");
+	}
 }
 
 void MOPTWindow::syncMOPTWindowParameters() {
@@ -210,6 +226,8 @@ void MOPTWindow::syncMOPTWindowParameters() {
 
 	moptParams.jointVelocityLimit = locomotionManager->motionPlan->jointVelocityLimit;
 	moptParams.jointVelocityEpsilon = locomotionManager->motionPlan->jointVelocityEpsilon;
+	moptParams.jointAngleLimit = locomotionManager->motionPlan->jointAngleLimit;
+	moptParams.EEminDistance = locomotionManager->motionPlan->EEminDistance;
 
 	moptParams.jointL0Delta = locomotionManager->motionPlan->jointL0Delta;
 
@@ -242,6 +260,9 @@ void MOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->motionPlan->jointVelocityLimit = moptParams.jointVelocityLimit;
 	locomotionManager->motionPlan->jointVelocityEpsilon = moptParams.jointVelocityEpsilon;
 	locomotionManager->motionPlan->jointAngleLimit = moptParams.jointAngleLimit;
+	locomotionManager->motionPlan->EEminDistance = moptParams.EEminDistance;
+
+
 	locomotionManager->motionPlan->jointL0Delta = moptParams.jointL0Delta;
 
 	locomotionManager->motionPlan->wheelSpeedLimit = moptParams.wheelSpeedLimit;
@@ -334,12 +355,60 @@ void MOPTWindow::loadFFPFromFile(const char* fName){
 
 void MOPTWindow::drawScene() {
 	glColor3d(1, 1, 1);
-	glDisable(GL_LIGHTING);
-	drawGround();
 	glEnable(GL_LIGHTING);
 
 	if (locomotionManager){
-		locomotionManager->drawMotionPlan(moptParams.phase, moptParams.gaitCycle, moptParams.drawRobotPose, moptParams.drawPlanDetails, moptParams.drawContactForces, moptParams.drawOrientation);
+
+		//hacks...
+		if (0){
+			moptParams.drawRobotMesh = moptParams.drawSkeleton = moptParams.drawAxesOfRotation = moptParams.drawWheels = moptParams.drawContactForces = moptParams.drawSupportPolygon = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawOrientation = false;
+			if (moptParams.gaitCycle == 0) {
+				theApp->slowMoFactor = 5;
+				moptParams.drawEndEffectorTrajectories = true;
+				if (moptParams.phase > 0.33)
+					moptParams.drawContactForces = true;
+				if (moptParams.phase > 0.66)
+					moptParams.drawCOMTrajectory = moptParams.drawOrientation = true;
+			}
+			else if (moptParams.gaitCycle == 1) {
+				theApp->slowMoFactor = 5;
+				moptParams.drawEndEffectorTrajectories = true;
+			}
+			else if (moptParams.gaitCycle == 2) {
+				theApp->slowMoFactor = 5;
+				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = true;
+			}
+			else if (moptParams.gaitCycle == 3) {
+				theApp->slowMoFactor = 5;
+				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawOrientation = true;
+			}
+			else if (moptParams.gaitCycle == 4) {
+				theApp->slowMoFactor = 5;
+				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawOrientation = moptParams.drawWheels = true;
+			}
+			else if (moptParams.gaitCycle == 5) {
+				theApp->slowMoFactor = 5;
+				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawWheels = moptParams.drawSkeleton = moptParams.drawOrientation = true;
+			}
+			else if (moptParams.gaitCycle == 6) {
+				theApp->slowMoFactor = 5;
+				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawOrientation = true;
+				if (moptParams.phase > 0.5)
+					moptParams.drawWheels = true;
+			}
+			else if (moptParams.gaitCycle == 7) {
+				theApp->slowMoFactor = 5;
+				moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawOrientation = moptParams.drawWheels = true;
+				if (moptParams.phase > 0.5)
+					moptParams.drawSkeleton = true;
+			}
+			else {
+				theApp->slowMoFactor = 1.0;
+				moptParams.drawRobotMesh = true;
+			}
+		}
+
+		locomotionManager->motionPlan->drawMotionPlan(moptParams.phase, moptParams.drawRobotMesh, moptParams.drawSkeleton, moptParams.drawAxesOfRotation, moptParams.drawWheels, moptParams.drawContactForces, moptParams.drawSupportPolygon, moptParams.drawEndEffectorTrajectories, moptParams.drawCOMTrajectory, moptParams.drawOrientation);
 
 		int startIndex = locomotionManager->motionPlan->wrapAroundBoundaryIndex;
 		if (startIndex < 0)  startIndex = 0;
@@ -347,13 +416,29 @@ void MOPTWindow::drawScene() {
 			       locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(startIndex);
 			
 	}
+	for (auto widget : EEwidgets)
+	{
+		if (fabs(EEwidget2constraint[widget]->phase - moptParams.phase) < (moptParams.motionPlanDuration / nTimeSteps))
+			widget->transparent = false;
+		else
+			widget->transparent = true;
+		widget->draw();
+	}
+	for (auto widget : COMWidgets)
+	{
+		if (fabs(COMwidget2constraint[widget]->phase - moptParams.phase) < (moptParams.motionPlanDuration / nTimeSteps))
+			widget->transparent = false;
+		else
+			widget->transparent = true;
+		widget->draw();
+	}
 }
 
 void MOPTWindow::drawAuxiliarySceneInfo(){
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	preDraw();
-	ffpViewer->draw();
+	if (showFFPViewer) ffpViewer->draw();
 	postDraw();
 
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -362,25 +447,102 @@ void MOPTWindow::drawAuxiliarySceneInfo(){
 
 //any time a physical key is pressed, this event will trigger. Useful for reading off special keys...
 bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
-	if (initialized && ffpViewer) {
-		return (ffpViewer->onKeyEvent(key, action, mods));
+	if (initialized) {
+		if (ffpViewer && showFFPViewer && ffpViewer->onKeyEvent(key, action, mods))
+			return true;
+		if (key == GLFW_KEY_DELETE && action == GLFW_PRESS)
+		{
+			for (auto itr = EEwidgets.begin(); itr != EEwidgets.end(); itr++)
+				if ((*itr)->active)
+				{
+					locomotionManager->motionPlan->EEPosObjectives.remove(EEwidget2constraint[*itr]);
+					EEwidgets.erase(itr);
+					break;
+				}
+			for (auto itr = COMWidgets.begin(); itr != COMWidgets.end(); itr++)
+				if ((*itr)->active)
+				{
+					locomotionManager->motionPlan->BodyPosObjectives.remove(COMwidget2constraint[*itr]);
+					COMWidgets.erase(itr);
+					break;
+				}
+		}
+		if (key == GLFW_KEY_L && action == GLFW_PRESS)
+		{
+			int timeStep = (int)round(moptParams.phase*nTimeSteps);
+			Logger::consolePrint("Picked body at time step %d", timeStep);
+			auto widget = std::make_shared<TranslateWidget>(AXIS_X | AXIS_Y | AXIS_Z);
+			COMWidgets.push_back(widget);
+
+			widget->pos = locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeStep);
+			auto bodyPosObj = make_shared<COMPositionObjective>();
+			bodyPosObj->sampleNum = timeStep;
+			bodyPosObj->pos = P3D(widget->pos);
+			bodyPosObj->phase = moptParams.phase;
+			locomotionManager->motionPlan->BodyPosObjectives.push_back(bodyPosObj);
+			COMwidget2constraint[widget] = bodyPosObj;
+		}
 	}
 	return false;
 }
 
 bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	if (initialized) {
-		if (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging())
+		if (showFFPViewer && (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging()))
 			if (ffpViewer->onMouseMoveEvent(xPos, yPos)) return true;
 	}
-	preDraw();
+
+
+
+	pushViewportTransformation();
 	Ray ray = getRayFromScreenCoords(xPos, yPos);
-	postDraw();
+	popViewportTransformation();
 
 	RobotState oldState(robot);
 	RobotState robotState(robot);
 	locomotionManager->motionPlan->robotStateTrajectory.getRobotPoseAt(moptParams.phase, robotState);
 	robot->setState(&robotState);
+	updateJointVelocityProfileWindowOnMouseMove(ray, xPos, yPos);
+	robot->setState(&oldState);
+
+	DynamicArray<LocomotionEngine_EndEffectorTrajectory> &EET = locomotionManager->motionPlan->endEffectorTrajectories;
+
+	endEffectorInd = -1;
+	for (uint i = 0; i < EET.size(); i++) {
+		EET[i].isHighlighted = false;
+		P3D p;
+		P3D EEPos = EET[i].getEEPositionAt(moptParams.phase);
+		double dist = ray.getDistanceToPoint(EEPos, &p);
+		double tVal = ray.getRayParameterFor(p);
+		if (dist < 0.01 * 1.2 && tVal < DBL_MAX) {
+			EET[i].isHighlighted = true;
+			endEffectorInd = i;
+			break;
+		}
+	}
+	pushViewportTransformation();
+	for (auto widget : EEwidgets)
+		if (widget->onMouseMoveEvent(xPos, yPos))
+		{
+			EEwidget2constraint[widget]->pos = widget->pos;
+			popViewportTransformation();
+			return true;
+		}
+	for (auto widget : COMWidgets)
+		if (widget->onMouseMoveEvent(xPos, yPos))
+		{
+			COMwidget2constraint[widget]->pos = widget->pos;
+			popViewportTransformation();
+			return true;
+		}
+	popViewportTransformation();
+
+	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
+}
+
+void MOPTWindow::updateJointVelocityProfileWindowOnMouseMove(Ray &ray, double xPos, double yPos)
+{
+	return;
 
 	Joint* joint;
 	dVector velocity;
@@ -407,32 +569,53 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 			velocityProfileWindow->dispose();
 			velocityProfileWindow = nullptr;
 		}
-		robot->setState(&oldState);
-		return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 	}
-	
-	if (velocityProfileWindow == nullptr)
+	else
 	{
-		velocityProfileWindow = new Window(glApp->menuScreen, "Velocity Profile");
-		velocityProfileWindow->setWidth(300);
-		velocityProfileWindow->setLayout(new GroupLayout());
-		velocityProfileGraph = velocityProfileWindow->add<Graph>("Velocity");
+		if (velocityProfileWindow == nullptr)
+		{
+			velocityProfileWindow = new Window(theApp->menuScreen, "Velocity Profile");
+			velocityProfileWindow->setWidth(300);
+			velocityProfileWindow->setLayout(new GroupLayout());
+			velocityProfileGraph = velocityProfileWindow->add<Graph>("Velocity");
+		}
+		velocityProfileWindow->setPosition(Eigen::Vector2i(xPos / 1.5, yPos / 1.5));
+		velocityProfileGraph->setValues(velocity.cast<float>());
+
+		theApp->menuScreen->performLayout();
 	}
-	velocityProfileWindow->setPosition(Eigen::Vector2i(xPos /1.5, yPos / 1.5));
-	velocityProfileGraph->setValues(velocity.cast<float>());
-	
-	glApp->menuScreen->performLayout();
-	robot->setState(&oldState);
-	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 }
 
 bool MOPTWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos)
 {
 	if (initialized) {
-		if (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging())
+		if (showFFPViewer && (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging()))
 			if (ffpViewer->onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
 	}
+	if (action == GLFW_PRESS && endEffectorInd > -1)
+	{
+		int timeStep = (int)round(moptParams.phase*nTimeSteps);
 
+		for (const auto &EEPosObj: locomotionManager->motionPlan->EEPosObjectives)
+			if(EEPosObj->endEffectorInd == endEffectorInd && EEPosObj->sampleNum == timeStep)
+				return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
+
+		auto widget = std::make_shared<TranslateWidget>(AXIS_X | AXIS_Z);
+		EEwidgets.push_back(widget);
+		Logger::consolePrint("Picked end effector %d at time step %d", endEffectorInd, timeStep);
+		widget->pos = locomotionManager->motionPlan->endEffectorTrajectories[endEffectorInd].EEPos[timeStep];
+		auto EEPosObj = make_shared<EndEffectorPositionObjective>();
+		EEPosObj->endEffectorInd = endEffectorInd;
+		EEPosObj->sampleNum = timeStep;
+		EEPosObj->pos = P3D(widget->pos);
+		EEPosObj->phase = moptParams.phase;
+		locomotionManager->motionPlan->EEPosObjectives.push_back(EEPosObj);
+		EEwidget2constraint[widget] = EEPosObj;
+		if (button == GLFW_MOUSE_BUTTON_LEFT) // make it temporary
+		{
+
+		}
+	}
 	return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
 }
 

@@ -513,7 +513,7 @@ void GLMesh::computeNormals(double modifier){
 void GLMesh::computeTangents(){
 	// NOTE: We assume there is exactly one UV per vertex. Along seams, vertices are to be duplicated.
 	for (int i=0; i<vertexCount; i++){
-		V3D result = V3D(0,0,0);
+		V3D result(0,0,0);
 
 		if (sharedVertices[i] == NULL)
 			continue;
@@ -526,14 +526,14 @@ void GLMesh::computeTangents(){
 			int n2Index = tempVertexInfo.n2Index;
 
 			// Get the points and UVs
-			V3D q1 = V3D(P3D(vertexList[3*i+0], vertexList[3*i+1], vertexList[3*i+2]),
+			V3D q1(P3D(vertexList[3*i+0], vertexList[3*i+1], vertexList[3*i+2]),
 								P3D(vertexList[3*n1Index+0], vertexList[3*n1Index+1], vertexList[3*n1Index+2]));
-			V3D q2 = V3D(P3D(vertexList[3*i+0], vertexList[3*i+1], vertexList[3*i+2]),
+			V3D q2(P3D(vertexList[3*i+0], vertexList[3*i+1], vertexList[3*i+2]),
 								P3D(vertexList[3*n2Index+0], vertexList[3*n2Index+1], vertexList[3*n2Index+2]));
 			
-			V3D s1 = V3D(P3D(texCoordList[3*i+0], texCoordList[3*i+1], texCoordList[3*i+2]),
+			V3D s1(P3D(texCoordList[3*i+0], texCoordList[3*i+1], texCoordList[3*i+2]),
 								P3D(texCoordList[3*n1Index+0], texCoordList[3*n1Index+1], texCoordList[3*n1Index+2]));
-			V3D s2 = V3D(P3D(texCoordList[3*i+0], texCoordList[3*i+1], texCoordList[3*i+2]),
+			V3D s2(P3D(texCoordList[3*i+0], texCoordList[3*i+1], texCoordList[3*i+2]),
 								P3D(texCoordList[3*n2Index+0], texCoordList[3*n2Index+1], texCoordList[3*n2Index+2]));
 
 			// We want the tangent T to point in the direction of the uv's 'u' coordinate

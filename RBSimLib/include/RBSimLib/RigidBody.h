@@ -19,6 +19,8 @@ class ArticulatedFigure;
 #define SHOW_MATERIALS					0x0020
 #define SHOW_ABSTRACT_VIEW				0x0040
 #define HIGHLIGHT_SELECTED				0x0080
+#define SHOW_WHEELS						0x0100
+
 
 struct MappingInfo {
 	int index1 = -1;

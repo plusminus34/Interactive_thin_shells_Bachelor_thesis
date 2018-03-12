@@ -15,6 +15,7 @@
 class SoftUnilateralConstraint {
 private:
 	double a1, b1, c1, a2, b2, c2, d2, epsilon;
+public:
 	double limit = 0;
 public:
 
@@ -104,12 +105,32 @@ public:
 	}
 };
 
+
+
+class SoftLowerBarrierConstraint {
+
+public:
+
+	SoftLowerBarrierConstraint(double limit);
+
+	virtual ~SoftLowerBarrierConstraint();
+
+	//comptue f(x)
+	double computeValue(double x);
+
+	//compute df/dx
+	double computeDerivative(double x);
+
+	//compute ddf/dxdx
+	double computeSecondDerivative(double x);
+	double limit = 1;
+};
+
 class SoftSymmetricBarrierConstraint {
 
 public:
 
-    //SoftSymmetricBarrierConstraint::SoftSymmetricBarrierConstraint(double limit);
-    SoftSymmetricBarrierConstraint(double limit);
+	SoftSymmetricBarrierConstraint(double limit);
 
 	virtual ~SoftSymmetricBarrierConstraint();
 
@@ -121,7 +142,6 @@ public:
 
 	//compute ddf/dxdx
 	double computeSecondDerivative(double x);
-	double stiffness = 1;
 	double limit = 1;
 };
 

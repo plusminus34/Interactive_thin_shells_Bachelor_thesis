@@ -33,10 +33,10 @@ double MPO_FeetSlidingObjective::computeValue(const dVector& p){
 			Vector3d eePosj = ee.EEPos[j];
 
 			if(ee.isWheel){
-				Vector3d rhoLocal = ee.getWheelRhoLocal_WF();
-				Vector3d axisLocal = ee.wheelAxisLocal_WF;
-				Vector3d axisYaw = ee.wheelYawAxis_WF;
-				Vector3d axisTilt = ee.wheelTiltAxis_WF;
+				Vector3d rhoLocal = ee.getWheelRhoLocal();
+				Vector3d axisLocal = ee.wheelAxisLocal;
+				Vector3d axisYaw = ee.wheelYawAxis;
+				Vector3d axisTilt = ee.wheelTiltAxis;
 
 				double speedj = ee.wheelSpeed[j];
 				double alphaj = ee.wheelYawAngle[j];
@@ -97,17 +97,19 @@ void MPO_FeetSlidingObjective::addGradientTo(dVector& grad, const dVector& p) {
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 
 			// Position of foot i at time sample j
-			int iEEj = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
 			V3T<ScalarDiff> eePosj;
-			for (int k = 0; k < 3; ++k)
-				eePosj(k) = p[iEEj + k];
-
+			if (theMotionPlan->feetPositionsParamsStartIndex >= 0)
+			{
+				int iEEj = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
+				for (int k = 0; k < 3; ++k)
+					eePosj(k) = p(iEEj + k);
+			}
 			if(ee.isWheel && theMotionPlan->wheelParamsStartIndex >= 0){
 				// get wheel axes
-				V3T<ScalarDiff> rhoLocal = ee.getWheelRhoLocal_WF();
-				V3T<ScalarDiff> wheelAxisLocal(ee.wheelAxisLocal_WF);
-				V3T<ScalarDiff> wheelYawAxis(ee.wheelYawAxis_WF);
-				V3T<ScalarDiff> wheelTiltAxis(ee.wheelTiltAxis_WF);
+				V3T<ScalarDiff> rhoLocal = ee.getWheelRhoLocal();
+				V3T<ScalarDiff> wheelAxisLocal(ee.wheelAxisLocal);
+				V3T<ScalarDiff> wheelYawAxis(ee.wheelYawAxis);
+				V3T<ScalarDiff> wheelTiltAxis(ee.wheelTiltAxis);
 
 				// get wheel motion parameters at time j
 				ScalarDiff alphaj = p[theMotionPlan->getWheelYawAngleIndex(i, j)];
@@ -247,18 +249,20 @@ void MPO_FeetSlidingObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessi
 
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 
-			int iEEj = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
 			V3T<ScalarDiffDiff> eePosj;
-			for (int k = 0; k < 3; ++k)
-				eePosj(k) = p[iEEj + k];
-
+			if (theMotionPlan->feetPositionsParamsStartIndex >= 0)
+			{
+				int iEEj = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
+				for (int k = 0; k < 3; ++k)
+					eePosj(k) = p[iEEj + k];
+			}
 			if(ee.isWheel && theMotionPlan->wheelParamsStartIndex >= 0)
 			{
 				// get wheel axes
-				V3T<ScalarDiffDiff> rhoLocal = ee.getWheelRhoLocal_WF();
-				V3T<ScalarDiffDiff> wheelAxisLocal(ee.wheelAxisLocal_WF);
-				V3T<ScalarDiffDiff> wheelYawAxis(ee.wheelYawAxis_WF);
-				V3T<ScalarDiffDiff> wheelTiltAxis(ee.wheelTiltAxis_WF);
+				V3T<ScalarDiffDiff> rhoLocal = ee.getWheelRhoLocal();
+				V3T<ScalarDiffDiff> wheelAxisLocal(ee.wheelAxisLocal);
+				V3T<ScalarDiffDiff> wheelYawAxis(ee.wheelYawAxis);
+				V3T<ScalarDiffDiff> wheelTiltAxis(ee.wheelTiltAxis);
 
 				// get wheel motion parameters at time j
 				ScalarDiffDiff alphaj = p[theMotionPlan->getWheelYawAngleIndex(i, j)];

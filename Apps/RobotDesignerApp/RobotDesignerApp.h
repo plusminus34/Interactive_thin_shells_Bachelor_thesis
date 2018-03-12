@@ -72,11 +72,14 @@ public:
 	};
 	RD_RUN_OPTIONS runOption = MOTION_PLAN_OPTIMIZATION;
 
+	int walkCycleIndex = 0;
+
 	enum RD_VIEW_OPTIONS {
 		SIM_WINDOW_ONLY = 0,
 		SIM_AND_MOPT,
 		SIM_AND_DESIGN,
-		MOPT_AND_IEDIT
+		MOPT_AND_IEDIT,
+		MOPT_WINDOW_ONLY
 	};
 #ifdef START_WITH_VISUAL_DESIGNER
 	RD_VIEW_OPTIONS viewOptions = SIM_AND_DESIGN;
@@ -84,6 +87,8 @@ public:
 	RD_VIEW_OPTIONS viewOptions = SIM_AND_MOPT;// MOPT_AND_IEDIT;// SIM_AND_DESIGN;
 #endif
 	bool doDebug = false;
+
+	double slowMoFactor = 5.0;
 
 public:
 	// constructor
@@ -142,6 +147,7 @@ public:
 	dVector slidervalues;
 	bool updateMotionBasedOnJacobian = false;
 	bool optimizeWhileAnimating = false;
+	bool syncCameras = false;
 };
 
 

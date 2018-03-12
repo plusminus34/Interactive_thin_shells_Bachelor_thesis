@@ -510,8 +510,7 @@ public:
 		return computeHeading(getOrientation(), headingAxis).getRotationAngle(headingAxis);
 	}
 
-    //bool RobotState::isSameAs(const RobotState& other) {
-    bool isSameAs(const RobotState& other) {
+	bool isSameAs(const RobotState& other) {
 		if (getJointCount() != other.getJointCount()) {
 //			Logger::consolePrint("jCount: %d vs %d\n", getJointCount(), other.getJointCount());
 			return false;

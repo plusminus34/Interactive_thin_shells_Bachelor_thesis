@@ -84,7 +84,7 @@ private:
 	dGeomID getPlaneGeom(PlaneCDP* p);
 
 	/**
-	this method is used to set up an ODE sphere geom. It is properly placed in body coordinates.
+	this method is used to set up an ODE capsule geom. It is properly placed in body coordinates.
 	*/
 	dGeomID getCapsuleGeom(CapsuleCDP* c);
 	void setCapsuleGeomTransformation(CapsuleCDP* c, dGeomID g);

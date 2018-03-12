@@ -18,11 +18,6 @@ LocomotionEngineManager::~LocomotionEngineManager(void) {
 	delete constrainedObjectiveFunction;
 }
 
-void LocomotionEngineManager::drawMotionPlan(double f, int animationCycle, bool drawRobot, bool drawSkeleton, bool drawPlanDetails, bool drawContactForces, bool drawOrientation){
-	// motionPlan->syncMotionPlanWithFootFallPattern(*footFallPattern);
-	motionPlan->drawMotionPlan(f, animationCycle, drawRobot, drawSkeleton, drawPlanDetails, drawContactForces, drawOrientation);
-}
-
 double LocomotionEngineManager::optimizeMoptionPlan(int maxIterations) {
 	double val = 0;
 	dVector params;

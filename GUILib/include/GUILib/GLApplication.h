@@ -41,7 +41,7 @@ public:
 
 	void setupMainMenu();
 
-protected:
+public:
 	//keep a timer here to see how long it's been since the last redraw
 	Timer fpsTimer;
 	//keep a timer for measuring app processing time
@@ -51,7 +51,6 @@ protected:
 
 	//this is the desired frame rate, specified in FPS
 	double desiredFrameRate = 30;
-	double animationSpeedupFactor = 1.0;
 
 	// Sets up various settings for OpenGL
 	void setupOpenGL();

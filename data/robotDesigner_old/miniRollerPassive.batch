@@ -1,0 +1,7 @@
+load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerPassive.dsn
+toSim
+load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerPassive_startStop-0.2speed.p
+load ..\data\RobotDesigner\designs\TGY306G\miniRollerWalkerPassive.pololu
+
+end
+

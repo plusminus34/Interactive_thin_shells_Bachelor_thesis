@@ -15,7 +15,7 @@ MPO_JointsAnglesSoftConstraint::~MPO_JointsAnglesSoftConstraint(void) {
 }
 
 double MPO_JointsAnglesSoftConstraint::computeValue(const dVector& s) {
-
+	constraintSymmetricBound->limit = theMotionPlan->jointAngleLimit;
 	if (theMotionPlan->robotStatesParamsStartIndex < 0)
 		return 0;
 
@@ -33,7 +33,7 @@ double MPO_JointsAnglesSoftConstraint::computeValue(const dVector& s) {
 }
 
 void MPO_JointsAnglesSoftConstraint::addGradientTo(dVector& grad, const dVector& p) {
-
+	constraintSymmetricBound->limit = theMotionPlan->jointAngleLimit;
 	if (theMotionPlan->robotStatesParamsStartIndex < 0)
 		return;
 
@@ -50,7 +50,7 @@ void MPO_JointsAnglesSoftConstraint::addGradientTo(dVector& grad, const dVector&
 }
 
 void MPO_JointsAnglesSoftConstraint::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
-
+	constraintSymmetricBound->limit = theMotionPlan->jointAngleLimit;
 	if (theMotionPlan->robotStatesParamsStartIndex < 0)
 		return;
 
@@ -60,15 +60,12 @@ void MPO_JointsAnglesSoftConstraint::addHessianEntriesTo(DynamicArray<MTriplet>&
 
 	for (int j=0; j<nSamplePoints-1; j++){
 		for (int i=startQIndex; i<=endQIndex; i++){
+			int I = theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + i;
 			double Qij = theMotionPlan->robotStateTrajectory.qArray[j][i];
-
+			
 			// lower bound hessian
 			// d_jm_jm
-			addMTripletToList_reflectUpperElements(
-						hessianEntries,
-						theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + i,
-						theMotionPlan->robotStatesParamsStartIndex + j * theMotionPlan->robotStateTrajectory.nStateDim + i,
-						weight * constraintSymmetricBound->computeSecondDerivative(Qij));
+			ADD_HES_ELEMENT(hessianEntries, I, I, constraintSymmetricBound->computeSecondDerivative(Qij), weight);
 		}
 	}
 }

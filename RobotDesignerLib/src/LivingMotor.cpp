@@ -2,13 +2,13 @@
 #include <GUILib/GLApplication.h>
 //#include <MathLib/MeshBoolean.h>
 
-
-LivingMotor::LivingMotor(const char* LMType){
+Motor_RMC::Motor_RMC(const char* LMType){
 	this->LMType = string(LMType);
+	name = "Motor";
 
 	if (strcmp(trim((char*)LMType), "TGY306G") == 0) {
-		bodyBracket = new LivingMotorBodyBracket_TGY306G();
-		hornBracket = new LivingHornBracket_TGY306G();
+		bodyBracket = new Motor_RMC_BodyBracket_TGY306G();
+		hornBracket = new Motor_RMC_HornBracket_TGY306G();
 
 		motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
 		motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
@@ -16,19 +16,23 @@ LivingMotor::LivingMotor(const char* LMType){
 		bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
 		hornMaterial.setColor(0.7, 0.7, 0.7, 1.0);
 	} else if (strcmp(trim((char*)LMType), "BK3002") == 0) {
-		bodyBracket = new LivingMotorBodyBracket_BK3002();
-		hornBracket = new LivingHornBracket_BK3002();
+		bodyBracket = new Motor_RMC_BodyBracket_BK3002();
+		hornBracket = new Motor_RMC_HornBracket_BK3002();
 
-		motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
-		motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
+		motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_parent.obj");
 
-		bodyMaterial.setColor(0.15, 0.15, 0.15, 1.0);
+		bodyMaterial.setShaderProgram(GLContentManager::getShaderProgram("matcap"));
+		string mat = "../data/textures/matcap/red_specular.bmp";
+		bodyMaterial.setTextureParam(mat.c_str(), GLContentManager::getTexture(mat.c_str()));
+		motorBodyMesh->setMaterial(bodyMaterial);
+
+		motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/TGY306G_child.obj");
 		hornMaterial.setColor(0.7, 0.7, 0.7, 1.0);
 	}
 	else {
 		//default for XM430 motors
-		bodyBracket = new LivingMotorBodyBracket_XM430();
-		hornBracket = new LivingHornBracket_XM430();
+		bodyBracket = new Motor_RMC_BodyBracket_XM430();
+		hornBracket = new Motor_RMC_HornBracket_XM430();
 
 //		motorBodyMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_parent.obj"); motorBodyMesh->getMaterial().setColor(0.15, 0.15, 0.15, 1.0);
 //		motorHornMesh = GLContentManager::getGLMesh("../data/robotDesigner/meshes/XM-430_child.obj"); motorHornMesh->getMaterial().setColor(0.7, 0.7, 0.7, 1.0);
@@ -41,17 +45,17 @@ LivingMotor::LivingMotor(const char* LMType){
 
 	}
 
-	type = LIVING_MOTOR;
+	type = MOTOR_RMC;
 
 	generatePins();
 }
 
-LivingMotor::~LivingMotor(){
+Motor_RMC::~Motor_RMC(){
 	delete bodyBracket;
 	delete hornBracket;
 }
 
-void LivingMotor::setColor(const Vector4d& color/* = Vector4d(0, 0, 0, 0)*/) {
+void Motor_RMC::setColor(const Vector4d& color/* = Vector4d(0, 0, 0, 0)*/) {
 	bodyBracket->setColor(color);
 	hornBracket->setColor(color);
 
@@ -67,40 +71,21 @@ void LivingMotor::setColor(const Vector4d& color/* = Vector4d(0, 0, 0, 0)*/) {
 	}
 }
 
-
-LivingMotor* LivingMotor::clone(){
-	LivingMotor* new_rmc = new LivingMotor(LMType.c_str());
-
+Motor_RMC* Motor_RMC::clone(){
+	Motor_RMC* new_rmc = new Motor_RMC(LMType.c_str());
+	copyBasePropertiesTo(new_rmc, false);
 	new_rmc->hornBracket->copyBracketProperties(this->hornBracket, false);
 
-	new_rmc->state = state;
-	new_rmc->rbProperties = rbProperties;
-
-	new_rmc->meshes = meshes;
-	new_rmc->name = name;
-	new_rmc->id = id;
-	new_rmc->type = type;
 	new_rmc->motorAxis = motorAxis;
 	new_rmc->motorAngle = motorAngle;
 
-	new_rmc->material = material;
-
-	new_rmc->mappingInfo = mappingInfo;
-
 	for (uint i = 0; i < pins.size(); i++)
-	{
 		new_rmc->pins[i].compatibleMap = pins[i].compatibleMap;
-	}
-
-	for (uint i = 0; i < bulletCollisionObjects.size(); i++) {
-		new_rmc->bulletCollisionObjects.push_back(bulletCollisionObjects[i]->clone());
-		new_rmc->bulletCollisionObjects.back()->parent = new_rmc;
-	}
-
+	new_rmc->update();
 	return new_rmc;
 }
 
-bool LivingMotor::pickMesh(Ray& ray, double* closestDist /*= NULL*/){
+bool Motor_RMC::pickMesh(Ray& ray, double* closestDist /*= NULL*/){
 	Transformation invTrans = Transformation(state.orientation.getRotationMatrix(), state.position).inverse();
 	Ray newRay(invTrans.transform(ray.origin), invTrans.transform(ray.direction));
 
@@ -109,14 +94,9 @@ bool LivingMotor::pickMesh(Ray& ray, double* closestDist /*= NULL*/){
 		|| hornBracket->bracketMesh->getDistanceToRayOriginIfHit(newRay, closestDist);
 }
 
-void LivingMotor::draw(int flags, const Vector4d& color /*= Vector4d(0, 0, 0, 0)*/){
+void Motor_RMC::draw(int flags, const Vector4d& color /*= Vector4d(0, 0, 0, 0)*/){
 	if (flags & SHOW_PINS)
-		for (uint i = 0; i < pins.size(); i++) {
-			if ((&pins[i]) == pickedPin)
-				pins[i].draw(V3D(1, 0, 0));
-			else
-				pins[i].draw(V3D(0, 1, 1));
-		}
+		drawPins();
 
 	if (flags & SHOW_MESH){
 		setColor(color);
@@ -156,13 +136,11 @@ void LivingMotor::draw(int flags, const Vector4d& color /*= Vector4d(0, 0, 0, 0)
 	return;
 }
 
-void LivingMotor::update(){
+void Motor_RMC::update(){
 	hornBracket->generateBracketMesh();
 	bodyBracket->generateBracketMesh();
-	for (auto& pin : pins)
-	{
-		if (pin.livingType == LIVING_HORN_PIN)
-		{
+	for (auto& pin : pins){
+		if (pin.livingType == LIVING_HORN_PIN){
 			Transformation motorRotTrans(getRotationQuaternion(RAD(motorAngle), motorAxis).getRotationMatrix());
 
 			pin.transformation = motorRotTrans * hornBracket->getPinTransformation();
@@ -177,8 +155,7 @@ void LivingMotor::update(){
 	switchToBestBodyPin();
 }
 
-void LivingMotor::generatePins()
-{
+void Motor_RMC::generatePins(){
 	{
 		RMCPin livingPin(this, hornBracket->getPinTransformation(), pins.size());
 		livingPin.type = HORN_PIN;
@@ -206,7 +183,7 @@ void LivingMotor::generatePins()
 	activeBodyPinID = 0;
 }
 
-void LivingMotor::exportMeshes(const char* dirName, int index){
+void Motor_RMC::exportMeshes(const char* dirName, int index){
 	//export only those meshes that are somehow custom-made... stock meshes need not be processed here...
 
 	// *************************** Horn Bracket Mesh ***************************
@@ -219,11 +196,16 @@ void LivingMotor::exportMeshes(const char* dirName, int index){
 	GLContentManager::addMeshFileMapping(tmpMesh, bracketFileName.c_str());
 }
 
-void LivingMotor::syncSymmParameters(LivingMotor* refMotor){
-	hornBracket->copyBracketProperties(refMotor->hornBracket, true);
+void Motor_RMC::syncSymmParameters(RMC* refMotor){
+	Motor_RMC* motor = dynamic_cast<Motor_RMC*>(refMotor);
+	if (motor) {
+		hornBracket->copyBracketProperties(motor->hornBracket, true);
+		motorAngle = -motor->motorAngle;
+	}
 }
 
-void LivingMotor::switchToBestBodyPin(){
+//TODO: this needs to also have different types of body brackets that can be instantiated... then it would make a lot of sense...
+void Motor_RMC::switchToBestBodyPin(){
 	RMCPin* bodyPin = &pins[1];
 	if (bodyPin->idle) return;
 
@@ -235,8 +217,7 @@ void LivingMotor::switchToBestBodyPin(){
 	if (connectedRMC->type != LIVING_CONNECTOR) return;
 
 	RMCPin* oppositePin = NULL;
-	for (auto& pin : connectedRMC->pins)
-	{
+	for (auto& pin : connectedRMC->pins){
 		if ((&pin) != connectedPin && !pin.idle)
 			oppositePin = pin.getConnectedPin();
 	}

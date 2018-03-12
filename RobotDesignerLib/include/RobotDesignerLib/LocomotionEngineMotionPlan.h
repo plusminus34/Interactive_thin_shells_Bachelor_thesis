@@ -11,6 +11,19 @@
 #include <vector>
 #include <RBSimLib/HingeJoint.h>
 #include <ControlLib/IK_Solver.h>
+#include <memory>
+struct EndEffectorPositionObjective {
+	int endEffectorInd;
+	int sampleNum;
+	P3D pos;
+	double phase;
+};
+
+struct COMPositionObjective {
+	int sampleNum;
+	P3D pos;
+	double phase;
+};
 
 class LocomotionEngine_EndEffectorTrajectory{
 public:
@@ -26,12 +39,12 @@ public:
 	bool isWeldedWheel = false;			// true for a permanently fixed wheel
 	bool isPassiveWheel = false;		// true if passive wheel
 
-	double wheelRadius = 0.1;			// wheel radius
+	double wheelRadius = 0.01;			// wheel radius
 	DynamicArray<double> wheelSpeed;	// angular speed of wheel around `wheelAxis`
 	//these are all quantities from the wheel's coordinate frame point of view...
-	V3D wheelAxisLocal_WF;					// wheel axis, not transformed by tilt and yaw angles...
-	V3D wheelYawAxis_WF;					// yaw axis in world coords.
-	V3D wheelTiltAxis_WF;					// tilt axis in world coords.
+	V3D wheelAxisLocal;					// wheel axis, not transformed by tilt and yaw angles...
+	V3D wheelYawAxis;					// yaw axis in world coords.
+	V3D wheelTiltAxis;					// tilt axis in world coords.
 
 	DynamicArray<double> wheelYawAngle;	// rotation around yaw axis
 	DynamicArray<double> wheelTiltAngle;// rotation around tilt axis
@@ -46,6 +59,7 @@ public:
 	//and this is the index of the end effector contact point that it represents
 	int CPIndex = -1;
 
+	bool isHighlighted = false;
 public:
 	LocomotionEngine_EndEffectorTrajectory(int nPos);
 
@@ -59,7 +73,7 @@ public:
 	P3D getEEPositionAt(double t) const;
 
 	// TODO: maybe we can store rho alongside with wheelAxis etc.
-	V3D getWheelRhoLocal_WF() const;
+	V3D getWheelRhoLocal() const;
 
 	P3D getWheelCenterPositionAt(double t) const;
 
@@ -88,9 +102,9 @@ public:
 	template<class T>
 	Vector3T<T> getRotatedWheelAxis(T angleYaw, T angleTilt) const
 	{
-		Vector3T<T> axis(wheelAxisLocal_WF);
-		Vector3T<T> axisYaw(wheelYawAxis_WF);
-		Vector3T<T> axisTilt(wheelTiltAxis_WF);
+		Vector3T<T> axis(wheelAxisLocal);
+		Vector3T<T> axisYaw(wheelYawAxis);
+		Vector3T<T> axisTilt(wheelTiltAxis);
 
 		return rotVecByYawTilt(axis, axisYaw, angleYaw, axisTilt, angleTilt);
 	}
@@ -187,8 +201,17 @@ public:
 
 	virtual ~LocomotionEngineMotionPlan(void);
 
-	void drawMotionPlan(double f, int animationCycle = 0, bool drawRobot = true, bool drawSkeleton = false, bool drawPlanDetails = false, bool drawContactForces = false, bool drawOrientation = false);
-	void drawMotionPlan2(double f, int animationCycle = 0, bool drawRobotPose = true, bool drawPlanDetails = false);
+	void drawMotionPlan(double f, 
+		bool drawRobotMesh = true, 
+		bool drawSkeleton = false, 
+		bool drawAxesOfRotation = false,
+		bool drawWheels = false,
+		bool drawContactForces = false,
+		bool drawSupportPolygon = false,
+		bool drawEndEffectorTrajectories = false,
+		bool drawCOMTrajectory = false,
+		bool drawOrientation = false
+		);
 
 	double motionPlanDuration = 0.8; //1.5
 	double swingFootHeight = 0.02;	
@@ -208,6 +231,7 @@ public:
 	double jointVelocityLimit = 0;
 	double jointVelocityEpsilon = 0.4;		// for SoftUnilateralConstraint
 	double jointAngleLimit = PI / 4;
+	double EEminDistance = 0.02;
 	dVector initialRobotState;
 	
 	// Parameters for wheel motor speed constraint
@@ -218,6 +242,9 @@ public:
 
 	//	parameters for L0 optimization
 	double jointL0Delta = 1;
+
+	list < shared_ptr<EndEffectorPositionObjective> > EEPosObjectives;
+	list < shared_ptr<COMPositionObjective> > BodyPosObjectives;
 
 public:
 	bool optimizeCOMPositions;

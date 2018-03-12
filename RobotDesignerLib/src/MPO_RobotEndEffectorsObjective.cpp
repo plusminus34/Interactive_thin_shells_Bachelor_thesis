@@ -23,9 +23,9 @@ double MPO_RobotEndEffectorsObjective::computeValue(const dVector& p){
 		for (int i=0;i<nLimbs;i++){
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 			if(ee.isWheel){
-				retVal += computeEnergyWheel<double>(ee.EEPos[j], ee.getWheelRhoLocal_WF(),
-													 ee.wheelYawAxis_WF, ee.wheelYawAngle[j],
-													 ee.wheelTiltAxis_WF, ee.wheelTiltAngle[j],
+				retVal += computeEnergyWheel<double>(ee.EEPos[j], ee.getWheelRhoLocal(),
+													 ee.wheelYawAxis, ee.wheelYawAngle[j],
+													 ee.wheelTiltAxis, ee.wheelTiltAngle[j],
 													 ee.endEffectorLocalCoords, q_t, ee.endEffectorRB);
 			}
 			else{
@@ -57,9 +57,9 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 
 			if(ee.isWheel){
-				V3D rho = ee.getWheelRhoLocal_WF();
-				V3D yawAxis = ee.wheelYawAxis_WF;
-				V3D tiltAxis = ee.wheelTiltAxis_WF;
+				V3D rho = ee.getWheelRhoLocal();
+				V3D yawAxis = ee.wheelYawAxis;
+				V3D tiltAxis = ee.wheelTiltAxis;
 				double yawAngle = ee.wheelYawAngle[j];
 				double tiltAngle = ee.wheelTiltAngle[j];
 				
@@ -93,7 +93,7 @@ void MPO_RobotEndEffectorsObjective::addGradientTo(dVector& grad, const dVector&
 				if (theMotionPlan->feetPositionsParamsStartIndex < 0)
 					continue;
 
-				Vector3d err(ee.EEPos[j] - theMotionPlan->robotRepresentation->getWorldCoordinatesForPointT(ee.endEffectorLocalCoords, ee.endEffectorRB,q_t));
+				Vector3d err(ee.EEPos[j] - P3D(theMotionPlan->robotRepresentation->getWorldCoordinatesForPointT(ee.endEffectorLocalCoords, ee.endEffectorRB,q_t)));
 				//compute the gradient with respect to the feet locations
 				if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
 					int ind = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
@@ -136,9 +136,9 @@ void MPO_RobotEndEffectorsObjective::addHessianEntriesTo(DynamicArray<MTriplet>&
 			const LocomotionEngine_EndEffectorTrajectory &ee = theMotionPlan->endEffectorTrajectories[i];
 
 			if (ee.isWheel) {				
-				V3D rho = ee.getWheelRhoLocal_WF();
-				V3D yawAxis = ee.wheelYawAxis_WF;
-				V3D tiltAxis = ee.wheelTiltAxis_WF;
+				V3D rho = ee.getWheelRhoLocal();
+				V3D yawAxis = ee.wheelYawAxis;
+				V3D tiltAxis = ee.wheelTiltAxis;
 				double yawAngle = ee.wheelYawAngle[j];
 				double tiltAngle = ee.wheelTiltAngle[j];
 

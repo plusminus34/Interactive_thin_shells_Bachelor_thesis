@@ -4,16 +4,23 @@
 #include <GUILib/GLWindow3D.h>
 #include <GUILib/GLTrackingCamera.h>
 #include <RobotDesignerLib/LocomotionEngineManager.h>
+#include <GUILib/TranslateWidget.h>
+#include <memory>
 
 struct MOPTParams {
 	double phase = 0;
 
-	int gaitCycle = 0;
+	bool drawRobotMesh = false;
+	bool drawSkeleton = true;
+	bool drawAxesOfRotation = false;
+	bool drawWheels = true;
+	bool drawContactForces = false;
+	bool drawSupportPolygon = false;
+	bool drawEndEffectorTrajectories = true;
+	bool drawCOMTrajectory = true;
+	bool drawOrientation = false;
 
-	bool drawRobotPose = false;
-	bool drawPlanDetails = true;
-	bool drawContactForces = true;
-	bool drawOrientation = true;
+	int gaitCycle = 0;
 
 	double swingFootHeight = 0.02;
 	double desTravelDistX = 0;
@@ -22,7 +29,8 @@ struct MOPTParams {
 
 	double jointVelocityLimit = 10;
 	double jointVelocityEpsilon = 0.4;
-	double jointAngleLimit = PI/4;
+	double jointAngleLimit = PI / 4;
+	double EEminDistance = 0.02;
 
 	double jointL0Delta = 1;
 
@@ -40,15 +48,16 @@ struct MOPTParams {
 	bool useDynamicRegularization = true;
 	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod = NewtonFunctionMinimizer::DynamicRegularization;
 	bool checkHessianPSD = false;
-	double externalForceX=0;
-	double externalForceZ=0;
+	double externalForceX = 0;
+	double externalForceZ = 0;
 };
 
+class RobotDesignerApp;
 
 class MOPTWindow : public GLWindow3D {
 public:
 	bool initialized = false;
-	GLApplication* glApp;
+	RobotDesignerApp* theApp;
 
 	int nTimeSteps = 12;
 	double globalMOPTRegularizer = 0.01;
@@ -64,6 +73,7 @@ public:
 
 	FootFallPattern footFallPattern;
 	FootFallPatternViewer* ffpViewer = nullptr;
+	bool showFFPViewer = true;
 	LocomotionEngineManager* locomotionManager = nullptr;
 
 	enum OPT_OPTIONS {
@@ -79,8 +89,10 @@ public:
 
 	bool periodicMotion = true;
 
+	std::list<shared_ptr<TranslateWidget>> EEwidgets;
+	std::list<shared_ptr<TranslateWidget>> COMWidgets;
 public:
-	MOPTWindow(int x, int y, int w, int h, GLApplication* glApp);
+	MOPTWindow(int x, int y, int w, int h, RobotDesignerApp* glApp);
 	~MOPTWindow();
 
 	void clear();
@@ -109,15 +121,23 @@ public:
 	virtual void drawAuxiliarySceneInfo();
 
 	virtual bool onMouseMoveEvent(double xPos, double yPos);
+
+	void updateJointVelocityProfileWindowOnMouseMove(Ray &ray, double xPos, double yPos);
+
 	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
 
 	//any time a physical key is pressed, this event will trigger. Useful for reading off special keys...
 	virtual bool onKeyEvent(int key, int action, int mods);
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
-
+	virtual void drawGround() {
+		drawTexturedGround(GLContentManager::getTexture("../data/textures/lightGray.bmp"));
+	}
 private:
 
 	V3D COMSpeed;
-	nanogui::Window* velocityProfileWindow=nullptr;
+	nanogui::Window* velocityProfileWindow = nullptr;
+	int endEffectorInd = -1;
+	map<shared_ptr<TranslateWidget>, shared_ptr<EndEffectorPositionObjective>> EEwidget2constraint;
+	map<shared_ptr<TranslateWidget>, shared_ptr<COMPositionObjective>> COMwidget2constraint;
 };

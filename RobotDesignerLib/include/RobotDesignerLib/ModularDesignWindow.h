@@ -36,8 +36,6 @@ private:
 	bool dragging = false;
 	bool snappable = false;
 
-	bool showWidgets = false;
-
 	bool runTask = false;
 	bool noMirror = false;
 
@@ -57,14 +55,14 @@ public:
 	RMCRobot* windowSelectedRobot = NULL;
 
 	GLMesh* bodyMesh = NULL;
+	bool bodyMeshSelected = false;
+	GLShaderMaterial bodyMaterial;
+
 	vector<RBFeaturePoint> bodyFeaturePts;
 	RBFeaturePoint* highlightedFP = NULL;
 	RBFeaturePoint* selectedFP = NULL;
 	GLMesh* sphereMesh = NULL;
 	bool showBodyFeature = true;
-
-	Quaternion motorStartOrient;
-	double motorRotAngle;
 
 	GLMesh* guidingMesh = NULL;
 	bool pickedGuidingMesh = false;
@@ -134,31 +132,25 @@ public:
 
 	bool process();
 
-	void loadParametersForLivingBracket();
-	void unloadParametersForLivingBracket();
-
-	void updateLivingBracket();
 	bool isSelectedRMCMovable();
 
 	void matchDesignWithRobot(Robot* tRobot, RobotState* initialRobotState);
 	void transferMeshes(Robot* tRobot, RobotState* initialRobotState);
 
 	void buildRMCMirrorMap();
-	void makeSelectedRMCSymmtry();
+	void makeSelectedRMCSymmetric();
 	void propagatePosToMirrorRMC(RMC* rmc);
 	void propagateOrientToMirrorRMC(RMC* rmc);
+
+	void makeRMCsSymmetricRecursive(RMC* originalRMC, RMC* mirroredRMC);
+
 	void updateParentConnector(RMC* rmc);
 
 	void pickBodyFeaturePts(Ray& ray);
-	void makeSelectedFpSymmtry();
+	void makeSelectedFPSymmtric();
 	void propagatePosToMirrorFp(RBFeaturePoint* fp);
 
 private:
-    // get pressed down modifiers
-    enum PressedModifier {
-        NONE, LEFT_ALT, RIGHT_ALT, LEFT_CTRL
-    };
-    static PressedModifier getPressedModifier(GLFWwindow *window);
 
 };
 

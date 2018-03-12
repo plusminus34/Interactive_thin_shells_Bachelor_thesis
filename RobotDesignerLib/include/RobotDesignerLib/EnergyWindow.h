@@ -27,6 +27,7 @@ private:
 	void hideEnergyGroup(bool visible, const std::string &groupName);
 
 	void updateWeightTextboxes(LocomotionEngine_EnergyFunction* energyFunction);
+	void resetData();
 private:
 	nanogui::Window * window = nullptr;
 	struct EnergyUIElement {
@@ -46,6 +47,8 @@ private:
 	Plot *energyPlot = nullptr;
 	std::map<std::string, std::vector<float>> energyHist;
 
-	const int numPlotValues = 100;
+	const int numPlotValues = 500;
 	Eigen::VectorXf plotXValues;
+	void saveData();
+	vector<double> TotalEnergyForDesignOptimization;
 };

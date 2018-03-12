@@ -53,101 +53,12 @@ bool isEERB(RigidBody* rb) {
 bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	if (highlightedRigidBody) {
 		if (highlightedRigidBody->pJoints.size() == 1 && (highlightedRigidBody->cJoints.size() > 0 || highlightedRigidBody->rbProperties.endEffectorPoints.size() > 0)){
-			RobotState rs(rdApp->robot);
-			rdApp->robot->setState(&rdApp->prd->defaultRobotState);
 
-			P3D p1 = highlightedRigidBody->pJoints[0]->getWorldPosition();
-			P3D p2;
-
-			if (!isEERB(highlightedRigidBody)){
-				p2 = highlightedRigidBody->cJoints[0]->getWorldPosition();
-			} else {
-				for (auto& eeItr : highlightedRigidBody->rbProperties.endEffectorPoints){
-					p2 += highlightedRigidBody->getWorldCoordinates(eeItr.coords);
-				}
-				p2 /= highlightedRigidBody->rbProperties.endEffectorPoints.size();
-			}
-
-			V3D vec = V3D(p1, p2) * ((100 + yOffset) / 100.0);
-			P3D midPoint = (p1 + p2) / 2;
 			DynamicArray<double> currentDesignParameters;
 			rdApp->prd->getCurrentSetOfParameters(currentDesignParameters);
 
-//			Logger::consolePrint("offset: %lf, vec: %lf %lf %lf\n", (100 + yOffset) / 100.0, vec[0], vec[1], vec[2]);
+			offsetDesignParameters(yOffset, currentDesignParameters);
 
-			V3D offset1(p1, midPoint + vec  * -0.5);
-			V3D offset2(p2, midPoint + vec * 0.5);
-
-			offset1 = highlightedRigidBody->getLocalCoordinates(offset1);
-			offset2 = highlightedRigidBody->getLocalCoordinates(offset2);
-
-			if (glfwGetKey(this->rdApp->glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
-				//scale the selected bone by moving just the child... and propagate all changes throughout the offspring hierarchy...
-	
-				//adapt the child coords of the parent joint
-				int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].index;
-				V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].xModifier, 1, 1);
-
-				for (int i = 0; i < 3; i++)
-					currentDesignParameters[pStartIndex + 3 + i] += offset1[i] * modifier[i];
-
-				//and now, the parent coords of the child joint
-				if (!isEERB(highlightedRigidBody)) {
-					int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
-					V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].xModifier, 1, 1);
-
-					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + i] += offset2[i] * modifier[i];
-				}
-				else {
-					for (uint i=0;i<highlightedRigidBody->rbProperties.endEffectorPoints.size();i++){
-						int pStartIndex =  rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].index;
-						V3D modifier = V3D(rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].xModifier, 1, 1);
-
-						for (int j = 0; j < 3; j++)
-							currentDesignParameters[pStartIndex + j] += offset2[j] * modifier[j];
-					}
-				}
-			}
-			else {
-				//rescaling the bone with as few global changes as possible
-
-				int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].index;
-				V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].xModifier, 1, 1);
-
-				//for the parent joint, adjust its coordinates in the child (e.g. highlighted) rigid body frame
-				for (int i = 0; i < 3;i++)
-					currentDesignParameters[pStartIndex + 3 + i] += offset1[i] * modifier[i];
-
-				//and then, for the same joint, adjust its coordinates in the frame of the parent rigid body...
-				V3D offset1P = highlightedRigidBody->pJoints[0]->parent->getLocalCoordinates(highlightedRigidBody->getWorldCoordinates(offset1));
-				for (int i = 0; i < 3; i++)
-					currentDesignParameters[pStartIndex + i] += offset1P[i] * modifier[i];
-
-				if (!isEERB(highlightedRigidBody)){
-
-					//adjust the coordinates of the child joint, both in coord frame of its parent and child rigid bodies...
-					int pStartIndex =  rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
-					V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].xModifier, 1, 1);
-
-					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + i] += offset2[i] * modifier[i];
-
-					V3D offset2P = highlightedRigidBody->cJoints[0]->child->getLocalCoordinates(highlightedRigidBody->getWorldCoordinates(offset2));
-					for (int i = 0; i < 3; i++)
-						currentDesignParameters[pStartIndex + 3 + i] += offset2P[i] * modifier[i];
-				}
-				else {
-					for (uint i = 0; i<highlightedRigidBody->rbProperties.endEffectorPoints.size(); i++) {
-						int pStartIndex =  rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].index;
-						V3D modifier = V3D(rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].xModifier, 1, 1);
-						for (int j = 0; j < 3; j++)
-							currentDesignParameters[pStartIndex + j] += offset2[j] * modifier[j];
-					}
-				}
-			}
-
-			rdApp->robot->setState(&rs);
 			updateParamsAndMotion(Eigen::Map<dVector>(currentDesignParameters.data(), currentDesignParameters.size()));
 			syncSliders();
 		}
@@ -158,14 +69,107 @@ bool IntelligentRobotEditingWindow::onMouseWheelScrollEvent(double xOffset, doub
 	return GLWindow3D::onMouseWheelScrollEvent(xOffset, yOffset);
 }
 
+void IntelligentRobotEditingWindow::offsetDesignParameters(double yOffset, DynamicArray<double> &currentDesignParameters)
+{
+	RobotState rs(rdApp->robot);
+	rdApp->robot->setState(&rdApp->prd->defaultRobotState);
+
+	P3D p1 = highlightedRigidBody->pJoints[0]->getWorldPosition();
+	P3D p2;
+
+	if (!isEERB(highlightedRigidBody)) {
+		p2 = highlightedRigidBody->cJoints[0]->getWorldPosition();
+	}
+	else {
+		for (auto& eeItr : highlightedRigidBody->rbProperties.endEffectorPoints) {
+			p2 += highlightedRigidBody->getWorldCoordinates(eeItr.coords);
+		}
+		p2 /= highlightedRigidBody->rbProperties.endEffectorPoints.size();
+	}
+
+	V3D vec = V3D(p1, p2) * ((100 + yOffset) / 100.0);
+	P3D midPoint = (p1 + p2) / 2;
+	V3D offset1(p1, midPoint + vec  * -0.5);
+	V3D offset2(p2, midPoint + vec * 0.5);
+
+	offset1 = highlightedRigidBody->getLocalCoordinates(offset1);
+	offset2 = highlightedRigidBody->getLocalCoordinates(offset2);
+
+	if (glfwGetKey(this->rdApp->glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
+		//scale the selected bone by moving just the child... and propagate all changes throughout the offspring hierarchy...
+
+		//adapt the child coords of the parent joint
+		int pStartIndex = rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].index;
+		V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].xModifier, 1, 1);
+
+		for (int i = 0; i < 3; i++)
+			currentDesignParameters[pStartIndex + 3 + i] += offset1[i] * modifier[i];
+
+		//and now, the parent coords of the child joint
+		if (!isEERB(highlightedRigidBody)) {
+			int pStartIndex = rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
+			V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].xModifier, 1, 1);
+
+			for (int i = 0; i < 3; i++)
+				currentDesignParameters[pStartIndex + i] += offset2[i] * modifier[i];
+		}
+		else {
+			for (uint i = 0; i < highlightedRigidBody->rbProperties.endEffectorPoints.size(); i++) {
+				int pStartIndex = rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].index;
+				V3D modifier = V3D(rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].xModifier, 1, 1);
+
+				for (int j = 0; j < 3; j++)
+					currentDesignParameters[pStartIndex + j] += offset2[j] * modifier[j];
+			}
+		}
+	}
+	else {
+		//rescaling the bone with as few global changes as possible
+
+		int pStartIndex = rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].index;
+		V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->pJoints[0]].xModifier, 1, 1);
+
+		//for the parent joint, adjust its coordinates in the child (e.g. highlighted) rigid body frame
+		for (int i = 0; i < 3; i++)
+			currentDesignParameters[pStartIndex + 3 + i] += offset1[i] * modifier[i];
+
+		//and then, for the same joint, adjust its coordinates in the frame of the parent rigid body...
+		V3D offset1P = highlightedRigidBody->pJoints[0]->parent->getLocalCoordinates(highlightedRigidBody->getWorldCoordinates(offset1));
+		for (int i = 0; i < 3; i++)
+			currentDesignParameters[pStartIndex + i] += offset1P[i] * modifier[i];
+
+		if (!isEERB(highlightedRigidBody)) {
+
+			//adjust the coordinates of the child joint, both in coord frame of its parent and child rigid bodies...
+			int pStartIndex = rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].index;
+			V3D modifier = V3D(rdApp->prd->jointParamMap[highlightedRigidBody->cJoints[0]].xModifier, 1, 1);
+
+			for (int i = 0; i < 3; i++)
+				currentDesignParameters[pStartIndex + i] += offset2[i] * modifier[i];
+
+			V3D offset2P = highlightedRigidBody->cJoints[0]->child->getLocalCoordinates(highlightedRigidBody->getWorldCoordinates(offset2));
+			for (int i = 0; i < 3; i++)
+				currentDesignParameters[pStartIndex + 3 + i] += offset2P[i] * modifier[i];
+		}
+		else {
+			for (uint i = 0; i < highlightedRigidBody->rbProperties.endEffectorPoints.size(); i++) {
+				int pStartIndex = rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].index;
+				V3D modifier = V3D(rdApp->prd->eeParamMap[&highlightedRigidBody->rbProperties.endEffectorPoints[i]].xModifier, 1, 1);
+				for (int j = 0; j < 3; j++)
+					currentDesignParameters[pStartIndex + j] += offset2[j] * modifier[j];
+			}
+		}
+	}
+	rdApp->robot->setState(&rs);
+}
 bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 	if (Robot* robot = rdApp->robot) {
-		preDraw();
+		pushViewportTransformation();
 		Ray ray = getRayFromScreenCoords(xPos, yPos);
-		postDraw();
+		popViewportTransformation();
 
 		if (tWidget->visible) {
-			preDraw();
+			pushViewportTransformation();
 			bool clickProcessed = false;
 			if ((clickProcessed = tWidget->onMouseMoveEvent(xPos, yPos)) == true) {
 				RobotState rs(robot);
@@ -218,7 +222,7 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 				updateParamsAndMotion(Eigen::Map<dVector>(currentDesignParameters.data(), currentDesignParameters.size()));
 				syncSliders();
 			}
-			postDraw();
+			popViewportTransformation();
 			if (clickProcessed)
 				return true;
 		}
@@ -322,7 +326,6 @@ bool IntelligentRobotEditingWindow::onMouseMoveEvent(double xPos, double yPos){
 
 	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 }
-
 bool IntelligentRobotEditingWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos){
 	int ctrlDown = glfwGetKey(this->rdApp->glfwWindow, GLFW_KEY_LEFT_CONTROL);
 	if (((GlobalMouseState::lButtonPressed && ctrlDown == GLFW_PRESS) || (GlobalMouseState::rButtonPressed)) && tWidget->visible) {
@@ -353,6 +356,11 @@ bool IntelligentRobotEditingWindow::onMouseButtonEvent(int button, int action, i
 			tWidget->pos = highlightedJoint->getWorldPosition();
 			Logger::consolePrint("Clicked on joint \'%s\' with ID %d\n", highlightedJoint->name.c_str(), highlightedJoint->jIndex);
 		}
+
+		if (highlightedRigidBody)
+		{
+
+		}
 		rdApp->robot->setState(&rs);
 	}
 
@@ -364,14 +372,19 @@ void IntelligentRobotEditingWindow::setViewportParameters(int posX, int posY, in
 void IntelligentRobotEditingWindow::resetParams()
 {
 	dVector p;	rdApp->prd->getCurrentSetOfParameters(p);
-	p.setZero();
-	setParamsAndUpdateMOPT(p);
+	p.setZero(); prev_p.setZero();
+	updateParams(p);
 	syncSliders();
 }
-
 void IntelligentRobotEditingWindow::onModeChange()
 {
 	throw std::logic_error("The method or operation is not implemented.");
+}
+
+void IntelligentRobotEditingWindow::takeMotionParamSnapshot()
+{
+	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+	m_snap = m;
 }
 
 void IntelligentRobotEditingWindow::update_dmdX()
@@ -425,13 +438,13 @@ void IntelligentRobotEditingWindow::update_dmdX()
 
 				double pVal = p[i];
 				p[i] = pVal + dp;
-				setParamsAndUpdateMOPT(p);
+				updateParams(p);
 				totalEnergy->addGradientTo(g_p, m);
 				p[i] = pVal - dp;
-				setParamsAndUpdateMOPT(p);
+				updateParams(p);
 				totalEnergy->addGradientTo(g_m, m);
 				p[i] = pVal;
-				setParamsAndUpdateMOPT(p);
+				updateParams(p);
 
 				dgdX.col(i) = (g_p - g_m) / (2 * dp);
 			}
@@ -469,8 +482,6 @@ void IntelligentRobotEditingWindow::update_dmdX()
 	for (int i = 0; i < nE; i++)
 		totalEnergy->objectives[i]->hackHessian = hackHessian[i];
 }
-
-
 void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep(ObjectiveFunction* objFunction) {
 	update_dmdX();
 	LocomotionEngine_EnergyFunction *totalEnergy = rdApp->moptWindow->locomotionManager->energyFunction;
@@ -511,7 +522,7 @@ void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep(Objective
 		if (mode == Mode::design)
 		{
 			X = p0 - currStepSize * dOdX;
-			setParamsAndUpdateMOPT(X);
+			updateParams(X);
 		}
 		else
 		{
@@ -530,7 +541,6 @@ void IntelligentRobotEditingWindow::DoDesignParametersOptimizationStep(Objective
 
 	Logger::consolePrint("Param optimization line search number of steps: %d", i);
 }
-
 void IntelligentRobotEditingWindow::showMenu(){
 	if (!rdApp->robot)
 		return;
@@ -543,7 +553,6 @@ void IntelligentRobotEditingWindow::hideMenu()
 	if (menu)
 		menu->setVisible(false);
 }
-
 void IntelligentRobotEditingWindow::syncSliders()
 {
 	DynamicArray<double> p;
@@ -552,6 +561,7 @@ void IntelligentRobotEditingWindow::syncSliders()
 	for (uint i = 0; i < sliders.size(); i++)
 	{
 		sliders[i]->setValue((float)p[i]);
+		slidervalues(i) = p[i];
 		textboxes[i]->setValue(removeTrailingZeros(to_string(p[i])));
 	}
 }
@@ -566,9 +576,15 @@ void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
 		temp->setItems({ "design","weights" });
 // 		temp->setCallback([this] (Mode val){onModeChange(); });
 	}
+	{
+		auto temp = rdApp->mainMenu->addVariable<MotionParamSet>("MotionParamSet", motionParamSet);
+		temp->setItems({ "Joints", "EndEffectors", "Forces", "Wheels", "BodyPos", "BodyOrientation", "All" });
+	}
+	rdApp->mainMenu->addVariable("Use synergies", useSynergies);
+	rdApp->mainMenu->addVariable("Use snapshot", useSnapshot);
 	rdApp->mainMenu->addButton("Reset Params", [this]() { resetParams(); });
 	rdApp->mainMenu->addButton("Compute dmdp", [this]() { update_dmdX(); });
-
+	rdApp->mainMenu->addButton("HEADSHOT", [this]() { takeMotionParamSnapshot(); });
 	rdApp->mainMenu->addVariable("Update dmdp continuously", updateJacobiancontinuously);
 	rdApp->mainMenu->addVariable("Use dmdp", updateMotionBasedOnJacobian);
 	rdApp->mainMenu->addVariable("Use SVD", useSVD);
@@ -581,8 +597,7 @@ void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
 
 	Widget *panel = new Widget(rdApp->mainMenu->window());
 	GridLayout *layout =
-		new GridLayout(Orientation::Horizontal, 2,
-			Alignment::Middle, 15, 5);
+		new GridLayout(Orientation::Horizontal, 6, Alignment::Middle);
 	layout->setColAlignment(
 	{ Alignment::Maximum, Alignment::Fill });
 	layout->setSpacing(0, 10);
@@ -592,12 +607,19 @@ void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
 	auto removeTrailingZeros = [](string &&s) {return s.erase(s.find_last_not_of('0') + 1, string::npos); };
 	sliders.resize(rdApp->prd->getNumberOfParameters());
 	textboxes.resize(rdApp->prd->getNumberOfParameters());
+	prev_p.resize(rdApp->prd->getNumberOfParameters()); prev_p.setZero();
+	fixedDesignParamSet.clear();
+	
 	for (int i = 0; i < rdApp->prd->getNumberOfParameters(); i++)
 	{
+		CheckBox *check = new CheckBox(panel);
+ 		check->setChecked(false);
+		check->setCallback([&, i](bool val) {if (val) fixedDesignParamSet.insert(i); else fixedDesignParamSet.erase(i); });
+		check->setCaption("");
 		Slider *slider = new Slider(panel);
 		slider->setValue((float)p[i]);
 		slider->setRange({ -0.1,0.1 });
-		slider->setFixedWidth(150);
+		slider->setFixedWidth(70);
 		TextBox *textBox = new TextBox(panel);
 		textBox->setValue(removeTrailingZeros(to_string(p[i])));
 		textBox->setFixedWidth(50);
@@ -634,29 +656,103 @@ void IntelligentRobotEditingWindow::updateParamsUsingSliders(int paramIndex, dou
 	}
 	updateParamsAndMotion(p);
 }
-void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const dVector& p) {
+void IntelligentRobotEditingWindow::updateParams(const dVector& p) {
 	rdApp->prd->setParameters(p);
 	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
+
+	if (rdApp->designWindow)
+		rdApp->designWindow->matchDesignWithRobot(rdApp->robot, &rdApp->startingRobotState);
+
 }
-void IntelligentRobotEditingWindow::setParamsAndUpdateMOPT(const std::vector<double>& p) {
+void IntelligentRobotEditingWindow::updateParams(const std::vector<double>& p) {
 	rdApp->prd->setParameters(p);
 	rdApp->moptWindow->locomotionManager->motionPlan->updateEEs();
+
+// 	if (rdApp->designWindow)
+// 		rdApp->designWindow->matchDesignWithRobot(rdApp->robot, &rdApp->startingRobotState);
+
 }
 void IntelligentRobotEditingWindow::updateParamsAndMotion(dVector p)
 {
 	if (updateJacobiancontinuously)
-	{
-		Timer timerN; timerN.restart();
 		update_dmdX();
-		Logger::consolePrint("Total time to compute J: %lf\n", timerN.timeEllapsed());
+	if (useSynergies)
+	{
+		updatePUsingSynergies(p);
+
+// 		print("KKT.m", KKT);
+// 		print("b.m", b);
 	}
-	setParamsAndUpdateMOPT(p);
+	updateParams(p.head(dmdX.cols()));
 	if (updateMotionBasedOnJacobian) {
 		dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
 		m = m0 + dmdX*(p - p0);
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m);
 	}
+	prev_p = p;
 }
+
+void IntelligentRobotEditingWindow::updatePUsingSynergies(dVector &p)
+{
+	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
+	dVector dm = - m + m_snap;
+
+	//find out which design parameters changed
+	auto tempFixedDesignParamSet = fixedDesignParamSet;
+	for (int i = 0; i < p.size(); i++)
+		if (!IS_ZERO(p[i] - prev_p[i]))
+			fixedDesignParamSet.insert(i);
+
+	const auto &motionPlan = rdApp->moptWindow->locomotionManager->motionPlan;
+	int i, j;
+	if (motionParamSet == MotionParamSet::BodyPosition)
+	{
+		i = motionPlan->COMPositionsParamsStartIndex;
+		j = 3 * motionPlan->nSamplePoints;
+	}
+	
+	if (motionParamSet == MotionParamSet::BodyOrientation)
+	{
+		i = motionPlan->COMPositionsParamsStartIndex + 3 * motionPlan->nSamplePoints;
+		j = 3 * motionPlan->nSamplePoints;
+	}
+
+	else if (motionParamSet == MotionParamSet::EndEffectors)
+	{
+		i = motionPlan->feetPositionsParamsStartIndex;
+		j = motionPlan->endEffectorTrajectories.size() * motionPlan->nSamplePoints;
+	}
+	else if (motionParamSet == MotionParamSet::Joints)
+	{
+		i = motionPlan->robotStatesParamsStartIndex;
+		j = motionPlan->robotStateTrajectory.qArray.size() * motionPlan->nSamplePoints;
+	}
+
+	// setup the kkt system
+	MatrixNxM Jmid = dmdX.middleRows(i, j);
+	MatrixNxM JtJ = Jmid.transpose()*Jmid + stepSize * MatrixNxM::Identity(dmdX.cols(), dmdX.cols());
+	MatrixNxM C(fixedDesignParamSet.size(), dmdX.cols()); C.setZero();
+	dVector b(JtJ.rows() + C.rows()); b.setZero();
+	if(useSnapshot)
+		b.head(JtJ.rows()) = Jmid.transpose() * dm.segment(i, j);
+	int k = 0;
+	for (int ind : fixedDesignParamSet)
+	{
+		C(k, ind) = 1;
+		b(JtJ.rows() + k) = p(ind);
+		k++;
+	}
+	MatrixNxM KKT(JtJ.rows() + C.rows(), JtJ.rows() + C.rows());
+	KKT.topLeftCorner(JtJ.rows(), JtJ.cols()) = JtJ;
+	KKT.bottomLeftCorner(C.rows(), C.cols()) = C;
+	KKT.topRightCorner(C.cols(), C.rows()) = C.transpose();
+	KKT.bottomRightCorner(C.rows(), C.rows()).setZero();
+	Eigen::LDLT<MatrixNxM> solver;
+	solver.compute(KKT);
+	p = solver.solve(b);
+	fixedDesignParamSet = tempFixedDesignParamSet;
+}
+
 void IntelligentRobotEditingWindow::drawScene() {
 	glColor3d(1, 1, 1);
 	glDisable(GL_LIGHTING);
@@ -668,7 +764,7 @@ void IntelligentRobotEditingWindow::drawScene() {
 
 	tWidget->draw();
 
-	int flags = SHOW_ABSTRACT_VIEW | SHOW_BODY_FRAME | SHOW_JOINTS | HIGHLIGHT_SELECTED;
+	int flags = SHOW_ABSTRACT_VIEW | SHOW_BODY_FRAME | SHOW_JOINTS | HIGHLIGHT_SELECTED | SHOW_WHEELS;
 
 	RobotState rs(rdApp->robot);
 	rdApp->robot->setState(&rdApp->prd->defaultRobotState);
@@ -701,7 +797,6 @@ void IntelligentRobotEditingWindow::drawScene() {
 
 	rdApp->robot->setState(&rs);
 }
-
 void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 	dVector m; rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m);
 	DynamicArray<double> p;	rdApp->prd->getCurrentSetOfParameters(p);
@@ -722,7 +817,7 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 
 		double pVal = p[i];
 		p[i] = pVal + dp;
-		setParamsAndUpdateMOPT(p);
+		updateParams(p);
 		//now we must solve this thing a loooot...
 
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
@@ -731,7 +826,7 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 
 		rdApp->moptWindow->locomotionManager->motionPlan->writeMPParametersToList(m_m);
 		p[i] = pVal - dp;
-		setParamsAndUpdateMOPT(p);
+		updateParams(p);
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
 		for (int j = 0; j < 300; j++)
 			rdApp->moptWindow->runMOPTStep();
@@ -739,7 +834,7 @@ void IntelligentRobotEditingWindow::test_dmdp_Jacobian() {
 
 		rdApp->moptWindow->locomotionManager->motionPlan->setMPParametersFromList(m_initial);
 		p[i] = pVal;
-		setParamsAndUpdateMOPT(p);
+		updateParams(p);
 
 		dmdp_FD.col(i) = (m_p - m_m) / (2 * dp);
 	}

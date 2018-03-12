@@ -31,7 +31,7 @@ public:
 
 	V3D(const Vector3d& v);
 
-	explicit V3D(const P3D& p);
+ 	explicit V3D(const P3D& p);
 
 	V3D(const V3D &other, double scale);
 

@@ -10,8 +10,8 @@
 //debug joint velocity limits some more...
 //add the option to start non-periodic mopt from zero or from two other motion plans...
 //fix the bulk write...
-//rotate the "wheel" in the creature design - does the rolling motion become obvious?
-//add a cylinder as CDP in ODE? A flat capsule!
+//BEAUTIFICATION: nice/clean motor/bracket meshes, eyes?
+
 
 RobotDesignerApp::RobotDesignerApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
@@ -30,7 +30,7 @@ RobotDesignerApp::RobotDesignerApp(){
 	mainMenu->addVariable<RD_VIEW_OPTIONS>("View Mode",
 		[this](const RD_VIEW_OPTIONS &val) {viewOptions = val; setupWindows(); },
 		[this]() {return viewOptions;},
-		true)->setItems({ "Sim Only", "Sim+MOPT", "Sim+Design", "MOPT+iEdit" });
+		true)->setItems({ "Sim Only", "Sim+MOPT", "Sim+Design", "MOPT+iEdit", "MOPT only" });
 
 	nanogui::Widget *tools = new nanogui::Widget(mainMenu->window());
 	mainMenu->addWidget("", tools);
@@ -64,6 +64,7 @@ RobotDesignerApp::RobotDesignerApp(){
 	button->setCallback([this]() { warmStartMOPT(true); });
 	button->setTooltip("Warmstart MOPT (M)");
 
+	mainMenu->addVariable("Sync Cameras", syncCameras);
 	{
 		using namespace nanogui;
 
@@ -116,7 +117,9 @@ RobotDesignerApp::RobotDesignerApp(){
 	simWindow->addMenuItems();
 
 	showGroundPlane = false;
-	bgColorR = bgColorG = bgColorB = 0.75;
+//	bgColorR = bgColorG = bgColorB = 0.75;
+
+	bgColorR = bgColorG = bgColorB = 249.0 / 255.0;
 
 #ifdef START_WITH_VISUAL_DESIGNER
 //	designWindow = new ModularDesignWindow(0, 0, 100, 100, this, "../data/robotDesigner/configXM-430-V1.cfg");
@@ -180,6 +183,12 @@ void RobotDesignerApp::setupWindows() {
 		iEditWindow->setViewportParameters(offset + w / 2, 0, w / 2, h);
 		iEditWindow->showMenu();
 	}
+	else if (viewOptions == MOPT_WINDOW_ONLY && moptWindow) {
+		moptWindow->setViewportParameters(offset, 0, w, h);
+		moptWindow->ffpViewer->setViewportParameters(offset, 0, w/2, h / 4);
+//		showConsole = false;
+//		moptWindow->showFFPViewer = false;
+	}
 	else {
 		consoleWindow->setViewportParameters(offset, 0, w, 280);
 		simWindow->setViewportParameters(offset, 0, w, h);
@@ -190,11 +199,11 @@ RobotDesignerApp::~RobotDesignerApp(void){
 }
 
 bool RobotDesignerApp::shouldShowSimWindow() {
-	return viewOptions != MOPT_AND_IEDIT && simWindow;
+	return viewOptions != MOPT_AND_IEDIT && viewOptions != MOPT_WINDOW_ONLY && simWindow;
 }
 
 bool RobotDesignerApp::shouldShowMOPTWindow() {
-	return (viewOptions == SIM_AND_MOPT || viewOptions == MOPT_AND_IEDIT) && moptWindow;
+	return (viewOptions == SIM_AND_MOPT || viewOptions == MOPT_AND_IEDIT || viewOptions == MOPT_WINDOW_ONLY) && moptWindow;
 }
 
 bool RobotDesignerApp::shouldShowIEditWindow() {
@@ -208,16 +217,48 @@ bool RobotDesignerApp::shouldShowDesignWindow() {
 //triggered when mouse moves
 bool RobotDesignerApp::onMouseMoveEvent(double xPos, double yPos) {
 	if (shouldShowSimWindow() && (simWindow->isActive() || simWindow->mouseIsWithinWindow(xPos, yPos)))
-		if (simWindow->onMouseMoveEvent(xPos, yPos)) return true;
+		if (simWindow->onMouseMoveEvent(xPos, yPos)) {
+			if (syncCameras)
+			{
+				copy((GLTrackingCamera*)simWindow->camera, (GLTrackingCamera*)simWindow->camera+1, (GLTrackingCamera*)moptWindow->camera);
+				copy((GLTrackingCamera*)simWindow->camera, (GLTrackingCamera*)simWindow->camera+1, (GLTrackingCamera*)designWindow->camera);
+				copy((GLTrackingCamera*)simWindow->camera, (GLTrackingCamera*)simWindow->camera+1, (GLTrackingCamera*)iEditWindow->camera);
+ 			}
+			return true;
+		}
 
 	if (shouldShowMOPTWindow() && (moptWindow->isActive() || moptWindow->mouseIsWithinWindow(xPos, yPos)))
-		if (moptWindow->onMouseMoveEvent(xPos, yPos)) return true;
+		if (moptWindow->onMouseMoveEvent(xPos, yPos)) {
+			if (syncCameras)
+			{
+				copy((GLTrackingCamera*)moptWindow->camera, (GLTrackingCamera*)moptWindow->camera + 1, (GLTrackingCamera*)simWindow->camera);
+				copy((GLTrackingCamera*)moptWindow->camera, (GLTrackingCamera*)moptWindow->camera + 1, (GLTrackingCamera*)designWindow->camera);
+				copy((GLTrackingCamera*)moptWindow->camera, (GLTrackingCamera*)moptWindow->camera + 1, (GLTrackingCamera*)iEditWindow->camera);
+			}
+			return true;
+		}
 
 	if (shouldShowDesignWindow() && (designWindow->isActive() || designWindow->mouseIsWithinWindow(xPos, yPos)))
-		if (designWindow->onMouseMoveEvent(xPos, yPos)) return true;
+		if (designWindow->onMouseMoveEvent(xPos, yPos)) {
+			if (syncCameras)
+			{
+				copy((GLTrackingCamera*)designWindow->camera, (GLTrackingCamera*)designWindow->camera + 1, (GLTrackingCamera*)simWindow->camera);
+				copy((GLTrackingCamera*)designWindow->camera, (GLTrackingCamera*)designWindow->camera + 1, (GLTrackingCamera*)moptWindow->camera);
+				copy((GLTrackingCamera*)designWindow->camera, (GLTrackingCamera*)designWindow->camera + 1, (GLTrackingCamera*)iEditWindow->camera);
+			}
+			return true;
+		}
 
 	if (shouldShowIEditWindow() && (iEditWindow->isActive() || iEditWindow->mouseIsWithinWindow(xPos, yPos)))
-		if (iEditWindow->onMouseMoveEvent(xPos, yPos)) return true;
+		if (iEditWindow->onMouseMoveEvent(xPos, yPos)) {
+			if (syncCameras)
+			{
+				copy(iEditWindow->camera, designWindow->camera + 1, simWindow->camera);
+				copy(iEditWindow->camera, designWindow->camera + 1, moptWindow->camera);
+				copy(iEditWindow->camera, designWindow->camera + 1, designWindow->camera);
+			}
+			return true;
+		};
 
 	if (GLApplication::onMouseMoveEvent(xPos, yPos)) return true;
 
@@ -262,12 +303,13 @@ bool RobotDesignerApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	return false;
 }
 
+//XXX: this is a bit of a mess...
 bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
-	if (viewOptions == SIM_AND_DESIGN && designWindow) {
+	if (shouldShowDesignWindow() && designWindow->isActive()) {
 		designWindow->onKeyEvent(key, action, mods);
 	}
 
-	if (shouldShowSimWindow() && moptWindow->isActive()){
+	if (shouldShowMOPTWindow() && moptWindow->isActive()){
 		moptWindow->onKeyEvent(key, action, mods);
 	}
 
@@ -297,8 +339,11 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 	}
 
 	if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
-		loadFile("..\\data\\RobotDesigner\\TGYDemo1.batch");
+//		loadFile("..\\data\\RobotDesigner\\TGYDemo1.batch");
 //		loadFile("..\\data\\RobotDesigner\\SpotMiniDemo.batch");
+		loadFile("..\\data\\RobotDesigner\\Anymal.batch");
+//		loadFile("..\\data\\RobotDesigner\\skaterbot.batch");
+//		loadFile("..\\data\\RobotDesigner\\activeBot.batch");
 	}
 
 	if (key == GLFW_KEY_M && action == GLFW_PRESS) {
@@ -323,6 +368,10 @@ bool RobotDesignerApp::onKeyEvent(int key, int action, int mods) {
 	}
 	if (key == GLFW_KEY_F4 && action == GLFW_PRESS) {
 		viewOptions = MOPT_AND_IEDIT;
+		setupWindows();
+	}
+	if (key == GLFW_KEY_F5 && action == GLFW_PRESS) {
+		viewOptions = MOPT_WINDOW_ONLY;
 		setupWindows();
 	}
 
@@ -577,9 +626,12 @@ void RobotDesignerApp::process() {
 			DoMOPTStep();
 
 		double dt = 1.0 / desiredFrameRate;
-		if (slowMo) dt /= 5.0;
+		if (slowMo) 
+			dt /= slowMoFactor;
 
-		simWindow->advanceSimulation(dt);
+		bool motionPhaseReset = simWindow->advanceSimulation(dt);
+		if (motionPhaseReset)
+			walkCycleIndex++;
 
 	}
 	else if (runOption == MOTION_PLAN_OPTIMIZATION)
@@ -597,7 +649,7 @@ void RobotDesignerApp::drawScene() {
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
 void RobotDesignerApp::drawAuxiliarySceneInfo() {
 	if (shouldShowMOPTWindow()) {
-		moptWindow->setAnimationParams(moptWindow->ffpViewer->cursorPosition, 0);
+		moptWindow->setAnimationParams(moptWindow->ffpViewer->cursorPosition, walkCycleIndex);
 		moptWindow->draw();
 		moptWindow->drawAuxiliarySceneInfo();
 	}

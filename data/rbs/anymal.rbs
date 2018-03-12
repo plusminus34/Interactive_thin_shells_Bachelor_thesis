@@ -1,0 +1,284 @@
+RigidBody
+	name body
+
+	position 0 1 0
+
+	CDP Box -0.295 0 -0.13 0.295 0.1 0.13
+
+	mass 24.0
+	moi 0.268388530623900 0.884235660795284 0.829158678306482
+
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.05
+/End
+
+
+RigidBody
+	name rightFrontHip
+	colour 0.36 0.46 0.7 1
+	
+	mass 1.1064
+	moi 0.001233015085231 0.000993231183395 0.001421603490980
+	
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.05
+/End
+
+RigidBody
+	name rightFrontThigh
+	colour 0.36 0.46 0.7 1
+	
+	mass 1.51
+	moi 0.014757162827465 0.001784490759640 0.014418892571904
+	
+	
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.05
+/End
+
+RigidBody
+	name rightFrontShin
+	colour 0.36 0.46 0.7 1
+	
+	mass 0.471
+	moi 0.003 0.00200 0.003
+
+	endEffector -0.0367 -0.1209 0.0017 0.01
+	CDP Sphere -0.0367 -0.1209 0.0017 0.01 
+		
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.05
+/End
+
+
+RigidBody
+	name leftFrontHip
+	colour 0.36 0.46 0.7 1
+	
+	mass 1.1064
+	moi 0.001233015085231 0.000993231183395 0.001421603490980
+	
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.05
+/End
+
+RigidBody
+	name leftFrontThigh
+	colour 0.36 0.46 0.7 1
+	
+	mass 1.51
+	moi 0.014757162827465 0.001784490759640 0.014418892571904
+	
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.05
+/End
+
+RigidBody
+	name leftFrontShin
+	colour 0.36 0.46 0.7 1
+	
+	mass 0.471
+	moi 0.003 0.00200 0.003
+	
+
+	endEffector -0.0367 -0.1209 -0.0017 0.01
+	CDP Sphere -0.0367 -0.1209 -0.0017 0.01 
+		
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.05
+/End
+
+RigidBody
+	name rightRearHip
+	colour 0.36 0.46 0.7 1
+	
+	mass 1.1064
+	moi 0.001233015085231 0.001421603490980 0.000993231183395
+	
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.05
+/End
+
+RigidBody
+	name rightRearThigh
+	colour 0.36 0.46 0.7 1
+	
+	mass 1.51
+	moi 0.014757162827465 0.001784490759640 0.014418892571904
+	
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.05
+/End
+
+RigidBody
+	name rightRearShin
+	colour 0.36 0.46 0.7 1
+	
+	mass 0.471
+	moi 0.003 0.00200 0.003
+
+	endEffector 0.0367 -0.1209 0.0017 0.01
+	CDP Sphere 0.0367 -0.1209 0.0017 0.01 		
+		
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.05
+/End
+
+
+RigidBody
+	name leftRearHip
+	colour 0.36 0.46 0.7 1
+	
+	mass 1.1064
+	moi 0.001233015085231 0.001421603490980 0.000993231183395
+	
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.05
+/End
+
+RigidBody
+	name leftRearThigh
+	colour 0.36 0.46 0.7 1
+	
+	mass 1.51
+	moi 0.014757162827465 0.001784490759640 0.014418892571904
+	
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.05
+/End
+
+RigidBody
+	name leftRearShin
+	colour 0.36 0.46 0.7 1
+	
+	mass 0.471
+	moi 0.003 0.00200 0.003
+
+	endEffector 0.0367 -0.1209 -0.0017 0.01
+	CDP Sphere 0.0367 -0.1209 -0.0017 0.01 	
+		
+	frictionCoefficient 0.8
+	restitutionCoefficient 0.05
+/End
+
+	hingeJoint 
+		name rfHipAA
+		parent body
+		child rightFrontHip
+		jointAxes 1 0 0
+		jointPPos 0.2629 0 0.1150 
+		jointCPos -0.0542  0.0 0.0136
+		jointLimits -1.5 1.5
+	/Joint
+	
+	hingeJoint
+		name rfHipFE
+		parent rightFrontHip
+		child rightFrontThigh
+		jointPPos 0.0043  0.0000 0.0451
+		jointCPos -0.0008 0.1975 -0.0545
+		jointAxes 0 0 1
+		jointLimits -1.5 1.5
+	/Joint	
+
+	hingeJoint
+		name rfKneeFE
+		parent rightFrontThigh
+		child rightFrontShin
+		jointPPos -0.0008 -0.0525 0.0565 
+		jointCPos -0.0683 0.0995 0.0109
+		jointAxes 0 0 1
+		jointLimits 0 2.5
+	/Joint	
+
+	hingeJoint
+		name lfHipAA
+		parent body
+		child leftFrontHip
+		jointAxes 1 0 0
+		jointPPos 0.2629 0.0 -0.1150
+		jointCPos -0.0542 0.0 -0.0136
+		jointLimits -1.5 1.5
+	/Joint
+	
+	hingeJoint
+		name lfHipFE
+		parent leftFrontHip
+		child leftFrontThigh
+		jointPPos 0.0043 0.0000 -0.0451
+		jointCPos -0.0008 0.1975 0.0545
+		jointAxes 0 0 1
+		jointLimits -1.5 1.5
+	/Joint	
+
+	hingeJoint
+		name lfKneeFE
+		parent leftFrontThigh
+		child leftFrontShin
+		jointPPos -0.0008 -0.0525 -0.0565 
+		jointCPos -0.0683 0.0995 -0.0109
+		jointAxes 0 0 1
+		jointLimits 0 2.5
+	/Joint	
+
+	hingeJoint
+		name rrHipAA
+		parent body
+		child rightRearHip
+		jointAxes 1 0 0
+		jointPPos -0.2629 0.0 0.1150
+		jointCPos 0.0542 0.0 0.0136
+		jointLimits -1.5 1.5
+	/Joint
+	
+	hingeJoint
+		name rrHipFE
+		parent rightRearHip
+		child rightRearThigh
+		jointAxes 0 0 1
+		jointPPos -0.0043 0.0000 0.0451
+		jointCPos 0.0008 0.1975 -0.0545
+		jointLimits -1.5 1.5
+	/Joint	
+
+	hingeJoint
+		name rrKneeFE
+		parent rightRearThigh
+		child rightRearShin
+		jointAxes 0 0 1
+		jointPPos 0.0008 -0.0525 0.0565 
+		jointCPos 0.0683 0.0995 0.0109
+		jointLimits -2.5 0
+	/Joint	
+	
+	hingeJoint
+		name lrHipAA
+		parent body
+		child leftRearHip
+		jointAxes 1 0 0 
+		jointPPos -0.2629 0.0 -0.1150
+		jointCPos 0.0542 0.0 -0.0136
+		jointLimits -1.5 1.5
+	/Joint
+	
+	hingeJoint 
+		name lrHipFE
+		parent leftRearHip
+		child leftRearThigh
+		jointAxes 0 0 1
+		jointPPos -0.0043 0.0000 -0.0451
+		jointCPos 0.0008 0.1975 0.0545
+		jointLimits -1.5 1.5
+	/Joint	
+
+	hingeJoint
+		name lrKneeFE
+		parent leftRearThigh
+		child leftRearShin
+		jointAxes 0 0 1
+		jointPPos 0.0008 -0.0525 -0.0565 
+		jointCPos 0.0683 0.0995 -0.0109
+		jointLimits -2.5 0
+	/Joint	
+
+

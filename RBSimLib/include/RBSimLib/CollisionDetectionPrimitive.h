@@ -109,7 +109,7 @@ class CapsuleCDP : public CollisionDetectionPrimitive {
 public:
 	static std::string keyword;
 
-	//end points of the cylinder, expressed in local coordinates.
+	//end points of the capsule, expressed in local coordinates.
 	P3D p1, p2;
 	double r;
 
@@ -124,5 +124,3 @@ public:
 	virtual std::string getDefinitionString();
 	virtual std::string getKeyword() { return keyword; }
 };
-
-

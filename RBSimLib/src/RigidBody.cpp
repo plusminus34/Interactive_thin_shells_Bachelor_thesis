@@ -153,10 +153,17 @@ void RigidBody::draw(int flags, V3D color, double alpha) {
 			drawCylinder(lastFeature, rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius, 16);
 
 			glColor3d(0, 0.5, 1);
-			if (rbProperties.endEffectorPoints[i].isWheel() && !rbProperties.endEffectorPoints[i].isWeldedWheel()) {
+			if (rbProperties.endEffectorPoints[i].isWheel() /*&& !rbProperties.endEffectorPoints[i].isWeldedWheel()*/ && flags & SHOW_WHEELS) {
 				V3D axis = rbProperties.endEffectorPoints[i].localCoordsWheelAxis;
 				drawArrow(rbProperties.endEffectorPoints[i].coords, rbProperties.endEffectorPoints[i].coords + axis*0.05, 0.0025);
+				P3D wheelCenter = rbProperties.endEffectorPoints[i].coords;
+				glColor4d(0.2, 0.6, 0.8, 0.8);
+				double width = 0.01;
+				drawCylinder(wheelCenter - axis*0.5*width, axis*width, rbProperties.endEffectorPoints[i].featureSize, 24);
 			}
+
+
+
 		}
 
 		for (uint i = 0; i < cJoints.size(); i++) {
@@ -171,7 +178,8 @@ void RigidBody::draw(int flags, V3D color, double alpha) {
 		}
 
 		
-		for (uint i = 0; i < rbProperties.endEffectorPoints.size(); i++)
+		for (uint i = 0; i < rbProperties.endEffectorPoints.size(); i++) {
+//			bool isWheel = rbProperties.endEffectorPoints[i].isWheel();
 			if (flags & HIGHLIGHT_SELECTED && rbProperties.endEffectorPoints[i].selected) {
 				glColor3d(1, 0, 0);
 				drawSphere(rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius*1.4, 16);
@@ -180,6 +188,18 @@ void RigidBody::draw(int flags, V3D color, double alpha) {
 				glColor3d(0, 0.5, 1);
 				drawSphere(rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius*1.2, 16);
 			}
+/*
+			if (isWheel && (flags & SHOW_ABSTRACT_VIEW)) {
+				double width = 0.01;
+				V3D axis = rbProperties.endEffectorPoints[i].getWheelAxis();
+				P3D wheelCenter = rbProperties.endEffectorPoints[i].coords;
+				double radius = rbProperties.endEffectorPoints[i].featureSize;
+				glColor4d(0.2, 0.6, 0.8, 0.8);
+				drawCylinder(wheelCenter - axis*0.5*width, axis*width, radius, 24);
+			}
+*/
+		}
+
 	}
 
 	if (flags & SHOW_MOI_BOX) {
@@ -284,7 +304,7 @@ uint RigidBody::renderToObjFile(FILE* fp, uint vertexIdxOffset) {
 			q.setRotationFrom(meshTransformations[i].R);
 
 			rot = rot * q;
-			pos = pos + meshTransformations[i].T;
+			pos = pos + state.orientation * meshTransformations[i].T;
 		}
 
 		retVal += meshes[i]->renderToObjFile(fp, vertexIdxOffset + retVal, rot, pos);
@@ -332,7 +352,7 @@ void RigidBody::writeToFile(FILE* fp){
 	for (uint i = 0; i < meshTransformations.size(); i++) {
 		Quaternion q;
 		q.setRotationFrom(meshTransformations[i].R);
-		V3D T = meshTransformations[i].T;
+		V3D T(meshTransformations[i].T);
 		fprintf(fp, "\t%s %lf %lf %lf %lf %lf %lf %lf\n", getRBString(RB_MESH_TRANSFORMATION), 
 			q[0], q[1], q[2], q[3], T[0], T[1], T[2]);
 	}	

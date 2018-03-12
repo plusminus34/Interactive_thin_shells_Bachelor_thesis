@@ -2,6 +2,7 @@
 
 #include <RobotDesignerLib/MPO_VelocitySoftConstraints.h>
 #include <RobotDesignerLib/MPO_JointsAnglesSoftConstraint.h>
+#include <RobotDesignerLib/MPO_EndEffectorCollisionEnergy.h>
 #include <RobotDesignerLib/MPO_WheelSpeedConstraint.h>
 #include <RobotDesignerLib/MPO_WheelSpeedRegularizer.h>
 #include <RobotDesignerLib/MPO_WheelSpeedSmoothRegularizer.h>
@@ -19,6 +20,8 @@
 #include <RobotDesignerLib/MPO_PassiveWheelsGRFConstraints.h>
 #include <RobotDesignerLib/MPO_FixedWheelObjective.h>
 #include <RobotDesignerLib/MPO_WheelTiltObjective.h>
+#include <RobotDesignerLib/MPO_EEPosObjective.h>
+#include <RobotDesignerLib/MPO_COMPosObjective.h>
 
 //#define DEBUG_WARMSTART
 //#define CHECK_DERIVATIVES_AFTER_WARMSTART
@@ -376,8 +379,8 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 
 	//consistancy constraints (between robot states and other auxiliary variables)
-	ef->addObjectiveFunction(new MPO_RobotEndEffectorsObjective(ef->theMotionPlan, "robot EE objective", 10000.0), "Consistency Constraints (Kinematics)");
-	ef->addObjectiveFunction(new MPO_RobotWheelAxisObjective(ef->theMotionPlan, "robot wheel axis objective", 10000.0), "Consistency Constraints (Kinematics)");
+	ef->addObjectiveFunction(new MPO_RobotEndEffectorsObjective(ef->theMotionPlan, "robot EE objective", 10000.0), "Consistency Constraints (Kinematics)"); ef->objectives.back()->hackHessian = true;
+	ef->addObjectiveFunction(new MPO_RobotWheelAxisObjective(ef->theMotionPlan, "robot wheel axis objective", 10000.0), "Consistency Constraints (Kinematics)"); ef->objectives.back()->hackHessian = true;
 	ef->addObjectiveFunction(new MPO_RobotCOMObjective(ef->theMotionPlan, "robot COM objective", 10000.0), "Consistency Constraints (Kinematics)");
 	ef->addObjectiveFunction(new MPO_RobotCOMOrientationsObjective(ef->theMotionPlan, "robot COM orientations objective", 10000.0), "Consistency Constraints (Kinematics)");
 	ef->addObjectiveFunction(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0), "Consistency Constraints (Kinematics)");
@@ -397,9 +400,9 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 
 	//range of motion/speed/acceleration constraints
 	ef->addObjectiveFunction(new MPO_VelocitySoftBoundConstraints(ef->theMotionPlan, "joint angle velocity constraint", 1, 6, dimCount - 1), "Bound Constraints");
-	ef->addObjectiveFunction(new MPO_JointsAnglesSoftConstraint(ef->theMotionPlan, "joint angle bound constraint", 1, 6, dimCount - 1), "Bound Constraints");
+	ef->addObjectiveFunction(new MPO_JointsAnglesSoftConstraint(ef->theMotionPlan, "joint angle bound constraint", 1, 6, dimCount - 1), "Bound Constraints"); ef->objectives.back()->isActive=false;
 	ef->addObjectiveFunction(new MPO_WheelSpeedConstraints(ef->theMotionPlan, "wheel speed bound constraint", 1), "Bound Constraints");
-	
+	ef->addObjectiveFunction(new MPO_EndEffectorCollisionEnergy(ef->theMotionPlan, "EE collision objective", 10000), "Bound Constraints");
 //	ef->addObjectiveFunction(new MPO_WheelAccelerationConstraints(ef->theMotionPlan, "wheel accel. bound constraint", 1e2), "Bound Constraints");
 //	ef->objectives.back()->isActive = false;
 
@@ -444,6 +447,8 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	//functional objectives
 	ef->addObjectiveFunction(new MPO_COMTravelObjective(ef->theMotionPlan, "COM Travel objective", 50.0), "Objectives");
 	ef->addObjectiveFunction(new MPO_COMTurningObjective(ef->theMotionPlan, "COM turning objective (YAW)", 50.0), "Objectives");
+	ef->addObjectiveFunction(new MPO_COMPosObjective(ef->theMotionPlan, "EE position objective", 10000), "Objectives");
+	ef->addObjectiveFunction(new MPO_EEPosObjective(ef->theMotionPlan, "COM position objective", 10000), "Objectives");
 
 	//smooth motion regularizers
 	ef->addObjectiveFunction(new MPO_SmoothStanceLegMotionObjective(ef->theMotionPlan, "robot stance leg smooth joint angle trajectories", 0.01), "Smooth Regularizer");

@@ -53,7 +53,8 @@ public:
 	Robot* loadRobot(const char*);
 	void loadMotionPlan(LocomotionEngineMotionPlan* mp);
 
-	void advanceSimulation(double dt);
+	//returns true if the motion plan finished/motion phase was reset, false otherwise...
+	bool advanceSimulation(double dt);
 
 	void reset();
 

@@ -1,0 +1,7 @@
+load ..\data\robotDesigner\configBK3002.cfg
+load ..\data\RobotDesigner\designs\BK3000\activeBot\activeBot.dsn
+toSim
+load ..\data\RobotDesigner\designs\BK3000\activeBot\activeBot_walk3.p
+
+end
+

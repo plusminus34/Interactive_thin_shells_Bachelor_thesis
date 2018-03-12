@@ -135,11 +135,10 @@ void SimWindow::drawScene() {
 	glEnable(GL_LIGHTING);
 
 	int flags = 0;
-	if (drawMeshes) flags |= SHOW_MESH | SHOW_MATERIALS | SHOW_ABSTRACT_VIEW;
-	if (drawSkeletonView) flags |= SHOW_BODY_FRAME | SHOW_ABSTRACT_VIEW;
+	if (drawMeshes) flags |= SHOW_MESH | SHOW_MATERIALS;
+	if (drawSkeletonView) flags |= SHOW_BODY_FRAME | SHOW_ABSTRACT_VIEW | SHOW_JOINTS | SHOW_WHEELS;
 	if (drawMOIs) flags |= SHOW_MOI_BOX;
 	if (drawCDPs) flags |= SHOW_CD_PRIMITIVES;
-	if (drawSkeletonView) flags |= SHOW_JOINTS;
 
 	glEnable(GL_LIGHTING);
 	if (rbEngine)
@@ -153,9 +152,9 @@ void SimWindow::drawScene() {
 
 
 void SimWindow::setPerturbationForceFromMouseInput(double xPos, double yPos) {
-	preDraw();
+	pushViewportTransformation();
 	Ray ray = getRayFromScreenCoords(xPos, yPos);
-	postDraw();
+	popViewportTransformation();
 	P3D pForce;
 	//ray.getDistanceToPoint(robot->root->getCMPosition(), &pForce);
 	ray.getDistanceToPlane(Plane(robot->root->getCMPosition(), V3D(0, 1, 0)), &pForce);
@@ -187,9 +186,11 @@ void SimWindow::doPhysicsStep(double simStep) {
 	}
 }
 
-void SimWindow::advanceSimulation(double dt) {
+bool SimWindow::advanceSimulation(double dt) {
 	if (!activeController)
-		return;
+		return false;
+
+	bool motionPhaseReset = false;
 
 /*
 	static RobotState lastSimRobotState(robot);
@@ -204,7 +205,7 @@ void SimWindow::advanceSimulation(double dt) {
 	if (activeController == kinematicController || activeController == pololuMaestroController){
 		activeController->computeControlSignals(dt);
 		activeController->applyControlSignals(dt);
-		activeController->advanceInTime(dt);
+		motionPhaseReset = activeController->advanceInTime(dt);
 	}
 	else {
 		double simulationTime = 0;
@@ -215,16 +216,10 @@ void SimWindow::advanceSimulation(double dt) {
 			activeController->computeControlSignals(simTimeStep);
 			doPhysicsStep(simTimeStep);
 
-			activeController->advanceInTime(simTimeStep);
+			motionPhaseReset = activeController->advanceInTime(simTimeStep) || motionPhaseReset;
 //			break;
-
 		}
 	}
 
-/*
-	//setting the state of the robot will fix constraints as well. That's why here we read it, set it (project it) and then set it again such that it is clean...
-	lastSimRobotState = RobotState(robot);
-	robot->setState(&lastSimRobotState);
-	lastSimRobotState = RobotState(robot);
-*/
+	return motionPhaseReset;
 }

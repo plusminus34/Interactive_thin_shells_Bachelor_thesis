@@ -92,7 +92,5 @@ public:
 		motionPlan->optimizeBarycentricWeights = (optimizationFlags & OPT_BARYCENTRIC_WEIGHTS) != 0;
 		return runMOPTStep();
 	}
-
-	virtual void drawMotionPlan(double f, int animationCycle = 0, bool drawRobot = true, bool drawSkeleton = false, bool drawPlanDetails = false, bool drawContactForces = false, bool drawOrientation = false);
 };
 

@@ -487,8 +487,12 @@ public:
 		vertexList[3*i+2] = p[2];
 	}
 
-	P3D getCenterOfMass()
-	{
+	P3D getCenterOfMass(){
+		//the immplementation below is not reliable when faces can be triangulated in different ways, and when vertices are being split up...
+
+		calBoundingBox();
+		return bbox.center();
+
 		P3D ans(0, 0, 0);
 		for (int k = 0; k < 3; ++k)
 			for (int i = 0; i < getVertexCount(); ++i)
