@@ -39,6 +39,7 @@ using std::pair;
 using std::make_pair;
 using std::string;
 using std::shared_ptr;
+using std::to_string;
 
 const auto vector_equality_check = [] (const auto &fd, const auto &anal) {
 	bool ret = true;
@@ -242,6 +243,16 @@ const auto find_min_i = [](const vector<double> &v) {
 // eigen wrappers //////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+const auto matRCstr = [](MatrixNxM m) -> string {
+	string ret = "";
+	ret.append("(");
+	ret.append(to_string(m.rows()));
+	ret.append(", ");
+	ret.append(to_string(m.cols()));
+	ret.append(")");
+	return ret;
+};
+
 // construct w st v x w is 1.
 const auto construct_perp2d = [](V3D v) -> V3D {
 	if (!IS_ZERO(v[2])) { helpers_error("Calling 2d function on 3D vector."); }
@@ -409,7 +420,7 @@ const auto vec_FD = [] (dVector s0, auto O_of_s, double d=1e-3) {
 	return vec;
 };
 
-const auto mat_FD = [] (dVector s0, auto f_of_s) {
+const auto mat_FD = [] (dVector s0, auto f_of_s, double d=1e-3) {
 	// ~ dfds|s0
 
 	dVector f0 = f_of_s(s0);
@@ -420,7 +431,6 @@ const auto mat_FD = [] (dVector s0, auto f_of_s) {
 	MatrixNxM mat;
 	mat_resize_zero(mat, r, c);
 
-	double d = 10e-4;
 	for (int i = 0; i < r; ++i) {
 		double s0i = s0[i];
 
@@ -569,6 +579,14 @@ const auto MatrixLowerTriangleEquality = [](const MatrixNxM &FDHessian, const au
 		}
 	}
 	return ret;
+};
+
+const auto dVector2vecDouble = [](const dVector &in) -> vector<double> {
+	vector<double> out;
+	for (int i = 0; i < in.size(); ++i) {
+		out.push_back(in[i]);
+	}
+	return out;
 };
 
  const auto stack_vec_dVector = [](const vector<dVector> &in) -> dVector {

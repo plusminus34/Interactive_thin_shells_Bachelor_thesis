@@ -35,8 +35,8 @@ void AppXD::drawScene() {
 }
 
 void AppXD::process() {
-	tri_mesh->xvPair_INTO_Mesh(tri_mesh->solve_dynamics(timeStep));
-	tet_mesh->xvPair_INTO_Mesh(tet_mesh->solve_dynamics(timeStep));
+	tri_mesh->xvPair_INTO_Mesh(tri_mesh->solve_dynamics());
+	tet_mesh->xvPair_INTO_Mesh(tet_mesh->solve_dynamics());
 }
 
 bool AppXD::onMouseMoveEvent(double xPos, double yPos) {
@@ -44,6 +44,7 @@ bool AppXD::onMouseMoveEvent(double xPos, double yPos) {
 }
 
 bool AppXD::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
+	tri_mesh->nudge_mesh(V3D(1., 0.));
     return(PlushApplication::onMouseButtonEvent(button, action, mods, xPos, yPos));
 }
 
