@@ -36,7 +36,7 @@ public:
 	// --
 	bool PROJECT = false;
 	bool CHECK_IK_GRADIENT = false;
-	bool SOLVE_DYNAMICS = false;
+	bool SOLVE_DYNAMICS = true;
 	bool LINEAR_APPROX = true;
 
 public:

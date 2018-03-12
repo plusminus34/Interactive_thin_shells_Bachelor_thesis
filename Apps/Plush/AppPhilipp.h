@@ -3,18 +3,26 @@
 #include "PlushApplication.h"
 #include "CSTSimulationMesh2D.h"
 #include "CSTSimulationMesh3D.h"
+#include "QueuePlot.h"
 
-class AppXD : public PlushApplication {
+class AppPhilipp : public PlushApplication {
 
 public: 
-	AppXD();
-	inline virtual ~AppXD(void) {}
+	AppPhilipp();
+	inline virtual ~AppPhilipp(void) {}
 	inline virtual void restart() {}
 	virtual void drawScene();
 
 public:
-    CSTSimulationMesh2D *tri_mesh;
-    CSTSimulationMesh3D *tet_mesh; 
+    CSTSimulationMesh2D *mesh;
+	QueuePlot *plot;
+
+public:
+	// std::vector (C++ version of a C array)
+	vector<double> u_vec;
+	vector<double> t_vec;
+	const int NUM_KEYFRAMES = 10;
+	P3D xy0 = P3D();
 
 public:
     bool TEST = false;

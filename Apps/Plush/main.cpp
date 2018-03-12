@@ -5,6 +5,10 @@
 #include "AppXD.h"
 #include "AppSoftIK.h"
 #include "AppEditor2D.h"
+#include "AppSoftLoco.h"
+#include "AppBoa.h"
+#include "AppPhilipp.h"
+#include "AppArt.h"
 
 // TODO: PlushApplication sets current direction to your data folder.
 
@@ -13,6 +17,10 @@ int main() {
 	const int APP_XD_ID          = 0;
 	const int APP_IK_ID          = 1;
 	const int APP_EDITOR2D_ID    = 2;
+	const int APP_LOCO_ID        = 3;
+	const int APP_BOA_ID         = 4;
+	const int APP_PMH_ID         = 5;
+	const int APP_ART_ID         = 6;
 
 	FILE* fp = fopen("../../../Apps/Plush/main.txt", "r");
 	int APP = -1;
@@ -25,6 +33,10 @@ int main() {
 		cout << APP_XD_ID            << " : AppXD\n"
 			 << APP_IK_ID            << " : AppSoftIK\n"
 			 << APP_EDITOR2D_ID      << " : AppEditor2D\n"
+			 << APP_LOCO_ID          << " : AppSoftLoco\n"
+			 << APP_BOA_ID           << " : AppBoa\n"
+			 << APP_PMH_ID           << " : AppPhilipp\n"
+			 << APP_ART_ID           << " : AppPhilipp\n"
 			 << ">> "; 
 		APP = getch() - '0';
 	} 
@@ -39,6 +51,18 @@ int main() {
 		break;
 	case APP_EDITOR2D_ID:
 		app = new AppEditor2D();
+		break;
+	case APP_LOCO_ID:
+		app = new AppSoftLoco();
+		break;
+	case APP_BOA_ID:
+		app = new AppBoa();
+		break;
+	case APP_PMH_ID:
+		app = new AppPhilipp();
+		break;
+	case APP_ART_ID:
+		app = new AppArt();
 		break;
 	} 
 

@@ -64,6 +64,8 @@ void SoftIKSolver::step() {
 	for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
 		iterate();
 	}
+	// NOTE!
+	// cout << calculate_O(alphac_curr) << endl;
 }
 
 void SoftIKSolver::iterate() {
@@ -82,9 +84,9 @@ void SoftIKSolver::project() {
 			double Gamma_i;
 			Gamma_i = mesh->tendons[i]->get_Gamma(x_proj, alphac_proj);
 
-			if (Gamma_i < 0) {
+			if (Gamma_i < .0005) {
 				PROJECTED = true;
-				alphac_proj[i] += abs(Gamma_i) + .001;
+				alphac_proj[i] += (.001 - Gamma_i);
 			}
 		}
 
@@ -147,7 +149,7 @@ double SoftIKSolver::calculate_gamma(const dVector &alphac, const dVector &dOdal
 // -- //
 
 dVector SoftIKSolver::x_of_alphac(const dVector &alphac) { // FORNOW
-	auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(timeStep, x_0, v_0, alphac) : mesh->solve_statics(x_0, alphac);
+	auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_0, v_0, alphac) : mesh->solve_statics(x_0, alphac);
 	return xv.first;
 }
 
@@ -177,7 +179,6 @@ double SoftIKSolver::calculate_Q_approx(const dVector &alphac) {
 double SoftIKSolver::calculate_R(const dVector &alphac) {
 
 	double ret = 0.;
-	double tmp = 0.;
 
 	{
 		for (int i = 0; i < T(); ++i) {
@@ -265,7 +266,7 @@ MatrixNxM SoftIKSolver::calculate_dxdalphac(const dVector &alphac, const dVector
 	}
  
 	dtaudalphac  = dtaudGamma_diag.asDiagonal(); // NOTE: dGammadalphac = I
-	dxdalphac    = dtaudalphac     * dxdtau;
+	dxdalphac    = dtaudalphac * dxdtau;
 
 	return dxdalphac;
 }
@@ -450,7 +451,7 @@ SparseMatrix SoftIKSolver::calculate_H(const dVector &x, const dVector &alphac) 
 void SoftIKSolver::construct_alphac_barrierFuncs() {
 	this->alphac_barrierFuncs.clear(); 
 	for (auto &tendon : mesh->tendons) {
-		double ALPHAC_MAX = .33*tendon->get_alphaz();
+		double ALPHAC_MAX = .66*tendon->get_alphaz();
 		alphac_barrierFuncs.push_back(new ZeroCubicQuadratic(1e5, .01, V3D(ALPHAC_MAX, 0.), false, false));
 	}
 }

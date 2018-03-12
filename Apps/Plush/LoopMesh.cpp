@@ -34,7 +34,7 @@ void LoopMesh::add_sketch(int N) {
 	ADD_TDN_i++;
 }
  
-bool LoopMesh::mouse_move(double xPos, double yPos) {
+bool LoopMesh::mouse_move_(double xPos, double yPos) {
 
 	ray = InteractiveWidget::getRayFromScreenCoords(xPos, yPos);
 	xy0 = xy0_from_ray(ray);
@@ -114,7 +114,7 @@ vector<P3D *> *LoopMesh::find_min_sketch(vector<vector<P3D *> *> search_sketches
 	return min_sketch;
 }
 
-bool LoopMesh::mouse_button(int button, int action, int mods, double xPos, double yPos) {
+bool LoopMesh::mouse_button_(int button, int action, int mods, double xPos, double yPos) {
 
 	SHIFTED = mods & GLFW_MOD_SHIFT;
 
@@ -217,12 +217,12 @@ bool LoopMesh::mouse_button(int button, int action, int mods, double xPos, doubl
 	}
 }
 
-bool LoopMesh::mouse_wheel(double xOffset, double yOffset) {
+bool LoopMesh::mouse_wheel_(double xOffset, double yOffset) {
 
 	return false;
 }
 
-bool LoopMesh::key_event(int key, int action, int mods) {
+bool LoopMesh::key_event_(int key, int action, int mods) {
 
 	return false;
 }
