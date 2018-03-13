@@ -28,7 +28,7 @@ public:
 // FORNOW
 public:
 	bool UNILATERAL_TENDONS = true;
-	double timeStep = .005;
+	double timeStep = .01;
 
 // core suite
 public:

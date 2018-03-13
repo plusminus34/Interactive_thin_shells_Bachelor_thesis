@@ -163,10 +163,10 @@ void SoftLocoSolver::draw() {
 		glDisable(GL_DEPTH_TEST);
 		glTranslated(1., 0., 0.);
 
-		for (int i = 0; i < K; ++i) {
-			set_color(color_swirl(.5*dfrac(i, K), ORCHID, BLACK));
+		for (int i = K - 1; i >= 0; --i) {
+			set_color(color_swirl(.9*dfrac(i, K), ORCHID, BLACK));
 			// if (i != 0) { set_color(LIGHT_CLAY); } // !!!
-			if (i != K - 1) { set_color(LIGHT_CLAY); } // !!!
+			// if (i != K - 1) { set_color(LIGHT_CLAY); } // !!!
 			glLineWidth(2); 
 			glBegin(GL_LINE_STRIP); {
 				for (auto &bs : mesh->boundary_simplices) {
@@ -224,7 +224,7 @@ Traj SoftLocoSolver::solve_trajectory(double dt, const dVector &x_0, const dVect
 	vector<dVector> x_tmp = {};
 	vector<dVector> v_tmp = {};
 
-	for (int i = 0; i < K; ++i) {
+	for (int i = 0; i < (int)uJ.size(); ++i) {
 		const dVector x_im1 = (x_tmp.empty()) ? x_0 : x_tmp.back();
 		const dVector v_im1 = (v_tmp.empty()) ? v_0 : v_tmp.back();
 		dVector u_i = uJ[i];

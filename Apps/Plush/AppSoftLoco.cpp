@@ -8,11 +8,12 @@ AppSoftLoco::AppSoftLoco() {
 	this->showGroundPlane = false;
 
 	const vector<string> TEST_CASES = {
-		"swingup", // 0
-		"tri",     // 1
-		"tentacle" // 2
+		"swingup",     // 0
+		"tri",         // 1
+		"tentacle",    // 2
+		"mini_swingup" // 3
 	};
-	string TEST_CASE = TEST_CASES[2];
+	string TEST_CASE = TEST_CASES[3];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
@@ -21,11 +22,11 @@ AppSoftLoco::AppSoftLoco() {
 	mesh->nudge_mesh_up();
 	mesh->applyYoungsModulusAndPoissonsRatio(3e4, .25);
 	mesh->addGravityForces(V3D(0., -10.)); 
-	mesh->pinToFloor(); 
-	// mesh->pinToLeftWall(); 
+	// mesh->pinToFloor(); 
+	mesh->pinToLeftWall(); 
 	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
 	// mesh->rig_boundary_simplices();
-	mesh->rig_boundary_simplices();
+	// mesh->rig_boundary_simplices();
 
 	// -- // ik
 	ik = new SoftLocoSolver(mesh);
@@ -81,13 +82,60 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addGroup("z");
 	mainMenu->addVariable("appIsRunnig", appIsRunning);
 	mainMenu->addVariable("STEP", STEP);
-	mainMenu->addVariable("REPLAY", REPLAY);
+	mainMenu->addVariable("PLAY_PREVIEW", PLAY_PREVIEW);
+	mainMenu->addGroup("zz");
+	mainMenu->addVariable("CAPTURE_TEST_SESSION", CAPTURE_TEST_SESSION);
+	mainMenu->addVariable("PLAY_CAPTURE", PLAY_CAPTURE);
 	menuScreen->performLayout(); 
 	appIsRunning = false;
 }
 
 void AppSoftLoco::processToggles() {
 	PlushApplication::processToggles();
+
+	if (CAPTURE_TEST_SESSION) {
+		if (!CAPTURED_TEST_SESSION_) {
+			CAPTURE_TEST_SESSION = false;
+			CAPTURED_TEST_SESSION_ = true;
+
+			xm1_capture = ik->xm1_curr;
+			vm1_capture = ik->vm1_curr;
+			auto uJ_curr_push = ik->uJ_curr;
+			auto xJ_curr_push = ik->xJ_curr;
+			auto x_push = mesh->x;
+			auto v_push = mesh->v;
+			{
+				uJ_capture.clear();
+				const int NUM_FRAMES = 48;
+				const int NUM_STEPS_ = 10;
+				for (int f = 0; f < NUM_FRAMES; ++f) { cout << endl << f + 1 << "/" << NUM_FRAMES << ": "; // TODO: nanogui::ProgressBar()
+ 
+					ik->xm1_curr = mesh->x;
+					ik->vm1_curr = mesh->v;
+
+					for (int s = 0; s < NUM_STEPS_; ++s) { cout << "(" << s + 1 << "/" << NUM_STEPS_ << ")"; 
+						ik->step();
+					} 
+
+					dVector &u_f = ik->uJ_curr.front(); 
+					uJ_capture.push_back(u_f);
+
+					mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, u_f) : mesh->solve_statics(ik->xm1_curr, u_f));
+
+				}
+			}
+			ik->xm1_curr = xm1_capture;
+			ik->vm1_curr = vm1_capture;
+			ik->uJ_curr = uJ_curr_push; 
+			ik->xJ_curr = xJ_curr_push; 
+			mesh->x = x_push;
+			mesh->v = v_push;
+
+			// TODO: CSTSimulationMesh2D::draw_silhouette(const dVector &x, const P3D &COLOR) {}
+			// TODO: Draw each subsequent step on screen.
+
+		}
+	} 
 }
 
 void AppSoftLoco::drawScene() {
@@ -101,25 +149,44 @@ void AppSoftLoco::drawScene() {
 	PlushApplication::drawScene(); 
 	// draw_floor2d();
 
-	if (!REPLAY) {
-		REPLAY_i = -LEADIN_FRAMES;
+	if (!PLAY_PREVIEW && !PLAY_CAPTURE) {
+		PREVIEW_i = -LEADIN_FRAMES;
+		CAPTURE_i = 0;
+		// --
 		mesh->draw(); // FORNOW 
 		ik->draw();
-	} else {
 
-		if (!POPULATED_REPLAY_TRAJEC) {
-			POPULATED_REPLAY_TRAJEC = true;
-			uJsafe = ik->uJ_curr;
-			xJsafe = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJsafe); 
+	} else if (PLAY_PREVIEW) {
+
+		if (!POPULATED_PREVIEW_TRAJEC) {
+			POPULATED_PREVIEW_TRAJEC = true;
+			uJ_preivew = ik->uJ_curr;
+			xJ_preivew = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preivew); 
 		} 
 
-		REPLAY_i++;
-		if (REPLAY_i < 0) {
+		PREVIEW_i++;
+		if (PREVIEW_i < 0) {
 			mesh->draw(ik->xm1_curr);
-		} else if (REPLAY_i < ik->K) {
-			mesh->draw(xJsafe[REPLAY_i], uJsafe[REPLAY_i]); 
+		} else if (PREVIEW_i < ik->K) {
+			mesh->draw(xJ_preivew[PREVIEW_i], uJ_preivew[PREVIEW_i]); 
 		} else {
-			mesh->draw(xJsafe.back(), uJsafe.back()); 
+			mesh->draw(xJ_preivew.back(), uJ_preivew.back()); 
+		}
+
+	} else if (PLAY_CAPTURE && !uJ_capture.empty()) {
+
+		if (!POPULATED_CAPTURE_TRAJEC) {
+			POPULATED_CAPTURE_TRAJEC = true;
+			xJ_capture = ik->solve_trajectory(mesh->timeStep, xm1_capture, vm1_capture, uJ_capture); 
+		} 
+
+		CAPTURE_i++;
+		if (CAPTURE_i < 0) {
+			mesh->draw(xm1_capture);
+		} else if (CAPTURE_i < (int)xJ_capture.size()) {
+			mesh->draw(xJ_capture[CAPTURE_i], uJ_capture[CAPTURE_i]);
+		} else {
+			mesh->draw(xJ_capture.back(), uJ_capture.back()); 
 		}
 
 	}
@@ -128,11 +195,11 @@ void AppSoftLoco::drawScene() {
 }
 
 void AppSoftLoco::process() { 
-	if (!REPLAY) {
-		POPULATED_REPLAY_TRAJEC = false;
+	if (!PLAY_PREVIEW) {
+		POPULATED_PREVIEW_TRAJEC = false;
 		// ik->COMp_FORNOW = ik->COMpJ[0]; // !!!
 		// Zik->COMp       = ik->COMpJ[0]; // !!!
-		ik->COMp_FORNOW = ik->COMpJ[ik->K - 1]; // !!!
+		// ik->COMp_FORNOW = ik->COMpJ[ik->K - 1]; // !!!
 		// Zik->COMp       = ik->COMpJ[ik->K - 1]; // !!!
 		// --
 		// Zik->SOLVE_DYNAMICS = ik->SOLVE_DYNAMICS;
@@ -140,7 +207,6 @@ void AppSoftLoco::process() {
 		if (INTEGRATE_FORWARD_IN_TIME) { ik->xm1_curr = mesh->x; ik->vm1_curr = mesh->v; }
 		// if (INTEGRATE_FORWARD_IN_TIME) { Zik->x_0 = mesh->x; Zik->v_0 = mesh->v; } // FORNOW
 		if (SOLVE_IK) {
-			// cout << endl << "--> loco" << endl;
 			ik->step();
 			// cout << endl << "--> Z_ik" << endl;
 			// Zik->step();

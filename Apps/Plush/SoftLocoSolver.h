@@ -47,7 +47,7 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 24; // HORIZON
+	const int K = 96; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
