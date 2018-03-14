@@ -8,12 +8,14 @@ AppSoftLoco::AppSoftLoco() {
 	this->showGroundPlane = false;
 
 	const vector<string> TEST_CASES = {
-		"swingup",     // 0
-		"tri",         // 1
-		"tentacle",    // 2
-		"mini_swingup" // 3
+		"swingup",      // 0
+		"tri",          // 1
+		"tentacle",     // 2
+		"mini_swingup", // 3
+		"3ball",        // 4
+		"walker",       // 5
 	};
-	string TEST_CASE = TEST_CASES[3];
+	string TEST_CASE = TEST_CASES[1];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
@@ -23,10 +25,16 @@ AppSoftLoco::AppSoftLoco() {
 	mesh->applyYoungsModulusAndPoissonsRatio(3e4, .25);
 	mesh->addGravityForces(V3D(0., -10.)); 
 	// mesh->pinToFloor(); 
-	mesh->pinToLeftWall(); 
+	// mesh->pinToLeftWall(); 
+	mesh->add_contacts_to_boundary_nodes();
 	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
 	// mesh->rig_boundary_simplices();
-	// mesh->rig_boundary_simplices();
+	mesh->rig_boundary_simplices();
+
+	for (int _ = 0; _ < 25; ++_) {
+		mesh->xvPair_INTO_Mesh(mesh->solve_dynamics());
+	}
+
 
 	// -- // ik
 	ik = new SoftLocoSolver(mesh);
@@ -55,6 +63,13 @@ AppSoftLoco::AppSoftLoco() {
 		// Zik->c_alphac_ = .1;
 		// Zik->HONEY_alphac = false;
 		// Zik->NUM_ITERS_PER_STEP = 1;
+	}
+
+	{
+		ik->REGULARIZE_u = false;
+		ik->SUBSEQUENT_u = false;
+		// mesh->HIGH_PRECISION_NEWTON = true;
+		ik->COMpJ.back() += V3D(-.5, .5);
 	}
  
 	mainMenu->addGroup("app");
@@ -87,7 +102,6 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("CAPTURE_TEST_SESSION", CAPTURE_TEST_SESSION);
 	mainMenu->addVariable("PLAY_CAPTURE", PLAY_CAPTURE);
 	menuScreen->performLayout(); 
-	appIsRunning = false;
 }
 
 void AppSoftLoco::processToggles() {
@@ -147,7 +161,7 @@ void AppSoftLoco::drawScene() {
 
 	DRAW_HANDLERS = false;
 	PlushApplication::drawScene(); 
-	// draw_floor2d();
+	draw_floor2d();
 
 	if (!PLAY_PREVIEW && !PLAY_CAPTURE) {
 		PREVIEW_i = -LEADIN_FRAMES;

@@ -164,7 +164,7 @@ void SoftLocoSolver::draw() {
 		glTranslated(1., 0., 0.);
 
 		for (int i = K - 1; i >= 0; --i) {
-			set_color(color_swirl(.9*dfrac(i, K), ORCHID, BLACK));
+			set_color(color_swirl(dfrac(i, K), ORCHID, RATIONALITY));
 			// if (i != 0) { set_color(LIGHT_CLAY); } // !!!
 			// if (i != K - 1) { set_color(LIGHT_CLAY); } // !!!
 			glLineWidth(2); 
@@ -237,7 +237,7 @@ Traj SoftLocoSolver::solve_trajectory(double dt, const dVector &x_0, const dVect
 }
 
 void SoftLocoSolver::step() { 
-	if (!mesh->contacts.empty()) { error("[SoftLocoSolver::step()] NotImplementedErro."); }
+	// if (!mesh->contacts.empty()) { error("[SoftLocoSolver::step()] NotImplementedError."); }
 	// mesh->update_contacts(xm1_curr);
 	if (PROJECT) {
 		// project();
@@ -667,14 +667,32 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	MatrixNxM I; I.setIdentity(DN(), DN());
 	vector<MatrixNxM> vecHinv;
 	for (int k = 0; k < K; ++k) {
-		vecHinv.push_back(calculate_H(xJ[k], uJ[k]).toDense().inverse());
+		dVector x_ctc = (k == 0) ? xm1_curr : xJ[k - 1];
+		vecHinv.push_back(calculate_H(xJ[k], uJ[k], x_ctc).toDense().inverse());
 	}
 
 	// cout << "dxkdxkm1" << endl;
 	vector<MatrixNxM> dxkdxkm1_INDEX_AT_km1; {
 		for (int k = 1; k < K; ++k) {
 			MatrixNxM &Hinv = vecHinv[k];
-			dxkdxkm1_INDEX_AT_km1.push_back(2./(h*h)*Hinv*M); // TODO <--
+			MatrixNxM dGkdxkm1;
+			  
+			dVector xk   = xJ[k];
+			dVector xkm1 = xJ[k - 1];
+			mat_resize_zero(dGkdxkm1, DN(), DN());
+			for (auto &c: mesh->contacts) {
+				int i = c->node->nodeIndex;
+				P3D xy_k_i   = c->getPosition(xk);
+				P3D xy_km1_i = c->getPosition(xkm1);
+				double &xk_i   = xy_k_i[0];
+				double &xkm1_i = xy_km1_i[0];
+				Matrix2x2 block; block.setZero();
+				block(0, 0) = -c->b(xk)*c->QT->computeSecondDerivative(xk_i - xkm1_i);
+				block(0, 1) = -c->b_prime(xk)*c->QT->computeDerivative(xk_i - xkm1_i);
+				dGkdxkm1.block<2, 2>(2 * i, 2 * i) += block;
+			}
+
+			dxkdxkm1_INDEX_AT_km1.push_back(Hinv*(2. / (h*h)*M));// -dGkdxkm1); // TODO <--
 		}
 	} 
 
@@ -728,7 +746,8 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	// cout << "dxkduk" << endl;
 	vector<MatrixNxM> dxkduk;
 	for (int k = 0; k < K; ++k) {
-		dxkduk.push_back(calculate_dxdu(uJ[k], xJ[k]));
+		dVector x_ctc = (k == 0) ? xm1_curr : xJ[k - 1];
+		dxkduk.push_back(calculate_dxdu(uJ[k], xJ[k], x_ctc));
 	}
 	
 	// cout << "dQkdxk" << endl;
@@ -885,7 +904,7 @@ dVector SoftLocoSolver::calculate_dQdx(const dVector &u, const dVector &x, const
 	return dQdx;
 }
 
-MatrixNxM SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x) {
+MatrixNxM SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x, const dVector &x_ctc) {
 	check_x_size(x);
 	check_u_size(u);
 	// --
@@ -894,7 +913,7 @@ MatrixNxM SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x) {
 		// X H = A_T
 		// H_T X_T = A
 		SparseMatrix A_s = calculate_A(x);
-		SparseMatrix H_T_s = calculate_H(x, u).transpose();
+		SparseMatrix H_T_s = calculate_H(x, u, x_ctc).transpose();
 		MatrixNxM X_T;
 		mat_resize_zero(X_T, H_T_s.cols(), A_s.cols());
 
@@ -1024,28 +1043,32 @@ SparseMatrix SoftLocoSolver::calculate_A(const dVector &x) {
 	return A; 
 }
 
-SparseMatrix SoftLocoSolver::calculate_H(const dVector &x, const dVector &u) {
+SparseMatrix SoftLocoSolver::calculate_H(const dVector &x, const dVector &u, const dVector &x_ctc) {
 	check_x_size(x);
 	check_u_size(u);
 	// --
 	vector<MTriplet> triplets;
 	{ 
 		dVector u_push = mesh->balphac;
-		// dVector x_push = mesh->x;
-		// dVector v_push = mesh->v;
+
 		{
-			mesh->balphac = u; // (*)
-			// mesh->x.fill(1000.);
-			// mesh->v.fill(1000.);
-			// mesh->x = x_0; mesh->v = v_0; // NOTE: This won't actually do anything since dynamics contrib to H is constant.
-			// --
-			auto &E = mesh->energyFunction;
-			(SOLVE_DYNAMICS) ? E->setToDynamicsMode(mesh->timeStep) : E->setToStaticsMode(0.);
-			E->addHessianEntriesTo(triplets, x);
+			if (!mesh->contacts.empty()) {
+				if (x_ctc.size() == 0) { error("[calculate_H] x_ctc not spec'd."); } 
+				mesh->update_contacts(x_ctc);
+			}
+
+			{
+				mesh->balphac = u; // (*)
+				auto &E = mesh->energyFunction;
+				(SOLVE_DYNAMICS) ? E->setToDynamicsMode(mesh->timeStep) : E->setToStaticsMode(0.);
+				E->addHessianEntriesTo(triplets, x);
+			}
+
+			if (!mesh->contacts.empty()) {
+				mesh->update_contacts(mesh->x);
+			}
 		}
 		mesh->balphac = u_push;
-		// mesh->x = x_push;
-		// mesh->v = v_push;
 
 	}
 	// H_sparse.setZero(); // (*)

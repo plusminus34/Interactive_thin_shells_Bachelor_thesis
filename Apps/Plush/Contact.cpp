@@ -58,12 +58,11 @@ P3D Contact::getPosition(const dVector &x) {
 }
  
 void Contact::update(const dVector &x) {
-	currentPosition = getPosition(x);
-	bool PENETRATING = (currentPosition.y() < 0);
-
-	ACTIVE = PENETRATING;
-	targetPosition = currentPosition;
-	targetPosition.y() = 0.;
+	P3D currentPosition = getPosition(x);
+	targetPosition[0] = currentPosition[0];
+	targetPosition[1] = 0.;
+	targetPosition[2] = currentPosition[2];
+	ACTIVE = true; // (currentPosition.y() < 0);
 
 	/*
 	if (ACTIVE) {
@@ -87,27 +86,32 @@ int Contact::D() {
 
 V3D Contact::get_Delta(const dVector &x) {
 	// NOTE: dDeltadx = 1
-	return node->getCoordinates(x) - targetPosition;
+	return getPosition(x) - targetPosition;
 }
 
 double Contact::b_(const double &y) {
-	double f_y = abs(ZCQ1->computeDerivative(y));
+	double f_y = -ZCQ1->computeDerivative(y);
+	if (f_y < 0) { error("[b_] ValueError"); }
 	// double step = _SSb->g(-y +_eps_b); // ? (*)
 	// return f_y * step;
 	return f_y;
 }
 
+double Contact::b_prime_(const double &y) {
+	return -ZCQ1->computeSecondDerivative(y);
+}
+
 double Contact::get_E(const dVector &x) {
-	auto &ds = get_Delta(x); 
 	
 	double E = 0.;
 
+	auto &ds = get_Delta(x); 
 	for (int i = 0; i < D(); ++i) {
 		if (i == 1) { continue; }
-		E += b()*QT->computeValue(ds[i]);
+		E += b(x)*QT->computeValue(ds[i]);
 	}
 
-	E += ZCQ1->computeValue(ds[1]);
+	E += ZCQ1->computeValue(getPosition(x)[1]); // FORNOW: NOTE: targetPosition[1] <- 0.
  
 	return E;
 }
@@ -119,10 +123,10 @@ dVector Contact::get_dEdx(const dVector &x) {
 
 	for (int i = 0; i < D(); ++i) {
 		if (i == 1) { continue; }
-		dEdx[i] += b()*QT->computeDerivative(ds[i]);
+		dEdx[i] += b(x)*QT->computeDerivative(ds[i]);
 	}
 
-	dEdx[1] += ZCQ1->computeDerivative(ds[1]);
+	dEdx[1] += ZCQ1->computeDerivative(getPosition(x)[1]);
 
 	{
 		dVector f_ctc = -dEdx;
@@ -141,10 +145,10 @@ MatrixNxM Contact::get_ddEdxdx(const dVector &x) {
 
 	for (int i = 0; i < D(); ++i) {
 		if (i == 1) { continue; }
-		ddEdxdx(i, i) += b()*QT->computeSecondDerivative(ds[i]);
+		ddEdxdx(i, i) += b(x)*QT->computeSecondDerivative(ds[i]);
 	}
 
-	ddEdxdx(1, 1) += ZCQ1->computeSecondDerivative(ds[1]); // (*) 
+	ddEdxdx(1, 1) += ZCQ1->computeSecondDerivative(getPosition(x)[1]); // (*) 
 
 	return ddEdxdx; 
 }

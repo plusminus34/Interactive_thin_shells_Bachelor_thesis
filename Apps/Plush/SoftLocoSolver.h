@@ -47,7 +47,7 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 96; // HORIZON
+	const int K = 2; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
@@ -107,13 +107,13 @@ public:
 	dVector calculate_dOdu(const dVector &u, const dVector &x);
 	dVector calculate_dQdu(const dVector &u, const dVector &x);
 	dVector calculate_dQdx(const dVector &u, const dVector &x, const P3D &COMp);
-	MatrixNxM calculate_dxdu(const dVector &u, const dVector &x);
+	MatrixNxM calculate_dxdu(const dVector &u, const dVector &x, const dVector &x_ctc=dVector());
 	dVector calculate_dRdu(const dVector &u);
 
 	// -- //
 
 	SparseMatrix calculate_A(const dVector &x);
-	SparseMatrix calculate_H(const dVector &x, const dVector &u);
+	SparseMatrix calculate_H(const dVector &x, const dVector &u, const dVector &x_ctc=dVector());
 
 public: 
 	vector<ZeroCubicQuadratic *> u_barrierFuncs;

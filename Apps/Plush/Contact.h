@@ -37,11 +37,12 @@ public:
 
 public:
 	// b
-	P3D currentPosition = P3D();
 	double _eps_b = .01;
 	SmoothestStep *_SSb = new SmoothestStep(&this->_eps_b);
 	double b_(const double &y);
-	double b() { return b_(currentPosition[1]); }
+	double b_prime_(const double &y);
+	double b(const dVector &x) { return b_(getPosition(x)[1]); }
+	double b_prime(const dVector &x) { return b_prime_(getPosition(x)[1]); }
 
 public:
 	P3D ACTIVE_COLOR = ORCHID;

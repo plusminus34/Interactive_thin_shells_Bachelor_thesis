@@ -49,18 +49,19 @@ void Tendon::draw(const dVector &x, const dVector &balphac) {
 			const P3D POS_COLOR = (SPEC_COLOR == BLACK) ? ORCHID : SPEC_COLOR;
 			const P3D NEG_COLOR = (SPEC_COLOR == BLACK) ? RATIONALITY : SPEC_COLOR;
 			const P3D ZERO_COLOR = (SPEC_COLOR == BLACK) ? WHITE : SPEC_COLOR;
-			const double POS_GAMMA_SATURATION = .01;
-			const double NEG_GAMMA_SATURATION = .01;
+			const double POS_ALPHAC_SATURATION = .1;
+			const double NEG_ALPHAC_SATURATION = .1;
 			// --
-			double Gamma = get_Gamma(x, balphac);
+			// double Gamma = get_Gamma(x, balphac);
+			double alphac = get_alphac(balphac);
 			double f;
 			P3D BASE_COLOR;
 			// --
-			if (Gamma > 0) {
-				f = Gamma / POS_GAMMA_SATURATION;
+			if (alphac > 0) {
+				f = alphac / POS_ALPHAC_SATURATION;
 				BASE_COLOR = POS_COLOR;
 			} else {
-				f = abs(Gamma / NEG_GAMMA_SATURATION);
+				f = abs(alphac / NEG_ALPHAC_SATURATION);
 				BASE_COLOR = NEG_COLOR;
 			}
 			COLOR = color_swirl(f, ZERO_COLOR, BASE_COLOR);
