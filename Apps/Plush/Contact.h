@@ -37,8 +37,8 @@ public:
 
 public:
 	// b
-	double _eps_b = .01;
-	SmoothestStep *_SSb = new SmoothestStep(&this->_eps_b);
+	// double _eps_b = .01;
+	// SmoothestStep *_SSb = new SmoothestStep(&this->_eps_b);
 	double b_(const double &y);
 	double b_prime_(const double &y);
 	double b() { return b_(prevPosition[1]); }

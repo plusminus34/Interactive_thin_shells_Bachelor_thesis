@@ -675,8 +675,8 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	vector<MatrixNxM> dxkdxkm1_INDEX_AT_km1; {
 		for (int k = 1; k < K; ++k) {
 			MatrixNxM &Hinv = vecHinv[k];
-			MatrixNxM dGkdxkm1;
-			  
+
+			MatrixNxM dGkdxkm1; 
 			dVector xk   = xJ[k];
 			dVector xkm1 = xJ[k - 1];
 			mesh->update_contacts(xkm1); // FORNOW
@@ -693,8 +693,22 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 				dGkdxkm1.block<2, 2>(2 * i, 2 * i) += block;
 			}
 
+			MatrixNxM dGkdxkm1_FD; 
+			auto G_wrapper = [&](const dVector xkm1) -> dVector {
+				dVector G;
+				mesh->update_contacts(xkm1);
+				mesh->energyFunction->setToStaticsMode(0.);
+				mesh->energyFunction->addGradientTo(G, xk);
+				return G;
+			};
+			dGkdxkm1_FD = mat_FD(xkm1, G_wrapper, 5e-5);
+
+			cout << "--> dGkdxkm1" << endl;
+			matrix_equality_check(dGkdxkm1, dGkdxkm1_FD);
+
 			dxkdxkm1_INDEX_AT_km1.push_back(Hinv*(2. / (h*h)*M) - dGkdxkm1);
 		}
+		mesh->update_contacts(mesh->x);
 	} 
 
 	// cout << "dxkdxkm1" << endl;
