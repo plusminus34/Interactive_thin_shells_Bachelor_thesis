@@ -84,6 +84,7 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("PROJECT", ik->PROJECT);
 	mainMenu->addGroup("testing"); 
 	mainMenu->addVariable("INTEGRATE_FORWARD_IN_TIME", INTEGRATE_FORWARD_IN_TIME);
+	mainMenu->addVariable("CHECK_DERIVATIVES", mesh->checkDerivatives);
 	mainMenu->addVariable("TEST_Q_FD", ik->TEST_Q_FD);
 	mainMenu->addVariable("TEST_R_FD", ik->TEST_R_FD);
 	mainMenu->addVariable("HIGH_PRECISION_NEWTON", mesh->HIGH_PRECISION_NEWTON);

@@ -870,23 +870,6 @@ Traj SoftLocoSolver::calculate_dRduJ(const Traj &uJ) {
 	return dRduJ;
 }
 
-dVector SoftLocoSolver::calculate_dOdu(const dVector &u, const dVector &x) {
-	check_x_size(x);
-	check_u_size(u);
-	// --
-	dVector dQdu = calculate_dQdu(u, x);
-	dVector dRdu = calculate_dRdu(u);
-	return dQdu + dRdu;
-} 
-
-dVector SoftLocoSolver::calculate_dQdu(const dVector &u, const dVector &x) {
-	check_x_size(x);
-	check_u_size(u);
-	// --
-	dxdu_SAVED = calculate_dxdu(u, x);
-	return dxdu_SAVED * calculate_dQdx(u, x, COMp_FORNOW);
-}
-
 dVector SoftLocoSolver::calculate_dQdx(const dVector &u, const dVector &x, const P3D &COMp) { 
 	check_x_size(x);
 	check_u_size(u);

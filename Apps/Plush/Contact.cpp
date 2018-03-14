@@ -58,26 +58,9 @@ P3D Contact::getPosition(const dVector &x) {
 }
  
 void Contact::update(const dVector &x) {
-	P3D currentPosition = getPosition(x);
-	targetPosition[0] = currentPosition[0];
+	targetPosition = getPosition(x);
 	targetPosition[1] = 0.;
-	targetPosition[2] = currentPosition[2];
 	ACTIVE = true; // (currentPosition.y() < 0);
-
-	/*
-	if (ACTIVE) {
-		if (!PENETRATING) {
-			ACTIVE = false;
-			targetPosition = P3D(0., 0., 0.);
-		} 
-	} else {
-		if (PENETRATING) {
-			ACTIVE = true;
-			targetPosition = currentPosition;
-			targetPosition.y() = 0.;
-		} 
-	} 
-	*/
 }
 
 int Contact::D() {
@@ -92,8 +75,6 @@ V3D Contact::get_Delta(const dVector &x) {
 double Contact::b_(const double &y) {
 	double f_y = -ZCQ1->computeDerivative(y);
 	if (f_y < 0) { error("[b_] ValueError"); }
-	// double step = _SSb->g(-y +_eps_b); // ? (*)
-	// return f_y * step;
 	return f_y;
 }
 
