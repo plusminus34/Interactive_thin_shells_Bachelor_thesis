@@ -24,7 +24,7 @@ void Contact::draw(const dVector &x) {
 		glPointSize(9.);
 
 		if (ACTIVE) {
-			vector<P3D> tmp = { node->getCoordinates(x), targetPosition };
+			vector<P3D> tmp = { node->getCoordinates(x), prevPosition };
 
 			set_color(POINT_COLOR);
 			glBegin(GL_POINTS); { glvecP3Dz(tmp, Z); } glEnd();
@@ -58,8 +58,7 @@ P3D Contact::getPosition(const dVector &x) {
 }
  
 void Contact::update(const dVector &x) {
-	targetPosition = getPosition(x);
-	targetPosition[1] = 0.;
+	prevPosition = getPosition(x);
 	ACTIVE = true; // (currentPosition.y() < 0);
 }
 
@@ -69,7 +68,7 @@ int Contact::D() {
 
 V3D Contact::get_Delta(const dVector &x) {
 	// NOTE: dDeltadx = 1
-	return getPosition(x) - targetPosition;
+	return getPosition(x) - prevPosition;
 }
 
 double Contact::b_(const double &y) {
@@ -86,10 +85,9 @@ double Contact::get_E(const dVector &x) {
 	
 	double E = 0.;
 
-	auto &ds = get_Delta(x); 
 	for (int i = 0; i < D(); ++i) {
 		if (i == 1) { continue; }
-		E += b(x)*QT->computeValue(ds[i]);
+		E += b()*QT->computeValue(get_Delta(x)[i]);
 	}
 
 	E += ZCQ1->computeValue(getPosition(x)[1]); // FORNOW: NOTE: targetPosition[1] <- 0.
@@ -98,13 +96,12 @@ double Contact::get_E(const dVector &x) {
 }
 
 dVector Contact::get_dEdx(const dVector &x) {
-	auto &ds = get_Delta(x); 
 
 	dVector dEdx; resize_zero(dEdx, D());
 
 	for (int i = 0; i < D(); ++i) {
 		if (i == 1) { continue; }
-		dEdx[i] += b(x)*QT->computeDerivative(ds[i]);
+		dEdx[i] += b()*QT->computeDerivative(get_Delta(x)[i]);
 	}
 
 	dEdx[1] += ZCQ1->computeDerivative(getPosition(x)[1]);
@@ -120,13 +117,12 @@ dVector Contact::get_dEdx(const dVector &x) {
 }
 
 MatrixNxM Contact::get_ddEdxdx(const dVector &x) {
-	auto &ds = get_Delta(x); 
 	
 	MatrixNxM ddEdxdx; mat_resize_zero(ddEdxdx, D(), D());
 
 	for (int i = 0; i < D(); ++i) {
 		if (i == 1) { continue; }
-		ddEdxdx(i, i) += b(x)*QT->computeSecondDerivative(ds[i]);
+		ddEdxdx(i, i) += b()*QT->computeSecondDerivative(get_Delta(x)[i]);
 	}
 
 	ddEdxdx(1, 1) += ZCQ1->computeSecondDerivative(getPosition(x)[1]); // (*) 

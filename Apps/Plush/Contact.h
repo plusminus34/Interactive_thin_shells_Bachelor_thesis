@@ -41,8 +41,8 @@ public:
 	SmoothestStep *_SSb = new SmoothestStep(&this->_eps_b);
 	double b_(const double &y);
 	double b_prime_(const double &y);
-	double b(const dVector &x) { return b_(getPosition(x)[1]); }
-	double b_prime(const dVector &x) { return b_prime_(getPosition(x)[1]); }
+	double b() { return b_(prevPosition[1]); }
+	double b_prime() { return b_prime_(prevPosition[1]); }
 
 public:
 	P3D ACTIVE_COLOR = ORCHID;
@@ -50,7 +50,7 @@ public:
 
 public:
 	Node *node = nullptr;
-	P3D targetPosition = P3D();
+	P3D prevPosition = P3D();
 	P3D getPosition(const dVector &);
 
 

@@ -31,9 +31,7 @@ AppSoftLoco::AppSoftLoco() {
 	// mesh->rig_boundary_simplices();
 	mesh->rig_boundary_simplices();
 
-	for (int _ = 0; _ < 25; ++_) {
-		mesh->xvPair_INTO_Mesh(mesh->solve_dynamics());
-	}
+	for (int _ = 0; _ < 25; ++_) { mesh->xvPair_INTO_Mesh(mesh->solve_dynamics()); }
 
 
 	// -- // ik

@@ -656,7 +656,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 					auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(xkm1, vkm1, uk) : mesh->solve_statics(xkm1, uk);
 					return xv.first;
 				};
-				dxkduk_FD.push_back(mat_FD(uJ[k], xk_wrapper, 1e-4));
+				dxkduk_FD.push_back(mat_FD(uJ[k], xk_wrapper, 5e-5));
 			}
 		}
 	}
@@ -679,6 +679,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 			  
 			dVector xk   = xJ[k];
 			dVector xkm1 = xJ[k - 1];
+			mesh->update_contacts(xkm1); // FORNOW
 			mat_resize_zero(dGkdxkm1, DN(), DN());
 			for (auto &c: mesh->contacts) {
 				int i = c->node->nodeIndex;
@@ -687,12 +688,12 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 				double &xk_i   = xy_k_i[0];
 				double &xkm1_i = xy_km1_i[0];
 				Matrix2x2 block; block.setZero();
-				block(0, 0) = -c->b(xk)*c->QT->computeSecondDerivative(xk_i - xkm1_i);
-				block(0, 1) = -c->b_prime(xk)*c->QT->computeDerivative(xk_i - xkm1_i);
+				block(0, 0) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
+				block(1, 0) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
 				dGkdxkm1.block<2, 2>(2 * i, 2 * i) += block;
 			}
 
-			dxkdxkm1_INDEX_AT_km1.push_back(Hinv*(2. / (h*h)*M));// -dGkdxkm1); // TODO <--
+			dxkdxkm1_INDEX_AT_km1.push_back(Hinv*(2. / (h*h)*M) - dGkdxkm1);
 		}
 	} 
 
