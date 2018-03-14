@@ -47,7 +47,7 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 10; // HORIZON
+	const int K = 48; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
@@ -84,7 +84,7 @@ public:
  
 public:
 	void step();
-	int NUM_ITERS_PER_STEP = 5;
+	int NUM_ITERS_PER_STEP = 1;
 
 public:
 	void iterate();

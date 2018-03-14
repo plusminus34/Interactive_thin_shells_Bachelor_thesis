@@ -14,8 +14,9 @@ AppSoftLoco::AppSoftLoco() {
 		"mini_swingup", // 3
 		"3ball",        // 4
 		"walker",       // 5
+		"jumping_cube"  // 6
 	};
-	string TEST_CASE = TEST_CASES[1];
+	string TEST_CASE = TEST_CASES[6];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
@@ -28,7 +29,7 @@ AppSoftLoco::AppSoftLoco() {
 	// mesh->pinToLeftWall(); 
 	mesh->add_contacts_to_boundary_nodes();
 	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
-	mesh->rig_boundary_simplices();
+	// mesh->rig_boundary_simplices();
 
 	for (int _ = 0; _ < 25; ++_) { mesh->xvPair_INTO_Mesh(mesh->solve_dynamics()); }
 
@@ -63,10 +64,11 @@ AppSoftLoco::AppSoftLoco() {
 	}
 
 	{
-		ik->REGULARIZE_u = false;
-		ik->SUBSEQUENT_u = false;
+		ik->REGULARIZE_u = true;
+		ik->SUBSEQUENT_u = true;
 		// mesh->HIGH_PRECISION_NEWTON = true;
 		ik->COMpJ.back() += V3D(-.5, .5);
+		appIsRunning = false;
 	}
  
 	mainMenu->addGroup("app");
@@ -172,17 +174,18 @@ void AppSoftLoco::drawScene() {
 
 		if (!POPULATED_PREVIEW_TRAJEC) {
 			POPULATED_PREVIEW_TRAJEC = true;
-			uJ_preivew = ik->uJ_curr;
-			xJ_preivew = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preivew); 
+			uJ_preview = ik->uJ_curr;
+			for (int _ = 0; _ < 30; ++_) { uJ_preview.push_back(uJ_preview.back()); }
+			xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview); 
 		} 
 
 		PREVIEW_i++;
 		if (PREVIEW_i < 0) {
 			mesh->draw(ik->xm1_curr);
-		} else if (PREVIEW_i < ik->K) {
-			mesh->draw(xJ_preivew[PREVIEW_i], uJ_preivew[PREVIEW_i]); 
+		} else if (PREVIEW_i < uJ_preview.size()) { // TODO: min() logic
+			mesh->draw(xJ_preview[PREVIEW_i], uJ_preview[PREVIEW_i]); 
 		} else {
-			mesh->draw(xJ_preivew.back(), uJ_preivew.back()); 
+			mesh->draw(xJ_preview.back(), uJ_preview.back()); 
 		}
 
 	} else if (PLAY_CAPTURE && !uJ_capture.empty()) {

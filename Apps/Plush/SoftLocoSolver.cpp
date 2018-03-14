@@ -1084,7 +1084,7 @@ SparseMatrix SoftLocoSolver::calculate_H(const dVector &x, const dVector &u, con
 void SoftLocoSolver::construct_u_barrierFuncs() {
 	this->u_barrierFuncs.clear(); 
 	for (auto &tendon : mesh->tendons) {
-		double ALPHAC_MAX = .66*tendon->get_alphaz();
+		double ALPHAC_MAX = .5*tendon->get_alphaz();
 		u_barrierFuncs.push_back(new ZeroCubicQuadratic(1e5, .01, V3D(ALPHAC_MAX, 0.), false, false));
 	}
 }

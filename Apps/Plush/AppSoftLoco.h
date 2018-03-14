@@ -31,8 +31,8 @@ public:
 	bool POPULATED_PREVIEW_TRAJEC = false;
 	const int LEADIN_FRAMES = 30;
 	int PREVIEW_i = -LEADIN_FRAMES;
-	vector<dVector> uJ_preivew;
-	vector<dVector> xJ_preivew;
+	vector<dVector> uJ_preview;
+	vector<dVector> xJ_preview;
 
 public:
 	bool CAPTURE_TEST_SESSION = false;
