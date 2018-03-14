@@ -28,7 +28,6 @@ AppSoftLoco::AppSoftLoco() {
 	// mesh->pinToLeftWall(); 
 	mesh->add_contacts_to_boundary_nodes();
 	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
-	// mesh->rig_boundary_simplices();
 	mesh->rig_boundary_simplices();
 
 	for (int _ = 0; _ < 25; ++_) { mesh->xvPair_INTO_Mesh(mesh->solve_dynamics()); }

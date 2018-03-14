@@ -693,25 +693,28 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 				dGkdxkm1.block<2, 2>(2 * i, 2 * i) += block;
 			}
 
-			MatrixNxM dGkdxkm1_FD; 
-			auto G_wrapper = [&](const dVector xkm1) -> dVector {
-				dVector G;
-				mesh->update_contacts(xkm1);
-				mesh->energyFunction->setToStaticsMode(0.);
-				mesh->energyFunction->addGradientTo(G, xk);
-				return G;
-			};
-			dGkdxkm1_FD = mat_FD(xkm1, G_wrapper, 5e-5);
+			if (TEST_Q_FD) {
+				MatrixNxM dGkdxkm1_FD;
+				auto G_wrapper = [&](const dVector xkm1) -> dVector {
+					dVector G;
+					mesh->update_contacts(xkm1);
+					mesh->energyFunction->setToStaticsMode(0.);
+					mesh->energyFunction->addGradientTo(G, xk);
+					(SOLVE_DYNAMICS) ? mesh->energyFunction->setToDynamicsMode(mesh->timeStep) : mesh->energyFunction->setToStaticsMode(0.);
+					return G;
+				};
+				dGkdxkm1_FD = mat_FD(xkm1, G_wrapper, 5e-5);
 
-			cout << "--> dGkdxkm1" << endl;
-			matrix_equality_check(dGkdxkm1, dGkdxkm1_FD);
+				cout << "--> dGkdxkm1" << endl;
+				matrix_equality_check(dGkdxkm1_FD, dGkdxkm1);
+			}
 
-			dxkdxkm1_INDEX_AT_km1.push_back(Hinv*(2. / (h*h)*M) - dGkdxkm1);
+			dxkdxkm1_INDEX_AT_km1.push_back((2./(h*h)*M - dGkdxkm1)*Hinv);
 		}
 		mesh->update_contacts(mesh->x);
 	} 
 
-	// cout << "dxkdxkm1" << endl;
+	// cout << "dxkdxkm2" << endl;
 	vector<MatrixNxM> dxkdxkm2_INDEX_AT_km2; {
 		for (int k = 2; k < K; ++k) {
 			double h = mesh->timeStep;
@@ -803,8 +806,8 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		cout << "BEG.................................................." << endl;
 		cout << "--> dxkduk" << endl;
 		MTraj_equality_check(dxkduk_FD, dxkduk);
-		// cout << "--> dxkdxkm1" << endl;
-		// MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
+		cout << "--> dxkdxkm1" << endl;
+		MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
 		cout << "--> dxidxj" << endl;
 		// cout << "--------------------------------------------------------------------------------" << endl;
 		// cout << "dx1dx0" << endl;
