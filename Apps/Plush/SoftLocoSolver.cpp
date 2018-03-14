@@ -665,6 +665,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	double h = mesh->timeStep;
 	MatrixNxM M = mesh->m.asDiagonal();
 	MatrixNxM I; I.setIdentity(DN(), DN());
+	MatrixNxM f1h2M = (1./(h*h))*M;
 	vector<MatrixNxM> vecHinv;
 	for (int k = 0; k < K; ++k) {
 		dVector x_ctc = (k == 0) ? xm1_curr : xJ[k - 1];
@@ -713,7 +714,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 				matrix_equality_check(dGkdxkm1_FD, dGkdxkm1);
 			}
 
-			MatrixNxM dScriptGdxkm1 = dGkdxkm1 - 2./(h*h)*M;
+			MatrixNxM dScriptGdxkm1 = dGkdxkm1 - 2.*f1h2M;
 			dScriptGdxkm1_INDEX_at_km1.push_back(dScriptGdxkm1);
 
 			dxkdxkm1_INDEX_AT_km1.push_back(-dScriptGdxkm1*Hinv);
@@ -726,7 +727,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		for (int k = 2; k < K; ++k) {
 			double h = mesh->timeStep;
 			MatrixNxM &Hinv = vecHinv[k];
-			MatrixNxM TERM_1 = 1./(h*h)*M;
+			MatrixNxM &TERM_1 = f1h2M;
 			MatrixNxM TERM_2 = dxkdxkm1_INDEX_AT_km1[k - 2] * dScriptGdxkm1_INDEX_at_km1[k - 1];
 			dxkdxkm2_INDEX_AT_km2.push_back(-(TERM_1 + TERM_2)*Hinv);
 		}
@@ -758,14 +759,13 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 
 	// -- // Grow.
 	auto &XX = dxidxj;
+	auto &scrGxm1 = [&](int k) { return dScriptGdxkm1_INDEX_at_km1[k - 1]; };
 	// --
 	for (int j = 0; j < K; ++j) {
 		for (int i = j + 3; i < K; ++i) { 
-
 			MatrixNxM &Hinv = vecHinv[i];
 			// --
-			dxidxj[i][j] = 1. / (h*h)*(2 * XX[i - 1][j] - XX[i - 2][j])*Hinv*M;
-
+			dxidxj[i][j] = -(XX[i - 1][j]*scrGxm1(i) + XX[i - 2][j]*f1h2M)*Hinv; 
 		}
 	}
 
