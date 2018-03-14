@@ -672,6 +672,8 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	}
 
 	// cout << "dxkdxkm1" << endl;
+	vector<MatrixNxM> dGdxkm1_INDEX_at_km1;
+	vector<MatrixNxM> dScriptGdxkm1_INDEX_at_km1;
 	vector<MatrixNxM> dxkdxkm1_INDEX_AT_km1; {
 		for (int k = 1; k < K; ++k) {
 			MatrixNxM &Hinv = vecHinv[k];
@@ -680,6 +682,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 			dVector xk   = xJ[k];
 			dVector xkm1 = xJ[k - 1];
 			mesh->update_contacts(xkm1); // FORNOW
+
 			mat_resize_zero(dGkdxkm1, DN(), DN());
 			for (auto &c: mesh->contacts) {
 				int i = c->node->nodeIndex;
@@ -692,6 +695,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 				block(1, 0) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
 				dGkdxkm1.block<2, 2>(2 * i, 2 * i) += block;
 			}
+			dGdxkm1_INDEX_at_km1.push_back(dGkdxkm1);
 
 			if (TEST_Q_FD) {
 				MatrixNxM dGkdxkm1_FD;
@@ -709,7 +713,10 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 				matrix_equality_check(dGkdxkm1_FD, dGkdxkm1);
 			}
 
-			dxkdxkm1_INDEX_AT_km1.push_back((2./(h*h)*M - dGkdxkm1)*Hinv);
+			MatrixNxM dScriptGdxkm1 = dGkdxkm1 - 2./(h*h)*M;
+			dScriptGdxkm1_INDEX_at_km1.push_back(dScriptGdxkm1);
+
+			dxkdxkm1_INDEX_AT_km1.push_back(-dScriptGdxkm1*Hinv);
 		}
 		mesh->update_contacts(mesh->x);
 	} 
@@ -719,8 +726,9 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		for (int k = 2; k < K; ++k) {
 			double h = mesh->timeStep;
 			MatrixNxM &Hinv = vecHinv[k];
-			MatrixNxM R = 2.*dxkdxkm1_INDEX_AT_km1[k - 2] - I; 
-			dxkdxkm2_INDEX_AT_km2.push_back(1./(h*h)*R*Hinv*M); // TODO <--
+			MatrixNxM TERM_1 = 1./(h*h)*M;
+			MatrixNxM TERM_2 = dxkdxkm1_INDEX_AT_km1[k - 2] * dScriptGdxkm1_INDEX_at_km1[k - 1];
+			dxkdxkm2_INDEX_AT_km2.push_back(-(TERM_1 + TERM_2)*Hinv);
 		}
 	} 
  
@@ -806,27 +814,9 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		cout << "BEG.................................................." << endl;
 		cout << "--> dxkduk" << endl;
 		MTraj_equality_check(dxkduk_FD, dxkduk);
-		cout << "--> dxkdxkm1" << endl;
-		MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
+		// cout << "--> dxkdxkm1" << endl;
+		// MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
 		cout << "--> dxidxj" << endl;
-		// cout << "--------------------------------------------------------------------------------" << endl;
-		// cout << "dx1dx0" << endl;
-		// cout << dxidxj[1][0] << endl;
-		// cout << "--------------------------------------------------------------------------------" << endl;
-		// cout << "dx1dx0_FD" << endl;
-		// cout << dxidxj_FD[1][0] << endl;
-		// cout << "--------------------------------------------------------------------------------" << endl;
-		// cout << "dx2dx1" << endl;
-		// cout << dxidxj[2][1] << endl;
-		// cout << "--------------------------------------------------------------------------------" << endl;
-		// cout << "dx2dx1_FD" << endl;
-		// cout << dxidxj_FD[2][1] << endl;
-		// cout << "--------------------------------------------------------------------------------" << endl;
-		// cout << "dx2dx0" << endl;
-		// cout << dxidxj[2][0] << endl;
-		// cout << "--------------------------------------------------------------------------------" << endl;
-		// cout << "dx2dx0_FD" << endl;
-		// cout << dxidxj_FD[2][0] << endl;
 		for (int i = 0; i < K; ++i) {
 			cout << "----> ii = " << i << endl;
 			MTraj_equality_check(dxidxj_FD[i], dxidxj[i]);
