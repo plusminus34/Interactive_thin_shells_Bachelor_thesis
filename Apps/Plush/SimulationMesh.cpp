@@ -206,8 +206,7 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const 
 		this->v = v_0;
 		this->balphac = balphac;
 		this->x = x_0; // TODO: CHECKME
-		// this->xSolver = x_0;
-		this->xSolver = X;
+		this->xSolver = x_0;
 
 		if (checkDerivatives) {
 			energyFunction->testGradientWithFD(xSolver);
