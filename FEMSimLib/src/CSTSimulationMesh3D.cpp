@@ -159,6 +159,8 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 											   double scale, V3D const & offset,
 											   double maxTetVolume)
 {
+	SimulationMesh * that = this;
+
 	// input objects for tetget
 	tetgenio input, addinput;
 	input.mesh_dim = 3;
@@ -171,15 +173,15 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 	b.coarsen = 1;
 	//b.refine = 1;
 	b.quality = 1;
+	b.minratio = 1.7;
+	b.mindihedral = 0.0;
+	//b.facesout = 1;
 
 	if(maxTetVolume > 0.0) {
 		b.fixedvolume = 1;
-		b.maxvolume = maxTetVolume;//1.35e-6;
+		b.maxvolume = maxTetVolume / (scale*scale*scale);
 	}
 
-
-	//b.minratio = 2.0;
-	//b.mindihedral = 1.0;
 	b.verbose = 1;
 
 	// set additional points
@@ -191,7 +193,7 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 		addinput.numberofpoints = m;
 		for(int i = 0; i < m; ++i) {
 			for(int j = 0; j < 3; ++j) {
-				addinput.pointlist[i*3+j] = (*add_input_points)[i][j];
+				addinput.pointlist[i*3+j] = (*add_input_points)[i][j] / scale;
 				addinput.pointmarkerlist[i] = 1;
 			}
 		}
@@ -236,6 +238,7 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 												 massDensity, shearModulus, bulkModulus);
 		elements.push_back(newElem);
 	}
+
 	energyFunction = new FEMEnergyFunction();
 	energyFunction->initialize(this);
 }
