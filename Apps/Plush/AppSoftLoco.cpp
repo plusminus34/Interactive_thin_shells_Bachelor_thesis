@@ -1,6 +1,12 @@
 #include "AppSoftLoco.h"
-
+ 
 using namespace nanogui;
+
+// TODO: Material damping? / Regularizer?
+// TODO: Squishier material model?
+// TODO: Throttle contraction _rate_?
+// TODO: Throttle _reaction forces_?
+// TODO: Aiiiiiir resistance?
 
 AppSoftLoco::AppSoftLoco() {
     setWindowTitle("AppSoftLoco");
@@ -16,14 +22,14 @@ AppSoftLoco::AppSoftLoco() {
 		"walker",       // 5
 		"jumping_cube"  // 6
 	};
-	string TEST_CASE = TEST_CASES[6];
+	string TEST_CASE = TEST_CASES[4];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
 	mesh = new CSTSimulationMesh2D();
 	mesh->spawnSavedMesh(fName);
 	mesh->nudge_mesh_up();
-	mesh->applyYoungsModulusAndPoissonsRatio(3e4, .25);
+	mesh->applyYoungsModulusAndPoissonsRatio(3e3, .25);
 	mesh->addGravityForces(V3D(0., -10.)); 
 	// mesh->pinToFloor(); 
 	// mesh->pinToLeftWall(); 
@@ -164,14 +170,17 @@ void AppSoftLoco::drawScene() {
 	draw_floor2d();
 
 	if (!PLAY_PREVIEW && !PLAY_CAPTURE) {
+		desiredFrameRate = 30;
+		// --
 		PREVIEW_i = -LEADIN_FRAMES;
 		CAPTURE_i = 0;
 		// --
 		mesh->draw(); // FORNOW 
 		ik->draw();
 
-	} else if (PLAY_PREVIEW) {
-
+	} else if (PLAY_PREVIEW) { 
+		desiredFrameRate = 100;
+		// -- 
 		if (!POPULATED_PREVIEW_TRAJEC) {
 			POPULATED_PREVIEW_TRAJEC = true;
 			uJ_preview = ik->uJ_curr;

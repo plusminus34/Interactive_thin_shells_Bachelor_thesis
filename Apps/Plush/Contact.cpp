@@ -3,7 +3,7 @@
 #include "SimulationMesh.h"
 #include "Frame.h"
 
-double Contact::K_x   = 0;
+double Contact::K_x   = 750;
 double Contact::K_y   = 750;
 double Contact::eps_y = .02;
 Quadratic *Contact::QT = new Quadratic(&Contact::K_x);

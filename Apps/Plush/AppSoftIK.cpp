@@ -15,7 +15,7 @@ AppSoftIK::AppSoftIK() {
 		"swingup",  // 3
 		"sugar"   // 4
 	};
-	string TEST_CASE = TEST_CASES[4];
+	string TEST_CASE = TEST_CASES[1];
 
 	// -- // mesh
 	mesh = new CSTSimulationMesh2D();
@@ -23,7 +23,7 @@ AppSoftIK::AppSoftIK() {
 	mesh->spawnSavedMesh(fName);
 	mesh->nudge_mesh_up();
 	mesh->applyYoungsModulusAndPoissonsRatio(3e4, .25);
-	// mesh->addGravityForces(V3D(0., -10.));
+	mesh->addGravityForces(V3D(0., -10.));
 	// mesh->add_contacts_to_boundary_nodes();
 
 	if (TEST_CASE == "tentacle") {
@@ -111,28 +111,28 @@ void AppSoftIK::drawScene() {
 	draw_floor2d();
 	mesh->draw();
 	ik->draw(); 
-	{
-		for (auto &bs : mesh->boundary_simplices) {
-			set_color(ORCHID);
-			glLineWidth(4);
-			glBegin(GL_LINE_STRIP); {
-				for (auto &node : bs->nodes) {
-					glP3D(node->getCoordinates(ik->x_curr));
-				}
-			} glEnd();
-			glPointSize(15);
-			// ik COM
-			glBegin(GL_POINTS); {
-				glP3D(mesh->get_COM(ik->x_curr));
-			} glEnd();
-			// ref COM
-			set_color(GOLDCLOVER);
-			glBegin(GL_POINTS); {
-				dVector SLACK_; resize_fill(SLACK_, ik->T(), -1000.);
-				glP3D(mesh->get_COM(ik->x_of_alphac(SLACK_)));
-			} glEnd();
-		}
-	}
+	// {
+	// 	for (auto &bs : mesh->boundary_simplices) {
+	// 		set_color(ORCHID);
+	// 		glLineWidth(4);
+	// 		glBegin(GL_LINE_STRIP); {
+	// 			for (auto &node : bs->nodes) {
+	// 				glP3D(node->getCoordinates(ik->x_curr));
+	// 			}
+	// 		} glEnd();
+	// 		glPointSize(15);
+	// 		// ik COM
+	// 		glBegin(GL_POINTS); {
+	// 			glP3D(mesh->get_COM(ik->x_curr));
+	// 		} glEnd();
+	// 		// ref COM
+	// 		set_color(GOLDCLOVER);
+	// 		glBegin(GL_POINTS); {
+	// 			dVector SLACK_; resize_fill(SLACK_, ik->T(), -1000.);
+	// 			glP3D(mesh->get_COM(ik->x_of_alphac(SLACK_)));
+	// 		} glEnd();
+	// 	}
+	// }
 	PlushApplication::recordVideo();
 }
 
