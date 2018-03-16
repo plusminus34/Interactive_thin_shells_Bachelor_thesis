@@ -630,9 +630,9 @@ void GLMesh::drawMesh() {
 	else {
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_FRONT);
-		//drawMeshElements();
+		drawMeshElements();
 		glCullFace(GL_BACK);
-		//drawMeshElements();
+		drawMeshElements();
 		glDisable(GL_CULL_FACE);
 	}
 	glDisableClientState(GL_VERTEX_ARRAY);
