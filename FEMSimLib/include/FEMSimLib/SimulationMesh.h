@@ -11,6 +11,7 @@
 */
 class SimulationMesh{
 	friend class FEMEnergyFunction;
+	friend class TopOptApp;
 	friend class Node;
 	friend class FEMSimApp;
     friend class FEMSim3DApp;
@@ -65,6 +66,7 @@ public:
 	
 	virtual int getSelectedNodeID(Ray ray) = 0;
 	virtual void setPinnedNode(int ID, const P3D& target) = 0;
+	virtual void unpinNode(int ID) {};
 	virtual void removePinnedNodeConstraints() {
 		for (auto it = pinnedNodeElements.begin(); it != pinnedNodeElements.end(); ++it)
 			delete *it;

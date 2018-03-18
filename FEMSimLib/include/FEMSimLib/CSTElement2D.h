@@ -5,12 +5,13 @@
 #include <MathLib/MathLib.h>
 #include <MathLib/Matrix.h>
 
-enum MaterialModel2D {MM_LINEAR_ISOTROPIC, MM_STVK, MM_NEO_HOOKEAN};
+enum MaterialModel2D {MM_LINEAR_ISOTROPIC=0, MM_STVK, MM_NEO_HOOKEAN};
 
 /**
 	This class implements Constant Strain Triangles elements in 2D
 */
 class CSTElement2D : public SimMeshElement {
+	friend class TopOptApp;
 private:
 	//material parameters...
 	double shearModulus = 50, bulkModulus = 50;

@@ -1,7 +1,6 @@
 #include <FEMSimLib/CSTSimulationMesh2D.h>
 #include <OptimizationLib/NewtonFunctionMinimizer.h>
 #include <FEMSimLib/CSTElement2D.h>
-#include <FEMSimLib/FixedPointSpring2D.h>
 
 CSTSimulationMesh2D::CSTSimulationMesh2D(){
 }

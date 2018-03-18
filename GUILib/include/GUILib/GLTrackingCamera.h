@@ -15,6 +15,8 @@ public:
 	//we need to keep track of the view direction and up axis
 	V3D camViewDirection, camUpAxis;
 
+	bool ignoreRotations = false;
+
 public:
 	GLTrackingCamera(double distToTarget = -4, const V3D& cameraViewDirection = V3D(0, 0, -1), const V3D& cameraUpAxis = V3D(0, 1, 0)); // y-up
 //	GLTrackingCamera(double distToTarget = -4, const V3D& cameraViewDirection = V3D(-1, 0, 0), const V3D& cameraUpAxis = V3D(0, 0, 1)); // z-up
