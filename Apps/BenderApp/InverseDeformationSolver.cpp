@@ -34,21 +34,15 @@ void InverseDeformationSolver<NDim>::pullXi()
 {
 	// find number of parameters
 	int n_parameters = 0;
-	for(Mount const * m: femMesh->mounts) {
-		if(m->active && m->parameterOptimization) {
-			n_parameters += m->parameters.size();
-		}
+	for(ParameterSet const * p: parameterSets) {
+		n_parameters += p->getNPar();
 	}
 	// copy values, set start index for each mount
 	xi.resize(n_parameters);
 	int i = 0;
-	for(Mount * m: femMesh->mounts) {
-		if(m->active && m->parameterOptimization) {
-			m->parametersStartIndex = i;
-			for(double p : m->parameters) {
-				xi[i++] = p;
-			}
-		}
+	for(ParameterSet * p: parameterSets) {
+		p->parametersStartIndex = i;
+		p->writeToList(xi, i);
 	}
 }
 
@@ -56,13 +50,9 @@ void InverseDeformationSolver<NDim>::pullXi()
 template<int NDim>
 void InverseDeformationSolver<NDim>::pushXi()
 {
-	for(Mount * m: femMesh->mounts) {
-		if(m->active && m->parameterOptimization) {
-			int i = 0;
-			for(double & p : m->parameters) {
-				p = xi[m->parametersStartIndex + (i++)];
-			}
-		}
+	int i = 0;
+	for(ParameterSet * p: parameterSets) {
+		p->setFromList(xi, i);
 	}
 }
 
@@ -75,9 +65,9 @@ double InverseDeformationSolver<NDim>::solveOptimization(double terminationResid
 {
 	// settings for optimization algorithm 
 	minimizer->solveResidual = terminationResidual;
-	minimizer->maxIterations = maxIterations;
-	minimizer->lineSearchStartValue = lineSearchStartValue;
-	minimizer->maxLineSearchIterations = maxLineSearchIterations;
+	//minimizer->maxIterations = maxIterations;
+	//minimizer->lineSearchStartValue = lineSearchStartValue;
+	//minimizer->maxLineSearchIterations = maxLineSearchIterations;
 
 	// update list of free optimization parameters
 	pullXi();
@@ -112,44 +102,82 @@ void InverseDeformationSolver<NDim>::computeDoDxi(dVector & dodxi)
 	femMesh->computeDoDx(dOdx);
 
 	// compute dF/dxi [length(x) x xi]
-	deltaFdeltaxi.resize(xi.size());
-	for(int i = 0; i < xi.size(); ++i) {
-		deltaFdeltaxi[i].resize(femMesh->x.size());
-		deltaFdeltaxi[i].setZero();
-	}
+	dFdxi.resize(femMesh->x.size(),xi.size());
+	dFdxi.setZero();
+
 	for(BaseEnergyUnit* pin : femMesh->pinnedNodeElements) {
-		dynamic_cast<MountedPointSpring<NDim>* >(pin)->addDeltaFDeltaXi(deltaFdeltaxi);
+		dynamic_cast<MountedPointSpring<NDim>* >(pin)->addDeltaFDeltaXi(dFdxi);
 	}
 
-	// get dF/dx  (Hessian from FEM simulation)  [lengh(x) x length(x)]
-	SparseMatrix H(femMesh->x.size(), femMesh->x.size());
-	DynamicArray<MTriplet> hessianEntries(0);
+	// dxdxi: sensitivity analysis
+	if(true) {
 
-	//double regularizer_temp = dynamic_cast<FEMEnergyFunction *>(femMesh->energyFunction)->regularizer;
-	femMesh->energyFunction->setToStaticsMode(0.0);
-	femMesh->energyFunction->addHessianEntriesTo(hessianEntries, femMesh->x);
-	femMesh->energyFunction->setToStaticsMode(0.01);
+		// get dF/dx  (Hessian from FEM simulation)  [length(x) x length(x)]
+		SparseMatrix H(femMesh->x.size(), femMesh->x.size());
+		DynamicArray<MTriplet> hessianEntries(0);
 
-	H.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
+		//double regularizer_temp = dynamic_cast<FEMEnergyFunction *>(femMesh->energyFunction)->regularizer;
+		femMesh->energyFunction->setToStaticsMode(0.0);
+		femMesh->energyFunction->addHessianEntriesTo(hessianEntries, femMesh->x);
+		femMesh->energyFunction->setToStaticsMode(0.01);
 
-	// solve dF/dx * y = dF/dxi		(y is dx/dxi)
-	Eigen::SimplicialLDLT<SparseMatrix> linearSolver;
-	H *= -1.0;
-	linearSolver.compute(H);
-	if (linearSolver.info() != Eigen::Success) {
-		std::cerr << "Eigen::SimplicialLDLT decomposition failed." << std::endl;
-		exit(1);
+		H.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
+
+		// solve dF/dx * y = dF/dxi		(y is dx/dxi)
+		Eigen::SimplicialLDLT<SparseMatrix> linearSolver;
+		H *= -1.0;
+		linearSolver.compute(H);
+		if (linearSolver.info() != Eigen::Success) {
+			std::cerr << "Eigen::SimplicialLDLT decomposition failed." << std::endl;
+			exit(1);
+		}
+		// solve for each parameter xi
+		dxdxi = linearSolver.solve(-dFdxi);
 	}
-	// solve for each parameter xi
-	deltaxdeltaxi.resize(xi.size());
-	for(int i = 0; i < xi.size(); ++i) {
-		deltaxdeltaxi[i] = linearSolver.solve(-deltaFdeltaxi[i]);
+	else {
+		double delta = 5.5e-3;//5e-3;
+		dVector xi_initial = xi;
+
+		dVector x_temp = femMesh->x;
+		dVector f_ext_temp = femMesh->f_ext;
+		dVector xSolver_temp = femMesh->xSolver;
+
+		dxdxi.resize(femMesh->x.size(),xi.size());
+		
+		for(int i = 0; i < xi.size(); ++i) {
+			xi = xi_initial;
+			// +delta
+			xi(i) += delta;
+			pushXi();
+			solveMesh(true);
+			x_xipdelta = femMesh->x;
+			// -delta
+			femMesh->x = x_temp;
+			femMesh->xSolver = xSolver_temp;
+			femMesh->f_ext = f_ext_temp;
+
+			xi = xi_initial;
+			xi(i) -= delta;
+			pushXi();
+			solveMesh(true);
+			x_ximdelta = femMesh->x;
+
+			femMesh->x = x_temp;
+			femMesh->xSolver = xSolver_temp;
+			femMesh->f_ext = f_ext_temp;
+
+			dxdxi.col(i) = (x_xipdelta - x_ximdelta) / (2.0 * delta);
+
+
+		}
+
+		// restore initial state of mesh and xi
+		xi = xi_initial;
+		pushXi();
 	}
 
 	// do/dxi = do/dx * dx/dxi
-	for(int i = 0; i < xi.size(); ++i) {
-		dodxi[i] = dOdx.transpose() * deltaxdeltaxi[i];
-	}
+	dodxi = dOdx.transpose() * dxdxi;
 }
 
 
@@ -173,7 +201,6 @@ double InverseDeformationSolver<NDim>::peekOofXi(dVector const & xi_in)
 	//femMesh->solve_statics();
 	solveMesh(true);
 	double O = femMesh->computeO();
-std::cout << "    tried new xi; O was " << O << std::endl;
 
 	// set mesh to old state
 	xi = xi_temp;

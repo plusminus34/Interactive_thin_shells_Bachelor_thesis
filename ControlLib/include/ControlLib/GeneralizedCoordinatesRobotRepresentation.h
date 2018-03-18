@@ -164,7 +164,7 @@ public:
 
 		return theVector;
 	}
-
+	
 
 	//returns the velocity (world coordinates) of the point p, which is specified in the local coordinates of rb (relative to its COM). I.e. p(q)
 	V3D getVelocityFor(const P3D& p, RigidBody* rb);
@@ -240,6 +240,15 @@ public:
 	int getQIndexForJoint(int jIndex) {
 		return jointCoordStartIndex[jIndex];
 	}
+
+	int getJointIndexForQ(int QIndex) {
+		return jointIndexForQ[QIndex];
+	}
+
+	Joint * getJointForQ(int QIndex) {
+		return robot->jointList[getJointIndexForQ(QIndex)];
+	}
+
 };
 
 

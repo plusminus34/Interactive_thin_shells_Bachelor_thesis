@@ -13,7 +13,9 @@ IKApp::IKApp() {
 //	loadFile("../data/rbs/trex.rbs");
 //	loadFile("../data/rbs/trex.rs");
 
-	loadFile("../data/rbs/bip/bip.rbs");
+//	loadFile("../data/rbs/bip/bip.rbs");
+
+    loadFile("../data/rbs/yumi/yumi.rbs");
 
 	showMesh = true;
 

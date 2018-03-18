@@ -188,7 +188,7 @@ void PololuServoControlInterface::setServomotorMaxSpeed(Motor& mp, double val) {
 }
 
 //set motor goals from target values
-void PololuServoControlInterface::sendControlInputsToPhysicalRobot() {
+void PololuServoControlInterface::sendControlInputsToPhysicalRobot(double dt) {
 	if (motorsOn == false)
 		return;
 
@@ -294,7 +294,7 @@ void PololuServoControlInterface::driveMotorPositionsToZero() {
 		else if (hj.j->controlMode == VELOCITY_MODE)
 			hj.j->motor.targetMotorVelocity = 0;
 	}
-	sendControlInputsToPhysicalRobot();
+	sendControlInputsToPhysicalRobot(0.0);
 
 //	Timer t;
 //	while (t.timeEllapsed() < 1000);
@@ -304,7 +304,7 @@ void PololuServoControlInterface::driveMotorPositionsToZero() {
 		if (hj.j->controlMode == POSITION_MODE)
 			hj.j->motor.targetMotorVelocity = -1.0;//-1 here we will take to mean no speed limit...
 
-	sendControlInputsToPhysicalRobot();
+	sendControlInputsToPhysicalRobot(0.0);
 }
 
 void PololuServoControlInterface::toggleMotorPower() {

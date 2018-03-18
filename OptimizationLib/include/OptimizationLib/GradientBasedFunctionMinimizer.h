@@ -19,16 +19,31 @@ public:
 	virtual void computeSearchDirection(ObjectiveFunction *function, const dVector &p, dVector& dp) = 0;
 	virtual double doLineSearch(ObjectiveFunction *function, dVector& pi, const dVector& dp);
 
+	double doLineSearchStandard(ObjectiveFunction *function, dVector& pi, const dVector& dp);
+	double doLineSearchTweaked(ObjectiveFunction *function, dVector& pi, const dVector& dp);
+
 public:
-	double lineSearchStartValue = 1.0;
+
 	double solveResidual = 1e-5;
 	int maxIterations = 100;
-	int maxLineSearchIterations = 15;
 	bool printOutput = false;
 	std::string optName;
+
+	bool useTweakedLineSearch = false;
+	// "standard" line search
+	double lineSearchStartValue = 1.0;
+	int maxLineSearchIterations = 15;
+
+	// "tweaked" line search
+	double lineSearchEndValue = 3.0e-5;
+	bool adaptiveLineSearch = false;
+	int lineSearchIterationLimit = -1;
 
 protected:
 	dVector pi, dp, gradient;
 	Timer timer;
+
+protected:
+	double lineSearchValueOld = -1.0;
 };
 

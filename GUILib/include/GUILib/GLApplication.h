@@ -10,6 +10,8 @@
 #include "GLContentManager.h"
 #include "GlobalMouseState.h"
 
+#include "ScreenRecorder.h"
+
 #include "Canvas3D.h"
 
 #pragma warning( disable : 4005)
@@ -29,6 +31,9 @@ public:
 
 	bool appIsRunning = false;
 	bool waitForFrameRate = true;
+	
+	ScreenRecorder * screenRecorder = NULL;
+	
 
     nanogui::Screen *menuScreen = nullptr;
 	nanogui::FormHelper *mainMenu = nullptr;

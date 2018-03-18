@@ -68,7 +68,7 @@ public:
 	/**
 		This method returns the reference to the rigid body with the given name, or NULL if it is not found
 	*/
-	RigidBody* getRBByName(char* name);
+	RigidBody* getRBByName(const char* name);
 
 	/**
 		This method returns the reference to the joint whose name matches, or NULL if it is not found

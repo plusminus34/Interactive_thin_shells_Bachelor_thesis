@@ -356,25 +356,25 @@ void GLMesh::addPoly(const GLIndexedPoly &p){
 		n2index = p.indexes[(i-1+p.indexes.size())%p.indexes.size()];
 		if (index<0 || index >= vertexCount ||n1index<0 || n1index >= vertexCount ||n2index<0 || n2index >= vertexCount)
 			return;
-		sharedVertices[index]->addVertexInfo(VertexNeighbourInfo(n1index, n2index));
+		sharedVertices[index]->addVertexInfo(n1index, n2index);
 	}
 	polygons->addPoly(p);
 	nrPolys++;
 	//printf("%d ", p.indexes.size());
 	//keep track of the individual triangles...
 	if (p.indexes.size() == 3)
-		triangles.push_back(GLIndexedTriangle(p.indexes[0], p.indexes[1], p.indexes[2]));
+		triangles.emplace_back(p.indexes[0], p.indexes[1], p.indexes[2]);
 
 	if (p.indexes.size() == 4){
-		triangles.push_back(GLIndexedTriangle(p.indexes[0], p.indexes[1], p.indexes[2]));
-		triangles.push_back(GLIndexedTriangle(p.indexes[0], p.indexes[2], p.indexes[3]));
+		triangles.emplace_back(p.indexes[0], p.indexes[1], p.indexes[2]);
+		triangles.emplace_back(p.indexes[0], p.indexes[2], p.indexes[3]);
 	}
 
 	if (p.indexes.size() > 4)
 	{
 		for (int i = 1; i < (int)p.indexes.size() - 1; i++)
 		{
-			triangles.push_back(GLIndexedTriangle(p.indexes[0], p.indexes[i], p.indexes[i+1]));
+			triangles.emplace_back(p.indexes[0], p.indexes[i], p.indexes[i+1]);
 		}
     }
 }
@@ -569,7 +569,8 @@ void GLMesh::drawNormals(){
 	for (int i=0;i<vertexCount;i++){
 		glBegin(GL_LINES);
 			glVertex3dv(&(vertexList.front())+3*i);
-			glVertex3d(vertexList[3*i+0]+normalList[3*i+0],vertexList[3*i+1]+normalList[3*i+1],vertexList[3*i+2]+normalList[3*i+2]);
+			double l = 0.01;
+			glVertex3d(vertexList[3*i+0]+normalList[3*i+0]*l,vertexList[3*i+1]+normalList[3*i+1]*l,vertexList[3*i+2]+normalList[3*i+2]*l);
 		glEnd();
 	}
 }
@@ -623,8 +624,9 @@ void GLMesh::drawMesh() {
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(3, GL_DOUBLE, 0, &(texCoordList.front()));
 	}
-	if (IS_EQUAL(material.a,1))
+	if (IS_EQUAL(material.a,1)) {
 		drawMeshElements();
+	}
 	else {
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_FRONT);
@@ -633,6 +635,85 @@ void GLMesh::drawMesh() {
 		drawMeshElements();
 		glDisable(GL_CULL_FACE);
 	}
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+	
+	if (material.hasTextureParam()) {
+		glClientActiveTexture(GL_TEXTURE1);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+
+	if (material.hasTextureParam()) {
+		glClientActiveTexture(GL_TEXTURE0);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+
+	material.end();
+}
+
+void GLMesh::drawMeshWithLines(V3D const & faceColor, bool drawFaces,
+							   V3D const & edgeColor, double edgeSize) {
+	
+	
+	material.setColor(faceColor(0), faceColor(1), faceColor(2), 1.0);
+	
+	material.apply();
+
+	/* enable the vertex array list*/
+	if (vertexList.size() > 0) {
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_DOUBLE, 0, &(vertexList.front()));
+	}
+
+	if (useNormals && normalList.size () > 0) {
+		glEnableClientState(GL_NORMAL_ARRAY);
+		glNormalPointer(GL_DOUBLE, 0, &(normalList.front()));
+	}
+
+	if (material.hasTextureParam() && tangentList.size() > 0) {
+		glClientActiveTexture(GL_TEXTURE1);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(3, GL_DOUBLE, 0, &(tangentList.front()));
+	}
+
+	//glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
+	/* enable the texture coordinates arrays */
+	if (material.hasTextureParam() && texCoordList.size() > 0) {
+		glClientActiveTexture(GL_TEXTURE0);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(3, GL_DOUBLE, 0, &(texCoordList.front()));
+	}
+
+	// draw the faces
+	if(drawFaces) {
+		if (IS_EQUAL(material.a,1)) {
+			drawMeshElements();
+		}
+		else {
+			glEnable(GL_CULL_FACE);
+			glCullFace(GL_FRONT);
+			drawMeshElements();
+			glCullFace(GL_BACK);
+			drawMeshElements();
+			glDisable(GL_CULL_FACE);
+		}
+	}
+
+	// draw the lines of all triangles
+	if(edgeSize > 0) {
+		glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+		glEnable(GL_POLYGON_OFFSET_LINE);
+		glPolygonOffset(-1.0,0);
+		float currentColor[4];
+		glGetFloatv(GL_CURRENT_COLOR,currentColor);
+		glColor3d(edgeColor(0), edgeColor(1), edgeColor(2));
+		glLineWidth((GLfloat)edgeSize);
+		drawMeshElements();
+		glColor3d(currentColor[0], currentColor[1], currentColor[2]);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 	
@@ -996,6 +1077,40 @@ bool GLMesh::getDistanceToRayOriginIfHit(const Ray& ray, double* distToOrigin) {
 		*distToOrigin = min_t;
 
 	return min_t < 1e10;
+}
+
+
+void GLMesh::getSelectedNode(Ray const & ray, int & node_id, int & triangle_id, int & i_node_in_triangle, bool checkOrientation)
+{
+	node_id = -1;
+	triangle_id = -1;
+	i_node_in_triangle = -1;
+    double dist_min = std::numeric_limits<double>::max();
+	for(int i = 0; i < (int)triangles.size(); ++i) {
+		for(int j = 0; j < 3; ++j) {
+			int nodeID = triangles[i].indexes[j];
+			P3D pt(vertexList[nodeID*3+0], vertexList[nodeID*3+1], vertexList[nodeID*3+2]);
+			double d = ray.getDistanceToPoint(pt) / (sqrt((pt - ray.origin).dot(pt - ray.origin)));
+			if(d < 0.01 && d < dist_min) {
+				if(!checkOrientation) {
+					dist_min = d;
+					node_id = nodeID;
+					triangle_id = i;
+					i_node_in_triangle = j;
+				}
+				else {
+					V3D normal(normalList[nodeID*3+0], normalList[nodeID*3+1], normalList[nodeID*3+2]);
+					if(normal.dot(ray.direction) < 0) {
+						dist_min = d;
+						node_id = nodeID;
+						triangle_id = i;
+						i_node_in_triangle = j;
+					}
+				}
+			}
+		}
+	}
+
 }
 
 void GLMesh::append(GLMesh* mesh, bool flipNormal)

@@ -34,7 +34,12 @@ RBSimApp::RBSimApp(bool maximizeWindows)
 
     drawCDPs = true;
 
-    loadFile("../data/rbs/wheely.rbs");
+    loadFile("../data/rbs/yumi/yumi.rbs");
+    //loadFile("../data/rbs/yumi/yumi_TEMP.rbs");
+
+    //loadFile("../data/rbs/wheely.rbs");
+    //loadFile("../data/rbs/bip/bip.rbs");
+
 //    loadFile("../data/robotsAndMotionPlans/crab/robot.rbs");
 
 //    loadFile("../data/robotsAndMotionPlans/starlETH/robot.rbs");

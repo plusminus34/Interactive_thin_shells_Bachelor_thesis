@@ -6,11 +6,17 @@
 #include <Utils/Utils.h>
 #include <Utils/Logger.h>
 
+#define TINYOBJLOADER_USE_DOUBLE
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <GUILib/tiny_obj_loader.h>
+
 OBJReader::OBJReader(void){
 }
 
 OBJReader::~OBJReader(void){
 }
+
+
 
 /**
 	This method checks a line of input from an ASCII OBJ file, and determines its type.
@@ -90,19 +96,20 @@ char* OBJReader::getNextIndex(char* line, int &vertexIndex, int &texcoordIndex, 
 }
 
 
-/**
+/*
 	This static method reads an obj file, whose name is sent in as a parameter, and returns a pointer to a GLMesh object that it created based on the file information.
 	This method throws errors if the file doesn't exist, is not an obj file, etc.
 */
-GLMesh* OBJReader::loadOBJFile(const char* fileName){
-/*#ifdef _DEBUG
+
+GLMesh* OBJReader::loadOBJFile_slow(const char* fileName) {
+	/*#ifdef _DEBUG
 	return new GLMesh();
-#endif*/
+	#endif*/
 
 	if (fileName == NULL)
 		throwError("fileName is NULL.");
-	
-//	Logger::out()<< "Loading mesh: " << fileName <<std::endl;
+
+	//	Logger::out()<< "Loading mesh: " << fileName <<std::endl;
 
 	//have a temporary buffer used to read the file line by line...
 	char buffer[200];
@@ -130,25 +137,25 @@ GLMesh* OBJReader::loadOBJFile(const char* fileName){
 		throwError("Cannot open file \'%s\'.", fileName);
 
 	//this is where it happens.
-	while (!feof(f)){
+	while (!feof(f)) {
 		//get a line from the file...
 		fgets(buffer, 200, f);
 		//see what line it is...
 		int lineType = getLineType(buffer);
-		if (lineType == VERTEX_INFO){
+		if (lineType == VERTEX_INFO) {
 			//we need to read in the three coordinates - skip over the v
 			vertexCoordinates.push_back(readCoordinates(buffer + 1));
-			result->addVertex(vertexCoordinates[vertexCoordinates.size()-1]);
+			result->addVertex(vertexCoordinates[vertexCoordinates.size() - 1]);
 			texCoordsOnVertex.push_back(-1);
 			normalOnVertex.push_back(-1);
 		}
 
-		if (lineType == TEXTURE_INFO){
+		if (lineType == TEXTURE_INFO) {
 			texCoordinates.push_back(readCoordinates(buffer + 2));
 			readTextureCoordinatesFromObj = true;
 		}
 
-		if (lineType == NORMAL_INFO){
+		if (lineType == NORMAL_INFO) {
 			normals.push_back(V3D(readCoordinates(buffer + 2)));
 			readNormalsFromObj = true;
 		}
@@ -190,7 +197,7 @@ GLMesh* OBJReader::loadOBJFile(const char* fileName){
 
 					if (texCoordsOnVertex[vIndex - 1] >= 0 && texCoordsOnVertex[vIndex - 1] != tIndex - 1) {
 						// We have an additional set of texcoords for this vertex - will duplicate it 
-						vertexCoordinates.push_back(vertexCoordinates[vIndex-1]);
+						vertexCoordinates.push_back(vertexCoordinates[vIndex - 1]);
 						result->addVertex(vertexCoordinates[vertexCoordinates.size() - 1]);
 						// copy over the old normal, as it might have been set properly already...
 						result->setVertexNormal((int)vertexCoordinates.size() - 1, result->getNormal(vIndex - 1));
@@ -231,10 +238,139 @@ GLMesh* OBJReader::loadOBJFile(const char* fileName){
 			else
 				result->addPoly(temporaryPolygon);
 		}
+	}
+	return(result);
+}
 
+GLMesh* OBJReader::loadOBJFile(const char* fileName){
+/*#ifdef _DEBUG
+	return new GLMesh();
+#endif*/
+
+	if (fileName == NULL)
+		throwError("fileName is NULL.");
+
+	GLMesh* result = new GLMesh();
+
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+
+	std::string err;
+	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &err, fileName, NULL /* basePath*/ , true /*triangulate*/);
+
+
+//	Logger::out()<< "Loading mesh: " << fileName <<std::endl;
+
+	//have a temporary buffer used to read the file line by line...
+	char buffer[200];
+
+	//an array of vertex positions - need to store it initially because vertices might have to be inserted/duplicated, and that may mess up the indices of polygons defined afterwards
+	DynamicArray<P3D> vertexCoordinates;
+	//and this is an array of texture coordinates
+	DynamicArray<P3D> texCoordinates;
+	//this is an array of normals
+	DynamicArray<V3D> normals;
+	//this is to store whether we assigned a set of uvs to vertex i - if yes, and we come across another set of UVs, we will need to
+	//duplicate this vertex.
+	DynamicArray<int> texCoordsOnVertex;
+	//... and the same for normals
+	DynamicArray<int> normalOnVertex;
+
+	bool readNormalsFromObj = false;
+	bool readTextureCoordinatesFromObj = false;
+
+	for (int i = 0; i < attrib.vertices.size()/3; i++)
+	{
+		vertexCoordinates.push_back(P3D(attrib.vertices[3 * i], attrib.vertices[3 * i + 1], attrib.vertices[3 * i + 2]));
+		result->addVertex(vertexCoordinates[vertexCoordinates.size() - 1]);
+		texCoordsOnVertex.push_back(-1);
+		normalOnVertex.push_back(-1);
 	}
 
-	fclose(f);
+	if (attrib.texcoords.size() > 0)
+	{
+		for (int i = 0; i < attrib.texcoords.size()/2; i++)
+			texCoordinates.push_back(P3D(attrib.texcoords[2 * i], attrib.texcoords[2 * i + 1], 0));
+		readTextureCoordinatesFromObj = true;
+	}
+
+	if (attrib.normals.size() > 0)
+	{
+		for (int i = 0; i < attrib.normals.size()/3; i++)
+			normals.push_back(V3D(attrib.normals[3 * i], attrib.normals[3 * i + 1], attrib.normals[3 * i + 2]));
+		readNormalsFromObj = true;
+	}
+
+	//this variable will keep getting populated with face information
+	GLIndexedPoly temporaryPolygon;
+	for (size_t i = 0; i < shapes.size(); i++)
+	{
+		size_t index_offset = 0;
+		// For each face
+		for (size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++) {
+			temporaryPolygon.indexes.clear();
+			size_t fnum = shapes[i].mesh.num_face_vertices[f]; // size of face
+			// For each vertex in the face
+			for (size_t v = 0; v < fnum; v++) {
+
+				tinyobj::index_t idx = shapes[i].mesh.indices[index_offset + v];
+				int vIndex=idx.vertex_index+1, 
+					tIndex=idx.texcoord_index+1,
+					nIndex=idx.normal_index+1;
+				// tinyobjreader puts 0 if there is no texture of normal
+				if (idx.texcoord_index != -1)
+				{
+					if (tIndex < 0)
+						tIndex = (int)texCoordinates.size() + tIndex;
+
+					if (texCoordsOnVertex[vIndex - 1] >= 0 && texCoordsOnVertex[vIndex - 1] != tIndex - 1) {
+						// We have an additional set of texcoords for this vertex - will duplicate it 
+						vertexCoordinates.push_back(vertexCoordinates[vIndex - 1]);
+						result->addVertex(vertexCoordinates[vertexCoordinates.size() - 1]);
+						// copy over the old normal, as it might have been set properly already...
+						result->setVertexNormal((int)vertexCoordinates.size() - 1, result->getNormal(vIndex - 1));
+						// have a way of tracking the normal/texture coords associated with this new vertex...
+						normalOnVertex.push_back(normalOnVertex[vIndex - 1]);
+						texCoordsOnVertex.push_back(texCoordsOnVertex[vIndex - 1]);
+						// and update the index of this new vertex, keeping the convention that was there before - vIndex is 1-relative
+						vIndex = (int)vertexCoordinates.size();
+					}
+					result->setVertexTexCoordinates(vIndex - 1, texCoordinates[tIndex - 1]);
+					texCoordsOnVertex[vIndex - 1] = tIndex - 1;
+				}
+				if (idx.normal_index != -1)
+				{
+					if (nIndex < 0)
+						nIndex = (int)normals.size() + nIndex;
+
+					if (normalOnVertex[vIndex - 1] >= 0 && normalOnVertex[vIndex - 1] != nIndex - 1) {
+						// We have an additional set of normal coordinates for this vertex - will duplicate it 
+						vertexCoordinates.push_back(vertexCoordinates[vIndex - 1]);
+						result->addVertex(vertexCoordinates[vertexCoordinates.size() - 1]);
+						// copy over the old texture info, as it might have been set properly already...
+						result->setVertexTexCoordinates((int)vertexCoordinates.size() - 1, result->getTexCoordinates(vIndex - 1));
+						// have a way of tracking the normal/texture coords associated with this new vertex...
+						normalOnVertex.push_back(normalOnVertex[vIndex - 1]);
+						texCoordsOnVertex.push_back(texCoordsOnVertex[vIndex - 1]);
+						// and update the index of this new vertex, keeping the convention that was there before - vIndex is 1-relative
+						vIndex = (int)vertexCoordinates.size();
+					}
+					result->setVertexNormal(vIndex - 1, normals[nIndex - 1]);
+					normalOnVertex[vIndex - 1] = nIndex - 1;
+				}
+
+				temporaryPolygon.indexes.push_back(vIndex - 1);
+			}
+
+			if (temporaryPolygon.indexes.size() == 0)
+				Logger::consolePrint("Found a polygon with zero vertices.\n");
+			else
+				result->addPoly(temporaryPolygon);
+
+			index_offset += fnum;
+		}
+	}
 
 	if (readNormalsFromObj == false)
 		result->computeNormals();

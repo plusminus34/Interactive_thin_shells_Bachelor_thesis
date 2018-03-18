@@ -7,7 +7,7 @@ class RobotDesignerApp;
 class BFGSHessianApproximator;
 class IntelligentRobotEditingWindow : public GLWindow3D {
 public:
-	RobotDesignerApp* rdApp;
+    RobotDesignerApp* rdApp;
 
 	RigidBody* highlightedRigidBody = NULL;
 	Joint* highlightedJoint = NULL;
@@ -19,7 +19,7 @@ public:
 	void addMenuItems();
 
 public:
-	IntelligentRobotEditingWindow(int x, int y, int w, int h, RobotDesignerApp* rdApp);
+    IntelligentRobotEditingWindow(int x, int y, int w, int h, RobotDesignerApp* rdApp);
 	~IntelligentRobotEditingWindow();
 
 	virtual void drawScene();

@@ -3,6 +3,7 @@
 #include <GUILib/GLApplication.h>
 #include <string>
 #include <map>
+#include <atomic>
 #include <GUILib/TranslateWidget.h>
 #include <RBSimLib/AbstractRBEngine.h>
 #include <RBSimLib/WorldOracle.h>
@@ -11,6 +12,8 @@
 #include <GUILib/GLWindow3DWithMesh.h>
 #include <GUILib/GLWindowContainer.h>
 #include <ControlLib/IK_Solver.h>
+
+#include <iostream>
 
 using namespace	std;
 
@@ -33,7 +36,7 @@ public:
 class RobotControlInterface{
 protected:
 	Robot* robot = NULL;
-	bool connected = false;
+	atomic_bool connected = {false};
 	bool motorsOn = false;
 
 	/* This array of joints stores ALL hinge joints (e.g. the ones directly controllable through physical motors) of the robot, including the auxiliary ones... */
@@ -88,19 +91,20 @@ public:
 
 	//set current sim values from robot readings...
 	virtual void syncSimRobotWithPhysicalRobot() {
+        //std::cout << "syncSimRobotWithPhysicalRobot" << std::endl;
 		readPhysicalRobotMotorPositions();
 		readPhysicalRobotMotorVelocities();
 		setSimRobotStateFromCurrentMotorValues();
 	}
 
 	//the time window dt estimates the amount of time before the next command is issued (or, alternatively, how long we'd expect the physical robot to take before it can match the target values)
-	virtual void syncPhysicalRobotWithSimRobot(double dt = 0.1) {
-		setTargetMotorValuesFromSimRobotState(dt);
-		sendControlInputsToPhysicalRobot();
+	virtual void syncPhysicalRobotWithSimRobot(double dt) {
+        setTargetMotorValuesFromSimRobotState(dt);
+		sendControlInputsToPhysicalRobot(dt);
 	}
 
 	//set motor goals from target values
-	virtual void sendControlInputsToPhysicalRobot() = 0;
+	virtual void sendControlInputsToPhysicalRobot(double dt) = 0;
 	//read motor positions
 	virtual void readPhysicalRobotMotorPositions() = 0;
 	//read motor positions
@@ -109,6 +113,11 @@ public:
 	virtual void openCommunicationPort() = 0;
 	virtual void closeCommunicationPort() = 0;
 	virtual void driveMotorPositionsToZero() = 0;
+
+	virtual void driveMotorPositionsToTestPos1(IK_Solver* ikSolverPtr) {};
+	virtual void driveMotorPositionsToTestPos2(IK_Solver* ikSolverPtr)  {};
+	virtual void grip(std::string arm) {};
+	virtual void printJointValues() {};
 
 	void toggleMotorPower() {
 		motorsOn = !motorsOn;

@@ -69,7 +69,7 @@ void AbstractRBEngine::drawRBs(int flags){
 /**
 	This method returns the reference to the rigid body with the given name, or NULL if it is not found
 */
-RigidBody* AbstractRBEngine::getRBByName(char* name){
+RigidBody* AbstractRBEngine::getRBByName(const char* name){
 	if (name == NULL)
 		return NULL;
 //	for (uint i=0;i<this->rbs.size();i++)

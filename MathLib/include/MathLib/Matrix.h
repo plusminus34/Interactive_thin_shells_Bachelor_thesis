@@ -93,6 +93,18 @@ void addSparseMatrixDenseBlockToTriplet(std::vector<MTriplet>& triplets, int sta
             triplets.push_back(MTriplet(startX + i, startY + j, block(i, j)));
 }
 
+template<class MATType>
+void addSparseMatrixDenseBlockToTripletAtIndex(std::vector<MTriplet>& triplets, int & pos_idx_io, int startX, int startY, const MATType& block, bool writeOnlyLowerDiagonalValues = false) {	
+	//int i_entry = 0;
+	for (int i = 0; i < block.rows(); i++)
+		for (int j = 0; j < block.cols(); j++)
+			if (startX + i >= startY + j || !writeOnlyLowerDiagonalValues) {
+				triplets[pos_idx_io++] = MTriplet(startX + i, startY + j, block(i, j));
+				//++i_entry;
+			}
+	//std::cout << i_entry;
+}
+
 //if the element at (row, col) is above the diagonal, it is skipped
 inline void addMTripletToList_ignoreUpperElements(std::vector<MTriplet>& triplets, int row, int col, double val) {
 	if (row >= col)

@@ -17,6 +17,7 @@ public:
 		This method throws errors if the file doesn't exist, is not an obj file, etc.
 	*/
 	static GLMesh* loadOBJFile(const char* fileName);
+	static GLMesh* loadOBJFile_slow(const char* fileName);
 
 protected:
 	static char* getNextIndex(char* line, int &vertexIndex, int &texcoordIndex, int &normalIndex, int &flags);

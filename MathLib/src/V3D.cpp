@@ -169,21 +169,7 @@ double V3D::dot(const V3D &v) const {
 
 // computes cross product with v
 V3D V3D::cross(const V3D &v) const {
-	/*
-	Easiest way to figure it out is to set it up like this:
-	___________________
-	Ux | Uy   Uz   Ux   Uy | Uz
-	Vx | Vy   Vz   Vx   Vy | Vz
-	-------------------
-	Cross product is given by cross multiplying the items in the box, and subing the other
-	diagonal
-	*/
-	V3D result, u = *this;
-	result.at(0) = u.at(1) * v.at(2) - u.at(2) * v.at(1);
-	result.at(1) = u.at(2) * v.at(0) - u.at(0) * v.at(2);
-	result.at(2) = u.at(0) * v.at(1) - u.at(1) * v.at(0);
-
-	return result;
+	return Vector3d::cross(v);
 }
 
 double sqrt__(double val) { return sqrt(val); }
@@ -235,7 +221,7 @@ double V3D::angleWith(const V3D &v, const V3D& n) const {
 
 // normalizes the vector
 V3D& V3D::toUnit() {
-	double d = this->length();
+	double d = Vector3d::norm();
 	if (IS_ZERO(d))
 		return *this;
 	*this /= d;
@@ -260,7 +246,7 @@ V3D getRandomUnitVector() {
 }
 
 //make skew symmetric for vec
-Matrix3x3 V3D::getSkewSymmetricMatrix(){
+Matrix3x3 V3D::getSkewSymmetricMatrix() {
 	Matrix3x3 result;
 	result << 0, -z(), y(), z(), 0, -x(), -y(), x(), 0;
 	return result;

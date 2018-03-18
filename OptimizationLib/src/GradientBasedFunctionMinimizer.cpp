@@ -1,6 +1,7 @@
 #include <OptimizationLib/GradientBasedFunctionMinimizer.h>
+
 #include <iostream>
- 
+
 GradientBasedFunctionMinimizer::GradientBasedFunctionMinimizer(int p_maxIterations, double p_solveResidual, int p_maxLineSearchIterations, bool p_printOutput){
 	maxIterations = p_maxIterations;
 	maxLineSearchIterations = p_maxLineSearchIterations;
@@ -37,6 +38,7 @@ bool GradientBasedFunctionMinimizer::minimize(ObjectiveFunction *function, dVect
 
 		timer.restart();
 		computeSearchDirection(function, pi, dp);
+
 		if (printOutput)
 			Logger::logPrint("\tTime to compute search direction: %lf\n", timer.timeEllapsed());
 
@@ -59,11 +61,6 @@ bool GradientBasedFunctionMinimizer::minimize(ObjectiveFunction *function, dVect
 		function->setCurrentBestSolution(pi);
 	}
 
-	// if (!optimizationConverged) {
-	// 	std:: cout << "XXX residual: " << dp.norm() << std::endl;
-	// } else {
-	// 	std:: cout << "..." << dp.norm() << std::endl; 
-	// }
 
 	functionValue = function->computeValue(pi);
 
@@ -86,7 +83,21 @@ bool GradientBasedFunctionMinimizer::minimize(ObjectiveFunction *function, dVect
 	return optimizationConverged;
 }
 
-double GradientBasedFunctionMinimizer::doLineSearch(ObjectiveFunction *function, dVector& pi, const dVector& dp){
+
+double GradientBasedFunctionMinimizer::doLineSearch(ObjectiveFunction *function, dVector& pi, const dVector& dp) 
+{
+	if(!useTweakedLineSearch) {
+		return doLineSearchStandard(function, pi, dp);
+	}
+	else {
+		return doLineSearchTweaked(function, pi, dp);
+	}
+}
+
+
+
+double GradientBasedFunctionMinimizer::doLineSearchStandard(ObjectiveFunction *function, dVector& pi, const dVector& dp)
+{
 	// line search now...
 	double alpha = lineSearchStartValue;
 	dVector pc(pi);
@@ -119,3 +130,62 @@ double GradientBasedFunctionMinimizer::doLineSearch(ObjectiveFunction *function,
 	return alpha;
 }
 
+
+
+double GradientBasedFunctionMinimizer::doLineSearchTweaked(ObjectiveFunction *function, dVector& pi, const dVector& dp)
+{
+	bool came_close = false;
+	double alpha_close;
+
+	if(lineSearchIterationLimit > 0) {adaptiveLineSearch = true;}
+
+	if(lineSearchValueOld < 0.0) { lineSearchValueOld = lineSearchStartValue; };
+
+	dVector pc(pi);
+	double initialValue = function->computeValue(pc);
+
+	double alpha = adaptiveLineSearch ? std::min(lineSearchValueOld*2.0, lineSearchStartValue) : lineSearchStartValue;
+	if(alpha < lineSearchEndValue) {alpha = lineSearchStartValue;}
+	//alpha = std::max(alpha, lineSearchEndValue*2.0);
+
+	double newLineSearchValue;
+	int j = 0;
+	while(alpha > lineSearchEndValue) {
+		// try a new solution
+		pi = pc - dp * alpha;
+
+		// now check the new function value at this point...
+		newLineSearchValue = function->computeValue(pi);
+
+		if(isfinite(newLineSearchValue) && newLineSearchValue < (initialValue)) {
+			// found a good value: return it!
+			lineSearchValueOld = alpha;
+			return(alpha);
+		}
+		else if((!came_close) && isfinite(newLineSearchValue) && newLineSearchValue < (initialValue+TINY)) {
+			came_close = true;
+			alpha_close = alpha;
+
+			alpha /= 2.0;
+		}
+		else {
+			// no good value: keep searching
+			alpha /= 2.0;
+		}
+
+		if((lineSearchIterationLimit > 0) && (++j >= lineSearchIterationLimit)) {
+			alpha /= 2.0;
+			break;
+		}
+	}
+
+	if(came_close) {
+		lineSearchValueOld = alpha_close;
+	}
+	else {
+		lineSearchValueOld = alpha* 2.0;
+	}
+
+	pi = pc;
+	return(0.0);
+}

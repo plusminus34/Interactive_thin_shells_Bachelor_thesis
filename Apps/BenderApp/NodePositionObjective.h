@@ -20,6 +20,6 @@ public:
 
 	virtual void addError(const dVector & x, double & e);
 
-	void draw(dVector const & x);
+	void draw(dVector const & x, HighlightLevel level = HighlightLevel::NONE);
 
 };

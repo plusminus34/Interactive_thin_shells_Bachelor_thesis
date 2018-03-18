@@ -5,6 +5,7 @@
 #include <GUILib/GLContentManager.h>
 #include <GUILib/GLTexture.h>
 #include <GUILib/GLShaderMaterial.h>
+#include "Utils/BMPIO.h"
 
 #include <nanogui/screen.h>
 
@@ -47,6 +48,7 @@ GLApplication::GLApplication(bool maximizeWindows) {
 
     init(borderLeft, borderTop, (mode->width - borderLeft - borderRight), (mode->height - borderTop - borderBottom), maximizeWindows);
 }
+
 
 void GLFW_error(int error, const char* description)
 {
@@ -453,6 +455,8 @@ void GLApplication::runMainLoop() {
 			glfwSwapBuffers(menuScreen->glfwWindow());
 		}
 #endif
+
+		if(screenRecorder != NULL) {screenRecorder->call(glfwWindow);}
 
 		/* Poll for and process events */
 		glfwPollEvents();
