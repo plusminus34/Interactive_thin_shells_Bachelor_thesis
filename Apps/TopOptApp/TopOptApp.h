@@ -21,11 +21,13 @@ private:
 	P3D startDragPoint, endDragPoint;
 	bool dragging = false;
 
-	MaterialModel2D matModel = MM_LINEAR_ISOTROPIC;
-	double shearModulus = 50000, bulkModulus = 50;
+	double forceScale = 10.0;
+
+	MaterialModel2D matModel = MM_NEO_HOOKEAN;
+	double shearModulus = 50, bulkModulus = 50;
 	bool checkDerivatives = false;
 
-	dVector externalLoads;
+	DynamicArray<V3D> externalLoads;
 
 
 public:

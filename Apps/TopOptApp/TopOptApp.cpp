@@ -32,8 +32,12 @@ TopOptApp::TopOptApp() {
 	femMesh = new CSTSimulationMesh2D();
 	femMesh->readMeshFromFile("../data/FEM/2d/triMeshTMP.tri2d");
 	//set some boundary conditions...
-	for (int i = 0; i < nCols;i++)
-		femMesh->setPinnedNode(i, femMesh->nodes[i]->getWorldPosition());
+//	for (int i = 0; i < nCols;i++)
+//		femMesh->setPinnedNode(i, femMesh->nodes[i]->getWorldPosition());
+	femMesh->setPinnedNode(0, femMesh->nodes[0]->getWorldPosition());
+	Globals::g = 0;
+
+	externalLoads.resize(femMesh->nodes.size());
 
 	showGroundPlane = false;
 
@@ -51,6 +55,9 @@ TopOptApp::TopOptApp() {
 		true)->setItems({ "Linear Isotropic", "StVK", "Neo-Hookean"});
 
 	mainMenu->addVariable("G:", Globals::g);
+
+	mainMenu->addVariable("force scale:", forceScale);
+
 	mainMenu->addVariable("Shear modulus", shearModulus);
 	mainMenu->addVariable("Bulk modulus", bulkModulus);
 	mainMenu->addButton("set params", [this]() {
@@ -58,6 +65,7 @@ TopOptApp::TopOptApp() {
 			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(femMesh->elements[i])) {
 				e->shearModulus = shearModulus;
 				e->bulkModulus = bulkModulus;
+				e->matModel = matModel;
 			}
 		}
 	});
@@ -93,8 +101,15 @@ bool TopOptApp::onMouseMoveEvent(double xPos, double yPos) {
 					femMesh->unpinNode(i);
 		}
 	}
-	else if (GlobalMouseState::dragging) {
-		selectedNodeID = femMesh->getSelectedNodeID(lastClickedRay);
+	else{
+		if (GlobalMouseState::dragging) {
+			if (selectedNodeID >= 0 && getGLAppInstance()->appIsRunning == false) {
+				P3D p;
+				lastClickedRay.getDistanceToPlane(Plane(P3D(), V3D(0, 0, -1)), &p);
+				externalLoads[selectedNodeID] = V3D(femMesh->nodes[selectedNodeID]->getWorldPosition(), p);
+			}
+		}else
+			selectedNodeID = femMesh->getSelectedNodeID(lastClickedRay);
 	}
 //	if (selectedNodeID != -1){
 //		Plane plane(camera->getCameraTarget(), V3D(camera->getCameraPosition(), camera->getCameraTarget()).unit());
@@ -183,6 +198,12 @@ void TopOptApp::process() {
 	femMesh->checkDerivatives = checkDerivatives != 0;
 
 	femMesh->addGravityForces(V3D(0, Globals::g, 0));
+
+	for (int i = 0; i < femMesh->nodes.size(); i++) {
+		femMesh->f_ext[2 * i + 0] = externalLoads[i].x() * forceScale;
+		femMesh->f_ext[2 * i + 1] = externalLoads[i].y() * forceScale;
+	}
+
 	femMesh->solve_statics();
 }
 
@@ -196,6 +217,14 @@ void TopOptApp::drawScene() {
 	if (selectedNodeID >= 0) {
 		P3D pos = femMesh->nodes[selectedNodeID]->getWorldPosition();
 		drawSphere(pos, 0.02);
+	}
+
+	glColor3d(0,1,0);
+	for (int i = 0; i < externalLoads.size(); i++) {
+		P3D pos = femMesh->nodes[i]->getWorldPosition();
+		V3D force = externalLoads[i];
+		if (force.length() > 0.01)
+			drawArrow(pos, pos + force, 0.005);
 	}
 
 	if (GlobalMouseState::dragging && GlobalMouseState::lButtonPressed && selectedNodeID < 0) {
