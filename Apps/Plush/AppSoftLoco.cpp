@@ -6,6 +6,7 @@ using namespace nanogui;
 // TODO: Squishier material model?
 // TODO: Throttle contraction _rate_?
 // TODO: Throttle _reaction forces_?
+// TODO: Different smoothing kernel?
 // TODO: Aiiiiiir resistance?
 
 AppSoftLoco::AppSoftLoco() {
@@ -20,24 +21,25 @@ AppSoftLoco::AppSoftLoco() {
 		"mini_swingup", // 3
 		"3ball",        // 4
 		"walker",       // 5
-		"jumping_cube"  // 6
+		"jumping_cube", // 6
+		"6ball"         // 7
 	};
-	string TEST_CASE = TEST_CASES[4];
+	string TEST_CASE = TEST_CASES[3];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
 	mesh = new CSTSimulationMesh2D();
 	mesh->spawnSavedMesh(fName);
 	mesh->nudge_mesh_up();
-	mesh->applyYoungsModulusAndPoissonsRatio(3e3, .25);
+	mesh->applyYoungsModulusAndPoissonsRatio(3e4, .25); // FORNOW
 	mesh->addGravityForces(V3D(0., -10.)); 
 	// mesh->pinToFloor(); 
 	// mesh->pinToLeftWall(); 
 	mesh->add_contacts_to_boundary_nodes();
 	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
-	// mesh->rig_boundary_simplices();
+	mesh->rig_boundary_simplices();
 
-	for (int _ = 0; _ < 25; ++_) { mesh->xvPair_INTO_Mesh(mesh->solve_dynamics()); }
+	for (int _ = 0; _ < 1000; ++_) { mesh->xvPair_INTO_Mesh(mesh->solve_dynamics()); }
 
 
 	// -- // ik
@@ -45,7 +47,7 @@ AppSoftLoco::AppSoftLoco() {
 	{
 		for (int i = 0; i < ik->K; ++i) {
 			// if (i != 0) { continue; } // !!!
-			if (i != ik->K - 1) { continue; }
+			if (i != ik->K - 1 && i != ik->K/2) { continue; }
 			auto &COMp = ik->COMpJ[i];
 			auto COM_handler = new P2DDragger(&COMp);
 			COM_handlers.push_back(COM_handler);
@@ -101,7 +103,7 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addGroup("loco");
 	mainMenu->addVariable("SELECTED_FRAME_i", ik->SELECTED_FRAME_i);
 	mainMenu->addGroup("z");
-	mainMenu->addVariable("appIsRunnig", appIsRunning);
+	mainMenu->addVariable("appIsRunning", appIsRunning);
 	mainMenu->addVariable("STEP", STEP);
 	mainMenu->addVariable("PLAY_PREVIEW", PLAY_PREVIEW);
 	mainMenu->addGroup("zz");
@@ -184,7 +186,7 @@ void AppSoftLoco::drawScene() {
 		if (!POPULATED_PREVIEW_TRAJEC) {
 			POPULATED_PREVIEW_TRAJEC = true;
 			uJ_preview = ik->uJ_curr;
-			for (int _ = 0; _ < 30; ++_) { uJ_preview.push_back(uJ_preview.back()); }
+			for (int _ = 0; _ < LEADOUT_FRAMES; ++_) { uJ_preview.push_back(uJ_preview.back()); }
 			xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview); 
 		} 
 

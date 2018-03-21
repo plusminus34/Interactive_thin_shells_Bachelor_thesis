@@ -314,6 +314,11 @@ const auto mat_resize_zero = [](MatrixNxM &M, int R, int C) {
 	M.setZero();
 };
 
+const auto sparse_mat_resize_zero = [](SparseMatrix &M, int R, int C) {
+	M.resize(R, C);
+	M.setZero();
+};
+
 const auto mat_resize_fill = [](MatrixNxM &M, int R, int C, double val) {
 	M.resize(R, C);
 	M.setZero();

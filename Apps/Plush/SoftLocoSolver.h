@@ -3,6 +3,9 @@
 #include "SimulationMesh.h"
 #include "ZeroCubicQuadratic.h"
 #include "Tendon.h"
+#include "SoftLocoObjectiveFunction.h"
+#include <OptimizationLib/GradientDescentFunctionMinimizer.h>
+#include <OptimizationLib/BFGSFunctionMinimizer.h>
 
 class SimulationMesh;
 
@@ -12,6 +15,9 @@ typedef vector<MatrixNxM> MTraj;
 class SoftLocoSolver {
 
 	friend class SimulationMesh; 
+
+public:
+	SoftLocoObjectiveFunction *objectiveFunction;
 
 public:
 	P3D COMp_FORNOW = P3D();
@@ -47,7 +53,7 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 48; // HORIZON
+	const int K = 12; // 48; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);

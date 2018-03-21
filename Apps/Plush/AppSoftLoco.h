@@ -29,7 +29,8 @@ public:
 public:
 	bool PLAY_PREVIEW = false;
 	bool POPULATED_PREVIEW_TRAJEC = false;
-	const int LEADIN_FRAMES = 30;
+	const int LEADIN_FRAMES = 25;
+	const int LEADOUT_FRAMES = 250;
 	int PREVIEW_i = -LEADIN_FRAMES;
 	vector<dVector> uJ_preview;
 	vector<dVector> xJ_preview;

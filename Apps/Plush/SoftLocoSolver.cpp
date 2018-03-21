@@ -23,6 +23,8 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	construct_u_barrierFuncs(); 
 	COMp_FORNOW = mesh->get_COM(mesh->X); 
 
+	objectiveFunction = new SoftLocoObjectiveFunction(this);
+
 	// cout << "Zu_curr: " << u_curr.transpose() << endl;
 	// cout << " u_curr: " << uJ_curr[0].transpose() << endl;
 }
@@ -100,6 +102,7 @@ void SoftLocoSolver::draw() {
 	*/
 
 	// Widget
+	/*
 	glMasterPush(); {
 		glDisable(GL_STENCIL_TEST);
 		glDisable(GL_DEPTH_TEST);
@@ -109,7 +112,7 @@ void SoftLocoSolver::draw() {
 			// bool SELECTED = (i == SELECTED_FRAME_i);
 			bool SELECTED = true;
 			// if (i != 0) { continue; } // !!!
-			if (i != K - 1) { continue; } // !!!
+			if (i != K - 1 && i != K/2) { continue; } // !!!
 			if (SPEC_COM_J[i]) {
 				for (auto &GL_PRIMITIVE : { GL_LINES, GL_POINTS }) {
 					glBegin(GL_PRIMITIVE); {
@@ -120,6 +123,7 @@ void SoftLocoSolver::draw() {
 			}
 		}
 	} glMasterPop();
+	*/
 
 	// // Debug
 	// glMasterPush(); {
@@ -161,13 +165,13 @@ void SoftLocoSolver::draw() {
 	glMasterPush(); {
 		glDisable(GL_STENCIL_TEST);
 		glDisable(GL_DEPTH_TEST);
-		glTranslated(1., 0., 0.);
+		// glTranslated(1., 0., 0.);
 
 		for (int i = K - 1; i >= 0; --i) {
 			set_color(color_swirl(dfrac(i, K), ORCHID, RATIONALITY));
 			// if (i != 0) { set_color(LIGHT_CLAY); } // !!!
 			// if (i != K - 1) { set_color(LIGHT_CLAY); } // !!!
-			glLineWidth(2); 
+			glLineWidth(2);
 			glBegin(GL_LINE_STRIP); {
 				for (auto &bs : mesh->boundary_simplices) {
 					for (auto &node : bs->nodes) {
@@ -176,25 +180,59 @@ void SoftLocoSolver::draw() {
 				}
 			} glEnd();
 			// --
+		}
+
+
+		for (int i = K - 1; i >= 0; --i) {
 			glPointSize(10);
-			glLineWidth(5); 
-			if (i != K - 1) { continue;  } // !!!
-			for (auto &GL_PRIMITIVE : { GL_POINTS, GL_LINES }) {
-				glBegin(GL_PRIMITIVE); {
-					// set_color(color_swirl(.5*dfrac(i, K), ORCHID, BLACK));
-					set_color(PUMPKIN);
-					glP3D(mesh->get_COM(xJ_curr[i]));
-					// set_color(color_swirl(.5*dfrac(i, K), RATIONALITY, BLACK));
-					set_color(RATIONALITY);
-					glP3D(COMpJ[i]);
+			if (i != K - 1 && i != K/2) { continue; } // !!!
+
+			double RAD = .015;
+			set_color(WHITE);
+			for (int _ = 0; _ < 2; ++_) {
+
+				int NUM_SEG = 16;
+				P3D s = mesh->get_COM(xJ_curr[i]); // circle
+				P3D t = COMpJ[i];                  // point
+				glBegin(GL_POLYGON); {
+					for (int i = 0; i < NUM_SEG; ++i) {
+						double theta = dfrac(i, NUM_SEG) * 2.*PI;
+						glP3D(s + RAD*e_theta_2D(theta));
+					}
 				} glEnd();
+
+				if (!IS_ZERO(V3D(s, t).norm())) {
+					V3D o = construct_perp2d(V3D(s, t).normalized());
+					glBegin(GL_TRIANGLES); {
+						glP3D(t);
+						glP3D(s + RAD*o);
+						glP3D(s + -RAD*o);
+					} glEnd();
+				}
+
+				RAD = .01;
+				set_color(color_swirl(dfrac(i, K), ORCHID, RATIONALITY)); 
 			}
+
+			// for (auto &GL_PRIMITIVE : { GL_POINTS, GL_LINES }) {
+			// 	glBegin(GL_PRIMITIVE); {
+			// 		glP3D(mesh->get_COM(xJ_curr[i]));
+			// 		glP3D(COMpJ[i]);
+			// 	} glEnd();
+			// }
+
 		}
 		
 	} glMasterPop(); 
 
 	auto time = linspace(K, 0., 1.);
 	vector<XYPlot*> plots;
+	dVector ONE;  resize_fill(ONE,  K, 1);
+	dVector ZERO; resize_zero(ZERO, K);
+	plots.push_back(new XYPlot(time, dVector2vecDouble(-ONE)));
+	plots.push_back(new XYPlot(time, dVector2vecDouble(ZERO)));
+	plots.push_back(new XYPlot(time, dVector2vecDouble(ONE)));
+	for (auto &plot : plots) { plot->SPEC_COLOR = LIGHT_CLAY; }
 	for (int t = 0; t < T(); ++t) {
 		vector<double> F_t;
 		for (int k = 0; k < K; ++k) {
@@ -204,11 +242,6 @@ void SoftLocoSolver::draw() {
 		plot->SPEC_COLOR = kelly_color(t);
 		plots.push_back(plot);
 	}
-	dVector ONE;  resize_fill(ONE,  K, 1);
-	dVector ZERO; resize_zero(ZERO, K);
-	plots.push_back(new XYPlot(time, dVector2vecDouble(-ONE)));
-	plots.push_back(new XYPlot(time, dVector2vecDouble(ZERO)));
-	plots.push_back(new XYPlot(time, dVector2vecDouble(ONE)));
 	XYPlot::uniformize_axes(plots);
 	for (auto &plot : plots) {*plot->origin = P3D(-1.5, -1.);
 							  *plot->top_right = P3D(-.5, 1.);
@@ -237,15 +270,30 @@ Traj SoftLocoSolver::solve_trajectory(double dt, const dVector &x_0, const dVect
 }
 
 void SoftLocoSolver::step() { 
-	// if (!mesh->contacts.empty()) { error("[SoftLocoSolver::step()] NotImplementedError."); }
-	// mesh->update_contacts(xm1_curr);
-	if (PROJECT) {
-		// project();
-		projectJ();
-	}
-	for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
-		iterate();
-	}
+
+	// // BFGSFunctionMinimizer minimizer(5);
+	GradientDescentFunctionMinimizer minimizer(1);
+	minimizer.
+	minimizer.solveResidual = 1e-5;
+	minimizer.maxLineSearchIterations = 15;
+	minimizer.lineSearchStartValue = 1.;
+	minimizer.printOutput = true;
+
+	dVector uS = stack_vec_dVector(uJ_curr);
+	double functionValue = objectiveFunction->computeValue(uS); // TODO:See AppSoftIK notes.
+	minimizer.minimize(objectiveFunction, uS, functionValue);
+
+	/*
+		// if (!mesh->contacts.empty()) { error("[SoftLocoSolver::step()] NotImplementedError."); }
+		// mesh->update_contacts(xm1_curr);
+		if (PROJECT) {
+			// project();
+			projectJ();
+		}
+		for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
+			iterate();
+		}
+	*/
 }
 
 void SoftLocoSolver::iterate() {
@@ -465,7 +513,7 @@ double SoftLocoSolver::calculate_QJ(const Traj &uJ) {
 	double QJ = 0.;
 	for (int i = 0; i < K; ++i) {
 		// if (i != 0) { continue; } // !!!
-		if (i != K - 1) { continue; } // !!!
+		if (i != K - 1 && i != K/2) { continue; } // !!!
 		// TODO: Inactive Widgets.
 		QJ += calculate_Q_of_x(xJ[i], COMpJ[i]);
 	}
@@ -589,7 +637,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 		if (true) {
 			for (int k = 0; k < K; ++k) {
 				dVector entry; resize_zero(entry, DN());
-				if (k == K - 1) {
+				if (k == K - 1 || k == K/2) {
 					auto Q_wrapper = [&](const dVector x) -> double {
 						return calculate_Q_of_x(x, COMpJ[k]);
 					};
@@ -663,38 +711,40 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 
 
 	double h = mesh->timeStep;
-	MatrixNxM M = mesh->m.asDiagonal();
-	MatrixNxM I; I.setIdentity(DN(), DN());
-	MatrixNxM f1h2M = (1./(h*h))*M;
-	vector<MatrixNxM> vecHinv;
+	SparseMatrix M = SparseMatrix(mesh->m.asDiagonal());
+	// MatrixNxM I; I.setIdentity(DN(), DN());
+	SparseMatrix f1h2M = (1./(h*h))*M;
+	vector<SparseMatrix> vecHinv;
 	for (int k = 0; k < K; ++k) {
 		dVector x_ctc = (k == 0) ? xm1_curr : xJ[k - 1];
-		vecHinv.push_back(calculate_H(xJ[k], uJ[k], x_ctc).toDense().inverse());
+		vecHinv.push_back(calculate_H(xJ[k], uJ[k], x_ctc).toDense().inverse().sparseView());
 	}
 
 	// cout << "dxkdxkm1" << endl;
-	vector<MatrixNxM> dGdxkm1_INDEX_at_km1;
-	vector<MatrixNxM> dScriptGdxkm1_INDEX_at_km1;
-	vector<MatrixNxM> dxkdxkm1_INDEX_AT_km1; {
+	vector<SparseMatrix> dGdxkm1_INDEX_at_km1;
+	vector<SparseMatrix> dScriptGdxkm1_INDEX_at_km1;
+	vector<SparseMatrix> dxkdxkm1_INDEX_AT_km1; {
 		for (int k = 1; k < K; ++k) {
-			MatrixNxM &Hinv = vecHinv[k];
+			auto &Hinv = vecHinv[k];
 
-			MatrixNxM dGkdxkm1; 
-			dVector xk   = xJ[k];
-			dVector xkm1 = xJ[k - 1];
+			SparseMatrix dGkdxkm1(DN(), DN());
+			const dVector &xk   = xJ[k];
+			const dVector &xkm1 = xJ[k - 1];
 			mesh->update_contacts(xkm1); // FORNOW
 
-			mat_resize_zero(dGkdxkm1, DN(), DN());
+			sparse_mat_resize_zero(dGkdxkm1, DN(), DN());
 			for (auto &c: mesh->contacts) {
 				int i = c->node->nodeIndex;
 				P3D xy_k_i   = c->getPosition(xk);
 				P3D xy_km1_i = c->getPosition(xkm1);
 				double &xk_i   = xy_k_i[0];
 				double &xkm1_i = xy_km1_i[0];
-				Matrix2x2 block; block.setZero();
-				block(0, 0) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
-				block(1, 0) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
-				dGkdxkm1.block<2, 2>(2 * i, 2 * i) += block;
+				// Matrix2x2 block; block.setZero();
+				// block(0, 0) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
+				// block(1, 0) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
+				// dGkdxkm1.block<2, 2>(2 * i, 2 * i) += block;
+				dGkdxkm1.insert(2*i, 2*i) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
+				dGkdxkm1.insert(2*i + 1, 2*i) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
 			}
 			dGdxkm1_INDEX_at_km1.push_back(dGkdxkm1);
 
@@ -714,7 +764,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 				matrix_equality_check(dGkdxkm1_FD, dGkdxkm1);
 			}
 
-			MatrixNxM dScriptGdxkm1 = dGkdxkm1 - 2.*f1h2M;
+			SparseMatrix dScriptGdxkm1 = dGkdxkm1 - 2.*f1h2M;
 			dScriptGdxkm1_INDEX_at_km1.push_back(dScriptGdxkm1);
 
 			dxkdxkm1_INDEX_AT_km1.push_back(-dScriptGdxkm1*Hinv);
@@ -726,8 +776,8 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	vector<MatrixNxM> dxkdxkm2_INDEX_AT_km2; {
 		for (int k = 2; k < K; ++k) {
 			double h = mesh->timeStep;
-			MatrixNxM &Hinv = vecHinv[k];
-			MatrixNxM &TERM_1 = f1h2M;
+			auto &Hinv = vecHinv[k];
+			SparseMatrix &TERM_1 = f1h2M;
 			MatrixNxM TERM_2 = dxkdxkm1_INDEX_AT_km1[k - 2] * dScriptGdxkm1_INDEX_at_km1[k - 1];
 			dxkdxkm2_INDEX_AT_km2.push_back(-(TERM_1 + TERM_2)*Hinv);
 		}
@@ -763,7 +813,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	// --
 	for (int j = 0; j < K; ++j) {
 		for (int i = j + 3; i < K; ++i) { 
-			MatrixNxM &Hinv = vecHinv[i];
+			auto &Hinv = vecHinv[i];
 			// --
 			dxidxj[i][j] = -(XX[i - 1][j]*scrGxm1(i) + XX[i - 2][j]*f1h2M)*Hinv; 
 		}
@@ -780,7 +830,7 @@ Traj SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
 	vector<dVector> dQkdxk;
 	for (int k = 0; k < K; ++k) {
 		dVector entry;
-		if (k != K - 1) {
+		if (k != K - 1 && k != K/2) {
 			resize_zero(entry, DN());
 		} else {
 			entry = calculate_dQdx(uJ[k], xJ[k], COMpJ[k]);
@@ -915,16 +965,8 @@ MatrixNxM SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x, con
 			error("Eigen::SimplicialLDLT decomposition failed.");
 		}
 
-		// Solve by column.
-		dVector x_j, a_j;
-		for (int j = 0; j < A_s.cols(); ++j) {
-			a_j = A_s.col(j);
-			x_j = solver.solve(a_j);
-			if (solver.info() != Eigen::Success) {
-				error("Eigen::SimplicialLDLT solve failed.");
-			}
-			X_T.col(j) = x_j;
-		}
+		X_T = solver.solve(A_s);
+		if (solver.info() != Eigen::Success) { error("Eigen::SimplicialLDLT solve failed."); }
 		dxdtau = X_T.transpose();
 	}
 
