@@ -21,6 +21,8 @@ void SimulationMesh::drawSimulationMesh(V3D const & edgeColor, double elementSiz
 										V3D const & nodeColor, double nodeSize)
 {
 
+	prepareForDraw();
+
 	// elements
 	glColor3d(edgeColor(0), edgeColor(1), edgeColor(2));
 	glLineWidth((GLfloat)elementSize);

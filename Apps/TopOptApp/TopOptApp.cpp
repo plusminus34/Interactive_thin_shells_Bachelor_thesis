@@ -15,6 +15,13 @@
 //adjoint method for non-linear top-opt
 //have menu items for density, gravity, material params...
 
+//model densities with continuous variables
+//Objectives:
+//- compliance/stored energy (SIMP)
+//- amount of material used (p)
+//- smoothness of solution (in case dithering artifacts come up)
+//- L0 regularizer to force solution to choose a side...
+
 TopOptApp::TopOptApp() {
 	setWindowTitle("Test FEM Sim Application...");
 
@@ -29,15 +36,17 @@ TopOptApp::TopOptApp() {
 
 	bgColorR = bgColorG = bgColorB = 1.0;
 
-	femMesh = new CSTSimulationMesh2D();
-	femMesh->readMeshFromFile("../data/FEM/2d/triMeshTMP.tri2d");
+	simMesh = new CSTSimulationMesh2D();
+	simMesh->readMeshFromFile("../data/FEM/2d/triMeshTMP.tri2d");
+
 	//set some boundary conditions...
-//	for (int i = 0; i < nCols;i++)
-//		femMesh->setPinnedNode(i, femMesh->nodes[i]->getWorldPosition());
-	femMesh->setPinnedNode(0, femMesh->nodes[0]->getWorldPosition());
+	for (int i = 0; i < nCols;i++)
+		simMesh->setPinnedNode(i, simMesh->nodes[i]->getWorldPosition());
+
 	Globals::g = 0;
 
-	externalLoads.resize(femMesh->nodes.size());
+	externalLoads.resize(simMesh->nodes.size());
+	resize(densityParams, simMesh->elements.size()); densityParams.setOnes();
 
 	showGroundPlane = false;
 
@@ -45,8 +54,8 @@ TopOptApp::TopOptApp() {
 	mainMenu->addVariable<MaterialModel2D>("MaterialModel",
 		[this](const MaterialModel2D &val) {
 			matModel = val;  
-			for (uint i = 0; i < femMesh->elements.size(); i++) {
-				if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(femMesh->elements[i])) 
+			for (uint i = 0; i < simMesh->elements.size(); i++) {
+				if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) 
 					e->matModel = matModel;
 			}
 	
@@ -61,18 +70,45 @@ TopOptApp::TopOptApp() {
 	mainMenu->addVariable("Shear modulus", shearModulus);
 	mainMenu->addVariable("Bulk modulus", bulkModulus);
 	mainMenu->addButton("set params", [this]() {
-		for (uint i = 0; i < femMesh->elements.size(); i++) {
-			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(femMesh->elements[i])) {
-				e->shearModulus = shearModulus;
-				e->bulkModulus = bulkModulus;
-				e->matModel = matModel;
-			}
-		}
+		applyDensityParametersToSimMesh();
 	});
 
+	initialMass = 0;
+	for (uint i = 0; i < simMesh->elements.size(); i++) {
+		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i]))
+			initialMass += e->getMass();
+	}
+
+
+	mainMenu->addVariable("Optimize Topology", optimizeTopology);
+
+	nanogui::Widget *panel = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", panel);
+	panel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+
+	auto label = new nanogui::Label(panel, "Target mass ratio (%)", "sans-bold");
+	auto slider = new nanogui::Slider(panel);
+	slider->setValue(0.5f);
+	slider->setFixedWidth(80);
+	std::pair<float, float> range; range.first = 10; range.second = 100;
+	slider->setRange(range);
+	slider->setValue((float)targetMassRatio);
+	slider->setCallback([this](float val) { targetMassRatio = val; });
 
 	menuScreen->performLayout();
 }
+
+void TopOptApp::applyDensityParametersToSimMesh() {
+	for (uint i = 0; i < simMesh->elements.size(); i++) {
+		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
+			e->shearModulus = minDensityScalingFactor + pow(densityParams[i], 2) * (shearModulus);
+			e->bulkModulus = minDensityScalingFactor + pow(densityParams[i], 2) * (bulkModulus);
+			e->densityForDrawing = densityParams[i];
+		}
+	}
+}
+
 
 TopOptApp::~TopOptApp(void){
 }
@@ -80,6 +116,18 @@ TopOptApp::~TopOptApp(void){
 //triggered when mouse moves
 bool TopOptApp::onMouseMoveEvent(double xPos, double yPos) {
 	lastClickedRay = getRayFromScreenCoords(xPos, yPos);
+
+	if (GlobalMouseState::dragging == false && glfwGetKey(glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
+		int elementID = simMesh->getSelectedElementID(lastClickedRay);
+		if (elementID >= 0) 
+			densityParams[elementID] = 0;
+	}
+
+	if (GlobalMouseState::dragging == false && glfwGetKey(glfwWindow, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS) {
+		int elementID = simMesh->getSelectedElementID(lastClickedRay);
+		if (elementID >= 0)
+			densityParams[elementID] = 1;
+	}
 
 	if (GlobalMouseState::dragging && GlobalMouseState::lButtonPressed && selectedNodeID < 0){
 		lastClickedRay.getDistanceToPlane(Plane(P3D(), V3D(0, 0, -1)), &endDragPoint);
@@ -90,31 +138,31 @@ bool TopOptApp::onMouseMoveEvent(double xPos, double yPos) {
 		AxisAlignedBoundingBox bb(startDragPoint, endDragPoint);
 
 		if (glfwGetKey(glfwWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
-			for (uint i = 0; i < femMesh->nodes.size(); i++)
-				if (bb.isInside(femMesh->nodes[i]->getWorldPosition())){
-					femMesh->setPinnedNode(i, femMesh->nodes[i]->getWorldPosition());
+			for (uint i = 0; i < simMesh->nodes.size(); i++)
+				if (bb.isInside(simMesh->nodes[i]->getWorldPosition())){
+					simMesh->setPinnedNode(i, simMesh->nodes[i]->getWorldPosition());
 				}
 		}
 		else if (glfwGetKey(glfwWindow, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
-			for (uint i = 0; i < femMesh->nodes.size(); i++)
-				if (bb.isInside(femMesh->nodes[i]->getWorldPosition()))
-					femMesh->unpinNode(i);
+			for (uint i = 0; i < simMesh->nodes.size(); i++)
+				if (bb.isInside(simMesh->nodes[i]->getWorldPosition()))
+					simMesh->unpinNode(i);
 		}
 	}
 	else{
 		if (GlobalMouseState::dragging) {
-			if (selectedNodeID >= 0 && getGLAppInstance()->appIsRunning == false) {
+			if (selectedNodeID >= 0) {
 				P3D p;
 				lastClickedRay.getDistanceToPlane(Plane(P3D(), V3D(0, 0, -1)), &p);
-				externalLoads[selectedNodeID] = V3D(femMesh->nodes[selectedNodeID]->getWorldPosition(), p);
+				externalLoads[selectedNodeID] = V3D(simMesh->nodes[selectedNodeID]->getWorldPosition(), p);
 			}
 		}else
-			selectedNodeID = femMesh->getSelectedNodeID(lastClickedRay);
+			selectedNodeID = simMesh->getSelectedNodeID(lastClickedRay);
 	}
 //	if (selectedNodeID != -1){
 //		Plane plane(camera->getCameraTarget(), V3D(camera->getCameraPosition(), camera->getCameraTarget()).unit());
 //		P3D targetPinPos; getRayFromScreenCoords(xPos, yPos).getDistanceToPlane(plane, &targetPinPos);
-//		femMesh->setPinnedNode(selectedNodeID, targetPinPos);
+//		simMesh->setPinnedNode(selectedNodeID, targetPinPos);
 //		return true;
 //	}
 	
@@ -170,9 +218,9 @@ void TopOptApp::loadFile(const char* fName) {
 
 	std::string fNameExt = fileName.substr(fileName.find_last_of('.') + 1);
 	if (fNameExt == "tri2d") {
-		delete femMesh;
-		femMesh = new CSTSimulationMesh2D;
-		femMesh->readMeshFromFile(fName);
+		delete simMesh;
+		simMesh = new CSTSimulationMesh2D;
+		simMesh->readMeshFromFile(fName);
 		Logger::consolePrint("...Done!");
 	} else {
 		Logger::consolePrint("...but how to do with that?");
@@ -187,41 +235,59 @@ void TopOptApp::saveFile(const char* fName) {
 
 // Run the App tasks
 void TopOptApp::process() {
-	//do the work here...
+	if (GlobalMouseState::dragging)
+		return;
 
-	//add mouse drag tempEEUnits
-	//femMesh->tempEEUnits.clear();
-	//femMesh->tempEEUnits.push_back(new CSTDrag2D(this, nodes[9], P3D(-5, 20)));
-	//
+	//do the work here...
 	double simulationTime = 0;
 	double maxRunningTime = 1.0 / desiredFrameRate;
-	femMesh->checkDerivatives = checkDerivatives != 0;
+	simMesh->checkDerivatives = checkDerivatives != 0;
 
-	femMesh->addGravityForces(V3D(0, Globals::g, 0));
+	simMesh->addGravityForces(V3D(0, Globals::g, 0));
 
-	for (int i = 0; i < femMesh->nodes.size(); i++) {
-		femMesh->f_ext[2 * i + 0] = externalLoads[i].x() * forceScale;
-		femMesh->f_ext[2 * i + 1] = externalLoads[i].y() * forceScale;
+	for (uint i = 0; i < simMesh->nodes.size(); i++) {
+		simMesh->f_ext[2 * i + 0] = externalLoads[i].x() * forceScale;
+		simMesh->f_ext[2 * i + 1] = externalLoads[i].y() * forceScale;
 	}
 
-	femMesh->solve_statics();
+
+	if (optimizeTopology) {
+		//make sure we're on the constraint manifold
+		double currentMass = 0;
+		for (uint i = 0; i < simMesh->elements.size(); i++) {
+			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i]))
+				currentMass += e->getMass() * densityParams[i];
+		}
+		if (currentMass > initialMass * targetMassRatio / 100.0) {
+			double ratio = initialMass * targetMassRatio / 100.0 / currentMass;
+			for (uint i = 0; i < simMesh->elements.size(); i++) {
+				if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i]))
+					densityParams[i] *= ratio;
+			}
+		}
+	}
+
+	applyDensityParametersToSimMesh();
+
+	simMesh->solve_statics();
 }
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
 void TopOptApp::drawScene() {
+	applyDensityParametersToSimMesh();
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glColor3d(1,1,1);
-	femMesh->drawSimulationMesh();
+	simMesh->drawSimulationMesh();
 
 	if (selectedNodeID >= 0) {
-		P3D pos = femMesh->nodes[selectedNodeID]->getWorldPosition();
+		P3D pos = simMesh->nodes[selectedNodeID]->getWorldPosition();
 		drawSphere(pos, 0.02);
 	}
 
 	glColor3d(0,1,0);
-	for (int i = 0; i < externalLoads.size(); i++) {
-		P3D pos = femMesh->nodes[i]->getWorldPosition();
+	for (uint i = 0; i < externalLoads.size(); i++) {
+		P3D pos = simMesh->nodes[i]->getWorldPosition();
 		V3D force = externalLoads[i];
 		if (force.length() > 0.01)
 			drawArrow(pos, pos + force, 0.005);

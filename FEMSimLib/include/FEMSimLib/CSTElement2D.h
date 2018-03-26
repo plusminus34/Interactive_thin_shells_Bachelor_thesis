@@ -12,6 +12,7 @@ enum MaterialModel2D {MM_LINEAR_ISOTROPIC=0, MM_STVK, MM_NEO_HOOKEAN};
 */
 class CSTElement2D : public SimMeshElement {
 	friend class TopOptApp;
+	friend class CSTSimulationMesh2D;
 private:
 	//material parameters...
 	double shearModulus = 50, bulkModulus = 50;
@@ -21,6 +22,9 @@ private:
 	MaterialModel2D matModel;
 	//keep track of the rest shape area
 	double restShapeArea = 0;
+
+	double defEnergyForDrawing = 0;
+	double densityForDrawing = 1;
 
 	//the collection of nodes that define the triangle element
 	Node* n[3];

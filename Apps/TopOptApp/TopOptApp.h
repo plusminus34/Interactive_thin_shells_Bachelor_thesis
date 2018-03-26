@@ -13,7 +13,7 @@
  */
 class TopOptApp : public GLApplication {
 private:
-	SimulationMesh* femMesh;
+	SimulationMesh* simMesh;
 
 	Ray lastClickedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
 	int selectedNodeID = -1;
@@ -28,7 +28,16 @@ private:
 	bool checkDerivatives = false;
 
 	DynamicArray<V3D> externalLoads;
+	dVector densityParams;
 
+	double targetMassRatio = 100;
+	double initialMass = 0;
+	bool optimizeTopology = false;
+
+
+	void applyDensityParametersToSimMesh();
+
+	double minDensityScalingFactor = 0.0001;
 
 public:
 	// constructor

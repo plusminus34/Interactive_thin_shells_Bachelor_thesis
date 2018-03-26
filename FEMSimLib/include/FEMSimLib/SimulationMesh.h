@@ -43,6 +43,8 @@ public:
 	SimulationMesh();
 	~SimulationMesh();
 
+	virtual void prepareForDraw() {	}
+
 	void drawNodes();
 	void drawSimulationMesh(V3D const & edgeColor = V3D(1.0,1.0,1.0), double edgeWidth = 1, 
 							V3D const & pinnedNodeColor = V3D(1.0,0.0,0.0), double pinnedNodeSize = 1,
@@ -66,7 +68,9 @@ public:
 
 	virtual void readMeshFromFile(const char* fName) = 0;
 	
-	virtual int getSelectedNodeID(Ray ray) = 0;
+	virtual int getSelectedNodeID(Ray ray) { return -1; }
+	virtual int getSelectedElementID(Ray ray) { return -1; }
+
 	virtual void setPinnedNode(int ID, const P3D& target) = 0;
 	virtual void unpinNode(int ID) {};
 	virtual void removePinnedNodeConstraints() {
