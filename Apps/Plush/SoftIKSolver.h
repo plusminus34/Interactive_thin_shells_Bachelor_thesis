@@ -34,7 +34,7 @@ public:
 public:
 	double timeStep = .01;
 	// --
-	bool PROJECT = false;
+	bool PROJECT = true;
 	bool CHECK_IK_GRADIENT = false;
 	bool SOLVE_DYNAMICS = true;
 	bool LINEAR_APPROX = true;

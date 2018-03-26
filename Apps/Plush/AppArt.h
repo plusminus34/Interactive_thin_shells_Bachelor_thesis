@@ -2,6 +2,7 @@
 
 #include "PlushApplication.h"
 #include "CSTSimulationMesh2D.h"
+#include "SoftIKSolver.h"
 
 using namespace Eigen;
 
@@ -14,7 +15,8 @@ public:
 	virtual void drawScene();
 
 public:
-	CSTSimulationMesh2D *mesh;
+	vector<CSTSimulationMesh2D *> meshes;
+	vector<SoftIKSolver *> solvers;
 	int W() { return getMainWindowWidth(); }
 	int H() { return getMainWindowHeight(); }
 	float *pixels;

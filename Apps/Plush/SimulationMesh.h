@@ -126,7 +126,9 @@ public:
 	void add_contacts_to_boundary_nodes();
 	void relax_tendons();
 	void nudge_mesh(const V3D &t);
+	void rotate_mesh(const double &);
 	void nudge_mesh_up();
+	void move_pins(const dVector &);
 
 // tendon suite I (TODO: what was this gonna be again?)
 public:

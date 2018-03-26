@@ -24,8 +24,8 @@ public:
 	Ray ray;
 	P3D xy0 = P3D();
 	// --
-	double POINT_THRESH = .1;
-	double EDGE_THRESH = .1;
+	double POINT_THRESH = .01;
+	double EDGE_THRESH = .01;
 
 public:
 
@@ -41,7 +41,7 @@ public:
 
 	vector<P3D> triangulated_vertices;
 	vector<vector<int>> triangulated_triangles;
-	double TRIANGLE_MAX_AREA = .005;
+	double TRIANGLE_MAX_AREA = .02;
 
 	LoopMesh();
 	~LoopMesh();

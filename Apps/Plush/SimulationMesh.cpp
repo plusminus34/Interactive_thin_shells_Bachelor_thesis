@@ -1004,6 +1004,19 @@ void SimulationMesh::nudge_mesh_up() {
 	x = X; x_prime = X; xSolver = X;
 }
 
+void SimulationMesh::rotate_mesh(const double &theta) {
+	if (D() != 2) { error("rotate_mesh: [NotImplementedError]"); }
+	for (auto &node : nodes) { node->setUndeformedPosition(rotate_2D(node->getUndeformedPosition(), theta)); }
+	x = X; x_prime = X; xSolver = X;
+}
+
+void SimulationMesh::move_pins(const dVector &x) { 
+	for (auto &pin : pins) {
+		auto pin_ = dynamic_cast<FixedPointSpring2D *>(pin);
+		pin_->targetPosition = pin_->node->getCoordinates(x);
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // nodal forces ///////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////

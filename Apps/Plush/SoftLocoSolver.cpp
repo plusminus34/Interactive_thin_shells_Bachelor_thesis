@@ -273,7 +273,6 @@ void SoftLocoSolver::step() {
 
 	// // BFGSFunctionMinimizer minimizer(5);
 	GradientDescentFunctionMinimizer minimizer(1);
-	minimizer.
 	minimizer.solveResidual = 1e-5;
 	minimizer.maxLineSearchIterations = 15;
 	minimizer.lineSearchStartValue = 1.;
@@ -960,7 +959,7 @@ MatrixNxM SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x, con
 
 		// Decompose LHS matrix;
 		Eigen::SimplicialLDLT<SparseMatrix> solver;
-		solver.compute(H_T_s);
+		solver.compute(H_T_s); // TODO: Can split and then one half you only need to do when sparsity structure changes.
 		if (solver.info() != Eigen::Success) {
 			error("Eigen::SimplicialLDLT decomposition failed.");
 		}

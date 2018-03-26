@@ -117,6 +117,10 @@ const auto e_theta_2D = [](const double &theta) {
 	return V3D(cos(theta), sin(theta));
 };
 
+const auto rotate_2D = [](const P3D &p, const double &theta) {
+	return P3D(p[0] * cos(theta) - p[1] * sin(theta), p[1] * cos(theta) + p[0] * sin(theta));
+};
+
 const auto ncos01 = [](const double &theta) {
 	return .5 - .5*cos(theta);
 }; 
