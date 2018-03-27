@@ -24,7 +24,7 @@ AppSoftLoco::AppSoftLoco() {
 		"jumping_cube", // 6
 		"6ball"         // 7
 	};
-	string TEST_CASE = TEST_CASES[1];
+	string TEST_CASE = TEST_CASES[4];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
@@ -33,11 +33,11 @@ AppSoftLoco::AppSoftLoco() {
 	mesh->nudge_mesh_up();
 	mesh->applyYoungsModulusAndPoissonsRatio(3e4, .25); // FORNOW
 	mesh->addGravityForces(V3D(0., -10.)); 
-    mesh->pinToFloor(); 
+    // mesh->pinToFloor(); 
 	// mesh->pinToLeftWall(); 
-	// mesh->add_contacts_to_boundary_nodes();
+	mesh->add_contacts_to_boundary_nodes();
 	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
-	mesh->rig_boundary_simplices();
+	// mesh->rig_boundary_simplices();
 
 	for (int _ = 0; _ < 1000; ++_) { mesh->xvPair_INTO_Mesh(mesh->solve_dynamics()); }
 
@@ -57,7 +57,6 @@ AppSoftLoco::AppSoftLoco() {
 	INTEGRATE_FORWARD_IN_TIME = false;
 
 	ik->PROJECT = true;
-	// ik->REGULARIZE_u = false;
 	ik->LINEAR_APPROX = false;
 	// ik->r_u_ = .1;
 	ik->NUM_ITERS_PER_STEP = 1;
@@ -72,9 +71,9 @@ AppSoftLoco::AppSoftLoco() {
 	}
 
 	{
-		ik->REGULARIZE_u = false;
-		ik->SUBSEQUENT_u = false;
-		mesh->HIGH_PRECISION_NEWTON = true;
+		ik->REGULARIZE_u = true;
+		ik->SUBSEQUENT_u = true;
+		mesh->HIGH_PRECISION_NEWTON = false;
 		ik->COMpJ.back() += V3D(-.5, .5);
 		appIsRunning = false;
 	}

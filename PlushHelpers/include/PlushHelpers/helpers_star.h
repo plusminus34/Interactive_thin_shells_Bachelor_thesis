@@ -432,30 +432,30 @@ const auto vec_FD = [] (dVector s0, auto O_of_s, double d=1e-3) {
 
 const auto mat_FD = [] (dVector s0, auto f_of_s, double d=1e-3) {
 	// ~ dfds|s0
+	// Convention dfds(i, j) = Dj(fi)
+	// <=> dfds.col(j) = Dj(f) 
 
 	dVector f0 = f_of_s(s0);
 
-	int r = s0.size();
-	int c = f0.size();
+	int r = f0.size();
+	int c = s0.size();
 
 	MatrixNxM mat;
 	mat_resize_zero(mat, r, c);
 
-	for (int i = 0; i < r; ++i) {
-		double s0i = s0[i];
+	for (int j = 0; j < c; ++j) {
+		double s0j = s0[j];
 
-		s0[i] -= d;
+		s0[j] -= d;
 		dVector left = f_of_s(s0);
-		s0[i] = s0i;
+		s0[j] = s0j;
 
-		s0[i] += d;
+		s0[j] += d;
 		dVector right = f_of_s(s0);
-		s0[i] = s0i;
+		s0[j] = s0j;
 
-		dVector dfdsi = (right - left) / (2. * d);
-		for (int j = 0; j < c; ++j) {
-			mat(i, j) = dfdsi[j];
-		}
+		dVector Dj_fi = (right - left) / (2. * d);
+		mat.col(j) = Dj_fi;
 	}
 	
 	return mat;

@@ -54,7 +54,7 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 3; // 48; // HORIZON
+	const int K = 48; // 48; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
@@ -125,6 +125,7 @@ public:
 
 public:
 	void Traj_equality_check(const Traj &, const Traj &);
+	void Traj_equality_check(const Traj &, const vector<dRowVector> &);
 	void MTraj_equality_check(const MTraj &, const MTraj &);
 	Traj unstack_Traj(const dVector &);
 
