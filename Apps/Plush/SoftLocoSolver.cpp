@@ -628,40 +628,46 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 	double h = mesh->timeStep;
 	// SparseMatrix M = SparseMatrix(mesh->m.asDiagonal());
 	// SparsMatrix f1h2M = (1./(h*h))*M;
-	MatrixNxM M = mesh->m.asDiagonal();
-	MatrixNxM f1h2M = (1./(h*h))*M;
-	vector<MatrixNxM> vecHinv;
+	SparseMatrix M = SparseMatrix(mesh->m.asDiagonal());
+	SparseMatrix f1h2M = (1./(h*h))*M;
+	// vector<MatrixNxM> vecHinv;
+	// for (int k = 0; k < K; ++k) {
+	// 	dVector x_ctc = (k == 0) ? xm1_curr : xJ[k - 1];
+	// 	vecHinv.push_back(calculate_H(xJ[k], uJ[k], x_ctc).toDense().inverse());
+	// }
+	vector<SparseMatrix> vecH;
 	for (int k = 0; k < K; ++k) {
 		dVector x_ctc = (k == 0) ? xm1_curr : xJ[k - 1];
-		vecHinv.push_back(calculate_H(xJ[k], uJ[k], x_ctc).toDense().inverse());
+		vecH.push_back(calculate_H(xJ[k], uJ[k], x_ctc));
 	}
 
 	// cout << "dxkdxkm1" << endl;
-	vector<MatrixNxM> dGkdxkm1_INDEX_at_km1;
-	vector<MatrixNxM> dScriptGkdxkm1_INDEX_at_km1;
-	vector<MatrixNxM> dxkdxkm1_INDEX_AT_km1; {
+	vector<SparseMatrix> dGkdxkm1_INDEX_at_km1;
+	vector<SparseMatrix> dScriptGkdxkm1_INDEX_at_km1;
+	vector<SparseMatrix> dxkdxkm1_INDEX_AT_km1; {
 		for (int k = 1; k < K; ++k) {
-			auto &Hinv = vecHinv[k];
+			auto &H = vecH[k];
 
-			MatrixNxM dGkdxkm1(DN(), DN());
+			// MatrixNxM dGkdxkm1(DN(), DN());
+			SparseMatrix dGkdxkm1(DN(), DN());
 			const dVector &xk   = xJ[k];
 			const dVector &xkm1 = xJ[k - 1];
 			mesh->update_contacts(xkm1); // FORNOW
 
-			// sparse_mat_resize_zero(dGkdxkm1, DN(), DN());
-			mat_resize_zero(dGkdxkm1, DN(), DN());
+			sparse_mat_resize_zero(dGkdxkm1, DN(), DN());
+			// mat_resize_zero(dGkdxkm1, DN(), DN());
 			for (auto &c: mesh->contacts) {
 				int i = c->node->nodeIndex;
 				P3D xy_k_i   = c->getPosition(xk);
 				P3D xy_km1_i = c->getPosition(xkm1);
 				double &xk_i   = xy_k_i[0];
 				double &xkm1_i = xy_km1_i[0];
-				Matrix2x2 block; block.setZero();
-				block(0, 0) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
-				block(0, 1) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
-				dGkdxkm1.block<2, 2>(2 * i, 2 * i) += block;
-				// dGkdxkm1.insert(2*i, 2*i) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
-				// dGkdxkm1.insert(2*i, 2*i + 1) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
+				// Matrix2x2 block; block.setZero();
+				// block(0, 0) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
+				// block(0, 1) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
+				// dGkdxkm1.block<2, 2>(2 * i, 2 * i) += block;
+				dGkdxkm1.insert(2*i, 2*i) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
+				dGkdxkm1.insert(2*i, 2*i + 1) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
 			}
 			dGkdxkm1_INDEX_at_km1.push_back(dGkdxkm1);
 
@@ -681,23 +687,23 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 				matrix_equality_check(dGkdxkm1_FD, dGkdxkm1);
 			}
 
-			MatrixNxM dScriptGkdxkm1 = dGkdxkm1 - 2.*f1h2M;
+			SparseMatrix dScriptGkdxkm1 = dGkdxkm1 - 2.*f1h2M;
 			// MatrixNxM dScriptGdxkm1 = -2.*f1h2M; // FORNOW
 			dScriptGkdxkm1_INDEX_at_km1.push_back(dScriptGkdxkm1);
 
-			dxkdxkm1_INDEX_AT_km1.push_back(-Hinv*dScriptGkdxkm1);
+			dxkdxkm1_INDEX_AT_km1.push_back(solve_AX_EQUALS_B(-H, dScriptGkdxkm1));
 		}
 		mesh->update_contacts(mesh->x);
 	} 
 
 	// cout << "dxkdxkm2" << endl;
-	vector<MatrixNxM> dxkdxkm2_INDEX_AT_km2; {
+	vector<SparseMatrix> dxkdxkm2_INDEX_AT_km2; {
 		for (int k = 2; k < K; ++k) {
 			double h = mesh->timeStep;
-			auto &Hinv = vecHinv[k];
-			MatrixNxM TERM_1 = dScriptGkdxkm1_INDEX_at_km1[k - 1] * dxkdxkm1_INDEX_AT_km1[k - 2];
-			MatrixNxM &TERM_2 = f1h2M;
-			dxkdxkm2_INDEX_AT_km2.push_back(-Hinv*(TERM_1 + TERM_2));
+			auto &H = vecH[k];
+			SparseMatrix TERM_1 = dScriptGkdxkm1_INDEX_at_km1[k - 1] * dxkdxkm1_INDEX_AT_km1[k - 2];
+			SparseMatrix &TERM_2 = f1h2M;
+			dxkdxkm2_INDEX_AT_km2.push_back(solve_AX_EQUALS_B(-H, TERM_1 + TERM_2));
 		}
 	} 
  
@@ -707,14 +713,14 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 	auto &D1 = [&](int k) { return dxkdxkm1_INDEX_AT_km1[k - 1]; };
 	auto &D2 = [&](int k) { return dxkdxkm2_INDEX_AT_km2[k - 2]; };
 	// --
-	vector<vector<MatrixNxM>> dxidxj;
+	vector<vector<SparseMatrix>> dxidxj;
 	for (int i = 0; i < K; ++i) {
-		vector<MatrixNxM> row;
+		vector<SparseMatrix> row;
 		for (int j = 0; j < K; ++j) {
 			int imj = i - j;
-			MatrixNxM entry; entry.setZero(DN(), DN());
+			SparseMatrix entry; sparse_mat_resize_zero(entry, DN(), DN());
 			if (imj == 0) {
-				entry.setIdentity(DN(), DN());
+				entry.setIdentity();
 			} else if (imj == 1) {
 				entry = D1(i); // dxkdxkm1_INDEX_AT_km1[i - 1]; // (*)
 			} else if (imj == 2) {
@@ -731,9 +737,9 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 	// --
 	for (int j = 0; j < K; ++j) {
 		for (int i = j + 3; i < K; ++i) { 
-			auto &Hinv = vecHinv[i];
+			auto &H = vecH[i];
 			// --
-			dxidxj[i][j] = -Hinv*(scrGxm1(i)*XX[i - 1][j] + f1h2M*XX[i - 2][j]); 
+			dxidxj[i][j] = solve_AX_EQUALS_B(-H, scrGxm1(i)*XX[i - 1][j] + f1h2M*XX[i - 2][j]);
 		}
 	}
 
@@ -776,7 +782,15 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 		cout << "--> dxidxj" << endl;
 		for (int i = 0; i < K; ++i) {
 			cout << "----> ii = " << i << endl;
-			MTraj_equality_check(dxidxj_FD[i], dxidxj[i]);
+			vector<vector<MatrixNxM>> dxidxj_dense;
+			for (auto &row : dxidxj) {
+				vector<MatrixNxM> dense_row;
+				for (auto &entry : row) {
+					dense_row.push_back(entry.toDense());
+				}
+				dxidxj_dense.push_back(dense_row);
+			}
+			MTraj_equality_check(dxidxj_FD[i], dxidxj_dense[i]);
 		}
 		cout << "--> dQkdxk" << endl;
 		Traj_equality_check(dQkdxk_FD, dQkdxk);
@@ -853,6 +867,15 @@ dRowVector SoftLocoSolver::calculate_dQdx(const dVector &u, const dVector &x, co
 	return dQdx;
 }
 
+SparseMatrix SoftLocoSolver::solve_AX_EQUALS_B(const SparseMatrix &A, const SparseMatrix &B) {
+	Eigen::SimplicialLDLT<SparseMatrix> ldlt;
+	ldlt.compute(A); // TODO: Can split and then one half you only need to do when sparsity structure changes.
+	if (ldlt.info() != Eigen::Success) { error("Eigen::SimplicialLDLT decomposition failed."); } 
+	SparseMatrix X = ldlt.solve(B);
+	if (ldlt.info() != Eigen::Success) { error("Eigen::SimplicialLDLT solve failed."); }
+	return X;
+}
+
 MatrixNxM SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x, const dVector &x_ctc) {
 	check_x_size(x);
 	check_u_size(u);
@@ -861,12 +884,7 @@ MatrixNxM SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x, con
 	{
 		SparseMatrix A = calculate_A(x);
 		SparseMatrix H = calculate_H(x, u, x_ctc);
-		// --
-		Eigen::SimplicialLDLT<SparseMatrix> ldlt;
-		ldlt.compute(H); // TODO: Can split and then one half you only need to do when sparsity structure changes.
-		if (ldlt.info() != Eigen::Success) { error("Eigen::SimplicialLDLT decomposition failed."); } 
-		dxdtau = ldlt.solve(A);
-		if (ldlt.info() != Eigen::Success) { error("Eigen::SimplicialLDLT solve failed."); }
+		dxdtau = solve_AX_EQUALS_B(H, A);
 	}
 
 	dVector dtaudu_diag; // == dVector dtaudGamma_diag;

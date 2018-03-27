@@ -124,11 +124,13 @@ public:
 	Quadratic *u_subFunc = new Quadratic(&s_u_);
 
 public:
+	SparseMatrix solve_AX_EQUALS_B(const SparseMatrix &A, const SparseMatrix &B);
+
+public:
 	void Traj_equality_check(const Traj &, const Traj &);
 	void Traj_equality_check(const Traj &, const vector<dRowVector> &);
 	void MTraj_equality_check(const MTraj &, const MTraj &);
 	Traj unstack_Traj(const dVector &);
-
-
+ 
 };
  
