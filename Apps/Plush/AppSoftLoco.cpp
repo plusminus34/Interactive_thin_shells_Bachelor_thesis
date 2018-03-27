@@ -74,7 +74,7 @@ AppSoftLoco::AppSoftLoco() {
 		ik->REGULARIZE_u = true;
 		ik->SUBSEQUENT_u = true;
 		mesh->HIGH_PRECISION_NEWTON = false;
-		ik->COMpJ.back() += V3D(-.5, .5);
+		ik->COMpJ.back() += V3D(1., 0.);
 		appIsRunning = false;
 	}
  

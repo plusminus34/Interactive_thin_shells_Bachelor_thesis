@@ -455,7 +455,7 @@ double SoftLocoSolver::calculate_QJ(const Traj &uJ) {
 		for (int i = 0; i < K; ++i) {
 			MatrixNxM entry = xJ_curr[i];
 			for (int j = 0; j < K; ++j) {
-				entry += dxiduj_SAVED[i][j].transpose() * duJ[j];
+				entry += dxiduj_SAVED[i][j] * duJ[j];
 			}
 			xJ.push_back(entry);
 		} 
