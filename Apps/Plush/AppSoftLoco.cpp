@@ -24,7 +24,7 @@ AppSoftLoco::AppSoftLoco() {
 		"jumping_cube", // 6
 		"6ball"         // 7
 	};
-	string TEST_CASE = TEST_CASES[3];
+	string TEST_CASE = TEST_CASES[1];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
@@ -33,9 +33,9 @@ AppSoftLoco::AppSoftLoco() {
 	mesh->nudge_mesh_up();
 	mesh->applyYoungsModulusAndPoissonsRatio(3e4, .25); // FORNOW
 	mesh->addGravityForces(V3D(0., -10.)); 
-	// mesh->pinToFloor(); 
+    mesh->pinToFloor(); 
 	// mesh->pinToLeftWall(); 
-	mesh->add_contacts_to_boundary_nodes();
+	// mesh->add_contacts_to_boundary_nodes();
 	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
 	mesh->rig_boundary_simplices();
 
@@ -72,9 +72,9 @@ AppSoftLoco::AppSoftLoco() {
 	}
 
 	{
-		ik->REGULARIZE_u = true;
-		ik->SUBSEQUENT_u = true;
-		// mesh->HIGH_PRECISION_NEWTON = true;
+		ik->REGULARIZE_u = false;
+		ik->SUBSEQUENT_u = false;
+		mesh->HIGH_PRECISION_NEWTON = true;
 		ik->COMpJ.back() += V3D(-.5, .5);
 		appIsRunning = false;
 	}
@@ -193,7 +193,7 @@ void AppSoftLoco::drawScene() {
 		PREVIEW_i++;
 		if (PREVIEW_i < 0) {
 			mesh->draw(ik->xm1_curr);
-		} else if (PREVIEW_i < uJ_preview.size()) { // TODO: min() logic
+		} else if (PREVIEW_i < (int) uJ_preview.size()) { // TODO: min() logic
 			mesh->draw(xJ_preview[PREVIEW_i], uJ_preview[PREVIEW_i]); 
 		} else {
 			mesh->draw(xJ_preview.back(), uJ_preview.back()); 

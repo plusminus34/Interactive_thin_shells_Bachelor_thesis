@@ -10,9 +10,10 @@ double SoftLocoObjectiveFunction::computeValue(const dVector &uS){
 }
 
 void SoftLocoObjectiveFunction::addGradientTo(dVector &G, const dVector &_) { // FORNOW: Assumes this function is _only_ ever called @(uJ_curr, xJ_curr)
+	error("[SoftLocoObjectiveFunction]: NotImplementedError");
 	// TODO: Consider adding check on whether _ == uJ_curr?
-	Traj GS = solver->calculate_dOduJ(solver->uJ_curr, solver->xJ_curr);
-	G += stack_vec_dVector(GS); 
+	// Traj GS = solver->calculate_dOduJ(solver->uJ_curr, solver->xJ_curr);
+	// G += stack_vec_dVector(GS); 
 }
 
 void SoftLocoObjectiveFunction::setCurrentBestSolution(const dVector &uS) {

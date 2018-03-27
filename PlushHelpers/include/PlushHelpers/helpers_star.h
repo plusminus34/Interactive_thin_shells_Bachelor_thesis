@@ -105,8 +105,9 @@ const auto helpers_error = [](const string &msg) {
 // math ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
- const auto dfrac = [](int num, int den) {
-	return double(num) / double(den);
+ const auto dfrac = [](int num, int den) -> double {
+	 if (den == 0) { return SGN(num)*INFINITY; }
+	 return double(num) / double(den);
 };
 
 // auto e_theta = [](double theta) {
@@ -249,11 +250,11 @@ const auto find_min_i = [](const vector<double> &v) {
 
 const auto matRCstr = [](MatrixNxM m) -> string {
 	string ret = "";
-	ret.append("(");
+	ret.append("[");
 	ret.append(to_string(m.rows()));
-	ret.append(", ");
+	ret.append("x");
 	ret.append(to_string(m.cols()));
-	ret.append(")");
+	ret.append("]");
 	return ret;
 };
 
@@ -302,12 +303,12 @@ const auto xxT3x3 = [](const V3D &u) {
 	return outer3x3(u, u);
 };
 
-const auto resize_zero = [](dVector &v, int n) {
+const auto resize_zero = [](auto &v, int n) {
 	v.resize(n);
 	v.setZero();
 };
 
-const auto resize_fill = [](dVector &v, int n, double val) {
+const auto resize_fill = [](auto &v, int n, double val) {
 	v.resize(n);
 	v.setZero();
 	v.fill(val);

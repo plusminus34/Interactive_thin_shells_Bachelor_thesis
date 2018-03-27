@@ -11,6 +11,7 @@ class SimulationMesh;
 
 typedef vector<dVector> Traj;
 typedef vector<MatrixNxM> MTraj;
+typedef Eigen::RowVectorXd dRowVector;
 
 class SoftLocoSolver {
 
@@ -53,7 +54,7 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 48; // 48; // HORIZON
+	const int K = 1; // 48; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
@@ -98,7 +99,7 @@ public:
 	void projectJ(); 
 
 	Traj uJ_next(const Traj &uJ, const Traj &xJ);
-	double calculate_gammaJ(const Traj &uJ, const Traj &dOduJ);
+	double calculate_gammaJ(const Traj &uJ, const vector<dRowVector> &dOduJ);
 	Traj xJ_of_uJ(const Traj &uJ);
 
 	// dVector u_next(const dVector &u, const dVector &x); 
@@ -106,13 +107,13 @@ public:
 	// dVector x_of_u(const dVector &u);
 
 	// -- //
-	Traj calculate_dOduJ(const Traj &uJ, const Traj &xJ);
-	Traj calculate_dQduJ(const Traj &uJ, const Traj &xJ);
-	Traj calculate_dRduJ(const Traj &uJ);
+	vector<dRowVector> calculate_dOduJ(const Traj &uJ, const Traj &xJ);
+	vector<dRowVector> calculate_dQduJ(const Traj &uJ, const Traj &xJ);
+	vector<dRowVector> calculate_dRduJ(const Traj &uJ);
 
-	dVector calculate_dQdx(const dVector &u, const dVector &x, const P3D &COMp);
+	dRowVector calculate_dQdx(const dVector &u, const dVector &x, const P3D &COMp);
 	MatrixNxM calculate_dxdu(const dVector &u, const dVector &x, const dVector &x_ctc=dVector());
-	dVector calculate_dRdu(const dVector &u);
+	dRowVector calculate_dRdu(const dVector &u);
 
 	// -- //
 
@@ -138,4 +139,4 @@ public:
 
 
 };
-
+ 
