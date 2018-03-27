@@ -472,15 +472,6 @@ Traj SoftLocoSolver::xJ_of_uJ(const Traj &uJ) {
 	return solve_trajectory(mesh->timeStep, xm1_curr, vm1_curr, uJ);
 }
 
-// dVector SoftLocoSolver::x_of_u(const dVector &u) { // FORNOW
-// 	// error("DeprecatedError");
-// 	// --
-// 	check_u_size(u);
-// 	// --
-// 	auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(xm1_curr, vm1_curr, u) : mesh->solve_statics(xm1_curr, u);
-// 	return xv.first;
-// }
-
 // -- //
 
 double SoftLocoSolver::calculate_OJ(const Traj &uJ) {
@@ -541,44 +532,6 @@ double SoftLocoSolver::calculate_RJ(const Traj &uJ) {
 
 	return RJ; 
 }
-
-// double SoftLocoSolver::calculate_O(const dVector &u) {
-// 	// error("DeprecatedError");
-// 	//--
-// 	check_u_size(u);
-// 	// --
-// 	double Q = calculate_Q(u);
-// 	double R = calculate_R(u);
-// 	return Q + R;
-// }
-
-// double SoftLocoSolver::calculate_Q(const dVector &u) {
-// 	// error("DeprecatedError");
-// 	//--
-// 	check_u_size(u);
-// 	// --
-// 	double Q = (LINEAR_APPROX) ? calculate_Q_approx(u) : calculate_Q_formal(u);
-// 	return Q;
-// }
- 
-// double SoftLocoSolver::calculate_Q_formal(const dVector &u) {
-// 	// error("DeprecatedError");
-// 	//--
-// 	check_u_size(u);
-// 	// --
-// 	dVector x = x_of_u(u);
-// 	double Q_formal  = calculate_Q_of_x(x, COMp_FORNOW);
-// 	return Q_formal;
-// }
-
-// double SoftLocoSolver::calculate_Q_approx(const dVector &u) { 
-// 	check_u_size(u);
-// 	// --
-// 	dVector du = u - u_curr;
-// 	dVector x_approx = x_curr + dxdu_SAVED.transpose() * du; 
-// 	double Q_approx = calculate_Q_of_x(x_approx, COMp_FORNOW); 
-// 	return Q_approx;
-// }
 
 double SoftLocoSolver::calculate_Q_of_x(const dVector &x, const P3D &COMp) {
 	check_x_size(x);
@@ -713,40 +666,42 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 
 
 	double h = mesh->timeStep;
-	SparseMatrix M = SparseMatrix(mesh->m.asDiagonal());
-	// MatrixNxM I; I.setIdentity(DN(), DN());
-	SparseMatrix f1h2M = (1./(h*h))*M;
-	vector<SparseMatrix> vecHinv;
+	// SparseMatrix M = SparseMatrix(mesh->m.asDiagonal());
+	// SparsMatrix f1h2M = (1./(h*h))*M;
+	MatrixNxM M = mesh->m.asDiagonal();
+	MatrixNxM f1h2M = (1./(h*h))*M;
+	vector<MatrixNxM> vecHinv;
 	for (int k = 0; k < K; ++k) {
 		dVector x_ctc = (k == 0) ? xm1_curr : xJ[k - 1];
-		vecHinv.push_back(calculate_H(xJ[k], uJ[k], x_ctc).toDense().inverse().sparseView());
+		vecHinv.push_back(calculate_H(xJ[k], uJ[k], x_ctc).toDense().inverse());
 	}
 
 	// cout << "dxkdxkm1" << endl;
-	vector<SparseMatrix> dGdxkm1_INDEX_at_km1;
-	vector<SparseMatrix> dScriptGdxkm1_INDEX_at_km1;
-	vector<SparseMatrix> dxkdxkm1_INDEX_AT_km1; {
+	vector<MatrixNxM> dGdxkm1_INDEX_at_km1;
+	vector<MatrixNxM> dScriptGdxkm1_INDEX_at_km1;
+	vector<MatrixNxM> dxkdxkm1_INDEX_AT_km1; {
 		for (int k = 1; k < K; ++k) {
 			auto &Hinv = vecHinv[k];
 
-			SparseMatrix dGkdxkm1(DN(), DN());
+			MatrixNxM dGkdxkm1(DN(), DN());
 			const dVector &xk   = xJ[k];
 			const dVector &xkm1 = xJ[k - 1];
 			mesh->update_contacts(xkm1); // FORNOW
 
-			sparse_mat_resize_zero(dGkdxkm1, DN(), DN());
+			// sparse_mat_resize_zero(dGkdxkm1, DN(), DN());
+			mat_resize_zero(dGkdxkm1, DN(), DN());
 			for (auto &c: mesh->contacts) {
 				int i = c->node->nodeIndex;
 				P3D xy_k_i   = c->getPosition(xk);
 				P3D xy_km1_i = c->getPosition(xkm1);
 				double &xk_i   = xy_k_i[0];
 				double &xkm1_i = xy_km1_i[0];
-				// Matrix2x2 block; block.setZero();
-				// block(0, 0) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
-				// block(1, 0) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
-				// dGkdxkm1.block<2, 2>(2 * i, 2 * i) += block;
-				dGkdxkm1.insert(2*i, 2*i) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
-				dGkdxkm1.insert(2*i + 1, 2*i) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
+				Matrix2x2 block; block.setZero();
+				block(0, 0) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
+				block(1, 0) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
+				dGkdxkm1.block<2, 2>(2 * i, 2 * i) += block;
+				// dGkdxkm1.insert(2*i, 2*i) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
+				// dGkdxkm1.insert(2*i + 1, 2*i) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
 			}
 			dGdxkm1_INDEX_at_km1.push_back(dGkdxkm1);
 
@@ -766,10 +721,11 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 				matrix_equality_check(dGkdxkm1_FD, dGkdxkm1);
 			}
 
-			SparseMatrix dScriptGdxkm1 = dGkdxkm1 - 2.*f1h2M;
+			// MatrixNxM dScriptGdxkm1 = dGkdxkm1 - 2.*f1h2M;
+			MatrixNxM dScriptGdxkm1 = -2.*f1h2M; // FORNOW
 			dScriptGdxkm1_INDEX_at_km1.push_back(dScriptGdxkm1);
 
-			dxkdxkm1_INDEX_AT_km1.push_back(-dScriptGdxkm1*Hinv);
+			dxkdxkm1_INDEX_AT_km1.push_back(-Hinv*dScriptGdxkm1);
 		}
 		mesh->update_contacts(mesh->x);
 	} 
@@ -779,9 +735,9 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 		for (int k = 2; k < K; ++k) {
 			double h = mesh->timeStep;
 			auto &Hinv = vecHinv[k];
-			SparseMatrix &TERM_1 = f1h2M;
-			MatrixNxM TERM_2 = dxkdxkm1_INDEX_AT_km1[k - 2] * dScriptGdxkm1_INDEX_at_km1[k - 1];
-			dxkdxkm2_INDEX_AT_km2.push_back(-(TERM_1 + TERM_2)*Hinv);
+			MatrixNxM &TERM_1 = f1h2M;
+			MatrixNxM TERM_2 = dScriptGdxkm1_INDEX_at_km1[k - 1] * dxkdxkm1_INDEX_AT_km1[k - 2];
+			dxkdxkm2_INDEX_AT_km2.push_back(-Hinv*(TERM_1 + TERM_2));
 		}
 	} 
  
@@ -1091,8 +1047,6 @@ SparseMatrix SoftLocoSolver::calculate_H(const dVector &x, const dVector &u, con
 		mesh->balphac = u_push;
 
 	}
-	// H_sparse.setZero(); // (*)
-	// H_sparse.setFromTriplets(triplets.begin(), triplets.end());
 
 	// FORNOW; TODO: DupFuntor
 	int NUM_TRIPLETS = triplets.size(); // (*)
@@ -1125,6 +1079,8 @@ int SoftLocoSolver::N() { return mesh->N(); }
 int SoftLocoSolver::DN() { return D()*N(); } 
 int SoftLocoSolver::T() { return mesh->tendons.size(); }
 
+////////////////////////////////////////////////////////////////////////////////
+
 bool SoftLocoSolver::check_x_size(const dVector &x) {
 	if (x.size() != D() * N()) {
 		error("InputDimensionsError");
@@ -1140,19 +1096,7 @@ bool SoftLocoSolver::check_u_size(const dVector &u) {
 	return true;
 }
 
-/*
-	// bool REPLAY = false;
-	// int PLAYBACK_i = 0;
-
-	} else {
-		mesh->DRAW_TENDONS = false;
-		mesh->draw(x_0);
-
-		mesh->DRAW_TENDONS = true;
-		int i = ++PLAYBACK_i % xJ_curr.size();
-		mesh->draw(xJ_curr[i], uJ_curr[i]);
-	} 
-*/
+// -- //
 
 void SoftLocoSolver::Traj_equality_check(const Traj &T1, const Traj &T2) {
 	if (T1.size() != T2.size()) { error("SizeMismatchError"); }

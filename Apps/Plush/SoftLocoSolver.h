@@ -54,7 +54,7 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 1; // 48; // HORIZON
+	const int K = 3; // 48; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
@@ -65,12 +65,6 @@ public:
 	double     calculate_RJ(const Traj &u);
 	double     calculate_R(const dVector &u);
 	double calculate_Q_of_x(const dVector &x, const P3D &COMp);
-
-	// double     calculate_O(const dVector &u);
-	// double     calculate_Q(const dVector &u);
-	// double calculate_Q_formal(const dVector &u);
-	// double calculate_Q_approx(const dVector &u);
-
 
 public:
 	dVector xm1_curr, vm1_curr; // TODO: rename xm1, vm
@@ -102,11 +96,8 @@ public:
 	double calculate_gammaJ(const Traj &uJ, const vector<dRowVector> &dOduJ);
 	Traj xJ_of_uJ(const Traj &uJ);
 
-	// dVector u_next(const dVector &u, const dVector &x); 
-	// double calculate_gamma(const dVector &u, const dVector &dOdu); 
-	// dVector x_of_u(const dVector &u);
-
 	// -- //
+
 	vector<dRowVector> calculate_dOduJ(const Traj &uJ, const Traj &xJ);
 	vector<dRowVector> calculate_dQduJ(const Traj &uJ, const Traj &xJ);
 	vector<dRowVector> calculate_dRduJ(const Traj &uJ);
