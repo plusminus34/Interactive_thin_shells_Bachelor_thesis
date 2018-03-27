@@ -12,6 +12,7 @@
 class SimulationMesh{
 	friend class FEMEnergyFunction;
 	friend class TopOptApp;
+	friend class TopOptConstraints;
 	friend class Node;
 	friend class FEMSimApp;
     friend class FEMSim3DApp;
@@ -78,4 +79,16 @@ public:
 			delete *it;
 		pinnedNodeElements.clear();
 	}
+
+	double getCurrentDeformationEnergy() {
+		double totalEnergy;
+		for (uint i = 0; i<elements.size(); i++)
+			totalEnergy += elements[i]->getEnergy(x, X);
+
+		for (uint i = 0; i<pinnedNodeElements.size(); i++)
+			totalEnergy += pinnedNodeElements[i]->getEnergy(x, X);
+
+		return totalEnergy;
+	}
+
 };

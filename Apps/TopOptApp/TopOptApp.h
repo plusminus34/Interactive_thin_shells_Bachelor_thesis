@@ -7,6 +7,9 @@
 #include <FEMSimLib/SimulationMesh.h>
 #include <FEMSimLib/CSTSimulationMesh2D.h>
 #include <FEMSimLib/CSTElement2D.h>
+#include <OptimizationLib/ConstrainedObjectiveFunction.h>
+#include "TopOptConstraints.h"
+#include "TopOptEnergyFunction.h"
 
 /**
  * Test App
@@ -37,7 +40,10 @@ private:
 
 	void applyDensityParametersToSimMesh();
 
-	double minDensityScalingFactor = 0.0001;
+	TopOptEnergyFunction* energyFunction;
+	TopOptConstraints* constraints;
+	ConstrainedObjectiveFunction* constrainedObjectiveFunction;
+
 
 public:
 	// constructor

@@ -7,20 +7,20 @@
 
 #include <GUILib/GLUtils.h>
 #include <GUILib/GLTrackingCamera.h>
+#include <OptimizationLib\SQPFunctionMinimizer.h>
 
-//paint and unpaint boundary conditions...
-//use color map as a function of von misses stress or strain...
-//edit also forces
 //sag-free simulations as an application of shape optimization
 //adjoint method for non-linear top-opt
-//have menu items for density, gravity, material params...
 
-//model densities with continuous variables
 //Objectives:
-//- compliance/stored energy (SIMP)
-//- amount of material used (p)
+//- compliance/stored energy
+//- amount of material used
 //- smoothness of solution (in case dithering artifacts come up)
 //- L0 regularizer to force solution to choose a side...
+
+//Constraints:
+//- upper bound on total mass based on desired value
+//- per element density limits
 
 TopOptApp::TopOptApp() {
 	setWindowTitle("Test FEM Sim Application...");
@@ -97,13 +97,36 @@ TopOptApp::TopOptApp() {
 	slider->setCallback([this](float val) { targetMassRatio = val; });
 
 	menuScreen->performLayout();
+
+	energyFunction = new TopOptEnergyFunction(simMesh);
+	constraints = new TopOptConstraints(simMesh);
+	constrainedObjectiveFunction = new ConstrainedObjectiveFunction(energyFunction, constraints);
 }
 
 void TopOptApp::applyDensityParametersToSimMesh() {
+	constraints->totalMassUpperBound = initialMass * targetMassRatio / 100.0;
+
+	//make sure we're on the constraint manifold
+	double currentMass = 0;
+	for (uint i = 0; i < simMesh->elements.size(); i++) {
+		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i]))
+			currentMass += e->getMass() * densityParams[i];
+	}
+
+	Logger::consolePrint("total mass: %lf (upper bound: %lf)\n", currentMass, initialMass * targetMassRatio / 100.0);
+
+	if (currentMass > initialMass * targetMassRatio / 100.0) {
+		double ratio = initialMass * targetMassRatio / 100.0 / currentMass;
+		for (uint i = 0; i < simMesh->elements.size(); i++) {
+			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i]))
+				densityParams[i] *= ratio;
+		}
+	}
+
 	for (uint i = 0; i < simMesh->elements.size(); i++) {
 		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
-			e->shearModulus = minDensityScalingFactor + pow(densityParams[i], 2) * (shearModulus);
-			e->bulkModulus = minDensityScalingFactor + pow(densityParams[i], 2) * (bulkModulus);
+			e->shearModulus = pow(densityParams[i], 1) * (shearModulus);
+			e->bulkModulus = pow(densityParams[i], 1) * (bulkModulus);
 			e->densityForDrawing = densityParams[i];
 		}
 	}
@@ -120,7 +143,7 @@ bool TopOptApp::onMouseMoveEvent(double xPos, double yPos) {
 	if (GlobalMouseState::dragging == false && glfwGetKey(glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
 		int elementID = simMesh->getSelectedElementID(lastClickedRay);
 		if (elementID >= 0) 
-			densityParams[elementID] = 0;
+			densityParams[elementID] = 0.001;
 	}
 
 	if (GlobalMouseState::dragging == false && glfwGetKey(glfwWindow, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS) {
@@ -250,26 +273,18 @@ void TopOptApp::process() {
 		simMesh->f_ext[2 * i + 1] = externalLoads[i].y() * forceScale;
 	}
 
-
-	if (optimizeTopology) {
-		//make sure we're on the constraint manifold
-		double currentMass = 0;
-		for (uint i = 0; i < simMesh->elements.size(); i++) {
-			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i]))
-				currentMass += e->getMass() * densityParams[i];
-		}
-		if (currentMass > initialMass * targetMassRatio / 100.0) {
-			double ratio = initialMass * targetMassRatio / 100.0 / currentMass;
-			for (uint i = 0; i < simMesh->elements.size(); i++) {
-				if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i]))
-					densityParams[i] *= ratio;
-			}
-		}
-	}
-
 	applyDensityParametersToSimMesh();
 
+	if (optimizeTopology) {
+		double val;
+		SQPFunctionMinimizer minimizer(1);
+		minimizer.maxLineSearchIterations_ = 12;
+		minimizer.printOutput_ = energyFunction->printDebugInfo;
+		minimizer.minimize(constrainedObjectiveFunction, densityParams, val);
+	}
+
 	simMesh->solve_statics();
+	Logger::consolePrint("overall deformation energy: %lf", simMesh->getCurrentDeformationEnergy());
 }
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method

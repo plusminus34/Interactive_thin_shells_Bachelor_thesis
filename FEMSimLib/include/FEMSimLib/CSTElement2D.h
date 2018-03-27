@@ -12,6 +12,7 @@ enum MaterialModel2D {MM_LINEAR_ISOTROPIC=0, MM_STVK, MM_NEO_HOOKEAN};
 */
 class CSTElement2D : public SimMeshElement {
 	friend class TopOptApp;
+	friend class TopOptConstraints;
 	friend class CSTSimulationMesh2D;
 private:
 	//material parameters...
