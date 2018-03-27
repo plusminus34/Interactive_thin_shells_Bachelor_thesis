@@ -42,8 +42,19 @@ void AxisAlignedBoundingBox::regularize() {
 }
 
 void AxisAlignedBoundingBox::updateData(){
-  center_ = (bmin_ + bmax_) * 0.5;
-  halfSides_ = (bmax_ + bmin_ * -1) * 0.5;
+	P3D min, max;
+	min.x() = MIN(bmin_.x(), bmax_.x());
+	min.y() = MIN(bmin_.y(), bmax_.y());
+	min.z() = MIN(bmin_.z(), bmax_.z());
+	max.x() = MAX(bmin_.x(), bmax_.x());
+	max.y() = MAX(bmin_.y(), bmax_.y());
+	max.z() = MAX(bmin_.z(), bmax_.z());
+
+	bmin_ = min;
+	bmax_ = max;
+
+	center_ = (bmin_ + bmax_) * 0.5;
+	halfSides_ = (bmax_ + bmin_ * -1) * 0.5;
 }
 
 void AxisAlignedBoundingBox::verifyBox(){

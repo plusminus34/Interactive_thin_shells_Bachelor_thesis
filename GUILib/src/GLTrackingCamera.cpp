@@ -64,7 +64,7 @@ bool GLTrackingCamera::onMouseMoveEvent(double xPos, double yPos) {
 		return true;
 	}
 
-	if (GlobalMouseState::lButtonPressed) {
+	if (GlobalMouseState::lButtonPressed && ignoreRotations == false) {
 		rotAboutUpAxis += screenCameraOffset[0] * 0.01;
 		rotAboutRightAxis += screenCameraOffset[1] * 0.003;
 		return true;

@@ -26,6 +26,9 @@ public:
 	bool selected;
 	 
 	bool fixed = false; P3D fixedPos;
+
+	double avgDefEnergyForDrawing = 0;
+
 public:
 	Node(SimulationMesh* m, int nodeIndex, int dataStartIndex, int dimSize);
 	~Node();
