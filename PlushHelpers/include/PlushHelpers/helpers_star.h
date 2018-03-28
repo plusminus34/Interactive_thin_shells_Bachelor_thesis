@@ -599,6 +599,14 @@ const auto dVector2vecDouble = [](const dVector &in) -> vector<double> {
 	return out;
 };
 
+const auto vecDouble2dVector = [](const vector<double> &in) -> dVector {
+	dVector out; out.setZero(in.size());
+	for (size_t i = 0; i < in.size(); ++i) {
+		out[i] = in[i];
+	}
+	return out;
+};
+
  const auto stack_vec_dVector = [](const vector<dVector> &in) -> dVector {
 
 	int N = 0;

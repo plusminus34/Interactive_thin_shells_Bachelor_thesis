@@ -39,6 +39,10 @@ AppSoftLoco::AppSoftLoco() {
 	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
 	// mesh->rig_boundary_simplices();
 
+	for (size_t i = 0; i < mesh->tendons.size(); ++i) {
+		mesh->tendons[i]->SPEC_COLOR = kelly_color(i);
+	}
+
 	for (int _ = 0; _ < 1000; ++_) { mesh->xvPair_INTO_Mesh(mesh->solve_dynamics()); }
 
 

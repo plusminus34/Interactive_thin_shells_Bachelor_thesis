@@ -9,10 +9,6 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	vm1_curr = mesh->v;
 	resize_zero(um1_curr, T()); // FORNOW
 
-	// resize_zero(u_curr, T());     // FORNOW
-	// x_curr = x_of_u(u_curr); // FORNOW
-
-
 	for (int _ = 0; _ < K; ++_) { dVector ZERO_; resize_zero(ZERO_, T()); uJ_curr.push_back(ZERO_); }
 	xJ_curr = xJ_of_uJ(uJ_curr); 
 
@@ -21,147 +17,28 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	for (int i = 0; i < K; ++i) { COMpJ.push_back(mesh->get_COM(xJ_curr[i])); }
 
 	construct_u_barrierFuncs(); 
+
+	for (int _ = 0; _ < Z; ++_) { dVector ZERO_; resize_zero(ZERO_, T()); yJ_curr.push_back(ZERO_); }
+	construct_splines();
+
 	COMp_FORNOW = mesh->get_COM(mesh->X); 
 
 	objectiveFunction = new SoftLocoObjectiveFunction(this);
-
-	// cout << "Zu_curr: " << u_curr.transpose() << endl;
-	// cout << " u_curr: " << uJ_curr[0].transpose() << endl;
 }
 
 void SoftLocoSolver::draw() { 
-	/*
-	// Foreground
-	glEnable(GL_STENCIL_TEST); {
-		glClear(GL_STENCIL_BUFFER_BIT);
-		// --
-		glStencilFunc(GL_NOTEQUAL, 1, 1);
-		for (int i = -1; i < K; ++i) {
-			auto &x = (i == -1) ? x_0 : xJ_curr[i];
-			auto &u = (i == -1) ? dVector() : uJ_curr[i];
-			
-			glColorMask(1, 1, 1, 1); glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-			mesh->DRAW_TENDONS = (i != -1); {
-				mesh->draw(x, u);
-			} mesh->DRAW_TENDONS = true;
 
-			glColorMask(0, 0, 0, 0); glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-			mesh->draw(x);
-		}
-		glColorMask(1, 1, 1, 1);
-	} glDisable(GL_STENCIL_TEST);
-	*/
+	CubicHermiteSpline s;
+	s.draw();
 
-	/*
-	// Shade Overlay
-	{
-		const auto sloppy_shade = [this]() {
-			// glColor4d(0., 0., 0., .33 * exp(1)*dfrac(1, K));
-			glColor4d(0., 0., 0., .2);
-			glBegin(GL_QUADS);
-			double R = 1000.;
-			glP3D(P3D(R, R, 0.));
-			glP3D(P3D(-R, R, 0.));
-			glP3D(P3D(-R, -R, 0.));
-			glP3D(P3D(R, -R, 0.));
-			glEnd();
-		};
-		glEnable(GL_STENCIL_TEST); {
-			glDisable(GL_DEPTH_TEST); { // TODO: MasterPush()?
-				glClear(GL_STENCIL_BUFFER_BIT);
-				// --
-				glStencilFunc(GL_NOTEQUAL, 1, 1);
-				for (int i = -1; i < K; ++i) {
-					auto &x = (i == -1) ? x_0 : xJ_curr[i];
-					glColorMask(0, 0, 0, 0); glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-					mesh->draw(x);
-
-					glColorMask(1, 1, 1, 1); glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-					sloppy_shade();
-				}
-			} glEnable(GL_DEPTH_TEST);
-		} glDisable(GL_STENCIL_TEST);
+	// FORNOW
+	for (int t = 0; t < T(); ++t) {
+		for (int z = 0; z < Z; ++z) {
+			yJ_curr[z][t] = uJ_curr[z][t];
+		} 
 	}
-	*/
+	update_splines(yJ_curr);
 
-	/*
-	// Highlight
-	glMasterPush(); {
-		glDisable(GL_DEPTH_TEST);
-
-		for (auto &bs : mesh->boundary_simplices) {
-			set_color(ORCHID);
-			glLineWidth(4);
-			glBegin(GL_LINE_STRIP); {
-				for (auto &node : bs->nodes) {
-					glP3D(node->getCoordinates(xJ_curr[SELECTED_FRAME_i]));
-				}
-			} glEnd();
-		}
-	} glMasterPop(); 
-	*/
-
-	// Widget
-	/*
-	glMasterPush(); {
-		glDisable(GL_STENCIL_TEST);
-		glDisable(GL_DEPTH_TEST);
-		glPointSize(10);
-		glLineWidth(5);
-		for (int i = 0; i < K; ++i) {
-			// bool SELECTED = (i == SELECTED_FRAME_i);
-			bool SELECTED = true;
-			// if (i != 0) { continue; } // !!!
-			if (i != K - 1 && i != K/2) { continue; } // !!!
-			if (SPEC_COM_J[i]) {
-				for (auto &GL_PRIMITIVE : { GL_LINES, GL_POINTS }) {
-					glBegin(GL_PRIMITIVE); {
-						set_color(SELECTED ? PUMPKIN     : DARK_CLAY); glP3D(mesh->get_COM(xJ_curr[i]));
-						set_color(SELECTED ? RATIONALITY : CLAY     ); glP3D(COMpJ[i]);
-					} glEnd();
-				}
-			}
-		}
-	} glMasterPop();
-	*/
-
-	// // Debug
-	// glMasterPush(); {
-	// 	glDisable(GL_STENCIL_TEST);
-	// 	glDisable(GL_DEPTH_TEST);
-	// 	glLineWidth(6);
-	// 	glPointSize(10);
-	// 	glTranslated(1., 0., 0.);
-	// 	set_color(HENN1NK);
-	// 	glBegin(GL_LINE_STRIP); {
-	// 		for (auto &bs : mesh->boundary_simplices) {
-	// 			for (auto &node : bs->nodes) {
-	// 				glP3D(node->getCoordinates(x_curr));
-	// 			}
-	// 		}
-	// 	} glEnd();
-	// 	glBegin(GL_POINTS); {
-	// 		glP3D(mesh->get_COM(x_curr)); 
-	// 	} glEnd();
-	// } glMasterPop();
-
-	/* // Debug
-	glMasterPush(); {
-		glDisable(GL_STENCIL_TEST);
-		glDisable(GL_DEPTH_TEST);
-		glTranslated(1., 0., 0.);
-		glLineWidth(3); 
-		set_color(ORCHID);
-		glBegin(GL_LINE_STRIP); {
-			for (auto &bs : mesh->boundary_simplices) {
-					for (auto &node : bs->nodes) {
-						glP3D(node->getCoordinates(xJ_curr[0]));
-					}
-			}
-		} glEnd();
-	} glMasterPop(); */
-
-	// Debug
 	glMasterPush(); {
 		glDisable(GL_STENCIL_TEST);
 		glDisable(GL_DEPTH_TEST);
@@ -226,35 +103,98 @@ void SoftLocoSolver::draw() {
 		
 	} glMasterPop(); 
 
-	auto time = linspace(K, 0., 1.);
-	vector<XYPlot*> plots;
-	dVector ONE;  resize_fill(ONE,  K, 1);
-	dVector ZERO; resize_zero(ZERO, K);
-	plots.push_back(new XYPlot(time, dVector2vecDouble(-ONE)));
-	plots.push_back(new XYPlot(time, dVector2vecDouble(ZERO)));
-	plots.push_back(new XYPlot(time, dVector2vecDouble(ONE)));
-	for (auto &plot : plots) { plot->SPEC_COLOR = LIGHT_CLAY; }
-	for (int t = 0; t < T(); ++t) {
-		vector<double> F_t;
-		for (int k = 0; k < K; ++k) {
-			F_t.push_back(uJ_curr[k][t] / mesh->balphaz[t]);
+	{
+		auto time = linspace(K, 0., 1.);
+		vector<XYPlot*> plots;
+
+		dVector ONE;  resize_fill(ONE, K, 1);
+		dVector ZERO; resize_zero(ZERO, K);
+		vector<dVector> lines = { -ONE, ZERO, ONE };
+		for (auto &line : lines) { plots.push_back(new XYPlot(time, dVector2vecDouble(line))); }
+		for (auto &plot : plots) { plot->SPEC_COLOR = LIGHT_CLAY; }
+
+		for (int t = 0; t < T(); ++t) {
+			vector<double> F_t;
+			for (int k = 0; k < K; ++k) {
+				F_t.push_back(uJ_curr[k][t] / mesh->balphaz[t]);
+			}
+			XYPlot *plot = new XYPlot(time, F_t);
+			plot->SPEC_COLOR = kelly_color(t);
+			plots.push_back(plot);
 		}
-		XYPlot *plot = new XYPlot(time, F_t);
-		plot->SPEC_COLOR = kelly_color(t);
-		plots.push_back(plot);
-	}
-	XYPlot::uniformize_axes(plots);
-	for (auto &plot : plots) {
-		*plot->origin = P3D(-1.5, -1.);
-	    *plot->top_right = P3D(-.5, 1.);
-	};
 
-	for (auto &plot : plots) {
-		plot->draw();
+		for (auto &plot : plots) {
+			*plot->origin = P3D(-1.5, -1.);
+			*plot->top_right = P3D(-.5, 1.);
+		};
+
+		XYPlot::uniformize_axes(plots);
+		for (auto &plot : plots) { plot->draw(); }
+		for (auto &plot : plots) { delete plot; }
 	}
 
-	for (auto &plot : plots) {
-		delete plot;
+	{
+		auto time = linspace(K, 0., 1.);
+		vector<XYPlot*> plots;
+
+		dVector ONE;  resize_fill(ONE, K, 1);
+		dVector ZERO; resize_zero(ZERO, K);
+		vector<dVector> lines = { -ONE, ZERO, ONE };
+		for (auto &line : lines) { plots.push_back(new XYPlot(time, dVector2vecDouble(line))); }
+		for (auto &plot : plots) { plot->SPEC_COLOR = LIGHT_CLAY; }
+
+		for (int t = 0; t < T(); ++t) {
+			vector<double> F_t;
+			for (int k = 0; k < K; ++k) {
+				F_t.push_back(splines[t](dfrac(k, (K - 1))) / mesh->balphaz[t]);
+			}
+			XYPlot *plot = new XYPlot(time, F_t);
+			plot->THIN_LINES = true;
+			plot->DRAW_POINTS = false;
+			plot->SPEC_COLOR = kelly_color(t);
+			plots.push_back(plot);
+		}
+
+		for (auto &plot : plots) {
+			*plot->origin = P3D(-2.5, -1.);
+			*plot->top_right = P3D(-1.5, 1.);
+		};
+
+		XYPlot::uniformize_axes(plots);
+		for (auto &plot : plots) { plot->draw(); }
+		for (auto &plot : plots) { delete plot; }
+	}
+
+	{
+		auto time = linspace(K, 0., 1.);
+		vector<XYPlot*> plots;
+
+		dVector ONE;  resize_fill(ONE, K, 1);
+		dVector ZERO; resize_zero(ZERO, K);
+		vector<dVector> lines = { -ONE, ZERO, ONE };
+		for (auto &line : lines) { plots.push_back(new XYPlot(time, dVector2vecDouble(line))); }
+		for (auto &plot : plots) { plot->SPEC_COLOR = LIGHT_CLAY; }
+
+		for (int t = 0; t < T(); ++t) {
+			vector<double> F_t;
+			for (int z = 0; z < Z; ++z) {
+				F_t.push_back(yJ_curr[z][t] / mesh->balphaz[t]);
+			}
+			XYPlot *plot = new XYPlot(knot_times, F_t);
+			plot->DRAW_LINES = false;
+			plot->DRAW_POINTS = true;
+			plot->SPEC_COLOR = kelly_color(t);
+			plots.push_back(plot);
+		}
+
+		for (auto &plot : plots) {
+			*plot->origin = P3D(-2.5, -1.);
+			*plot->top_right = P3D(-1.5, 1.);
+		};
+
+		XYPlot::uniformize_axes(plots);
+		for (auto &plot : plots) { plot->draw(); }
+		for (auto &plot : plots) { delete plot; }
 	}
 					
 }
@@ -336,12 +276,12 @@ void SoftLocoSolver::projectJ() {
 		xJ_curr[i] = xv.first;
 	}
 
-	if (false) { // VALIDATE_PROJECTION
-		Traj xJ_CHECK = solve_trajectory(mesh->timeStep, xm1_curr, vm1_curr, uJ_curr);
-		cout << "^^^" << endl;
-		Traj_equality_check(xJ_curr, xJ_CHECK);
-		cout << "vvv" << endl;
-	}
+	// if (false) { // VALIDATE_PROJECTION
+	// 	Traj xJ_CHECK = solve_trajectory(mesh->timeStep, xm1_curr, vm1_curr, uJ_curr);
+	// 	cout << "^^^" << endl;
+	// 	Traj_equality_check(xJ_curr, xJ_CHECK);
+	// 	cout << "vvv" << endl;
+	// }
 }
 
 Traj SoftLocoSolver::uJ_next(const Traj &uJ, const Traj &xJ) { 
@@ -353,48 +293,7 @@ Traj SoftLocoSolver::uJ_next(const Traj &uJ, const Traj &xJ) {
 	}
 	return uJ_next;
 }
-
-// dVector SoftLocoSolver::u_next(const dVector &u, const dVector &x) {
-// 	check_u_size(u);
-// 	check_x_size(x);
-// 	// --
-// 	dVector dOdu = calculate_dOdu(u, x);
-// 	// cout << "ZdOdu: " << endl << dOdu << endl;
-// 	double gamma = calculate_gamma(u, dOdu);
-// 	// cout << "Zgamma:     " << endl << gamma << endl;
-// 	return u - gamma * dOdu; 
-// }
-
-// double SoftLocoSolver::calculate_gamma(const dVector &u, const dVector &dOdu) {
-// 	check_u_size(u);
-// 	// --
-// 	double gamma_0 = 1.;
-// 	int maxLineSearchIterations = 10;
-
-// 	dVector u_0 = u;
-// 	double O_0 = calculate_O(u_0); 
-// 	double gamma_k = gamma_0;
-// 	for (int j = 0; j < maxLineSearchIterations; j++) { 
-// 		dVector u_k = u_0 - gamma_k * dOdu; 
-// 		double O_k = calculate_O(u_k);
-
-// 		if (!isfinite(O_k)) {
-// 			error("non-finite O_k detected.");
-// 			O_k = O_0 + 1.0;
-// 		}
-
-// 		if (O_k > O_0) {
-// 			gamma_k /= 2.0;
-// 		} else {
-// 			// success
-// 			return gamma_k;
-// 		}
-// 	}
-
-// 	// error("Line search failed.");
-// 	return gamma_k; 
-// }
-
+ 
 double SoftLocoSolver::calculate_gammaJ(const Traj &uJ, const vector<dRowVector> &dOduJ) {
 	double gammaJ_0 = 1.;
 	int maxLineSearchIterations = 48;
@@ -744,7 +643,7 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 	}
 
 	// cout << "dxkduk" << endl;
-	vector<MatrixNxM> dxkduk;
+	vector<SparseMatrix> dxkduk;
 	for (int k = 0; k < K; ++k) {
 		dVector x_ctc = (k == 0) ? xm1_curr : xJ[k - 1];
 		dxkduk.push_back(calculate_dxdu(uJ[k], xJ[k], x_ctc));
@@ -773,29 +672,29 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 		dQJduj.push_back(entry);
 	}
 
-	if (TEST_Q_FD) {
-		cout << "BEG.................................................." << endl;
-		cout << "--> dxkduk" << endl;
-		MTraj_equality_check(dxkduk_FD, dxkduk);
-		// cout << "--> dxkdxkm1" << endl;
-		// MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
-		cout << "--> dxidxj" << endl;
-		for (int i = 0; i < K; ++i) {
-			cout << "----> ii = " << i << endl;
-			vector<vector<MatrixNxM>> dxidxj_dense;
-			for (auto &row : dxidxj) {
-				vector<MatrixNxM> dense_row;
-				for (auto &entry : row) {
-					dense_row.push_back(entry.toDense());
-				}
-				dxidxj_dense.push_back(dense_row);
-			}
-			MTraj_equality_check(dxidxj_FD[i], dxidxj_dense[i]);
-		}
-		cout << "--> dQkdxk" << endl;
-		Traj_equality_check(dQkdxk_FD, dQkdxk);
-		cout << "..................................................END" << endl;
-	}
+	// if (TEST_Q_FD) {
+	// 	cout << "BEG.................................................." << endl;
+	// 	cout << "--> dxkduk" << endl;
+	// 	MTraj_equality_check(dxkduk_FD, dxkduk);
+	// 	// cout << "--> dxkdxkm1" << endl;
+	// 	// MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
+	// 	cout << "--> dxidxj" << endl;
+	// 	for (int i = 0; i < K; ++i) {
+	// 		cout << "----> ii = " << i << endl;
+	// 		vector<vector<MatrixNxM>> dxidxj_dense;
+	// 		for (auto &row : dxidxj) {
+	// 			vector<MatrixNxM> dense_row;
+	// 			for (auto &entry : row) {
+	// 				dense_row.push_back(entry.toDense());
+	// 			}
+	// 			dxidxj_dense.push_back(dense_row);
+	// 		}
+	// 		MTraj_equality_check(dxidxj_FD[i], dxidxj_dense[i]);
+	// 	}
+	// 	cout << "--> dQkdxk" << endl;
+	// 	Traj_equality_check(dQkdxk_FD, dQkdxk);
+	// 	cout << "..................................................END" << endl;
+	// }
  
 	if (TEST_Q_FD) {
 		cout << "XXX.................................................." << endl;
@@ -876,11 +775,11 @@ SparseMatrix SoftLocoSolver::solve_AX_EQUALS_B(const SparseMatrix &A, const Spar
 	return X;
 }
 
-MatrixNxM SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x, const dVector &x_ctc) {
+SparseMatrix SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x, const dVector &x_ctc) {
 	check_x_size(x);
 	check_u_size(u);
 	// --
-	MatrixNxM dxdtau; // H^{-1} A
+	SparseMatrix dxdtau; // H^{-1} A
 	{
 		SparseMatrix A = calculate_A(x);
 		SparseMatrix H = calculate_H(x, u, x_ctc);
@@ -899,6 +798,14 @@ MatrixNxM SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x, con
 	}
  
 	return dxdtau * dtaudu_diag.asDiagonal();
+}
+
+vector<MatrixNxM> SoftLocoSolver::calculate_duJdyJ(const Traj &uJ, const Traj &yJ) {
+
+
+	//scalar_FD(z, u_wrapper)
+
+	return vector<MatrixNxM>();
 }
 
 dRowVector SoftLocoSolver::calculate_dRdu(const dVector &u) { 
@@ -1042,6 +949,38 @@ void SoftLocoSolver::construct_u_barrierFuncs() {
 		double ALPHAC_MAX = .5*tendon->get_alphaz();
 		u_barrierFuncs.push_back(new ZeroCubicQuadratic(1e5, .01, V3D(ALPHAC_MAX, 0.), false, false));
 	}
+}
+
+// [y @ z0] [y @ z1] ...
+void SoftLocoSolver::update_spline(Spline &spline, const dVector &y) {
+	spline.set_points(knot_times, dVector2vecDouble(y));
+}
+
+// [Y @ z0] [Y @ z1] ...
+void SoftLocoSolver::update_splines(const Traj &yJ) {
+	for (int t = 0; t < T(); ++t) {
+		dVector y_t; y_t.setZero(Z);
+		for (int z = 0; z < Z; ++z) {
+			y_t[z] = yJ[z][t];
+		}
+		update_spline(splines[t], y_t);
+	}
+}
+
+// Traj SoftLocoSolver::zipunzip(const Traj &traj) {
+// 	Traj ret;
+// 	for (auto el )
+
+// }
+
+void SoftLocoSolver::construct_splines() {
+	for (int t = 0; t < T(); ++t) {
+		vector<double> y_vec = linspace(Z, 0., 0.);
+		// --
+		Spline spline;
+		spline.set_points(knot_times, y_vec);
+		splines.push_back(spline);
+	} 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
