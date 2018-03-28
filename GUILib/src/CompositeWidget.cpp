@@ -14,6 +14,11 @@ P3D CompositeWidget::getPos()
 	return pos;
 }
 
+Quaternion CompositeWidget::getOrientation()
+{
+	return orientation;
+}
+
 void CompositeWidget::setPos(P3D pos)
 {
 	this->pos = pos;
@@ -51,6 +56,9 @@ bool CompositeWidget::onMouseMoveEvent(double xPos, double yPos) {
 		return true;
 	}
 	if (rotateWidget.onMouseMoveEvent(xPos, yPos))
+	{
+		orientation = rotateWidget.orientation;
 		return true;
+	}
 	return false;
 }

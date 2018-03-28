@@ -462,7 +462,7 @@ bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
 			for (auto itr = COMWidgets.begin(); itr != COMWidgets.end(); itr++)
 				if ((*itr)->active)
 				{
-					locomotionManager->motionPlan->BodyPosObjectives.remove(COMwidget2constraint[*itr]);
+					locomotionManager->motionPlan->BodyFrameObjectives.remove(COMwidget2constraint[*itr]);
 					COMWidgets.erase(itr);
 					break;
 				}
@@ -471,15 +471,15 @@ bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
 		{
 			int timeStep = (int)round(moptParams.phase*nTimeSteps);
 			Logger::consolePrint("Picked body at time step %d", timeStep);
-			auto widget = std::make_shared<TranslateWidget>(AXIS_X | AXIS_Y | AXIS_Z);
+			auto widget = std::make_shared<CompositeWidget>();
 			COMWidgets.push_back(widget);
 
-			widget->pos = locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeStep);
-			auto bodyPosObj = make_shared<COMPositionObjective>();
+			widget->setPos(locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeStep));
+			auto bodyPosObj = make_shared<BodyFrameObjective>();
 			bodyPosObj->sampleNum = timeStep;
-			bodyPosObj->pos = P3D(widget->pos);
+			bodyPosObj->pos = P3D(widget->getPos());
 			bodyPosObj->phase = moptParams.phase;
-			locomotionManager->motionPlan->BodyPosObjectives.push_back(bodyPosObj);
+			locomotionManager->motionPlan->BodyFrameObjectives.push_back(bodyPosObj);
 			COMwidget2constraint[widget] = bodyPosObj;
 		}
 	}
@@ -531,7 +531,8 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	for (auto widget : COMWidgets)
 		if (widget->onMouseMoveEvent(xPos, yPos))
 		{
-			COMwidget2constraint[widget]->pos = widget->pos;
+			COMwidget2constraint[widget]->pos = widget->getPos();
+			COMwidget2constraint[widget]->orientation = widget->getOrientation().toAxisAngle();
 			popViewportTransformation();
 			return true;
 		}

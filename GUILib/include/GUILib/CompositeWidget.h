@@ -17,6 +17,7 @@
 class CompositeWidget : public TransformWidget {
 public:
 	P3D getPos();
+	Quaternion getOrientation();
 	void setPos(P3D pos);
 
 private:
@@ -25,6 +26,7 @@ private:
 	// Translation
 	P3D pos;
 
+	Quaternion orientation;
 public:
 	CompositeWidget(uint translateAxes = AXIS_X | AXIS_Y | AXIS_Z, uint rotationAxes = AXIS_X | AXIS_Y | AXIS_Z);
 	virtual ~CompositeWidget();
