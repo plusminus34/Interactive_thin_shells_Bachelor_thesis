@@ -3,6 +3,24 @@
 #include <Eigen/SparseCholesky>
 #include "XYPlot.h"
 
+// Rough dev plan:
+// Z <- K
+// yJ <- uJ
+// dudy <- Identity (First hardcode, then check.) 
+// // lookup_dudy()
+
+// xJ_of_uJ -> xJ_of_yJ
+// calcualte_QJ
+// calculate_OJ --> // calculate_gammaJ
+
+// uJ_next --> yJ_next
+// calculate_dOduJ
+
+// calculate_RJ
+// calculate_dRduJ
+// calculate_R
+// construct_U_barrier_functions
+
 SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	this->mesh = mesh; 
 	xm1_curr = mesh->x;
@@ -281,19 +299,20 @@ double SoftLocoSolver::calculate_QJ(const Traj &uJ) {
 	if (!LINEAR_APPROX) {
 		xJ = xJ_of_uJ(uJ);
 	} else { 
-		Traj duJ;
-		for (int i = 0; i < K; ++i) {
-			duJ.push_back(uJ[i] - uJ_curr[i]);
-		}
+		error("NotImplmenetedError.");
+		// Traj duJ;
+		// for (int i = 0; i < K; ++i) {
+		// 	duJ.push_back(uJ[i] - uJ_curr[i]);
+		// }
 
-		// CHECKME
-		for (int i = 0; i < K; ++i) {
-			MatrixNxM entry = xJ_curr[i];
-			for (int j = 0; j < K; ++j) {
-				entry += dxiduj_SAVED[i][j] * duJ[j];
-			}
-			xJ.push_back(entry);
-		} 
+		// // CHECKME
+		// for (int i = 0; i < K; ++i) {
+		// 	MatrixNxM entry = xJ_curr[i];
+		// 	for (int j = 0; j < K; ++j) {
+		// 		entry += dxiduj_SAVED[i][j] * duJ[j];
+		// 	}
+		// 	xJ.push_back(entry);
+		// } 
 	}
 
 	double QJ = 0.;
@@ -593,7 +612,7 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 		if (k != K - 1) {
 			entry.setZero(DN());
 		} else {
-			entry = calculate_dQdx(uJ[k], xJ[k], COMpJ[k]);
+			entry = calculate_dQdx(xJ[k], COMpJ[k]);
 		}
 		dQkdxk.push_back(entry);
 	}
@@ -686,9 +705,8 @@ vector<dRowVector> SoftLocoSolver::calculate_dRduJ(const Traj &uJ) {
 	return dRduJ;
 }
 
-dRowVector SoftLocoSolver::calculate_dQdx(const dVector &u, const dVector &x, const P3D &COMp) { 
+dRowVector SoftLocoSolver::calculate_dQdx(const dVector &x, const P3D &COMp) { 
 	check_x_size(x);
-	check_u_size(u);
 	// --
 	dRowVector dQdx;
 	{

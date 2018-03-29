@@ -41,10 +41,9 @@ void SimulationMesh::draw(dVector &x, dVector &alphac) {
 		for (auto &non_E_element : non_E_elements) { non_E_element->draw(x); }
 	} else {
 		if (DRAW_SIMPLICES) { for (auto &simplex : simplices           ) { simplex->draw(x);       } }
-		// TODO: if (DRAW_TENDONS)   { for (auto &tendon : tendons              ) { tendon->draw(x, balphac);        } }
 		if (DRAW_TENDONS)   { for (auto &tendon : tendons              ) { tendon->draw(x, alphac);        } }
 		if (DRAW_PINS)      { for (auto &pin : pins                    ) { pin->draw(x);           } }
-		if (DRAW_ANCHORS)   { for (auto &contact : contacts  ) { contact->draw(x);  } }
+		if (DRAW_ANCHORS)   { for (auto &contact : contacts            ) { contact->draw(x);  } }
 		if (DRAW_NON_E)     { for (auto &non_E_element : non_E_elements) { non_E_element->draw(x); } }
 	}
 	// -- 

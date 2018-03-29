@@ -6,7 +6,6 @@
 #include "SoftLocoObjectiveFunction.h"
 #include <OptimizationLib/GradientDescentFunctionMinimizer.h>
 #include <OptimizationLib/BFGSFunctionMinimizer.h>
-#include <PlushHelpers/spline.h>
 #include "CubicHermiteSpline.h"
 
 class SimulationMesh;
@@ -14,7 +13,6 @@ class SimulationMesh;
 typedef vector<dVector> Traj;
 typedef vector<MatrixNxM> MTraj;
 typedef Eigen::RowVectorXd dRowVector;
-typedef tk::spline Spline;
 
 class SoftLocoSolver {
 
@@ -112,7 +110,7 @@ public:
 	vector<dRowVector> calculate_dQduJ(const Traj &uJ, const Traj &xJ);
 	vector<dRowVector> calculate_dRduJ(const Traj &uJ);
 
-	dRowVector calculate_dQdx(const dVector &u, const dVector &x, const P3D &COMp);
+	dRowVector calculate_dQdx(const dVector &x, const P3D &COMp);
 	SparseMatrix calculate_dxdu(const dVector &u, const dVector &x, const dVector &x_ctc=dVector());
 	// SparseMatrix calculate_dudz(const dVector &u, const dVector &z);
 	vector<MatrixNxM> calculate_duJdyJ(const Traj &uJ, const Traj &yJ);
@@ -126,10 +124,6 @@ public:
 public: 
 	vector<ZeroCubicQuadratic *> u_barrierFuncs;
 	void construct_u_barrierFuncs();
-	void construct_splines();
-	void update_spline(Spline &, const dVector &);
-	void update_splines(const Traj &);
-	// Traj zipunzip(const Traj &);
 
 	bool REGULARIZE_u = true;
 	double r_u_ = .01;

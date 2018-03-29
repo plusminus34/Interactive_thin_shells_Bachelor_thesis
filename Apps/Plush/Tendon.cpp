@@ -44,24 +44,24 @@ void Tendon::draw(const dVector &x, const dVector &balphac) {
 		glLineWidth(5.);
 		glPointSize(7.); 
 
-		P3D COLOR = HENN1NK;
+		P3D COLOR;
 		if (balphac.size() != 0) {
 			const P3D POS_COLOR = (SPEC_COLOR == BLACK) ? ORCHID : SPEC_COLOR;
 			const P3D NEG_COLOR = (SPEC_COLOR == BLACK) ? RATIONALITY : SPEC_COLOR;
 			const P3D ZERO_COLOR = (SPEC_COLOR == BLACK) ? WHITE : SPEC_COLOR;
-			const double POS_ALPHAC_SATURATION = .1;
-			const double NEG_ALPHAC_SATURATION = .1;
+			const double POS_SATURATION = .01;
+			const double NEG_SATURATION = .01;
 			// --
-			// double Gamma = get_Gamma(x, balphac);
-			double alphac = get_alphac(balphac);
+			double colorQuantity = get_Gamma(x, balphac);
+			// double colorQuantity = get_alphac(balphac);
 			double f;
 			P3D BASE_COLOR;
 			// --
-			if (alphac > 0) {
-				f = alphac / POS_ALPHAC_SATURATION;
+			if (colorQuantity > 0) {
+				f = colorQuantity / POS_SATURATION;
 				BASE_COLOR = POS_COLOR;
 			} else {
-				f = abs(alphac / NEG_ALPHAC_SATURATION);
+				f = abs(colorQuantity / NEG_SATURATION);
 				BASE_COLOR = NEG_COLOR;
 			}
 			COLOR = color_swirl(f, ZERO_COLOR, BASE_COLOR);
