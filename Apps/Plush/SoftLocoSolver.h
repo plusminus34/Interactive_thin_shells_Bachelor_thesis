@@ -63,10 +63,10 @@ public:
 	bool check_u_size(const dVector &u);
 
 public:
-	vector<Spline> splines;
+	CubicHermiteSpline *god_spline;
 	const int Z = 8;
 	Traj yJ_curr;
-	const vector<double> knot_times = linspace(8, 0., 1.);
+	const dVector knot_times = vecDouble2dVector(linspace(8, 0., 1.));
 
 
 public:
@@ -147,6 +147,7 @@ public:
 	void Traj_equality_check(const Traj &, const vector<dRowVector> &);
 	void MTraj_equality_check(const MTraj &, const MTraj &);
 	Traj unstack_Traj(const dVector &);
+	vector<dVector> zipunzip(const Traj &);
  
 };
  

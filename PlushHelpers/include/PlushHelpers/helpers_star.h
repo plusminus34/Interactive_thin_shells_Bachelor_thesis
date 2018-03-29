@@ -624,6 +624,25 @@ const auto vecDouble2dVector = [](const vector<double> &in) -> dVector {
 	return out;
 
  };
+ 
+ const auto zip_vec_dVector2vecP3D = [](const vector<dVector> &in) -> vector<P3D> {
+	 vector<P3D> out;
+	 // --
+	 int dVec_LENGTH = in[0].size();
+	 int dVec_COUNT = in.size();
+	 // --
+	 for (auto &dVec : in) { if (dVec.size() != dVec_LENGTH) { helpers_error("dVec's are different lengths."); } }
+	 if ((dVec_COUNT != 2) && (dVec_COUNT != 3)) { helpers_error("Must pass either 2 or 3 dVec's."); } 
+	 // --
+	 for (int i = 0; i < dVec_LENGTH; ++i) {
+		 P3D p;
+		 for (int j = 0; j < dVec_COUNT; ++j) {
+			 p[j] = in[j][i];
+		 } 
+		 out.push_back(p);
+	 } 
+	 return out;
+ };
 
 
 

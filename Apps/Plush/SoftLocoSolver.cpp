@@ -19,7 +19,7 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	construct_u_barrierFuncs(); 
 
 	for (int _ = 0; _ < Z; ++_) { dVector ZERO_; resize_zero(ZERO_, T()); yJ_curr.push_back(ZERO_); }
-	construct_splines();
+	god_spline = new CubicHermiteSpline(vecDouble2dVector(linspace(Z, 0., 1.)), vecDouble2dVector(linspace(K, 0., 1.)));
 
 	COMp_FORNOW = mesh->get_COM(mesh->X); 
 
@@ -28,17 +28,17 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 
 void SoftLocoSolver::draw() { 
 
-	CubicHermiteSpline s;
-	s.draw();
-
 	// FORNOW
 	for (int t = 0; t < T(); ++t) {
 		for (int z = 0; z < Z; ++z) {
-			yJ_curr[z][t] = uJ_curr[z][t];
+			yJ_curr[z][t] = uJ_curr[z][t] / mesh->balphaz[t];
 		} 
 	}
-	update_splines(yJ_curr);
 
+	int i = -1;	for (auto &Y : zipunzip(yJ_curr)) { god_spline->SPEC_COLOR = kelly_color(++i); 
+		god_spline->draw(Y);
+	}
+ 
 	glMasterPush(); {
 		glDisable(GL_STENCIL_TEST);
 		glDisable(GL_DEPTH_TEST);
@@ -133,70 +133,6 @@ void SoftLocoSolver::draw() {
 		for (auto &plot : plots) { delete plot; }
 	}
 
-	{
-		auto time = linspace(K, 0., 1.);
-		vector<XYPlot*> plots;
-
-		dVector ONE;  resize_fill(ONE, K, 1);
-		dVector ZERO; resize_zero(ZERO, K);
-		vector<dVector> lines = { -ONE, ZERO, ONE };
-		for (auto &line : lines) { plots.push_back(new XYPlot(time, dVector2vecDouble(line))); }
-		for (auto &plot : plots) { plot->SPEC_COLOR = LIGHT_CLAY; }
-
-		for (int t = 0; t < T(); ++t) {
-			vector<double> F_t;
-			for (int k = 0; k < K; ++k) {
-				F_t.push_back(splines[t](dfrac(k, (K - 1))) / mesh->balphaz[t]);
-			}
-			XYPlot *plot = new XYPlot(time, F_t);
-			plot->THIN_LINES = true;
-			plot->DRAW_POINTS = false;
-			plot->SPEC_COLOR = kelly_color(t);
-			plots.push_back(plot);
-		}
-
-		for (auto &plot : plots) {
-			*plot->origin = P3D(-2.5, -1.);
-			*plot->top_right = P3D(-1.5, 1.);
-		};
-
-		XYPlot::uniformize_axes(plots);
-		for (auto &plot : plots) { plot->draw(); }
-		for (auto &plot : plots) { delete plot; }
-	}
-
-	{
-		auto time = linspace(K, 0., 1.);
-		vector<XYPlot*> plots;
-
-		dVector ONE;  resize_fill(ONE, K, 1);
-		dVector ZERO; resize_zero(ZERO, K);
-		vector<dVector> lines = { -ONE, ZERO, ONE };
-		for (auto &line : lines) { plots.push_back(new XYPlot(time, dVector2vecDouble(line))); }
-		for (auto &plot : plots) { plot->SPEC_COLOR = LIGHT_CLAY; }
-
-		for (int t = 0; t < T(); ++t) {
-			vector<double> F_t;
-			for (int z = 0; z < Z; ++z) {
-				F_t.push_back(yJ_curr[z][t] / mesh->balphaz[t]);
-			}
-			XYPlot *plot = new XYPlot(knot_times, F_t);
-			plot->DRAW_LINES = false;
-			plot->DRAW_POINTS = true;
-			plot->SPEC_COLOR = kelly_color(t);
-			plots.push_back(plot);
-		}
-
-		for (auto &plot : plots) {
-			*plot->origin = P3D(-2.5, -1.);
-			*plot->top_right = P3D(-1.5, 1.);
-		};
-
-		XYPlot::uniformize_axes(plots);
-		for (auto &plot : plots) { plot->draw(); }
-		for (auto &plot : plots) { delete plot; }
-	}
-					
 }
  
 Traj SoftLocoSolver::solve_trajectory(double dt, const dVector &x_0, const dVector &v_0, const Traj &uJ) {
@@ -951,36 +887,20 @@ void SoftLocoSolver::construct_u_barrierFuncs() {
 	}
 }
 
-// [y @ z0] [y @ z1] ...
-void SoftLocoSolver::update_spline(Spline &spline, const dVector &y) {
-	spline.set_points(knot_times, dVector2vecDouble(y));
-}
-
-// [Y @ z0] [Y @ z1] ...
-void SoftLocoSolver::update_splines(const Traj &yJ) {
-	for (int t = 0; t < T(); ++t) {
-		dVector y_t; y_t.setZero(Z);
-		for (int z = 0; z < Z; ++z) {
-			y_t[z] = yJ[z][t];
-		}
-		update_spline(splines[t], y_t);
-	}
-}
-
-// Traj SoftLocoSolver::zipunzip(const Traj &traj) {
-// 	Traj ret;
-// 	for (auto el )
-
-// }
-
-void SoftLocoSolver::construct_splines() {
-	for (int t = 0; t < T(); ++t) {
-		vector<double> y_vec = linspace(Z, 0., 0.);
-		// --
-		Spline spline;
-		spline.set_points(knot_times, y_vec);
-		splines.push_back(spline);
+vector<dVector> SoftLocoSolver::zipunzip(const vector<dVector> &in) {
+	int in_LENGTH = in[0].size();
+	int in_COUNT  = in.size();
+	// --
+	for (auto &dVec : in) { if (dVec.size() != in_LENGTH) { helpers_error("dVec's are different lengths."); } }
+	vector<dVector> out;
+	for (int i = 0; i < in_LENGTH; ++i) {
+		dVector dVec; dVec.setZero(in_COUNT);
+		for (int j = 0; j < in_COUNT; ++j) {
+			dVec[j] = in[j][i];
+		} 
+		out.push_back(dVec);
 	} 
+	return out; 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
