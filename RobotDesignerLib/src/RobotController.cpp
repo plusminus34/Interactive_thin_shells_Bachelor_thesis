@@ -12,11 +12,14 @@ RobotController::RobotController(Robot* robot, LocomotionEngineMotionPlan *motio
 RobotController::~RobotController(){
 }
 
-void RobotController::advanceInTime(double timeStep) {
+bool RobotController::advanceInTime(double timeStep) {
 	totalTime += timeStep;
 	stridePhase += timeStep / this->motionPlan->motionPlanDuration;
-	if (stridePhase > 1.0)
+	if (stridePhase > 1.0){
 		stridePhase -= 1.0;
+		return true;
+	}
+	return false;
 }
 
 void RobotController::initialize() {

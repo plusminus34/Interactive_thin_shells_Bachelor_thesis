@@ -13,6 +13,7 @@ target_link_libraries(${PROJECT_NAME}
 	OptimizationLib
 	RBSimLib
 	ControlLib
+	YuMiLib
 )
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Apps")
 

@@ -1,7 +1,6 @@
 #include <FEMSimLib/CSTSimulationMesh2D.h>
 #include <OptimizationLib/NewtonFunctionMinimizer.h>
 #include <FEMSimLib/CSTElement2D.h>
-#include <FEMSimLib/FixedPointSpring2D.h>
 
 CSTSimulationMesh2D::CSTSimulationMesh2D(){
 }
@@ -42,6 +41,43 @@ int CSTSimulationMesh2D::getSelectedNodeID(Ray ray){
 		}
 	}
 	return ID;
+}
+
+int CSTSimulationMesh2D::getSelectedElementID(Ray ray) {
+	double dis = 2e9;
+	for (uint i = 0; i < elements.size(); i++) {
+		CSTElement2D* e = dynamic_cast<CSTElement2D*> (elements[i]);
+		if (!e) continue;
+
+		P3D p1 = e->n[0]->getWorldPosition();
+		P3D p2 = e->n[1]->getWorldPosition();
+		P3D p3 = e->n[2]->getWorldPosition();
+
+		double t = ray.getDistanceToTriangle(p1, p2, p3);
+		if (t >= 0)
+			return i;
+	}
+	return -1;
+}
+
+void CSTSimulationMesh2D::prepareForDraw() {
+	for (auto node : nodes)
+		node->avgDefEnergyForDrawing = 0;
+
+	double maxE = 0;
+
+	for (auto element : elements) {
+		double energy = element->getEnergy(x, X);
+		CSTElement2D* tmpE = dynamic_cast<CSTElement2D*>(element);
+		if (!tmpE) continue;
+		if (maxE < energy) maxE = energy;
+		tmpE->defEnergyForDrawing = energy;
+		tmpE->n[0]->avgDefEnergyForDrawing += energy / 3.0;
+		tmpE->n[1]->avgDefEnergyForDrawing += energy / 3.0;
+		tmpE->n[2]->avgDefEnergyForDrawing += energy / 3.0;
+	}
+//	Logger::consolePrint("max strainEnergy %lf\n", maxE);
+
 }
 
 void CSTSimulationMesh2D::setPinnedNode(int ID, const P3D& point){

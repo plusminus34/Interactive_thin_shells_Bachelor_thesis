@@ -35,6 +35,8 @@ void FixedPointSpring2D::draw(const dVector & x){
 	glColor3d(1, 0, 0);
 	P3D pi = (node->getCoordinates(x));
 	P3D pj = targetPosition;
+	glColor3d(0,0,0);
+	drawSphere(targetPosition, 0.01);
 	glBegin(GL_LINES);
 	glVertex3d(pi[0], pi[1], 0);
 	glVertex3d(pj[0], pj[1], 0);

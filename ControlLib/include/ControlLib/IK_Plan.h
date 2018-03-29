@@ -15,11 +15,15 @@ using namespace std;
 class IK_EndEffector{
 public:
 	P3D targetEEPos;
+	V3T<V3D> targetEEOrientation;	// target direction for (EE-local) x- y- and z-direction
 	RigidBody* endEffectorRB;
 	P3D endEffectorLocalCoords;
+	V3T<V3D> endEffectorLocalOrientation; // x- y- z- unit vectors of EE-local coordinate system
 
-//if we want to control just the x,y or z component of the end effector, use this mask...
-	V3D mask = V3D(1,1,1);
+	//if we want to control just the x,y or z component of the end effector, use this mask...
+	V3D positionMask = V3D(1.0, 1.0, 1.0);
+	V3D orientationMask = V3D(1.0, 1.0, 1.0);
+	double lengthScaleOrientation = -1.0;	// scale the unit-vectors for orientation error with a length to put into relation with position errors
 
 	IK_EndEffector(){
 		endEffectorRB = NULL;

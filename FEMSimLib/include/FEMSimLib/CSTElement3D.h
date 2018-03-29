@@ -13,9 +13,9 @@ enum MaterialModel3D { MM_LINEAR_ISOTROPIC, MM_STVK, MM_NEO_HOOKEAN };
 class CSTElement3D : public SimMeshElement {
 private:
     //material parameters...
-    double shearModulus = 50, bulkModulus = 50;
+    double shearModulus, bulkModulus; // -> default values set in constructor (50/50)
     //relates area/volume to the mass of the element
-    double massDensity = 1;
+    double massDensity;// = 1;	-> set as default value in constructor
     //material model used
     MaterialModel3D matModel;
     //keep track of the rest shape volume
@@ -60,7 +60,8 @@ private:
     virtual void drawRestConfiguration(const dVector& X);
 
 public:
-    CSTElement3D(SimulationMesh* simMesh, Node* n1, Node* n2, Node* n3, Node* n4);
+    CSTElement3D(SimulationMesh* simMesh, Node* n1, Node* n2, Node* n3, Node* n4, 
+				 double massDensity = 1.0, double shearModulus = 50, double bulkModulus = 50);
     ~CSTElement3D();
 
 };

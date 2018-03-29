@@ -1,0 +1,7 @@
+load ..\data\robotDesigner\configBK3002.cfg
+load ..\data\RobotDesigner\designs\BK3000\skatingBot\skatingRobot.dsn
+toSim
+load ..\data\RobotDesigner\designs\BK3000\skatingBot\skatingRobot_v1.p
+
+end
+

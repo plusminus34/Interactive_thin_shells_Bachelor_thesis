@@ -178,7 +178,8 @@ void RigidBody::draw(int flags, V3D color, double alpha) {
 		}
 
 		
-		for (uint i = 0; i < rbProperties.endEffectorPoints.size(); i++)
+		for (uint i = 0; i < rbProperties.endEffectorPoints.size(); i++) {
+//			bool isWheel = rbProperties.endEffectorPoints[i].isWheel();
 			if (flags & HIGHLIGHT_SELECTED && rbProperties.endEffectorPoints[i].selected) {
 				glColor3d(1, 0, 0);
 				drawSphere(rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius*1.4, 16);
@@ -187,6 +188,18 @@ void RigidBody::draw(int flags, V3D color, double alpha) {
 				glColor3d(0, 0.5, 1);
 				drawSphere(rbProperties.endEffectorPoints[i].coords, abstractViewCylinderRadius*1.2, 16);
 			}
+/*
+			if (isWheel && (flags & SHOW_ABSTRACT_VIEW)) {
+				double width = 0.01;
+				V3D axis = rbProperties.endEffectorPoints[i].getWheelAxis();
+				P3D wheelCenter = rbProperties.endEffectorPoints[i].coords;
+				double radius = rbProperties.endEffectorPoints[i].featureSize;
+				glColor4d(0.2, 0.6, 0.8, 0.8);
+				drawCylinder(wheelCenter - axis*0.5*width, axis*width, radius, 24);
+			}
+*/
+		}
+
 	}
 
 	if (flags & SHOW_MOI_BOX) {

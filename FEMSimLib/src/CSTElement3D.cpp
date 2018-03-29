@@ -4,9 +4,13 @@
 
 #define SCALE_FACTOR 10000000.0
 
-CSTElement3D::CSTElement3D(SimulationMesh* simMesh, Node* n1, Node* n2, Node* n3, Node* n4) : SimMeshElement(simMesh) {
+CSTElement3D::CSTElement3D(SimulationMesh* simMesh, Node* n1, Node* n2, Node* n3, Node* n4, 
+						   double massDensity, double shearModulus , double bulkModulus) 
+	: SimMeshElement(simMesh), massDensity(massDensity) 
+{
     //	shearModulus = 0.3 * 10e9 / SCALE_FACTOR;
     //	bulkModulus = 1.5 * 10e9 / SCALE_FACTOR;
+	setShearModulusAndBulkModulus(shearModulus, bulkModulus);
 
     this->n[0] = n1;
     this->n[1] = n2;
@@ -19,7 +23,7 @@ CSTElement3D::CSTElement3D(SimulationMesh* simMesh, Node* n1, Node* n2, Node* n3
     for (int i = 0;i<4;i++)
         n[i]->addMassContribution(getMass() / 4.0);
 
-    matModel = MM_NEO_HOOKEAN;//MM_STVK;//MM_LINEAR_ISOTROPIC
+    matModel = MM_STVK;//MM_NEO_HOOKEAN;//MM_STVK;//MM_LINEAR_ISOTROPIC
 }
 
 CSTElement3D::~CSTElement3D() {

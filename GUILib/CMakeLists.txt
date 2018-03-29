@@ -12,7 +12,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 file(GLOB sources
 		${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
 		${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/*.h
+
+		${CMAKE_SOURCE_DIR}/thirdparty/LodePNG/lodepng.h
+		${CMAKE_SOURCE_DIR}/thirdparty/LodePNG/lodepng.cpp
 	)
+
+include_directories("${CMAKE_SOURCE_DIR}/thirdparty")
 
 # Adding nanogui:
 # Disable building extras we won't need (pure C++ project)

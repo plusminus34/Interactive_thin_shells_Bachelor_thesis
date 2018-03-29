@@ -33,14 +33,18 @@ void LocomotionEngine_EndEffectorTrajectory::initialize(int nPos){
 }
 
 V3D LocomotionEngine_EndEffectorTrajectory::getContactForceAt(double t) {
-	//very slow method, but easy to implement...
-	//		Trajectory3D traj;
-	//		for (uint i = 0; i<contactForce.size(); i++)
-	//			traj.addKnot((double)i / (contactForce.size() - 1), contactForce[i]);
-	//		return traj.evaluate_linear(t);
-	boundToRange(&t, 0, 1);
 	int tIndex = (int)(t * (double)(contactFlag.size() - 1));
-	return contactForce[tIndex];
+	if (contactFlag[tIndex] == 0)
+		return V3D(0, 0, 0);
+
+	//very slow method, but easy to implement...
+	Trajectory3D traj;
+	for (uint i = 0; i<contactForce.size(); i++)
+		traj.addKnot((double)i / (contactForce.size() - 1), contactForce[i]);
+	return traj.evaluate_linear(t);
+//	boundToRange(&t, 0, 1);
+//	int tIndex = (int)(t * (double)(contactFlag.size() - 1));
+//	return contactForce[tIndex];
 }
 
 P3D LocomotionEngine_EndEffectorTrajectory::getEEPositionAt(double t) const {
@@ -312,30 +316,19 @@ void LocomotionEngine_RobotStateTrajectory::getRobotStateAt(double t, double mot
 	}
 }
 
-void LocomotionEngine_RobotStateTrajectory::writeRobotMotionTrajectoriesToFile(const char *fName) {
+void LocomotionEngine_RobotStateTrajectory::writeRobotMotionTrajectoriesToFile(const char *fName, Robot* robot, double mpDuration) {
 	FILE* fp = fopen(fName, "w");
 
-	fprintf(fp, "%d\n", qArray.size());
+	fprintf(fp, "# every line describes the angle trajectory for a specific joint. Each trajectory is described by n points equally distributed over a planning horizon with length t. These two parameters are provided below.\n");
+
+	fprintf(fp, "%d %lf\n\n", qArray.size(), mpDuration);
 	//every line in the file will correspond to the angle trajectory for one of the joints
-	for (int j = 0; j<nStateDim; j++) {
-		for (uint i = 0; i<qArray.size(); i++)
-			fprintf(fp, "%lf\t", qArray[i][j]);
+	for (int j = 0; j < robot->getJointCount(); j++) {
+		fprintf(fp, "%s:\t", robot->getJoint(j)->name.c_str());
+		int nSamples = (int)qArray.size();
+		for (int i = 0; i<nSamples; i++)
+			fprintf(fp, "%lf\t", qArray[i][robotRepresentation->getQIndexForJoint(robot->getJoint(j))]);
 		fprintf(fp, "\n");
-	}
-	fclose(fp);
-}
-
-void LocomotionEngine_RobotStateTrajectory::loadRobotMotionTrajectoriesToFile(const char *fName) {
-	FILE* fp = fopen(fName, "r");
-
-	int nSamples;
-	fscanf(fp, "%d", &nSamples);
-	initialize(nSamples);
-
-	//every line in the file will correspond to the angle trajectory for one of the joints
-	for (int j = 0; j<nStateDim; j++) {
-		for (uint i = 0; i<qArray.size(); i++)
-			fscanf(fp, "%lf", &qArray[i][j]);
 	}
 	fclose(fp);
 }
@@ -486,7 +479,7 @@ void LocomotionEngineMotionPlan::addIKInitEE(RigidBody* rb, IK_Plan* ikPlan) {
 		ikPlan->endEffectors.back().endEffectorLocalCoords = eeLocalCoords;
 		ikPlan->endEffectors.back().endEffectorRB = rb;
 		ikPlan->endEffectors.back().targetEEPos = eeWorldCoords;
-		ikPlan->endEffectors.back().mask = V3D(0, 1, 0);
+		ikPlan->endEffectors.back().positionMask = V3D(0, 1, 0);
 	}
 }
 
@@ -1455,14 +1448,23 @@ bool LocomotionEngineMotionPlan::getJointAngleVelocityProfile(dVector &velocityP
 
 
 //TODO: redo motion plan animation to update state in terms of deltas, rather than the animation cycle thing?
-void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bool drawRobot, bool drawSkeleton, bool drawPlanDetails, bool drawContactForces, bool drawOrientation){
-	drawContactForces = false;
-	if (drawPlanDetails){
+void LocomotionEngineMotionPlan::drawMotionPlan(double f, 
+	bool drawRobotMesh,
+	bool drawSkeleton,
+	bool drawAxesOfRotation,
+	bool drawWheels,
+	bool drawContactForces,
+	bool drawSupportPolygon,
+	bool drawEndEffectorTrajectories,
+	bool drawCOMTrajectory,
+	bool drawOrientation){
+
+	if (drawSupportPolygon) {
 		//draw the support polygon...
 		DynamicArray<int> stanceLimbs;
 		DynamicArray<P3D> limbPositions;
-		for (uint i=0;i<endEffectorTrajectories.size();i++){
-			if (endEffectorTrajectories[i].isInStance(f)){
+		for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
+			if (endEffectorTrajectories[i].isInStance(f)) {
 				stanceLimbs.push_back(i);
 				limbPositions.push_back(endEffectorTrajectories[i].getEEPositionAt(f));
 			}
@@ -1470,17 +1472,18 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 		DynamicArray<ConvexHull2D_Vertex> convexHullVertices;
 		ConvexHull3D::planarConvexHullFromSetOfPoints(limbPositions, V3D(0, 1, 0), convexHullVertices);
 
-// 		glDisable(GL_LIGHTING);
-// 		glColor3d(1,0,0);
-// 		glLineWidth(3.0);
-// 		glBegin(GL_LINE_LOOP);
-// 		for (uint i=0;i<convexHullVertices.size();i++){
-// 			int limbIndex = stanceLimbs[convexHullVertices[i].index];
-// 			P3D p = endEffectorTrajectories[limbIndex].getEEPositionAt(f);
-// 			glVertex3d(p[0], p[1]+0.001, p[2]);
-// 		}
-// 		glEnd();
+		glDisable(GL_LIGHTING);
+		glColor3d(1, 0, 0);
+		glLineWidth(3.0);
+		glBegin(GL_LINE_LOOP);
+		for (uint i = 0; i < convexHullVertices.size(); i++) {
+			int limbIndex = stanceLimbs[convexHullVertices[i].index];
+			P3D p = endEffectorTrajectories[limbIndex].getEEPositionAt(f);
+			glVertex3d(p[0], p[1] + 0.001, p[2]);
+		}
+		glEnd();
 		glLineWidth(1.0);
+	}
 		//-----------------------------------
 
 		//draw the COP and projected COM
@@ -1508,126 +1511,86 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 // 			glEnd();
 // 			glLineWidth(1.0);
 // 		}
-		//------------------------------------
 
+	if (drawEndEffectorTrajectories) {
 		//draw end effector trajectories
-		glLineWidth(3.0);
-		glColor3d(0.3, 0.3, 0.8);
-		for (uint i=0;i<endEffectorTrajectories.size();i++){
-			glBegin(GL_LINE_STRIP);
-			for (double j=0;j<=1; j+=0.01){
+		glColor3d(0.5, 0.5, 1.0);
+		glEnable(GL_LIGHTING);
+		for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
+			P3D lastPoint = endEffectorTrajectories[i].getEEPositionAt(0);
+			for (double j = 0.01; j <= 1; j += 0.01) {
 				P3D p = endEffectorTrajectories[i].getEEPositionAt(j);
-				glVertex3d(p[0], p[1], p[2]);
+				drawCylinder(lastPoint, p, 0.001, 12, false);
+				lastPoint = p;
 			}
-			glEnd();
 		}
-		//----------------------------
 
-		//draw the COM trajectory
-		glColor3d(1, 0, 0);
-		P3D comP = COMTrajectory.getCOMPositionAt(f);
-		drawSphere(comP, 0.003);
-		comP.y() = 0.001;
-		drawSphere(comP, 0.003);
-
-		glLineWidth(5);
-		glColor3d(0.7, 0.7, 0.7);
-		glBegin(GL_LINE_STRIP);
-			for (int i=0; i<nSamplePoints;i++){
-				glVertex3d(COMTrajectory.pos[0][i], 0.001, COMTrajectory.pos[2][i]);
-			}
-		glEnd();
-		glLineWidth(1.0);
-
-		glLineWidth(5);
-		glColor3d(0.0, 0.5, 0.0);
-		glBegin(GL_LINE_STRIP);
-		for (int i = 0; i<nSamplePoints; i++) {
-			glVertex3d(COMTrajectory.pos[0][i], COMTrajectory.pos[1][i], COMTrajectory.pos[2][i]);
-		}
-		glEnd();
-		glLineWidth(1.0);
-
-		//----------------------------
-
+		glColor3d(0.0, 0.0, 1.0);
 		//draw end effector positions...
-		for (uint i = 0; i < endEffectorTrajectories.size(); i++) 
+		for (uint i = 0; i < endEffectorTrajectories.size(); i++)
 		{
-			if(endEffectorTrajectories[i].isHighlighted)
+/*
+			if (endEffectorTrajectories[i].isHighlighted)
 				glColor3d(0, 0, 1);
 			else
 				if (endEffectorTrajectories[i].isInStance(f))
 					glColor3d(1, 0, 0);
 				else
 					glColor3d(0, 1, 0);
-			drawSphere(endEffectorTrajectories[i].getEEPositionAt(f), 0.003);
+*/
+			drawSphere(endEffectorTrajectories[i].getEEPositionAt(f), 0.007, 12);
 		}
 	}
 
+	if (drawCOMTrajectory) {
+		//draw the COM trajectory
+		glColor3d(1, 0.0, 0.0);
+		P3D comP = COMTrajectory.getCOMPositionAt(f);
+		drawSphere(comP, 0.007, 12);
 
-	if (robot && (drawRobot || drawSkeleton)){
+/*
+		comP.y() = 0.001;
+		drawSphere(comP, 0.003);
+		glLineWidth(5);
+		glColor3d(0.7, 0.7, 0.7);
+		glBegin(GL_LINE_STRIP);
+		for (int i = 0; i < nSamplePoints; i++) {
+			glVertex3d(COMTrajectory.pos[0][i], 0.001, COMTrajectory.pos[2][i]);
+		}
+		glEnd();
+		glLineWidth(1.0);
+*/
+//		glLineWidth(5);
+		glColor3d(1.0, 0.5, 0.5);
+//		glBegin(GL_LINE_STRIP);
+		for (int i = 1; i < nSamplePoints; i++) {
+			//glVertex3d(COMTrajectory.pos[0][i], COMTrajectory.pos[1][i], COMTrajectory.pos[2][i]);
+			P3D p1(COMTrajectory.pos[0][i-1], COMTrajectory.pos[1][i-1], COMTrajectory.pos[2][i-1]);
+			P3D p2(COMTrajectory.pos[0][i], COMTrajectory.pos[1][i], COMTrajectory.pos[2][i]);
+			drawCylinder(p1, p2, 0.001, 12, false);
+		}
+//		glEnd();
+//		glLineWidth(1.0);
+	}
+
+
+	if (robot && (drawRobotMesh || drawSkeleton)){
 		RobotState oldState(robot);
-		////draw the robot's COM trajectory
-		//glLineWidth(5);
-		//glColor3d(0.3, 0.5, 0.3);
-		//glBegin(GL_LINE_STRIP);
-		//	for (double j=0;j<=1; j+=0.01){
-		//		RobotState robotState(robot);
-		//		robotStateTrajectory.getRobotStateAt(j, robotState);
-		//		robot->setState(&robotState);
-		//		P3D p = robot->bFrame->bodyState.position;
-		//		glVertex3d(p[0], p[1]*0+0.001, p[2]);
-		//	}
-		//glEnd();
-		//------------------------------------
 		RobotState robotState(robot);
 		robotStateTrajectory.getRobotPoseAt(f, robotState);
-
-		dVector q; 
-		robotStateTrajectory.getQAtTimeIndex(0, q);
-		Quaternion q0 = getRotationQuaternion(q[3], robotStateTrajectory.robotRepresentation->getQAxis(3)) *
-			getRotationQuaternion(q[4], robotStateTrajectory.robotRepresentation->getQAxis(4)) *
-			getRotationQuaternion(q[5], robotStateTrajectory.robotRepresentation->getQAxis(5));
-
-		robotStateTrajectory.getQAtTimeIndex(nSamplePoints-1, q);
-		Quaternion q1 = getRotationQuaternion(q[3], robotStateTrajectory.robotRepresentation->getQAxis(3)) *
-			getRotationQuaternion(q[4], robotStateTrajectory.robotRepresentation->getQAxis(4)) *
-			getRotationQuaternion(q[5], robotStateTrajectory.robotRepresentation->getQAxis(5));
-
-
-		Quaternion qRel = q0.getInverse() * q1;
-		V3D pRel = robotStateTrajectory.getBodyPositionAt(1) - robotStateTrajectory.getBodyPositionAt(0);
-
-		Quaternion qRoot = robotState.getOrientation();
-		P3D pRoot = robotStateTrajectory.getBodyPositionAt(0);
-		V3D vecToRoot(robotStateTrajectory.getBodyPositionAt(0), robotState.getPosition());
-		for (int ii = 0; ii < animationCycle; ii++){
-			qRoot = qRel * qRoot;
-			pRoot += pRel;
-			pRel = qRel * pRel;
-			vecToRoot = qRel * vecToRoot;
-		}
-
-//		if (f == 0) {
-//			Logger::consolePrint("Starting at: %lf %lf %lf\n", pRoot[0], pRoot[1], pRoot[2]);
-//			Logger::consolePrint("  Ending at: %lf %lf %lf\n", pRoot[0] + pRel[0], pRoot[1] + pRel[1], pRoot[2] + pRel[2]);
-//		}
-
-		robotState.setOrientation(qRoot);
-		robotState.setPosition(pRoot + vecToRoot);
 		robot->setState(&robotState);
 		
-		//draw the axes of rotation...
-		//for (int i=0;i<robot->getJointCount();i++){
-		//	HingeJoint* hj = dynamic_cast<HingeJoint*> (robot->getJoint(i));
-		//	V3D v = hj->child->getWorldCoordinates(hj->getRotAxisA()) * 0.1;
-		//	P3D p = hj->child->getWorldCoordinates(hj->cJPos);
-		//	glBegin(GL_LINES);
-		//		glVertex3d(p[0], p[1], p[2]);
-		//		glVertex3d(p[0]+v[0], p[1]+v[1], p[2]+v[2]);
-		//	glEnd();
-		//}
-		//----------------------------
+		if (drawAxesOfRotation){
+			for (int i=0;i<robot->getJointCount();i++){
+				HingeJoint* hj = dynamic_cast<HingeJoint*> (robot->getJoint(i));
+				V3D v = hj->child->getWorldCoordinates(hj->rotationAxis) * 0.1;
+				P3D p = hj->child->getWorldCoordinates(hj->cJPos);
+				glBegin(GL_LINES);
+					glVertex3d(p[0], p[1], p[2]);
+					glVertex3d(p[0]+v[0], p[1]+v[1], p[2]+v[2]);
+				glEnd();
+			}
+		}
 
 		glEnable(GL_LIGHTING);
 
@@ -1637,7 +1600,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 //		int flags = SHOW_ABSTRACT_VIEW;
 
 		int flags = SHOW_MESH;
-		if (drawPlanDetails || drawSkeleton)
+		if (drawSkeleton)
 			flags = SHOW_ABSTRACT_VIEW;
 		flags |= HIGHLIGHT_SELECTED;
 		//draw the robot configuration...
@@ -1698,37 +1661,38 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 	glEnable(GL_LIGHTING);
 
 	// drawContactForce
-	if (drawPlanDetails && drawContactForces) {
+	if (drawContactForces) {
 		glColor3d(0.0, 1.0, 0.0);
 		for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
 			V3D contactForce = endEffectorTrajectories[i].getContactForceAt(f);
 			P3D EEPos = endEffectorTrajectories[i].getEEPositionAt(f);
-			drawArrow(EEPos, EEPos + contactForce * 0.05, 0.007, 12);
+			drawArrow(EEPos, EEPos + contactForce * 0.05, 0.003, 12);
 		}
 	}
 
 
 	// draw wheels at end effectors
-	{
-		for (const LocomotionEngine_EndEffectorTrajectory &ee : endEffectorTrajectories) {
-			double alpha = ee.getWheelYawAngleAt(f);
-			double beta = ee.getWheelTiltAngleAt(f);
-			double radius = ee.wheelRadius;
-			V3D axis = ee.getRotatedWheelAxis(alpha, beta);
-			P3D wheelCenter = ee.getWheelCenterPositionAt(f);
+	if (drawWheels){
+		if (drawAxesOfRotation)
+			for (const LocomotionEngine_EndEffectorTrajectory &ee : endEffectorTrajectories) {
+				double alpha = ee.getWheelYawAngleAt(f);
+				double beta = ee.getWheelTiltAngleAt(f);
+				double radius = ee.wheelRadius;
+				V3D axis = ee.getRotatedWheelAxis(alpha, beta);
+				P3D wheelCenter = ee.getWheelCenterPositionAt(f);
 
-//			glColor4d(0.8, 0.2, 0.6, 0.8);
-//			drawArrow(wheelCenter, wheelCenter + ee.wheelYawAxis*radius*2.0, 0.003);
+	//			glColor4d(0.8, 0.2, 0.6, 0.8);
+	//			drawArrow(wheelCenter, wheelCenter + ee.wheelYawAxis*radius*2.0, 0.003);
 
-//			glColor4d(0.8, 0.6, 0.2, 0.8);
-//			drawArrow(wheelCenter, wheelCenter + ee.wheelTiltAxis*radius*2.0, 0.003);
+	//			glColor4d(0.8, 0.6, 0.2, 0.8);
+	//			drawArrow(wheelCenter, wheelCenter + ee.wheelTiltAxis*radius*2.0, 0.003);
 
-//			glColor4d(0, 0, 0.5, 0.8);
-//			drawArrow(wheelCenter, wheelCenter + ee.wheelAxisLocal*radius*2.0, 0.003);
+	//			glColor4d(0, 0, 0.5, 0.8);
+	//			drawArrow(wheelCenter, wheelCenter + ee.wheelAxisLocal*radius*2.0, 0.003);
 
-			glColor4d(0.2, 0.6, 0.8, 0.8);
-			drawArrow(wheelCenter, wheelCenter + axis*0.05, 0.003);
-		}
+				glColor4d(0.2, 0.6, 0.8, 0.8);
+				drawArrow(wheelCenter, wheelCenter + axis*0.05, 0.003);
+			}
 
 		double width = 0.01;
 		for (const LocomotionEngine_EndEffectorTrajectory &ee : endEffectorTrajectories) {
@@ -1744,7 +1708,6 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 	}
 
 	// drawOrientation
-	drawOrientation = false;
 	if (drawOrientation) {
 		glPushMatrix();
 		P3D comPos = COMTrajectory.getCOMPositionAt(f);
@@ -1754,9 +1717,22 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 		Quaternion q = COMTrajectory.getCOMOrientationAt(f);
 		q.getAxisAngle(rotAxis, rotAngle);
 		glRotated(DEG(rotAngle), rotAxis[0], rotAxis[1], rotAxis[2]);
+		glEnable(GL_BLEND);
+		glColor4d(0.5, 0.5, 0.5, 0.2);
 
-		glColor4d(0.0, 1.0, 1.0, 0.3);
-		drawMOIApproximation(Matrix3x3::Identity() * totalInertia, totalMass);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_FRONT);
+
+		Matrix3x3 moi = Matrix3x3::Identity();
+		moi(2, 2) /= 2.5;
+		moi(1, 1) *= 1.6;
+		moi(0, 0) *= 1.4;
+
+		drawMOIApproximation(moi * totalInertia, totalMass);
+		glCullFace(GL_BACK);
+		drawMOIApproximation(moi * totalInertia, totalMass);
+		glDisable(GL_CULL_FACE);
+
 		/*glColor3d(1.0, 1.0, 0.0);
 		drawArrow(P3D(), P3D(0.1, 0, 0), 0.005, 12);
 		glColor3d(0.0, 1.0, 1.0);
@@ -1769,144 +1745,6 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f, int animationCycle, bo
 	glDisable(GL_LIGHTING);
 }
 
-void LocomotionEngineMotionPlan::drawMotionPlan2(double f, int animationCycle, bool drawRobotPose, bool drawPlanDetails) {
-	int nIntervalCounts = nSamplePoints - 1;
-	int tIndex = (int)(f * nIntervalCounts);
-
-	double alphaVal = 1.0;
-	if (animationCycle == 6)
-		alphaVal = 1-mapTo01Range(f, 0, 0.2);
-	if (animationCycle > 6)
-		alphaVal = 0.0;
-
-	//draw the robot in a neutral stance
-	if (animationCycle == 0 && f < 0.95) {
-		RobotState oldState(robot);
-		RobotState robotState(robot);
-		robotStateTrajectory.getRobotPoseAt(0, robotState);
-		robotState.setOrientation(Quaternion());
-		P3D pos = (COMTrajectory.getCOMPositionAt(1) + COMTrajectory.getCOMPositionAt(0)) / 2;
-		P3D oldPos = robotState.getPosition();
-		pos[1] = oldPos[1];
-		robotState.setPosition(pos);
-		for (int i = 0; i < robot->getJointCount(); i++)
-			robotState.setJointRelativeOrientation(Quaternion(), i);
-		robot->setState(&robotState);
-		glEnable(GL_LIGHTING);
-
-		//draw end effector positions...
-		for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
-			if (endEffectorTrajectories[i].isInSwing(f))
-				glColor3d(1, 0, 0);
-			else
-				glColor3d(0, 1, 0);
-			drawSphere(endEffectorTrajectories[i].theLimb->getLastLimbSegment()->getWorldCoordinates(endEffectorTrajectories[i].theLimb->getLastLimbSegment()->rbProperties.getEndEffectorPoint(endEffectorTrajectories[i].CPIndex)), 0.02);
-		}
-
-		//draw the robot configuration...
-		robot->getRoot()->draw(SHOW_ABSTRACT_VIEW);
-		for (int i = 0; i<robot->getJointCount(); i++)
-			robot->getJoint(i)->child->draw(SHOW_ABSTRACT_VIEW);
-
-		glDisable(GL_LIGHTING);
-
-		robot->setState(&oldState);
-	}
-
-	//draw the entire COM trajectory, together with the COM position at intermediate points...
-	if ((animationCycle >= 2 && alphaVal > 0) || (animationCycle == 0 && f < 0.5)) {
-		glEnable(GL_LIGHTING);
-		glColor4d(0x00/255.0, 0x3a/255.0, 0x6f/255.0, alphaVal);
-		for (int i = 1; i<nSamplePoints; i++) 
-			drawCapsule(P3D(COMTrajectory.pos[0][i-1], COMTrajectory.pos[1][i-1], COMTrajectory.pos[2][i-1]), P3D(COMTrajectory.pos[0][i], COMTrajectory.pos[1][i], COMTrajectory.pos[2][i]), 0.001);
-
-		drawSphere(COMTrajectory.getCOMPositionAtTimeIndex(tIndex), 0.01);
-	}
-
-	//draw the end effectors
-	if (animationCycle >= 1 && alphaVal > 0) {
-		glEnable(GL_LIGHTING);
-		glColor4d(0x6e / 255.0, 0xc5 / 255.0, 0xe9 / 255.0, alphaVal);
-		for (uint i = 0; i<endEffectorTrajectories.size(); i++) {
-			for (double j = 0.01; j <= 1; j += 0.01) {
-				P3D p1 = endEffectorTrajectories[i].getEEPositionAt(j);
-				P3D p2 = endEffectorTrajectories[i].getEEPositionAt(j-0.01);
-				drawCapsule(p1, p2, 0.001);
-			}
-		}
-		glEnable(GL_LIGHTING);
-		for (uint i = 0; i<endEffectorTrajectories.size(); i++)
-			drawSphere(endEffectorTrajectories[i].getEEPositionAt(f), 0.01);
-		
-		glEnd();
-	}
-
-	//draw the COP points/trajectory
-	if (animationCycle >= 3 && alphaVal > 0) {
-		glEnable(GL_LIGHTING);
-		glColor4d(0.75 * 0xff / 255.0, 0.75 * 0xcf / 255.0, 0.75 * 0x6c / 255.0, alphaVal);
-		for (int i = 1; i<nSamplePoints; i++) {
-			P3D zmp1 = getCOP(i); zmp1[1] = 0.001;
-			P3D zmp2 = getCOP(i-1); zmp2[1] = 0.001;
-
-			drawCapsule(zmp1, zmp2, 0.001);
-		}
-		drawSphere(getCOP(tIndex), 0.01);
-	}
-
-	//draw the support polygon
-	if (animationCycle >= 4 && alphaVal > 0) {
-		//draw the support polygon...
-		DynamicArray<int> stanceLimbs;
-		DynamicArray<P3D> limbPositions;
-		for (uint i = 0; i<endEffectorTrajectories.size(); i++) {
-			if (endEffectorTrajectories[i].isInStance(f)) {
-				stanceLimbs.push_back(i);
-				limbPositions.push_back(endEffectorTrajectories[i].getEEPositionAt(f));
-			}
-		}
-		DynamicArray<ConvexHull2D_Vertex> convexHullVertices;
-		ConvexHull3D::planarConvexHullFromSetOfPoints(limbPositions, V3D(0, 1, 0), convexHullVertices);
-		glColor4d(0xff / 255.0, 0x59 / 255.0, 0x59 / 255.0, alphaVal);
-		glEnable(GL_LIGHTING);
-		for (uint i = 0; i<convexHullVertices.size(); i++) {
-			int limbIndex1 = stanceLimbs[convexHullVertices[i].index];
-			P3D p1 = endEffectorTrajectories[limbIndex1].getEEPositionAt(f); p1[1] += 0.001;
-			int limbIndex2 = stanceLimbs[convexHullVertices[(i+1)%(convexHullVertices.size())].index];
-			P3D p2 = endEffectorTrajectories[limbIndex2].getEEPositionAt(f); p2[1] += 0.001;
-			drawCapsule(p1, p2, 0.001);
-		}
-	}
-
-	if (animationCycle >= 5) {
-		RobotState oldState(robot);
-		RobotState robotState(robot);
-		robotStateTrajectory.getRobotPoseAt(f, robotState);
-		V3D val = robotStateTrajectory.getBodyPositionAt(1) - robotStateTrajectory.getBodyPositionAt(0);
-		robotState.setPosition(robotState.getPosition() + val * (animationCycle-5));
-		robot->setState(&robotState);
-
-		glEnable(GL_LIGHTING);
-
-		//draw end effector positions...
-		for (uint i = 0; i < endEffectorTrajectories.size(); i++) {
-			if (endEffectorTrajectories[i].isInSwing(f))
-				glColor3d(1, 0, 0);
-			else
-				glColor3d(0, 1, 0);
-			drawSphere(endEffectorTrajectories[i].theLimb->getLastLimbSegment()->getWorldCoordinates(endEffectorTrajectories[i].theLimb->getLastLimbSegment()->rbProperties.getEndEffectorPoint(endEffectorTrajectories[i].CPIndex)), 0.02);
-		}
-
-		//draw the robot configuration...
-		robot->getRoot()->draw(SHOW_ABSTRACT_VIEW);
-		for (int i = 0; i<robot->getJointCount(); i++)
-			robot->getJoint(i)->child->draw(SHOW_ABSTRACT_VIEW);
-
-		glDisable(GL_LIGHTING);
-
-		robot->setState(&oldState);
-	}
-}
 
 int LocomotionEngineMotionPlan::getWheelSpeedIndex(int i, int j) const
 {

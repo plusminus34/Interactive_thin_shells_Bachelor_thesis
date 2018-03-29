@@ -14,11 +14,12 @@ Node::~Node(){
 
 }
 
-void Node::draw(){
-	glColor3d(0, 0, 1);
+void Node::draw(V3D const & color, double size)
+{
+	glColor3d(color(0), color(1), color(2));
 	if (selected || fixed || 1) {
-		glColor3d(1, 0, 0);
-		drawSphere(getWorldPosition(), 0.005);
+		//glColor3d(1, 0, 0);
+		drawSphere(getWorldPosition(), size);
 	}
 }
 

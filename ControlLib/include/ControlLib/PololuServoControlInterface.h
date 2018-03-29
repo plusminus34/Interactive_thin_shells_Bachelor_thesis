@@ -19,7 +19,7 @@ public:
 class PololuServoControlInterface : public RobotControlInterface{
 public:
 
-//SOME OF THESE PARAMETERS MUST BE SET WITH THE POLOLU SERVOMOTOR CONTROLLER, INCLUDING THE MAESTRO’S SERIAL MODE WHICH NEEDS TO BE SET TO “USB Dual Port”
+//SOME OF THESE PARAMETERS MUST BE SET WITH THE POLOLU SERVOMOTOR CONTROLLER, INCLUDING THE MAESTRO?S SERIAL MODE WHICH NEEDS TO BE SET TO ?USB Dual Port?
 	int comNumber = 4;
 	//this is the period of servo pulses, expressed in milliseconds - set by the maestro control center, so make sure it matches up...
 	int signalPeriod = 20; //in ms
@@ -54,7 +54,7 @@ public:
 	void createMultiWriteClusters();
 
 	//set motor goals from target values
-	virtual void sendControlInputsToPhysicalRobot();
+	virtual void sendControlInputsToPhysicalRobot(double dt);
 	//read motor positions
 	virtual void readPhysicalRobotMotorPositions();
 	//read motor positions

@@ -5,6 +5,7 @@
 #include <GUILib/GLContentManager.h>
 #include <GUILib/GLTexture.h>
 #include <GUILib/GLShaderMaterial.h>
+#include "Utils/BMPIO.h"
 
 #include <nanogui/screen.h>
 
@@ -47,6 +48,7 @@ GLApplication::GLApplication(bool maximizeWindows) {
 
     init(borderLeft, borderTop, (mode->width - borderLeft - borderRight), (mode->height - borderTop - borderBottom), maximizeWindows);
 }
+
 
 void GLFW_error(int error, const char* description)
 {
@@ -454,6 +456,8 @@ void GLApplication::runMainLoop() {
 		}
 #endif
 
+		if(screenRecorder != NULL) {screenRecorder->call(glfwWindow);}
+
 		/* Poll for and process events */
 		glfwPollEvents();
 	}
@@ -491,10 +495,10 @@ void GLApplication::drawFPS(double timeSinceLastUpdate, double percentageOfTimeS
 	glLoadIdentity();
 	glTranslatef(0.0f, 0.0f, -1.0f);
 
-	glColor4d(1.0, 1.0, 1.0, 1.0);
+	glColor4d(0.75, 0.0, 0.0, 1.0);
 	int viewportWidth, viewportHeight;
 	getMainWindowWidthAndHeight(viewportWidth, viewportHeight);
-	glprint(viewportWidth - 400, viewportHeight-15, "FPS: %7.2lf (processing: %7.2lf %%)", oldFrameRate, 100 * oldPerformanceRate);
+	glprint(viewportWidth - 400, viewportHeight-20, "FPS: %7.2lf (processing: %7.2lf %%)", oldFrameRate, 100 * oldPerformanceRate);
 	glPopMatrix();
 }
 

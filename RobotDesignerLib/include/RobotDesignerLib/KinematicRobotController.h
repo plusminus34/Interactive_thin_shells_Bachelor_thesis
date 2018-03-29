@@ -13,7 +13,7 @@ public:
 	~KinematicRobotController(void);
 
 	//advance the phase of the motion by timeStep...
-	virtual void advanceInTime(double timeStep);
+	virtual bool advanceInTime(double timeStep);
 
 	//timeStep indicates the time that will take until the next call to this function, esentially how long do we expect the current control signals to be constant for...
 	virtual void applyControlSignals(double timeStep);

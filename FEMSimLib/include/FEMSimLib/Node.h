@@ -24,13 +24,16 @@ public:
 
 	//flag that indicates whether this node is selected or not...
 	bool selected;
-
+	 
 	bool fixed = false; P3D fixedPos;
+
+	double avgDefEnergyForDrawing = 0;
+
 public:
 	Node(SimulationMesh* m, int nodeIndex, int dataStartIndex, int dimSize);
 	~Node();
 
-	void draw();
+	void draw(V3D const & color = V3D(1.0,0.0,0.0), double size = 0.005);
 
 	P3D getWorldPosition();
 	void setWorldPosition(const P3D& newPos);

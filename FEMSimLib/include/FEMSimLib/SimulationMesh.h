@@ -11,6 +11,8 @@
 */
 class SimulationMesh{
 	friend class FEMEnergyFunction;
+	friend class TopOptApp;
+	friend class TopOptConstraints;
 	friend class Node;
 	friend class FEMSimApp;
     friend class FEMSim3DApp;
@@ -42,15 +44,19 @@ public:
 	SimulationMesh();
 	~SimulationMesh();
 
+	virtual void prepareForDraw() {	}
+
 	void drawNodes();
-	void drawSimulationMesh();
+	void drawSimulationMesh(V3D const & edgeColor = V3D(1.0,1.0,1.0), double edgeWidth = 1, 
+							V3D const & pinnedNodeColor = V3D(1.0,0.0,0.0), double pinnedNodeSize = 1,
+							V3D const & nodeColor = V3D(1.0,0.0,0.0), double nodeSize = 0.005);
 	void drawExternalForces();
 	void drawRestConfiguration();
 
 	void solve_dynamics(double dt);
 	void solve_statics();
 
-	void addGravityForces(const V3D& g);
+	void addGravityForces(const V3D & g);
 
 	//projects positions of nodes to lie on the plane, rather than under it, and kills normal component of their velocities
 	void fakeContactWithPlane(const Plane& plane);
@@ -63,11 +69,26 @@ public:
 
 	virtual void readMeshFromFile(const char* fName) = 0;
 	
-	virtual int getSelectedNodeID(Ray ray) = 0;
+	virtual int getSelectedNodeID(Ray ray) { return -1; }
+	virtual int getSelectedElementID(Ray ray) { return -1; }
+
 	virtual void setPinnedNode(int ID, const P3D& target) = 0;
+	virtual void unpinNode(int ID) {};
 	virtual void removePinnedNodeConstraints() {
 		for (auto it = pinnedNodeElements.begin(); it != pinnedNodeElements.end(); ++it)
 			delete *it;
 		pinnedNodeElements.clear();
 	}
+
+	double getCurrentDeformationEnergy() {
+		double totalEnergy;
+		for (uint i = 0; i<elements.size(); i++)
+			totalEnergy += elements[i]->getEnergy(x, X);
+
+		for (uint i = 0; i<pinnedNodeElements.size(); i++)
+			totalEnergy += pinnedNodeElements[i]->getEnergy(x, X);
+
+		return totalEnergy;
+	}
+
 };

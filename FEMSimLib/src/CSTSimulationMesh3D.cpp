@@ -154,8 +154,13 @@ void CSTSimulationMesh3D::readMeshFromFile(const char* fName)
 }
 
 
-void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> const * add_input_points)
+void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> const * add_input_points,
+											   double massDensity, double shearModulus, double bulkModulus,
+											   double scale, V3D const & offset,
+											   double maxTetVolume)
 {
+	SimulationMesh * that = this;
+
 	// input objects for tetget
 	tetgenio input, addinput;
 	input.mesh_dim = 3;
@@ -166,9 +171,17 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 	tetgenbehavior b;
 	b.plc = 1;
 	b.coarsen = 1;
+	//b.refine = 1;
 	b.quality = 1;
-	//b.minratio = 2.0;
-	//b.mindihedral = 1.0;
+	b.minratio = 1.7;
+	b.mindihedral = 0.0;
+	//b.facesout = 1;
+
+	if(maxTetVolume > 0.0) {
+		b.fixedvolume = 1;
+		b.maxvolume = maxTetVolume / (scale*scale*scale);
+	}
+
 	b.verbose = 1;
 
 	// set additional points
@@ -180,7 +193,7 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 		addinput.numberofpoints = m;
 		for(int i = 0; i < m; ++i) {
 			for(int j = 0; j < 3; ++j) {
-				addinput.pointlist[i*3+j] = (*add_input_points)[i][j];
+				addinput.pointlist[i*3+j] = (*add_input_points)[i][j] / scale;
 				addinput.pointmarkerlist[i] = 1;
 			}
 		}
@@ -200,6 +213,14 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 	f_ext.resize(3 * nodeCount);
 	m.resize(3 * nodeCount);
 
+	// apply scaling and offset
+	for(int i = 0; i < nodeCount; ++i) {
+		for(int j = 0; j < 3; ++j) {
+			output.pointlist[i*3 + j] *= scale;
+			output.pointlist[i*3 + j] += offset(j);
+		}
+	}
+
 	for (int i = 0; i<nodeCount; i++) {
 		Node* newNode = new Node(this, i, 3 * i, 3);
 		double *p = output.pointlist + 3 * i;
@@ -213,9 +234,11 @@ void CSTSimulationMesh3D::readMeshFromFile_ply(char* fName, DynamicArray<P3D> co
 	}
 	for (int i = 0;i<tetCount; i++) {
 		CSTElement3D* newElem = new CSTElement3D(this, nodes[output.tetrahedronlist[i * 4]], nodes[output.tetrahedronlist[i * 4 + 1]],
-			nodes[output.tetrahedronlist[i * 4 + 2]], nodes[output.tetrahedronlist[i * 4 + 3]]);
+												 nodes[output.tetrahedronlist[i * 4 + 2]], nodes[output.tetrahedronlist[i * 4 + 3]],
+												 massDensity, shearModulus, bulkModulus);
 		elements.push_back(newElem);
 	}
+
 	energyFunction = new FEMEnergyFunction();
 	energyFunction->initialize(this);
 }

@@ -19,13 +19,18 @@ public:
 	InverseDeformationObjectiveFunction<NDim> * objectiveFunction;
 
 	// Optimization Parameters
+	std::vector<ParameterSet*> parameterSets;
 	dVector xi;
 
 	// helpers for optimization
 	dVector dOdxi;
 	dVector dOdx;
-	std::vector<dVector> deltaFdeltaxi;
-	std::vector<dVector> deltaxdeltaxi;
+	MatrixNxM dFdxi;
+	MatrixNxM dxdxi;
+
+	// helpers for finite differences
+	dVector x_xipdelta;
+	dVector x_ximdelta;
 
 public:
 

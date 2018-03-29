@@ -29,13 +29,19 @@ private:
 	bool showRotationAxes = false;
 	bool showCDPs = false;
 
-	bool playFFTrajectory = true;
+    bool playFFTrajectory = false;
 	double trajPhase = 0.0;
 	double trajDuration = 1.0;
 
 	bool controlPositionsOnly = false;
+    bool syncPhysicalRobot = false;
+	bool requestPosition = true;
 
+	bool startAtHomeState = true; //true = uses predefined home position / false = uses position where robot is currently in as home position
+	bool saveCurrentAsHomePosition = false;
+	std::string homeFilePath = "/scp/data/rbs/yumi/yumiHomeState.rs";
 
+	unsigned int speed = 100;
 
 	RigidBody* selectedRigidBody = NULL;
 	RigidBody* highlightedRigidBody = NULL;
@@ -80,5 +86,7 @@ public:
 	void loadRobot(const char* fName);
 	virtual void loadFile(const char* fName);
 	virtual void saveFile(const char* fName);
+
+	void updateSpeedParameter();
 
 };

@@ -3,6 +3,8 @@
 
 #include <GUILib/GLUtils.h>
 
+#include "BenderAppGlobals.h"
+
 #include "MatchScaledTrajObjective.h"
 
 
@@ -39,6 +41,18 @@ void MatchScaledTrajObjective::addDoDx(const dVector & x, const dVector & X, dVe
 
 void MatchScaledTrajObjective::addError(const dVector & x, double & e)
 {
+	update_tNode(x);
+
+	double e_sum = 0.0;
+
+	int n = matchedFiber.size();
+	for(int i = 0; i < n; ++i) {
+		double o;
+		o = computeOofNode(i, x);
+		e_sum += sqrt(o);
+	}
+
+	e += e_sum / n;
 }
 
 
@@ -58,6 +72,7 @@ double MatchScaledTrajObjective::computeOofNode(int nodeID_local, const dVector 
 	double o = 0.5 * (pt_tgt - pt_node).length2();
 	return(o);
 }
+
 
 
 void MatchScaledTrajObjective::addDoDxEachNode(int nodeID_local, const dVector & x, dVector & dodx)
@@ -155,29 +170,36 @@ void MatchScaledTrajObjective::prepareDtTargetDxNode(dVector const & x)
 }
 
 
-void MatchScaledTrajObjective::draw(dVector const & x) {
+void MatchScaledTrajObjective::draw(dVector const & x, HighlightLevel level) {
 	
 	update_tNode(x);
 
 	int n = tNodeTarget.size();
 
 	// draw links
-	for(int i = 0; i < n; ++i) {
-		glColor3d(0, 1, 0);
-		P3D pi = (matchedFiber[i]->getCoordinates(x));
-		P3D pj = targetTrajectory.evaluate_catmull_rom(tNodeTarget[i], false);
-		glBegin(GL_LINES);
-		glVertex3d(pi[0], pi[1], pi[2]);
-		glVertex3d(pj[0], pj[1], pj[2]);
-		glEnd();
+	if(false) {
+		for(int i = 0; i < n; ++i) {
+			glColor3d(0, 1, 0);
+			P3D pi = (matchedFiber[i]->getCoordinates(x));
+			P3D pj = targetTrajectory.evaluate_catmull_rom(tNodeTarget[i], false);
+			glBegin(GL_LINES);
+			glVertex3d(pi[0], pi[1], pi[2]);
+			glVertex3d(pj[0], pj[1], pj[2]);
+			glEnd();
+		}
 	}
 
+	double line_width = 2.0 * SYMBOL_SCALE;
+
 	// draw target trajectory
-	targetTrajectory.draw(V3D(0.0, 0.0, 1.0), 2, V3D(0, 0.8, 0), -0.003);
+	//targetTrajectory.draw(V3D(0.0, 0.0, 1.0), line_width, V3D(0, 0.8, 0), -0.003);
+	glDisable(GL_LIGHTING);
+	targetTrajectory.draw(V3D(1.0, 0.5, 0.0), line_width, V3D(0, 0.8, 0), -0.003);
+	glEnable(GL_LIGHTING);
 
 	// draw matched fiber
 	glColor3d(0.0, 0.5, 1.0);
-	glLineWidth((GLfloat)2.0);
+	glLineWidth((GLfloat)line_width);
 	glBegin(GL_LINE_STRIP);
 	for(Node * node : matchedFiber) {
 		P3D pt = node->getCoordinates(x);

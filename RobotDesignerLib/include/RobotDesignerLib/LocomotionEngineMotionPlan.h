@@ -19,9 +19,10 @@ struct EndEffectorPositionObjective {
 	double phase;
 };
 
-struct COMPositionObjective {
+struct BodyFrameObjective {
 	int sampleNum;
 	P3D pos;
+	P3D orientation;
 	double phase;
 };
 
@@ -175,9 +176,7 @@ public:
 	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
 	void getRobotStateAt(double t, double motionPlanDuration, RobotState& robotState);
 
-	void writeRobotMotionTrajectoriesToFile(const char* fName);
-
-	void loadRobotMotionTrajectoriesToFile(const char* fName);
+	void writeRobotMotionTrajectoriesToFile(const char* fName, Robot* robot, double mpDuration);
 
 	void getQAtTimeIndex(int j, dVector& q_t);
 
@@ -201,8 +200,17 @@ public:
 
 	virtual ~LocomotionEngineMotionPlan(void);
 
-	void drawMotionPlan(double f, int animationCycle = 0, bool drawRobot = true, bool drawSkeleton = false, bool drawPlanDetails = false, bool drawContactForces = false, bool drawOrientation = false);
-	void drawMotionPlan2(double f, int animationCycle = 0, bool drawRobotPose = true, bool drawPlanDetails = false);
+	void drawMotionPlan(double f, 
+		bool drawRobotMesh = true, 
+		bool drawSkeleton = false, 
+		bool drawAxesOfRotation = false,
+		bool drawWheels = false,
+		bool drawContactForces = false,
+		bool drawSupportPolygon = false,
+		bool drawEndEffectorTrajectories = false,
+		bool drawCOMTrajectory = false,
+		bool drawOrientation = false
+		);
 
 	double motionPlanDuration = 0.8; //1.5
 	double swingFootHeight = 0.02;	
@@ -235,7 +243,7 @@ public:
 	double jointL0Delta = 1;
 
 	list < shared_ptr<EndEffectorPositionObjective> > EEPosObjectives;
-	list < shared_ptr<COMPositionObjective> > BodyPosObjectives;
+	list < shared_ptr<BodyFrameObjective> > BodyFrameObjectives;
 
 public:
 	bool optimizeCOMPositions;
@@ -326,6 +334,10 @@ public:
 	void writeParamsToFile(FILE* fp);
 
 	void writeParamsToFile(const char* fName);
+
+	void writeRobotMotionTrajectoriesToFile(const char* fName) {
+		robotStateTrajectory.writeRobotMotionTrajectoriesToFile(fName, robot, motionPlanDuration);
+	}
 
 	void readParamsFromFile(FILE* fp);
 

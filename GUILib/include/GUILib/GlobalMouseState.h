@@ -15,6 +15,7 @@ public:
 	static double lastMouseX, lastMouseY;
 	static double mouseMoveX, mouseMoveY;
 	static bool rButtonPressed, lButtonPressed, mButtonPressed;
+	static bool dragging;
 
 	GlobalMouseState() {}
 

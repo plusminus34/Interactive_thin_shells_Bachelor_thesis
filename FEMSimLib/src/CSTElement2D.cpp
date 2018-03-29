@@ -73,10 +73,25 @@ void CSTElement2D::addEnergyHessianTo(const dVector& x, const dVector& X, std::v
 }
 
 void CSTElement2D::draw(const dVector& x) {
-//	glColor3d(1, 1, 1);
+
+
+
+
+	//draw a heatmap-sort-of-thing representing internal stresses...
+	glBegin(GL_TRIANGLES);
+	for (int idx = 0; idx < 3; idx++){
+		P3D p = n[idx]->getCoordinates(x);
+		double color = pow(n[idx]->avgDefEnergyForDrawing, 0.75);
+		color = mapTo01Range(color, 0, 0.05);
+		glColor4d(color, 0, 1 - color, densityForDrawing);
+		glVertex3d(p[0], p[1], p[2]);
+	}
+	glEnd();
+
+	glColor3d(0, 0, 0);
 	glBegin(GL_LINES);
-	for (int i = 0; i<2;i++)
-		for (int j = i + 1;j<3;j++) {
+	for (int i = 0; i < 2; i++)
+		for (int j = i + 1; j < 3; j++) {
 			P3D pi = n[i]->getCoordinates(x);
 			P3D pj = n[j]->getCoordinates(x);
 			glVertex3d(pi[0], pi[1], pi[2]);

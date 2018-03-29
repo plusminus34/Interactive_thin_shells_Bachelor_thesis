@@ -9,15 +9,17 @@ class RotationMount2D : public Mount {
 public:
 	// parameters are: [alpha, shift_1, shift_2]
 public:
-	RotationMount2D() {parametersStartIndex = 0; parameters.assign(3, 0);}
+	RotationMount2D(ParameterSet * parameters);
 
+	/*
 	RotationMount2D(double alpha, double shift_1, double shift_2, int parametersStartIndex) {
 		this->parametersStartIndex = parametersStartIndex;
 		parameters.assign({alpha, shift_1, shift_2});
 	};
+	*/
 
-	virtual P3D transformation(P3D const & x0, std::vector<double> const & parameters);
-	virtual void dxDpar(P3D const & x0, std::vector<double> const & parameters, std::vector<V3D> & grad);
+	virtual P3D transformation(P3D const & x0, ParameterSet * parameters_in);
+	virtual void dxDpar(P3D const & x0, ParameterSet * parameters_in, std::vector<V3D> & grad);
 
 	//virtual void getDxDpar(P3D const & x0, std::vector<V3D> & grad);
 
@@ -29,3 +31,16 @@ public:
 };
 
 
+class Rotation2DParameters : public ParameterSet {
+
+public:
+	double alpha;
+	V3D shift;
+
+public:
+
+	virtual void writeToList(dVector & par, int & cursor_idx_io);
+	virtual void setFromList(dVector const & par, int & cursor_idx_io);
+	virtual int getNPar() const {return(4);}
+
+};

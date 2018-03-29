@@ -21,6 +21,7 @@ class ArticulatedFigure;
 #define HIGHLIGHT_SELECTED				0x0080
 #define SHOW_WHEELS						0x0100
 
+
 struct MappingInfo {
 	int index1 = -1;
 	int index2 = -1;

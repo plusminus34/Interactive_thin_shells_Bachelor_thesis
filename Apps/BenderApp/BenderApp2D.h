@@ -64,7 +64,7 @@ public:
 	Ray currentRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
 	int selectedNodeID = -1;
 	int selectedKnotID = -1;
-	int selected_mount = -1;
+	int selectedMountID = -1;
 
 	// menu elements
 	nanogui::ComboBox * comboBoxMountSelection;

@@ -2,7 +2,9 @@
 #include <cmath>
 
 #include <GUILib/GLUtils.h>
-#include "MathLib/V3D.h"
+#include <MathLib/V3D.h>
+
+#include "BenderAppGlobals.h"
 
 #include "NodePositionObjective.h"
 
@@ -37,13 +39,37 @@ void NodePositionObjective::addError(const dVector & x, double & e)
 
 
 
-void NodePositionObjective::draw(dVector const & x) 
+void NodePositionObjective::draw(dVector const & x, HighlightLevel level) 
 {
-	glColor3d(0, 1, 0);
+	if(level == HighlightLevel::HIDE) {return;}
+
+
 	P3D pi = (node->getCoordinates(x));
 	P3D pj = targetPosition;
-	glBegin(GL_LINES);
-	glVertex3d(pi[0], pi[1], 0);
-	glVertex3d(pj[0], pj[1], 0);
-	glEnd();
+
+	double r = 0.0;
+	if(level ==  HighlightLevel::NONE) {
+		r = 0.002;
+		glColor3d(1.0, 0.5, 0);
+	}
+	if(level ==  HighlightLevel::HOVERED) {
+		r = 0.002;
+		glColor3d(1.0, 0.1, 0);
+	}
+	if(level ==  HighlightLevel::SELECTED) {
+		r = 0.0025;
+		glColor3d(1.0, 0.1, 0);
+	}
+	r *= SYMBOL_SCALE;
+
+	drawArrow(pi, pj, r*0.75);
+
+	// sphere on base
+	drawSphere(pi, r);
+	// sphere at target
+	if(level == HighlightLevel::HOVERED || level == HighlightLevel::SELECTED) {
+		drawSphere(pj, r);
+		
+	}
+
 }

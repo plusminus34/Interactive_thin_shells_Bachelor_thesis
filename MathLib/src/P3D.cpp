@@ -46,8 +46,8 @@ bool P3D::operator != (const P3D& p) const {
 }
 
 bool P3D::operator < (const P3D& p) const {
-    return (this->at(0) < p.at(0) - EPSILON) || (this->at(0) < p.at(0) + EPSILON && this->at(1) < p.at(1) - EPSILON)
-        || (this->at(0) < p.at(0) + EPSILON && this->at(1) < p.at(1) + EPSILON && this->at(2) < p.at(2) - EPSILON);
+	return (this->at(0) < p.at(0) - EPSILON) || (this->at(0) < p.at(0) + EPSILON && this->at(1) < p.at(1) - EPSILON)
+		|| (this->at(0) < p.at(0) + EPSILON && this->at(1) < p.at(1) + EPSILON && this->at(2) < p.at(2) - EPSILON);
 }
 
 double P3D::at(int i) const {
@@ -60,6 +60,11 @@ double& P3D::at(int i) {
 
 //return *this + v
 P3D P3D::operator+(const Vector3d &v) const {
+	return P3D(Vector3d::operator+(v));
+}
+
+//return *this + v
+P3D P3D::operator+(const V3D &v) const {
 	return P3D(Vector3d::operator+(v));
 }
 
@@ -109,7 +114,7 @@ P3D P3D::operator-() const {
 }
 
 // return the vector between the two points
-V3D P3D::operator-(const P3D &p) const{
+V3D P3D::operator-(const P3D &p) const {
 	return V3D(Vector3d::operator-(p));
 }
 
@@ -146,7 +151,7 @@ void P3D::boundComponentAlong(const V3D& other, double min, double max) {
 }
 
 // makes it all zero
-void P3D::zero(){
+void P3D::zero() {
 	at(0) = at(1) = at(2) = 0;
 }
 

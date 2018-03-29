@@ -10,6 +10,8 @@
 #include "GLContentManager.h"
 #include "GlobalMouseState.h"
 
+#include "ScreenRecorder.h"
+
 #include "Canvas3D.h"
 
 #pragma warning( disable : 4005)
@@ -29,6 +31,9 @@ public:
 
 	bool appIsRunning = false;
 	bool waitForFrameRate = true;
+	
+	ScreenRecorder * screenRecorder = NULL;
+	
 
     nanogui::Screen *menuScreen = nullptr;
 	nanogui::FormHelper *mainMenu = nullptr;
@@ -36,7 +41,7 @@ public:
 
 	void setupMainMenu();
 
-protected:
+public:
 	//keep a timer here to see how long it's been since the last redraw
 	Timer fpsTimer;
 	//keep a timer for measuring app processing time
@@ -46,7 +51,6 @@ protected:
 
 	//this is the desired frame rate, specified in FPS
 	double desiredFrameRate = 30;
-	double animationSpeedupFactor = 1.0;
 
 	// Sets up various settings for OpenGL
 	void setupOpenGL();

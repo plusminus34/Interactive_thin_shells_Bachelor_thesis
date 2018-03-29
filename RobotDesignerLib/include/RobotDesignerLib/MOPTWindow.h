@@ -5,17 +5,23 @@
 #include <GUILib/GLTrackingCamera.h>
 #include <RobotDesignerLib/LocomotionEngineManager.h>
 #include <GUILib/TranslateWidget.h>
+#include <GUILib/CompositeWidget.h>
 #include <memory>
 
 struct MOPTParams {
 	double phase = 0;
 
-	int gaitCycle = 0;
+	bool drawRobotMesh = false;
+	bool drawSkeleton = true;
+	bool drawAxesOfRotation = false;
+	bool drawWheels = true;
+	bool drawContactForces = false;
+	bool drawSupportPolygon = false;
+	bool drawEndEffectorTrajectories = true;
+	bool drawCOMTrajectory = true;
+	bool drawOrientation = false;
 
-	bool drawRobotPose = false;
-	bool drawPlanDetails = true;
-	bool drawContactForces = true;
-	bool drawOrientation = true;
+	int gaitCycle = 0;
 
 	double swingFootHeight = 0.02;
 	double desTravelDistX = 0;
@@ -47,11 +53,12 @@ struct MOPTParams {
 	double externalForceZ = 0;
 };
 
+class RobotDesignerApp;
 
 class MOPTWindow : public GLWindow3D {
 public:
 	bool initialized = false;
-	GLApplication* glApp;
+	RobotDesignerApp* theApp;
 
 	int nTimeSteps = 12;
 	double globalMOPTRegularizer = 0.01;
@@ -67,6 +74,7 @@ public:
 
 	FootFallPattern footFallPattern;
 	FootFallPatternViewer* ffpViewer = nullptr;
+	bool showFFPViewer = true;
 	LocomotionEngineManager* locomotionManager = nullptr;
 
 	enum OPT_OPTIONS {
@@ -83,9 +91,9 @@ public:
 	bool periodicMotion = true;
 
 	std::list<shared_ptr<TranslateWidget>> EEwidgets;
-	std::list<shared_ptr<TranslateWidget>> COMWidgets;
+	std::list<shared_ptr<CompositeWidget>> COMWidgets;
 public:
-	MOPTWindow(int x, int y, int w, int h, GLApplication* glApp);
+	MOPTWindow(int x, int y, int w, int h, RobotDesignerApp* glApp);
 	~MOPTWindow();
 
 	void clear();
@@ -124,7 +132,7 @@ public:
 
 	virtual void setViewportParameters(int posX, int posY, int sizeX, int sizeY);
 	virtual void drawGround() {
-		drawTexturedGround(GLContentManager::getTexture("../data/textures/grid.bmp"));
+		drawTexturedGround(GLContentManager::getTexture("../data/textures/lightGray.bmp"));
 	}
 private:
 
@@ -132,5 +140,5 @@ private:
 	nanogui::Window* velocityProfileWindow = nullptr;
 	int endEffectorInd = -1;
 	map<shared_ptr<TranslateWidget>, shared_ptr<EndEffectorPositionObjective>> EEwidget2constraint;
-	map<shared_ptr<TranslateWidget>, shared_ptr<COMPositionObjective>> COMwidget2constraint;
+	map<shared_ptr<CompositeWidget>, shared_ptr<BodyFrameObjective>> COMwidget2constraint;
 };

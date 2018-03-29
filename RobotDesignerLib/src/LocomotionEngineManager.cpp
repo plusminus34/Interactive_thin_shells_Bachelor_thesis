@@ -18,11 +18,6 @@ LocomotionEngineManager::~LocomotionEngineManager(void) {
 	delete constrainedObjectiveFunction;
 }
 
-void LocomotionEngineManager::drawMotionPlan(double f, int animationCycle, bool drawRobot, bool drawSkeleton, bool drawPlanDetails, bool drawContactForces, bool drawOrientation){
-	// motionPlan->syncMotionPlanWithFootFallPattern(*footFallPattern);
-	motionPlan->drawMotionPlan(f, animationCycle, drawRobot, drawSkeleton, drawPlanDetails, drawContactForces, drawOrientation);
-}
-
 double LocomotionEngineManager::optimizeMoptionPlan(int maxIterations) {
 	double val = 0;
 	dVector params;
@@ -76,8 +71,10 @@ double LocomotionEngineManager::runMOPTStep() {
 
 	double energyVal = optimizeMoptionPlan();
 	writeParamsToFile = printDebugInfo;
-	if(writeParamsToFile)
+	if (writeParamsToFile) {
 		motionPlan->writeParamsToFile("..//out//MPParams.p");
+		motionPlan->writeRobotMotionTrajectoriesToFile("..//out//robotMotion.traj");
+	}
 
 	if (printDebugInfo)
 		Logger::consolePrint("total time elapsed: %lfs\n", timer.timeEllapsed());

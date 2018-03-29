@@ -34,7 +34,12 @@ RBSimApp::RBSimApp(bool maximizeWindows)
 
     drawCDPs = true;
 
-    loadFile("../data/rbs/wheely.rbs");
+//    loadFile("../data/rbs/yumi/yumi.rbs");
+    //loadFile("../data/rbs/yumi/yumi_TEMP.rbs");
+
+    //loadFile("../data/rbs/wheely.rbs");
+    loadFile("../data/rbs/bip/bip.rbs");
+
 //    loadFile("../data/robotsAndMotionPlans/crab/robot.rbs");
 
 //    loadFile("../data/robotsAndMotionPlans/starlETH/robot.rbs");
@@ -140,9 +145,7 @@ void RBSimApp::process() {
 	double maxRunningTime = 1.0 / desiredFrameRate;
 
 	//if we still have time during this frame, or if we need to finish the physics step, do this until the simulation time reaches the desired value
-	while (simulationTime / maxRunningTime < animationSpeedupFactor)
-	{
-
+	while (simulationTime < maxRunningTime){
 		simulationTime += simTimeStep;
 		rbEngine->step(simTimeStep);
 	}

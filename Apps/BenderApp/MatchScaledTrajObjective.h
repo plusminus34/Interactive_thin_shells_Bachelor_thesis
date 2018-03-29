@@ -38,7 +38,7 @@ public:
 
 	void prepareDtTargetDxNode(dVector const & x);
 
-	void draw(dVector const & x);
+	void draw(dVector const & x, HighlightLevel level = HighlightLevel::NONE);
 
 };
 

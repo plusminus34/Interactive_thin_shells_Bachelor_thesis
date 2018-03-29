@@ -4,14 +4,15 @@
 
 class V3D;
 /**
- * Point in 3d.
- */
+* Point in 3d.
+*/
+
 class P3D : public Vector3d {
 public:
 
-/**
+	/**
 	Contructors and destructor
-*/
+	*/
 	P3D();
 
 	explicit P3D(double val);
@@ -28,15 +29,15 @@ public:
 
 	~P3D();
 
-/**
+	/**
 	operators
-*/
+	*/
 
 	bool operator == (const P3D& p) const;
 
 	bool operator != (const P3D& p) const;
-    
-    bool operator < (const P3D& p) const;
+
+	bool operator < (const P3D& p) const;
 
 	double at(int i) const;
 
@@ -45,8 +46,10 @@ public:
 	//return *this + v
 	P3D operator + (const Vector3d &v) const;
 
+	P3D operator + (const V3D &v) const;
+
 	//return *this - p
-    V3D operator - (const P3D &p) const;
+	V3D operator - (const P3D &p) const;
 
 	//return *this - p
 	P3D operator - (const V3D &p) const;
@@ -75,9 +78,9 @@ public:
 	// return - *this
 	P3D operator - () const;
 
-/**
+	/**
 	useful methods
-*/
+	*/
 	double getComponentAlong(const V3D& other);
 
 	double getComponentAlong(const V3D& other) const;
@@ -96,5 +99,3 @@ public:
 
 // compute surface area of a triangle
 double computeTriangleSurfaceArea(P3D & p0, P3D & p1, P3D & p2);
-
-

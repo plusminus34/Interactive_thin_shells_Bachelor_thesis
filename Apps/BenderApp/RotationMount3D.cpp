@@ -121,32 +121,44 @@ std::cout << "abc = " << a << " " << b << " " << c << std::endl;
 
 */
 
-P3D RotationMount3D::transformation(P3D const & x0, std::vector<double> const & parameters)
+RotationMount3D::RotationMount3D(ParameterSet * parameters) 
+	: Mount(parameters) 
 {
-	Matrix3x3 T_rot = get_T_rot(parameters[0], parameters[1], parameters[2]);
-	V3D shift(parameters[3], parameters[4], parameters[5]);
+	if(! dynamic_cast<EulerRotationParameters *>(parameters)) {
+		std::cerr << "Error:" << __FILE__ << ":" << __LINE__ << std::endl;
+		exit(3);
+	}
+}
+
+P3D RotationMount3D::transformation(P3D const & x0, ParameterSet * parameters_in)
+{
+	EulerRotationParameters * pars = static_cast<EulerRotationParameters * >(parameters_in);
+	Matrix3x3 T_rot = get_T_rot(pars->alpha, pars->beta, pars->gamma);
+	V3D shift(pars->shift);
 
 	//P3D x;
 	//x = static_cast<V3D>(mat_times_vec(T_rot, static_cast<V3D>(x0)) + shift);
-	V3D x = T_rot * x0 + shift;
+	V3D x = static_cast<V3D>(T_rot * x0 + shift);
 
 	return(static_cast<P3D>(x));
 }
 
 
-void RotationMount3D::dxDpar(P3D const & x0, std::vector<double> const & parameters, std::vector<V3D> & grad)
+void RotationMount3D::dxDpar(P3D const & x0, ParameterSet * parameters_in, std::vector<V3D> & grad)
 {
-	int n_par = parameters.size();
+	EulerRotationParameters * pars = static_cast<EulerRotationParameters * >(parameters_in);
+
+	int n_par = pars->getNPar();
 	grad.resize(n_par);
 
-	Matrix3x3 dTda = get_dTda(parameters[0], parameters[1], parameters[2]);
-	Matrix3x3 dTdb = get_dTdb(parameters[0], parameters[1], parameters[2]);
-	Matrix3x3 dTdc = get_dTdc(parameters[0], parameters[1], parameters[2]);
+	Matrix3x3 dTda = get_dTda(pars->alpha, pars->beta, pars->gamma);
+	Matrix3x3 dTdb = get_dTdb(pars->alpha, pars->beta, pars->gamma);
+	Matrix3x3 dTdc = get_dTdc(pars->alpha, pars->beta, pars->gamma);
 
 	// dx/dalpha
-	V3D dxda = dTda * static_cast<V3D>(x0);
-	V3D dxdb = dTdb * static_cast<V3D>(x0);
-	V3D dxdc = dTdc * static_cast<V3D>(x0);
+	V3D dxda = static_cast<V3D>(dTda * static_cast<V3D>(x0));
+	V3D dxdb = static_cast<V3D>(dTdb * static_cast<V3D>(x0));
+	V3D dxdc = static_cast<V3D>(dTdc * static_cast<V3D>(x0));
 	
 	grad[0] = dxda;
 	grad[1] = dxdb;
@@ -159,19 +171,19 @@ void RotationMount3D::dxDpar(P3D const & x0, std::vector<double> const & paramet
 
 void RotationMount3D::rotate(P3D const & origin, double alpha, double beta, double gamma)
 {
-	parameters[0] += alpha;
-	parameters[1] += beta;
-	parameters[2] += gamma;
+	EulerRotationParameters * pars = static_cast<EulerRotationParameters * >(parameters);
+
+	pars->alpha += alpha;
+	pars->beta += beta;
+	pars->gamma += gamma;
 
 	Matrix3x3 T_rot = get_T_rot(alpha, beta, gamma);
 
-	V3D shift_old(parameters[3], parameters[4], parameters[5]);
+	V3D shift_old(pars->shift);
 
-	V3D shift_new = T_rot * (shift_old - origin) + origin;
+	V3D shift_new = static_cast<V3D>(T_rot * (shift_old - origin) + origin);
 
-	parameters[3] = shift_new[0];
-	parameters[4] = shift_new[1];
-	parameters[5] = shift_new[2];
+	pars->shift = shift_new;
 
 }
 
@@ -186,11 +198,47 @@ void RotationMount3D::rotate(P3D const & origin, V3D const & axis, double phi)
 }
 */
 
+/*
 void RotationMount3D::shift(V3D const & delta)
 {
 	parameters[3] += delta[0];
 	parameters[4] += delta[1];
 	parameters[5] += delta[2];
+}
+*/
+
+void RotationMount3D::shift(V3D const & delta)
+{
+	EulerRotationParameters * pars = static_cast<EulerRotationParameters * >(parameters);
+	pars->shift += delta;
+}
+
+
+
+
+
+
+
+
+void EulerRotationParameters::writeToList(dVector & par, int & cursor_idx_io)
+{
+	par[cursor_idx_io++] = alpha;
+	par[cursor_idx_io++] = beta;
+	par[cursor_idx_io++] = gamma;
+	for(int i = 0; i < 3; ++i) {
+		par[cursor_idx_io++] = shift(i);
+	}
+}
+
+
+void EulerRotationParameters::setFromList(dVector const & par, int & cursor_idx_io)
+{
+	alpha = par[cursor_idx_io++];
+	beta = par[cursor_idx_io++];
+	gamma = par[cursor_idx_io++];
+	for(int i = 0; i < 3; ++i) {
+		shift(i) = par[cursor_idx_io++];
+	}
 }
 
 

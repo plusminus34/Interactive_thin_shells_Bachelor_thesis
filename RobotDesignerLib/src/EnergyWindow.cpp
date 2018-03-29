@@ -296,7 +296,7 @@ void EnergyWindow::saveData()
 		outputfile << energy.first << ",";
 	}
 	outputfile << endl;
-	for (int i = 0; i < (*energyHist.begin()).second.size(); i++)
+	for (uint i = 0; i < (*energyHist.begin()).second.size(); i++)
 	{
 		for (const auto& energy : energyHist)
 		{
@@ -306,7 +306,7 @@ void EnergyWindow::saveData()
 	}
 	outputfile.close();
 	outputfile.open("energyPerDesignIteration.txt");
-	for (int i = 0; i < TotalEnergyForDesignOptimization.size(); i++)
+	for (uint i = 0; i < TotalEnergyForDesignOptimization.size(); i++)
 		outputfile << TotalEnergyForDesignOptimization[i] << endl;
 	outputfile.close();
 }

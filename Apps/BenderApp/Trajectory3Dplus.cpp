@@ -1,7 +1,7 @@
 
 
 #include <GUILib/GLUtils.h>
-#include <FEMSimLib/Node.h>
+#include <LazyFEMSimLib/Node.h>
 
 #include "Trajectory3Dplus.h"
 
