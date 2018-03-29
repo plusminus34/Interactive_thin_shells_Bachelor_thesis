@@ -498,7 +498,11 @@ void GLApplication::drawFPS(double timeSinceLastUpdate, double percentageOfTimeS
 	glColor4d(0.75, 0.0, 0.0, 1.0);
 	int viewportWidth, viewportHeight;
 	getMainWindowWidthAndHeight(viewportWidth, viewportHeight);
-	glprint(viewportWidth - 400, viewportHeight-20, "FPS: %7.2lf (processing: %7.2lf %%)", oldFrameRate, 100 * oldPerformanceRate);
+	glPushAttrib(GL_COLOR); {
+		glColor4f(1., 1., 1., 1.);
+		// --
+		glprint(viewportWidth - 400, viewportHeight - 20, "FPS: %7.2lf (processing: %7.2lf %%)", oldFrameRate, 100 * oldPerformanceRate);
+	} glPopAttrib();
 	glPopMatrix();
 }
 
