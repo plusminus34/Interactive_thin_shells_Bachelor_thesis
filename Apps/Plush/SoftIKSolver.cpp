@@ -99,14 +99,14 @@ void SoftIKSolver::project() {
 }
 
 dVector SoftIKSolver::alphac_next(const dVector &alphac, const dVector &x) {
-	dVector dOdalphac = calculate_dOdalphac(alphac, x);
+	dRowVector dOdalphac = calculate_dOdalphac(alphac, x);
 	double gamma = calculate_gamma(alphac, dOdalphac);
-	return alphac - gamma * dOdalphac; 
+	return alphac - gamma * dOdalphac.transpose(); 
 }
 
-dVector SoftIKSolver::calculate_dOdalphac(const dVector &alphac, const dVector &x) {
-	dVector dQdalphac = calculate_dQdalphac(alphac, x); 
-	dVector dRdalphac = calculate_dRdalphac(alphac, x); 
+dRowVector SoftIKSolver::calculate_dOdalphac(const dVector &alphac, const dVector &x) {
+	dRowVector dQdalphac = calculate_dQdalphac(alphac, x); 
+	dRowVector dRdalphac = calculate_dRdalphac(alphac, x); 
 	return dQdalphac + dRdalphac;
 }
 
@@ -118,7 +118,7 @@ bool SoftIKSolver::check_gradient(const dVector &alphac, const dVector &x) {
 		return (Q_passes && R_passes);
 }
 
-double SoftIKSolver::calculate_gamma(const dVector &alphac, const dVector &dOdalphac) {
+double SoftIKSolver::calculate_gamma(const dVector &alphac, const dRowVector &dOdalphac) {
 	double gamma_0 = 1.;
 	int maxLineSearchIterations = 10;
 
@@ -126,7 +126,7 @@ double SoftIKSolver::calculate_gamma(const dVector &alphac, const dVector &dOdal
 	double O_0 = calculate_O(alphac_0); 
 	double gamma_k = gamma_0;
 	for (int j = 0; j < maxLineSearchIterations; j++) { 
-		dVector alphac_k = alphac_0 - gamma_k * dOdalphac; 
+		dVector alphac_k = alphac_0 - gamma_k * dOdalphac.transpose(); 
 		double O_k = calculate_O(alphac_k);
 
 		if (!isfinite(O_k)) {
@@ -171,7 +171,7 @@ double SoftIKSolver::calculate_Q_formal(const dVector &alphac) {
 
 double SoftIKSolver::calculate_Q_approx(const dVector &alphac) { 
 	dVector dalphac = alphac - alphac_curr;
-	dVector x_approx = x_curr + dxdalphac.transpose() * dalphac; 
+	dVector x_approx = x_curr + dxdalphac * dalphac; 
 	double Q_approx = calculate_Q_of_x(x_approx); 
 	return Q_approx;
 }
@@ -201,81 +201,62 @@ double SoftIKSolver::calculate_R(const dVector &alphac) {
 	return ret; 
 }
 
-dVector SoftIKSolver::calculate_dQdalphac(const dVector &alphac, const dVector &x) {
-	return calculate_dxdalphac(alphac, x) * calculate_dQdx(alphac, x);
+dRowVector SoftIKSolver::calculate_dQdalphac(const dVector &alphac, const dVector &x) {
+	return calculate_dQdx(alphac, x) * calculate_dxdalphac(alphac, x);
 }
  
-dVector SoftIKSolver::calculate_dQdx(const dVector &alphac, const dVector &x) { 
-	dVector dQdx; resize_zero(dQdx, D()*N());
+dRowVector SoftIKSolver::calculate_dQdx(const dVector &alphac, const dVector &x) { 
+	dRowVector dQdx; dQdx.setZero(DN());
 
 	if (SPEC_FREESTYLE) {
-		dQdx += Z().asDiagonal()*(x - mesh->x_prime);
+		dQdx += (x - mesh->x_prime)*Z().asDiagonal();
 	}
 
 	if (SPEC_COM) {
 		V3D DeltaCOM_ = V3D(COMp, mesh->get_COM(x));
-		dVector DeltaCOM; resize_zero(DeltaCOM, D());
-		for (int i = 0; i < D(); ++i) { DeltaCOM[i] = DeltaCOM_[i]; }
+		dRowVector dQdCOM; dQdCOM.setZero(D()); // dRowVector dQdCOM = DeltaCOM;
+		for (int i = 0; i < D(); ++i) { dQdCOM[i] = DeltaCOM_[i]; }
 		// --
-		dVector dQdCOM = DeltaCOM; 
-		dQdx += mesh->get_dCOMdx().transpose() * dQdCOM;
+		dQdx += dQdCOM * mesh->get_dCOMdx();
 	}
 
 	return dQdx;
 }
 
-MatrixNxM SoftIKSolver::calculate_dxdalphac(const dVector &alphac, const dVector &x) {
-	MatrixNxM dxdtau; // H^{-1} A
+SparseMatrix SoftIKSolver::calculate_dxdalphac(const dVector &alphac, const dVector &x) {
+	SparseMatrix dxdtau; // H^{-1} A
 	{
-		// X H = A_T
-		// H_T X_T = A
-		SparseMatrix A_s = calculate_A(x);
-		SparseMatrix H_T_s = calculate_H(x, alphac).transpose();
-		MatrixNxM X_T;
-		mat_resize_zero(X_T, H_T_s.cols(), A_s.cols());
+		SparseMatrix A = calculate_A(x);
+		SparseMatrix H = calculate_H(x, alphac);
 
-		// Decompose LHS matrix;
-		Eigen::SimplicialLDLT<SparseMatrix> solver;
-		solver.compute(H_T_s);
-		if (solver.info() != Eigen::Success) {
-			error("Eigen::SimplicialLDLT decomposition failed.");
-		}
-
-		// Solve by column.
-		dVector x_j, a_j;
-		for (int j = 0; j < A_s.cols(); ++j) {
-			a_j = A_s.col(j);
-			x_j = solver.solve(a_j);
-			if (solver.info() != Eigen::Success) {
-				error("Eigen::SimplicialLDLT solve failed.");
-			}
-			X_T.col(j) = x_j;
-		}
-		dxdtau = X_T.transpose();
+		Eigen::SimplicialLDLT<SparseMatrix> ldlt;
+		ldlt.compute(H); // TODO: Can split and then one half you only need to do when sparsity structure changes.
+		if (ldlt.info() != Eigen::Success) { error("Eigen::SimplicialLDLT decomposition failed."); } 
+		dxdtau = ldlt.solve(A);
+		if (ldlt.info() != Eigen::Success) { error("Eigen::SimplicialLDLT solve failed."); }
 	}
 
-	dVector dtaudGamma_diag;
+	dVector dtaudalphac_diag; // dVector dtaudGamma_diag;
 	{
-		resize_zero(dtaudGamma_diag, T());
+		resize_zero(dtaudalphac_diag, T());
 		for (int j = 0; j < T(); ++j) {
 			auto &tendon = mesh->tendons[j];
 			auto *E_j = tendon->tendon_energy_model();
 			double Gamma_j = tendon->get_Gamma(x, alphac);
-			dtaudGamma_diag[j] = E_j->computeSecondDerivative(Gamma_j);
+			dtaudalphac_diag[j] = E_j->computeSecondDerivative(Gamma_j);
 		}
 	}
  
-	dtaudalphac  = dtaudGamma_diag.asDiagonal(); // NOTE: dGammadalphac = I
-	dxdalphac    = dtaudalphac * dxdtau;
+	dxdalphac = dxdtau * dtaudalphac_diag.asDiagonal(); // NOTE: Store for use in LINEAR_APPROX
 
 	return dxdalphac;
 }
 
-dVector SoftIKSolver::calculate_dRdalphac(const dVector &alphac, const dVector &x) { 
-	dVector dRdalphac; resize_zero(dRdalphac, T());
+dRowVector SoftIKSolver::calculate_dRdalphac(const dVector &alphac, const dVector &x) { 
+	dRowVector dRdalphac; resize_zero(dRdalphac, T());
 
 	{
-		dVector dalphacBarrierdalphac; resize_zero(dalphacBarrierdalphac, T());
+		dRowVector dalphacBarrierdalphac; resize_zero(dalphacBarrierdalphac, T());
 		for (int i = 0; i < T(); ++i) {
 			dalphacBarrierdalphac[i] += alphac_barrierFuncs[i]->computeDerivative(alphac[i]);
 		}
@@ -283,7 +264,7 @@ dVector SoftIKSolver::calculate_dRdalphac(const dVector &alphac, const dVector &
 	}
 
 	if (HONEY_alphac) {
-		dVector dalphacHoneydalphac; resize_zero(dalphacHoneydalphac, T());
+		dRowVector dalphacHoneydalphac; resize_zero(dalphacHoneydalphac, T());
 		{
 			for (int i = 0; i < T(); ++i) {
 				dalphacHoneydalphac[i] += alphac_honeyFunc->computeDerivative(alphac[i] - alphac_curr[i]);
@@ -293,7 +274,7 @@ dVector SoftIKSolver::calculate_dRdalphac(const dVector &alphac, const dVector &
 	}
 
 	if (REGULARIZE_alphac) { 
-		dVector dalphacRegdalphac; resize_zero(dalphacRegdalphac, T());
+		dRowVector dalphacRegdalphac; resize_zero(dalphacRegdalphac, T());
 		{
 			for (int i = 0; i < T(); ++i) {
 				dalphacRegdalphac[i] += alphac_regFunc->computeDerivative(alphac[i]);
@@ -460,5 +441,6 @@ void SoftIKSolver::construct_alphac_barrierFuncs() {
 
 int SoftIKSolver::D() { return mesh->D(); } 
 int SoftIKSolver::N() { return mesh->N(); } 
+int SoftIKSolver::DN() { return D()*N(); } 
 int SoftIKSolver::T() { return mesh->tendons.size(); }
  

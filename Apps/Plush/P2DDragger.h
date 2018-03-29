@@ -21,7 +21,6 @@ public:
 	virtual bool mouse_button_(int button, int action, int mods, double xPos, double yPos);
 
 public:
-	const double POINT_THRESH = .05;
-	const double SEGMENT_THRESH = .05;
+	const double POINT_THRESH = .1;
 
 };

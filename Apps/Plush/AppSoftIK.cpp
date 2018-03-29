@@ -13,9 +13,20 @@ AppSoftIK::AppSoftIK() {
 		"3ball",    // 1
 		"tri",      // 2
 		"swingup",  // 3
-		"luca"   // 4
+		"luca",     // 4
+		"sugar"     // 5
 	};
 	string TEST_CASE = TEST_CASES[4];
+
+	// BEG: Convenience block
+	SPOOF_2D_CAMERA = true;
+	// --
+	if (TEST_CASE == "luca") {
+		DEFAULT_CAM_DISTANCE____________ = -13.;
+		DEFAULT_CAM_TARGET______________ = P3D(-.15, .85);
+		resetCamera();
+	}
+	// END
 
 	// -- // mesh
 	mesh = new CSTSimulationMesh2D();
@@ -45,6 +56,10 @@ AppSoftIK::AppSoftIK() {
 		mesh->timeStep = .1;
 	} else if (TEST_CASE == "luca") {
 		// mesh->add_contacts_to_boundary_nodes();
+		// mesh->nudge_mesh_up();
+		mesh->pinToFloor();
+		mesh->timeStep = .01; 
+	} else if (TEST_CASE == "sugar") {
 		mesh->pinToFloor();
 		mesh->timeStep = .01; 
 	}
@@ -76,6 +91,9 @@ AppSoftIK::AppSoftIK() {
 	} else if (TEST_CASE == "luca") {
 		ik->c_alphac_ = 1.;
 		ik->h_alphac_ = 100.; 
+	} else if (TEST_CASE == "sugar") {
+		ik->c_alphac_ = 1.;
+		ik->h_alphac_ = 0.; 
 	}
  
 	// -- // inspector
@@ -108,7 +126,7 @@ void AppSoftIK::processToggles() {
 void AppSoftIK::drawScene() {
 	DRAW_HANDLERS = false;
 	PlushApplication::drawScene(); 
-	draw_floor2d();
+	// draw_floor2d();
 	mesh->draw(mesh->x, ik->alphac_curr);
 
 	// glMasterPush(); {
