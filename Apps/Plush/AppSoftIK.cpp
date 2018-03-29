@@ -111,35 +111,14 @@ void AppSoftIK::drawScene() {
 	draw_floor2d();
 	mesh->draw(mesh->x, ik->alphac_curr);
 
-	glMasterPush(); {
-		glTranslated(2.5, 0., 0.);
-		dVector ZERO_; ZERO_.setZero(ik->T());
-		mesh->draw(mesh->X, ZERO_); 
-	} glMasterPop();
+	// glMasterPush(); {
+	// 	glTranslated(2.5, 0., 0.);
+	// 	dVector ZERO_; ZERO_.setZero(ik->T());
+	// 	mesh->draw(mesh->X, ZERO_); 
+	// } glMasterPop();
 
 	ik->draw(); 
-	// {
-	// 	for (auto &bs : mesh->boundary_simplices) {
-	// 		set_color(ORCHID);
-	// 		glLineWidth(4);
-	// 		glBegin(GL_LINE_STRIP); {
-	// 			for (auto &node : bs->nodes) {
-	// 				glP3D(node->getCoordinates(ik->x_curr));
-	// 			}
-	// 		} glEnd();
-	// 		glPointSize(15);
-	// 		// ik COM
-	// 		glBegin(GL_POINTS); {
-	// 			glP3D(mesh->get_COM(ik->x_curr));
-	// 		} glEnd();
-	// 		// ref COM
-	// 		set_color(GOLDCLOVER);
-	// 		glBegin(GL_POINTS); {
-	// 			dVector SLACK_; resize_fill(SLACK_, ik->T(), -1000.);
-	// 			glP3D(mesh->get_COM(ik->x_of_alphac(SLACK_)));
-	// 		} glEnd();
-	// 	}
-	// }
+
 	PlushApplication::recordVideo();
 }
 
