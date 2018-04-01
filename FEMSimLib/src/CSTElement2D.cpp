@@ -61,7 +61,7 @@ void CSTElement2D::addEnergyGradientTo(const dVector& x, const dVector& X, dVect
 	computeGradientComponents(x, X);
 	for (int i = 0;i<3;i++)
 		for (int j = 0;j<2;j++)
-		grad[n[i]->dataStartIndex + j] += dEdx[i][j];
+		grad[n[i]->dataStartIndex + j] += dEdx[i][j] * topOptInterpolationDensity;
 }
 
 void CSTElement2D::addEnergyHessianTo(const dVector& x, const dVector& X, std::vector<MTriplet>& hesEntries) {
@@ -69,7 +69,7 @@ void CSTElement2D::addEnergyHessianTo(const dVector& x, const dVector& X, std::v
     computeHessianComponents(x, X);
     for (int i = 0;i<3;i++)
         for (int j = 0;j < 3;j++)
-            addSparseMatrixDenseBlockToTriplet(hesEntries, n[i]->dataStartIndex, n[j]->dataStartIndex, ddEdxdx[i][j], true);
+            addSparseMatrixDenseBlockToTriplet(hesEntries, n[i]->dataStartIndex, n[j]->dataStartIndex, ddEdxdx[i][j] * topOptInterpolationDensity, true);
 }
 
 void CSTElement2D::draw(const dVector& x) {
@@ -83,7 +83,7 @@ void CSTElement2D::draw(const dVector& x) {
 		P3D p = n[idx]->getCoordinates(x);
 		double color = pow(n[idx]->avgDefEnergyForDrawing, 0.75);
 		color = mapTo01Range(color, 0, 0.05);
-		glColor4d(color, 0, 1 - color, densityForDrawing);
+		glColor4d(color, 0, 1 - color, topOptInterpolationDensity);
 		glVertex3d(p[0], p[1], p[2]);
 	}
 	glEnd();
@@ -165,7 +165,7 @@ double CSTElement2D::getEnergy(const dVector& x, const dVector& X){
 		energyDensity += shearModulus/2 * (normF2-2) - shearModulus * log(detF) + bulkModulus/2 * log(detF) * log(detF);
 	}
 
-	return energyDensity * restShapeArea;
+	return energyDensity * restShapeArea * topOptInterpolationDensity;
 
 }
 

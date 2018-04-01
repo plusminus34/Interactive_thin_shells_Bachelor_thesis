@@ -33,7 +33,7 @@ private:
 	DynamicArray<V3D> externalLoads;
 	dVector densityParams;
 
-	double targetMassRatio = 100;
+	double targetMassRatio = 50;
 	double initialMass = 0;
 	bool optimizeTopology = false;
 

@@ -13,6 +13,7 @@ class SimulationMesh{
 	friend class FEMEnergyFunction;
 	friend class TopOptApp;
 	friend class TopOptConstraints;
+	friend class TopOptEnergyFunction;
 	friend class Node;
 	friend class FEMSimApp;
     friend class FEMSim3DApp;
@@ -56,6 +57,8 @@ public:
 	void solve_dynamics(double dt);
 	void solve_statics();
 
+	double targetSolverResidual = 0;
+
 	void addGravityForces(const V3D & g);
 
 	//projects positions of nodes to lie on the plane, rather than under it, and kills normal component of their velocities
@@ -81,7 +84,7 @@ public:
 	}
 
 	double getCurrentDeformationEnergy() {
-		double totalEnergy;
+		double totalEnergy = 0;
 		for (uint i = 0; i<elements.size(); i++)
 			totalEnergy += elements[i]->getEnergy(x, X);
 

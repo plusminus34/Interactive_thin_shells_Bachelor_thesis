@@ -2,6 +2,12 @@
 
 TopOptConstraints::TopOptConstraints(SimulationMesh* simMesh){
 	this->simMesh = simMesh;
+	resize(ineqConstraintVals, 1);
+	resize(d, 1);
+	resize(f, 1);
+
+	d[0] = -10000;
+	f[0] = 10000;
 }
 
 //and bound constraints for the parameters min <= p <= max
@@ -36,8 +42,6 @@ int TopOptConstraints::getInequalityConstraintCount() {
 
 const dVector& TopOptConstraints::getInequalityConstraintValues(const dVector& p) {
 	resize(ineqConstraintVals, 1);
-	resize(d, 1);
-	resize(f, 1);
 
 	double currentMass = 0;
 	//we want the mass (e.g. density params * per element mass) to be bounded...
@@ -47,8 +51,7 @@ const dVector& TopOptConstraints::getInequalityConstraintValues(const dVector& p
 	}
 
 	ineqConstraintVals[0] = currentMass;
-	d[0] = -10000;
-	f[0] = totalMassUpperBound;
+
 	
 	return ineqConstraintVals;
 }
@@ -65,10 +68,21 @@ const dVector& TopOptConstraints::getEqualityConstraintValues(const dVector& p){
 /*!
 *  evaluates the constraint jacobian
 */
-/*
 void TopOptConstraints::addEqualityConstraintsJacobianEntriesTo(DynamicArray<MTriplet>& jacobianEntries, const dVector& p) {
-	//first decide how many constraints there are
-	int nEqConstraints = getEqualityConstraintCount();
 
 }
+
+
+/*!
+*  evaluates the constraint jacobian
 */
+void TopOptConstraints::addInequalityConstraintsJacobianEntriesTo(DynamicArray<MTriplet>& jacobianEntries, const dVector& p) {
+//	FunctionConstraints::addInequalityConstraintsJacobianEntriesTo(jacobianEntries, p);
+//	return;
+
+	for (uint i = 0; i < simMesh->elements.size(); i++) {
+		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i]))
+			jacobianEntries.push_back(MTriplet(0, i, e->getMass()));
+	}
+}
+

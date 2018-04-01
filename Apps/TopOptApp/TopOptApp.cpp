@@ -8,13 +8,13 @@
 #include <GUILib/GLUtils.h>
 #include <GUILib/GLTrackingCamera.h>
 #include <OptimizationLib\SQPFunctionMinimizer.h>
+#include <OptimizationLib\GradientDescentFunctionMinimizer.h>
 
 //sag-free simulations as an application of shape optimization
 //adjoint method for non-linear top-opt
 
 //Objectives:
 //- compliance/stored energy
-//- amount of material used
 //- smoothness of solution (in case dithering artifacts come up)
 //- L0 regularizer to force solution to choose a side...
 
@@ -25,7 +25,7 @@
 TopOptApp::TopOptApp() {
 	setWindowTitle("Test FEM Sim Application...");
 
-	int nRows = 20;
+	int nRows = 50;
 	int nCols = 20;
 	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, nRows, nCols);
 
@@ -47,6 +47,8 @@ TopOptApp::TopOptApp() {
 
 	externalLoads.resize(simMesh->nodes.size());
 	resize(densityParams, simMesh->elements.size()); densityParams.setOnes();
+
+	externalLoads[nRows * (nCols -1)] = V3D(1,-1,0);
 
 	showGroundPlane = false;
 
@@ -104,7 +106,7 @@ TopOptApp::TopOptApp() {
 }
 
 void TopOptApp::applyDensityParametersToSimMesh() {
-	constraints->totalMassUpperBound = initialMass * targetMassRatio / 100.0;
+	constraints->setTotalMassUpperBound(initialMass * targetMassRatio / 100.0);
 
 	//make sure we're on the constraint manifold
 	double currentMass = 0;
@@ -113,7 +115,9 @@ void TopOptApp::applyDensityParametersToSimMesh() {
 			currentMass += e->getMass() * densityParams[i];
 	}
 
-	Logger::consolePrint("total mass: %lf (upper bound: %lf)\n", currentMass, initialMass * targetMassRatio / 100.0);
+//	double upperBound = initialMass * targetMassRatio / 100.0;
+//	double defEnergy = simMesh->getCurrentDeformationEnergy();
+//	Logger::consolePrint("total mass: %lf (upper bound: %lf), total deformation energy: %lf\n", currentMass, upperBound, defEnergy);
 
 	if (currentMass > initialMass * targetMassRatio / 100.0) {
 		double ratio = initialMass * targetMassRatio / 100.0 / currentMass;
@@ -123,13 +127,8 @@ void TopOptApp::applyDensityParametersToSimMesh() {
 		}
 	}
 
-	for (uint i = 0; i < simMesh->elements.size(); i++) {
-		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
-			e->shearModulus = pow(densityParams[i], 1) * (shearModulus);
-			e->bulkModulus = pow(densityParams[i], 1) * (bulkModulus);
-			e->densityForDrawing = densityParams[i];
-		}
-	}
+	energyFunction->applyDensityParametersToSimMesh(densityParams);
+	
 }
 
 
@@ -144,6 +143,7 @@ bool TopOptApp::onMouseMoveEvent(double xPos, double yPos) {
 		int elementID = simMesh->getSelectedElementID(lastClickedRay);
 		if (elementID >= 0) 
 			densityParams[elementID] = 0.001;
+//		Logger::consolePrint("element selected: %d\n", elementID);
 	}
 
 	if (GlobalMouseState::dragging == false && glfwGetKey(glfwWindow, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS) {
@@ -182,16 +182,12 @@ bool TopOptApp::onMouseMoveEvent(double xPos, double yPos) {
 		}else
 			selectedNodeID = simMesh->getSelectedNodeID(lastClickedRay);
 	}
-//	if (selectedNodeID != -1){
-//		Plane plane(camera->getCameraTarget(), V3D(camera->getCameraPosition(), camera->getCameraTarget()).unit());
-//		P3D targetPinPos; getRayFromScreenCoords(xPos, yPos).getDistanceToPlane(plane, &targetPinPos);
-//		simMesh->setPinnedNode(selectedNodeID, targetPinPos);
-//		return true;
-//	}
 	
 	if (GLApplication::onMouseMoveEvent(xPos, yPos) == true) return true;
 	return false;
 }
+
+print out intensity value when the mouse hovers over elements
 
 //triggered when mouse buttons are pressed
 bool TopOptApp::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
@@ -276,20 +272,55 @@ void TopOptApp::process() {
 	applyDensityParametersToSimMesh();
 
 	if (optimizeTopology) {
-		double val;
+//		constraints->testJacobiansWithFD(densityParams);
+
+		energyFunction->testGradientWithFD(densityParams);
+
+/*		for (double val = 0.001; val < 1; val += 0.001) {
+			densityParams[684] = densityParams[685] = val;
+			energyFunction->applyDensityParametersToSimMesh(densityParams);
+			simMesh->solve_statics();
+			Logger::consolePrint("%lf\t%lf\n", val, simMesh->getCurrentDeformationEnergy());
+		}
+		exit(0);
+*/
+		double val = 0;
+
 		SQPFunctionMinimizer minimizer(1);
 		minimizer.maxLineSearchIterations_ = 12;
 		minimizer.printOutput_ = energyFunction->printDebugInfo;
 		minimizer.minimize(constrainedObjectiveFunction, densityParams, val);
+
+/*
+		GradientDescentFunctionMinimizer minimizer(1);
+		minimizer.maxLineSearchIterations = 1; // 12;
+		minimizer.printOutput = energyFunction->printDebugInfo;
+		minimizer.minimize(energyFunction, densityParams, val);
+*/
+
+		energyFunction->applyDensityParametersToSimMesh(densityParams);
+
 	}
 
 	simMesh->solve_statics();
-	Logger::consolePrint("overall deformation energy: %lf", simMesh->getCurrentDeformationEnergy());
+
+	//print some stats...
+	double currentMass = 0;
+	for (uint i = 0; i < simMesh->elements.size(); i++) {
+		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i]))
+			currentMass += e->getMass() * densityParams[i];
+	}
+
+	double upperBound = initialMass * targetMassRatio / 100.0;
+	double defEnergy = simMesh->getCurrentDeformationEnergy();
+	Logger::consolePrint("total mass: %lf (upper bound: %lf), total deformation energy: %lf\n", currentMass, upperBound, defEnergy);
+
+//	Logger::consolePrint("overall deformation energy: %lf", simMesh->getCurrentDeformationEnergy());
 }
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
 void TopOptApp::drawScene() {
-	applyDensityParametersToSimMesh();
+//	applyDensityParametersToSimMesh();
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glColor3d(1,1,1);
@@ -318,10 +349,6 @@ void TopOptApp::drawScene() {
 		glEnd();
 	}
 
-#ifdef CONSTRAINED_DYNAMICS_DEMO
-	glColor3d(1, 1, 1);
-	drawCircle(0, 0, 1, 100);
-#endif
 }
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
