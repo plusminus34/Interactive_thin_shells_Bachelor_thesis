@@ -20,6 +20,9 @@ public:
 	P3D *origin    = new P3D(1., 0.);
 	P3D *top_right = new P3D(2., .5);
 	bool FILLED = false;
+	bool DRAW_LINES = true;
+	bool DRAW_POINTS = true;
+	bool THIN_LINES = false;
 
 public:
 	vector<P3D> point_rep_mod(const vector<double> &);

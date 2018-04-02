@@ -19,9 +19,10 @@ struct EndEffectorPositionObjective {
 	double phase;
 };
 
-struct COMPositionObjective {
+struct BodyFrameObjective {
 	int sampleNum;
 	P3D pos;
+	P3D orientation;
 	double phase;
 };
 
@@ -242,7 +243,7 @@ public:
 	double jointL0Delta = 1;
 
 	list < shared_ptr<EndEffectorPositionObjective> > EEPosObjectives;
-	list < shared_ptr<COMPositionObjective> > BodyPosObjectives;
+	list < shared_ptr<BodyFrameObjective> > BodyFrameObjectives;
 
 public:
 	bool optimizeCOMPositions;

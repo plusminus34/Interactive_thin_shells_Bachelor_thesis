@@ -10,6 +10,7 @@ static const P3D ORANGE      = P3D(1., .5, 0.);
 static const P3D WHITE       = P3D(1., 1., 1.);
 static const P3D BLACK       = P3D(0., 0., 0.);
 static const P3D GRAY        = P3D(.5, .5, .5);
+// http://www.colourlovers.com/palette/1718713/Monokai
 static const P3D CLAY        = P3D(39./255., 40./255., 34./255.);
 static const P3D ORCHID      = P3D(249./255., 38./255., 114./255.);
 static const P3D RATIONALITY = P3D(102./255., 217./255., 239./255.);

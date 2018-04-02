@@ -4,11 +4,11 @@
 #include <MathLib/Matrix.h>
 #include <RobotDesignerLib/LocomotionEngineMotionPlan.h>
 
-class MPO_COMPosObjective : public ObjectiveFunction {
+class MPO_BodyFrameObjective : public ObjectiveFunction {
 
 public:
-	MPO_COMPosObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
-	virtual ~MPO_COMPosObjective(void);
+	MPO_BodyFrameObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
+	virtual ~MPO_BodyFrameObjective(void);
 
 	virtual double computeValue(const dVector& p);
 

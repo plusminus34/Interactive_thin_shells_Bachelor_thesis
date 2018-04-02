@@ -124,10 +124,10 @@ void PlushApplication::recordVideo() {
 }
 
 void PlushApplication::resetCamera() {
-	((GLTrackingCamera *)camera)->rotAboutRightAxis = 0.;
-	((GLTrackingCamera *)camera)->rotAboutUpAxis    = 0.;
-	((GLTrackingCamera *)camera)->camDistance       = -3.;
-	((GLTrackingCamera *)camera)->camTarget         = P3D();
+	((GLTrackingCamera *)camera)->rotAboutRightAxis = DEFAULT_CAM_ROT_ABOUT_RIGHT_AXIS;
+	((GLTrackingCamera *)camera)->rotAboutUpAxis    = DEFAULT_CAM_ROT_ABOUT_UP_AXIS___;
+	((GLTrackingCamera *)camera)->camDistance       = DEFAULT_CAM_DISTANCE____________;
+	((GLTrackingCamera *)camera)->camTarget         = DEFAULT_CAM_TARGET______________;
 }
 
 void PlushApplication::printCamera() {
@@ -147,6 +147,10 @@ bool PlushApplication::onMouseButtonEvent(int button, int action, int mods, doub
 bool PlushApplication::onMouseMoveEvent(double xPos, double yPos) {
 	for (auto handler : handlers) { if (handler->mouse_move(xPos, yPos)) { return true; } } 
 	if (GLApplication::onMouseMoveEvent(xPos, yPos) == true) { return true; }
+	if (SPOOF_2D_CAMERA) { 
+		((GLTrackingCamera *)camera)->rotAboutRightAxis = 0.;
+		((GLTrackingCamera *)camera)->rotAboutUpAxis    = 0.; 
+	}
 	return false;
 }
 
@@ -166,6 +170,8 @@ bool PlushApplication::onCharacterPressedEvent(int key, int mods) {
 	if (key == 'c') {
 		resetCamera();
 		return true;
+	} else if (key == 'C') {
+		printCamera();
 	}
 	// -- //
 	if (GLApplication::onCharacterPressedEvent(key, mods)) { return true; } 

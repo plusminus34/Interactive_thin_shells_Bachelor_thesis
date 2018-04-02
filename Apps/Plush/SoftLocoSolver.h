@@ -3,15 +3,23 @@
 #include "SimulationMesh.h"
 #include "ZeroCubicQuadratic.h"
 #include "Tendon.h"
+#include "SoftLocoObjectiveFunction.h"
+#include <OptimizationLib/GradientDescentFunctionMinimizer.h>
+#include <OptimizationLib/BFGSFunctionMinimizer.h>
+#include "CubicHermiteSpline.h"
 
 class SimulationMesh;
 
 typedef vector<dVector> Traj;
 typedef vector<MatrixNxM> MTraj;
+typedef Eigen::RowVectorXd dRowVector;
 
 class SoftLocoSolver {
 
 	friend class SimulationMesh; 
+
+public:
+	SoftLocoObjectiveFunction *objectiveFunction;
 
 public:
 	P3D COMp_FORNOW = P3D();
@@ -47,10 +55,17 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 24; // HORIZON
+	const int K = 48; // 48; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
+
+public:
+	CubicHermiteSpline *god_spline;
+	const int Z = 8;
+	Traj yJ_curr;
+	const dVector knot_times = vecDouble2dVector(linspace(8, 0., 1.));
+
 
 public:
 	double     calculate_OJ(const Traj &u);
@@ -58,12 +73,6 @@ public:
 	double     calculate_RJ(const Traj &u);
 	double     calculate_R(const dVector &u);
 	double calculate_Q_of_x(const dVector &x, const P3D &COMp);
-
-	// double     calculate_O(const dVector &u);
-	// double     calculate_Q(const dVector &u);
-	// double calculate_Q_formal(const dVector &u);
-	// double calculate_Q_approx(const dVector &u);
-
 
 public:
 	dVector xm1_curr, vm1_curr; // TODO: rename xm1, vm
@@ -84,7 +93,7 @@ public:
  
 public:
 	void step();
-	int NUM_ITERS_PER_STEP = 5;
+	int NUM_ITERS_PER_STEP = 1;
 
 public:
 	void iterate();
@@ -92,28 +101,25 @@ public:
 	void projectJ(); 
 
 	Traj uJ_next(const Traj &uJ, const Traj &xJ);
-	double calculate_gammaJ(const Traj &uJ, const Traj &dOduJ);
+	double calculate_gammaJ(const Traj &uJ, const vector<dRowVector> &dOduJ);
 	Traj xJ_of_uJ(const Traj &uJ);
 
-	// dVector u_next(const dVector &u, const dVector &x); 
-	// double calculate_gamma(const dVector &u, const dVector &dOdu); 
-	// dVector x_of_u(const dVector &u);
-
 	// -- //
-	Traj calculate_dOduJ(const Traj &uJ, const Traj &xJ);
-	Traj calculate_dQduJ(const Traj &uJ, const Traj &xJ);
-	Traj calculate_dRduJ(const Traj &uJ);
 
-	dVector calculate_dOdu(const dVector &u, const dVector &x);
-	dVector calculate_dQdu(const dVector &u, const dVector &x);
-	dVector calculate_dQdx(const dVector &u, const dVector &x, const P3D &COMp);
-	MatrixNxM calculate_dxdu(const dVector &u, const dVector &x);
-	dVector calculate_dRdu(const dVector &u);
+	vector<dRowVector> calculate_dOduJ(const Traj &uJ, const Traj &xJ);
+	vector<dRowVector> calculate_dQduJ(const Traj &uJ, const Traj &xJ);
+	vector<dRowVector> calculate_dRduJ(const Traj &uJ);
+
+	dRowVector calculate_dQdx(const dVector &x, const P3D &COMp);
+	SparseMatrix calculate_dxdu(const dVector &u, const dVector &x, const dVector &x_ctc=dVector());
+	// SparseMatrix calculate_dudz(const dVector &u, const dVector &z);
+	vector<MatrixNxM> calculate_duJdyJ(const Traj &uJ, const Traj &yJ);
+	dRowVector calculate_dRdu(const dVector &u);
 
 	// -- //
 
 	SparseMatrix calculate_A(const dVector &x);
-	SparseMatrix calculate_H(const dVector &x, const dVector &u);
+	SparseMatrix calculate_H(const dVector &x, const dVector &u, const dVector &x_ctc=dVector());
 
 public: 
 	vector<ZeroCubicQuadratic *> u_barrierFuncs;
@@ -128,10 +134,14 @@ public:
 	Quadratic *u_subFunc = new Quadratic(&s_u_);
 
 public:
+	SparseMatrix solve_AX_EQUALS_B(const SparseMatrix &A, const SparseMatrix &B);
+
+public:
 	void Traj_equality_check(const Traj &, const Traj &);
+	void Traj_equality_check(const Traj &, const vector<dRowVector> &);
 	void MTraj_equality_check(const MTraj &, const MTraj &);
 	Traj unstack_Traj(const dVector &);
-
-
+	vector<dVector> zipunzip(const Traj &);
+ 
 };
-
+ 

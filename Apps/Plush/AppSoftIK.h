@@ -21,7 +21,7 @@ public:
 
 public:
 	bool SOLVE_IK = true;
-	bool SOLVE_DYNAMICS = true;
+	bool SOLVE_DYNAMICS = false;
 	double timeStep = .01;
 	bool INTEGRATE_FORWARD_IN_TIME = true;
 

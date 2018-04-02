@@ -21,7 +21,7 @@
 #include <RobotDesignerLib/MPO_FixedWheelObjective.h>
 #include <RobotDesignerLib/MPO_WheelTiltObjective.h>
 #include <RobotDesignerLib/MPO_EEPosObjective.h>
-#include <RobotDesignerLib/MPO_COMPosObjective.h>
+#include <RobotDesignerLib/MPO_BodyFrameObjective.h>
 
 //#define DEBUG_WARMSTART
 //#define CHECK_DERIVATIVES_AFTER_WARMSTART
@@ -447,7 +447,7 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	//functional objectives
 	ef->addObjectiveFunction(new MPO_COMTravelObjective(ef->theMotionPlan, "COM Travel objective", 50.0), "Objectives");
 	ef->addObjectiveFunction(new MPO_COMTurningObjective(ef->theMotionPlan, "COM turning objective (YAW)", 50.0), "Objectives");
-	ef->addObjectiveFunction(new MPO_COMPosObjective(ef->theMotionPlan, "EE position objective", 10000), "Objectives");
+	ef->addObjectiveFunction(new MPO_BodyFrameObjective(ef->theMotionPlan, "EE position objective", 10000), "Objectives");
 	ef->addObjectiveFunction(new MPO_EEPosObjective(ef->theMotionPlan, "COM position objective", 10000), "Objectives");
 
 	//smooth motion regularizers

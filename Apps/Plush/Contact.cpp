@@ -24,7 +24,7 @@ void Contact::draw(const dVector &x) {
 		glPointSize(9.);
 
 		if (ACTIVE) {
-			vector<P3D> tmp = { node->getCoordinates(x), targetPosition };
+			vector<P3D> tmp = { node->getCoordinates(x), prevPosition };
 
 			set_color(POINT_COLOR);
 			glBegin(GL_POINTS); { glvecP3Dz(tmp, Z); } glEnd();
@@ -58,27 +58,8 @@ P3D Contact::getPosition(const dVector &x) {
 }
  
 void Contact::update(const dVector &x) {
-	currentPosition = getPosition(x);
-	bool PENETRATING = (currentPosition.y() < 0);
-
-	ACTIVE = PENETRATING;
-	targetPosition = currentPosition;
-	targetPosition.y() = 0.;
-
-	/*
-	if (ACTIVE) {
-		if (!PENETRATING) {
-			ACTIVE = false;
-			targetPosition = P3D(0., 0., 0.);
-		} 
-	} else {
-		if (PENETRATING) {
-			ACTIVE = true;
-			targetPosition = currentPosition;
-			targetPosition.y() = 0.;
-		} 
-	} 
-	*/
+	prevPosition = getPosition(x);
+	ACTIVE = true; // (currentPosition.y() < 0);
 }
 
 int Contact::D() {
@@ -87,42 +68,43 @@ int Contact::D() {
 
 V3D Contact::get_Delta(const dVector &x) {
 	// NOTE: dDeltadx = 1
-	return node->getCoordinates(x) - targetPosition;
+	return getPosition(x) - prevPosition;
 }
 
 double Contact::b_(const double &y) {
-	double f_y = abs(ZCQ1->computeDerivative(y));
-	// double step = _SSb->g(-y +_eps_b); // ? (*)
-	// return f_y * step;
+	double f_y = -ZCQ1->computeDerivative(y);
+	if (f_y < 0) { error("[b_] ValueError"); }
 	return f_y;
 }
 
+double Contact::b_prime_(const double &y) {
+	return -ZCQ1->computeSecondDerivative(y);
+}
+
 double Contact::get_E(const dVector &x) {
-	auto &ds = get_Delta(x); 
 	
 	double E = 0.;
 
 	for (int i = 0; i < D(); ++i) {
 		if (i == 1) { continue; }
-		E += b()*QT->computeValue(ds[i]);
+		E += b()*QT->computeValue(get_Delta(x)[i]);
 	}
 
-	E += ZCQ1->computeValue(ds[1]);
+	E += ZCQ1->computeValue(getPosition(x)[1]); // FORNOW: NOTE: targetPosition[1] <- 0.
  
 	return E;
 }
 
 dVector Contact::get_dEdx(const dVector &x) {
-	auto &ds = get_Delta(x); 
 
 	dVector dEdx; resize_zero(dEdx, D());
 
 	for (int i = 0; i < D(); ++i) {
 		if (i == 1) { continue; }
-		dEdx[i] += b()*QT->computeDerivative(ds[i]);
+		dEdx[i] += b()*QT->computeDerivative(get_Delta(x)[i]);
 	}
 
-	dEdx[1] += ZCQ1->computeDerivative(ds[1]);
+	dEdx[1] += ZCQ1->computeDerivative(getPosition(x)[1]);
 
 	{
 		dVector f_ctc = -dEdx;
@@ -135,16 +117,15 @@ dVector Contact::get_dEdx(const dVector &x) {
 }
 
 MatrixNxM Contact::get_ddEdxdx(const dVector &x) {
-	auto &ds = get_Delta(x); 
 	
 	MatrixNxM ddEdxdx; mat_resize_zero(ddEdxdx, D(), D());
 
 	for (int i = 0; i < D(); ++i) {
 		if (i == 1) { continue; }
-		ddEdxdx(i, i) += b()*QT->computeSecondDerivative(ds[i]);
+		ddEdxdx(i, i) += b()*QT->computeSecondDerivative(get_Delta(x)[i]);
 	}
 
-	ddEdxdx(1, 1) += ZCQ1->computeSecondDerivative(ds[1]); // (*) 
+	ddEdxdx(1, 1) += ZCQ1->computeSecondDerivative(getPosition(x)[1]); // (*) 
 
 	return ddEdxdx; 
 }

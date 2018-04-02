@@ -24,7 +24,8 @@ void LowerSimplex::draw(const dVector &y) {
 		// --
 		if (D() == 1) {
 			glDisable(GL_CULL_FACE);
-			set_color(HENN1NK);
+			// set_color(HENN1NK);
+			set_color(WHITE);
 			glBegin(GL_LINE_STRIP); {
 				for (auto &node : nodes) {
 					glP3D(node->getCoordinates(y));

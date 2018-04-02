@@ -105,8 +105,9 @@ const auto helpers_error = [](const string &msg) {
 // math ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
- const auto dfrac = [](int num, int den) {
-	return double(num) / double(den);
+ const auto dfrac = [](int num, int den) -> double {
+	 if (den == 0) { return SGN(num)*INFINITY; }
+	 return double(num) / double(den);
 };
 
 // auto e_theta = [](double theta) {
@@ -115,6 +116,10 @@ const auto helpers_error = [](const string &msg) {
 
 const auto e_theta_2D = [](const double &theta) {
 	return V3D(cos(theta), sin(theta));
+};
+
+const auto rotate_2D = [](const P3D &p, const double &theta) {
+	return P3D(p[0] * cos(theta) - p[1] * sin(theta), p[1] * cos(theta) + p[0] * sin(theta));
 };
 
 const auto ncos01 = [](const double &theta) {
@@ -245,11 +250,11 @@ const auto find_min_i = [](const vector<double> &v) {
 
 const auto matRCstr = [](MatrixNxM m) -> string {
 	string ret = "";
-	ret.append("(");
+	ret.append("[");
 	ret.append(to_string(m.rows()));
-	ret.append(", ");
+	ret.append("x");
 	ret.append(to_string(m.cols()));
-	ret.append(")");
+	ret.append("]");
 	return ret;
 };
 
@@ -298,18 +303,23 @@ const auto xxT3x3 = [](const V3D &u) {
 	return outer3x3(u, u);
 };
 
-const auto resize_zero = [](dVector &v, int n) {
+const auto resize_zero = [](auto &v, int n) {
 	v.resize(n);
 	v.setZero();
 };
 
-const auto resize_fill = [](dVector &v, int n, double val) {
+const auto resize_fill = [](auto &v, int n, double val) {
 	v.resize(n);
 	v.setZero();
 	v.fill(val);
 };
 
 const auto mat_resize_zero = [](MatrixNxM &M, int R, int C) {
+	M.resize(R, C);
+	M.setZero();
+};
+
+const auto sparse_mat_resize_zero = [](SparseMatrix &M, int R, int C) {
 	M.resize(R, C);
 	M.setZero();
 };
@@ -422,30 +432,30 @@ const auto vec_FD = [] (dVector s0, auto O_of_s, double d=1e-3) {
 
 const auto mat_FD = [] (dVector s0, auto f_of_s, double d=1e-3) {
 	// ~ dfds|s0
+	// Convention dfds(i, j) = Dj(fi)
+	// <=> dfds.col(j) = Dj(f) 
 
 	dVector f0 = f_of_s(s0);
 
-	int r = s0.size();
-	int c = f0.size();
+	int r = f0.size();
+	int c = s0.size();
 
 	MatrixNxM mat;
 	mat_resize_zero(mat, r, c);
 
-	for (int i = 0; i < r; ++i) {
-		double s0i = s0[i];
+	for (int j = 0; j < c; ++j) {
+		double s0j = s0[j];
 
-		s0[i] -= d;
+		s0[j] -= d;
 		dVector left = f_of_s(s0);
-		s0[i] = s0i;
+		s0[j] = s0j;
 
-		s0[i] += d;
+		s0[j] += d;
 		dVector right = f_of_s(s0);
-		s0[i] = s0i;
+		s0[j] = s0j;
 
-		dVector dfdsi = (right - left) / (2. * d);
-		for (int j = 0; j < c; ++j) {
-			mat(i, j) = dfdsi[j];
-		}
+		dVector Dj_fi = (right - left) / (2. * d);
+		mat.col(j) = Dj_fi;
 	}
 	
 	return mat;
@@ -589,6 +599,14 @@ const auto dVector2vecDouble = [](const dVector &in) -> vector<double> {
 	return out;
 };
 
+const auto vecDouble2dVector = [](const vector<double> &in) -> dVector {
+	dVector out; out.setZero(in.size());
+	for (size_t i = 0; i < in.size(); ++i) {
+		out[i] = in[i];
+	}
+	return out;
+};
+
  const auto stack_vec_dVector = [](const vector<dVector> &in) -> dVector {
 
 	int N = 0;
@@ -605,6 +623,25 @@ const auto dVector2vecDouble = [](const dVector &in) -> vector<double> {
 
 	return out;
 
+ };
+ 
+ const auto zip_vec_dVector2vecP3D = [](const vector<dVector> &in) -> vector<P3D> {
+	 vector<P3D> out;
+	 // --
+	 int dVec_LENGTH = in[0].size();
+	 int dVec_COUNT = in.size();
+	 // --
+	 for (auto &dVec : in) { if (dVec.size() != dVec_LENGTH) { helpers_error("dVec's are different lengths."); } }
+	 if ((dVec_COUNT != 2) && (dVec_COUNT != 3)) { helpers_error("Must pass either 2 or 3 dVec's."); } 
+	 // --
+	 for (int i = 0; i < dVec_LENGTH; ++i) {
+		 P3D p;
+		 for (int j = 0; j < dVec_COUNT; ++j) {
+			 p[j] = in[j][i];
+		 } 
+		 out.push_back(p);
+	 } 
+	 return out;
  };
 
 

@@ -5,6 +5,7 @@
 #include <GUILib/GLTrackingCamera.h>
 #include <RobotDesignerLib/LocomotionEngineManager.h>
 #include <GUILib/TranslateWidget.h>
+#include <GUILib/CompositeWidget.h>
 #include <memory>
 
 struct MOPTParams {
@@ -90,7 +91,7 @@ public:
 	bool periodicMotion = true;
 
 	std::list<shared_ptr<TranslateWidget>> EEwidgets;
-	std::list<shared_ptr<TranslateWidget>> COMWidgets;
+	std::list<shared_ptr<CompositeWidget>> COMWidgets;
 public:
 	MOPTWindow(int x, int y, int w, int h, RobotDesignerApp* glApp);
 	~MOPTWindow();
@@ -139,5 +140,5 @@ private:
 	nanogui::Window* velocityProfileWindow = nullptr;
 	int endEffectorInd = -1;
 	map<shared_ptr<TranslateWidget>, shared_ptr<EndEffectorPositionObjective>> EEwidget2constraint;
-	map<shared_ptr<TranslateWidget>, shared_ptr<COMPositionObjective>> COMwidget2constraint;
+	map<shared_ptr<CompositeWidget>, shared_ptr<BodyFrameObjective>> COMwidget2constraint;
 };

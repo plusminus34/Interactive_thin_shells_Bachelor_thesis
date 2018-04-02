@@ -44,7 +44,16 @@ public:
 public:
 	virtual void resetCamera(); bool RESET_CAMERA = false;
 	        void printCamera(); bool PRINT_CAMERA = false;
+
+public:
+	bool SPOOF_2D_CAMERA = false;
  
+public:
+	double DEFAULT_CAM_ROT_ABOUT_RIGHT_AXIS = 0.;
+	double DEFAULT_CAM_ROT_ABOUT_UP_AXIS___ = 0.;
+	double DEFAULT_CAM_DISTANCE____________ = -3.;
+	P3D    DEFAULT_CAM_TARGET______________ = P3D();
+
 public:
 	vector<Handler *> handlers; 
 

@@ -3,6 +3,8 @@
 #include "SimulationMesh.h"
 #include "ZeroCubicQuadratic.h"
 
+typedef Eigen::RowVectorXd dRowVector;
+
 class SimulationMesh;
 
 class SoftIKSolver { 
@@ -34,7 +36,7 @@ public:
 public:
 	double timeStep = .01;
 	// --
-	bool PROJECT = false;
+	bool PROJECT = true;
 	bool CHECK_IK_GRADIENT = false;
 	bool SOLVE_DYNAMICS = true;
 	bool LINEAR_APPROX = true;
@@ -42,6 +44,7 @@ public:
 public:
 	int D();
 	int N();
+	int DN();
 	int T();
 
 public:
@@ -58,8 +61,7 @@ public:
 	dVector alphac_curr; dVector x_curr;
 
 public:
-	MatrixNxM dtaudalphac;
-	MatrixNxM dxdalphac;
+	SparseMatrix dxdalphac;
  
 public:
 	void step();
@@ -70,18 +72,18 @@ public:
  
 	dVector alphac_next(const dVector &alphac, const dVector &x);
 
-	dVector calculate_dOdalphac(const dVector &alphac, const dVector &x);
-	double calculate_gamma(const dVector &alphac, const dVector &dOdalphac);
+	dRowVector calculate_dOdalphac(const dVector &alphac, const dVector &x);
+	double calculate_gamma(const dVector &alphac, const dRowVector &dOdalphac);
 	// --
 	bool check_gradient(const dVector &alphac, const dVector &x);
 
 	dVector x_of_alphac(const dVector &alphac);
 
-	dVector calculate_dQdalphac(const dVector &alphac, const dVector &x);
-	dVector calculate_dRdalphac(const dVector &alphac, const dVector &x);
+	dRowVector calculate_dQdalphac(const dVector &alphac, const dVector &x);
+	dRowVector calculate_dRdalphac(const dVector &alphac, const dVector &x);
 
-	dVector calculate_dQdx(const dVector &alphac, const dVector &x);
-	MatrixNxM calculate_dxdalphac(const dVector &alphac, const dVector &x);
+	dRowVector calculate_dQdx(const dVector &alphac, const dVector &x);
+	SparseMatrix calculate_dxdalphac(const dVector &alphac, const dVector &x);
 
 	double calculate_Q_of_x(const dVector &x);
 	SparseMatrix calculate_A(const dVector &x);

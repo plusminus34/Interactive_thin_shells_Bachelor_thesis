@@ -83,8 +83,9 @@ void CSTElement2D::draw(const dVector& x) {
 	// set_color(LIGHT_HENN1NK);
 
 	double f = this->getEnergy(x, dVector()) / .05;
-	f = 0.;
-	set_color(map_swirl(f, VIRIDIS));
+	// set_color(map_swirl(f, COOL));
+	// set_color(map_swirl(f, VIRIDIS));
+	set_color(LIGHT_CLAY);
 
 	glBegin(GL_TRIANGLES);
 	for (auto node : n) {
@@ -94,7 +95,8 @@ void CSTElement2D::draw(const dVector& x) {
 
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	glLineWidth(2.);
-	set_color(HENN1NK);
+	// set_color(HENN1NK);
+	set_color(CLAY);
 	glLineWidth(1);
 	glBegin(GL_LINE_LOOP);
 	for (auto node : n) {

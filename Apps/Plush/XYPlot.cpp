@@ -32,7 +32,7 @@ double XYPlot::PLOT_HALF_HEIGHT() {
 
 void XYPlot::draw() {
 	glPushAttrib(GL_ALL_ATTRIB_BITS); {
-		glLineWidth(5.);
+		glLineWidth((!THIN_LINES) ? 5.f : 2.f);
 		glPointSize(5.);
 		set_color(HENN1NK);
 		glBegin(GL_POINTS); {
@@ -56,13 +56,17 @@ void XYPlot::draw() {
 			glScaled(X_SCALE(), Y_SCALE(), 1.);
 			// --
 			set_color((SPEC_COLOR == BLACK) ? RATIONALITY : SPEC_COLOR);
-			glBegin(GL_LINE_STRIP); {
-				glvecP3Dz(point_rep_mod(Y), Z);
-			} glEnd();
+			if (DRAW_LINES) {
+				glBegin(GL_LINE_STRIP); {
+					glvecP3Dz(point_rep_mod(Y), Z);
+				} glEnd();
+			}
 			// --
-			glBegin(GL_POINTS); {
-				glvecP3Dz(point_rep_mod(Y), Z);
-			} glEnd();
+			if (DRAW_POINTS) {
+				glBegin(GL_POINTS); {
+					glvecP3Dz(point_rep_mod(Y), Z);
+				} glEnd();
+			}
 		} glPopMatrix();
 	} glPopAttrib();
 }

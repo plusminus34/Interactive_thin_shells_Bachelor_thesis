@@ -41,10 +41,9 @@ void SimulationMesh::draw(dVector &x, dVector &alphac) {
 		for (auto &non_E_element : non_E_elements) { non_E_element->draw(x); }
 	} else {
 		if (DRAW_SIMPLICES) { for (auto &simplex : simplices           ) { simplex->draw(x);       } }
-		// TODO: if (DRAW_TENDONS)   { for (auto &tendon : tendons              ) { tendon->draw(x, balphac);        } }
 		if (DRAW_TENDONS)   { for (auto &tendon : tendons              ) { tendon->draw(x, alphac);        } }
 		if (DRAW_PINS)      { for (auto &pin : pins                    ) { pin->draw(x);           } }
-		if (DRAW_ANCHORS)   { for (auto &contact : contacts  ) { contact->draw(x);  } }
+		if (DRAW_ANCHORS)   { for (auto &contact : contacts            ) { contact->draw(x);  } }
 		if (DRAW_NON_E)     { for (auto &non_E_element : non_E_elements) { non_E_element->draw(x); } }
 	}
 	// -- 
@@ -201,13 +200,11 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const 
 
 		energyFunction->setToDynamicsMode(timeStep);
 
-		// cout << x_0.transpose() << endl;
 		this->update_contacts(x_0);
 		this->v = v_0;
 		this->balphac = balphac;
-		this->x = x_0; // TODO: CHECKME
-		// this->xSolver = x_0;
-		this->xSolver = X;
+		this->x = x_0;
+		this->xSolver = x_0;
 
 		if (checkDerivatives) {
 			energyFunction->testGradientWithFD(xSolver);
@@ -242,7 +239,15 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const 
 		x_new = xSolver;
 		v_new = (x_new - x_0) / timeStep;
 
-		if (is_nan(x_new)) { error("x_new is NaN"); }
+		if (is_nan(x_new)) {
+			error("x_new is NaN");
+			cout << " x_0 is_nan? " << is_nan(x_0)     << endl;
+			cout << " v_0 is_nan? " << is_nan(v_0)     << endl;
+			cout << "   u is_nan? " << is_nan(balphac) << endl;
+			cout << "-------------" << endl;
+			cout << " u: " << balphac.transpose() << endl;
+			// __debugbreak(); 
+		}
 
 	}
 	this->x       = x_push;
@@ -996,6 +1001,19 @@ void SimulationMesh::nudge_mesh(const V3D &t) {
 void SimulationMesh::nudge_mesh_up() {
 	for (auto &node : nodes) { node->setUndeformedPosition(node->getUndeformedPosition() + V3D(0., .5)); }
 	x = X; x_prime = X; xSolver = X;
+}
+
+void SimulationMesh::rotate_mesh(const double &theta) {
+	if (D() != 2) { error("rotate_mesh: [NotImplementedError]"); }
+	for (auto &node : nodes) { node->setUndeformedPosition(rotate_2D(node->getUndeformedPosition(), theta)); }
+	x = X; x_prime = X; xSolver = X;
+}
+
+void SimulationMesh::move_pins(const dVector &x) { 
+	for (auto &pin : pins) {
+		auto pin_ = dynamic_cast<FixedPointSpring2D *>(pin);
+		pin_->targetPosition = pin_->node->getCoordinates(x);
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////

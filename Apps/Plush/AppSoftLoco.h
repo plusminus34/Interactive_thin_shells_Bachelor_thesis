@@ -27,12 +27,26 @@ public:
 	vector<P2DDragger *> COM_handlers;
 
 public:
-	bool REPLAY = false;
-	bool POPULATED_REPLAY_TRAJEC = false;
-	const int LEADIN_FRAMES = 30;
-	int REPLAY_i = -LEADIN_FRAMES;
-	vector<dVector> uJsafe;
-	vector<dVector> xJsafe;
+	bool PLAY_PREVIEW = false;
+	bool POPULATED_PREVIEW_TRAJEC = false;
+	const int LEADIN_FRAMES = 25;
+	const int LEADOUT_FRAMES = 250;
+	int PREVIEW_i = -LEADIN_FRAMES;
+	vector<dVector> uJ_preview;
+	vector<dVector> xJ_preview;
+
+public:
+	bool CAPTURE_TEST_SESSION = false;
+	bool CAPTURED_TEST_SESSION_ = false;
+	// --
+	bool PLAY_CAPTURE = false;
+	bool POPULATED_CAPTURE_TRAJEC = false;
+	int CAPTURE_i = -30;
+	vector<dVector> uJ_capture;
+	vector<dVector> xJ_capture;
+	// -- 
+	dVector xm1_capture;
+	dVector vm1_capture;
 
 public:
 	bool SOLVE_IK = true;
