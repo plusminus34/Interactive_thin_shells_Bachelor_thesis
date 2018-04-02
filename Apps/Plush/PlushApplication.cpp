@@ -84,15 +84,15 @@ void PlushApplication::flashError() {
 	if (BERN_ERROR) {
 		BERN_ERROR = false;
 		BERN_ERROR_REPORTING = true;
+		BERN_ERROR_TIME_SNAPSHOT = t;
 	}
 
 	if (BERN_ERROR_REPORTING) {
-		BERN_ERROR_COOLDOWN--;
 
-		set_color(color_swirl(1. - BERN_ERROR_COOLDOWN / double(N_COOLDOWN), RED, BLACK));
+		set_color(color_swirl((t - BERN_ERROR_TIME_SNAPSHOT) / BERN_ERROR_COOLDOWN_TIME, RED, BLACK));
 		big_bad_panic_rectangle();
 
-		if (BERN_ERROR_COOLDOWN == 0) {
+		if (t - BERN_ERROR_TIME_SNAPSHOT > BERN_ERROR_COOLDOWN_TIME) {
 			BERN_ERROR_REPORTING = false;
 		}
 	}

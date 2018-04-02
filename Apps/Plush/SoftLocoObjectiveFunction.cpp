@@ -17,7 +17,7 @@ void SoftLocoObjectiveFunction::addGradientTo(dVector &G, const dVector &_) { //
 }
 
 void SoftLocoObjectiveFunction::setCurrentBestSolution(const dVector &uS) {
-	solver->uJ_curr = solver->unstack_Traj(uS);
-	solver->xJ_curr = solver->xJ_of_uJ(solver->uJ_curr);
-	solver->projectJ();
+	// solver->uJ_curr = solver->unstack_Traj(uS);
+	// solver->xJ_curr = solver->xJ_of_uJ(solver->uJ_curr);
+	// solver->projectJ();
 }

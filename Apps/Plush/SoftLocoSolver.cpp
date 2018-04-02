@@ -27,8 +27,13 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	vm1_curr = mesh->v;
 	resize_zero(um1_curr, T()); // FORNOW
 
-	for (int _ = 0; _ < K; ++_) { dVector ZERO_; resize_zero(ZERO_, T()); uJ_curr.push_back(ZERO_); }
-	xJ_curr = xJ_of_uJ(uJ_curr); 
+	for (int _ = 0; _ < Z; ++_) { dVector ZERO_; resize_zero(ZERO_, T()); yJ_curr.push_back(ZERO_); }
+	god_spline = new CubicHermiteSpline(vecDouble2dVector(linspace(Z, 0., 1.)), vecDouble2dVector(linspace(K, 0., 1.)));
+	dUdY_ = god_spline->calculate_dUdY_(); // FORNOW
+
+	// for (int _ = 0; _ < K; ++_) { dVector ZERO_; resize_zero(ZERO_, T()); uJ_curr.push_back(ZERO_); }
+	// xJ_curr = xJ_of_uJ(uJ_curr); 
+	xJ_curr = xJ_of_yJ(yJ_curr); 
 
 	for (int _ = 0; _ < K; ++_) { SPEC_FREESTYLE_J.push_back(false); }
 	for (int _ = 0; _ < K; ++_) { SPEC_COM_J.push_back(true); }
@@ -36,8 +41,6 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 
 	construct_u_barrierFuncs(); 
 
-	for (int _ = 0; _ < Z; ++_) { dVector ZERO_; resize_zero(ZERO_, T()); yJ_curr.push_back(ZERO_); }
-	god_spline = new CubicHermiteSpline(vecDouble2dVector(linspace(Z, 0., 1.)), vecDouble2dVector(linspace(K, 0., 1.)));
 
 	COMp_FORNOW = mesh->get_COM(mesh->X); 
 
@@ -47,15 +50,15 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 void SoftLocoSolver::draw() { 
 
 	// FORNOW
-	for (int t = 0; t < T(); ++t) {
-		for (int z = 0; z < Z; ++z) {
-			yJ_curr[z][t] = uJ_curr[z][t] / mesh->balphaz[t];
-		} 
-	}
+	// for (int t = 0; t < T(); ++t) {
+	// 	for (int z = 0; z < Z; ++z) {
+	// 		yJ_curr[z][t] = uJ_curr[z][t] / mesh->balphaz[t];
+	// 	} 
+	// }
 
-	int i = -1;	for (auto &Y : zipunzip(yJ_curr)) { god_spline->SPEC_COLOR = kelly_color(++i); 
-		god_spline->draw(Y);
-	}
+	// int i = -1;	for (auto &Y : zipunzip(yJ_curr)) { god_spline->SPEC_COLOR = kelly_color(++i); 
+	// 	god_spline->draw(Y);
+	// }
  
 	glMasterPush(); {
 		glDisable(GL_STENCIL_TEST);
@@ -122,23 +125,32 @@ void SoftLocoSolver::draw() {
 	} glMasterPop(); 
 
 	{
-		auto time = linspace(K, 0., 1.);
+		auto K_range = linspace(K, 0., 1.);
+		auto Z_range = linspace(Z, 0., 1.);
 		vector<XYPlot*> plots;
 
 		dVector ONE;  resize_fill(ONE, K, 1);
 		dVector ZERO; resize_zero(ZERO, K);
 		vector<dVector> lines = { -ONE, ZERO, ONE };
-		for (auto &line : lines) { plots.push_back(new XYPlot(time, dVector2vecDouble(line))); }
+		for (auto &line : lines) { plots.push_back(new XYPlot(K_range, dVector2vecDouble(line))); }
 		for (auto &plot : plots) { plot->SPEC_COLOR = LIGHT_CLAY; }
 
+		// FORNOW
+		auto uJ_curr_ = uJ_of_yJ(yJ_curr);
 		for (int t = 0; t < T(); ++t) {
-			vector<double> F_t;
-			for (int k = 0; k < K; ++k) {
-				F_t.push_back(uJ_curr[k][t] / mesh->balphaz[t]);
-			}
-			XYPlot *plot = new XYPlot(time, F_t);
-			plot->SPEC_COLOR = kelly_color(t);
-			plots.push_back(plot);
+			vector<double> u_K; for (int k = 0; k < K; ++k) { u_K.push_back(uJ_curr_[k][t] / mesh->balphaz[t]); }
+			vector<double> y_Z; for (int z = 0; z < Z; ++z) { y_Z.push_back(yJ_curr[z][t] / mesh->balphaz[t]); }
+
+			XYPlot *plot_K = new XYPlot(K_range, u_K);
+			plot_K->THIN_LINES = true;
+			plot_K->DRAW_POINTS = false;
+			plot_K->SPEC_COLOR = kelly_color(t); 
+			plots.push_back(plot_K);
+
+			XYPlot *plot_Z = new XYPlot(Z_range, y_Z);
+			plot_Z->DRAW_LINES = false;
+			plot_Z->SPEC_COLOR = kelly_color(t); 
+			plots.push_back(plot_Z);
 		}
 
 		for (auto &plot : plots) {
@@ -191,79 +203,94 @@ void SoftLocoSolver::step() {
 }
 
 void SoftLocoSolver::iterate() {
-	uJ_curr = uJ_next(uJ_curr, xJ_curr);
-	xJ_curr = xJ_of_uJ(uJ_curr);
+	// uJ_curr = uJ_next(uJ_curr, xJ_curr);
+	// xJ_curr = xJ_of_uJ(uJ_curr);
+	yJ_curr = yJ_next(yJ_curr, xJ_curr);
+	xJ_curr = xJ_of_yJ(yJ_curr);
 }
 
 void SoftLocoSolver::projectJ() { 
-	Traj x_tmp;
-	Traj v_tmp;
-	for (int i = 0; i < K; ++i) {
-		const dVector x_start = (x_tmp.empty()) ? xm1_curr : x_tmp.back();
-		const dVector v_start = (v_tmp.empty()) ? vm1_curr : v_tmp.back();
-		// --
-		dVector u_proj = uJ_curr[i];
-		while (true) {
-			bool PROJECTED = false;
+	// TODO: This may actually end up being quite a non-trivial function to write.
 
-			auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_start, v_start, u_proj) : mesh->solve_statics(x_start, u_proj);
-			dVector x_proj = xv.first;
 
-			for (int i = 0; i < T(); ++i) {
-				double Gamma_i;
-				Gamma_i = mesh->tendons[i]->get_Gamma(x_proj, u_proj);
+	// Traj x_tmp;
+	// Traj v_tmp;
+	// for (int i = 0; i < K; ++i) {
+	// 	const dVector x_start = (x_tmp.empty()) ? xm1_curr : x_tmp.back();
+	// 	const dVector v_start = (v_tmp.empty()) ? vm1_curr : v_tmp.back();
+	// 	// --
+	// 	dVector u_proj = uJ_curr[i];
+	// 	while (true) {
+	// 		bool PROJECTED = false;
 
-				if (Gamma_i < .0005) {
-					PROJECTED = true;
-					u_proj[i] += (.001 - Gamma_i);
-				}
-			}
+	// 		auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_start, v_start, u_proj) : mesh->solve_statics(x_start, u_proj);
+	// 		dVector x_proj = xv.first;
 
-			if (!PROJECTED) {
-				break;
-			}
-		}
-		auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_start, v_start, u_proj) : mesh->solve_statics(x_start, u_proj);
-		x_tmp.push_back(xv.first);
-		v_tmp.push_back(xv.second);
-		uJ_curr[i] = u_proj;
-		xJ_curr[i] = xv.first;
-	}
+	// 		for (int i = 0; i < T(); ++i) {
+	// 			double Gamma_i;
+	// 			Gamma_i = mesh->tendons[i]->get_Gamma(x_proj, u_proj);
 
-	// if (false) { // VALIDATE_PROJECTION
-	// 	Traj xJ_CHECK = solve_trajectory(mesh->timeStep, xm1_curr, vm1_curr, uJ_curr);
-	// 	cout << "^^^" << endl;
-	// 	Traj_equality_check(xJ_curr, xJ_CHECK);
-	// 	cout << "vvv" << endl;
+	// 			if (Gamma_i < .0005) {
+	// 				PROJECTED = true;
+	// 				u_proj[i] += (.001 - Gamma_i);
+	// 			}
+	// 		}
+
+	// 		if (!PROJECTED) {
+	// 			break;
+	// 		}
+	// 	}
+	// 	auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_start, v_start, u_proj) : mesh->solve_statics(x_start, u_proj);
+	// 	x_tmp.push_back(xv.first);
+	// 	v_tmp.push_back(xv.second);
+	// 	uJ_curr[i] = u_proj;
+	// 	xJ_curr[i] = xv.first;
 	// }
+
+	// // if (false) { // VALIDATE_PROJECTION
+	// // 	Traj xJ_CHECK = solve_trajectory(mesh->timeStep, xm1_curr, vm1_curr, uJ_curr);
+	// // 	cout << "^^^" << endl;
+	// // 	Traj_equality_check(xJ_curr, xJ_CHECK);
+	// // 	cout << "vvv" << endl;
+	// // }
 }
 
-Traj SoftLocoSolver::uJ_next(const Traj &uJ, const Traj &xJ) { 
-	vector<dRowVector> dOduJ = calculate_dOduJ(uJ, xJ);
-	double gammaJ = calculate_gammaJ(uJ, dOduJ);
-	Traj uJ_next;
-	for (int i = 0; i < K; ++i) {
-		uJ_next.push_back(uJ[i] - gammaJ * dOduJ[i].transpose());
+// Traj SoftLocoSolver::uJ_next(const Traj &uJ, const Traj &xJ) { 
+// 	vector<dRowVector> dOduJ = calculate_dOduJ(uJ, xJ);
+// 	double gammaJ = calculate_gammaJ(uJ, dOduJ);
+// 	Traj uJ_next;
+// 	for (int i = 0; i < K; ++i) {
+// 		uJ_next.push_back(uJ[i] - gammaJ * dOduJ[i].transpose());
+// 	}
+// 	return uJ_next;
+// }
+
+Traj SoftLocoSolver::yJ_next(const Traj &yJ, const Traj &xJ) { 
+	vector<dRowVector> dOdyJ = calculate_dOdyJ(yJ, xJ);
+	double gammaJ = calculate_gammaJ(yJ, dOdyJ);
+	Traj yJ_next;
+	for (int i = 0; i < Z; ++i) {
+		yJ_next.push_back(yJ[i] - gammaJ * dOdyJ[i].transpose());
 	}
-	return uJ_next;
+	return yJ_next;
 }
  
-double SoftLocoSolver::calculate_gammaJ(const Traj &uJ, const vector<dRowVector> &dOduJ) {
+double SoftLocoSolver::calculate_gammaJ(const Traj &yJ, const vector<dRowVector> &dOdyJ) {
 	double gammaJ_0 = 1.;
 	int maxLineSearchIterations = 48;
 
-	Traj uJ_0 = uJ;
-	double O_0 = calculate_OJ(uJ_0); 
+	Traj yJ_0 = yJ;
+	double O_0 = calculate_OJ(yJ_0); 
 	double gammaJ_k = gammaJ_0;
 	for (int j = 0; j < maxLineSearchIterations; j++) { 
-		Traj uJ_k; // = uJ_0 - gammaJ_k * dOduJ; 
-		for (int i = 0; i < K; ++i) {
-			uJ_k.push_back(uJ_0[i] - gammaJ_k * dOduJ[i].transpose());
+		Traj yJ_k; // = yJ_0 - gammaJ_k * dOdyJ; 
+		for (int i = 0; i < Z; ++i) {
+			yJ_k.push_back(yJ_0[i] - gammaJ_k * dOdyJ[i].transpose());
 		}
-		double O_k = calculate_OJ(uJ_k);
+		double O_k = calculate_OJ(yJ_k);
 
 		if (!isfinite(O_k)) {
-			error("non-finite O_k detected.");
+			error("non-finite o_k detected.");
 			O_k = O_0 + 1.0;
 		}
 
@@ -280,16 +307,29 @@ double SoftLocoSolver::calculate_gammaJ(const Traj &uJ, const vector<dRowVector>
 }
 
 // -- //
+ 
+Traj SoftLocoSolver::xJ_of_yJ(const Traj &yJ) {
+	return xJ_of_uJ(uJ_of_yJ(yJ));
+}
 
 Traj SoftLocoSolver::xJ_of_uJ(const Traj &uJ) {
 	return solve_trajectory(mesh->timeStep, xm1_curr, vm1_curr, uJ);
 }
 
+Traj SoftLocoSolver::uJ_of_yJ(const Traj &yJ) {
+	Traj uJ_zzz;
+	for (auto &y_for_tendon_i : zipunzip(yJ)) { 
+		uJ_zzz.push_back(god_spline->calculate_U(y_for_tendon_i));
+	}
+	return zipunzip(uJ_zzz);
+}
+
 // -- //
 
-double SoftLocoSolver::calculate_OJ(const Traj &uJ) {
-	double QJ = calculate_QJ(uJ);
-	double RJ = calculate_RJ(uJ);
+double SoftLocoSolver::calculate_OJ(const Traj &yJ) {
+	auto uJ_ = uJ_of_yJ(yJ);
+	double QJ = calculate_QJ(uJ_);
+	double RJ = calculate_RJ(uJ_);
 	return QJ + RJ;
 }
 
@@ -378,14 +418,16 @@ double SoftLocoSolver::calculate_R(const dVector &u) {
 	return ret; 
 }
 
-vector<dRowVector> SoftLocoSolver::calculate_dOduJ(const Traj &uJ, const Traj &xJ) {
-	vector<dRowVector> dQduJ = calculate_dQduJ(uJ, xJ);
-	vector<dRowVector> dRduJ = calculate_dRduJ(uJ);
-	vector<dRowVector> dOduJ;
-	for (int i = 0; i < K; ++i) {
-		dOduJ.push_back(dQduJ[i] + dRduJ[i]);
+vector<dRowVector> SoftLocoSolver::calculate_dOdyJ(const Traj &yJ, const Traj &xJ) {
+	auto uJ_ = uJ_of_yJ(yJ);
+	vector<dRowVector> dQdyJ = dSTARduJ2dSTARdyJ(calculate_dQduJ(uJ_, xJ)); 
+	vector<dRowVector> dRdyJ = dSTARduJ2dSTARdyJ(calculate_dRduJ(uJ_)); 
+	vector<dRowVector> dOdyJ;
+	for (int i = 0; i < Z; ++i) {
+		// dOduJ.push_back(dQduJ[i] + dRduJ[i]);
+		dOdyJ.push_back(dQdyJ[i]);
 	}
-	return dOduJ;
+	return dOdyJ;
 }
 
 vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
@@ -605,7 +647,7 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 	}
 	
 	// cout << "dQkdxk" << endl;
-	vector<dRowVector> dQkdxk;
+	vector<dRowVector> dQJdxk;
 	for (int k = 0; k < K; ++k) {
 		dRowVector entry;
 		// if (k != K - 1 && k != K/2) {
@@ -614,18 +656,30 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 		} else {
 			entry = calculate_dQdx(xJ[k], COMpJ[k]);
 		}
-		dQkdxk.push_back(entry);
+		dQJdxk.push_back(entry);
 	}
 
 	// cout << "dQJduj" << endl;
-	vector<dRowVector> dQJduj;
+	vector<dRowVector> dQJduj; // (*)
 	for (int j = 0; j < K; ++j) {
 		dRowVector entry; resize_zero(entry, T());
 		for (int i = 0; i < K; ++i) {
-			entry += dQkdxk[i] * dxidxj[i][j] * dxkduk[j];
+			entry += dQJdxk[i] * dxidxj[i][j] * dxkduk[j];
 		}
 		dQJduj.push_back(entry);
 	}
+
+
+	// cout << "dQJdyj" << endl;
+	// -- uJ is of form [ u@t0, u@t1, ... ]
+	// -- dQJdyj must be of form [ dQdyj@t0, dQdyj@t1, ... ]
+	// Traj uJT = zipunzip(uJ);
+	// auto &dudyT = god_spline->dUdY;
+	// vector<dRowVector> dQJdyT;
+	// for (auto &uT: uJT) {
+	// 	dQJdyT.push_back((dudyT*uT).transpose());
+	// }
+	// vector<dRowVector> dQJdyj = zipunzip(dQJdyT);
 
 	// if (TEST_Q_FD) {
 	// 	cout << "BEG.................................................." << endl;
@@ -668,6 +722,19 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 	}
 
 	return dQJduj;
+}
+
+vector<dRowVector> SoftLocoSolver::dSTARduJ2dSTARdyJ(const vector<dRowVector> &dSTARdui) {
+	SparseMatrix dUdY_ = god_spline->calculate_dUdY_(); // FORNOW
+	vector<dRowVector> dSTARdyj;
+	for (int j = 0; j < Z; ++j) {
+		dRowVector entry; resize_zero(entry, T());
+		for (int i = 0; i < K; ++i) {
+			entry += dSTARdui[i] * dUdY_.coeff(i, j);
+		}
+		dSTARdyj.push_back(entry);
+	}
+	return dSTARdyj;
 }
 
 vector<dRowVector> SoftLocoSolver::calculate_dRduJ(const Traj &uJ) {
@@ -752,14 +819,6 @@ SparseMatrix SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x, 
 	}
  
 	return dxdtau * dtaudu_diag.asDiagonal();
-}
-
-vector<MatrixNxM> SoftLocoSolver::calculate_duJdyJ(const Traj &uJ, const Traj &yJ) {
-
-
-	//scalar_FD(z, u_wrapper)
-
-	return vector<MatrixNxM>();
 }
 
 dRowVector SoftLocoSolver::calculate_dRdu(const dVector &u) { 
@@ -905,21 +964,6 @@ void SoftLocoSolver::construct_u_barrierFuncs() {
 	}
 }
 
-vector<dVector> SoftLocoSolver::zipunzip(const vector<dVector> &in) {
-	int in_LENGTH = in[0].size();
-	int in_COUNT  = in.size();
-	// --
-	for (auto &dVec : in) { if (dVec.size() != in_LENGTH) { helpers_error("dVec's are different lengths."); } }
-	vector<dVector> out;
-	for (int i = 0; i < in_LENGTH; ++i) {
-		dVector dVec; dVec.setZero(in_COUNT);
-		for (int j = 0; j < in_COUNT; ++j) {
-			dVec[j] = in[j][i];
-		} 
-		out.push_back(dVec);
-	} 
-	return out; 
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -932,14 +976,22 @@ int SoftLocoSolver::T() { return mesh->tendons.size(); }
 
 bool SoftLocoSolver::check_x_size(const dVector &x) {
 	if (x.size() != D() * N()) {
-		error("InputDimensionsError");
+		error("x:InputDimensionsError");
 		return false;
 	}
 	return true;
 }
 bool SoftLocoSolver::check_u_size(const dVector &u) {
 	if (u.size() != T()) {
-		error("InputDimensionsError");
+		error("u:InputDimensionsError");
+		return false;
+	}
+	return true;
+}
+
+bool SoftLocoSolver::check_y_size(const dVector &y) {
+	if (y.size() != Z) {
+		error("y:InputDimensionsError");
 		return false;
 	}
 	return true;

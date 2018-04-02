@@ -50,35 +50,40 @@ public:
 	bool TEST_R_FD = false;
 	bool REPLAY = false;
 
+// (K, Z) = (32, 4)
+// (K, Z) = (64, 8)
+
 public:
 	int D();
 	int N();
 	int DN();
 	int T();
-	const int K = 48; // 48; // HORIZON
+	const int K = 64; // 48; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
+	bool check_y_size(const dVector &y);
 
 public:
 	CubicHermiteSpline *god_spline;
+	SparseMatrix  dUdY_;
 	const int Z = 8;
-	Traj yJ_curr;
-	const dVector knot_times = vecDouble2dVector(linspace(8, 0., 1.));
-
+	const dVector knot_times = vecDouble2dVector(linspace(8, 0., 1.)); 
 
 public:
-	double     calculate_OJ(const Traj &u);
-	double     calculate_QJ(const Traj &u);
-	double     calculate_RJ(const Traj &u);
+	double     calculate_OJ(const Traj &uJ);
+	double     calculate_QJ(const Traj &uJ);
+	double     calculate_RJ(const Traj &uJ);
 	double     calculate_R(const dVector &u);
 	double calculate_Q_of_x(const dVector &x, const P3D &COMp);
 
 public:
 	dVector xm1_curr, vm1_curr; // TODO: rename xm1, vm
 	dVector um1_curr;
-	Traj uJ_curr;
+	// Traj uJ_curr;
+	Traj yJ_curr;
 	Traj xJ_curr;
+	Traj uJ_curr() { return uJ_of_yJ(yJ_curr); }
 	// --
 	// dVector u_curr; dVector x_curr;
 
@@ -101,20 +106,23 @@ public:
 	void projectJ(); 
 
 	Traj uJ_next(const Traj &uJ, const Traj &xJ);
-	double calculate_gammaJ(const Traj &uJ, const vector<dRowVector> &dOduJ);
+	Traj yJ_next(const Traj &yJ, const Traj &xJ);
+	double calculate_gammaJ(const Traj &yJ, const vector<dRowVector> &dOdyJ);
+	Traj xJ_of_yJ(const Traj &yJ);
 	Traj xJ_of_uJ(const Traj &uJ);
+	Traj uJ_of_yJ(const Traj &yJ);
 
 	// -- //
 
-	vector<dRowVector> calculate_dOduJ(const Traj &uJ, const Traj &xJ);
+	vector<dRowVector> calculate_dOdyJ(const Traj &yJ, const Traj &xJ);
 	vector<dRowVector> calculate_dQduJ(const Traj &uJ, const Traj &xJ);
 	vector<dRowVector> calculate_dRduJ(const Traj &uJ);
 
 	dRowVector calculate_dQdx(const dVector &x, const P3D &COMp);
 	SparseMatrix calculate_dxdu(const dVector &u, const dVector &x, const dVector &x_ctc=dVector());
 	// SparseMatrix calculate_dudz(const dVector &u, const dVector &z);
-	vector<MatrixNxM> calculate_duJdyJ(const Traj &uJ, const Traj &yJ);
 	dRowVector calculate_dRdu(const dVector &u);
+	vector<dRowVector> dSTARduJ2dSTARdyJ(const vector<dRowVector> &);
 
 	// -- //
 
@@ -141,7 +149,58 @@ public:
 	void Traj_equality_check(const Traj &, const vector<dRowVector> &);
 	void MTraj_equality_check(const MTraj &, const MTraj &);
 	Traj unstack_Traj(const dVector &);
-	vector<dVector> zipunzip(const Traj &);
+	
+	template<typename T>
+	vector<T> zipunzip(const vector<T> &in) {
+		int in_LENGTH = in[0].size();
+		int in_COUNT  = in.size();
+		// --
+		for (auto &dVec : in) { if (dVec.size() != in_LENGTH) { helpers_error("dVec's are different lengths."); } }
+		vector<T> out;
+		for (int i = 0; i < in_LENGTH; ++i) {
+			T dVec; dVec.setZero(in_COUNT);
+			for (int j = 0; j < in_COUNT; ++j) {
+				dVec[j] = in[j][i];
+			} 
+			out.push_back(dVec);
+		} 
+		return out; 
+	}
  
 };
  
+	// reindex
+
+	// T() tendons
+	// T() splines
+	// U() sampled data points
+	// Y() spline parameters
+
+	// dQJdui is a list of vectors, where the i-th vector
+	// tells us how the total objective QJ changes wrt
+	// all contractions at timestep i.
+
+	// We now want dQJdyj, which will be a list of vectors, where the j-th 
+	// tells us how the total objective QJ changes wrt
+	// all spline control points at timestep j.
+
+	// We need duidyj, which will be a table of [T()xT()] matrices, where the [i][j]-th matrix
+	// tells us how the contractions at timestep i change wrt
+	// the knot positions at timestep j.
+
+	// What we have for cubic hermite splines is dUdY, which is a [U()xY()] constant matrix
+	// telling us for a given spline how spline positions change wrt
+	// knot positions.
+
+	// A given entry M(a, b) of M = duidyj[i][j]
+	// asks how does the contraction of the a-th tendon @ time i changes wrt
+	// the knot position the b-th spline @ time j 
+
+	// If a != b, then M(a, b) = 0.
+	// So we will just be populating the diagonal.
+	// M(a, a) says for the a-th tendon/spline,
+	// -- how does the contraction of ui change wrt yj
+	// This is dUdY(i, j), which is a scalar constant (times the identity).
+
+	// So in conclusion.
+	// duidyj can be considered as a table of constant scalars, i.e. exactly dUdY.  

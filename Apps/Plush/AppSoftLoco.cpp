@@ -22,16 +22,18 @@ AppSoftLoco::AppSoftLoco() {
 		"3ball",        // 4
 		"walker",       // 5
 		"jumping_cube", // 6
-		"6ball"         // 7
+		"6ball",        // 7
+		"sugar",        // 8
 	};
 	string TEST_CASE = TEST_CASES[4];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
 	mesh = new CSTSimulationMesh2D();
+	mesh->timeStep = .01;
 	mesh->spawnSavedMesh(fName);
 	mesh->nudge_mesh_up();
-	mesh->applyYoungsModulusAndPoissonsRatio(3e4, .25); // FORNOW
+	mesh->applyYoungsModulusAndPoissonsRatio(3e5, .25); // FORNOW
 	mesh->addGravityForces(V3D(0., -10.)); 
     // mesh->pinToFloor(); 
 	// mesh->pinToLeftWall(); 
@@ -118,49 +120,49 @@ AppSoftLoco::AppSoftLoco() {
 void AppSoftLoco::processToggles() {
 	PlushApplication::processToggles();
 
-	if (CAPTURE_TEST_SESSION) {
-		if (!CAPTURED_TEST_SESSION_) {
-			CAPTURE_TEST_SESSION = false;
-			CAPTURED_TEST_SESSION_ = true;
+	// if (CAPTURE_TEST_SESSION) {
+	// 	if (!CAPTURED_TEST_SESSION_) {
+	// 		CAPTURE_TEST_SESSION = false;
+	// 		CAPTURED_TEST_SESSION_ = true;
 
-			xm1_capture = ik->xm1_curr;
-			vm1_capture = ik->vm1_curr;
-			auto uJ_curr_push = ik->uJ_curr;
-			auto xJ_curr_push = ik->xJ_curr;
-			auto x_push = mesh->x;
-			auto v_push = mesh->v;
-			{
-				uJ_capture.clear();
-				const int NUM_FRAMES = 48;
-				const int NUM_STEPS_ = 10;
-				for (int f = 0; f < NUM_FRAMES; ++f) { cout << endl << f + 1 << "/" << NUM_FRAMES << ": "; // TODO: nanogui::ProgressBar()
+	// 		xm1_capture = ik->xm1_curr;
+	// 		vm1_capture = ik->vm1_curr;
+	// 		auto uJ_curr_push = ik->uJ_curr;
+	// 		auto xJ_curr_push = ik->xJ_curr;
+	// 		auto x_push = mesh->x;
+	// 		auto v_push = mesh->v;
+	// 		{
+	// 			uJ_capture.clear();
+	// 			const int NUM_FRAMES = 48;
+	// 			const int NUM_STEPS_ = 10;
+	// 			for (int f = 0; f < NUM_FRAMES; ++f) { cout << endl << f + 1 << "/" << NUM_FRAMES << ": "; // TODO: nanogui::ProgressBar()
  
-					ik->xm1_curr = mesh->x;
-					ik->vm1_curr = mesh->v;
+	// 				ik->xm1_curr = mesh->x;
+	// 				ik->vm1_curr = mesh->v;
 
-					for (int s = 0; s < NUM_STEPS_; ++s) { cout << "(" << s + 1 << "/" << NUM_STEPS_ << ")"; 
-						ik->step();
-					} 
+	// 				for (int s = 0; s < NUM_STEPS_; ++s) { cout << "(" << s + 1 << "/" << NUM_STEPS_ << ")"; 
+	// 					ik->step();
+	// 				} 
 
-					dVector &u_f = ik->uJ_curr.front(); 
-					uJ_capture.push_back(u_f);
+	// 				dVector &u_f = ik->uJ_curr.front(); 
+	// 				uJ_capture.push_back(u_f);
 
-					mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, u_f) : mesh->solve_statics(ik->xm1_curr, u_f));
+	// 				mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, u_f) : mesh->solve_statics(ik->xm1_curr, u_f));
 
-				}
-			}
-			ik->xm1_curr = xm1_capture;
-			ik->vm1_curr = vm1_capture;
-			ik->uJ_curr = uJ_curr_push; 
-			ik->xJ_curr = xJ_curr_push; 
-			mesh->x = x_push;
-			mesh->v = v_push;
+	// 			}
+	// 		}
+	// 		ik->xm1_curr = xm1_capture;
+	// 		ik->vm1_curr = vm1_capture;
+	// 		ik->uJ_curr = uJ_curr_push; 
+	// 		ik->xJ_curr = xJ_curr_push; 
+	// 		mesh->x = x_push;
+	// 		mesh->v = v_push;
 
-			// TODO: CSTSimulationMesh2D::draw_silhouette(const dVector &x, const P3D &COLOR) {}
-			// TODO: Draw each subsequent step on screen.
+	// 		// TODO: CSTSimulationMesh2D::draw_silhouette(const dVector &x, const P3D &COLOR) {}
+	// 		// TODO: Draw each subsequent step on screen.
 
-		}
-	} 
+	// 	}
+	// } 
 }
 
 void AppSoftLoco::drawScene() {
@@ -188,7 +190,7 @@ void AppSoftLoco::drawScene() {
 		// -- 
 		if (!POPULATED_PREVIEW_TRAJEC) {
 			POPULATED_PREVIEW_TRAJEC = true;
-			uJ_preview = ik->uJ_curr;
+			uJ_preview = ik->uJ_curr();
 			for (int _ = 0; _ < LEADOUT_FRAMES; ++_) { uJ_preview.push_back(uJ_preview.back()); }
 			xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview); 
 		} 
@@ -241,7 +243,7 @@ void AppSoftLoco::process() {
 			// Zik->step();
 			// getchar();
 		}
-		if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, ik->uJ_curr[0]) : mesh->solve_statics(ik->xm1_curr, ik->uJ_curr[0])); }
+		if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, ik->uJ_curr()[0]) : mesh->solve_statics(ik->xm1_curr, ik->uJ_curr()[0])); }
 		// if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((Zik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(Zik->x_0, Zik->v_0, Zik->alphac_curr) : mesh->solve_statics(Zik->x_0, Zik->alphac_curr)); } // FORNOW
 	}
 }
