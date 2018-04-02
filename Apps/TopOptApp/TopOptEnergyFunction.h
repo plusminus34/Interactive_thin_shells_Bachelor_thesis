@@ -14,6 +14,8 @@ public:
 	void updateRegularizingSolutionTo(const dVector &currentP);
 	virtual double computeValue(const dVector& p);
 
+	double computeDeformationEnergyObjective();
+
 	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
 	virtual void addGradientTo(dVector& grad, const dVector& p);
 

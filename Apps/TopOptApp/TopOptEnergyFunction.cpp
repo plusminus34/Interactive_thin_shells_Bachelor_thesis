@@ -41,21 +41,31 @@ void TopOptEnergyFunction::setCurrentBestSolution(const dVector& p){
 	}
 }
 
+double TopOptEnergyFunction::computeDeformationEnergyObjective() {
+	double totalEnergy = 0;
+	for (uint i = 0; i < simMesh->elements.size(); i++)
+		totalEnergy += simMesh->elements[i]->getEnergy(simMesh->x, simMesh->X);//XXX / p[i];
+	return totalEnergy;
+}
+
 double TopOptEnergyFunction::computeValue(const dVector& p) {
 	double totalEnergy = 0;
-
-	simMesh->energyFunction->setToStaticsMode(0);
 
 	//================================================================================
 	//-- compliance/overall deformation energy of the simulation mesh
 	applyDensityParametersToSimMesh(p);
-	double tmpResidual = simMesh->targetSolverResidual;
-	simMesh->targetSolverResidual = 1e-50;
 	simMesh->solve_statics();
-	simMesh->targetSolverResidual = tmpResidual;
 
-	for (uint i = 0; i<simMesh->elements.size(); i++)
-		totalEnergy += simMesh->elements[i]->getEnergy(simMesh->x, simMesh->X) / p[i];
+	totalEnergy += computeDeformationEnergyObjective();
+
+	//================================================================================
+	//-- regularizer contribution
+	if (regularizer > 0) {
+		resize(tmpVec, p.size());
+		if (m_p0.size() != p.size()) m_p0 = p;
+		tmpVec = p - m_p0;
+		totalEnergy += 0.5*regularizer*tmpVec.dot(tmpVec);
+	}
 
 	return totalEnergy;
 }
@@ -68,13 +78,8 @@ void TopOptEnergyFunction::addGradientTo(dVector& grad, const dVector& p) {
 	int xDim = simMesh->x.size();
 	int pDim = p.size();
 
-	simMesh->energyFunction->setToStaticsMode(0);
-
 	applyDensityParametersToSimMesh(p);
-	double tmpResidual = simMesh->targetSolverResidual;
-	simMesh->targetSolverResidual = 1e-50;
 	simMesh->solve_statics();
-	simMesh->targetSolverResidual = tmpResidual;
 
 	//================================================================================
 	//-- compliance/overall deformation energy
@@ -83,9 +88,13 @@ void TopOptEnergyFunction::addGradientTo(dVector& grad, const dVector& p) {
 	//what we want is to know how the gradient of the total deformation energy changes with respect to x...
 	//dE / dx = dE0/dx' * p + dEp/dx
 
+
+	dVector tmpP = p; tmpP.setOnes();
+	//XXX applyDensityParametersToSimMesh(tmpP);
 	dVector dEdx; resize(dEdx, xDim);
 	for (uint i = 0; i<simMesh->elements.size(); i++)
 		simMesh->elements[i]->addEnergyGradientTo(simMesh->x, simMesh->X, dEdx);
+	applyDensityParametersToSimMesh(p);
 
 	//now, we need to know how x changes wrt to p to know how E changes with p: dE/dp = dE/dx * dx/dp. To compute dx/dp, we need to know how the gradient G of the entire energy driving the statics solve changes wrt x and p...
 
@@ -98,6 +107,7 @@ void TopOptEnergyFunction::addGradientTo(dVector& grad, const dVector& p) {
 	//ok, now we need to get the Jacobian dG/dp = dE0/dx * dP/dp, where dE0/dx is a jacobian where the block at (i,j) tells us how the energy of the jth element changes with respect to the coordinates of the ith node... all other energy terms are independent of p... Note that all other terms in the energy we use for static solves are not a function of p, and therefore their gradient wrt p vanishes
 	SparseMatrix dGdp; resize(dGdp, xDim, pDim);
 	dVector tmp; resize(tmp, xDim);
+	applyDensityParametersToSimMesh(tmpP);
 	dVector partialEpartialp; resize(partialEpartialp, pDim);
 	triplets.clear();
 	for (uint i = 0; i < simMesh->elements.size(); i++) {
@@ -107,14 +117,15 @@ void TopOptEnergyFunction::addGradientTo(dVector& grad, const dVector& p) {
 		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
 			for (int nIndex = 0; nIndex<3; nIndex++) {
 				for (int j = e->n[nIndex]->dataStartIndex; j < e->n[nIndex]->dataStartIndex + 2; j++)
-					triplets.push_back(MTriplet(j, i, tmp[j] / p[i]));
+					triplets.push_back(MTriplet(j, i, tmp[j]));
 			}
 		}
 
 		//NOTE: would need another step of the chain rule if the energy E is not linear in p
-		partialEpartialp[i] += simMesh->elements[i]->getEnergy(simMesh->x, simMesh->X) / p[i];
+		partialEpartialp[i] += simMesh->elements[i]->getEnergy(simMesh->x, simMesh->X);
 	}
 	dGdp.setFromTriplets(triplets.begin(), triplets.end());
+	applyDensityParametersToSimMesh(p);
 
 	//NOTE: we do need to multiply the matrix above by dP/dp - but it's just an identity when the SIMP method uses a rho of 1...
 
@@ -126,7 +137,14 @@ void TopOptEnergyFunction::addGradientTo(dVector& grad, const dVector& p) {
 	solver.compute(dGdx);
 	dVector dEdx_times_dxdp = (solver.solve(dEdx).transpose() * dGdp).transpose() * -1;
 
-	grad = dEdx_times_dxdp;// + partialEpartialp;
+	grad = dEdx_times_dxdp + partialEpartialp; //XXX
+
+   //================================================================================
+   //-- regularizer contribution
+	if (regularizer > 0) {
+		if (m_p0.size() != p.size()) m_p0 = p;
+		grad += (p - m_p0) * regularizer;
+	}
 }
 
 

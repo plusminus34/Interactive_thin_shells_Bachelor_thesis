@@ -25,8 +25,8 @@
 TopOptApp::TopOptApp() {
 	setWindowTitle("Test FEM Sim Application...");
 
-	int nRows = 50;
-	int nCols = 20;
+	int nRows = 30;
+	int nCols = 30;
 	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, nRows, nCols);
 
 	delete camera;
@@ -48,7 +48,7 @@ TopOptApp::TopOptApp() {
 	externalLoads.resize(simMesh->nodes.size());
 	resize(densityParams, simMesh->elements.size()); densityParams.setOnes();
 
-	externalLoads[nRows * (nCols -1)] = V3D(1,-1,0);
+//	externalLoads[nRows * (nCols -1)] = V3D(0.5,-0.5,0);
 
 	showGroundPlane = false;
 
@@ -72,6 +72,11 @@ TopOptApp::TopOptApp() {
 	mainMenu->addVariable("Shear modulus", shearModulus);
 	mainMenu->addVariable("Bulk modulus", bulkModulus);
 	mainMenu->addButton("set params", [this]() {
+		for (uint i = 0; i < simMesh->elements.size(); i++)
+			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])){
+				e->shearModulus = shearModulus;
+				e->bulkModulus = bulkModulus;
+			}		
 		applyDensityParametersToSimMesh();
 	});
 
@@ -139,17 +144,15 @@ TopOptApp::~TopOptApp(void){
 bool TopOptApp::onMouseMoveEvent(double xPos, double yPos) {
 	lastClickedRay = getRayFromScreenCoords(xPos, yPos);
 
-	if (GlobalMouseState::dragging == false && glfwGetKey(glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
+	if (GlobalMouseState::dragging == false) {
 		int elementID = simMesh->getSelectedElementID(lastClickedRay);
-		if (elementID >= 0) 
-			densityParams[elementID] = 0.001;
-//		Logger::consolePrint("element selected: %d\n", elementID);
-	}
-
-	if (GlobalMouseState::dragging == false && glfwGetKey(glfwWindow, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS) {
-		int elementID = simMesh->getSelectedElementID(lastClickedRay);
-		if (elementID >= 0)
-			densityParams[elementID] = 1;
+		if (elementID >= 0){
+			if (glfwGetKey(glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
+				densityParams[elementID] = 0.001;
+			if (glfwGetKey(glfwWindow, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
+				densityParams[elementID] = 1;
+			Logger::consolePrint("element %d has density %lf\n", elementID, densityParams[elementID]);
+		}
 	}
 
 	if (GlobalMouseState::dragging && GlobalMouseState::lButtonPressed && selectedNodeID < 0){
@@ -186,8 +189,6 @@ bool TopOptApp::onMouseMoveEvent(double xPos, double yPos) {
 	if (GLApplication::onMouseMoveEvent(xPos, yPos) == true) return true;
 	return false;
 }
-
-print out intensity value when the mouse hovers over elements
 
 //triggered when mouse buttons are pressed
 bool TopOptApp::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
@@ -274,7 +275,7 @@ void TopOptApp::process() {
 	if (optimizeTopology) {
 //		constraints->testJacobiansWithFD(densityParams);
 
-		energyFunction->testGradientWithFD(densityParams);
+//		energyFunction->testGradientWithFD(densityParams);
 
 /*		for (double val = 0.001; val < 1; val += 0.001) {
 			densityParams[684] = densityParams[685] = val;
@@ -312,7 +313,7 @@ void TopOptApp::process() {
 	}
 
 	double upperBound = initialMass * targetMassRatio / 100.0;
-	double defEnergy = simMesh->getCurrentDeformationEnergy();
+	double defEnergy = energyFunction->computeDeformationEnergyObjective();
 	Logger::consolePrint("total mass: %lf (upper bound: %lf), total deformation energy: %lf\n", currentMass, upperBound, defEnergy);
 
 //	Logger::consolePrint("overall deformation energy: %lf", simMesh->getCurrentDeformationEnergy());
