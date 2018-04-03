@@ -143,6 +143,8 @@ void MOPTWindow::addMenuItems() {
 		[this](bool val) {if (locomotionManager) locomotionManager->printDebugInfo = val; },
 		[this] { if (locomotionManager) return locomotionManager->printDebugInfo; else return false; });
 	theApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "IPv1", "IPv2" });
+	
+	theApp->mainMenu->addVariable("Optimization method", moptParams.optimizationMethod, true)->setItems({ "Newton", "BFGS" });
 
 	{
 		using namespace nanogui;
@@ -244,7 +246,7 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.checkDerivatives = locomotionManager->checkDerivatives;
 	moptParams.checkHessianPSD = locomotionManager->checkHessianPSD;
 	moptParams.hessCorrectionMethod = locomotionManager->hessCorrectionMethod;
-
+	moptParams.optimizationMethod = (MOPTParams::OptMethod) locomotionManager->optimizationMethod;
 }
 
 void MOPTWindow::syncMotionPlanParameters(){
@@ -278,6 +280,7 @@ void MOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->checkDerivatives = moptParams.checkDerivatives;
 	locomotionManager->checkHessianPSD = moptParams.checkHessianPSD;
 	locomotionManager->hessCorrectionMethod = moptParams.hessCorrectionMethod;
+	locomotionManager->optimizationMethod = (LocomotionEngineManager::OptMethod) moptParams.optimizationMethod;
 
 }
 
