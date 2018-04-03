@@ -42,7 +42,7 @@ void CSTSimulationMesh2D::spawnSimplexMesh() {
 	spawnMesh(nodes_as_vecP3D, simplices_as_vecVecInt);
 }
 
-void CSTSimulationMesh2D::spawnSavedMesh(const char *prefix) {
+void CSTSimulationMesh2D::spawnSavedMesh(const char *prefix, bool loadTendons) {
 	vector<P3D> nodes_as_vecP3D;
 	vector<vector<int>> simplices_as_vecVecInt;
 	vector<vector< pair<vector<int>, vector<double>> >> tendons_as_vecVecPairVecIntVecDouble;
@@ -79,7 +79,7 @@ void CSTSimulationMesh2D::spawnSavedMesh(const char *prefix) {
 	fclose(X_fp);
 
 	spawnMesh(nodes_as_vecP3D, simplices_as_vecVecInt);
-	loadSavedTendons(prefix);
+	if (loadTendons) { loadSavedTendons(prefix); }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

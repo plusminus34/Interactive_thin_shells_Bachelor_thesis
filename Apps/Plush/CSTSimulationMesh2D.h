@@ -18,7 +18,7 @@ public:
 	virtual int D();
 	virtual void add_simplices(const vector<vector<int>> &);
 	virtual void spawnSimplexMesh();
-	virtual void spawnSavedMesh(const char *);
+	virtual void spawnSavedMesh(const char *, bool loadTendons=true);
 
 // stelian impure virtuals
 public:

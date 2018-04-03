@@ -111,7 +111,7 @@ public:
 	void pinToCeiling();
 	void pinToLeftWall();
 	void spawnMesh(const vector<P3D> &, const vector<vector<int>> &);
-	virtual void spawnSavedMesh(const char *prefix) = 0;
+	virtual void spawnSavedMesh(const char *prefix, bool loadTendons=false) = 0;
 	void loadSavedTendons(const char *prefix);
 
 // simple utility/testing suite

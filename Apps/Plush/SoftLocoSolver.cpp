@@ -18,10 +18,13 @@
 
 // calculate_RJ
 // calculate_dRduJ
-// calculate_R
+// calculate_R, bool loadTendons
 // construct_U_barrier_functions
 
 SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
+
+	if ((K-1) % (Z-1) != 0) { error("NotImplementedError"); }
+
 	this->mesh = mesh; 
 	xm1_curr = mesh->x;
 	vm1_curr = mesh->v;
@@ -155,7 +158,57 @@ void SoftLocoSolver::draw() {
 
 		for (auto &plot : plots) {
 			*plot->origin = P3D(-1.5, -1.);
-			*plot->top_right = P3D(-.5, 1.);
+			*plot->top_right = *plot->origin + V3D(1., 2.);
+		};
+
+		XYPlot::uniformize_axes(plots);
+		for (auto &plot : plots) { plot->draw(); }
+		for (auto &plot : plots) { delete plot; }
+	}
+
+	{
+		auto K_range = linspace(K, 0., 1.);
+		auto Z_range = linspace(Z, 0., 1.);
+		vector<XYPlot*> plots;
+
+		// dVector POINT_ONE;  resize_fill(POINT_ONE, K, .1);
+		dVector ZERO; resize_zero(ZERO, K);
+		// vector<dVector> lines = { -POINT_ONE, ZERO, POINT_ONE };
+		vector<dVector> lines = { ZERO };
+		for (auto &line : lines) { plots.push_back(new XYPlot(K_range, dVector2vecDouble(line))); }
+		for (auto &plot : plots) { plot->SPEC_COLOR = WHITE; plot->DRAW_POINTS = false; plot->THIN_LINES = true; }
+
+		// FORNOW
+		auto uJ_curr_ = uJ_of_yJ(yJ_curr);
+		for (int t = 0; t < T(); ++t) {
+			vector<double> gamma_K; for (int k = 0; k < K; ++k) { gamma_K.push_back(mesh->tendons[t]->get_Gamma(xJ_curr[k], uJ_curr_[k])); };
+
+			XYPlot *plot_K = new XYPlot(K_range, gamma_K);
+			plot_K->THIN_LINES = true;
+			plot_K->DRAW_POINTS = false;
+			plot_K->SPEC_COLOR = kelly_color(t); 
+			plots.push_back(plot_K);
+
+		}
+
+
+		for (int t = 0; t < T(); ++t) {
+			vector<double> gamma_Z; for (int z = 0; z < Z; ++z) {
+				int k = k_of_z(z);
+				gamma_Z.push_back(mesh->tendons[t]->get_Gamma(xJ_curr[k], uJ_curr_[k]));
+			};
+
+			XYPlot *plot_Z = new XYPlot(Z_range, gamma_Z);
+			plot_Z->DRAW_LINES = false;
+			plot_Z->DRAW_POINTS = true;
+			plot_Z->SPEC_COLOR = kelly_color(t); 
+			plots.push_back(plot_Z);
+
+		}
+
+		for (auto &plot : plots) {
+			*plot->origin = P3D(-2.5, -1.);
+			*plot->top_right = *plot->origin + V3D(1., 2.);
 		};
 
 		XYPlot::uniformize_axes(plots);
@@ -209,50 +262,73 @@ void SoftLocoSolver::iterate() {
 	xJ_curr = xJ_of_yJ(yJ_curr);
 }
 
+Traj SoftLocoSolver::xZ_from_xJ(const Traj &xJ) {
+	// TODO: Rename *J -> *K
+	Traj xZ;
+	for (int z = 0; z < Z; ++z) {
+		int k = k_of_z(z);
+		xZ.push_back(xJ[k]);
+	}
+	return xZ;
+}
+
 void SoftLocoSolver::projectJ() { 
-	// TODO: This may actually end up being quite a non-trivial function to write.
 
+	// Approach 1: Ensure all tendons taught in all _keyframes_ 
 
-	// Traj x_tmp;
-	// Traj v_tmp;
-	// for (int i = 0; i < K; ++i) {
-	// 	const dVector x_start = (x_tmp.empty()) ? xm1_curr : x_tmp.back();
-	// 	const dVector v_start = (v_tmp.empty()) ? vm1_curr : v_tmp.back();
-	// 	// --
-	// 	dVector u_proj = uJ_curr[i];
-	// 	while (true) {
-	// 		bool PROJECTED = false;
+	Traj x_tmp;
+	Traj v_tmp;
 
-	// 		auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_start, v_start, u_proj) : mesh->solve_statics(x_start, u_proj);
-	// 		dVector x_proj = xv.first;
+	// Traj xZ_tmp = xZ_from_xJ(xJ_curr);
 
-	// 		for (int i = 0; i < T(); ++i) {
-	// 			double Gamma_i;
-	// 			Gamma_i = mesh->tendons[i]->get_Gamma(x_proj, u_proj);
+	for (int z = 0; z < Z; ++z) {
+		int k = k_of_z(z);
 
-	// 			if (Gamma_i < .0005) {
-	// 				PROJECTED = true;
-	// 				u_proj[i] += (.001 - Gamma_i);
-	// 			}
-	// 		}
+		const dVector &x_start = (x_tmp.empty()) ? xm1_curr : x_tmp.back();
+		const dVector &v_start = (v_tmp.empty()) ? vm1_curr : v_tmp.back();
+		// --
+		dVector &y_proj = yJ_curr[z]; // (*)
+		Traj uJ_proj = uJ_of_yJ(yJ_curr);
+		dVector u_proj = uJ_proj[k]; // TODO: RENAME uK_of_yZ
+		while (true) {
+			bool PROJECTED = false;
 
-	// 		if (!PROJECTED) {
-	// 			break;
-	// 		}
-	// 	}
-	// 	auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_start, v_start, u_proj) : mesh->solve_statics(x_start, u_proj);
-	// 	x_tmp.push_back(xv.first);
-	// 	v_tmp.push_back(xv.second);
-	// 	uJ_curr[i] = u_proj;
-	// 	xJ_curr[i] = xv.first;
-	// }
+			auto xv = mesh->solve_dynamics(x_start, v_start, u_proj);
+			dVector x_proj = xv.first;
 
-	// // if (false) { // VALIDATE_PROJECTION
-	// // 	Traj xJ_CHECK = solve_trajectory(mesh->timeStep, xm1_curr, vm1_curr, uJ_curr);
-	// // 	cout << "^^^" << endl;
-	// // 	Traj_equality_check(xJ_curr, xJ_CHECK);
-	// // 	cout << "vvv" << endl;
-	// // }
+			for (int i = 0; i < T(); ++i) {
+				double Gamma_i;
+				Gamma_i = mesh->tendons[i]->get_Gamma(x_proj, u_proj);
+
+				if (Gamma_i < .0005) {
+					PROJECTED = true;
+					y_proj[i] += .001 - Gamma_i; // yJ_curr[z];
+					uJ_proj = uJ_of_yJ(yJ_curr);
+					u_proj = uJ_proj[k]; // TODO: RENAME uK_of_yZ 
+				}
+			}
+
+			if (!PROJECTED) {
+				break;
+			}
+		}
+		yJ_curr[z] = y_proj;
+
+		// Integrate forward into [x|v]_start
+		if (z != Z - 1) {
+			for (int step = 0; step < (K - 1) / (Z - 1); ++step) {
+				const dVector &x_start = (x_tmp.empty()) ? xm1_curr : x_tmp.back();
+				const dVector &v_start = (v_tmp.empty()) ? vm1_curr : v_tmp.back();
+				// --
+				auto xv = mesh->solve_dynamics(x_start, v_start, uJ_proj[k + step]);
+				x_tmp.push_back(xv.first);
+				v_tmp.push_back(xv.second);
+			}
+		}
+	}
+
+	xJ_curr = xJ_of_yJ(yJ_curr); 
+
 }
 
 // Traj SoftLocoSolver::uJ_next(const Traj &uJ, const Traj &xJ) { 
@@ -373,6 +449,8 @@ double SoftLocoSolver::calculate_RJ(const Traj &uJ) {
 	for (int i = 0; i < K; ++i) {
 		RJ += calculate_R(uJ[i]);
 	}
+
+	RJ += 1e2*.5*uJ[0].squaredNorm();
 
 	if (SUBSEQUENT_u) {
 		for (int k = 0; k < K; ++k) {
@@ -743,6 +821,8 @@ vector<dRowVector> SoftLocoSolver::calculate_dRduJ(const Traj &uJ) {
 	for (auto &u : uJ) {
 		dRduJ.push_back(calculate_dRdu(u));
 	}
+
+	dRduJ[0] += 1e2*uJ[0].transpose();
  
 	if (SUBSEQUENT_u) {
 		for (int k = 0; k < K; ++k) {
@@ -959,7 +1039,7 @@ SparseMatrix SoftLocoSolver::calculate_H(const dVector &x, const dVector &u, con
 void SoftLocoSolver::construct_u_barrierFuncs() {
 	this->u_barrierFuncs.clear(); 
 	for (auto &tendon : mesh->tendons) {
-		double ALPHAC_MAX = .5*tendon->get_alphaz();
+		double ALPHAC_MAX = .33*tendon->get_alphaz(); // TODO: Make this a parameter
 		u_barrierFuncs.push_back(new ZeroCubicQuadratic(1e5, .01, V3D(ALPHAC_MAX, 0.), false, false));
 	}
 }
@@ -1046,3 +1126,47 @@ Traj SoftLocoSolver::unstack_Traj(const dVector &fooJ_d) {
 // cout << matRCstr(dxidxj[i][j]);
 // cout << matRCstr(dxkduk[j]);
 // cout << endl;
+
+	// TODO: This may actually end up being quite a non-trivial function to write.
+
+
+	// Traj x_tmp;
+	// Traj v_tmp;
+	// for (int i = 0; i < K; ++i) {
+	// 	const dVector x_start = (x_tmp.empty()) ? xm1_curr : x_tmp.back();
+	// 	const dVector v_start = (v_tmp.empty()) ? vm1_curr : v_tmp.back();
+	// 	// --
+	// 	dVector u_proj = uJ_curr[i];
+	// 	while (true) {
+	// 		bool PROJECTED = false;
+
+	// 		auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_start, v_start, u_proj) : mesh->solve_statics(x_start, u_proj);
+	// 		dVector x_proj = xv.first;
+
+	// 		for (int i = 0; i < T(); ++i) {
+	// 			double Gamma_i;
+	// 			Gamma_i = mesh->tendons[i]->get_Gamma(x_proj, u_proj);
+
+	// 			if (Gamma_i < .0005) {
+	// 				PROJECTED = true;
+	// 				u_proj[i] += (.001 - Gamma_i);
+	// 			}
+	// 		}
+
+	// 		if (!PROJECTED) {
+	// 			break;
+	// 		}
+	// 	}
+	// 	auto xv = (SOLVE_DYNAMICS) ? mesh->solve_dynamics(x_start, v_start, u_proj) : mesh->solve_statics(x_start, u_proj);
+	// 	x_tmp.push_back(xv.first);
+	// 	v_tmp.push_back(xv.second);
+	// 	uJ_curr[i] = u_proj;
+	// 	xJ_curr[i] = xv.first;
+	// }
+
+	// // if (false) { // VALIDATE_PROJECTION
+	// // 	Traj xJ_CHECK = solve_trajectory(mesh->timeStep, xm1_curr, vm1_curr, uJ_curr);
+	// // 	cout << "^^^" << endl;
+	// // 	Traj_equality_check(xJ_curr, xJ_CHECK);
+	// // 	cout << "vvv" << endl;
+	// // }

@@ -13,6 +13,9 @@ AppSoftLoco::AppSoftLoco() {
     setWindowTitle("AppSoftLoco");
 	this->showReflections = false;
 	this->showGroundPlane = false;
+	this->DEFAULT_CAM_TARGET______________ = P3D(-1., 0.);
+	this->DEFAULT_CAM_DISTANCE____________ = -4.5;
+	this->resetCamera();
 
 	const vector<string> TEST_CASES = {
 		"swingup",      // 0
@@ -24,14 +27,16 @@ AppSoftLoco::AppSoftLoco() {
 		"jumping_cube", // 6
 		"6ball",        // 7
 		"sugar",        // 8
+		"T"             // 9
 	};
-	string TEST_CASE = TEST_CASES[4];
+	string TEST_CASE = TEST_CASES[7];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
 	mesh = new CSTSimulationMesh2D();
 	mesh->timeStep = .01;
-	mesh->spawnSavedMesh(fName);
+	mesh->spawnSavedMesh(fName, true);
+	// mesh->rotate_mesh(PI);
 	mesh->nudge_mesh_up();
 	mesh->applyYoungsModulusAndPoissonsRatio(3e5, .25); // FORNOW
 	mesh->addGravityForces(V3D(0., -10.)); 
@@ -40,6 +45,7 @@ AppSoftLoco::AppSoftLoco() {
 	mesh->add_contacts_to_boundary_nodes();
 	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
 	// mesh->rig_boundary_simplices();
+	// mesh->rig_all_lower_simplices();
 
 	for (size_t i = 0; i < mesh->tendons.size(); ++i) {
 		mesh->tendons[i]->SPEC_COLOR = kelly_color(i);

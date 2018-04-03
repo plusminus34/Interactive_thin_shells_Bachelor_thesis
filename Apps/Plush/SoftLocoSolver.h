@@ -58,7 +58,7 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 64; // 48; // HORIZON
+	const int K = 64 + 1; // 48; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
@@ -67,8 +67,9 @@ public:
 public:
 	CubicHermiteSpline *god_spline;
 	SparseMatrix  dUdY_;
-	const int Z = 8;
+	const int Z = ((K - 1)/16) + 1;
 	const dVector knot_times = vecDouble2dVector(linspace(8, 0., 1.)); 
+	int k_of_z(const int &z) { return (K-1)/(Z-1)*z; }
 
 public:
 	double     calculate_OJ(const Traj &uJ);
@@ -111,6 +112,8 @@ public:
 	Traj xJ_of_yJ(const Traj &yJ);
 	Traj xJ_of_uJ(const Traj &uJ);
 	Traj uJ_of_yJ(const Traj &yJ);
+
+	Traj xZ_from_xJ(const Traj &xJ); // keyframes
 
 	// -- //
 
