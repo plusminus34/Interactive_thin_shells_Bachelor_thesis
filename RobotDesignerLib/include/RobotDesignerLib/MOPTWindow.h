@@ -51,6 +51,7 @@ struct MOPTParams {
 	bool checkHessianPSD = false;
 	double externalForceX = 0;
 	double externalForceZ = 0;
+	enum class OptMethod { Newton, lbfgs } optimizationMethod = OptMethod::Newton;
 };
 
 class RobotDesignerApp;
@@ -84,6 +85,7 @@ public:
 		IP_OPT_V2
 	};
 	OPT_OPTIONS optimizeOption = GRF_OPT_V2;
+	
 
 	bool printDebugInfo;
 	void addMenuItems();

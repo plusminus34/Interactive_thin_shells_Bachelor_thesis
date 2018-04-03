@@ -51,14 +51,17 @@ void CompositeWidget::draw(){
 bool CompositeWidget::onMouseMoveEvent(double xPos, double yPos) {
 	if (translateWidget.onMouseMoveEvent(xPos, yPos))
 	{
+		active = true;
 		pos = translateWidget.pos;
 		rotateWidget.pos = pos;
 		return true;
 	}
 	if (rotateWidget.onMouseMoveEvent(xPos, yPos))
 	{
+		active = true;
 		orientation = rotateWidget.orientation;
 		return true;
 	}
+	active = false;
 	return false;
 }
