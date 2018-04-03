@@ -30,7 +30,11 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	vm1_curr = mesh->v;
 	resize_zero(um1_curr, T()); // FORNOW
 
-	for (int _ = 0; _ < Z; ++_) { dVector ZERO_; resize_zero(ZERO_, T()); yJ_curr.push_back(ZERO_); }
+	for (int z = 0; z < Z; ++z) {
+		dVector SIGNAL_;
+		resize_fill(SIGNAL_, T(), .05 + abs(.1*sin(dfrac(z, Z - 1)*2.*PI)));
+		yJ_curr.push_back(SIGNAL_);
+	}
 	god_spline = new CubicHermiteSpline(vecDouble2dVector(linspace(Z, 0., 1.)), vecDouble2dVector(linspace(K, 0., 1.)));
 	dUdY_ = god_spline->calculate_dUdY_(); // FORNOW
 
@@ -450,7 +454,7 @@ double SoftLocoSolver::calculate_RJ(const Traj &uJ) {
 		RJ += calculate_R(uJ[i]);
 	}
 
-	RJ += 1e2*.5*uJ[0].squaredNorm();
+	RJ += 1e5*.5*uJ[0].squaredNorm();
 
 	if (SUBSEQUENT_u) {
 		for (int k = 0; k < K; ++k) {
@@ -822,7 +826,7 @@ vector<dRowVector> SoftLocoSolver::calculate_dRduJ(const Traj &uJ) {
 		dRduJ.push_back(calculate_dRdu(u));
 	}
 
-	dRduJ[0] += 1e2*uJ[0].transpose();
+	dRduJ[0] += 1e5*uJ[0].transpose();
  
 	if (SUBSEQUENT_u) {
 		for (int k = 0; k < K; ++k) {
