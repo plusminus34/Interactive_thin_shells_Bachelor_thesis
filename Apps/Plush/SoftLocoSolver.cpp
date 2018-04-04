@@ -19,7 +19,7 @@
 // calculate_RJ
 // calculate_dRduJ
 // calculate_R, bool loadTendons
-// construct_U_barrier_functions
+// construct_U_barrier_function
 
 SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 
@@ -32,7 +32,7 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 
 	for (int z = 0; z < Z; ++z) {
 		dVector SIGNAL_;
-		resize_fill(SIGNAL_, T(), .05 + abs(.1*sin(dfrac(z, Z - 1)*2.*PI)));
+		resize_fill(SIGNAL_, T(), 0.);// .05 + abs(.1*sin(dfrac(z, Z - 1)*2.*PI)));
 		yJ_curr.push_back(SIGNAL_);
 	}
 	god_spline = new CubicHermiteSpline(vecDouble2dVector(linspace(Z, 0., 1.)), vecDouble2dVector(linspace(K, 0., 1.)));
@@ -211,7 +211,7 @@ void SoftLocoSolver::draw() {
 		}
 
 		for (auto &plot : plots) {
-			*plot->origin = P3D(-2.5, -1.);
+			*plot->origin = P3D(-2.75, -1.);
 			*plot->top_right = *plot->origin + V3D(1., 2.);
 		};
 
@@ -253,7 +253,7 @@ void SoftLocoSolver::step() {
 	minimizer.minimize(objectiveFunction, uS, functionValue);
 	*/
 
-	if (PROJECT) { projectJ(); }
+	if (mesh->UNILATERAL_TENDONS &&PROJECT) { projectJ(); } 
 	for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
 		iterate();
 	}

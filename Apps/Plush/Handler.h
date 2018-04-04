@@ -2,13 +2,13 @@
 // --
 #include <MathLib\Plane.h>
 #include <GUILib\GLTrackingCamera.h>
+#include "Frame.h"
 
 class Handler {
 
 public:
 	Handler();
 	inline virtual void draw() {};
-	V3D *offset = new V3D();
 
 public:
 	P3D get_xy0(double, double);

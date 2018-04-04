@@ -7,7 +7,9 @@
 #include "CSTSimulationMesh2D.h"
 #include "CSTSimulationMesh3D.h"
 #include "P2DDragger.h"
+#include "P2DDragger_v2.h"
 #include "Poser.h"
+#include "Handler_v2.h"
 
 class AppSoftLoco : public PlushApplication {
 
@@ -25,6 +27,11 @@ public:
 
 public:
 	vector<P2DDragger *> COM_handlers;
+	vector<P3D*> test_points;
+	Frame test_frame = Frame(Matrix3x3::Identity(), V3D(1., 1.));
+	Handler_v2 test_handler;
+	// TODO: test out use of Handler_v2
+	// TODO: Consider exposing translation and scaling as widgets
 
 public:
 	bool PLAY_PREVIEW = false;

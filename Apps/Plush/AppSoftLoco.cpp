@@ -2,6 +2,14 @@
  
 using namespace nanogui;
 
+// TODO: Check gradient (you can clear out the rest of the FD code, add in one big check on dOdyJ --- feel free to leave other checks in for now)
+// TODO: You should be able to drag activations yourself
+// TODO: Save user-designed control-signals, and use as intial guess.
+//       -- // Perturb these control signals to get a sense of the envelope of convergence.
+// TODO: Add tangents
+// TODO: Scalar to reduce dynamics effects
+// TODO: SplinePlot
+
 // TODO: Material damping? / Regularizer?
 // TODO: Squishier material model?
 // TODO: Throttle contraction _rate_?
@@ -15,6 +23,7 @@ AppSoftLoco::AppSoftLoco() {
 	this->showGroundPlane = false;
 	this->DEFAULT_CAM_TARGET______________ = P3D(-1., 0.);
 	this->DEFAULT_CAM_DISTANCE____________ = -4.5;
+	this->SPOOF_2D_CAMERA = true;
 	this->resetCamera();
 
 	const vector<string> TEST_CASES = {
@@ -29,7 +38,7 @@ AppSoftLoco::AppSoftLoco() {
 		"sugar",        // 8
 		"T"             // 9
 	};
-	string TEST_CASE = TEST_CASES[7];
+	string TEST_CASE = TEST_CASES[4];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
@@ -52,7 +61,6 @@ AppSoftLoco::AppSoftLoco() {
 	}
 
 	for (int _ = 0; _ < 1000; ++_) { mesh->xvPair_INTO_Mesh(mesh->solve_dynamics()); }
-
 
 	// -- // ik
 	ik = new SoftLocoSolver(mesh);
@@ -89,6 +97,16 @@ AppSoftLoco::AppSoftLoco() {
 		ik->COMpJ.back() += V3D(1., 0.);
 		appIsRunning = false;
 	}
+
+
+	// FORNOW
+	{
+		for (int z = 0; z < ik->Z; ++z) { test_points.push_back(new P3D(dfrac(z, ik->Z - 1), 0.)); }
+		push_back_handler2(new P2DDragger_v2(test_points, &test_frame, true));
+	}
+
+
+
  
 	mainMenu->addGroup("app");
 	mainMenu->addVariable("SOLVE_IK", SOLVE_IK);
@@ -178,9 +196,24 @@ void AppSoftLoco::drawScene() {
 		// }
 	}
 
+	glMasterPush(); {
+		glPointSize(5.);
+		set_color(PUMPKIN);
+		glBegin(GL_POINTS); {
+			for (auto &test_point : test_points) {
+				glP3D(test_frame.local2world(*test_point));
+			}
+		} glEnd();
+	} glMasterPop();
+
 	DRAW_HANDLERS = false;
 	PlushApplication::drawScene(); 
 	draw_floor2d();
+
+	// BEG***
+	for (int z = 0; z < ik->Z; ++z) { ik->yJ_curr[z][1] = test_points[z]->y(); }
+	ik->xJ_curr = ik->xJ_of_yJ(ik->yJ_curr);
+	// ***END
 
 	if (!PLAY_PREVIEW && !PLAY_CAPTURE) {
 		desiredFrameRate = 30;
@@ -231,7 +264,7 @@ void AppSoftLoco::drawScene() {
 	PlushApplication::recordVideo();
 }
 
-void AppSoftLoco::process() { 
+void AppSoftLoco::process() {
 	if (!PLAY_PREVIEW) {
 		POPULATED_PREVIEW_TRAJEC = false;
 		// ik->COMp_FORNOW = ik->COMpJ[0]; // !!!
@@ -248,6 +281,10 @@ void AppSoftLoco::process() {
 			// cout << endl << "--> Z_ik" << endl;
 			// Zik->step();
 			// getchar();
+
+			// BEG***
+			for (int z = 0; z < ik->Z; ++z) { test_points[z]->y() = ik->yJ_curr[z][1]; }
+			// ***END
 		}
 		if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, ik->uJ_curr()[0]) : mesh->solve_statics(ik->xm1_curr, ik->uJ_curr()[0])); }
 		// if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((Zik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(Zik->x_0, Zik->v_0, Zik->alphac_curr) : mesh->solve_statics(Zik->x_0, Zik->alphac_curr)); } // FORNOW

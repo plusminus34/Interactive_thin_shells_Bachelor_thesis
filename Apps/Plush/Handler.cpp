@@ -3,7 +3,12 @@
 #include <GUILib\InteractiveWidget.h>
 #include <MathLib\Ray.h>
 
-Handler::Handler() { }
+// TODO: NewHandler which passes P3D's to the handlers.
+
+// NOTE: offset is local2world
+
+Handler::Handler() {
+}
  
 P3D Handler::get_xy0(double xPos, double yPos) {
 	Ray ray = InteractiveWidget::getRayFromScreenCoords(xPos, yPos);

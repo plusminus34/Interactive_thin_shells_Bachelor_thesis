@@ -7,6 +7,7 @@ class Frame {
 public:
 	Frame(const Matrix3x3 &, const P3D &);
 	Frame(const vector<V3D> &, const P3D &);
+	Frame();
 	virtual void draw();
 
 public:

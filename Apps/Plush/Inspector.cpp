@@ -78,7 +78,7 @@ pair<int, double> Inspector::get_closest_node_i(double xPos, double yPos) {
 	double min_d = INFINITY;
 	int min_i = -1;
 	for (size_t i = 0; i < nodes.size(); ++i) {
-		P3D p = nodes[i]->getCurrentPosition() + *offset; // FORNOW
+		P3D p = nodes[i]->getCurrentPosition(); // FORNOW
 		double d = ray.getDistanceToPoint(p);
 		bool better_candidate = (d < min_d);
 		if (d < min_d) {
@@ -103,8 +103,8 @@ pair<int, double> Inspector::get_closest_tendon_i(double xPos, double yPos) {
 		auto &tendon = tendons[i];
 		for (int a = 0; a < (int) tendon->waypoints.size() - 1; ++a) {
 			int b = a + 1;
-			P3D pa = tendon->waypoints[a]->getCurrentPosition() + *offset; // FORNOW
-			P3D pb = tendon->waypoints[b]->getCurrentPosition() + *offset; // FORNOW
+			P3D pa = tendon->waypoints[a]->getCurrentPosition(); // FORNOW
+			P3D pb = tendon->waypoints[b]->getCurrentPosition(); // FORNOW
 
 			double d = ray.getDistanceToSegment(pa, pb);
 			bool better_candidate = (d < min_d);
