@@ -52,6 +52,7 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	COMp_FORNOW = mesh->get_COM(mesh->X); 
 
 	objectiveFunction = new SoftLocoObjectiveFunction(this);
+
 }
 
 void SoftLocoSolver::draw() { 
@@ -406,6 +407,19 @@ Traj SoftLocoSolver::uJ_of_yJ(const Traj &yJ) {
 
 // -- //
 
+void SoftLocoSolver::FD_TEST_dOJdyJ(const Traj &yJ, const Traj &xJ) {
+	auto calculate_dOJdyJ_FD = [&](const Traj &yJ) -> Traj {
+		auto OJ_wrapper = [&](const dVector &yJ_d) -> double {
+			return calculate_OJ(unstack_Traj(yJ_d, Z)); 
+		};
+		return unstack_Traj(vec_FD(stack_vec_dVector(yJ), OJ_wrapper, FD_TEST_STEPSIZE), Z);
+	};
+
+	cout << "--> dOJdyJ" << endl;
+	// NOTE: anal version also changes when we run HP_NEWTON
+	Traj_equality_check(calculate_dOJdyJ_FD(yJ), calculate_dOdyJ(yJ, xJ)); 
+}
+
 double SoftLocoSolver::calculate_OJ(const Traj &yJ) {
 	auto uJ_ = uJ_of_yJ(yJ);
 	double QJ = calculate_QJ(uJ_);
@@ -506,8 +520,7 @@ vector<dRowVector> SoftLocoSolver::calculate_dOdyJ(const Traj &yJ, const Traj &x
 	vector<dRowVector> dRdyJ = dSTARduJ2dSTARdyJ(calculate_dRduJ(uJ_)); 
 	vector<dRowVector> dOdyJ;
 	for (int i = 0; i < Z; ++i) {
-		// dOduJ.push_back(dQduJ[i] + dRduJ[i]);
-		dOdyJ.push_back(dQdyJ[i]);
+		dOdyJ.push_back(dQdyJ[i] + dRdyJ[i]);
 	}
 	return dOdyJ;
 }
@@ -516,9 +529,9 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 
 	auto calculate_dQJduJ_FD = [&](const Traj &uJ, const Traj &xJ) -> Traj {
 		auto QJ_wrapper = [&](const dVector uJ_d) -> double {
-			return calculate_QJ(unstack_Traj(uJ_d)); 
+			return calculate_QJ(unstack_Traj(uJ_d, K)); 
 		};
-		return unstack_Traj(vec_FD(stack_vec_dVector(uJ), QJ_wrapper, 1e-8));
+		return unstack_Traj(vec_FD(stack_vec_dVector(uJ), QJ_wrapper, 1e-8), K);
 	};
  
 	vector<dVector> dQkdxk_FD; 
@@ -751,47 +764,34 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 		dQJduj.push_back(entry);
 	}
 
-
-	// cout << "dQJdyj" << endl;
-	// -- uJ is of form [ u@t0, u@t1, ... ]
-	// -- dQJdyj must be of form [ dQdyj@t0, dQdyj@t1, ... ]
-	// Traj uJT = zipunzip(uJ);
-	// auto &dudyT = god_spline->dUdY;
-	// vector<dRowVector> dQJdyT;
-	// for (auto &uT: uJT) {
-	// 	dQJdyT.push_back((dudyT*uT).transpose());
-	// }
-	// vector<dRowVector> dQJdyj = zipunzip(dQJdyT);
-
-	// if (TEST_Q_FD) {
-	// 	cout << "BEG.................................................." << endl;
-	// 	cout << "--> dxkduk" << endl;
-	// 	MTraj_equality_check(dxkduk_FD, dxkduk);
-	// 	// cout << "--> dxkdxkm1" << endl;
-	// 	// MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
-	// 	cout << "--> dxidxj" << endl;
-	// 	for (int i = 0; i < K; ++i) {
-	// 		cout << "----> ii = " << i << endl;
-	// 		vector<vector<MatrixNxM>> dxidxj_dense;
-	// 		for (auto &row : dxidxj) {
-	// 			vector<MatrixNxM> dense_row;
-	// 			for (auto &entry : row) {
-	// 				dense_row.push_back(entry.toDense());
-	// 			}
-	// 			dxidxj_dense.push_back(dense_row);
-	// 		}
-	// 		MTraj_equality_check(dxidxj_FD[i], dxidxj_dense[i]);
-	// 	}
-	// 	cout << "--> dQkdxk" << endl;
-	// 	Traj_equality_check(dQkdxk_FD, dQkdxk);
-	// 	cout << "..................................................END" << endl;
-	// }
+	if (TEST_Q_FD) {
+		cout << "BEG.................................................." << endl;
+		cout << "--> dxkduk" << endl;
+		MTraj_equality_check(dxkduk_FD, dxkduk);
+		// cout << "--> dxkdxkm1" << endl;
+		// MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
+		cout << "--> dxidxj" << endl;
+		for (int i = 0; i < K; ++i) {
+			cout << "----> ii = " << i << endl;
+			vector<vector<MatrixNxM>> dxidxj_dense;
+			for (auto &row : dxidxj) {
+				vector<MatrixNxM> dense_row;
+				for (auto &entry : row) {
+					dense_row.push_back(entry.toDense());
+				}
+				dxidxj_dense.push_back(dense_row);
+			}
+			MTraj_equality_check(dxidxj_FD[i], dxidxj_dense[i]);
+		}
+		cout << "--> dQkdxk" << endl;
+		Traj_equality_check(dQkdxk_FD, dQJdxk);
+		cout << "..................................................END" << endl;
+	}
  
 	if (TEST_Q_FD) {
-		cout << "XXX.................................................." << endl;
+		cout << "--> dQJduJ" << endl;
 		Traj STEP0 = calculate_dQJduJ_FD(uJ, xJ);
 		Traj_equality_check(STEP0, dQJduj);
-		cout << "..................................................XXX" << endl;
 	}
 
 	dxiduj_SAVED.clear();
@@ -839,19 +839,17 @@ vector<dRowVector> SoftLocoSolver::calculate_dRduJ(const Traj &uJ) {
 		}
 	}
 
-	/*
 	if (TEST_R_FD) {
 		auto calculate_dRJduJ_FD = [&](const Traj &uJ) -> Traj {
 			auto RJ_wrapper = [&](const dVector uJ_d) -> double {
-				return calculate_RJ(unstack_Traj(uJ_d)); 
+				return calculate_RJ(unstack_Traj(uJ_d, K)); 
 			};
-			return unstack_Traj(vec_FD(stack_vec_dVector(uJ), RJ_wrapper, 1e-5));
+			return unstack_Traj(vec_FD(stack_vec_dVector(uJ), RJ_wrapper, 1e-5), K);
 		};
 
 		cout << "--> dRJduJ" << endl;
 		Traj_equality_check(calculate_dRJduJ_FD(uJ), dRduJ); 
 	}
-	*/
 
 	return dRduJ;
 }
@@ -1099,6 +1097,14 @@ void SoftLocoSolver::Traj_equality_check(const Traj &T1, const Traj &T2) {
 	}
 };
 
+void SoftLocoSolver::MTraj_equality_check(const MTraj &T1, const vector<SparseMatrix> &T2) {
+	if (T1.size() != T2.size()) { error("SizeMismatchError"); }
+	for (size_t i = 0; i < T1.size(); ++i) {
+		cout << "--> k = " << i << " // ";
+		matrix_equality_check(T1[i], T2[i].toDense());
+	}
+};
+
 void SoftLocoSolver::MTraj_equality_check(const MTraj &T1, const MTraj &T2) {
 	if (T1.size() != T2.size()) { error("SizeMismatchError"); }
 	for (size_t i = 0; i < T1.size(); ++i) {
@@ -1107,10 +1113,10 @@ void SoftLocoSolver::MTraj_equality_check(const MTraj &T1, const MTraj &T2) {
 	}
 };
 
-Traj SoftLocoSolver::unstack_Traj(const dVector &fooJ_d) {
+Traj SoftLocoSolver::unstack_Traj(const dVector &fooJ_d, int VEC_SIZE) {
 	Traj fooJ;
-	int LEN = fooJ_d.size() / K;
-	for (int i = 0; i < K; ++i) {
+	int LEN = fooJ_d.size() / VEC_SIZE;
+	for (int i = 0; i < VEC_SIZE; ++i) {
 		fooJ.push_back(fooJ_d.segment(i*LEN, LEN));
 	} 
 	return fooJ;

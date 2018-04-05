@@ -9,6 +9,10 @@ using namespace nanogui;
 // TODO: Add tangents
 // TODO: Scalar to reduce dynamics effects
 // TODO: SplinePlot
+// TODO: Moritz's idea of optimizing for u_{-1}, essentially "picking the starting pose", right now we have a special case of u_{-1} = 0
+// -- Keep in mind that this is guarded by 1000 dynamics solves.
+// TODO: Projection
+// Bilateral tendons until then
 
 // TODO: Material damping? / Regularizer?
 // TODO: Squishier material model?
@@ -53,7 +57,7 @@ AppSoftLoco::AppSoftLoco() {
 	// mesh->pinToLeftWall(); 
 	mesh->add_contacts_to_boundary_nodes();
 	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
-	// mesh->rig_boundary_simplices();
+	if (TEST_CASE == "tri") { mesh->rig_boundary_simplices(); }
 	// mesh->rig_all_lower_simplices();
 
 	for (size_t i = 0; i < mesh->tendons.size(); ++i) {
@@ -113,9 +117,6 @@ AppSoftLoco::AppSoftLoco() {
 		}
 		push_back_handler2(new P2DDragger_v2(all_points, &test_frame, true, -1., .5));
 	}
-
-
-
  
 	mainMenu->addGroup("app");
 	mainMenu->addVariable("SOLVE_IK", SOLVE_IK);
@@ -145,58 +146,16 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("STEP", STEP);
 	mainMenu->addVariable("PLAY_PREVIEW", PLAY_PREVIEW);
 	mainMenu->addVariable("ENABLE_SPLINE_INTERACTION", ENABLE_SPLINE_INTERACTION);
-	mainMenu->addGroup("zz");
-	mainMenu->addVariable("CAPTURE_TEST_SESSION", CAPTURE_TEST_SESSION);
-	mainMenu->addVariable("PLAY_CAPTURE", PLAY_CAPTURE);
+	mainMenu->addButton("PROJECT SPLINE", [&]() {for (int t = 0; t < ik->T(); ++t) { test_splines[t][0]->y() = 0.; } });
+	mainMenu->addButton("FD_TEST_dOJdyJ", [&]() { ik->FD_TEST_dOJdyJ(ik->yJ_curr, ik->xJ_curr); });
+	mainMenu->addVariable("FD_TEST_STEPSIZE", ik->FD_TEST_STEPSIZE);
+	mainMenu->addVariable("_DYNAMICS_MAX_ITERATIONS", mesh->_DYNAMICS_MAX_ITERATIONS);
+	mainMenu->addVariable("_DYNAMICS_SOLVE_RESIDUAL", mesh->_DYNAMICS_SOLVE_RESIDUAL);
 	menuScreen->performLayout(); 
 }
 
 void AppSoftLoco::processToggles() {
 	PlushApplication::processToggles();
-
-	// if (CAPTURE_TEST_SESSION) {
-	// 	if (!CAPTURED_TEST_SESSION_) {
-	// 		CAPTURE_TEST_SESSION = false;
-	// 		CAPTURED_TEST_SESSION_ = true;
-
-	// 		xm1_capture = ik->xm1_curr;
-	// 		vm1_capture = ik->vm1_curr;
-	// 		auto uJ_curr_push = ik->uJ_curr;
-	// 		auto xJ_curr_push = ik->xJ_curr;
-	// 		auto x_push = mesh->x;
-	// 		auto v_push = mesh->v;
-	// 		{
-	// 			uJ_capture.clear();
-	// 			const int NUM_FRAMES = 48;
-	// 			const int NUM_STEPS_ = 10;
-	// 			for (int f = 0; f < NUM_FRAMES; ++f) { cout << endl << f + 1 << "/" << NUM_FRAMES << ": "; // TODO: nanogui::ProgressBar()
- 
-	// 				ik->xm1_curr = mesh->x;
-	// 				ik->vm1_curr = mesh->v;
-
-	// 				for (int s = 0; s < NUM_STEPS_; ++s) { cout << "(" << s + 1 << "/" << NUM_STEPS_ << ")"; 
-	// 					ik->step();
-	// 				} 
-
-	// 				dVector &u_f = ik->uJ_curr.front(); 
-	// 				uJ_capture.push_back(u_f);
-
-	// 				mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, u_f) : mesh->solve_statics(ik->xm1_curr, u_f));
-
-	// 			}
-	// 		}
-	// 		ik->xm1_curr = xm1_capture;
-	// 		ik->vm1_curr = vm1_capture;
-	// 		ik->uJ_curr = uJ_curr_push; 
-	// 		ik->xJ_curr = xJ_curr_push; 
-	// 		mesh->x = x_push;
-	// 		mesh->v = v_push;
-
-	// 		// TODO: CSTSimulationMesh2D::draw_silhouette(const dVector &x, const P3D &COLOR) {}
-	// 		// TODO: Draw each subsequent step on screen.
-
-	// 	}
-	// } 
 }
 
 void AppSoftLoco::drawScene() {
@@ -247,14 +206,13 @@ void AppSoftLoco::drawScene() {
 		ik->xJ_curr = ik->xJ_of_yJ(ik->yJ_curr);
 	}
 
-	if (!PLAY_PREVIEW && !PLAY_CAPTURE) {
+	if (!PLAY_PREVIEW) {
 		desiredFrameRate = 30;
 		// --
 		PREVIEW_i = -LEADIN_FRAMES;
-		CAPTURE_i = 0;
 		// --
-		mesh->draw(); // FORNOW 
 		ik->draw();
+		mesh->draw(); // FORNOW 
 
 	} else if (PLAY_PREVIEW) { 
 		desiredFrameRate = 100;
@@ -273,22 +231,6 @@ void AppSoftLoco::drawScene() {
 			mesh->draw(xJ_preview[PREVIEW_i], uJ_preview[PREVIEW_i]); 
 		} else {
 			mesh->draw(xJ_preview.back(), uJ_preview.back()); 
-		}
-
-	} else if (PLAY_CAPTURE && !uJ_capture.empty()) {
-
-		if (!POPULATED_CAPTURE_TRAJEC) {
-			POPULATED_CAPTURE_TRAJEC = true;
-			xJ_capture = ik->solve_trajectory(mesh->timeStep, xm1_capture, vm1_capture, uJ_capture); 
-		} 
-
-		CAPTURE_i++;
-		if (CAPTURE_i < 0) {
-			mesh->draw(xm1_capture);
-		} else if (CAPTURE_i < (int)xJ_capture.size()) {
-			mesh->draw(xJ_capture[CAPTURE_i], uJ_capture[CAPTURE_i]);
-		} else {
-			mesh->draw(xJ_capture.back(), uJ_capture.back()); 
 		}
 
 	}

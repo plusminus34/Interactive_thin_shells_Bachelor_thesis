@@ -6,7 +6,8 @@ SoftLocoObjectiveFunction::SoftLocoObjectiveFunction(SoftLocoSolver *solver){
 }
 
 double SoftLocoObjectiveFunction::computeValue(const dVector &uS){
-	return solver->calculate_OJ(solver->unstack_Traj(uS));
+	return 0.;
+	// return solver->calculate_OJ(solver->unstack_Traj(uS));
 }
 
 void SoftLocoObjectiveFunction::addGradientTo(dVector &G, const dVector &_) { // FORNOW: Assumes this function is _only_ ever called @(uJ_curr, xJ_curr)

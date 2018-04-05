@@ -46,19 +46,6 @@ public:
 	vector<dVector> xJ_preview;
 
 public:
-	bool CAPTURE_TEST_SESSION = false;
-	bool CAPTURED_TEST_SESSION_ = false;
-	// --
-	bool PLAY_CAPTURE = false;
-	bool POPULATED_CAPTURE_TRAJEC = false;
-	int CAPTURE_i = -30;
-	vector<dVector> uJ_capture;
-	vector<dVector> xJ_capture;
-	// -- 
-	dVector xm1_capture;
-	dVector vm1_capture;
-
-public:
 	bool SOLVE_IK = true;
 	bool INTEGRATE_FORWARD_IN_TIME = true;
 

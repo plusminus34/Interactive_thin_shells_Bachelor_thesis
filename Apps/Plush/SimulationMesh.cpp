@@ -217,13 +217,13 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const 
 			energyFunction->testHessianWithFD(xSolver);
 		}
 
-		int    MAX_ITERATIONS = 10;
-		double SOLVE_RESIDUAL = 10e-5;
+		int    MAX_ITERATIONS = _DYNAMICS_MAX_ITERATIONS; //100;
+		double SOLVE_RESIDUAL = _DYNAMICS_SOLVE_RESIDUAL; // 1e-6;
 		int MAX_LINE_SEARCH_ITERATIONS = 15;
 		double LINE_SEARCH_START_VALUE = 1.;
 		if (HIGH_PRECISION_NEWTON) {
 			MAX_ITERATIONS = 1000;
-			SOLVE_RESIDUAL = 1e-8;
+			SOLVE_RESIDUAL = 1e-10;
 			MAX_LINE_SEARCH_ITERATIONS = 48;
 			LINE_SEARCH_START_VALUE = 1.;
 		}

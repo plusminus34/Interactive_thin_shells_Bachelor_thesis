@@ -67,9 +67,13 @@ public:
 public:
 	CubicHermiteSpline *god_spline;
 	SparseMatrix  dUdY_;
-	const int Z = ((K - 1)/8) + 1;
+	const int Z = ((K - 1) / 8) + 1;
 	const dVector knot_times = vecDouble2dVector(linspace(8, 0., 1.)); 
 	int k_of_z(const int &z) { return (K-1)/(Z-1)*z; }
+
+public:
+	void FD_TEST_dOJdyJ(const Traj &yJ, const Traj &xJ);
+	double FD_TEST_STEPSIZE = 1.5e-5;
 
 public:
 	double     calculate_OJ(const Traj &uJ);
@@ -151,7 +155,8 @@ public:
 	void Traj_equality_check(const Traj &, const Traj &);
 	void Traj_equality_check(const Traj &, const vector<dRowVector> &);
 	void MTraj_equality_check(const MTraj &, const MTraj &);
-	Traj unstack_Traj(const dVector &);
+	void MTraj_equality_check(const MTraj &T1, const vector<SparseMatrix> &T2);
+	Traj unstack_Traj(const dVector &, int VEC_SIZE);
 	
 	template<typename T>
 	vector<T> zipunzip(const vector<T> &in) {
