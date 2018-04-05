@@ -79,6 +79,7 @@ AppSoftLoco::AppSoftLoco() {
 		}
 	}
 	INTEGRATE_FORWARD_IN_TIME = false;
+	mesh->UNILATERAL_TENDONS = false;
 
 	ik->PROJECT = false;
 	ik->LINEAR_APPROX = false;
