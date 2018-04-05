@@ -76,7 +76,7 @@ AppSoftLoco::AppSoftLoco() {
 	}
 	INTEGRATE_FORWARD_IN_TIME = false;
 
-	ik->PROJECT = true;
+	ik->PROJECT = false;
 	ik->LINEAR_APPROX = false;
 	// ik->r_u_ = .1;
 	ik->NUM_ITERS_PER_STEP = 1;
@@ -101,8 +101,17 @@ AppSoftLoco::AppSoftLoco() {
 
 	// FORNOW
 	{
-		for (int z = 0; z < ik->Z; ++z) { test_points.push_back(new P3D(dfrac(z, ik->Z - 1), 0.)); }
-		push_back_handler2(new P2DDragger_v2(test_points, &test_frame, true));
+		vector<P3D *> all_points;
+		for (int i = 0; i < ik->T(); ++i) {
+			vector<P3D *> test_spline;
+			for (int z = 0; z < ik->Z; ++z) {
+				P3D *point = new P3D(dfrac(z, ik->Z - 1), 0.);
+				test_spline.push_back(point);
+				all_points.push_back(point);
+			}
+			test_splines.push_back(test_spline);
+		}
+		push_back_handler2(new P2DDragger_v2(all_points, &test_frame, true, -1., .5));
 	}
 
 
@@ -135,6 +144,7 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("appIsRunning", appIsRunning);
 	mainMenu->addVariable("STEP", STEP);
 	mainMenu->addVariable("PLAY_PREVIEW", PLAY_PREVIEW);
+	mainMenu->addVariable("ENABLE_SPLINE_INTERACTION", ENABLE_SPLINE_INTERACTION);
 	mainMenu->addGroup("zz");
 	mainMenu->addVariable("CAPTURE_TEST_SESSION", CAPTURE_TEST_SESSION);
 	mainMenu->addVariable("PLAY_CAPTURE", PLAY_CAPTURE);
@@ -197,23 +207,45 @@ void AppSoftLoco::drawScene() {
 	}
 
 	glMasterPush(); {
+		test_frame.glAffineTransform();
+		// --
 		glPointSize(5.);
-		set_color(PUMPKIN);
+		glLineWidth(2.);
+		// --
 		glBegin(GL_POINTS); {
-			for (auto &test_point : test_points) {
-				glP3D(test_frame.local2world(*test_point));
+			for (int i = 0; i < ik->T(); ++i) { 
+				set_color(kelly_color(i));
+				auto &test_spline = test_splines[i];
+				for (auto &test_point : test_spline) {
+					glP3D(*test_point);
+				}
 			}
 		} glEnd();
+		// --
+		auto uJ_curr_T = ik->zipunzip(ik->uJ_of_yJ(ik->yJ_curr));
+		auto K_range = linspace(ik->K, 0., 1.);
+		for (int t = 0; t < ik->T(); ++t) {
+			glBegin(GL_LINE_STRIP); {
+				set_color(kelly_color(t));
+				// (*)
+				glvecP3D(zip_vec_dVector2vecP3D({ vecDouble2dVector(K_range), uJ_curr_T[t]/mesh->tendons[t]->get_alphaz() }));
+			} glEnd();
+		} 
 	} glMasterPop();
 
 	DRAW_HANDLERS = false;
 	PlushApplication::drawScene(); 
 	draw_floor2d();
 
-	// BEG***
-	for (int z = 0; z < ik->Z; ++z) { ik->yJ_curr[z][1] = test_points[z]->y(); }
-	ik->xJ_curr = ik->xJ_of_yJ(ik->yJ_curr);
-	// ***END
+	if (ENABLE_SPLINE_INTERACTION) {
+		for (int t = 0; t < ik->T(); ++t) {
+			auto &test_spline = test_splines[t];
+			for (int z = 0; z < ik->Z; ++z) {
+				ik->yJ_curr[z][t] = test_spline[z]->y() * mesh->tendons[t]->get_alphaz();
+			}
+		}
+		ik->xJ_curr = ik->xJ_of_yJ(ik->yJ_curr);
+	}
 
 	if (!PLAY_PREVIEW && !PLAY_CAPTURE) {
 		desiredFrameRate = 30;
@@ -283,7 +315,12 @@ void AppSoftLoco::process() {
 			// getchar();
 
 			// BEG***
-			for (int z = 0; z < ik->Z; ++z) { test_points[z]->y() = ik->yJ_curr[z][1]; }
+			for (int t = 0; t < ik->T(); ++t) {
+				auto &test_spline = test_splines[t];
+				for (int z = 0; z < ik->Z; ++z) {
+					test_spline[z]->y() = ik->yJ_curr[z][t]/mesh->tendons[t]->get_alphaz();
+				}
+			}
 			// ***END
 		}
 		if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, ik->uJ_curr()[0]) : mesh->solve_statics(ik->xm1_curr, ik->uJ_curr()[0])); }

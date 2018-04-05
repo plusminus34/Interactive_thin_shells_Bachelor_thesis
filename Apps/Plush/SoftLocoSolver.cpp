@@ -161,7 +161,7 @@ void SoftLocoSolver::draw() {
 		}
 
 		for (auto &plot : plots) {
-			*plot->origin = P3D(-1.5, -1.);
+			*plot->origin = P3D(2., -1.);
 			*plot->top_right = *plot->origin + V3D(1., 2.);
 		};
 
@@ -454,7 +454,7 @@ double SoftLocoSolver::calculate_RJ(const Traj &uJ) {
 		RJ += calculate_R(uJ[i]);
 	}
 
-	RJ += 1e5*.5*uJ[0].squaredNorm();
+	// RJ += 1e5*.5*uJ[0].squaredNorm();
 
 	if (SUBSEQUENT_u) {
 		for (int k = 0; k < K; ++k) {
@@ -826,7 +826,7 @@ vector<dRowVector> SoftLocoSolver::calculate_dRduJ(const Traj &uJ) {
 		dRduJ.push_back(calculate_dRdu(u));
 	}
 
-	dRduJ[0] += 1e5*uJ[0].transpose();
+	// dRduJ[0] += 1e5*uJ[0].transpose();
  
 	if (SUBSEQUENT_u) {
 		for (int k = 0; k < K; ++k) {
@@ -1043,7 +1043,7 @@ SparseMatrix SoftLocoSolver::calculate_H(const dVector &x, const dVector &u, con
 void SoftLocoSolver::construct_u_barrierFuncs() {
 	this->u_barrierFuncs.clear(); 
 	for (auto &tendon : mesh->tendons) {
-		double ALPHAC_MAX = .33*tendon->get_alphaz(); // TODO: Make this a parameter
+		double ALPHAC_MAX = .5*tendon->get_alphaz(); // TODO: Make this a parameter
 		u_barrierFuncs.push_back(new ZeroCubicQuadratic(1e5, .01, V3D(ALPHAC_MAX, 0.), false, false));
 	}
 }

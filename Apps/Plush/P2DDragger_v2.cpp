@@ -3,10 +3,11 @@
 #include <GUILib/InteractiveWidget.h>
 #include <MathLib/Ray.h>
 
-P2DDragger_v2::P2DDragger_v2(const vector<P3D *> &points, Frame *frame, bool FREEZE_X, bool FREEZE_Y) : Handler_v2(frame) {
+P2DDragger_v2::P2DDragger_v2(const vector<P3D *> &points, Frame *frame, bool FREEZE_X, double MIN_Y, double MAX_Y) : Handler_v2(frame) {
 	this->points = points;
 	this->FREEZE_X = FREEZE_X;
-	this->FREEZE_Y = FREEZE_Y;
+	this->MIN_Y = MIN_Y;
+	this->MAX_Y = MAX_Y;
 }
 
 // P2DDragger_v2::P2DDragger_v2(P3D *point, Frame *frame) : Handler_v2() {
@@ -37,7 +38,7 @@ bool P2DDragger_v2::mouse_move_(P3D xy0) {
 	if (LEFT_CLICKED) {
 		if (selected_point_i != -1) {
 			if (!FREEZE_X) { points[selected_point_i]->x() = xy0.x(); };
-			if (!FREEZE_Y) { points[selected_point_i]->y() = xy0.y(); };
+			{ points[selected_point_i]->y() = clamp(xy0.y(), MIN_Y, MAX_Y); };
 			return true;
 		}
 	}

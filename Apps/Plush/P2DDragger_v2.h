@@ -7,13 +7,13 @@
 class P2DDragger_v2 : public Handler_v2 {
 
 public:
-	P2DDragger_v2(const vector<P3D *> &, Frame *frame=nullptr, bool FREEZE_X=false, bool FREEZE_Y=false);
-	// P2DDragger_v2(P3D *p, Frame *frame);
+	P2DDragger_v2(const vector<P3D *> &, Frame *frame=nullptr, bool FREEZE_X=false, double MIN_Y=-INFINITY, double MAX_Y=INFINITY);
 
 public:
 	vector<P3D *> points;
 	bool FREEZE_X;
-	bool FREEZE_Y;
+	double MIN_Y;
+	double MAX_Y;
 
 public:
 	int get_closest_point_i(P3D xy0);
