@@ -33,6 +33,10 @@ public:
 
 	bool printDebugInfo;
 	double regularizer = 0.001;
+
+	double smoothnessObjectiveWeight = 0.001;
+	double binaryDensityObjectiveWeight = 0.001;
+
 private:
 
 	//this is the configuration of the sim mesh that is used as a regularizing solution...

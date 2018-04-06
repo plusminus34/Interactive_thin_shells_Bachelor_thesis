@@ -9,6 +9,7 @@
 */
 
 class SimulationMesh;
+class SimMeshElement;
 
 class Node{
 public:
@@ -28,6 +29,8 @@ public:
 	bool fixed = false; P3D fixedPos;
 
 	double avgDefEnergyForDrawing = 0;
+
+	DynamicArray<SimMeshElement*> adjacentElements;
 
 public:
 	Node(SimulationMesh* m, int nodeIndex, int dataStartIndex, int dimSize);

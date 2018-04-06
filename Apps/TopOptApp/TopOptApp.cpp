@@ -25,8 +25,8 @@
 TopOptApp::TopOptApp() {
 	setWindowTitle("Test FEM Sim Application...");
 
-	int nRows = 30;
-	int nCols = 30;
+	int nRows = 60;
+	int nCols = 20;
 	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, nRows, nCols);
 
 	delete camera;
@@ -72,11 +72,6 @@ TopOptApp::TopOptApp() {
 	mainMenu->addVariable("Shear modulus", shearModulus);
 	mainMenu->addVariable("Bulk modulus", bulkModulus);
 	mainMenu->addButton("set params", [this]() {
-		for (uint i = 0; i < simMesh->elements.size(); i++)
-			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])){
-				e->shearModulus = shearModulus;
-				e->bulkModulus = bulkModulus;
-			}		
 		applyDensityParametersToSimMesh();
 	});
 
@@ -103,15 +98,49 @@ TopOptApp::TopOptApp() {
 	slider->setValue((float)targetMassRatio);
 	slider->setCallback([this](float val) { targetMassRatio = val; });
 
-	menuScreen->performLayout();
-
 	energyFunction = new TopOptEnergyFunction(simMesh);
 	constraints = new TopOptConstraints(simMesh);
 	constrainedObjectiveFunction = new ConstrainedObjectiveFunction(energyFunction, constraints);
+
+	panel = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", panel);
+	panel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+	label = new nanogui::Label(panel, "Sparsity Objective Weight", "sans-bold");
+	slider = new nanogui::Slider(panel);
+	slider->setValue(0.001f);
+	slider->setFixedWidth(80);
+	range.first = 0; range.second = 0.1;
+	slider->setRange(range);
+	slider->setValue((float)energyFunction->binaryDensityObjectiveWeight);
+	slider->setCallback([this](float val) { energyFunction->binaryDensityObjectiveWeight = val; });
+
+	panel = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", panel);
+	panel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+	label = new nanogui::Label(panel, "Smoothness Objective Weight", "sans-bold");
+	slider = new nanogui::Slider(panel);
+	slider->setValue(0.01f);
+	slider->setFixedWidth(80);
+	range.first = 0; range.second = 0.1;
+	slider->setRange(range);
+	slider->setValue((float)energyFunction->smoothnessObjectiveWeight);
+	slider->setCallback([this](float val) { energyFunction->smoothnessObjectiveWeight = val; });
+
+
+	menuScreen->performLayout();
+	applyDensityParametersToSimMesh();
 }
 
 void TopOptApp::applyDensityParametersToSimMesh() {
 	constraints->setTotalMassUpperBound(initialMass * targetMassRatio / 100.0);
+
+	for (uint i = 0; i < simMesh->elements.size(); i++)
+		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
+			e->shearModulus = shearModulus;
+			e->bulkModulus = bulkModulus;
+		}
 
 	//make sure we're on the constraint manifold
 	double currentMass = 0;
@@ -148,7 +177,7 @@ bool TopOptApp::onMouseMoveEvent(double xPos, double yPos) {
 		int elementID = simMesh->getSelectedElementID(lastClickedRay);
 		if (elementID >= 0){
 			if (glfwGetKey(glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
-				densityParams[elementID] = 0.001;
+				densityParams[elementID] = 0.00001;
 			if (glfwGetKey(glfwWindow, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
 				densityParams[elementID] = 1;
 			Logger::consolePrint("element %d has density %lf\n", elementID, densityParams[elementID]);

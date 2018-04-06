@@ -124,11 +124,26 @@ void CSTSimulationMesh2D::readMeshFromFile(const char* fName){
 		fscanf(fp, "%d %d %d", &i1, &i2, &i3);
 
 		CSTElement2D* newElem = new CSTElement2D(this, nodes[i1], nodes[i2], nodes[i3]);
+		newElem->elementIndex = elements.size();
 		elements.push_back(newElem);
+		
+		nodes[i1]->adjacentElements.push_back(newElem);
+		nodes[i2]->adjacentElements.push_back(newElem);
+		nodes[i3]->adjacentElements.push_back(newElem);
 	}
 
 	fclose(fp);
 
+	for (SimMeshElement* sme : elements) {
+		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(sme)) {
+			for (int i = 0; i < 3; i++) {
+				for (SimMeshElement* sme2 : e->n[i]->adjacentElements) {
+					if (sme2 != sme)
+						sme->adjacentElements.push_back(sme2);
+				}
+			}
+		}
+	}
 
 	energyFunction = new FEMEnergyFunction();
 	energyFunction->initialize(this);

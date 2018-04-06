@@ -6,7 +6,7 @@ SimulationMesh::SimulationMesh(){
 	energyFunction = NULL;
 	checkDerivatives = false;
 
-	targetSolverResidual = 1e-5;
+	targetSolverResidual = 1e-10;
 }
 
 SimulationMesh::~SimulationMesh(){
