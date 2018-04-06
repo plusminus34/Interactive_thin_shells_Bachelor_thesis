@@ -41,6 +41,10 @@ using std::string;
 using std::shared_ptr;
 using std::to_string;
 
+typedef vector<dVector> Traj;
+typedef vector<MatrixNxM> MTraj;
+typedef Eigen::RowVectorXd dRowVector;
+
 const auto vector_equality_check = [] (const auto &fd, const auto &anal) {
 	bool ret = true;
 
@@ -615,6 +619,24 @@ const auto vecDouble2dVector = [](const vector<double> &in) -> dVector {
 		N += dvec.size();
 	}
 	dVector out; resize_zero(out, N);
+
+	int o = 0;
+	for (auto &dvec : in) {
+		out.segment(o, dvec.size()) = dvec;
+		o += dvec.size();
+	}
+
+	return out;
+
+ };
+
+ const auto stack_vec_dRowVector = [](const vector<dRowVector> &in) -> dRowVector {
+
+	int N = 0;
+	for (auto &dvec : in) {
+		N += dvec.size();
+	}
+	dRowVector out; resize_zero(out, N);
 
 	int o = 0;
 	for (auto &dvec : in) {

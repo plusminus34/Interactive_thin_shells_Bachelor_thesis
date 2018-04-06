@@ -42,7 +42,7 @@ AppSoftLoco::AppSoftLoco() {
 		"sugar",        // 8
 		"T"             // 9
 	};
-	string TEST_CASE = TEST_CASES[4];
+	string TEST_CASE = TEST_CASES[0];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
@@ -54,10 +54,11 @@ AppSoftLoco::AppSoftLoco() {
 	mesh->applyYoungsModulusAndPoissonsRatio(3e5, .25); // FORNOW
 	mesh->addGravityForces(V3D(0., -10.)); 
     // mesh->pinToFloor(); 
-	// mesh->pinToLeftWall(); 
-	mesh->add_contacts_to_boundary_nodes();
+	mesh->pinToLeftWall(); 
+	// mesh->add_contacts_to_boundary_nodes();
 	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
 	if (TEST_CASE == "tri") { mesh->rig_boundary_simplices(); }
+	// mesh->rig_boundary_simplices();
 	// mesh->rig_all_lower_simplices();
 
 	for (size_t i = 0; i < mesh->tendons.size(); ++i) {
@@ -99,7 +100,7 @@ AppSoftLoco::AppSoftLoco() {
 		ik->REGULARIZE_u = false;
 		ik->SUBSEQUENT_u = false;
 		mesh->HIGH_PRECISION_NEWTON = false;
-		ik->COMpJ.back() += V3D(1., 0.);
+		ik->COMpJ.back() += V3D(-.2, .4); 
 		appIsRunning = false;
 	}
 
@@ -148,6 +149,10 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("PLAY_PREVIEW", PLAY_PREVIEW);
 	mainMenu->addVariable("ENABLE_SPLINE_INTERACTION", ENABLE_SPLINE_INTERACTION);
 	mainMenu->addButton("PROJECT SPLINE", [&]() {for (int t = 0; t < ik->T(); ++t) { test_splines[t][0]->y() = 0.; } });
+	mainMenu->addButton("GRADIENT MAGNITUDE", [&]() { cout << "|G| = " << stack_vec_dRowVector(ik->calculate_dOdyJ(ik->yJ_curr, ik->xJ_curr)).squaredNorm() << endl; });
+	mainMenu->addButton("OBJECTIVE_VALUE", [&]() { cout << " O  = " << ik->calculate_OJ(ik->yJ_curr)   << endl; }); 
+	mainMenu->addButton("Q_VALUE",         [&]() { cout << " Q  = " << ik->calculate_QJ(ik->uJ_curr()) << endl; }); 
+	mainMenu->addButton("R_VALUE",         [&]() { cout << " R  = " << ik->calculate_RJ(ik->uJ_curr()) << endl; }); 
 	mainMenu->addButton("FD_TEST_dOJdyJ", [&]() { ik->FD_TEST_dOJdyJ(ik->yJ_curr, ik->xJ_curr); });
 	mainMenu->addVariable("FD_TEST_STEPSIZE", ik->FD_TEST_STEPSIZE);
 	mainMenu->addVariable("_DYNAMICS_MAX_ITERATIONS", mesh->_DYNAMICS_MAX_ITERATIONS);

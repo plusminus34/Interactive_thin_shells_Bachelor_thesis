@@ -258,6 +258,7 @@ void SoftLocoSolver::step() {
 	for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
 		iterate();
 	}
+	// cout << " O  = " << calculate_OJ(yJ_curr) << endl;
 }
 
 void SoftLocoSolver::iterate() {
@@ -348,6 +349,7 @@ void SoftLocoSolver::projectJ() {
 
 Traj SoftLocoSolver::yJ_next(const Traj &yJ, const Traj &xJ) { 
 	vector<dRowVector> dOdyJ = calculate_dOdyJ(yJ, xJ);
+	// dOdyJ[0].setZero();
 	double gammaJ = calculate_gammaJ(yJ, dOdyJ);
 	Traj yJ_next;
 	for (int i = 0; i < Z; ++i) {
@@ -357,8 +359,8 @@ Traj SoftLocoSolver::yJ_next(const Traj &yJ, const Traj &xJ) {
 }
  
 double SoftLocoSolver::calculate_gammaJ(const Traj &yJ, const vector<dRowVector> &dOdyJ) {
-	double gammaJ_0 = 1.;
-	int maxLineSearchIterations = 48;
+	double gammaJ_0 = 1.;// .1 / stack_vec_dRowVector(dOdyJ).squaredNorm();
+	int maxLineSearchIterations = 24;
 
 	Traj yJ_0 = yJ;
 	double O_0 = calculate_OJ(yJ_0); 
@@ -499,11 +501,11 @@ double SoftLocoSolver::calculate_R(const dVector &u) {
 
 	double ret = 0.;
 
-	{
-		for (int i = 0; i < T(); ++i) {
-			ret += u_barrierFuncs[i]->computeValue(u[i]);
-		}
-	}
+	// {
+	// 	for (int i = 0; i < T(); ++i) {
+	// 		ret += u_barrierFuncs[i]->computeValue(u[i]);
+	// 	}
+	// }
 
 	if (REGULARIZE_u) {
 		for (int i = 0; i < T(); ++i) {
@@ -908,13 +910,13 @@ dRowVector SoftLocoSolver::calculate_dRdu(const dVector &u) {
 	// --
 	dRowVector dRdu; dRdu.setZero(T());
 
-	{
-		dRowVector duBarrierdu; duBarrierdu.setZero(T());
-		for (int i = 0; i < T(); ++i) {
-			duBarrierdu[i] += u_barrierFuncs[i]->computeDerivative(u[i]);
-		}
-		dRdu += duBarrierdu;
-	}
+	// {
+	// 	dRowVector duBarrierdu; duBarrierdu.setZero(T());
+	// 	for (int i = 0; i < T(); ++i) {
+	// 		duBarrierdu[i] += u_barrierFuncs[i]->computeDerivative(u[i]);
+	// 	}
+	// 	dRdu += duBarrierdu;
+	// }
 
 	if (REGULARIZE_u) { 
 		dRowVector duRegdu; duRegdu.setZero(T());

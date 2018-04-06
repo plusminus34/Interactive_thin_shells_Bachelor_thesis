@@ -9,11 +9,7 @@
 #include "CubicHermiteSpline.h"
 
 class SimulationMesh;
-
-typedef vector<dVector> Traj;
-typedef vector<MatrixNxM> MTraj;
-typedef Eigen::RowVectorXd dRowVector;
-
+ 
 class SoftLocoSolver {
 
 	friend class SimulationMesh; 
@@ -58,7 +54,7 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 64 + 1; // 48; // HORIZON
+	const int K = 5;// 24 + 1; // 48; // HORIZON
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
@@ -67,7 +63,7 @@ public:
 public:
 	CubicHermiteSpline *god_spline;
 	SparseMatrix  dUdY_;
-	const int Z = ((K - 1) / 8) + 1;
+	const int Z = 3;//((K - 1) / 8) + 1;
 	const dVector knot_times = vecDouble2dVector(linspace(8, 0., 1.)); 
 	int k_of_z(const int &z) { return (K-1)/(Z-1)*z; }
 
