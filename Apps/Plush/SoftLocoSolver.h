@@ -3,10 +3,16 @@
 #include "SimulationMesh.h"
 #include "ZeroCubicQuadratic.h"
 #include "Tendon.h"
-#include "SoftLocoObjectiveFunction.h"
+
+#include "CubicHermiteSpline.h"
+
 #include <OptimizationLib/GradientDescentFunctionMinimizer.h>
 #include <OptimizationLib/BFGSFunctionMinimizer.h>
-#include "CubicHermiteSpline.h"
+#include <OptimizationLib/SQPFunctionMinimizer.h>
+#include <OptimizationLib/ConstrainedObjectiveFunction.h>
+
+#include "SoftLocoObjectiveFunction.h"
+#include "SoftLocoConstraints.h"
 
 class SimulationMesh;
  
@@ -16,6 +22,8 @@ class SoftLocoSolver {
 
 public:
 	SoftLocoObjectiveFunction *objectiveFunction;
+	SoftLocoConstraints *constraints;
+	ConstrainedObjectiveFunction *constrainedObjectiveFunction;
 
 public:
 	P3D COMp_FORNOW = P3D();
@@ -55,6 +63,7 @@ public:
 	int DN();
 	int T();
 	const int K = 5;// 24 + 1; // 48; // HORIZON
+	int ZT();
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);

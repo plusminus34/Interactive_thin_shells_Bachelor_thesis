@@ -65,7 +65,8 @@ AppSoftLoco::AppSoftLoco() {
 		mesh->tendons[i]->SPEC_COLOR = kelly_color(i);
 	}
 
-	for (int _ = 0; _ < 1000; ++_) { mesh->xvPair_INTO_Mesh(mesh->solve_dynamics()); }
+	// FORNOW
+	// for (int _ = 0; _ < 1000; ++_) { mesh->xvPair_INTO_Mesh(mesh->solve_dynamics()); }
 
 	// -- // ik
 	ik = new SoftLocoSolver(mesh);

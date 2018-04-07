@@ -52,7 +52,8 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 	COMp_FORNOW = mesh->get_COM(mesh->X); 
 
 	objectiveFunction = new SoftLocoObjectiveFunction(this);
-
+	constraints = new SoftLocoConstraints(this);
+	constrainedObjectiveFunction = new ConstrainedObjectiveFunction(objectiveFunction, constraints); 
 }
 
 void SoftLocoSolver::draw() { 
@@ -250,16 +251,28 @@ void SoftLocoSolver::step() {
 	// 	}
 	// }
 
-	// // BFGSFunctionMinimizer minimizer(5);
-	GradientDescentFunctionMinimizer minimizer(1);
-	minimizer.solveResidual = 1e-5;
-	minimizer.maxLineSearchIterations = 15;
-	minimizer.lineSearchStartValue = 1.;
-	minimizer.printOutput = true;
+	{
+		// // // BFGSFunctionMinimizer minimizer(5);
+		// GradientDescentFunctionMinimizer minimizer(1);
+		// minimizer.solveResidual = 1e-5;
+		// minimizer.maxLineSearchIterations = 15;
+		// minimizer.lineSearchStartValue = 1.;
+		// minimizer.printOutput = true;
+		// // --
+		// dVector yS = stack_vec_dVector(yJ_curr);
+		// double functionValue = objectiveFunction->computeValue(yS);
+		// minimizer.minimize(objectiveFunction, yS, functionValue);
+	}
 
-	dVector yS = stack_vec_dVector(yJ_curr);
-	double functionValue = objectiveFunction->computeValue(yS);
-	minimizer.minimize(objectiveFunction, yS, functionValue);
+	{
+		SQPFunctionMinimizer minimizer(1);
+		minimizer.maxLineSearchIterations_ = 15;
+		minimizer.printOutput_ = true;
+		// --
+		dVector yS = stack_vec_dVector(yJ_curr);
+		double functionValue = objectiveFunction->computeValue(yS);
+		minimizer.minimize(constrainedObjectiveFunction, yS, functionValue); 
+	}
 
 	// cout << " O  = " << calculate_OJ(yJ_curr) << endl;
 }
@@ -429,8 +442,9 @@ void SoftLocoSolver::FD_TEST_dOJdyJ(const Traj &yJ, const Traj &xJ) {
 double SoftLocoSolver::calculate_OJ(const Traj &yJ) {
 	auto uJ_ = uJ_of_yJ(yJ);
 	double QJ = calculate_QJ(uJ_);
-	double RJ = calculate_RJ(uJ_);
-	return QJ + RJ;
+	// double RJ = calculate_RJ(uJ_);
+	// return QJ + RJ;
+	return QJ;
 }
 
 double SoftLocoSolver::calculate_QJ(const Traj &uJ) {
@@ -523,12 +537,13 @@ double SoftLocoSolver::calculate_R(const dVector &u) {
 vector<dRowVector> SoftLocoSolver::calculate_dOdyJ(const Traj &yJ, const Traj &xJ) {
 	auto uJ_ = uJ_of_yJ(yJ);
 	vector<dRowVector> dQdyJ = dSTARduJ2dSTARdyJ(calculate_dQduJ(uJ_, xJ)); 
-	vector<dRowVector> dRdyJ = dSTARduJ2dSTARdyJ(calculate_dRduJ(uJ_)); 
-	vector<dRowVector> dOdyJ;
-	for (int i = 0; i < Z; ++i) {
-		dOdyJ.push_back(dQdyJ[i] + dRdyJ[i]);
-	}
-	return dOdyJ;
+	// vector<dRowVector> dRdyJ = dSTARduJ2dSTARdyJ(calculate_dRduJ(uJ_)); 
+	// vector<dRowVector> dOdyJ;
+	// for (int i = 0; i < Z; ++i) {
+	// 	dOdyJ.push_back(dQdyJ[i] + dRdyJ[i]);
+	// }
+	// return dOdyJ;
+	return dQdyJ;
 }
 
 vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {
@@ -1059,6 +1074,7 @@ int SoftLocoSolver::D() { return mesh->D(); }
 int SoftLocoSolver::N() { return mesh->N(); } 
 int SoftLocoSolver::DN() { return D()*N(); } 
 int SoftLocoSolver::T() { return mesh->tendons.size(); }
+int SoftLocoSolver::ZT() { return Z*T(); }
 
 ////////////////////////////////////////////////////////////////////////////////
 
