@@ -8,13 +8,13 @@
 #include <GUILib/GLUtils.h>
 #include <GUILib/GLTrackingCamera.h>
 #include <OptimizationLib\SQPFunctionMinimizer.h>
+#include <OptimizationLib\GradientDescentFunctionMinimizer.h>
 
 //sag-free simulations as an application of shape optimization
 //adjoint method for non-linear top-opt
 
 //Objectives:
 //- compliance/stored energy
-//- amount of material used
 //- smoothness of solution (in case dithering artifacts come up)
 //- L0 regularizer to force solution to choose a side...
 
@@ -25,7 +25,7 @@
 TopOptApp::TopOptApp() {
 	setWindowTitle("Test FEM Sim Application...");
 
-	int nRows = 20;
+	int nRows = 60;
 	int nCols = 20;
 	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, nRows, nCols);
 
@@ -47,6 +47,8 @@ TopOptApp::TopOptApp() {
 
 	externalLoads.resize(simMesh->nodes.size());
 	resize(densityParams, simMesh->elements.size()); densityParams.setOnes();
+
+//	externalLoads[nRows * (nCols -1)] = V3D(0.5,-0.5,0);
 
 	showGroundPlane = false;
 
@@ -96,15 +98,49 @@ TopOptApp::TopOptApp() {
 	slider->setValue((float)targetMassRatio);
 	slider->setCallback([this](float val) { targetMassRatio = val; });
 
-	menuScreen->performLayout();
-
 	energyFunction = new TopOptEnergyFunction(simMesh);
 	constraints = new TopOptConstraints(simMesh);
 	constrainedObjectiveFunction = new ConstrainedObjectiveFunction(energyFunction, constraints);
+
+	panel = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", panel);
+	panel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+	label = new nanogui::Label(panel, "Sparsity Objective Weight", "sans-bold");
+	slider = new nanogui::Slider(panel);
+	slider->setValue(0.001f);
+	slider->setFixedWidth(80);
+	range.first = 0; range.second = 0.1;
+	slider->setRange(range);
+	slider->setValue((float)energyFunction->binaryDensityObjectiveWeight);
+	slider->setCallback([this](float val) { energyFunction->binaryDensityObjectiveWeight = val; });
+
+	panel = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", panel);
+	panel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+	label = new nanogui::Label(panel, "Smoothness Objective Weight", "sans-bold");
+	slider = new nanogui::Slider(panel);
+	slider->setValue(0.01f);
+	slider->setFixedWidth(80);
+	range.first = 0; range.second = 0.1;
+	slider->setRange(range);
+	slider->setValue((float)energyFunction->smoothnessObjectiveWeight);
+	slider->setCallback([this](float val) { energyFunction->smoothnessObjectiveWeight = val; });
+
+
+	menuScreen->performLayout();
+	applyDensityParametersToSimMesh();
 }
 
 void TopOptApp::applyDensityParametersToSimMesh() {
-	constraints->totalMassUpperBound = initialMass * targetMassRatio / 100.0;
+	constraints->setTotalMassUpperBound(initialMass * targetMassRatio / 100.0);
+
+	for (uint i = 0; i < simMesh->elements.size(); i++)
+		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
+			e->shearModulus = shearModulus;
+			e->bulkModulus = bulkModulus;
+		}
 
 	//make sure we're on the constraint manifold
 	double currentMass = 0;
@@ -113,7 +149,9 @@ void TopOptApp::applyDensityParametersToSimMesh() {
 			currentMass += e->getMass() * densityParams[i];
 	}
 
-	Logger::consolePrint("total mass: %lf (upper bound: %lf)\n", currentMass, initialMass * targetMassRatio / 100.0);
+//	double upperBound = initialMass * targetMassRatio / 100.0;
+//	double defEnergy = simMesh->getCurrentDeformationEnergy();
+//	Logger::consolePrint("total mass: %lf (upper bound: %lf), total deformation energy: %lf\n", currentMass, upperBound, defEnergy);
 
 	if (currentMass > initialMass * targetMassRatio / 100.0) {
 		double ratio = initialMass * targetMassRatio / 100.0 / currentMass;
@@ -123,13 +161,8 @@ void TopOptApp::applyDensityParametersToSimMesh() {
 		}
 	}
 
-	for (uint i = 0; i < simMesh->elements.size(); i++) {
-		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
-			e->shearModulus = pow(densityParams[i], 1) * (shearModulus);
-			e->bulkModulus = pow(densityParams[i], 1) * (bulkModulus);
-			e->densityForDrawing = densityParams[i];
-		}
-	}
+	energyFunction->applyDensityParametersToSimMesh(densityParams);
+	
 }
 
 
@@ -140,16 +173,15 @@ TopOptApp::~TopOptApp(void){
 bool TopOptApp::onMouseMoveEvent(double xPos, double yPos) {
 	lastClickedRay = getRayFromScreenCoords(xPos, yPos);
 
-	if (GlobalMouseState::dragging == false && glfwGetKey(glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
+	if (GlobalMouseState::dragging == false) {
 		int elementID = simMesh->getSelectedElementID(lastClickedRay);
-		if (elementID >= 0) 
-			densityParams[elementID] = 0.001;
-	}
-
-	if (GlobalMouseState::dragging == false && glfwGetKey(glfwWindow, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS) {
-		int elementID = simMesh->getSelectedElementID(lastClickedRay);
-		if (elementID >= 0)
-			densityParams[elementID] = 1;
+		if (elementID >= 0){
+			if (glfwGetKey(glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
+				densityParams[elementID] = 0.00001;
+			if (glfwGetKey(glfwWindow, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
+				densityParams[elementID] = 1;
+			Logger::consolePrint("element %d has density %lf\n", elementID, densityParams[elementID]);
+		}
 	}
 
 	if (GlobalMouseState::dragging && GlobalMouseState::lButtonPressed && selectedNodeID < 0){
@@ -182,12 +214,6 @@ bool TopOptApp::onMouseMoveEvent(double xPos, double yPos) {
 		}else
 			selectedNodeID = simMesh->getSelectedNodeID(lastClickedRay);
 	}
-//	if (selectedNodeID != -1){
-//		Plane plane(camera->getCameraTarget(), V3D(camera->getCameraPosition(), camera->getCameraTarget()).unit());
-//		P3D targetPinPos; getRayFromScreenCoords(xPos, yPos).getDistanceToPlane(plane, &targetPinPos);
-//		simMesh->setPinnedNode(selectedNodeID, targetPinPos);
-//		return true;
-//	}
 	
 	if (GLApplication::onMouseMoveEvent(xPos, yPos) == true) return true;
 	return false;
@@ -276,20 +302,55 @@ void TopOptApp::process() {
 	applyDensityParametersToSimMesh();
 
 	if (optimizeTopology) {
-		double val;
+//		constraints->testJacobiansWithFD(densityParams);
+
+//		energyFunction->testGradientWithFD(densityParams);
+
+/*		for (double val = 0.001; val < 1; val += 0.001) {
+			densityParams[684] = densityParams[685] = val;
+			energyFunction->applyDensityParametersToSimMesh(densityParams);
+			simMesh->solve_statics();
+			Logger::consolePrint("%lf\t%lf\n", val, simMesh->getCurrentDeformationEnergy());
+		}
+		exit(0);
+*/
+		double val = 0;
+
 		SQPFunctionMinimizer minimizer(1);
 		minimizer.maxLineSearchIterations_ = 12;
 		minimizer.printOutput_ = energyFunction->printDebugInfo;
 		minimizer.minimize(constrainedObjectiveFunction, densityParams, val);
+
+/*
+		GradientDescentFunctionMinimizer minimizer(1);
+		minimizer.maxLineSearchIterations = 1; // 12;
+		minimizer.printOutput = energyFunction->printDebugInfo;
+		minimizer.minimize(energyFunction, densityParams, val);
+*/
+
+		energyFunction->applyDensityParametersToSimMesh(densityParams);
+
 	}
 
 	simMesh->solve_statics();
-	Logger::consolePrint("overall deformation energy: %lf", simMesh->getCurrentDeformationEnergy());
+
+	//print some stats...
+	double currentMass = 0;
+	for (uint i = 0; i < simMesh->elements.size(); i++) {
+		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i]))
+			currentMass += e->getMass() * densityParams[i];
+	}
+
+	double upperBound = initialMass * targetMassRatio / 100.0;
+	double defEnergy = energyFunction->computeDeformationEnergyObjective();
+	Logger::consolePrint("total mass: %lf (upper bound: %lf), total deformation energy: %lf\n", currentMass, upperBound, defEnergy);
+
+//	Logger::consolePrint("overall deformation energy: %lf", simMesh->getCurrentDeformationEnergy());
 }
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
 void TopOptApp::drawScene() {
-	applyDensityParametersToSimMesh();
+//	applyDensityParametersToSimMesh();
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glColor3d(1,1,1);
@@ -318,10 +379,6 @@ void TopOptApp::drawScene() {
 		glEnd();
 	}
 
-#ifdef CONSTRAINED_DYNAMICS_DEMO
-	glColor3d(1, 1, 1);
-	drawCircle(0, 0, 1, 100);
-#endif
 }
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function

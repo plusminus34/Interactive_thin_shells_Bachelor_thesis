@@ -3,7 +3,7 @@
 
 #include <OptimizationLib/GradientDescentFunctionMinimizer.h>
 
-LocomotionEngineManager::LocomotionEngineManager(){
+LocomotionEngineManager::LocomotionEngineManager() : minimizerNewton(1),minimizerBFGS(10) {
 }
 
 void LocomotionEngineManager::createSolverComponents() {
@@ -28,12 +28,21 @@ double LocomotionEngineManager::optimizeMoptionPlan(int maxIterations) {
 		Logger::logPrint("Starting Problem size: %d\n", params.size());
 
 	if (useObjectivesOnly) {
-		NewtonFunctionMinimizer minimizer(maxIterations);
-//		GradientDescentFunctionMinimizer minimizer;
-		minimizer.maxLineSearchIterations = 12;
-		minimizer.printOutput = energyFunction->printDebugInfo;
-		minimizer.hessCorrectionMethod = hessCorrectionMethod;
-		minimizer.minimize(energyFunction, params, val);
+		if (optimizationMethod == OptMethod::Newton)
+		{
+			minimizerNewton.maxLineSearchIterations = 12;
+			minimizerNewton.printOutput = energyFunction->printDebugInfo;
+			minimizerNewton.hessCorrectionMethod = hessCorrectionMethod;
+			minimizerNewton.minimize(energyFunction, params, val);
+		}
+			
+		else if (optimizationMethod == OptMethod::lbfgs)
+		{
+			minimizerBFGS.maxLineSearchIterations = 40;
+			minimizerBFGS.printOutput = energyFunction->printDebugInfo;
+			minimizerBFGS.minimize(energyFunction, params, val);
+		}
+			
 	}
 	else {
 		SQPFunctionMinimizer minimizer(maxIterations);

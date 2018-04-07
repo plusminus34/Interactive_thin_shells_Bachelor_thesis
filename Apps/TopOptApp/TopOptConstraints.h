@@ -15,7 +15,9 @@ public:
 
 	SimulationMesh* simMesh;
 
-	double totalMassUpperBound = 1.0;
+	void setTotalMassUpperBound(double val) {
+		f[0] = val;
+	}
 
 private:
 	//the energy function operates on a motion plan...
@@ -33,11 +35,11 @@ private:
 	/*! 
 	*  evaluates the constraint jacobian
 	*/
-//	virtual void addEqualityConstraintsJacobianEntriesTo(DynamicArray<MTriplet>& jacobianEntries, const dVector& p);
+	virtual void addEqualityConstraintsJacobianEntriesTo(DynamicArray<MTriplet>& jacobianEntries, const dVector& p);
 
 /*!
 *  evaluates the constraint jacobian
 */
-//	virtual void addInequalityConstraintsJacobianEntriesTo(DynamicArray<MTriplet>& jacobianEntries, const dVector& p);
+	virtual void addInequalityConstraintsJacobianEntriesTo(DynamicArray<MTriplet>& jacobianEntries, const dVector& p);
 
 };
