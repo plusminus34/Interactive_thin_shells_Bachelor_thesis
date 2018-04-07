@@ -5,20 +5,20 @@ SoftLocoObjectiveFunction::SoftLocoObjectiveFunction(SoftLocoSolver *solver){
 	this->solver = solver;
 }
 
-double SoftLocoObjectiveFunction::computeValue(const dVector &uS){
-	return 0.;
-	// return solver->calculate_OJ(solver->unstack_Traj(uS));
+double SoftLocoObjectiveFunction::computeValue(const dVector &yS){
+	return solver->calculate_OJ(solver->unstack_Traj(yS, solver->Z));
 }
 
-void SoftLocoObjectiveFunction::addGradientTo(dVector &G, const dVector &_) { // FORNOW: Assumes this function is _only_ ever called @(uJ_curr, xJ_curr)
-	error("[SoftLocoObjectiveFunction]: NotImplementedError");
-	// TODO: Consider adding check on whether _ == uJ_curr?
-	// Traj GS = solver->calculate_dOduJ(solver->uJ_curr, solver->xJ_curr);
-	// G += stack_vec_dVector(GS); 
+void SoftLocoObjectiveFunction::addGradientTo(dVector &G, const dVector &yS) {
+	// TODO: Can assumes this function is _only_ ever called @(yJ_curr, xJ_curr)
+	// vector<dRowVector> GS = solver->calculate_dOdyJ(solver->yJ_curr, solver->xJ_curr);
+	// --
+	vector<dRowVector> GS = solver->calculate_dOdyJ(solver->unstack_Traj(yS, solver->Z), solver->xJ_curr);
+	G += stack_vec_dRowVector(GS).transpose(); 
 }
 
-void SoftLocoObjectiveFunction::setCurrentBestSolution(const dVector &uS) {
-	// solver->uJ_curr = solver->unstack_Traj(uS);
-	// solver->xJ_curr = solver->xJ_of_uJ(solver->uJ_curr);
+void SoftLocoObjectiveFunction::setCurrentBestSolution(const dVector &yS) {
+	solver->yJ_curr = solver->unstack_Traj(yS, solver->Z);
+	solver->xJ_curr = solver->xJ_of_yJ(solver->yJ_curr);
 	// solver->projectJ();
 }

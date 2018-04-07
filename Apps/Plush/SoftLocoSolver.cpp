@@ -241,7 +241,15 @@ Traj SoftLocoSolver::solve_trajectory(double dt, const dVector &x_0, const dVect
 
 void SoftLocoSolver::step() { 
 
-	/*
+
+	if (mesh->UNILATERAL_TENDONS &&PROJECT) { projectJ(); } 
+
+	// {
+	// 	for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
+	// 		iterate();
+	// 	}
+	// }
+
 	// // BFGSFunctionMinimizer minimizer(5);
 	GradientDescentFunctionMinimizer minimizer(1);
 	minimizer.solveResidual = 1e-5;
@@ -249,19 +257,15 @@ void SoftLocoSolver::step() {
 	minimizer.lineSearchStartValue = 1.;
 	minimizer.printOutput = true;
 
-	dVector uS = stack_vec_dVector(uJ_curr);
-	double functionValue = objectiveFunction->computeValue(uS); // TODO:See AppSoftIK notes.
-	minimizer.minimize(objectiveFunction, uS, functionValue);
-	*/
+	dVector yS = stack_vec_dVector(yJ_curr);
+	double functionValue = objectiveFunction->computeValue(yS);
+	minimizer.minimize(objectiveFunction, yS, functionValue);
 
-	if (mesh->UNILATERAL_TENDONS &&PROJECT) { projectJ(); } 
-	for (int _ = 0; _ < NUM_ITERS_PER_STEP; ++_) {
-		iterate();
-	}
 	// cout << " O  = " << calculate_OJ(yJ_curr) << endl;
 }
 
 void SoftLocoSolver::iterate() {
+	error("iterate():DeprecatedError");
 	// uJ_curr = uJ_next(uJ_curr, xJ_curr);
 	// xJ_curr = xJ_of_uJ(uJ_curr);
 	yJ_curr = yJ_next(yJ_curr, xJ_curr);

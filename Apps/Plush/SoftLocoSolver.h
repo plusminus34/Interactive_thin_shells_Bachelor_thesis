@@ -72,7 +72,7 @@ public:
 	double FD_TEST_STEPSIZE = 1.5e-5;
 
 public:
-	double     calculate_OJ(const Traj &uJ);
+	double     calculate_OJ(const Traj &yJ);
 	double     calculate_QJ(const Traj &uJ);
 	double     calculate_RJ(const Traj &uJ);
 	double     calculate_R(const dVector &u);
