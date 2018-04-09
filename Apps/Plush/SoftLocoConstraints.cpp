@@ -10,8 +10,13 @@ SoftLocoConstraints::SoftLocoConstraints(SoftLocoSolver *loco){
 		double alphaz = loco->mesh->tendons[t]->get_alphaz();
 		for (int z = 0; z < loco->Z; ++z) {
 			int i = z*loco->T() + t;
-			l[i] = -.1*alphaz;
-			u[i] =  .1*alphaz;
+			if (z == 0 || z == loco->Z - 1) {
+				l[i] = -0.001;
+				u[i] =  0.001;
+			} else {
+				l[i] = -.5*alphaz;
+				u[i] =  .5*alphaz;
+			}
 		} 
 	}
 }

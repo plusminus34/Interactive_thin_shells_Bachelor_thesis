@@ -442,9 +442,9 @@ void SoftLocoSolver::FD_TEST_dOJdyJ(const Traj &yJ, const Traj &xJ) {
 double SoftLocoSolver::calculate_OJ(const Traj &yJ) {
 	auto uJ_ = uJ_of_yJ(yJ);
 	double QJ = calculate_QJ(uJ_);
-	// double RJ = calculate_RJ(uJ_);
-	// return QJ + RJ;
-	return QJ;
+	double RJ = calculate_RJ(uJ_);
+	return QJ + RJ;
+	// return QJ;
 }
 
 double SoftLocoSolver::calculate_QJ(const Traj &uJ) {
@@ -537,13 +537,13 @@ double SoftLocoSolver::calculate_R(const dVector &u) {
 vector<dRowVector> SoftLocoSolver::calculate_dOdyJ(const Traj &yJ, const Traj &xJ) {
 	auto uJ_ = uJ_of_yJ(yJ);
 	vector<dRowVector> dQdyJ = dSTARduJ2dSTARdyJ(calculate_dQduJ(uJ_, xJ)); 
-	// vector<dRowVector> dRdyJ = dSTARduJ2dSTARdyJ(calculate_dRduJ(uJ_)); 
-	// vector<dRowVector> dOdyJ;
-	// for (int i = 0; i < Z; ++i) {
-	// 	dOdyJ.push_back(dQdyJ[i] + dRdyJ[i]);
-	// }
-	// return dOdyJ;
-	return dQdyJ;
+	vector<dRowVector> dRdyJ = dSTARduJ2dSTARdyJ(calculate_dRduJ(uJ_)); 
+	vector<dRowVector> dOdyJ;
+	for (int i = 0; i < Z; ++i) {
+		dOdyJ.push_back(dQdyJ[i] + dRdyJ[i]);
+	}
+	return dOdyJ;
+	// return dQdyJ;
 }
 
 vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &xJ) {

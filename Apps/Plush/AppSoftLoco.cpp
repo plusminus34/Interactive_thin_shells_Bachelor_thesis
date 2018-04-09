@@ -42,7 +42,7 @@ AppSoftLoco::AppSoftLoco() {
 		"sugar",        // 8
 		"T"             // 9
 	};
-	string TEST_CASE = TEST_CASES[0];
+	string TEST_CASE = TEST_CASES[4];
 
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
@@ -54,9 +54,8 @@ AppSoftLoco::AppSoftLoco() {
 	mesh->applyYoungsModulusAndPoissonsRatio(3e5, .25); // FORNOW
 	mesh->addGravityForces(V3D(0., -10.)); 
     // mesh->pinToFloor(); 
-	mesh->pinToLeftWall(); 
-	// mesh->add_contacts_to_boundary_nodes();
-	// mesh->xvPair_INTO_Mesh((*ptr)->solve_statics());
+	// mesh->pinToLeftWall(); 
+	if (mesh->pins.empty()) { mesh->add_contacts_to_boundary_nodes(); }
 	if (TEST_CASE == "tri") { mesh->rig_boundary_simplices(); }
 	// mesh->rig_boundary_simplices();
 	// mesh->rig_all_lower_simplices();
@@ -66,7 +65,7 @@ AppSoftLoco::AppSoftLoco() {
 	}
 
 	// FORNOW
-	// for (int _ = 0; _ < 1000; ++_) { mesh->xvPair_INTO_Mesh(mesh->solve_dynamics()); }
+	if (mesh->pins.empty()) { for (int _ = 0; _ < 1000; ++_) { mesh->xvPair_INTO_Mesh(mesh->solve_dynamics()); } }
 
 	// -- // ik
 	ik = new SoftLocoSolver(mesh);
