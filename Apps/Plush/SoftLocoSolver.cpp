@@ -36,7 +36,11 @@ SoftLocoSolver::SoftLocoSolver(SimulationMesh *mesh) {
 		yJ_curr.push_back(SIGNAL_);
 	}
 	god_spline = new CubicHermiteSpline(vecDouble2dVector(linspace(Z, 0., 1.)), vecDouble2dVector(linspace(K, 0., 1.)));
-	dUdY_ = god_spline->calculate_dUdY_(); // FORNOW
+	dUdY_ = god_spline->calculate_dUdY_();
+
+	god_spline2 = new CubicHermiteSpline_v2(vecDouble2dVector(linspace(Z, 0., 1.)), vecDouble2dVector(linspace(K, 0., 1.)));
+	dUdY2_ = god_spline2->calculate_dUdY_();
+	dUdM2_ = god_spline2->calculate_dUdM_();
 
 	// for (int _ = 0; _ < K; ++_) { dVector ZERO_; resize_zero(ZERO_, T()); uJ_curr.push_back(ZERO_); }
 	// xJ_curr = xJ_of_uJ(uJ_curr); 

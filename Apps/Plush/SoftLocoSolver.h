@@ -5,6 +5,7 @@
 #include "Tendon.h"
 
 #include "CubicHermiteSpline.h"
+#include "CubicHermiteSpline_v2.h"
 
 #include <OptimizationLib/GradientDescentFunctionMinimizer.h>
 #include <OptimizationLib/BFGSFunctionMinimizer.h>
@@ -72,6 +73,11 @@ public:
 public:
 	CubicHermiteSpline *god_spline;
 	SparseMatrix  dUdY_;
+
+	CubicHermiteSpline_v2 *god_spline2;
+	SparseMatrix  dUdY2_;
+	SparseMatrix  dUdM2_;
+
 	const int Z = ((K - 1) / 8) + 1;
 	const dVector knot_times = vecDouble2dVector(linspace(8, 0., 1.)); 
 	int k_of_z(const int &z) { return (K-1)/(Z-1)*z; }

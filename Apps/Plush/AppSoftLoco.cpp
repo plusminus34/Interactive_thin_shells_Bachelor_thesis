@@ -119,7 +119,7 @@ AppSoftLoco::AppSoftLoco() {
 		}
 		push_back_handler2(new P2DDragger_v2(all_points, &test_frame, true, -1., .5));
 	}
- 
+
 	mainMenu->addGroup("app");
 	mainMenu->addVariable("SOLVE_IK", SOLVE_IK);
 	mainMenu->addVariable("SOLVE_DYNAMICS", ik->SOLVE_DYNAMICS);
@@ -240,6 +240,14 @@ void AppSoftLoco::drawScene() {
 		}
 
 	}
+
+	{
+		CubicHermiteSpline_v2 tmp = CubicHermiteSpline_v2(vecDouble2dVector(linspace(ik->Z, 0., 1.)), vecDouble2dVector(linspace(ik->K, 0., 1.)));
+		vector<P3D *> data = test_splines[0];
+		dVector Y; Y.setZero(data.size());
+		for (size_t i = 0; i < data.size(); ++i) { Y[i] = (*data[i])[1]; } 
+		tmp.draw(Y, tmp.CFD_M(Y));
+	} 
 
 	PlushApplication::recordVideo();
 }

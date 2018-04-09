@@ -10,6 +10,7 @@
 #include "P2DDragger_v2.h"
 #include "Poser.h"
 #include "Handler_v2.h"
+#include "CubicHermiteSpline_v2.h"
 
 class AppSoftLoco : public PlushApplication {
 
