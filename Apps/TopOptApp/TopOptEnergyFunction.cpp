@@ -41,10 +41,13 @@ void TopOptEnergyFunction::setCurrentBestSolution(const dVector& p){
 	}
 }
 
-double TopOptEnergyFunction::computeDeformationEnergyObjective() {
+double TopOptEnergyFunction::computeDeformationEnergyObjective(const dVector& p) {
 	double totalEnergy = 0;
 	for (uint i = 0; i < simMesh->elements.size(); i++)
-		totalEnergy += simMesh->elements[i]->getEnergy(simMesh->x, simMesh->X);//XXX / p[i];
+		if (minimizeOriginalCompliance)
+			totalEnergy += simMesh->elements[i]->getEnergy(simMesh->x, simMesh->X) / p[i];
+		else
+			totalEnergy += simMesh->elements[i]->getEnergy(simMesh->x, simMesh->X);
 	return totalEnergy;
 }
 
@@ -56,7 +59,7 @@ double TopOptEnergyFunction::computeValue(const dVector& p) {
 	applyDensityParametersToSimMesh(p);
 	simMesh->solve_statics();
 
-	totalEnergy += computeDeformationEnergyObjective();
+	totalEnergy += computeDeformationEnergyObjective(p) * complianceObjectiveWeight;
 
 	//================================================================================
 	//-- smoothness - favor larger material clusters rather than small, isolated islands
@@ -108,7 +111,8 @@ void TopOptEnergyFunction::addGradientTo(dVector& grad, const dVector& p) {
 
 
 	dVector tmpP = p; tmpP.setOnes();
-	//XXX applyDensityParametersToSimMesh(tmpP);
+	if (minimizeOriginalCompliance)
+		applyDensityParametersToSimMesh(tmpP);
 	dVector dEdx; resize(dEdx, xDim);
 	for (uint i = 0; i<simMesh->elements.size(); i++)
 		simMesh->elements[i]->addEnergyGradientTo(simMesh->x, simMesh->X, dEdx);
@@ -155,7 +159,10 @@ void TopOptEnergyFunction::addGradientTo(dVector& grad, const dVector& p) {
 	solver.compute(dGdx);
 	dVector dEdx_times_dxdp = (solver.solve(dEdx).transpose() * dGdp).transpose() * -1;
 
-	grad = dEdx_times_dxdp + partialEpartialp; //XXX
+	if (minimizeOriginalCompliance)
+		grad = (dEdx_times_dxdp) * complianceObjectiveWeight;
+	else
+		grad = (dEdx_times_dxdp + partialEpartialp) * complianceObjectiveWeight;
 
 	//================================================================================
 	//-- black-or-white solution - each element should decide to either have density 1 or 0

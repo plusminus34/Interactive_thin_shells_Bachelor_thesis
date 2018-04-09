@@ -29,6 +29,7 @@ private:
 	MaterialModel2D matModel = MM_NEO_HOOKEAN;
 	double shearModulus = 5000, bulkModulus = 50;
 	bool checkDerivatives = false;
+	bool checkSimDerivatives = false;
 
 	DynamicArray<V3D> externalLoads;
 	dVector densityParams;
@@ -36,7 +37,6 @@ private:
 	double targetMassRatio = 30;
 	double initialMass = 0;
 	bool optimizeTopology = false;
-
 
 	void applyDensityParametersToSimMesh();
 

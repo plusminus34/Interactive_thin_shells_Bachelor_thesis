@@ -14,7 +14,7 @@ public:
 	void updateRegularizingSolutionTo(const dVector &currentP);
 	virtual double computeValue(const dVector& p);
 
-	double computeDeformationEnergyObjective();
+	double computeDeformationEnergyObjective(const dVector& p);
 
 	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
 	virtual void addGradientTo(dVector& grad, const dVector& p);
@@ -36,6 +36,10 @@ public:
 
 	double smoothnessObjectiveWeight = 0.001;
 	double binaryDensityObjectiveWeight = 0.001;
+	double complianceObjectiveWeight = 1.0;
+
+	bool minimizeOriginalCompliance = true;
+
 
 private:
 

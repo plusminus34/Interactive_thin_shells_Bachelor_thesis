@@ -25,8 +25,8 @@
 TopOptApp::TopOptApp() {
 	setWindowTitle("Test FEM Sim Application...");
 
-	int nRows = 60;
-	int nCols = 20;
+	int nRows = 30;
+	int nCols = 10;
 	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, nRows, nCols);
 
 	delete camera;
@@ -81,7 +81,7 @@ TopOptApp::TopOptApp() {
 			initialMass += e->getMass();
 	}
 
-
+	mainMenu->addVariable("Check derivatives", checkDerivatives);
 	mainMenu->addVariable("Optimize Topology", optimizeTopology);
 
 	nanogui::Widget *panel = new nanogui::Widget(mainMenu->window());
@@ -101,6 +101,19 @@ TopOptApp::TopOptApp() {
 	energyFunction = new TopOptEnergyFunction(simMesh);
 	constraints = new TopOptConstraints(simMesh);
 	constrainedObjectiveFunction = new ConstrainedObjectiveFunction(energyFunction, constraints);
+
+	panel = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", panel);
+	panel->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+	label = new nanogui::Label(panel, "Compliance Objective Weight", "sans-bold");
+	slider = new nanogui::Slider(panel);
+	slider->setValue(0.001f);
+	slider->setFixedWidth(80);
+	range.first = 0; range.second = 10;
+	slider->setRange(range);
+	slider->setValue((float)energyFunction->complianceObjectiveWeight);
+	slider->setCallback([this](float val) { energyFunction->complianceObjectiveWeight = val; });
 
 	panel = new nanogui::Widget(mainMenu->window());
 	mainMenu->addWidget("", panel);
@@ -290,7 +303,7 @@ void TopOptApp::process() {
 	//do the work here...
 	double simulationTime = 0;
 	double maxRunningTime = 1.0 / desiredFrameRate;
-	simMesh->checkDerivatives = checkDerivatives != 0;
+	simMesh->checkDerivatives = checkSimDerivatives;
 
 	simMesh->addGravityForces(V3D(0, Globals::g, 0));
 
@@ -304,7 +317,8 @@ void TopOptApp::process() {
 	if (optimizeTopology) {
 //		constraints->testJacobiansWithFD(densityParams);
 
-//		energyFunction->testGradientWithFD(densityParams);
+		if (checkDerivatives)
+			energyFunction->testGradientWithFD(densityParams);
 
 /*		for (double val = 0.001; val < 1; val += 0.001) {
 			densityParams[684] = densityParams[685] = val;
@@ -342,7 +356,7 @@ void TopOptApp::process() {
 	}
 
 	double upperBound = initialMass * targetMassRatio / 100.0;
-	double defEnergy = energyFunction->computeDeformationEnergyObjective();
+	double defEnergy = energyFunction->computeDeformationEnergyObjective(densityParams);
 	Logger::consolePrint("total mass: %lf (upper bound: %lf), total deformation energy: %lf\n", currentMass, upperBound, defEnergy);
 
 //	Logger::consolePrint("overall deformation energy: %lf", simMesh->getCurrentDeformationEnergy());
