@@ -45,7 +45,7 @@ AppSoftLoco::AppSoftLoco() {
 		"sugar",        // 8
 		"T"             // 9
 	};
-	string TEST_CASE = TEST_CASES[4];
+	string TEST_CASE = TEST_CASES[8];
 
 	// TODO: Could have yJ_curr, mJ_curr (but then all functions need two arguments)
 
