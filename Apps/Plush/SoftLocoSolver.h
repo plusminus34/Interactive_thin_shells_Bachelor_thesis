@@ -64,7 +64,7 @@ public:
 	int DN();
 	int T();
 	const int K = 64 + 1;
-	int ZT();
+	int ZS();
 	// --
 	bool check_x_size(const dVector &x);
 	bool check_u_size(const dVector &u);
@@ -81,13 +81,14 @@ public:
 	const int Z = ((K - 1) / 8) + 1;
 	const dVector knot_times = vecDouble2dVector(linspace(8, 0., 1.)); 
 	int k_of_z(const int &z) { return (K-1)/(Z-1)*z; }
+	int S();
 
 public:
-	void FD_TEST_dOJdyJ(const Traj &yJ, const Traj &xJ);
+	void FD_TEST_dOJdymJ(const Traj &ymJ, const Traj &xJ);
 	double FD_TEST_STEPSIZE = 1.5e-5;
 
 public:
-	double     calculate_OJ(const Traj &yJ);
+	double     calculate_OJ(const Traj &ymJ);
 	double     calculate_QJ(const Traj &uJ);
 	double     calculate_RJ(const Traj &uJ);
 	double     calculate_R(const dVector &u);
@@ -96,10 +97,10 @@ public:
 public:
 	dVector xm1_curr, vm1_curr; // TODO: rename xm1, vm
 	dVector um1_curr;
-	// Traj uJ_curr;
-	Traj yJ_curr;
+
+	Traj ymJ_curr; // TODO: Rename sJ_curr ([ y ... y , m ... m ])
 	Traj xJ_curr;
-	Traj uJ_curr() { return uJ_of_yJ(yJ_curr); }
+	Traj uJ_curr() { return uJ_of_ymJ(ymJ_curr); }
 	// --
 	// dVector u_curr; dVector x_curr;
 
@@ -119,20 +120,20 @@ public:
 public:
 	void iterate();
 	// void project(); 
-	void projectJ(); 
+	// void projectJ(); 
 
-	Traj uJ_next(const Traj &uJ, const Traj &xJ);
-	Traj yJ_next(const Traj &yJ, const Traj &xJ);
-	double calculate_gammaJ(const Traj &yJ, const vector<dRowVector> &dOdyJ);
-	Traj xJ_of_yJ(const Traj &yJ);
+	// Traj uJ_next(const Traj &uJ, const Traj &xJ);
+	// Traj yJ_next(const Traj &yJ, const Traj &xJ);
+	// double calculate_gammaJ(const Traj &yJ, const vector<dRowVector> &dOdyJ);
+	Traj xJ_of_ymJ(const Traj &ymJ);
 	Traj xJ_of_uJ(const Traj &uJ);
-	Traj uJ_of_yJ(const Traj &yJ);
+	Traj uJ_of_ymJ(const Traj &ymJ);
 
 	Traj xZ_from_xJ(const Traj &xJ); // keyframes
 
 	// -- //
 
-	vector<dRowVector> calculate_dOdyJ(const Traj &yJ, const Traj &xJ);
+	vector<dRowVector> calculate_dOdymJ(const Traj &ymJ, const Traj &xJ);
 	vector<dRowVector> calculate_dQduJ(const Traj &uJ, const Traj &xJ);
 	vector<dRowVector> calculate_dRduJ(const Traj &uJ);
 
@@ -140,7 +141,7 @@ public:
 	SparseMatrix calculate_dxdu(const dVector &u, const dVector &x, const dVector &x_ctc=dVector());
 	// SparseMatrix calculate_dudz(const dVector &u, const dVector &z);
 	dRowVector calculate_dRdu(const dVector &u);
-	vector<dRowVector> dSTARduJ2dSTARdyJ(const vector<dRowVector> &);
+	vector<dRowVector> dSTARduJ2dSTARdymJ(const vector<dRowVector> &);
 
 	// -- //
 

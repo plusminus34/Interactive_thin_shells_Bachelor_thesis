@@ -10,7 +10,7 @@ double SoftLocoObjectiveFunction::computeValue(const dVector &yS){
 }
 
 void SoftLocoObjectiveFunction::addGradientTo(dVector &G, const dVector &yS) {
-	vector<dRowVector> GS = solver->calculate_dOdyJ(solver->yJ_curr, solver->xJ_curr);
+	vector<dRowVector> GS = solver->calculate_dOdymJ(solver->ymJ_curr, solver->xJ_curr);
 	// --
 	// auto yJ = solver->unstack_Traj(yS, solver->Z);
 	// vector<dRowVector> GS = solver->calculate_dOdyJ(yJ, solver->xJ_of_yJ(yJ));
@@ -27,7 +27,7 @@ void SoftLocoObjectiveFunction::addHessianEntriesTo(DynamicArray<MTriplet>& hess
 }
 
 void SoftLocoObjectiveFunction::setCurrentBestSolution(const dVector &yS) {
-	solver->yJ_curr = solver->unstack_Traj(yS, solver->Z);
-	solver->xJ_curr = solver->xJ_of_yJ(solver->yJ_curr);
+	solver->ymJ_curr = solver->unstack_Traj(yS, solver->Z);
+	solver->xJ_curr = solver->xJ_of_ymJ(solver->ymJ_curr);
 	// solver->projectJ();
 }

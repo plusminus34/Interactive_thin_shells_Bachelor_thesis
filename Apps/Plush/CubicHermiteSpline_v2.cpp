@@ -72,6 +72,7 @@ dVector CubicHermiteSpline_v2::calculate_U(const dVector &Y, const dVector &M) {
 		double &t = T[i];
 		// --
 		double dx = X[k + 1] - X[k];
+		// --
 		U[i] = h00(t)*Y[k] + h10(t)*dx*M[k] + h01(t)*Y[k + 1] + h11(t)*dx*M[k + 1];
 	}
 	return U;
@@ -96,8 +97,11 @@ SparseMatrix CubicHermiteSpline_v2::calculate_dUdM_() {
 	for (int i = 0; i < dUdY_.rows(); ++i) {     // U[i]
 		int    &k = K[i];
 		double &t = T[i];
-		triplets.push_back(MTriplet(i, k, h10(t)));
-		triplets.push_back(MTriplet(i, k + 1, h11(t)));
+		// --
+		double dx = X[k + 1] - X[k];
+		// --
+		triplets.push_back(MTriplet(i, k, h10(t)*dx));
+		triplets.push_back(MTriplet(i, k + 1, h11(t)*dx));
 	}
 	dUdY_.setFromTriplets(triplets.begin(), triplets.end());
 	return dUdY_;

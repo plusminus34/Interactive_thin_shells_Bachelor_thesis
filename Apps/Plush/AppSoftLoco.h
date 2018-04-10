@@ -28,11 +28,15 @@ public:
 
 public:
 	vector<P2DDragger *> COM_handlers;
-	vector<vector<P3D*>> test_splines;
-	Frame test_frame = Frame(Matrix3x3::Identity(), V3D(-1., 1.));
-	Handler_v2 test_handler;
+	vector<vector<P3D*>> all_positions;
+	vector<vector<P3D*>> all_tangents;
+	P2DDragger_v2 *splinePositionsDragger;
+	P2DDragger_v2 *splineTangentsDragger;
+	Frame splinePositionsFrame = Frame(Matrix3x3::Identity(), V3D(-3., 1.));
+	Frame splineTangentsFrame = Frame(Matrix3x3::Identity(), V3D(-1.75, 1.)); // TODO V2DDragger
 	// TODO: test out use of Handler_v2
 	// TODO: Consider exposing translation and scaling as widgets
+	bool DRAG_POSITIONS_TANGENTS_TOGGLE = false;
 
 public:
 	bool ENABLE_SPLINE_INTERACTION = true;

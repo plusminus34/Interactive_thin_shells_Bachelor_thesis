@@ -47,15 +47,17 @@ AppSoftLoco::AppSoftLoco() {
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
 	mesh = new CSTSimulationMesh2D();
-	mesh->timeStep = .01;
+	mesh->timeStep = .02;
 	mesh->spawnSavedMesh(fName, true);
 	// mesh->rotate_mesh(PI);
 	mesh->nudge_mesh_up();
 	mesh->applyYoungsModulusAndPoissonsRatio(3e5, .25); // FORNOW
 	mesh->addGravityForces(V3D(0., -10.)); 
-    // mesh->pinToFloor(); 
-	// mesh->pinToLeftWall(); 
+
+	if (TEST_CASE == "tri") { mesh->pinToFloor(); }
+	if (TEST_CASE == "swingup") { mesh->pinToLeftWall(); }
 	if (mesh->pins.empty()) { mesh->add_contacts_to_boundary_nodes(); }
+
 	if (TEST_CASE == "tri") { mesh->rig_boundary_simplices(); }
 	// mesh->rig_boundary_simplices();
 	// mesh->rig_all_lower_simplices();
@@ -107,17 +109,27 @@ AppSoftLoco::AppSoftLoco() {
 
 	// FORNOW
 	{
-		vector<P3D *> all_points;
 		for (int i = 0; i < ik->T(); ++i) {
-			vector<P3D *> test_spline;
+			vector<P3D *> positions;
 			for (int z = 0; z < ik->Z; ++z) {
-				P3D *point = new P3D(dfrac(z, ik->Z - 1), 0.);
-				test_spline.push_back(point);
-				all_points.push_back(point);
+				P3D *position = new P3D(dfrac(z, ik->Z - 1), 0.);
+				positions.push_back(position);
 			}
-			test_splines.push_back(test_spline);
+			all_positions.push_back(positions);
 		}
-		push_back_handler2(new P2DDragger_v2(all_points, &test_frame, true, -1., .5));
+
+		for (int i = 0; i < ik->T(); ++i) {
+			vector<P3D *> tangents;
+			for (int z = 0; z < ik->Z; ++z) {
+				P3D *tangent = new P3D(dfrac(z, ik->Z - 1), 0.);
+				tangents.push_back(tangent);
+			}
+			all_tangents.push_back(tangents);
+		}
+		splinePositionsDragger = new P2DDragger_v2(flatten(all_positions), &splinePositionsFrame, true, -.5, .5);
+		splineTangentsDragger  = new P2DDragger_v2(flatten(all_tangents) , &splineTangentsFrame,  true, -1., 1.);
+		push_back_handler2(splinePositionsDragger);
+		push_back_handler2(splineTangentsDragger);
 	}
 
 	mainMenu->addGroup("app");
@@ -148,12 +160,12 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("STEP", STEP);
 	mainMenu->addVariable("PLAY_PREVIEW", PLAY_PREVIEW);
 	mainMenu->addVariable("ENABLE_SPLINE_INTERACTION", ENABLE_SPLINE_INTERACTION);
-	mainMenu->addButton("PROJECT SPLINE", [&]() {for (int t = 0; t < ik->T(); ++t) { test_splines[t][0]->y() = 0.; } });
-	mainMenu->addButton("GRADIENT MAGNITUDE", [&]() { cout << "|G| = " << stack_vec_dRowVector(ik->calculate_dOdyJ(ik->yJ_curr, ik->xJ_curr)).squaredNorm() << endl; });
-	mainMenu->addButton("OBJECTIVE_VALUE", [&]() { cout << " O  = " << ik->calculate_OJ(ik->yJ_curr)   << endl; }); 
+	mainMenu->addButton("PROJECT SPLINE", [&]() {for (int t = 0; t < ik->T(); ++t) { all_positions[t][0]->y() = 0.; } });
+	mainMenu->addButton("GRADIENT MAGNITUDE", [&]() { cout << "|G| = " << stack_vec_dRowVector(ik->calculate_dOdymJ(ik->ymJ_curr, ik->xJ_curr)).squaredNorm() << endl; });
+	mainMenu->addButton("OBJECTIVE_VALUE", [&]() { cout << " O  = " << ik->calculate_OJ(ik->ymJ_curr)   << endl; }); 
 	mainMenu->addButton("Q_VALUE",         [&]() { cout << " Q  = " << ik->calculate_QJ(ik->uJ_curr()) << endl; }); 
 	mainMenu->addButton("R_VALUE",         [&]() { cout << " R  = " << ik->calculate_RJ(ik->uJ_curr()) << endl; }); 
-	mainMenu->addButton("FD_TEST_dOJdyJ", [&]() { ik->FD_TEST_dOJdyJ(ik->yJ_curr, ik->xJ_curr); });
+	mainMenu->addButton("FD_TEST_dOJdymJ", [&]() { ik->FD_TEST_dOJdymJ(ik->ymJ_curr, ik->xJ_curr); });
 	mainMenu->addVariable("FD_TEST_STEPSIZE", ik->FD_TEST_STEPSIZE);
 	mainMenu->addVariable("_DYNAMICS_MAX_ITERATIONS", mesh->_DYNAMICS_MAX_ITERATIONS);
 	mainMenu->addVariable("_DYNAMICS_SOLVE_RESIDUAL", mesh->_DYNAMICS_SOLVE_RESIDUAL);
@@ -172,44 +184,62 @@ void AppSoftLoco::drawScene() {
 	}
 
 	glMasterPush(); {
-		test_frame.glAffineTransform();
+		splinePositionsFrame.glAffineTransform();
 		// --
 		glPointSize(5.);
 		glLineWidth(2.);
 		// --
 		glBegin(GL_POINTS); {
-			for (int i = 0; i < ik->T(); ++i) { 
+			for (int i = 0; i < ik->T(); ++i) {
 				set_color(kelly_color(i));
-				auto &test_spline = test_splines[i];
-				for (auto &test_point : test_spline) {
-					glP3D(*test_point);
+				for (auto &position : all_positions[i]) {
+					glP3D(*position);
 				}
 			}
 		} glEnd();
 		// --
-		auto uJ_curr_T = ik->zipunzip(ik->uJ_of_yJ(ik->yJ_curr));
+		auto uJ_curr_T = ik->zipunzip(ik->uJ_of_ymJ(ik->ymJ_curr));
 		auto K_range = linspace(ik->K, 0., 1.);
 		for (int t = 0; t < ik->T(); ++t) {
 			glBegin(GL_LINE_STRIP); {
 				set_color(kelly_color(t));
-				// (*)
 				glvecP3D(zip_vec_dVector2vecP3D({ vecDouble2dVector(K_range), uJ_curr_T[t]/mesh->tendons[t]->get_alphaz() }));
 			} glEnd();
 		} 
+	} glMasterPop();
+
+	glMasterPush(); {
+		splineTangentsFrame.glAffineTransform();
+		// --
+		glPointSize(5.);
+		glLineWidth(2.);
+		// --
+		for (int t = 0; t < ik->T(); ++t) { 
+			set_color(kelly_color(t));
+			for (auto &GL_PRIMITIVE : { GL_LINES, GL_POINTS }) {
+				glBegin(GL_PRIMITIVE); {
+					for (int z = 0; z < ik->Z; ++z) {
+						auto &tangent = all_tangents[t][z];
+						// --
+						glP3D(P3D(tangent->x(), 0.));
+						glP3D(P3D(*tangent));
+					}
+				} glEnd();
+			}
+		}
 	} glMasterPop();
 
 	DRAW_HANDLERS = false;
 	PlushApplication::drawScene(); 
 	draw_floor2d();
 
+	// TODO: Tangent interaction
 	if (ENABLE_SPLINE_INTERACTION) {
-		for (int t = 0; t < ik->T(); ++t) {
-			auto &test_spline = test_splines[t];
-			for (int z = 0; z < ik->Z; ++z) {
-				ik->yJ_curr[z][t] = test_spline[z]->y() * mesh->tendons[t]->get_alphaz();
-			}
+		for (int z = 0; z < ik->Z; ++z) {
+			for (int t = 0; t < ik->T(); ++t) { ik->ymJ_curr[z][t]           = all_positions[t][z]->y() * mesh->tendons[t]->get_alphaz(); }
+			for (int t = 0; t < ik->T(); ++t) { ik->ymJ_curr[z][ik->T() + t] = all_tangents[t][z]->y() * mesh->tendons[t]->get_alphaz(); }
 		}
-		ik->xJ_curr = ik->xJ_of_yJ(ik->yJ_curr);
+		ik->xJ_curr = ik->xJ_of_ymJ(ik->ymJ_curr);
 	}
 
 	if (!PLAY_PREVIEW) {
@@ -221,7 +251,7 @@ void AppSoftLoco::drawScene() {
 		mesh->draw(); // FORNOW 
 
 	} else if (PLAY_PREVIEW) { 
-		desiredFrameRate = 100;
+		// desiredFrameRate = 100;
 		// -- 
 		if (!POPULATED_PREVIEW_TRAJEC) {
 			POPULATED_PREVIEW_TRAJEC = true;
@@ -241,13 +271,13 @@ void AppSoftLoco::drawScene() {
 
 	}
 
-	{
-		CubicHermiteSpline_v2 tmp = CubicHermiteSpline_v2(vecDouble2dVector(linspace(ik->Z, 0., 1.)), vecDouble2dVector(linspace(ik->K, 0., 1.)));
-		vector<P3D *> data = test_splines[0];
-		dVector Y; Y.setZero(data.size());
-		for (size_t i = 0; i < data.size(); ++i) { Y[i] = (*data[i])[1]; } 
-		tmp.draw(Y, tmp.CFD_M(Y));
-	} 
+	// {
+	// 	CubicHermiteSpline_v2 tmp = CubicHermiteSpline_v2(vecDouble2dVector(linspace(ik->Z, 0., 1.)), vecDouble2dVector(linspace(ik->K, 0., 1.)));
+	// 	vector<P3D *> data = test_splines[0];
+	// 	dVector Y; Y.setZero(data.size());
+	// 	for (size_t i = 0; i < data.size(); ++i) { Y[i] = (*data[i])[1]; } 
+	// 	tmp.draw(Y, tmp.CFD_M(Y));
+	// } 
 
 	PlushApplication::recordVideo();
 }
@@ -272,9 +302,9 @@ void AppSoftLoco::process() {
 
 			// BEG***
 			for (int t = 0; t < ik->T(); ++t) {
-				auto &test_spline = test_splines[t];
 				for (int z = 0; z < ik->Z; ++z) {
-					test_spline[z]->y() = ik->yJ_curr[z][t]/mesh->tendons[t]->get_alphaz();
+					all_positions[t][z]->y() = ik->ymJ_curr[z][t]            / mesh->tendons[t]->get_alphaz();
+					all_tangents [t][z]->y() = ik->ymJ_curr[z][ik->T() + t]  / mesh->tendons[t]->get_alphaz();
 				}
 			}
 			// ***END
