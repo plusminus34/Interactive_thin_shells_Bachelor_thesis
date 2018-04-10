@@ -9,11 +9,11 @@ double SoftLocoObjectiveFunction::computeValue(const dVector &yS){
 	return solver->calculate_OJ(solver->unstack_Traj(yS, solver->Z));
 }
 
-void SoftLocoObjectiveFunction::addGradientTo(dVector &G, const dVector &yS) {
+void SoftLocoObjectiveFunction::addGradientTo(dVector &G, const dVector &ymS) {
 	vector<dRowVector> GS = solver->calculate_dOdymJ(solver->ymJ_curr, solver->xJ_curr);
 	// --
-	// auto yJ = solver->unstack_Traj(yS, solver->Z);
-	// vector<dRowVector> GS = solver->calculate_dOdyJ(yJ, solver->xJ_of_yJ(yJ));
+	// auto ymJ = solver->unstack_Traj(ymS, solver->Z);
+	// vector<dRowVector> GS = solver->calculate_dOdymJ(ymJ, solver->xJ_of_ymJ(ymJ)); 
 
 	G += stack_vec_dRowVector(GS).transpose(); 
 }

@@ -2,6 +2,9 @@
  
 using namespace nanogui;
 
+// TODO: Make material parameters properties of the mesh so you can scrub them and see how it impacts the sim
+// TODO: (Including mass density).
+
 // TODO: Check gradient (you can clear out the rest of the FD code, add in one big check on dOdyJ --- feel free to leave other checks in for now)
 // TODO: You should be able to drag activations yourself
 // TODO: Save user-designed control-signals, and use as intial guess.
@@ -44,10 +47,12 @@ AppSoftLoco::AppSoftLoco() {
 	};
 	string TEST_CASE = TEST_CASES[4];
 
+	// TODO: Could have yJ_curr, mJ_curr (but then all functions need two arguments)
+
 	// -- // mesh
 	char fName[128]; strcpy(fName, "../Apps/Plush/data/tri/"); strcat(fName, TEST_CASE.data());
 	mesh = new CSTSimulationMesh2D();
-	mesh->timeStep = .02;
+	mesh->timeStep = .01;
 	mesh->spawnSavedMesh(fName, true);
 	// mesh->rotate_mesh(PI);
 	mesh->nudge_mesh_up();
@@ -58,7 +63,10 @@ AppSoftLoco::AppSoftLoco() {
 	if (TEST_CASE == "swingup") { mesh->pinToLeftWall(); }
 	if (mesh->pins.empty()) { mesh->add_contacts_to_boundary_nodes(); }
 
-	if (TEST_CASE == "tri") { mesh->rig_boundary_simplices(); }
+	if (TEST_CASE == "tri") {
+		// mesh->rig_boundary_simplices();
+		mesh->add_tendon_from_vecInt({ 0, 2 });
+	}
 	// mesh->rig_boundary_simplices();
 	// mesh->rig_all_lower_simplices();
 
@@ -126,8 +134,8 @@ AppSoftLoco::AppSoftLoco() {
 			}
 			all_tangents.push_back(tangents);
 		}
-		splinePositionsDragger = new P2DDragger_v2(flatten(all_positions), &splinePositionsFrame, true, -.5, .5);
-		splineTangentsDragger  = new P2DDragger_v2(flatten(all_tangents) , &splineTangentsFrame,  true, -1., 1.);
+		splinePositionsDragger = new P2DDragger_v2(flatten(all_positions), &splinePositionsFrame, true, -1., 1.);
+		splineTangentsDragger  = new P2DDragger_v2(flatten(all_tangents) , &splineTangentsFrame,  true);
 		push_back_handler2(splinePositionsDragger);
 		push_back_handler2(splineTangentsDragger);
 	}
@@ -160,7 +168,8 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("STEP", STEP);
 	mainMenu->addVariable("PLAY_PREVIEW", PLAY_PREVIEW);
 	mainMenu->addVariable("ENABLE_SPLINE_INTERACTION", ENABLE_SPLINE_INTERACTION);
-	mainMenu->addButton("PROJECT SPLINE", [&]() {for (int t = 0; t < ik->T(); ++t) { all_positions[t][0]->y() = 0.; } });
+	// mainMenu->addButton("PROJECT SPLINE", [&]() {for (int t = 0; t < ik->T(); ++t) { all_positions[t][0]->y() = 0.; } });
+	mainMenu->addButton("CHECK CONSTRAINTS", [&]() { ik->constraints->checkConstraints(ik->ymJ_curr); });
 	mainMenu->addButton("GRADIENT MAGNITUDE", [&]() { cout << "|G| = " << stack_vec_dRowVector(ik->calculate_dOdymJ(ik->ymJ_curr, ik->xJ_curr)).squaredNorm() << endl; });
 	mainMenu->addButton("OBJECTIVE_VALUE", [&]() { cout << " O  = " << ik->calculate_OJ(ik->ymJ_curr)   << endl; }); 
 	mainMenu->addButton("Q_VALUE",         [&]() { cout << " Q  = " << ik->calculate_QJ(ik->uJ_curr()) << endl; }); 
@@ -169,6 +178,7 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("FD_TEST_STEPSIZE", ik->FD_TEST_STEPSIZE);
 	mainMenu->addVariable("_DYNAMICS_MAX_ITERATIONS", mesh->_DYNAMICS_MAX_ITERATIONS);
 	mainMenu->addVariable("_DYNAMICS_SOLVE_RESIDUAL", mesh->_DYNAMICS_SOLVE_RESIDUAL);
+	mainMenu->addVariable("FPS", this->desiredFrameRate);
 	menuScreen->performLayout(); 
 }
 
@@ -243,7 +253,7 @@ void AppSoftLoco::drawScene() {
 	}
 
 	if (!PLAY_PREVIEW) {
-		desiredFrameRate = 30;
+		// desiredFrameRate = 30;
 		// --
 		PREVIEW_i = -LEADIN_FRAMES;
 		// --

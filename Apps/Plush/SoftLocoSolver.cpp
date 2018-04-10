@@ -144,7 +144,7 @@ void SoftLocoSolver::draw() {
 
 		dVector ONE;  resize_fill(ONE, K, 1);
 		dVector ZERO; resize_zero(ZERO, K);
-		vector<dVector> lines = { -ONE, ZERO, ONE };
+		vector<dVector> lines = { -.5*ONE, ZERO, .5*ONE };
 		for (auto &line : lines) { plots.push_back(new XYPlot(K_range, dVector2vecDouble(line))); }
 		for (auto &plot : plots) { plot->SPEC_COLOR = LIGHT_CLAY; }
 
