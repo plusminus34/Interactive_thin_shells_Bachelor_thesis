@@ -166,8 +166,8 @@ public:
 	SparseMatrix solve_AX_EQUALS_B(const SparseMatrix &A, const SparseMatrix &B);
 	// --
 	SLSSolver solver;
-	// SparseMatrix factorize_A(SLSSolver &solver, const SparseMatrix &A);
-	// SparseMatrix solve_AX_EQUALS_B_WITHOUT_FACTORIZATION(SLSSolver &solver, const SparseMatrix &A, const SparseMatrix &B);
+	void factorize_A(SLSSolver &solver, const SparseMatrix &A);
+	SparseMatrix solve_AX_EQUALS_B_WITHOUT_FACTORIZATION(SLSSolver &solver, const SparseMatrix &A, const SparseMatrix &B);
 
 public:
 	void Traj_equality_check(const Traj &, const Traj &);

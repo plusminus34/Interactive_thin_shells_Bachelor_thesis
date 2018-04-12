@@ -706,28 +706,28 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 
 			// TOOD: These two should be brought into the general case.
 			// Make sure gradient checks with FD before WIHTOUT FACT
-			dxkdxkm1_INDEX_AT_km1.push_back(solve_AX_EQUALS_B(-H, dScriptGkdxkm1));
+			// dxkdxkm1_INDEX_AT_km1.push_back(solve_AX_EQUALS_B(-H, dScriptGkdxkm1));
 			// dxkdxkm1_INDEX_AT_km1.push_back(solve_AX_EQUALS_B_WITHOUT_FACTORIZATION(-H, dScriptGkdxkm1));
 		}
 		mesh->update_contacts(mesh->x);
 	} 
 
-	// cout << "dxkdxkm2" << endl;
-	vector<SparseMatrix> dxkdxkm2_INDEX_AT_km2; {
-		for (int k = 2; k < K; ++k) {
-			double h = mesh->timeStep;
-			auto &H = vecH[k];
-			SparseMatrix TERM_1 = dScriptGkdxkm1_INDEX_at_km1[k - 1] * dxkdxkm1_INDEX_AT_km1[k - 2];
-			SparseMatrix &TERM_2 = f1h2M;
-			dxkdxkm2_INDEX_AT_km2.push_back(solve_AX_EQUALS_B(-H, TERM_1 + TERM_2));
-		}
-	} 
+	// // cout << "dxkdxkm2" << endl;
+	// vector<SparseMatrix> dxkdxkm2_INDEX_AT_km2; {
+	// 	for (int k = 2; k < K; ++k) {
+	// 		double h = mesh->timeStep;
+	// 		auto &H = vecH[k];
+	// 		SparseMatrix TERM_1 = dScriptGkdxkm1_INDEX_at_km1[k - 1] * dxkdxkm1_INDEX_AT_km1[k - 2];
+	// 		SparseMatrix &TERM_2 = f1h2M;
+	// 		dxkdxkm2_INDEX_AT_km2.push_back(solve_AX_EQUALS_B(-H, TERM_1 + TERM_2));
+	// 	}
+	// } 
  
 	// cout << "dxidxj" << endl;
 	
 	// -- // Seed.
-	auto &D1 = [&](int k) { return dxkdxkm1_INDEX_AT_km1[k - 1]; };
-	auto &D2 = [&](int k) { return dxkdxkm2_INDEX_AT_km2[k - 2]; };
+	// auto &D1 = [&](int k) { return dxkdxkm1_INDEX_AT_km1[k - 1]; };
+	// auto &D2 = [&](int k) { return dxkdxkm2_INDEX_AT_km2[k - 2]; };
 	// --
 	vector<vector<SparseMatrix>> dxidxj;
 	for (int i = 0; i < K; ++i) {
@@ -740,23 +740,31 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 			if (imj < 0) {
 				entry.resize(DN(), DN()); entry.setZero();
 			} else if (imj == 0) {
-				entry.resize(DN(), DN()); entry.setIdentity(); 
-			} if (imj == 1) {
-				entry = D1(i);
-			} else if (imj == 2) {
-				entry = D2(i);
+				entry.resize(DN(), DN()); entry.setIdentity();
+			} else {
+				entry.resize(DN(), DN()); entry.setZero();
+			// } if (imj == 1) {
+			// 	entry = D1(i);
+			// } else if (imj == 2) {
+			// 	entry = D2(i);
 			}
 			row.push_back(entry);
 		}
 		dxidxj.push_back(row);
 	} 
-	auto &XX = dxidxj;
 
+	SparseMatrix ZERO(DN(), DN()); ZERO.setZero();
+	auto &XX = [&](int i, int j) -> const SparseMatrix & {
+		if (i < 0) { return ZERO; }
+		return dxidxj[i][j];
+	};
+
+	// Grow
 	auto &scrGxm1 = [&](int k) { return dScriptGkdxkm1_INDEX_at_km1[k - 1]; };
 	for (int j = 0; j < K; ++j) {
-		for (int i = j + 3; i < K; ++i) { 
+		for (int i = j + 1; i < K; ++i) { 
 			auto &Hi = vecH[i];
-			XX[i][j] = solve_AX_EQUALS_B(-Hi, scrGxm1(i)*XX[i - 1][j] + f1h2M*XX[i - 2][j]);
+			dxidxj[i][j] = solve_AX_EQUALS_B(-Hi, scrGxm1(i)*XX(i - 1, j) + f1h2M*XX(i - 2, j));
 		}
 	}
 
@@ -906,15 +914,15 @@ SparseMatrix SoftLocoSolver::solve_AX_EQUALS_B(const SparseMatrix &A, const Spar
 	return X;
 }
 
-// SparseMatrix factorize_A(SLSSolver &solver, const SparseMatrix &A) {
-// 	solver.factorize(A);
-// }
+void factorize_A(SLSSolver &solver, const SparseMatrix &A) {
+	solver.factorize(A);
+}
 
-// SparseMatrix solve_AX_EQUALS_B_WITHOUT_FACTORIZATION(SLSSolver &solver, const SparseMatrix &A, const SparseMatrix &B) { 
-// 	SparseMatrix X = solver.solve(B);
-// 	if (solver.info() != Eigen::Success) { error("Eigen::SimplicialLDLT solve failed."); }
-// 	return X;
-// }
+SparseMatrix solve_AX_EQUALS_B_WITHOUT_FACTORIZATION(SLSSolver &solver, const SparseMatrix &A, const SparseMatrix &B) { 
+	SparseMatrix X = solver.solve(B);
+	if (solver.info() != Eigen::Success) { error("Eigen::SimplicialLDLT solve failed."); }
+	return X;
+}
 
 SparseMatrix SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x, const dVector &x_ctc) {
 	check_x_size(x);
