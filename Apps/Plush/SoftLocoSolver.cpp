@@ -760,11 +760,13 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 	};
 
 	// Grow
+	// TODO (SAFER): One solver per Hi, prefactorized vecHSolvers_FACTORIZED
+	analyze_A(solver, vecH[0]);
 	auto &scrGxm1 = [&](int k) { return dScriptGkdxkm1_INDEX_at_km1[k - 1]; };
 	for (int j = 0; j < K; ++j) {
 		for (int i = j + 1; i < K; ++i) { 
 			auto &Hi = vecH[i];
-			dxidxj[i][j] = solve_AX_EQUALS_B(-Hi, scrGxm1(i)*XX(i - 1, j) + f1h2M*XX(i - 2, j));
+			dxidxj[i][j] = solve_AX_EQUALS_B_WITHOUT_ANALYSIS(solver, -Hi, scrGxm1(i)*XX(i - 1, j) + f1h2M*XX(i - 2, j));
 		}
 	}
 
@@ -914,11 +916,12 @@ SparseMatrix SoftLocoSolver::solve_AX_EQUALS_B(const SparseMatrix &A, const Spar
 	return X;
 }
 
-void factorize_A(SLSSolver &solver, const SparseMatrix &A) {
-	solver.factorize(A);
+void SoftLocoSolver::analyze_A(SLSSolver &solver, const SparseMatrix &A) {
+	solver.analyzePattern(A);
 }
 
-SparseMatrix solve_AX_EQUALS_B_WITHOUT_FACTORIZATION(SLSSolver &solver, const SparseMatrix &A, const SparseMatrix &B) { 
+SparseMatrix SoftLocoSolver::solve_AX_EQUALS_B_WITHOUT_ANALYSIS(SLSSolver &solver, const SparseMatrix &A, const SparseMatrix &B) { 
+	solver.factorize(A);
 	SparseMatrix X = solver.solve(B);
 	if (solver.info() != Eigen::Success) { error("Eigen::SimplicialLDLT solve failed."); }
 	return X;
