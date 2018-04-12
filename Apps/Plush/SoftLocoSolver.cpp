@@ -167,7 +167,7 @@ void SoftLocoSolver::draw() {
 		}
 
 		for (auto &plot : plots) {
-			*plot->origin = P3D(2., -1.);
+			*plot->origin = P3D(-2., -1.);
 			*plot->top_right = *plot->origin + V3D(1., 2.);
 		};
 
@@ -270,7 +270,7 @@ void SoftLocoSolver::step() {
 	{
 		SQPFunctionMinimizer minimizer(1);
 		minimizer.maxLineSearchIterations_ = 15;
-		minimizer.printOutput_ = true;
+		minimizer.printOutput_ = false;
 		// --
 		dVector ymS = stack_vec_dVector(ymJ_curr);
 		double functionValue = objectiveFunction->computeValue(ymS);
@@ -658,19 +658,19 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 	}
 
 	// cout << "dxkdxkm1" << endl;
-	vector<SparseMatrix> dGkdxkm1_INDEX_at_km1;
+	// vector<SparseMatrix> dGkdxkm1_INDEX_at_km1;
 	vector<SparseMatrix> dScriptGkdxkm1_INDEX_at_km1;
 	vector<SparseMatrix> dxkdxkm1_INDEX_AT_km1; {
 		for (int k = 1; k < K; ++k) {
 			auto &H = vecH[k];
 
 			// MatrixNxM dGkdxkm1(DN(), DN());
-			SparseMatrix dGkdxkm1(DN(), DN());
+			SparseMatrix dScriptGkdxkm1(DN(), DN());
 			const dVector &xk   = xJ[k];
 			const dVector &xkm1 = xJ[k - 1];
 			mesh->update_contacts(xkm1); // FORNOW
 
-			sparse_mat_resize_zero(dGkdxkm1, DN(), DN());
+			sparse_mat_resize_zero(dScriptGkdxkm1, DN(), DN());
 			// mat_resize_zero(dGkdxkm1, DN(), DN());
 			for (auto &c: mesh->contacts) {
 				int i = c->node->nodeIndex;
@@ -678,36 +678,36 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 				P3D xy_km1_i = c->getPosition(xkm1);
 				double &xk_i   = xy_k_i[0];
 				double &xkm1_i = xy_km1_i[0];
-				// Matrix2x2 block; block.setZero();
-				// block(0, 0) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
-				// block(0, 1) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
-				// dGkdxkm1.block<2, 2>(2 * i, 2 * i) += block;
-				dGkdxkm1.insert(2*i, 2*i) = -c->b()*c->QT->computeSecondDerivative(xk_i - xkm1_i);
-				dGkdxkm1.insert(2*i, 2*i + 1) = c->b_prime()*c->QT->computeDerivative(xk_i - xkm1_i);
+				dScriptGkdxkm1.insert(2*i, 2*i)     = -c->b()      *c->QT->computeSecondDerivative(xk_i - xkm1_i);
+				dScriptGkdxkm1.insert(2*i, 2*i + 1) =  c->b_prime()*c->QT->computeDerivative(      xk_i - xkm1_i);
 			}
-			dGkdxkm1_INDEX_at_km1.push_back(dGkdxkm1);
-
-			if (TEST_Q_FD) {
-				MatrixNxM dGkdxkm1_FD;
-				auto G_wrapper = [&](const dVector xkm1) -> dVector {
-					dVector G;
-					mesh->update_contacts(xkm1);
-					mesh->energyFunction->setToStaticsMode(0.);
-					mesh->energyFunction->addGradientTo(G, xk);
-					(SOLVE_DYNAMICS) ? mesh->energyFunction->setToDynamicsMode(mesh->timeStep) : mesh->energyFunction->setToStaticsMode(0.);
-					return G;
-				};
-				dGkdxkm1_FD = mat_FD(xkm1, G_wrapper, 5e-5);
-
-				cout << "--> dGkdxkm1" << endl;
-				matrix_equality_check(dGkdxkm1_FD, dGkdxkm1);
-			}
-
-			SparseMatrix dScriptGkdxkm1 = dGkdxkm1 - 2.*f1h2M;
-			// MatrixNxM dScriptGdxkm1 = -2.*f1h2M; // FORNOW
+			dScriptGkdxkm1 -= 2.*f1h2M;
 			dScriptGkdxkm1_INDEX_at_km1.push_back(dScriptGkdxkm1);
 
+			// if (TEST_Q_FD) {
+			// 	MatrixNxM dGkdxkm1_FD;
+			// 	auto G_wrapper = [&](const dVector xkm1) -> dVector {
+			// 		dVector G;
+			// 		mesh->update_contacts(xkm1);
+			// 		mesh->energyFunction->setToStaticsMode(0.);
+			// 		mesh->energyFunction->addGradientTo(G, xk);
+			// 		(SOLVE_DYNAMICS) ? mesh->energyFunction->setToDynamicsMode(mesh->timeStep) : mesh->energyFunction->setToStaticsMode(0.);
+			// 		return G;
+			// 	};
+			// 	dGkdxkm1_FD = mat_FD(xkm1, G_wrapper, 5e-5);
+
+			// 	cout << "--> dGkdxkm1" << endl;
+			// 	matrix_equality_check(dGkdxkm1_FD, dGkdxkm1);
+			// }
+
+			// SparseMatrix dScriptGkdxkm1 = dGkdxkm1 - 2.*f1h2M;
+			// // MatrixNxM dScriptGdxkm1 = -2.*f1h2M; // FORNOW
+			// dScriptGkdxkm1_INDEX_at_km1.push_back(dScriptGkdxkm1);
+
+			// TOOD: These two should be brought into the general case.
+			// Make sure gradient checks with FD before WIHTOUT FACT
 			dxkdxkm1_INDEX_AT_km1.push_back(solve_AX_EQUALS_B(-H, dScriptGkdxkm1));
+			// dxkdxkm1_INDEX_AT_km1.push_back(solve_AX_EQUALS_B_WITHOUT_FACTORIZATION(-H, dScriptGkdxkm1));
 		}
 		mesh->update_contacts(mesh->x);
 	} 
@@ -734,28 +734,29 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 		vector<SparseMatrix> row;
 		for (int j = 0; j < K; ++j) {
 			int imj = i - j;
-			SparseMatrix entry; sparse_mat_resize_zero(entry, DN(), DN());
-			if (imj == 0) {
-				entry.setIdentity();
-			} else if (imj == 1) {
-				entry = D1(i); // dxkdxkm1_INDEX_AT_km1[i - 1]; // (*)
+			// --
+			SparseMatrix entry;
+			// --
+			if (imj < 0) {
+				entry.resize(DN(), DN()); entry.setZero();
+			} else if (imj == 0) {
+				entry.resize(DN(), DN()); entry.setIdentity(); 
+			} if (imj == 1) {
+				entry = D1(i);
 			} else if (imj == 2) {
-				entry = D2(i); // M = dxkdxkm2_INDEX_AT_km2[i - 2]; // (*)
+				entry = D2(i);
 			}
 			row.push_back(entry);
 		}
 		dxidxj.push_back(row);
-	}
-
-	// -- // Grow.
+	} 
 	auto &XX = dxidxj;
+
 	auto &scrGxm1 = [&](int k) { return dScriptGkdxkm1_INDEX_at_km1[k - 1]; };
-	// --
 	for (int j = 0; j < K; ++j) {
 		for (int i = j + 3; i < K; ++i) { 
-			auto &H = vecH[i];
-			// --
-			dxidxj[i][j] = solve_AX_EQUALS_B(-H, scrGxm1(i)*XX[i - 1][j] + f1h2M*XX[i - 2][j]);
+			auto &Hi = vecH[i];
+			XX[i][j] = solve_AX_EQUALS_B(-Hi, scrGxm1(i)*XX[i - 1][j] + f1h2M*XX[i - 2][j]);
 		}
 	}
 
@@ -783,35 +784,35 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 	vector<dRowVector> dQJduj; // (*)
 	for (int j = 0; j < K; ++j) {
 		dRowVector entry; resize_zero(entry, T());
-		for (int i = 0; i < K; ++i) {
+		for (int i = j; i < K; ++i) { // (*)
 			entry += dQJdxk[i] * dxidxj[i][j] * dxkduk[j];
 		}
 		dQJduj.push_back(entry);
 	}
 
-	if (TEST_Q_FD) {
-		cout << "BEG.................................................." << endl;
-		cout << "--> dxkduk" << endl;
-		MTraj_equality_check(dxkduk_FD, dxkduk);
-		// cout << "--> dxkdxkm1" << endl;
-		// MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
-		cout << "--> dxidxj" << endl;
-		for (int i = 0; i < K; ++i) {
-			cout << "----> ii = " << i << endl;
-			vector<vector<MatrixNxM>> dxidxj_dense;
-			for (auto &row : dxidxj) {
-				vector<MatrixNxM> dense_row;
-				for (auto &entry : row) {
-					dense_row.push_back(entry.toDense());
-				}
-				dxidxj_dense.push_back(dense_row);
-			}
-			MTraj_equality_check(dxidxj_FD[i], dxidxj_dense[i]);
-		}
-		cout << "--> dQkdxk" << endl;
-		Traj_equality_check(dQkdxk_FD, dQJdxk);
-		cout << "..................................................END" << endl;
-	}
+	// if (TEST_Q_FD) {
+	// 	cout << "BEG.................................................." << endl;
+	// 	cout << "--> dxkduk" << endl;
+	// 	MTraj_equality_check(dxkduk_FD, dxkduk);
+	// 	// cout << "--> dxkdxkm1" << endl;
+	// 	// MTraj_equality_check(dxkdxkm1_FD, dxkdxkm1_INDEX_AT_km1);
+	// 	cout << "--> dxidxj" << endl;
+	// 	for (int i = 0; i < K; ++i) {
+	// 		cout << "----> ii = " << i << endl;
+	// 		vector<vector<MatrixNxM>> dxidxj_dense;
+	// 		for (auto &row : dxidxj) {
+	// 			vector<MatrixNxM> dense_row;
+	// 			for (auto &entry : row) {
+	// 				dense_row.push_back(entry.toDense());
+	// 			}
+	// 			dxidxj_dense.push_back(dense_row);
+	// 		}
+	// 		MTraj_equality_check(dxidxj_FD[i], dxidxj_dense[i]);
+	// 	}
+	// 	cout << "--> dQkdxk" << endl;
+	// 	Traj_equality_check(dQkdxk_FD, dQJdxk);
+	// 	cout << "..................................................END" << endl;
+	// }
  
 	if (TEST_Q_FD) {
 		cout << "--> dQJduJ" << endl;
@@ -819,14 +820,14 @@ vector<dRowVector> SoftLocoSolver::calculate_dQduJ(const Traj &uJ, const Traj &x
 		Traj_equality_check(STEP0, dQJduj);
 	}
 
-	dxiduj_SAVED.clear();
-	for (int i = 0; i < K; ++i) {
-		vector<MatrixNxM> row;
-		for (int j = 0; j < K; ++j) {
-			row.push_back(dxidxj[i][j] * dxkduk[j]);
-		}
-		dxiduj_SAVED.push_back(row);;
-	}
+	// dxiduj_SAVED.clear();
+	// for (int i = 0; i < K; ++i) {
+	// 	vector<MatrixNxM> row;
+	// 	for (int j = 0; j < K; ++j) {
+	// 		row.push_back(dxidxj[make_pair(i, j)] * dxkduk[j]);
+	// 	}
+	// 	dxiduj_SAVED.push_back(row);;
+	// }
 
 	return dQJduj;
 }
@@ -904,6 +905,16 @@ SparseMatrix SoftLocoSolver::solve_AX_EQUALS_B(const SparseMatrix &A, const Spar
 	if (ldlt.info() != Eigen::Success) { error("Eigen::SimplicialLDLT solve failed."); }
 	return X;
 }
+
+// SparseMatrix factorize_A(SLSSolver &solver, const SparseMatrix &A) {
+// 	solver.factorize(A);
+// }
+
+// SparseMatrix solve_AX_EQUALS_B_WITHOUT_FACTORIZATION(SLSSolver &solver, const SparseMatrix &A, const SparseMatrix &B) { 
+// 	SparseMatrix X = solver.solve(B);
+// 	if (solver.info() != Eigen::Success) { error("Eigen::SimplicialLDLT solve failed."); }
+// 	return X;
+// }
 
 SparseMatrix SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x, const dVector &x_ctc) {
 	check_x_size(x);

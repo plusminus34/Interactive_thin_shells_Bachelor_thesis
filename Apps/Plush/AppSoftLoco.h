@@ -32,8 +32,8 @@ public:
 	vector<vector<P3D*>> all_tangents;
 	P2DDragger_v2 *splinePositionsDragger;
 	P2DDragger_v2 *splineTangentsDragger;
-	Frame splinePositionsFrame = Frame(Matrix3x3::Identity(), V3D(-3., 1.));
-	Frame splineTangentsFrame = Frame(Matrix3x3::Identity(), V3D(-1.75, 1.)); // TODO V2DDragger
+	Frame splinePositionsFrame = Frame(Matrix3x3::Identity(), V3D(0., -1.));
+	Frame splineTangentsFrame = Frame(Matrix3x3::Identity(), V3D(1.33, -1.)); // TODO V2DDragger
 	// TODO: test out use of Handler_v2
 	// TODO: Consider exposing translation and scaling as widgets
 	bool DRAG_POSITIONS_TANGENTS_TOGGLE = false;
@@ -45,7 +45,7 @@ public:
 	bool PLAY_PREVIEW = false;
 	bool POPULATED_PREVIEW_TRAJEC = false;
 	const int LEADIN_FRAMES = 25;
-	const int LEADOUT_FRAMES = 250;
+	const int NUM_CYCLES = 10;
 	int PREVIEW_i = -LEADIN_FRAMES;
 	vector<dVector> uJ_preview;
 	vector<dVector> xJ_preview;

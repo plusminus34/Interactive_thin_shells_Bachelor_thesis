@@ -16,6 +16,8 @@
 #include "SoftLocoConstraints.h"
 
 class SimulationMesh;
+
+typedef Eigen::SimplicialLDLT<SparseMatrix> SLSSolver;
  
 class SoftLocoSolver {
 
@@ -78,7 +80,7 @@ public:
 	SparseMatrix  dUdY2_;
 	SparseMatrix  dUdM2_;
 
-	const int Z = ((K - 1) / 8) + 1;
+	const int Z = ((K - 1) / 32) + 1;
 	const dVector knot_times = vecDouble2dVector(linspace(8, 0., 1.)); 
 	int k_of_z(const int &z) { return (K-1)/(Z-1)*z; }
 	int S();
@@ -162,6 +164,10 @@ public:
 
 public:
 	SparseMatrix solve_AX_EQUALS_B(const SparseMatrix &A, const SparseMatrix &B);
+	// --
+	SLSSolver solver;
+	// SparseMatrix factorize_A(SLSSolver &solver, const SparseMatrix &A);
+	// SparseMatrix solve_AX_EQUALS_B_WITHOUT_FACTORIZATION(SLSSolver &solver, const SparseMatrix &A, const SparseMatrix &B);
 
 public:
 	void Traj_equality_check(const Traj &, const Traj &);

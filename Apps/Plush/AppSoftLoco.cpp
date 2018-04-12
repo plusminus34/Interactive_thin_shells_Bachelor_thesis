@@ -16,6 +16,8 @@ using namespace nanogui;
 // -- Keep in mind that this is guarded by 1000 dynamics solves.
 // TODO: Projection
 // Bilateral tendons until then
+// TODO: Have both a low and high res triangulation which you can switch between optimizing with
+// Low for quick sketches
 
 // TODO: Material damping? / Regularizer?
 // TODO: Squishier material model?
@@ -28,10 +30,11 @@ AppSoftLoco::AppSoftLoco() {
     setWindowTitle("AppSoftLoco");
 	this->showReflections = false;
 	this->showGroundPlane = false;
-	this->DEFAULT_CAM_TARGET______________ = P3D(-1., 0.);
+	this->DEFAULT_CAM_TARGET______________ = P3D(0., 0.);
 	this->DEFAULT_CAM_DISTANCE____________ = -4.5;
 	this->SPOOF_2D_CAMERA = true;
 	this->resetCamera();
+
 
 	const vector<string> TEST_CASES = {
 		"swingup",      // 0
@@ -96,22 +99,14 @@ AppSoftLoco::AppSoftLoco() {
 	ik->LINEAR_APPROX = false;
 	// ik->r_u_ = .1;
 	ik->NUM_ITERS_PER_STEP = 1;
-	{
-		// Zik = new SoftIKSolver(Zmesh);
-		// Zik->PROJECT = true;
-		// Zik->REGULARIZE_alphac = false;
-		// Zik->LINEAR_APPROX = false;
-		// Zik->c_alphac_ = .1;
-		// Zik->HONEY_alphac = false;
-		// Zik->NUM_ITERS_PER_STEP = 1;
-	}
 
 	{
 		ik->REGULARIZE_u = false;
 		ik->SUBSEQUENT_u = false;
 		mesh->HIGH_PRECISION_NEWTON = false;
-		ik->COMpJ.back() += V3D(-.2, .4); 
-		appIsRunning = false;
+		ik->COMpJ.back() += V3D(1., 0.); 
+		appIsRunning = true;
+		ENABLE_SPLINE_INTERACTION = false;
 	}
 
 
@@ -265,8 +260,13 @@ void AppSoftLoco::drawScene() {
 		// -- 
 		if (!POPULATED_PREVIEW_TRAJEC) {
 			POPULATED_PREVIEW_TRAJEC = true;
-			uJ_preview = ik->uJ_curr();
-			for (int _ = 0; _ < LEADOUT_FRAMES; ++_) { uJ_preview.push_back(uJ_preview.back()); }
+
+			uJ_preview.clear();
+			for (int _ = 0; _ < NUM_CYCLES; ++_) {
+				concat_in_place(uJ_preview, ik->uJ_curr());
+			}
+
+
 			xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview); 
 		} 
 
@@ -386,3 +386,4 @@ bool AppSoftLoco::onCharacterPressedEvent(int key, int mods) {
 	// 	} glEnd();
 	// } glMasterPop();
 
+			// for (int _ = 0; _ < LEADOUT_FRAMES; ++_) { uJ_preview.push_back(uJ_preview.back()); }

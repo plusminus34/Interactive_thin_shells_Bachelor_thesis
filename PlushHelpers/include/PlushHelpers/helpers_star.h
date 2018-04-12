@@ -56,7 +56,7 @@ const auto vector_equality_check = [] (const auto &fd, const auto &anal) {
 	Logger::print("vec_check...\n");
 	for (int i = 0; i < int(fd.size()); ++i) {
 		double err = fd[i] - anal[i];
-		if (fabs(err) > 0.0001 && 2 * fabs(err) / (fabs(fd[i]) + fabs(anal[i])) > 0.001) {
+		if (fabs(err) > 0.00001 && 2 * fabs(err) / (fabs(fd[i]) + fabs(anal[i])) > 0.0001) {
 			ret = false; 
 			// --
 			Logger::logPrint("Mismatch element %d: Anal val: %lf, FD val: %lf. Error: %lf\n", i, anal[i], fd[i], err);
@@ -191,6 +191,20 @@ inline std::vector<T> flatten(const std::vector<std::vector<T>> &orig) {
     for(const auto &v: orig)
         ret.insert(ret.end(), v.begin(), v.end());                                                                                         
     return ret;
+}   
+
+template<typename T>
+inline void concat_in_place(vector<T> &modify_me, const vector<T> &vector2) {   
+	// https://stackoverflow.com/questions/201718/concatenating-two-stdvectors
+	modify_me.insert( modify_me.end(), vector2.begin(), vector2.end() );
+}   
+
+template<typename T>
+inline void concat(vector<T> &vector1, const vector<T> &vector2) {   
+	// https://stackoverflow.com/questions/201718/concatenating-two-stdvectors
+	vector<T> ret = vector1;
+	ret.insert( ret.end(), vector2.begin(), vector2.end() );
+	return ret;
 }   
  
 const auto quadratic1d = [](const double x, const double y0, const double y1) {

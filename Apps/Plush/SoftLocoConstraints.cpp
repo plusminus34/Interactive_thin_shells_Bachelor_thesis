@@ -21,8 +21,8 @@ SoftLocoConstraints::SoftLocoConstraints(SoftLocoSolver *loco){
 					l[i] = -0.001;
 					u[i] = 0.001;
 				} else {
-					l[i] = -.25*alphaz;
-					u[i] = .25*alphaz;
+					l[i] = -.1*alphaz;
+					u[i] = .1*alphaz;
 				}
 			} else {
 				if (z == 0 || z == Z() - 1) {
@@ -41,8 +41,8 @@ SoftLocoConstraints::SoftLocoConstraints(SoftLocoSolver *loco){
 		for (int t = 0; t < T(); ++t) {
 			int i = k*T() + t;
 			double alphaz = loco->mesh->tendons[t]->get_alphaz();
-			d[i] = -.3*alphaz;
-			f[i] =  .3*alphaz;
+			d[i] = -.1*alphaz;
+			f[i] =  .1*alphaz;
 		}
 	}
 

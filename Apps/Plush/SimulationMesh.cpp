@@ -231,7 +231,7 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const 
 		minimizer.solveResidual = SOLVE_RESIDUAL;
 		minimizer.maxLineSearchIterations = MAX_LINE_SEARCH_ITERATIONS;
 		minimizer.lineSearchStartValue = LINE_SEARCH_START_VALUE;
-		minimizer.printOutput = true;
+		minimizer.printOutput = false;
 
 		double functionValue = energyFunction->computeValue(xSolver); // TODO:See AppSoftIK notes.
 		minimizer.minimize(energyFunction, xSolver, functionValue);
