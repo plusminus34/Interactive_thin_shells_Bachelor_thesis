@@ -10,6 +10,7 @@ SoftLocoConstraints::SoftLocoConstraints(SoftLocoSolver *loco){
 	d.setZero(KT());
 	f.setZero(KT());
 
+	// TODO: Rewrite as two pieces, first sets alphaz bounds, second pins start and end to 0
 	for (int z = 0; z < Z(); ++z) {
 		for (int s = 0; s < S(); ++s) {
 			int i = z*S() + s;
@@ -21,8 +22,8 @@ SoftLocoConstraints::SoftLocoConstraints(SoftLocoSolver *loco){
 					l[i] = -0.001;
 					u[i] = 0.001;
 				} else {
-					l[i] = -.1*alphaz;
-					u[i] = .1*alphaz;
+					l[i] = -.2*alphaz;
+					u[i] = .2*alphaz;
 				}
 			} else {
 				if (z == 0 || z == Z() - 1) {
@@ -41,8 +42,8 @@ SoftLocoConstraints::SoftLocoConstraints(SoftLocoSolver *loco){
 		for (int t = 0; t < T(); ++t) {
 			int i = k*T() + t;
 			double alphaz = loco->mesh->tendons[t]->get_alphaz();
-			d[i] = -.1*alphaz;
-			f[i] =  .1*alphaz;
+			d[i] = -.2*alphaz;
+			f[i] =  .2*alphaz;
 		}
 	}
 

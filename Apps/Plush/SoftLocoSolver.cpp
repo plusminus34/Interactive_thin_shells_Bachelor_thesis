@@ -935,7 +935,8 @@ SparseMatrix SoftLocoSolver::calculate_dxdu(const dVector &u, const dVector &x, 
 	{
 		SparseMatrix A = calculate_A(x);
 		SparseMatrix H = calculate_H(x, u, x_ctc);
-		dxdtau = solve_AX_EQUALS_B(H, A);
+		// dxdtau = solve_AX_EQUALS_B(H, A);
+		dxdtau = solve_AX_EQUALS_B_WITHOUT_ANALYSIS(solver, H, A);
 	}
 
 	dVector dtaudu_diag; // == dVector dtaudGamma_diag;
