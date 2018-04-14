@@ -26,20 +26,32 @@ public:
 	void applyDensityParametersToSimMesh(const dVector& densityParams) {
 		for (uint i = 0; i < simMesh->elements.size(); i++) {
 			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
-				e->topOptInterpolationDensity = pow(densityParams[i], 1);
+				e->topOptInterpolationDensity = minPVal + pow(densityParams[i], rho);
 			}
 		}
 	}
 
+	void applyConstantDensityParametersToSimMesh() {
+		for (uint i = 0; i < simMesh->elements.size(); i++) {
+			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
+				e->topOptInterpolationDensity = 1;
+			}
+		}
+	}
+
+
+
 	bool printDebugInfo;
 	double regularizer = 0.001;
 
-	double smoothnessObjectiveWeight = 0.001;
-	double binaryDensityObjectiveWeight = 0.001;
+	double smoothnessObjectiveWeight = 0.001 * 0;
+	double binaryDensityObjectiveWeight = 0.001 * 0;
 	double complianceObjectiveWeight = 1.0;
 
 	bool minimizeOriginalCompliance = true;
 
+	double rho = 1.0;
+	double minPVal = 0.0001;
 
 private:
 

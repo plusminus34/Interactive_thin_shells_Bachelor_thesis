@@ -15,7 +15,7 @@ const dVector& TopOptConstraints::getBoundConstraintsMinValues() {
 	l.resize(simMesh->elements.size());
 
 	//not quite zero for the lower limit, but close enough
-	l.setConstant(0.00001);
+	l.setConstant(0.0);
 
 	return l;
 }

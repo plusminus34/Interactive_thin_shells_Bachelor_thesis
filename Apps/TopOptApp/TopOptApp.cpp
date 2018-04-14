@@ -25,8 +25,8 @@
 TopOptApp::TopOptApp() {
 	setWindowTitle("Test FEM Sim Application...");
 
-	int nRows = 30;
-	int nCols = 10;
+	int nRows = 15;
+	int nCols = 5;
 	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, nRows, nCols);
 
 	delete camera;
@@ -48,7 +48,7 @@ TopOptApp::TopOptApp() {
 	externalLoads.resize(simMesh->nodes.size());
 	resize(densityParams, simMesh->elements.size()); densityParams.setOnes();
 
-//	externalLoads[nRows * (nCols -1)] = V3D(0.5,-0.5,0);
+	externalLoads[nCols * (nRows -1)] = V3D(0,-0.05,0);
 
 	showGroundPlane = false;
 
@@ -190,7 +190,7 @@ bool TopOptApp::onMouseMoveEvent(double xPos, double yPos) {
 		int elementID = simMesh->getSelectedElementID(lastClickedRay);
 		if (elementID >= 0){
 			if (glfwGetKey(glfwWindow, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
-				densityParams[elementID] = 0.00001;
+				densityParams[elementID] = 0;
 			if (glfwGetKey(glfwWindow, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
 				densityParams[elementID] = 1;
 			Logger::consolePrint("element %d has density %lf\n", elementID, densityParams[elementID]);
