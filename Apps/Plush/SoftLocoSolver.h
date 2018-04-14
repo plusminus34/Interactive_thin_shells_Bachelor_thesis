@@ -140,7 +140,7 @@ public:
 	vector<dRowVector> calculate_dRduJ(const Traj &uJ);
 
 	dRowVector calculate_dQdx(const dVector &x, const P3D &COMp);
-	SparseMatrix calculate_dxdu(const dVector &u, const dVector &x, const dVector &x_ctc=dVector());
+	SparseMatrix calculate_dxdu(const dVector &u, const dVector &x, SLSSolver *Hsolver, const dVector &x_ctc=dVector());
 	// SparseMatrix calculate_dudz(const dVector &u, const dVector &z);
 	dRowVector calculate_dRdu(const dVector &u);
 	vector<dRowVector> dSTARduJ2dSTARdymJ(const vector<dRowVector> &);
@@ -165,9 +165,8 @@ public:
 public:
 	SparseMatrix solve_AX_EQUALS_B(const SparseMatrix &A, const SparseMatrix &B);
 	// --
-	SLSSolver solver;
 	void analyze_A(SLSSolver &solver, const SparseMatrix &A);
-	SparseMatrix solve_AX_EQUALS_B_WITHOUT_ANALYSIS(SLSSolver &solver, const SparseMatrix &A, const SparseMatrix &B);
+	SparseMatrix solve_AX_EQUALS_B_WITHOUT_ANALYSIS_OR_FACTORIZATION(SLSSolver *solver, const SparseMatrix &B);
 
 public:
 	void Traj_equality_check(const Traj &, const Traj &);
