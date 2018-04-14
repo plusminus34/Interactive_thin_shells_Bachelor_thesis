@@ -31,6 +31,15 @@ public:
 		}
 	}
 
+	void applyDensityParametersForMeshDisplay(const dVector& densityParams) {
+		for (uint i = 0; i < simMesh->elements.size(); i++) {
+			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
+				e->topOptInterpolationDensity = densityParams[i];
+			}
+		}
+	}
+
+
 	void applyConstantDensityParametersToSimMesh() {
 		for (uint i = 0; i < simMesh->elements.size(); i++) {
 			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
@@ -44,13 +53,13 @@ public:
 	bool printDebugInfo;
 	double regularizer = 0.001;
 
-	double smoothnessObjectiveWeight = 0.001 * 0;
+	double smoothnessObjectiveWeight = 0.1;
 	double binaryDensityObjectiveWeight = 0.001 * 0;
 	double complianceObjectiveWeight = 1.0;
 
-	bool minimizeOriginalCompliance = false;
+	bool minimizeOriginalCompliance = true;
 
-	double rho = 3.0;
+	double rho = 5.0;
 	double minPVal = 0.0001;
 
 private:

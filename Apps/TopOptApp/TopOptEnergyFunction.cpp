@@ -69,11 +69,11 @@ double TopOptEnergyFunction::computeValue(const dVector& p) {
 		double avgNeighbourhoodDensity = 0;
 		for (SimMeshElement* nsme : sme->adjacentElements) {
 			CSTElement2D* e = dynamic_cast<CSTElement2D*>(nsme);
-			avgNeighbourhoodDensity += e->topOptInterpolationDensity / sme->adjacentElements.size();
+			avgNeighbourhoodDensity += p[e->elementIndex] / sme->adjacentElements.size();
 		}
 
 		CSTElement2D* e = dynamic_cast<CSTElement2D*>(sme);
-		totalEnergy += 0.5 * (e->topOptInterpolationDensity - avgNeighbourhoodDensity) * (e->topOptInterpolationDensity - avgNeighbourhoodDensity) * smoothnessObjectiveWeight;
+		totalEnergy += 0.5 * (p[e->elementIndex] - avgNeighbourhoodDensity) * (p[e->elementIndex] - avgNeighbourhoodDensity) * smoothnessObjectiveWeight;
 	}
 
 	//================================================================================
@@ -178,14 +178,14 @@ void TopOptEnergyFunction::addGradientTo(dVector& grad, const dVector& p) {
 		double avgNeighbourhoodDensity = 0;
 		for (SimMeshElement* nsme : sme->adjacentElements) {
 			CSTElement2D* e = dynamic_cast<CSTElement2D*>(nsme);
-			avgNeighbourhoodDensity += e->topOptInterpolationDensity / sme->adjacentElements.size();
+			avgNeighbourhoodDensity += p[e->elementIndex] / sme->adjacentElements.size();
 		}
 
 		CSTElement2D* e = dynamic_cast<CSTElement2D*>(sme);
-		grad[sme->elementIndex] += (e->topOptInterpolationDensity - avgNeighbourhoodDensity) * smoothnessObjectiveWeight;
+		grad[sme->elementIndex] += (p[e->elementIndex] - avgNeighbourhoodDensity) * smoothnessObjectiveWeight;
 
 		for (SimMeshElement* nsme : sme->adjacentElements) {
-			grad[nsme->elementIndex] += -1.0 / sme->adjacentElements.size() * (e->topOptInterpolationDensity - avgNeighbourhoodDensity) * smoothnessObjectiveWeight;
+			grad[nsme->elementIndex] += -1.0 / sme->adjacentElements.size() * (p[e->elementIndex] - avgNeighbourhoodDensity) * smoothnessObjectiveWeight;
 		}
 	}
 

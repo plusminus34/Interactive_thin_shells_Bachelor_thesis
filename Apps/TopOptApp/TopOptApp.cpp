@@ -25,8 +25,8 @@
 TopOptApp::TopOptApp() {
 	setWindowTitle("Test FEM Sim Application...");
 
-	int nRows = 15;
-	int nCols = 5;
+	int nRows = 60;
+	int nCols = 20;
 	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, nRows, nCols);
 
 	delete camera;
@@ -136,7 +136,7 @@ TopOptApp::TopOptApp() {
 	slider = new nanogui::Slider(panel);
 	slider->setValue(0.01f);
 	slider->setFixedWidth(80);
-	range.first = 0; range.second = 0.1;
+	range.first = 0; range.second = 1.0;
 	slider->setRange(range);
 	slider->setValue((float)energyFunction->smoothnessObjectiveWeight);
 	slider->setCallback([this](float val) { energyFunction->smoothnessObjectiveWeight = val; });
@@ -368,7 +368,10 @@ void TopOptApp::drawScene() {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glColor3d(1,1,1);
+
+	energyFunction->applyDensityParametersForMeshDisplay(densityParams);
 	simMesh->drawSimulationMesh();
+	energyFunction->applyDensityParametersToSimMesh(densityParams);
 
 	if (selectedNodeID >= 0) {
 		P3D pos = simMesh->nodes[selectedNodeID]->getWorldPosition();
