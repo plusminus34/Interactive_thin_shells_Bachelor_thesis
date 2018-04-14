@@ -21,8 +21,20 @@ void TopOptEnergyFunction::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEn
 
 	//we will fake here a somewhat cautious gradient descent solver by hard coding the hessian to something nice-ish
 	for (int i = 0; i < p.size(); i++)
-		hessianEntries.push_back(MTriplet(i, i, 1.0));
+		hessianEntries.push_back(MTriplet(i, i, complianceObjectiveWeight / 1.0));
 
+	//================================================================================
+	//-- smoothness - favor larger material clusters rather than small, isolated islands
+	for (SimMeshElement* sme : simMesh->elements) {
+		ADD_HES_ELEMENT(hessianEntries, sme->elementIndex, sme->elementIndex, 1.0, smoothnessObjectiveWeight);
+		for (SimMeshElement* nsme : sme->adjacentElements) {
+			ADD_HES_ELEMENT(hessianEntries, sme->elementIndex, nsme->elementIndex, -1.0 / sme->adjacentElements.size(), smoothnessObjectiveWeight);
+			for (SimMeshElement* nsme2 : sme->adjacentElements) {
+				if (nsme2->elementIndex >= nsme->elementIndex)
+					ADD_HES_ELEMENT(hessianEntries, nsme2->elementIndex, nsme->elementIndex, 1.0 / (sme->adjacentElements.size() * sme->adjacentElements.size()), smoothnessObjectiveWeight);
+			}
+		}
+	}
 }
 
 //this method gets called whenever a new best solution to the objective function is found

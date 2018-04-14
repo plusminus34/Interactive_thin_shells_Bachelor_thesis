@@ -178,7 +178,6 @@ void TopOptApp::applyDensityParametersToSimMesh() {
 	
 }
 
-
 TopOptApp::~TopOptApp(void){
 }
 
@@ -317,8 +316,10 @@ void TopOptApp::process() {
 	if (optimizeTopology) {
 //		constraints->testJacobiansWithFD(densityParams);
 
-		if (checkDerivatives)
+		if (checkDerivatives){
 			energyFunction->testGradientWithFD(densityParams);
+//			energyFunction->testHessianWithFD(densityParams);
+		}
 
 /*		for (double val = 0.001; val < 1; val += 0.001) {
 			densityParams[684] = densityParams[685] = val;

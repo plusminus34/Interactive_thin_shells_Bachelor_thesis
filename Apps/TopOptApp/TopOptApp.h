@@ -26,8 +26,8 @@ private:
 
 	double forceScale = 10.0;
 
-	MaterialModel2D matModel = MM_NEO_HOOKEAN;
-	double shearModulus = 5000, bulkModulus = 50;
+	MaterialModel2D matModel = MM_LINEAR_ISOTROPIC;// MM_NEO_HOOKEAN;
+	double shearModulus = 50000, bulkModulus = 50;
 	bool checkDerivatives = false;
 	bool checkSimDerivatives = false;
 
