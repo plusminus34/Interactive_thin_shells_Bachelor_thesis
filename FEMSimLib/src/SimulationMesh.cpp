@@ -91,7 +91,7 @@ void SimulationMesh::solve_dynamics(double dt){
 
 void SimulationMesh::solve_statics(){
 	xSolver = x;
-	energyFunction->setToStaticsMode(0.01);
+	energyFunction->setToStaticsMode(0.00001);
 
 	if (checkDerivatives){
 		energyFunction->testGradientWithFD(xSolver);

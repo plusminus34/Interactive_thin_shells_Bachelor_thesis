@@ -48,9 +48,9 @@ public:
 	double binaryDensityObjectiveWeight = 0.001 * 0;
 	double complianceObjectiveWeight = 1.0;
 
-	bool minimizeOriginalCompliance = true;
+	bool minimizeOriginalCompliance = false;
 
-	double rho = 1.0;
+	double rho = 3.0;
 	double minPVal = 0.0001;
 
 private:

@@ -34,7 +34,7 @@ private:
 	DynamicArray<V3D> externalLoads;
 	dVector densityParams;
 
-	double targetMassRatio = pow(0.3, 3) * 100;
+	double targetMassRatio = 30;// pow(0.3, 1.0 / 3) * 100;// 30; //pow(0.3, 3) * 100;
 	double initialMass = 0;
 	bool optimizeTopology = false;
 
