@@ -5,10 +5,10 @@ AppEditor3D::AppEditor3D() {
 	design = new LoopMesh();
 	push_back_handler(design);
 
-	load_sugar("../Apps/Plush/data/loop/sugar");
+	loadDesign(DESIGN_PATH_.data());
 
 	{
-		showGroundPlane = true;
+		// showGroundPlane = true;
 		showDesignEnvironmentBox = true;
 	}
 
@@ -87,10 +87,10 @@ bool AppEditor3D::processCommandLine(const std::string& cmdLine) {
 void AppEditor3D::loadFile(const char* fName) {
 	string stripped = string(fName);
 	stripped = stripped.substr(0, stripped.find('.'));
-	load_sugar(stripped.data()); 
+	loadDesign(stripped.data()); 
 }
 
-void AppEditor3D::load_sugar(const char* fName) {
+void AppEditor3D::loadDesign(const char* fName) {
 	design->boundary.clear();
 	design->sketches.clear();
 

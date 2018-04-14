@@ -35,7 +35,7 @@ private:
 	bool EXPORT_PLUSHIE = false;
 
 
-	void load_sugar(const char* fName);
+	void loadDesign(const char* fName);
 
 	virtual void process();
 	// Wild west.
