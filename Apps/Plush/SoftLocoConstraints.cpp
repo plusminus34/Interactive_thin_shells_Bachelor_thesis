@@ -5,49 +5,41 @@ SoftLocoConstraints::SoftLocoConstraints(SoftLocoSolver *loco){
 	this->loco = loco;
 
 
-	l.setZero(ZS());
-	u.setZero(ZS());
-	d.setZero(KT());
-	f.setZero(KT());
+	l.setZero(ZS()); l.fill(-INFINITY);
+	u.setZero(ZS()); u.fill( INFINITY);
+	d.setZero(KT()); d.fill(-INFINITY);
+	f.setZero(KT()); f.fill( INFINITY);
 
-	// TODO: Rewrite as two pieces, first sets alphaz bounds, second pins start and end to 0
-	for (int z = 0; z < Z(); ++z) {
-		for (int s = 0; s < S(); ++s) {
-			int i = z*S() + s;
+	// TODO: Make static member like Contact::K_X, etc.
+	double facaz_LOWER_BOUND = -.25;
+	double facaz_UPPER_BOUND =  .25;
 
-			double alphaz = loco->mesh->tendons[s % T()]->get_alphaz();
- 
-			if (s < T()) {
-				if (z == 0 || z == Z() - 1) {
-					l[i] = -0.001;
-					u[i] = 0.001;
-				} else {
-					l[i] = -.2*alphaz;
-					u[i] = .2*alphaz;
-				}
-			} else {
-				if (z == 0 || z == Z() - 1) {
-					l[i] = -0.001;
-					u[i] = 0.001;
-				} else {
-					l[i] = -INFINITY;
-					u[i] =  INFINITY;
-				} 
-			}
+	// -- primary bounds
+	for (int t = 0; t < T(); ++t) {
+		double alphaz = loco->mesh->tendons[t]->get_alphaz();
+		for (int z = 0; z < Z(); ++z) {
+			int i = z*S() + t; 
+			// --
+			l[i]       = facaz_LOWER_BOUND*alphaz; u[i]       = facaz_UPPER_BOUND*alphaz; // -- y bounds
+			l[T() + i] = -INFINITY;                u[T() + i] = INFINITY;                 // -- m bounds
+		}
 
-		} 
-	}
-
-	for (int k = 0; k < K(); ++k) {
-		for (int t = 0; t < T(); ++t) {
-			int i = k*T() + t;
-			double alphaz = loco->mesh->tendons[t]->get_alphaz();
-			d[i] = -.2*alphaz;
-			f[i] =  .2*alphaz;
+		for (int k = 0; k < K(); ++k) {
+			int j = k*T() + t; 
+			d[j] = facaz_LOWER_BOUND*alphaz; f[j] = facaz_UPPER_BOUND*alphaz; // -- u(y, m) bounds
 		}
 	}
 
-
+	// -- secondary bounds (set ends to zero)
+	double SOFT_ZERO = .001;
+	for (int t = 0; t < T(); ++t) {
+		for (auto &z : { 0, Z() - 1 }) {
+			int i = z*S() + t; 
+			int j = z*T() + t; 
+			l[i]       = -SOFT_ZERO; u[i]       =  SOFT_ZERO;
+			l[T() + i] = -SOFT_ZERO; u[T() + i] =  SOFT_ZERO;
+		}
+	} 
 }
 
 const dVector &SoftLocoConstraints::getInequalityConstraintValues(const dVector &ymS) {

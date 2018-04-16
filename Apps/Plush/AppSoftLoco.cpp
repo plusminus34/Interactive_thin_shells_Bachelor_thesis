@@ -48,7 +48,7 @@ AppSoftLoco::AppSoftLoco() {
 		"sugar",        // 8
 		"T"             // 9
 	};
-	string TEST_CASE = TEST_CASES[8];
+	string TEST_CASE = "2biped"; TEST_CASES[8];
 
 	// TODO: Could have yJ_curr, mJ_curr (but then all functions need two arguments)
 
@@ -302,7 +302,7 @@ void AppSoftLoco::process() {
 		// --
 		// Zik->SOLVE_DYNAMICS = ik->SOLVE_DYNAMICS;
 		// -- 
-		if (INTEGRATE_FORWARD_IN_TIME) { ik->xm1_curr = mesh->x; ik->vm1_curr = mesh->v; }
+		// if (INTEGRATE_FORWARD_IN_TIME) { ik->xm1_curr = mesh->x; ik->vm1_curr = mesh->v; }
 		// if (INTEGRATE_FORWARD_IN_TIME) { Zik->x_0 = mesh->x; Zik->v_0 = mesh->v; } // FORNOW
 		if (SOLVE_IK) {
 			ik->step();
@@ -319,7 +319,7 @@ void AppSoftLoco::process() {
 			}
 			// ***END
 		}
-		if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, ik->uJ_curr()[0]) : mesh->solve_statics(ik->xm1_curr, ik->uJ_curr()[0])); }
+		// if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, ik->uJ_curr()[0]) : mesh->solve_statics(ik->xm1_curr, ik->uJ_curr()[0])); }
 		// if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((Zik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(Zik->x_0, Zik->v_0, Zik->alphac_curr) : mesh->solve_statics(Zik->x_0, Zik->alphac_curr)); } // FORNOW
 	}
 }
@@ -358,9 +358,13 @@ bool AppSoftLoco::onCharacterPressedEvent(int key, int mods) {
 	} else if (key == 'h') {
 		if (ik->SELECTED_FRAME_i == 0) {
 			ik->SELECTED_FRAME_i = ik->K - 1;
-		} else {
+		}
+		else {
 			ik->SELECTED_FRAME_i -= 1;
 		}
+	} else if (key == 'r') {
+		ik->xJ_curr = ik->xJ_of_ymJ(ik->ymJ_curr);
+		POPULATED_PREVIEW_TRAJEC = false;
 	}
 	// --
 	if (PlushApplication::onCharacterPressedEvent(key, mods)) { return true; } 

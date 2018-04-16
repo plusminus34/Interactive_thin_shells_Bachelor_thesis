@@ -44,6 +44,7 @@ AppEditor2D::AppEditor2D() {
 	mainMenu->addVariable("load plushie",  LOAD_PLUSHIE);
 	mainMenu->addVariable("dump plushie",   DUMP_PLUSHIE);
 	mainMenu->addButton("Num triangles?", [&]() {cout << "NUM_TRIANGLES: " << mesh->triangulated_triangles.size() << endl; });
+	mainMenu->addButton("Load tri", [&]() { cout << "Loading tri..." << endl; load_sugar("../Apps/Plush/data/loop/tri"); });
 	menuScreen->performLayout(); 
 }
 
