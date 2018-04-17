@@ -1,4 +1,5 @@
 #include "AppSoftLoco.h"
+#include "XYPlot.h"
  
 using namespace nanogui;
 
@@ -263,7 +264,8 @@ void AppSoftLoco::drawScene() {
 	} else if (PLAY_PREVIEW) { 
 		// desiredFrameRate = 100;
 		// -- 
-		if (!POPULATED_PREVIEW_TRAJEC) {
+		// TODO: populatePreviewTrajec()
+		/* if (!POPULATED_PREVIEW_TRAJEC) {
 			POPULATED_PREVIEW_TRAJEC = true;
 
 			uJ_preview.clear();
@@ -275,10 +277,40 @@ void AppSoftLoco::drawScene() {
 			// --
 			// prepend_in_place(uJ_preview, ZERO_dVector(ik->T()));// (*)
 			// prepend_in_place(xJ_preview, ik->xm1_curr);// (*)
-			
-		} 
 
-		mesh->draw(xJ_preview[PREVIEW_i], uJ_preview[PREVIEW_i], (PREVIEW_i != 0) ? xJ_preview[PREVIEW_i - 1] : ik->xm1_curr); 
+			
+		} */
+
+
+		if (POPULATED_PREVIEW_TRAJEC) {
+			mesh->draw(xJ_preview[PREVIEW_i], uJ_preview[PREVIEW_i], (PREVIEW_i != 0) ? xJ_preview[PREVIEW_i - 1] : ik->xm1_curr); 
+			// --
+			glMasterPush(); {
+				auto K_range = linspace(uJ_preview.size(), 0., 1.);
+				vector<XYPlot*> plots;
+
+				vector<double> x_spoof = { dfrac(PREVIEW_i, PREVIEW_LENGTH()) };
+				concat_in_place(x_spoof, x_spoof);
+				vector<double> y_spoof = { -1., 1. };
+				plots.push_back(new XYPlot(x_spoof, y_spoof));
+
+				for (int t = 0; t < ik->T(); ++t) {
+					vector<double> u_K; for (int k = 0; k < (int) uJ_preview.size(); ++k) { u_K.push_back(uJ_preview[k][t] / mesh->balphaz[t]); }
+					XYPlot *plot_K = new XYPlot(K_range, u_K);
+					plot_K->THIN_LINES = true;
+					plot_K->DRAW_POINTS = false;
+					plot_K->SPEC_COLOR = kelly_color(t);
+					plots.push_back(plot_K);
+				}
+				for (auto &plot : plots) {
+					*plot->origin = P3D(-2., -1.);
+					*plot->top_right = *plot->origin + V3D(2., 2.);
+				};
+				XYPlot::uniformize_axes(plots);
+				for (auto &plot : plots) { plot->draw(); }
+				for (auto &plot : plots) { delete plot; }
+			} glMasterPop();
+		}
 
 	}
 
@@ -341,6 +373,9 @@ void AppSoftLoco::load_uJ() {
 	for (auto u_vec : uJ_vecVecDouble) {
 		uJ_preview.push_back(vecDouble2dVector(u_vec));
 	}
+	concat_in_place(uJ_preview, uJ_preview); // FORNOW
+	// uJ_preview.front().setZero();
+	// uJ_preview.back().setZero();
 	xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview); 
 	POPULATED_PREVIEW_TRAJEC = true;
 }
