@@ -27,6 +27,9 @@ using namespace nanogui;
 // TODO: Different smoothing kernel?
 // TODO: Aiiiiiir resistance?
 
+// TODO: Squishier floor?
+// TODO: Small timestep? (TODO: Should do at least a first validation by resampling buggy u-trajectory to a smaller timestep_
+
 AppSoftLoco::AppSoftLoco() {
     setWindowTitle("AppSoftLoco");
 	this->showReflections = false;
