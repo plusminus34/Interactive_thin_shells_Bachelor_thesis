@@ -268,7 +268,7 @@ void AppSoftLoco::drawScene() {
 			uJ_preview.clear();
 			for (int _ = 0; _ < NUM_PREVIEW_CYCLES; ++_) {
 				concat_in_place(uJ_preview, ik->uJ_curr());
-				for (int _ = 0; _ < 5; ++_) { uJ_preview.push_back(ik->uJ_curr().back()); } // FORNOW (TODO)
+				// for (int _ = 0; _ < 5; ++_) { uJ_preview.push_back(ik->uJ_curr().back()); } // FORNOW (TODO)
 			} 
 			xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview); 
 			// --
