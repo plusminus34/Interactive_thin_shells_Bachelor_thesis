@@ -41,6 +41,10 @@ using std::string;
 using std::shared_ptr;
 using std::to_string;
 
+// FORNOW
+template <typename T>
+using vec = std::vector<T>;
+
 typedef vector<dVector> Traj;
 typedef vector<MatrixNxM> MTraj;
 typedef Eigen::RowVectorXd dRowVector;

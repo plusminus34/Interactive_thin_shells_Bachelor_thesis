@@ -35,7 +35,6 @@ AppSoftLoco::AppSoftLoco() {
 	this->SPOOF_2D_CAMERA = true;
 	this->resetCamera();
 
-
 	// const vector<string> TEST_CASES = {
 	// 	"swingup",      // 0
 	// 	"tri",          // 1
@@ -140,6 +139,8 @@ AppSoftLoco::AppSoftLoco() {
 
 	mainMenu->addGroup("app");
 	mainMenu->addVariable("draw F", mesh->DRAW_NODAL_FORCES);
+	mainMenu->addButton("save_uJ", [&]() { save_uJ(); });
+	mainMenu->addButton("load_uJ", [&]() { load_uJ(); });
 	mainMenu->addVariable("SOLVE_IK", SOLVE_IK);
 	mainMenu->addVariable("SOLVE_DYNAMICS", ik->SOLVE_DYNAMICS);
 	mainMenu->addVariable("UNILATERAL_TENDONS", mesh->UNILATERAL_TENDONS);
@@ -302,10 +303,46 @@ void AppSoftLoco::process() {
 }
 
 void AppSoftLoco::save_uJ() {
+	FILE *fp = fopen("../Apps/Plush/data/uJtmp.xxx", "w");
 
+	for (auto &frame : uJ_preview) {
+		for (int i = 0; i < frame.size(); ++i) { 
+			fprintf(fp, "%lf ", frame[i]);
+		}
+		fprintf(fp, "\n");
+	}
+
+	fclose(fp); 
 }
 
 void AppSoftLoco::load_uJ() {
+	FILE *fp = fopen("../Apps/Plush/data/uJtmp.xxx", "r");
+
+	const int LINESZ = 1024;
+	char line[LINESZ]; 
+	vector<vector<double>> uJ_vecVecDouble;
+	double u_double;
+	while (fgets(line, LINESZ, fp) != NULL) { 
+		vector<double> u_vec;
+		// https://stackoverflow.com/questions/10826953/sscanf-doesnt-move-scans-same-integer-everytime-c 
+		int nums_now, bytes_now;
+		int bytes_consumed = 0, nums_read = 0;
+		while ((nums_now = sscanf(line + bytes_consumed, "%lf %n", &u_double, &bytes_now)) > 0) {
+			bytes_consumed += bytes_now; nums_read += nums_now;
+			u_vec.push_back(u_double);
+		} 
+
+		uJ_vecVecDouble.push_back(u_vec);
+	}
+
+	fclose(fp);
+
+	uJ_preview.clear();
+	for (auto u_vec : uJ_vecVecDouble) {
+		uJ_preview.push_back(vecDouble2dVector(u_vec));
+	}
+	xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview); 
+	POPULATED_PREVIEW_TRAJEC = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
