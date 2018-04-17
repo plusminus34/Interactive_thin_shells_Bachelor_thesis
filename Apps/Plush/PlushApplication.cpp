@@ -176,6 +176,7 @@ bool PlushApplication::onCharacterPressedEvent(int key, int mods) {
 		printCamera();
 	}
 	// -- //
+	for (auto handler : handlers2) { handler->character_event(key, mods); } // FORNOW
 	if (GLApplication::onCharacterPressedEvent(key, mods)) { return true; } 
 	return false;
 }

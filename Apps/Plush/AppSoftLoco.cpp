@@ -36,19 +36,19 @@ AppSoftLoco::AppSoftLoco() {
 	this->resetCamera();
 
 
-	const vector<string> TEST_CASES = {
-		"swingup",      // 0
-		"tri",          // 1
-		"tentacle",     // 2
-		"mini_swingup", // 3
-		"3ball",        // 4
-		"walker",       // 5
-		"jumping_cube", // 6
-		"6ball",        // 7
-		"sugar",        // 8
-		"T"             // 9
-	};
-	string TEST_CASE = "2biped"; TEST_CASES[8];
+	// const vector<string> TEST_CASES = {
+	// 	"swingup",      // 0
+	// 	"tri",          // 1
+	// 	"tentacle",     // 2
+	// 	"mini_swingup", // 3
+	// 	"3ball",        // 4
+	// 	"walker",       // 5
+	// 	"jumping_cube", // 6
+	// 	"6ball",        // 7
+	// 	"sugar",        // 8
+	// 	"T"             // 9
+	// };
+	string TEST_CASE = "2biped"; // TEST_CASES[1];
 
 	// TODO: Could have yJ_curr, mJ_curr (but then all functions need two arguments)
 
@@ -135,7 +135,11 @@ AppSoftLoco::AppSoftLoco() {
 		push_back_handler2(splineTangentsDragger);
 	}
 
+	scrubber = new Scrubber(&PREVIEW_i, PREVIEW_LENGTH());
+	push_back_handler2(scrubber);
+
 	mainMenu->addGroup("app");
+	mainMenu->addVariable("draw F", mesh->DRAW_NODAL_FORCES);
 	mainMenu->addVariable("SOLVE_IK", SOLVE_IK);
 	mainMenu->addVariable("SOLVE_DYNAMICS", ik->SOLVE_DYNAMICS);
 	mainMenu->addVariable("UNILATERAL_TENDONS", mesh->UNILATERAL_TENDONS);
@@ -250,7 +254,7 @@ void AppSoftLoco::drawScene() {
 	if (!PLAY_PREVIEW) {
 		// desiredFrameRate = 30;
 		// --
-		PREVIEW_i = -LEADIN_FRAMES;
+		PREVIEW_i = 0;
 		// --
 		ik->draw();
 		mesh->draw(); // FORNOW 
@@ -262,32 +266,20 @@ void AppSoftLoco::drawScene() {
 			POPULATED_PREVIEW_TRAJEC = true;
 
 			uJ_preview.clear();
-			for (int _ = 0; _ < NUM_CYCLES; ++_) {
+			for (int _ = 0; _ < NUM_PREVIEW_CYCLES; ++_) {
 				concat_in_place(uJ_preview, ik->uJ_curr());
-			}
-
-
+				for (int _ = 0; _ < 5; ++_) { uJ_preview.push_back(ik->uJ_curr().back()); } // FORNOW (TODO)
+			} 
 			xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview); 
+			// --
+			// prepend_in_place(uJ_preview, ZERO_dVector(ik->T()));// (*)
+			// prepend_in_place(xJ_preview, ik->xm1_curr);// (*)
+			
 		} 
 
-		PREVIEW_i++;
-		if (PREVIEW_i < 0) {
-			mesh->draw(ik->xm1_curr);
-		} else if (PREVIEW_i < (int) uJ_preview.size()) { // TODO: min() logic
-			mesh->draw(xJ_preview[PREVIEW_i], uJ_preview[PREVIEW_i]); 
-		} else {
-			mesh->draw(xJ_preview.back(), uJ_preview.back()); 
-		}
+		mesh->draw(xJ_preview[PREVIEW_i], uJ_preview[PREVIEW_i], (PREVIEW_i != 0) ? xJ_preview[PREVIEW_i - 1] : ik->xm1_curr); 
 
 	}
-
-	// {
-	// 	CubicHermiteSpline_v2 tmp = CubicHermiteSpline_v2(vecDouble2dVector(linspace(ik->Z, 0., 1.)), vecDouble2dVector(linspace(ik->K, 0., 1.)));
-	// 	vector<P3D *> data = test_splines[0];
-	// 	dVector Y; Y.setZero(data.size());
-	// 	for (size_t i = 0; i < data.size(); ++i) { Y[i] = (*data[i])[1]; } 
-	// 	tmp.draw(Y, tmp.CFD_M(Y));
-	// } 
 
 	PlushApplication::recordVideo();
 }
@@ -295,22 +287,9 @@ void AppSoftLoco::drawScene() {
 void AppSoftLoco::process() {
 	if (!PLAY_PREVIEW) {
 		POPULATED_PREVIEW_TRAJEC = false;
-		// ik->COMp_FORNOW = ik->COMpJ[0]; // !!!
-		// Zik->COMp       = ik->COMpJ[0]; // !!!
-		// ik->COMp_FORNOW = ik->COMpJ[ik->K - 1]; // !!!
-		// Zik->COMp       = ik->COMpJ[ik->K - 1]; // !!!
-		// --
-		// Zik->SOLVE_DYNAMICS = ik->SOLVE_DYNAMICS;
-		// -- 
-		// if (INTEGRATE_FORWARD_IN_TIME) { ik->xm1_curr = mesh->x; ik->vm1_curr = mesh->v; }
-		// if (INTEGRATE_FORWARD_IN_TIME) { Zik->x_0 = mesh->x; Zik->v_0 = mesh->v; } // FORNOW
 		if (SOLVE_IK) {
 			ik->step();
-			// cout << endl << "--> Z_ik" << endl;
-			// Zik->step();
-			// getchar();
-
-			// BEG***
+			// -- // BEG***
 			for (int t = 0; t < ik->T(); ++t) {
 				for (int z = 0; z < ik->Z; ++z) {
 					all_positions[t][z]->y() = ik->ymJ_curr[z][t]            / mesh->tendons[t]->get_alphaz();
@@ -319,9 +298,14 @@ void AppSoftLoco::process() {
 			}
 			// ***END
 		}
-		// if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((ik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->xm1_curr, ik->vm1_curr, ik->uJ_curr()[0]) : mesh->solve_statics(ik->xm1_curr, ik->uJ_curr()[0])); }
-		// if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((Zik->SOLVE_DYNAMICS) ? mesh->solve_dynamics(Zik->x_0, Zik->v_0, Zik->alphac_curr) : mesh->solve_statics(Zik->x_0, Zik->alphac_curr)); } // FORNOW
 	}
+}
+
+void AppSoftLoco::save_uJ() {
+
+}
+
+void AppSoftLoco::load_uJ() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -349,20 +333,7 @@ bool AppSoftLoco::onKeyEvent(int key, int action, int mods) {
 }
 
 bool AppSoftLoco::onCharacterPressedEvent(int key, int mods) {
-	if (key == 'l') {
-		if (ik->SELECTED_FRAME_i == ik->K - 1) {
-			ik->SELECTED_FRAME_i = 0;
-		} else {
-			ik->SELECTED_FRAME_i += 1;
-		}
-	} else if (key == 'h') {
-		if (ik->SELECTED_FRAME_i == 0) {
-			ik->SELECTED_FRAME_i = ik->K - 1;
-		}
-		else {
-			ik->SELECTED_FRAME_i -= 1;
-		}
-	} else if (key == 'r') {
+	if (key == 'r') {
 		ik->xJ_curr = ik->xJ_of_ymJ(ik->ymJ_curr);
 		POPULATED_PREVIEW_TRAJEC = false;
 	}
@@ -370,24 +341,3 @@ bool AppSoftLoco::onCharacterPressedEvent(int key, int mods) {
 	if (PlushApplication::onCharacterPressedEvent(key, mods)) { return true; } 
     return false;
 } 
-/*
-		if (TEST_CASE == "swingup") {
-			(*ptr)->pinToLeftWall();
-			(*ptr)->relax_tendons();
-			(*ptr)->timeStep = .01;
-		} else if (TEST_CASE == "tri") {
-*/
-	// glMasterPush(); {
-	// 	glTranslated(1., 0., 0.);
-	// 	glLineWidth(9);
-	// 	set_color(GOLDCLOVER);
-	// 	glBegin(GL_LINE_STRIP); {
-	// 		for (auto &bs : Zmesh->boundary_simplices) {
-	// 			for (auto &node : bs->nodes) {
-	// 				glP3D(node->getCoordinates(Zik->x_curr));
-	// 			}
-	// 		}
-	// 	} glEnd();
-	// } glMasterPop();
-
-			// for (int _ = 0; _ < LEADOUT_FRAMES; ++_) { uJ_preview.push_back(uJ_preview.back()); }

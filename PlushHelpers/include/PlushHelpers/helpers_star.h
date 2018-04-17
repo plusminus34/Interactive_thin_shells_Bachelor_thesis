@@ -183,7 +183,7 @@ const auto linspace = [](const int N, const double left, const double right) {
 
 	return X;
 };
-
+ 
 template<typename T>
 inline std::vector<T> flatten(const std::vector<std::vector<T>> &orig) {   
 	// https://stackoverflow.com/questions/38874605/generic-method-for-flattening-2d-vectors
@@ -198,6 +198,11 @@ inline void concat_in_place(vector<T> &modify_me, const vector<T> &vector2) {
 	// https://stackoverflow.com/questions/201718/concatenating-two-stdvectors
 	modify_me.insert( modify_me.end(), vector2.begin(), vector2.end() );
 }   
+
+template<typename T>
+inline void prepend_in_place(std::vector<T> &modify_me, const T el) {
+	    modify_me.insert(modify_me.begin(), el); 
+} 
 
 template<typename T>
 inline void concat(vector<T> &vector1, const vector<T> &vector2) {   
@@ -266,6 +271,11 @@ const auto find_min_i = [](const vector<double> &v) {
 ////////////////////////////////////////////////////////////////////////////////
 // eigen wrappers //////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+const auto ZERO_dVector = [](int n) -> dVector {
+	dVector ret; ret.setZero(n);
+	return ret;
+};
 
 const auto matRCstr = [](MatrixNxM m) -> string {
 	string ret = "";
@@ -1101,9 +1111,9 @@ const auto glSphereVec = [](vector<P3D> &s_vec) {
 const auto quiver = [](const vector<P3D> &x_vec, const vector<V3D> &F_vec, int D) {
 
 	double ZERO_W = 0.;
-	double UNIT_W = .01; // unit force produces this width
+	double UNIT_W = .001; // unit force produces this width
 
-	for (size_t i = 0; i < x_vec.size(); ++i) {
+	for (size_t i = 0; i< x_vec.size(); ++i) {
 		P3D x = x_vec[i];
 		V3D F = F_vec[i];
 		if (F.norm() > 1.e-6) {

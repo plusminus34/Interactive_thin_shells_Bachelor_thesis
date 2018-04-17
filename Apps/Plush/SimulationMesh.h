@@ -147,8 +147,8 @@ double eps = .01;
 public: 
 	dVector F, F_spx, F_pin, F_tdn, F_ctc, F_sum, F_ext;
 	// --
-	void computeTotalNodalForces(const dVector &y);
-	void computeConstituentNodalForces(const dVector &y);
+	// void computeTotalNodalForces(const dVector &y);
+	void computeConstituentNodalForces(const dVector &x, const dVector &alphac, const dVector &x0);
 	void prep_nodal_force_dVectors();
 // --
 // nodal forces II (drawing)
@@ -161,12 +161,12 @@ public:
 	bool DRAW_F_CTC = true; const P3D COL_F_CTC = ORCHID;
 	bool DRAW_F_SUM = true; const P3D COL_F_SUM = GOLDCLOVER;
 	// --
-	void drawNodalForces();
+	void drawNodalForces(const dVector &x, const dVector &alphac, const dVector &x0);
 
 public:
-	bool DRAW_NODAL_VELOCITIES = false; const P3D COL_V = WHITE;
+	//bool DRAW_NODAL_VELOCITIES = false; const P3D COL_V = WHITE;
 	// --
-	void drawNodalVelocities();
+	//void drawNodalVelocities(const dVector &x);
 
 public:
 	bool DRAW_BOUNDARY = true;
@@ -206,7 +206,7 @@ public:
 // stelian impure virtuals
 public:
 	virtual void fakeContactWithPlane(const Plane &plane);
-	virtual void draw(dVector &x=dVector(), dVector &alphac=dVector());
+	virtual void draw(dVector &x=dVector(), dVector &alphac=dVector(), dVector &x0=dVector()); // TODO: Switch to taking v, and getting x0 from difference
 	virtual void addGravityForces(const V3D &g);
 	virtual void removePinnedNodeConstraints();
 

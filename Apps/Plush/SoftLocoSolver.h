@@ -65,7 +65,7 @@ public:
 	int N();
 	int DN();
 	int T();
-	const int K = 64 + 1;
+	const int K = 64 + 1;// 64 + 1;
 	int ZS();
 	// --
 	bool check_x_size(const dVector &x);
@@ -80,7 +80,7 @@ public:
 	SparseMatrix  dUdY2_;
 	SparseMatrix  dUdM2_;
 
-	const int Z = ((K - 1) / 32) + 1;
+	const int Z = 3;// ((K - 1) / 32) + 1;
 	const dVector knot_times = vecDouble2dVector(linspace(8, 0., 1.)); 
 	int k_of_z(const int &z) { return (K-1)/(Z-1)*z; }
 	int S();

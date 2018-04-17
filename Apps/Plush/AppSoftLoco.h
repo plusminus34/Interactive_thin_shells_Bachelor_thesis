@@ -11,6 +11,7 @@
 #include "Poser.h"
 #include "Handler_v2.h"
 #include "CubicHermiteSpline_v2.h"
+#include "Scrubber.h"
 
 class AppSoftLoco : public PlushApplication {
 
@@ -44,14 +45,15 @@ public:
 public:
 	bool PLAY_PREVIEW = false;
 	bool POPULATED_PREVIEW_TRAJEC = false;
-	const int LEADIN_FRAMES = 25;
-	const int NUM_CYCLES = 10;
-	int PREVIEW_i = -LEADIN_FRAMES;
+	const int NUM_PREVIEW_CYCLES = 10;
+	int PREVIEW_LENGTH() { return NUM_PREVIEW_CYCLES * ik->K; }
+	int PREVIEW_i = 0;
 	vector<dVector> uJ_preview;
 	vector<dVector> xJ_preview;
+	Scrubber *scrubber = nullptr; 
 
 public:
-	bool SOLVE_IK = true;
+	bool SOLVE_IK = false;
 	bool INTEGRATE_FORWARD_IN_TIME = true;
 
 public:
@@ -67,6 +69,10 @@ public:
     virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
     virtual bool onMouseMoveEvent(double xPos, double yPos);
     virtual bool onMouseWheelScrollEvent(double xOffset, double yOffset);
+
+public:
+	void save_uJ();
+	void load_uJ();
 
  
 };
