@@ -142,6 +142,7 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("draw F", mesh->DRAW_NODAL_FORCES);
 	mainMenu->addButton("save_uJ", [&]() { save_uJ(); });
 	mainMenu->addButton("load_uJ", [&]() { load_uJ(); });
+	mainMenu->addButton("populatePreviewTraj", [&]() { populatePreviewTrajec(); });
 	mainMenu->addVariable("SOLVE_IK", SOLVE_IK);
 	mainMenu->addVariable("SOLVE_DYNAMICS", ik->SOLVE_DYNAMICS);
 	mainMenu->addVariable("UNILATERAL_TENDONS", mesh->UNILATERAL_TENDONS);
@@ -264,22 +265,6 @@ void AppSoftLoco::drawScene() {
 	} else if (PLAY_PREVIEW) { 
 		// desiredFrameRate = 100;
 		// -- 
-		// TODO: populatePreviewTrajec()
-		/* if (!POPULATED_PREVIEW_TRAJEC) {
-			POPULATED_PREVIEW_TRAJEC = true;
-
-			uJ_preview.clear();
-			for (int _ = 0; _ < NUM_PREVIEW_CYCLES; ++_) {
-				concat_in_place(uJ_preview, ik->uJ_curr());
-				// for (int _ = 0; _ < 5; ++_) { uJ_preview.push_back(ik->uJ_curr().back()); } // FORNOW (TODO)
-			} 
-			xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview); 
-			// --
-			// prepend_in_place(uJ_preview, ZERO_dVector(ik->T()));// (*)
-			// prepend_in_place(xJ_preview, ik->xm1_curr);// (*)
-
-			
-		} */
 
 
 		if (POPULATED_PREVIEW_TRAJEC) {
@@ -413,3 +398,18 @@ bool AppSoftLoco::onCharacterPressedEvent(int key, int mods) {
 	if (PlushApplication::onCharacterPressedEvent(key, mods)) { return true; } 
     return false;
 } 
+
+void AppSoftLoco::populatePreviewTrajec() {
+	POPULATED_PREVIEW_TRAJEC = true;
+
+	uJ_preview.clear();
+	for (int _ = 0; _ < NUM_PREVIEW_CYCLES; ++_) {
+		concat_in_place(uJ_preview, ik->uJ_curr());
+		// for (int _ = 0; _ < 5; ++_) { uJ_preview.push_back(ik->uJ_curr().back()); } // FORNOW (TODO)
+	}
+	xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview);
+
+	// --
+	// prepend_in_place(uJ_preview, ZERO_dVector(ik->T()));// (*)
+	// prepend_in_place(xJ_preview, ik->xm1_curr);// (*)
+}

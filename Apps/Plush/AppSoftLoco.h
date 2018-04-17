@@ -73,6 +73,7 @@ public:
 public:
 	void save_uJ();
 	void load_uJ();
+	void populatePreviewTrajec();
 
  
 };
