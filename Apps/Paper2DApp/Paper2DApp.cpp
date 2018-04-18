@@ -12,60 +12,8 @@
 #include "Paper2DMesh.h"
 #include <vector>
 
-double xdum, ydum;
-// TODO move all of this elsewhere
-void generateSinMassSpringSystem(char* fName, int nNodes) {
-	FILE* fp = fopen(fName, "w");
-	fprintf(fp, "%d %d %d\n\n", nNodes, nNodes-1, nNodes-2);
-
-	//Silly way to get some equidistant nodes
-	std::vector<double> xpos(nNodes);
-	std::vector<double> ypos(nNodes);
-
-	xpos[0] = ypos[0] = 0.0;
-
-	double dx = 0.1;
-	double nnn = 0.5;
-	double target_length = 3.0;
-	double eps = 0.01;
-	for (int i = 1;i < nNodes;++i) {
-		xpos[i] = xpos[i - 1] + dx;
-		ypos[i] = sin(xpos[i]*nnn*2*PI);
-		double l2 = (xpos[i] - xpos[i - 1])*(xpos[i] - xpos[i - 1]) + (ypos[i] - ypos[i - 1])*(ypos[i] - ypos[i - 1]);
-		double target_l2 = target_length / (nNodes - 1);
-		if ((l2 - target_l2)*(l2 - target_l2) > eps) {
-			if (l2 > target_l2){
-				dx *= 0.9;
-			}else{
-				dx *= 1.1;
-			}
-			--i;
-		}
-	}
-	xdum = xpos[nNodes - 1];ydum = ypos[nNodes - 1];// TODO: I REALLY shouldn't do it like this.
-
-	double h = 1.0 / (nNodes - 1);
-
-	//generate particles
-	for (int j = 0; j<nNodes; j++)
-		fprintf(fp, "%lf %lf %lf\n", xpos[j], ypos[j], 0.0);
-
-	fprintf(fp, "\n\n");
-
-	//generate springs between particles
-	for (int j = 1; j<nNodes; j++)
-		fprintf(fp, "%li %li\n", j-1, j);
-
-	//generate angle springs
-	for (int j = 1; j<nNodes-1; j++)
-		fprintf(fp, "%li %li %li\n", j - 1, j, j+1);
-
-	fclose(fp);
-}
-
 Paper2DApp::Paper2DApp() {
 	setWindowTitle("Test Paper2D Application...");
-
 
 	delete camera;
 	GLTrackingCamera *cam = new GLTrackingCamera();
@@ -76,19 +24,15 @@ Paper2DApp::Paper2DApp() {
 
 	int N = 15;
 
-	generateSinMassSpringSystem("../data/FEM/3d/sinMassSpringSystem.ms",N);
+	Paper2DMesh::generateSinMassSpringSystem("../data/FEM/3d/sinMassSpringSystem.ms",N);
 	simMesh = new Paper2DMesh();
 	simMesh->readMeshFromFile("../data/FEM/3d/sinMassSpringSystem.ms");
 	simMesh->addGravityForces(V3D(0, -9.8, 0));
 
 	simMesh->setPinnedNode(0, V3D(0.0, 0.0, 0.0));
-	simMesh->setPinnedNode(N-1, V3D(xdum, ydum, 0.0));
+	simMesh->setPinnedNode(N-1, simMesh->nodes[N - 1]->getUndeformedPosition());
+	
 }
-
-void Paper2DApp::applyDensityParametersToSimMesh() {
-	//TODO remove?
-}
-
 
 Paper2DApp::~Paper2DApp(void){
 }
@@ -138,7 +82,7 @@ void Paper2DApp::saveFile(const char* fName) {
 // Run the App tasks
 void Paper2DApp::process() {
 	//do the work here...
-	simMesh->checkDerivatives = true;
+	//simMesh->checkDerivatives = true;
 	simMesh->solve_statics();
 	//simMesh->solve_dynamics(0.25);
 }
@@ -150,15 +94,6 @@ void Paper2DApp::drawScene() {
 	glColor3d(1, 1, 1);
 
 	simMesh->drawSimulationMesh();
-	/*
-	for (int i = 3; i < 9; ++i) {
-		glColor3d(0.5, 0.1 + 0.1 * i, 1.0);
-		glBegin(GL_LINE_LOOP);
-		for (int j = 0; j < i; ++j) {
-			glVertex3d(0.2*i+0.2*j-1, 0.1*j*j, 0);
-		}
-		glEnd();
-	}*/
 }
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function

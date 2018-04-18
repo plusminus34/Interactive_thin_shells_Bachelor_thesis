@@ -12,7 +12,7 @@ public:
 	Paper2DMesh();
     ~Paper2DMesh();
 
-	static void generateTestMassSpringSystem(char* fName);
+	static void generateSinMassSpringSystem(char* fName, int num_nodes);
     void readMeshFromFile(const char* fName);
 
     virtual int getSelectedNodeID(Ray ray);

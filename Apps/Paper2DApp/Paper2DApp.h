@@ -22,26 +22,7 @@ private:
 	P3D startDragPoint, endDragPoint;
 	bool dragging = false;
 
-	double forceScale = 10.0;
-
-	MaterialModel2D matModel = MM_NEO_HOOKEAN;
-	double shearModulus = 50, bulkModulus = 50;
 	bool checkDerivatives = false;
-
-	DynamicArray<V3D> externalLoads;
-	dVector densityParams;
-
-	double targetMassRatio = 100;
-	double initialMass = 0;
-	bool optimizeTopology = false;
-
-
-	void applyDensityParametersToSimMesh();
-
-	//TopOptEnergyFunction* energyFunction;
-	//TopOptConstraints* constraints;
-	ConstrainedObjectiveFunction* constrainedObjectiveFunction;
-
 
 public:
 	// constructor

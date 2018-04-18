@@ -8,7 +8,6 @@ AngleSpring::AngleSpring(SimulationMesh* simMesh, Node* n1, Node* n2, Node* n3) 
 	this->n[2] = n3;
 
 	setRestShapeFromCurrentConfiguration();
-
 }
 
 AngleSpring::~AngleSpring(){}
@@ -36,6 +35,8 @@ double AngleSpring::getAngle(const dVector& x) {
 
 double AngleSpring::getEnergy(const dVector& x, const dVector& X) {
 	double d_angle = getAngle(x) - restAngle;
+	if (d_angle > PI) d_angle -= 2 * PI;
+	if (d_angle < -PI)d_angle += 2 * PI;
 	return 0.5*d_angle*d_angle*k;
 }
 
@@ -71,6 +72,8 @@ void AngleSpring::addEnergyHessianTo(const dVector& x, const dVector& X, std::ve
 	double d2_a = dx_a * dx_a + dy_a * dy_a;
 	double d2_b = dx_b * dx_b + dy_b * dy_b;
 	double d_angle = getAngle(x) - restAngle;
+	if (d_angle > PI) d_angle -= 2 * PI;
+	if (d_angle < -PI)d_angle += 2 * PI;
 
 	double comp_x0 = dy_a / d2_a;
 	double comp_y0 = dx_a / d2_a;
@@ -137,6 +140,7 @@ void AngleSpring::draw(const dVector& x) {
 	P3D pa = 0.5*(p1 + p2);
 	P3D pb = 0.5*(p2 + p3);
 
+	// draw a line between the midpoints of the edges n[0]-n[1] and n[1]-n[2]
 	glBegin(GL_LINES);
 		glVertex3d(pa[0], pa[1], pa[2]);
 		glVertex3d(pb[0], pb[1], pb[2]);
