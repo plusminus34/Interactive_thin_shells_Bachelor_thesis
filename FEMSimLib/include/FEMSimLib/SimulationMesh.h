@@ -24,6 +24,9 @@ class SimulationMesh{
 	template<int NDim> 
 	friend class InverseDeformationSolver;
 
+	friend class AngleSpring;
+	friend class Paper2DApp;
+
 protected:
 	//this is the list of nodes in the structure
 	DynamicArray<Node*> nodes;

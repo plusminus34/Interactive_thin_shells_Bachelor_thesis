@@ -26,4 +26,4 @@ add_subdirectory(PhysicalRobotControlApp)
 add_subdirectory(BenderApp)
 add_subdirectory(Plush)
 add_subdirectory(PlotExampleApp)
-
+add_subdirectory(Paper2DApp)
