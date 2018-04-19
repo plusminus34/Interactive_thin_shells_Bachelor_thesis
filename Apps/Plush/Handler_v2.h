@@ -24,11 +24,12 @@ public:
 	virtual bool mouse_wheel_(double xOffset, double yOffset) { return false; }
 	virtual bool key_event_(int key, int action, int mods) { return false; }
 	virtual bool character_event_(int key, int mods) { return false; }
-	bool mouse_move(double xPos, double yPos)                                     { return (ACTIVE) ? mouse_move_(get_xy0(xPos, yPos)) : false; }
-	bool mouse_button(int button, int action, int mods, double xPos, double yPos) { return (ACTIVE) ? mouse_button_(button, action, mods, get_xy0(xPos, yPos)) : false; }
-	bool mouse_wheel(double xOffset, double yOffset)                              { return (ACTIVE) ? mouse_wheel_(xOffset, yOffset) : false; }
-	bool key_event(int key, int action, int mods)                                 { return (ACTIVE) ? key_event_(key, action, mods) : false; }
-	bool character_event(int key, int mods)                                       { return (ACTIVE) ? character_event_(key, mods) : false; }
+	// --
+	virtual bool mouse_move(double xPos, double yPos)                                     final { return (ACTIVE) ? mouse_move_(get_xy0(xPos, yPos)) : false; }
+	virtual bool mouse_button(int button, int action, int mods, double xPos, double yPos) final { return (ACTIVE) ? mouse_button_(button, action, mods, get_xy0(xPos, yPos)) : false; }
+	virtual bool mouse_wheel(double xOffset, double yOffset)                              final { return (ACTIVE) ? mouse_wheel_(xOffset, yOffset) : false; }
+	virtual bool key_event(int key, int action, int mods)                                 final { return (ACTIVE) ? key_event_(key, action, mods) : false; }
+	virtual bool character_event(int key, int mods)                                       final { return (ACTIVE) ? character_event_(key, mods) : false; }
 
 public:
 	bool LEFT_CLICKED = false;

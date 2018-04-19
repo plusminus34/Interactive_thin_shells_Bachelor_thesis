@@ -8,7 +8,7 @@
 #include <GUILib/GLTrackingCamera.h>
 
 #include "PlushApplication.h"
-#include "LoopMesh.h"
+#include "PlateMesh.h"
 #include "CSTSimulationMesh3D.h"
  
 class AppEditor3D : public PlushApplication {
@@ -19,11 +19,15 @@ public:
 	virtual void drawScene();
 
 private:
-	LoopMesh *design = nullptr;
-	CSTSimulationMesh3D *plushie = nullptr;
+	PlateMesh *design = nullptr;
+	Plane *drag_plane = new Plane(P3D(0., 0., .5), V3D(0., 0., 1.));
+	// CSTSimulationMesh3D *plushie = nullptr;
 	const string DESIGN_PATH_ = "../Apps/Plush/data/loop/sugar";
 	const string PLUSHIE_PATH = "../Apps/Plush/data/tri/sugar"; 
 
+private:
+	enum View { Designer, Checker, Simulator };
+	View view = Designer; 
 
 private:
 	bool DRAW_AXES = true;

@@ -2,29 +2,204 @@
 
 AppEditor3D::AppEditor3D() { 
 
-	design = new LoopMesh();
-	push_back_handler(design);
 
-	loadDesign(DESIGN_PATH_.data());
+	// loadDesign(DESIGN_PATH_.data());
 
 	{
 		// showGroundPlane = true;
 		showDesignEnvironmentBox = true;
 	}
 
+	design = new PlateMesh(camera, drag_plane);
+	design->BAKE_TETS = false;
+	// design->MAX_TET_VOLUME = .005;
+
+	string TEST_CASE = "Hexy";
+
+	if (TEST_CASE == "Hexy") {
+		int N = 3;
+		// --
+		double dtheta = 2.*PI / double(N);
+
+		// --
+
+		vector<P3D> loop;
+		auto store = [&](const V3D &v) {
+			P3D p = P3D(v[0], 0., v[1]);
+			loop.push_back(p);
+		};
+
+		double R = 12./100.;
+		double L = .5*(70. - 2.*R)/100.;
+		L *= 2; // FORNOW
+		double W = 06./100.;
+		for (int i = 0; i < N; ++i) {
+			double theta = double(i) * dtheta;
+			double theta_M = theta - .5*dtheta;
+			double theta_P = theta + .5*dtheta;
+			// --
+			V3D r = e_theta_2D(theta);
+			V3D r_M = e_theta_2D(theta_M);
+			V3D r_P = e_theta_2D(theta_P);
+			// --
+			store(r_M*R);
+			store(r_M*R + r*L);
+			store(r_P*R + r*L);
+		}
+
+		auto rangeLen = [](const vector<P3D> &loop) {
+			vector<int> ret;
+			for (size_t i = 0; i < loop.size(); ++i) {
+				ret.push_back(i);
+			}
+			return ret;
+		};
+
+		auto offset_loop = [&](const vector<P3D> &loop, const double &y_offset) {
+			vector<P3D> ret;
+			for (auto &p : loop) {
+				ret.push_back(p + V3D(0., y_offset));
+			}
+			return ret;
+		};
+
+		auto join_loops = [&](const vector<int> &a, const vector<int> &b_) {
+			auto b = b_;
+			std::reverse(b.begin(), b.end());
+			// --
+			if (a.size() != b.size()) { error("NotImplementedError"); }
+			// --
+			int N = a.size();
+			// --
+			vector<vector<int>> ret;
+			for (int ii = 0; ii < N; ++ii) {
+				int jj = (ii + 1) % N;
+				// --
+				int i_a = a[ii];
+				int i_b = b[ii];
+				int j_a = a[jj];
+				int j_b = b[jj];
+				// --
+				ret.push_back({ i_a, i_b, j_b, j_a });
+			}
+			return ret;
+		};
+
+		// loop
+		double thickness = W;
+		auto loop_ = loop;
+		loop = offset_loop(loop_, -.5*thickness);
+		vector<P3D> loop2 = offset_loop(loop_, .5*thickness);
+		// --
+		design->points.clear();
+		design->plates.clear();
+		// --
+		for (auto &p : loop) { design->points.push_back(p); }
+		for (auto &p : loop2) { design->points.push_back(p); }
+		// --
+		vector<int> loop_spec = rangeLen(loop);
+		vector<int> loop2_spec; for (auto &i : loop_spec) { loop2_spec.push_back(i + loop.size()); }
+		std::reverse(loop2_spec.begin(), loop2_spec.end());
+		// --
+		design->plates.push_back(new Plate(loop_spec, design));
+		design->plates.push_back(new Plate(loop2_spec, design));
+		for (auto &spec : join_loops(loop_spec, loop2_spec)) { design->plates.push_back(new Plate(spec, design)); }
+
+	} else if (TEST_CASE == "Canty") {
+		vector<P3D> loop;
+		auto store = [&](const P3D &p) {
+			loop.push_back(P3D(p[0], 0., p[1]));
+		};
+
+		double X = 50./100.;
+		double Y = 05./100.;
+		double Z = 06./100.;
+		store(P3D( .5*X,  .5*Y));
+		store(P3D(-.5*X,  .5*Y));
+		store(P3D(-.5*X, -.5*Y));
+		store(P3D( .5*X, -.5*Y)); 
+
+		auto rangeLen = [](const vector<P3D> &loop) {
+			vector<int> ret;
+			for (size_t i = 0; i < loop.size(); ++i) {
+				ret.push_back(i);
+			}
+			return ret;
+		};
+
+		auto offset_loop = [&](const vector<P3D> &loop, const double &y_offset) {
+			vector<P3D> ret;
+			for (auto &p : loop) {
+				ret.push_back(p + V3D(0., y_offset));
+			}
+			return ret;
+		};
+
+		auto join_loops = [&](const vector<int> &a, const vector<int> &b_) {
+			auto b = b_;
+			std::reverse(b.begin(), b.end());
+			// --
+			if (a.size() != b.size()) { error("NotImplementedError"); }
+			// --
+			int N = a.size();
+			// --
+			vector<vector<int>> ret;
+			for (int ii = 0; ii < N; ++ii) {
+				int jj = (ii + 1) % N;
+				// --
+				int i_a = a[ii];
+				int i_b = b[ii];
+				int j_a = a[jj];
+				int j_b = b[jj];
+				// --
+				ret.push_back({ i_a, i_b, j_b, j_a });
+			}
+			return ret;
+		};
+
+		// loop
+		double thickness = Z;
+		auto loop_ = loop;
+		loop = offset_loop(loop_, -.5*thickness);
+		vector<P3D> loop2 = offset_loop(loop_, .5*thickness);
+		// --
+		design->points.clear();
+		design->plates.clear();
+		// --
+		for (auto &p : loop) { design->points.push_back(p); }
+		for (auto &p : loop2) { design->points.push_back(p); }
+		// --
+		vector<int> loop_spec = rangeLen(loop);
+		vector<int> loop2_spec; for (auto &i : loop_spec) { loop2_spec.push_back(i + loop.size()); }
+		std::reverse(loop2_spec.begin(), loop2_spec.end());
+		// --
+		design->plates.push_back(new Plate(loop_spec, design));
+		design->plates.push_back(new Plate(loop2_spec, design));
+		for (auto &spec : join_loops(loop_spec, loop2_spec)) { design->plates.push_back(new Plate(spec, design)); }
+
+		design->MAX_TET_VOLUME = .00010;
+
+	}
+
+	design->LOAD = true;
+	push_back_handler(design);
+
 	mainMenu->addGroup("xxx");
 
-	mainMenu->addVariable("mode", design->mode) -> setItems({"Mesh", "Tendon"});
+	// mainMenu->addVariable("mode", design->mode) -> setItems({"Mesh", "Tendon"});
 
-	mainMenu->addVariable("MAX_TET_VOLUME",  design->TRIANGLE_MAX_AREA);
-	mainMenu->addVariable("TETRAHEDRALIZE",  design->TRIANGULATE, "key=TAB");
+	mainMenu->addVariable("MAX_TET_VOLUME",  design->MAX_TET_VOLUME);
+	// mainMenu->addVariable("TETRAHEDRALIZE",  design->PLEASE_REBUILD_SIMULATION_MESH, "key=TAB");
 
-	mainMenu->addButton("SAVE_DESIGN_", [&]() { cout << "TODO: " << DESIGN_PATH_ << endl; });
-	mainMenu->addButton("LOAD_DESIGN_", [&]() { cout << "TODO: " << DESIGN_PATH_ << endl; });
-	mainMenu->addButton("EXPO_PLUSHIE", [&]() { cout << "TODO: " << PLUSHIE_PATH << endl; });
-	mainMenu->addButton("TEST_PLUSHIE", [&]() { cout << "TODO: " << PLUSHIE_PATH << endl; });
+	// mainMenu->addButton("SAVE_DESIGN_", [&]() { cout << "TODO: " << DESIGN_PATH_ << endl; });
+	// mainMenu->addButton("LOAD_DESIGN_", [&]() { cout << "TODO: " << DESIGN_PATH_ << endl; });
+	// mainMenu->addButton("EXPO_PLUSHIE", [&]() { cout << "TODO: " << PLUSHIE_PATH << endl; });
+	// mainMenu->addButton("TEST_PLUSHIE", [&]() { cout << "TODO: " << PLUSHIE_PATH << endl; });
 
 	menuScreen->performLayout(); 
+
+
+
 }
 
 void AppEditor3D::process() { }
@@ -35,14 +210,71 @@ void AppEditor3D::process() { }
 
 void AppEditor3D::drawScene() { 
 
+		if (view == View::Designer) {
+		PlushApplication::DRAW_HANDLERS = true;
+		// --
+		this->showReflections = false;
+		this->showGroundPlane = false;
+		// --
+		design->SIMULATION_STARTED = false;
+		// --
+		design->BAKE_TETS = false;
+		design->BAKE_TDNS = false;
+		// --
+		design->DRAW_DESIGNER = true;
+		design->DRAW_BAKE = false;
+		design->DRAW_SIMULATION = false;
+	} else if (view == View::Checker) {
+		PlushApplication::DRAW_HANDLERS = false;
+		// --
+		this->showReflections = false;
+		this->showGroundPlane = false;
+		// --
+		design->SIMULATION_STARTED = false;
+		// --
+		design->BAKE_TETS = true;
+		design->BAKE_TDNS = true;
+		// --
+		design->DRAW_DESIGNER = false;
+		design->DRAW_BAKE = true;
+		design->DRAW_SIMULATION = false; }
+	else if (view == View::Simulator) {
+		PlushApplication::DRAW_HANDLERS = false;
+		// --
+		this->showReflections = true; // FORNOW
+		this->showGroundPlane = true; // FORNOW
+		// --
+		design->BAKE_TETS = false;
+		design->BAKE_TDNS = false;
+		// --
+		design->DRAW_DESIGNER = false;
+		design->DRAW_BAKE = false;
+		design->DRAW_SIMULATION = true; 
+
+		if (!design->SIMULATION_STARTED) {
+			design->SIMULATION_STARTED = true;
+			// --
+			if (design->simMesh != nullptr) {
+				design->reset_simulation();
+			}
+		} else {
+			if (design->simMesh != nullptr) {
+				if (appIsRunning) { design->step_simulation(); }
+			}
+		}
+	} else {
+		error("NotImplemented"); 
+	}
+
+
 	design->draw();
 
-	if (plushie != nullptr) {
-		glMasterPush(); {
-			glTranslated(2., 0., 0.);
-			plushie->draw();
-		} glMasterPop(); 
-	}
+	// if (plushie != nullptr) {
+	// 	glMasterPush(); {
+	// 		glTranslated(2., 0., 0.);
+	// 		plushie->draw();
+	// 	} glMasterPop(); 
+	// }
 
 }
 
@@ -71,6 +303,11 @@ bool AppEditor3D::onKeyEvent(int key, int action, int mods) {
 }
 
 bool AppEditor3D::onCharacterPressedEvent(int key, int mods) {
+
+	if (key == ' ') {
+		view = View((view + 1) % 3); 
+		return true;
+	}
 	if (PlushApplication::onCharacterPressedEvent(key, mods)) { return true; }
 	return false;
 }
@@ -91,77 +328,9 @@ void AppEditor3D::loadFile(const char* fName) {
 }
 
 void AppEditor3D::loadDesign(const char* fName) {
-	design->boundary.clear();
-	design->sketches.clear();
-
-	char vName[128];
-	char sketchName[128];
-	apply_suffix(fName, "loop", vName);
-	apply_suffix(fName, "sketch", sketchName); 
-	FILE* v_fp = fopen(vName, "r");
-	FILE* sketch_fp = fopen(sketchName, "r");
-
-	P3D p;
-	while (fscanf(v_fp, "%lf %lf", &p[0], &p[1]) != EOF) {
-		design->boundary.push_back(new P3D(p));
-	} 
-	fclose(v_fp); 
- 
-	vector<vector<P3D>> tendons_as_vecVecP2D;
-	if (sketch_fp != nullptr) {
-
-		P3D s = P3D();
-
-		const int LINESZ = 1024;
-		char line[LINESZ]; 
-		while (fgets(line, LINESZ, sketch_fp) != NULL) { 
-			vector<P3D> tendon;
-			int nums_now, bytes_now;
-			int bytes_consumed = 0, nums_read = 0;
-			while ((nums_now = sscanf(line + bytes_consumed, "%lf %lf %n", &s[0], &s[1], &bytes_now)) > 0) {
-				bytes_consumed += bytes_now; nums_read += nums_now;
-				tendon.push_back(s);
-			} 
-
-			tendons_as_vecVecP2D.push_back(tendon);
-		}
-		fclose(sketch_fp); 
-	}
-
-	for (auto &tendon : tendons_as_vecVecP2D) {
-		vector<P3D *> *sketch = new vector<P3D *>();
-		for (auto &p : tendon) {
-			sketch->push_back(new P3D(p));
-		}
-		design->sketches.push_back(sketch);
-	}
-
- }
+}
  
 void AppEditor3D::saveFile(const char* fName) {
-	char vName[128];
-	char sketchName[128];
-	apply_suffix(fName, "loop", vName);
-	apply_suffix(fName, "sketch", sketchName); 
-	FILE* v_fp = fopen(vName, "w");
-	FILE* sketch_fp = fopen(sketchName, "w");
-
-
-	for (auto &p : design->boundary) {
-		fprintf(v_fp, "%lf %lf\n", p->x(), p->y());
-	}
-
-	if (sketch_fp != nullptr) {
-		for (auto &sketch : design->sketches) {
-			for (auto &p : *sketch) {
-				fprintf(sketch_fp, "%lf %lf ", p->x(), p->y());
-			}
-			fprintf(sketch_fp, "\n");
-		} 
-	}
-
-	fclose(v_fp); 
-	fclose(sketch_fp); 
 }
 
 ////////////////////////////////////////////////////////////////////////////////

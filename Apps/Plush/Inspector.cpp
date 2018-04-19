@@ -133,12 +133,12 @@ void Inspector::interrogate(double xPos, double yPos, int &node_i, double &node_
 
 }
  
-bool Inspector::key_event(int key, int action, int mods) {
+bool Inspector::key_event_(int key, int action, int mods) {
 	PREFER_NODES = mods & GLFW_MOD_SHIFT;
 	return true;
 }
 
-bool Inspector::mouse_move(double xPos, double yPos) {
+bool Inspector::mouse_move_(double xPos, double yPos) {
 	if (selected_tendon_i != -1) {
 		tendons[selected_tendon_i]->set_alphac(TMP_ALPHAC);
 	}
@@ -173,7 +173,7 @@ bool Inspector::mouse_move(double xPos, double yPos) {
 	return false;
 }
 
-bool Inspector::mouse_button(int button, int action, int mods, double xPos, double yPos) {
+bool Inspector::mouse_button_(int button, int action, int mods, double xPos, double yPos) {
 	int node_i, tendon_i;               double node_d, tendon_d;
 	interrogate(xPos, yPos, node_i, node_d, tendon_i, tendon_d);
 
@@ -235,7 +235,7 @@ bool Inspector::mouse_button(int button, int action, int mods, double xPos, doub
 	return false;
 }
  
-bool Inspector::mouse_wheel(double xOffset, double yOffset) {
+bool Inspector::mouse_wheel_(double xOffset, double yOffset) {
 	if (selected_tendon_i != -1) {
 		auto &tendon = tendons[selected_tendon_i];
 		TMP_ALPHAC = tendon->get_alphac(mesh->balphac) + .01*yOffset;

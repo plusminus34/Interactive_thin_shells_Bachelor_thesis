@@ -11,7 +11,7 @@ PlushApplication::PlushApplication() {
 	showGroundPlane = false;
 	bgColorR = 0.; bgColorG = 0.; bgColorB = 0.; bgColorA = 1.;
 	// --
-	push_back_handler(new P2DDragger({ &test_P3D }));
+	// push_back_handler(new P2DDragger({ &test_P3D }));
 	// --
 	// menuScreen->removeChild(0);
 	// mainMenu->addWindow(Eigen::Vector2i(0, 0), "Main Menu");
