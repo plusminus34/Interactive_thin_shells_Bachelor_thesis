@@ -84,10 +84,10 @@ void CSTElement2D::draw(const dVector& x) {
 	for (int idx = 0; idx < 3; idx++){
 		P3D p = n[idx]->getCoordinates(x);
 		double colorValue = pow(n[idx]->avgDefEnergyForDrawing, 0.75);
-//		colorValue = mapTo01Range(colorValue, 0, 0.1);
+//		colorValue = mapTo01Range(colorValue, 0, 0.05);
 //		glColor4d(colorValue, 0, 1 - colorValue, topOptInterpolationDensity);
-//		ColorMaps::Color color = ColorMaps::jetColorFromScalar(colorValue, 0, 0.1);
-		ColorMaps::Color color = ColorMaps::parulaColorFromScalar(colorValue, 0, 0.1);
+//		ColorMaps::Color color = ColorMaps::jetColorFromScalar(colorValue, 0, 0.05);
+		ColorMaps::Color color = ColorMaps::parulaColorFromScalar(colorValue, 0, 0.05);
 		glColor4d(color.r, color.g, color.b, topOptInterpolationDensity);
 		glVertex3d(p[0], p[1], p[2]);
 	}

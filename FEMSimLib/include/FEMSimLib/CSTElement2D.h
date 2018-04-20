@@ -15,6 +15,7 @@ class CSTElement2D : public SimMeshElement {
 	friend class TopOptConstraints;
 	friend class TopOptEnergyFunction;
 	friend class CSTSimulationMesh2D;
+	friend class FEMSimApp;
 private:
 	//material parameters...
 	double shearModulus = 50, bulkModulus = 50;

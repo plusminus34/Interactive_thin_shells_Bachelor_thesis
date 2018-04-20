@@ -5,6 +5,7 @@
 #include <map>
 
 #include <FEMSimLib/SimulationMesh.h>
+#include <FEMSimLib/CSTElement2D.h>
 
 /**
  * Test App
@@ -15,6 +16,8 @@ private:
 
 	bool computeStaticSolution = false;
 	bool checkDerivatives = false;
+
+	MaterialModel2D matModel = MM_LINEAR_ISOTROPIC;// MM_NEO_HOOKEAN;
 
 	double simTimeStep = 1/100.0;
 
