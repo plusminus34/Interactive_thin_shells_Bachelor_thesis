@@ -138,8 +138,6 @@ AppSoftLoco::AppSoftLoco() {
 		push_back_handler2(splineTangentsDragger);
 	}
 
-	scrubber = new Scrubber(&PREVIEW_i, PREVIEW_LENGTH());
-	push_back_handler2(scrubber);
 
 	mainMenu->addGroup("app");
 	mainMenu->addVariable("draw F", mesh->DRAW_NODAL_FORCES);
@@ -200,6 +198,8 @@ void AppSoftLoco::drawScene() {
 		// 	COM_handlers[i]->ACTIVE = (i == ik->SELECTED_FRAME_i);
 		// }
 	}
+
+	// scrubber->character_event_('.', 0);
 
 	glMasterPush(); {
 		splinePositionsFrame.glAffineTransform();
@@ -390,12 +390,17 @@ void AppSoftLoco::load_uJ() {
 	for (auto u_vec : uJ_vecVecDouble) {
 		uJ_preview.push_back(vecDouble2dVector(u_vec));
 	}
+	concat_in_place(uJ_preview, uJ_preview);
+	concat_in_place(uJ_preview, uJ_preview);
+	concat_in_place(uJ_preview, uJ_preview);
 	// concat_in_place(uJ_preview, uJ_preview); // FORNOW
 	// uJ_preview.front().setZero();
 	// uJ_preview.back().setZero();
 	xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview); 
 	POPULATED_PREVIEW_TRAJEC = true;
 
+	scrubber = new Scrubber(&PREVIEW_i, uJ_preview.size());
+	push_back_handler2(scrubber); 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
