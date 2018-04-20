@@ -72,6 +72,8 @@ void CSTElement2D::addEnergyHessianTo(const dVector& x, const dVector& X, std::v
             addSparseMatrixDenseBlockToTriplet(hesEntries, n[i]->dataStartIndex, n[j]->dataStartIndex, ddEdxdx[i][j] * topOptInterpolationDensity, true);
 }
 
+#include <Utils/ColorMaps.h>
+
 void CSTElement2D::draw(const dVector& x) {
 
 
@@ -81,9 +83,12 @@ void CSTElement2D::draw(const dVector& x) {
 	glBegin(GL_TRIANGLES);
 	for (int idx = 0; idx < 3; idx++){
 		P3D p = n[idx]->getCoordinates(x);
-		double color = pow(n[idx]->avgDefEnergyForDrawing, 0.75);
-		color = mapTo01Range(color, 0, 0.05);
-		glColor4d(color, 0, 1 - color, topOptInterpolationDensity);
+		double colorValue = pow(n[idx]->avgDefEnergyForDrawing, 0.75);
+//		colorValue = mapTo01Range(colorValue, 0, 0.1);
+//		glColor4d(colorValue, 0, 1 - colorValue, topOptInterpolationDensity);
+//		ColorMaps::Color color = ColorMaps::jetColorFromScalar(colorValue, 0, 0.1);
+		ColorMaps::Color color = ColorMaps::parulaColorFromScalar(colorValue, 0, 0.1);
+		glColor4d(color.r, color.g, color.b, topOptInterpolationDensity);
 		glVertex3d(p[0], p[1], p[2]);
 	}
 	glEnd();
