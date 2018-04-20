@@ -185,6 +185,9 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("_DYNAMICS_SOLVE_RESIDUAL", mesh->_DYNAMICS_SOLVE_RESIDUAL);
 	mainMenu->addVariable("FPS", this->desiredFrameRate);
 	menuScreen->performLayout(); 
+
+	PLAY_PREVIEW = true;
+	load_uJ();
 }
 
 void AppSoftLoco::processToggles() {
@@ -277,7 +280,7 @@ void AppSoftLoco::drawScene() {
 				auto K_range = linspace(uJ_preview.size(), 0., 1.);
 				vector<XYPlot*> plots;
 
-				vector<double> x_spoof = { dfrac(PREVIEW_i, PREVIEW_LENGTH()) };
+				vector<double> x_spoof = { dfrac(PREVIEW_i, uJ_preview.size() - 1) };
 				concat_in_place(x_spoof, x_spoof);
 				vector<double> y_spoof = { -1., 1. };
 				plots.push_back(new XYPlot(x_spoof, y_spoof));
@@ -361,7 +364,7 @@ void AppSoftLoco::load_uJ() {
 	for (auto u_vec : uJ_vecVecDouble) {
 		uJ_preview.push_back(vecDouble2dVector(u_vec));
 	}
-	concat_in_place(uJ_preview, uJ_preview); // FORNOW
+	// concat_in_place(uJ_preview, uJ_preview); // FORNOW
 	// uJ_preview.front().setZero();
 	// uJ_preview.back().setZero();
 	xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview); 
@@ -405,11 +408,12 @@ bool AppSoftLoco::onCharacterPressedEvent(int key, int mods) {
 void AppSoftLoco::populatePreviewTrajec() {
 	POPULATED_PREVIEW_TRAJEC = true;
 
-	uJ_preview.clear();
-	for (int _ = 0; _ < NUM_PREVIEW_CYCLES; ++_) {
-		concat_in_place(uJ_preview, ik->uJ_curr());
+	// uJ_preview.clear();
+	// for (int _ = 0; _ < NUM_PREVIEW_CYCLES; ++_) {
+		// concat_in_place(uJ_preview, ik->uJ_curr());
 		// for (int _ = 0; _ < 5; ++_) { uJ_preview.push_back(ik->uJ_curr().back()); } // FORNOW (TODO)
-	}
+	// }
+	uJ_preview = ik->uJ_curr();
 	xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview);
 
 	// --

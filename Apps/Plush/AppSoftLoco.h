@@ -45,7 +45,7 @@ public:
 public:
 	bool PLAY_PREVIEW = false;
 	bool POPULATED_PREVIEW_TRAJEC = false;
-	const int NUM_PREVIEW_CYCLES = 2;
+	const int NUM_PREVIEW_CYCLES = 1;
 	int PREVIEW_LENGTH() { return NUM_PREVIEW_CYCLES * ik->K; }
 	int PREVIEW_i = 0;
 	vector<dVector> uJ_preview;
