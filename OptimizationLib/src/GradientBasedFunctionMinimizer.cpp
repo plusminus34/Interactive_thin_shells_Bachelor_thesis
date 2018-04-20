@@ -77,6 +77,16 @@ bool GradientBasedFunctionMinimizer::minimize(ObjectiveFunction *function, dVect
 	if (printOutput && optimizationConverged)
 		Logger::logPrint("Converged! Gradient norm: %lf. FunctionValue: %10.10lf\n", dp.norm(), functionValue);
 
+	// BEG FORNOW
+	{
+		// dVector G_tmp;
+		// G_tmp.setZero(N);
+		// function->addGradientTo(G_tmp, pi);
+		// magG_tmp = G_tmp.norm(); 
+		magG_tmp = dp.norm();
+	}
+	// END FORNOW
+
 	//p now holds the parameter values at the start of the iteration...
 	p = pi;
 	//and done!

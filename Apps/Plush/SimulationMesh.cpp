@@ -237,6 +237,8 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const 
 		double functionValue = energyFunction->computeValue(xSolver); // TODO:See AppSoftIK notes.
 		minimizer.minimize(energyFunction, xSolver, functionValue);
 
+		magG_tmp = minimizer.magG_tmp; // FORNOW
+
 		x_new = xSolver;
 		v_new = (x_new - x_0) / timeStep;
 

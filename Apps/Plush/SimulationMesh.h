@@ -29,7 +29,7 @@ public:
 public:
 	bool UNILATERAL_TENDONS = true;
 	double timeStep = .01;
-	int _DYNAMICS_MAX_ITERATIONS = 15;
+	int _DYNAMICS_MAX_ITERATIONS = 200;
 	double _DYNAMICS_SOLVE_RESIDUAL = 1e-10;
 
 // core suite
@@ -209,5 +209,9 @@ public:
 	virtual void draw(dVector &x=dVector(), dVector &alphac=dVector(), dVector &x0=dVector()); // TODO: Switch to taking v, and getting x0 from difference
 	virtual void addGravityForces(const V3D &g);
 	virtual void removePinnedNodeConstraints();
+
+public:
+	double magG_tmp;
+	
 
 };

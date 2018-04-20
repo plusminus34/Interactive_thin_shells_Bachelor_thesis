@@ -144,8 +144,8 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addGroup("app");
 	mainMenu->addVariable("draw F", mesh->DRAW_NODAL_FORCES);
 	mainMenu->addButton("save_uJ", [&]() { save_uJ(); });
-	mainMenu->addButton("load_uJ", [&]() { load_uJ(); });
-	mainMenu->addButton("populatePreviewTraj", [&]() { populatePreviewTrajec(); });
+	mainMenu->addButton("load_uJ (and calc xJ)", [&]() { load_uJ(); });
+	// mainMenu->addButton("populatePreviewTraj", [&]() { populatePreviewTrajec(); });
 	mainMenu->addVariable("SOLVE_IK", SOLVE_IK);
 	mainMenu->addVariable("SOLVE_DYNAMICS", ik->SOLVE_DYNAMICS);
 	mainMenu->addVariable("UNILATERAL_TENDONS", mesh->UNILATERAL_TENDONS);
@@ -280,8 +280,8 @@ void AppSoftLoco::drawScene() {
 				auto K_range = linspace(uJ_preview.size(), 0., 1.);
 				vector<XYPlot*> plots;
 
-				vector<double> x_spoof = { dfrac(PREVIEW_i, uJ_preview.size() - 1) };
-				concat_in_place(x_spoof, x_spoof);
+					double x_spoof_ = dfrac(PREVIEW_i, uJ_preview.size() - 1);
+				vector<double> x_spoof = { x_spoof_, x_spoof_ };
 				vector<double> y_spoof = { -1., 1. };
 				plots.push_back(new XYPlot(x_spoof, y_spoof));
 
@@ -293,6 +293,32 @@ void AppSoftLoco::drawScene() {
 					plot_K->SPEC_COLOR = kelly_color(t);
 					plots.push_back(plot_K);
 				}
+				for (auto &plot : plots) {
+					*plot->origin = P3D(-2., -1.);
+					*plot->top_right = *plot->origin + V3D(2., 2.);
+				};
+				XYPlot::uniformize_axes(plots);
+				for (auto &plot : plots) { plot->draw(); }
+				for (auto &plot : plots) { delete plot; }
+			} glMasterPop();
+
+			// for (auto &tmp : ik->magG_tmp_vec) {
+				// cout << tmp << endl;
+				// cout << endl;
+			// }
+
+			glMasterPush(); {
+
+				auto K_range = linspace(uJ_preview.size(), 0., 1.); 
+				XYPlot *plot = new XYPlot(K_range, ik->magG_tmp_vec);
+
+				vector<double> x_spoof = { 0., 1. };
+				vector<double> y_spoof = { 1., 1. }; 
+				XYPlot *horz = new XYPlot(x_spoof, y_spoof);
+				horz->SPEC_COLOR = HENN1NK;
+
+				vector<XYPlot*> plots = { plot, horz };
+				plot->SPEC_COLOR = WHITE;
 				for (auto &plot : plots) {
 					*plot->origin = P3D(-2., -1.);
 					*plot->top_right = *plot->origin + V3D(2., 2.);
@@ -369,6 +395,7 @@ void AppSoftLoco::load_uJ() {
 	// uJ_preview.back().setZero();
 	xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview); 
 	POPULATED_PREVIEW_TRAJEC = true;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -405,18 +432,18 @@ bool AppSoftLoco::onCharacterPressedEvent(int key, int mods) {
     return false;
 } 
 
-void AppSoftLoco::populatePreviewTrajec() {
-	POPULATED_PREVIEW_TRAJEC = true;
+// void AppSoftLoco::populatePreviewTrajec() {
+// 	POPULATED_PREVIEW_TRAJEC = true;
 
-	// uJ_preview.clear();
-	// for (int _ = 0; _ < NUM_PREVIEW_CYCLES; ++_) {
-		// concat_in_place(uJ_preview, ik->uJ_curr());
-		// for (int _ = 0; _ < 5; ++_) { uJ_preview.push_back(ik->uJ_curr().back()); } // FORNOW (TODO)
-	// }
-	uJ_preview = ik->uJ_curr();
-	xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview);
+// 	// uJ_preview.clear();
+// 	// for (int _ = 0; _ < NUM_PREVIEW_CYCLES; ++_) {
+// 		// concat_in_place(uJ_preview, ik->uJ_curr());
+// 		// for (int _ = 0; _ < 5; ++_) { uJ_preview.push_back(ik->uJ_curr().back()); } // FORNOW (TODO)
+// 	// }
+// 	uJ_preview = ik->uJ_curr();
+// 	xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview);
 
-	// --
-	// prepend_in_place(uJ_preview, ZERO_dVector(ik->T()));// (*)
-	// prepend_in_place(xJ_preview, ik->xm1_curr);// (*)
-}
+// 	// --
+// 	// prepend_in_place(uJ_preview, ZERO_dVector(ik->T()));// (*)
+// 	// prepend_in_place(xJ_preview, ik->xm1_curr);// (*)
+// }

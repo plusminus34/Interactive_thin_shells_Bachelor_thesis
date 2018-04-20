@@ -233,11 +233,13 @@ Traj SoftLocoSolver::solve_trajectory(double dt, const dVector &x_0, const dVect
 	vector<dVector> x_tmp = {};
 	vector<dVector> v_tmp = {};
 
+	magG_tmp_vec.clear(); // FORNOW
 	for (int i = 0; i < (int)uJ.size(); ++i) {
 		const dVector x_im1 = (x_tmp.empty()) ? x_0 : x_tmp.back();
 		const dVector v_im1 = (v_tmp.empty()) ? v_0 : v_tmp.back();
 		dVector u_i = uJ[i];
 		auto xv = mesh->solve_dynamics(x_im1, v_im1, u_i);
+		magG_tmp_vec.push_back(mesh->magG_tmp); // FORNOW
 		x_tmp.push_back(xv.first );
 		v_tmp.push_back(xv.second);
 	}

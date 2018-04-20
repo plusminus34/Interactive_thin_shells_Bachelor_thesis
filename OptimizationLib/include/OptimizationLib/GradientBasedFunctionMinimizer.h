@@ -45,5 +45,8 @@ protected:
 
 protected:
 	double lineSearchValueOld = -1.0;
+
+public:
+	double magG_tmp;
 };
 

@@ -191,7 +191,9 @@ public:
 		} 
 		return out; 
 	}
- 
+
+public:
+	vec<double> magG_tmp_vec;
 };
  
 	// reindex

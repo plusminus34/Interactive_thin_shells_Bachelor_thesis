@@ -16,7 +16,7 @@ AppXD::AppXD() {
 	tet_mesh = new CSTSimulationMesh3D();
 	tet_mesh->spawnSavedMesh("../Apps/Plush/data/tet/brick");
 	tet_mesh->nudge_mesh(tx_);
-	tet_mesh->addGravityForces(V3D(0., -10., 0.));
+	tet_mesh->addGravityForces(V3D(0., -100., 0.));
 	tet_mesh->applyYoungsModulusAndPoissonsRatio(1e4, .25);
 	tet_mesh->pinToCeiling(); 
 
@@ -44,7 +44,7 @@ bool AppXD::onMouseMoveEvent(double xPos, double yPos) {
 }
 
 bool AppXD::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
-	tri_mesh->nudge_mesh(V3D(1., 0.));
+	// tri_mesh->nudge_mesh(V3D(1., 0.));
     return(PlushApplication::onMouseButtonEvent(button, action, mods, xPos, yPos));
 }
 
