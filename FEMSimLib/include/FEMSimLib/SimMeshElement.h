@@ -22,8 +22,6 @@ public:
 	SimMeshElement(SimulationMesh* simMesh);
 	~SimMeshElement();
 
-	virtual double getMass() = 0;
-
 	virtual double getEnergy(const dVector& x, const dVector& X) = 0;
 	virtual void drawRestConfiguration(const dVector& X) = 0;
 	virtual void draw(const dVector& x) = 0;

@@ -8,6 +8,7 @@
 #include <FEMSimLib/CSTSimulationMesh3D.h>
 #include <FEMSimLib/MassSpringSimulationMesh3D.h>
 #include <GUILib/GLUtils.h>
+#include <GUILib/GLTrackingCamera.h>
 
 
 #define EDIT_BOUNDARY_CONDITIONS
@@ -26,8 +27,13 @@ FEMSimApp::FEMSimApp() {
 	femMesh->addGravityForces(V3D(0, -9.8, 0));
 #else
 
-	int nRows = 20;
-	int nCols = 20;
+	delete camera;
+	GLTrackingCamera *cam = new GLTrackingCamera();
+	cam->ignoreRotations = true;
+	camera = cam;
+
+	int nRows = 10;
+	int nCols = 10;
 	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, nRows, nCols);
 
 	femMesh = new CSTSimulationMesh2D();
@@ -48,6 +54,19 @@ FEMSimApp::FEMSimApp() {
 	showGroundPlane = false;
 
 	mainMenu->addGroup("FEM Sim options");
+
+	mainMenu->addVariable<MaterialModel2D>("MaterialModel",
+		[this](const MaterialModel2D &val) {
+		matModel = val;
+		for (uint i = 0; i < femMesh->elements.size(); i++) {
+			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(femMesh->elements[i]))
+				e->matModel = matModel;
+		}
+
+	},
+		[this]() {return matModel; },
+		true)->setItems({ "Linear Isotropic", "StVK", "Neo-Hookean" });
+
 	mainMenu->addVariable("Static solve", computeStaticSolution);
 	mainMenu->addVariable("Check derivatives", checkDerivatives);
 	menuScreen->performLayout();
@@ -193,6 +212,8 @@ void FEMSimApp::process() {
 #endif
 //			femMesh->fakeContactWithPlane(Plane(P3D(0, 0, 0), V3D(0, 1, 0)));
 		}
+
+//		break;
 	}
 }
 
