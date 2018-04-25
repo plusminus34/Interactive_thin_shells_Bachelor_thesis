@@ -14,6 +14,9 @@ CSTriangle3D::CSTriangle3D(SimulationMesh* simMesh, Node* n1, Node* n2, Node* n3
 
 	setRestShapeFromCurrentConfiguration();
 
+	shearModulus = 0.3;
+	bulkModulus = 1.5;
+
 	//distribute the mass of this element to the nodes that define it...
 	for (int i = 0;i<3;i++)
 		n[i]->addMassContribution(getMass() / 3.0);
@@ -156,7 +159,7 @@ void CSTriangle3D::computeGradientComponents(const dVector& x, const dVector& X)
 	if (matModel == MM_STVK){
         strain = F.transpose() * F; strain(0, 0) -= 1; strain(1, 1) -= 1; strain(2,2) -= 1;
         strain *= 0.5;
-		Matrix2x2 tmp = 2 * shearModulus * strain;// TODO avoid temporary matrix
+		Matrix2x2 tmp = 2 * shearModulus * strain;// TODO avoid temporary matrix or at least rename it
 		tmp(0, 0) += bulkModulus * (strain(0, 0) + strain(1, 1));
 		tmp(1, 1) += bulkModulus * (strain(0, 0) + strain(1, 1));
         dEdF = F * tmp;
@@ -174,6 +177,7 @@ void CSTriangle3D::computeGradientComponents(const dVector& x, const dVector& X)
 
 void CSTriangle3D::computeHessianComponents(const dVector& x, const dVector& X) {
     /*TODO update description
+	TODO: z coordinates of H are zero and shouldn't be
     H = dfdx = ddEdxdx.
     H = restShapeArea * dPdx(F; dFdx) * transpose(dXInv)
     There are different formula of dPdx in different models. See below.
@@ -212,11 +216,12 @@ void CSTriangle3D::computeHessianComponents(const dVector& x, const dVector& X) 
                 Matrix3x2 dPdXij = dFdXij * (2.0 * shearModulus * E + bulkModulus * E.trace() * I);
                 dPdXij += F * (2.0 * shearModulus * dEdXij + bulkModulus * dEdXij.trace() * I);
                 Matrix3x2 dHdXij = restShapeArea * dPdXij * dXInv.transpose();
-                for (int ii = 0;ii < 3;++ii)
-                    for (int jj = 0;jj < 2;++jj)
+                for (int ii = 0;ii < 2;++ii)
+                    for (int jj = 0;jj < 3;++jj)
                     ddEdxdx[ii + 1][i](jj, j) = dHdXij(jj, ii);
                 ddEdxdx[0][i](0, j) = -dHdXij(0, 1) - dHdXij(0, 0);
                 ddEdxdx[0][i](1, j) = -dHdXij(1, 1) - dHdXij(1, 0);
+				ddEdxdx[0][i](2, j) = -dHdXij(2, 1) - dHdXij(2, 0);
             }
         //Logger::consolePrint("%lf %lf\n%lf %lf\n", ddEdxdx[0][1](0, 0), ddEdxdx[0][1](0, 1), ddEdxdx[0][1](1, 0), ddEdxdx[1][1](1, 1));
     }
