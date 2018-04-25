@@ -18,6 +18,7 @@ class SimulationMesh{
     friend class FEMSim3DApp;
 	friend class CSTElement2D;
 	friend class CSTElement3D;
+	friend class CSTriangle3D;
 	friend class BilateralSpring3D;
 	friend class BenderApp2D;
 	friend class BenderApp3D;
