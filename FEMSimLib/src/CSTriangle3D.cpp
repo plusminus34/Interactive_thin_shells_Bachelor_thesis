@@ -203,7 +203,7 @@ void CSTriangle3D::computeHessianComponents(const dVector& x, const dVector& X) 
         Matrix2x2 I;
         I(0, 0) = I(1, 1) = 1; I(0, 1) = I(1, 0) = 0;
         for (int i = 0;i < 3;++i)
-            for (int j = 0;j < 2;++j)
+            for (int j = 0;j < 3;++j)
             {
                 Matrix3x2 dFdXij;
                 dFdXij(0, 0) = dFdXij(0, 1) = dFdXij(1, 0) = dFdXij(1, 1) = dFdXij(2,0) = dFdXij(2, 1) = 0;

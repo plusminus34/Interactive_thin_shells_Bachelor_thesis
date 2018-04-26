@@ -32,7 +32,7 @@ private:
 	Node* n[3];
 	//parameters needed for gradient and hessian of the energy
 	V3D dEdx[3];
-	Matrix3x2 ddEdxdx[3][3];
+	Matrix3x3 ddEdxdx[3][3];
 	//tmp matrices used to speed up computation of the deformation gradient, green strain, etc
 	//TODO: correct sizes
 	Matrix2x2 dXInv, strain;
