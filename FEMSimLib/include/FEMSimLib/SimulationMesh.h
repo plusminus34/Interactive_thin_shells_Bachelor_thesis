@@ -27,6 +27,7 @@ class SimulationMesh{
 
 	friend class AngleSpring;
 	friend class Paper2DApp;
+	friend class Paper3DApp;
 
 protected:
 	//this is the list of nodes in the structure
