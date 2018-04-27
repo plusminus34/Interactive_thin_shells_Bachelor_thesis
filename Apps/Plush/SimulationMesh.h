@@ -29,7 +29,7 @@ public:
 public:
 	bool UNILATERAL_TENDONS = true;
 	double timeStep = .01;
-	int _DYNAMICS_MAX_ITERATIONS = 1000;
+	int _DYNAMICS_MAX_ITERATIONS = 10000;
 	double _DYNAMICS_SOLVE_RESIDUAL = 1e-10;
 
 // core suite

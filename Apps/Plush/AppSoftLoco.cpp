@@ -184,8 +184,8 @@ AppSoftLoco::AppSoftLoco() {
 	mainMenu->addVariable("FPS", this->desiredFrameRate);
 	menuScreen->performLayout(); 
 
-	PLAY_PREVIEW = true;
-	load_uJ();
+	// PLAY_PREVIEW = true;
+	// load_uJ();
 }
 
 void AppSoftLoco::processToggles() {
@@ -272,6 +272,9 @@ void AppSoftLoco::drawScene() {
 		// desiredFrameRate = 100;
 		// -- 
 
+		if (!POPULATED_PREVIEW_TRAJEC) {
+			populatePreviewTrajec();
+		}
 
 		if (POPULATED_PREVIEW_TRAJEC) {
 			mesh->draw(xJ_preview[PREVIEW_i], uJ_preview[PREVIEW_i], (PREVIEW_i != 0) ? xJ_preview[PREVIEW_i - 1] : ik->xm1_curr); 
@@ -390,9 +393,9 @@ void AppSoftLoco::load_uJ() {
 	for (auto u_vec : uJ_vecVecDouble) {
 		uJ_preview.push_back(vecDouble2dVector(u_vec));
 	}
-	concat_in_place(uJ_preview, uJ_preview);
-	concat_in_place(uJ_preview, uJ_preview);
-	concat_in_place(uJ_preview, uJ_preview);
+	// concat_in_place(uJ_preview, uJ_preview);
+	// concat_in_place(uJ_preview, uJ_preview);
+	// concat_in_place(uJ_preview, uJ_preview);
 	// concat_in_place(uJ_preview, uJ_preview); // FORNOW
 	// uJ_preview.front().setZero();
 	// uJ_preview.back().setZero();
@@ -437,18 +440,22 @@ bool AppSoftLoco::onCharacterPressedEvent(int key, int mods) {
     return false;
 } 
 
-// void AppSoftLoco::populatePreviewTrajec() {
-// 	POPULATED_PREVIEW_TRAJEC = true;
+void AppSoftLoco::populatePreviewTrajec() {
+	POPULATED_PREVIEW_TRAJEC = true;
 
-// 	// uJ_preview.clear();
-// 	// for (int _ = 0; _ < NUM_PREVIEW_CYCLES; ++_) {
-// 		// concat_in_place(uJ_preview, ik->uJ_curr());
-// 		// for (int _ = 0; _ < 5; ++_) { uJ_preview.push_back(ik->uJ_curr().back()); } // FORNOW (TODO)
-// 	// }
-// 	uJ_preview = ik->uJ_curr();
-// 	xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview);
+	uJ_preview.clear();
+	for (int _ = 0; _ < NUM_PREVIEW_CYCLES; ++_) {
+	 concat_in_place(uJ_preview, ik->uJ_curr());
+	 for (int _ = 0; _ < 5; ++_) { uJ_preview.push_back(ik->uJ_curr().back()); } // FORNOW (TODO)
+	}
+	uJ_preview = ik->uJ_curr();
+	xJ_preview = ik->solve_trajectory(mesh->timeStep, ik->xm1_curr, ik->vm1_curr, uJ_preview);
 
-// 	// --
-// 	// prepend_in_place(uJ_preview, ZERO_dVector(ik->T()));// (*)
-// 	// prepend_in_place(xJ_preview, ik->xm1_curr);// (*)
-// }
+	// --
+	// prepend_in_place(uJ_preview, ZERO_dVector(ik->T()));// (*)
+	// prepend_in_place(xJ_preview, ik->xm1_curr);// (*)
+
+	// FORNOW
+	scrubber = new Scrubber(&PREVIEW_i, uJ_preview.size());
+	push_back_handler2(scrubber); 
+}
