@@ -1,9 +1,20 @@
 #include "AppEditor2D.h"
 
+// Switch between Mesh and Tendon mode using GUI
+// Mesh Mode:
+// -- Right Click to add/delete nodes
+// Tendon Mode:
+// -- Shift+Left Click to select tendon
+// -- Shift+Right Click to spawn new tendon
+// -- Right Click to add/delete waypoints
+// -- NOTE: Tendons delete themselves when they have only one waypoint left
+
 AppEditor2D::AppEditor2D() { 
 
 	mesh = new LoopMesh();
 	push_back_handler(mesh);
+
+	SPOOF_2D_CAMERA = true;
 
 	/*
 	string TEST_CASE = "Canty";
@@ -120,9 +131,6 @@ void AppEditor2D::drawScene() {
 		glEnd();
 		glPopAttrib();
 	}
-
-	dynamic_cast<GLTrackingCamera *>(camera)->rotAboutRightAxis = 0;
-	dynamic_cast<GLTrackingCamera *>(camera)->rotAboutUpAxis = 0;
  
 }
 

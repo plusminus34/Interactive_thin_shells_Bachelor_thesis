@@ -1,4 +1,4 @@
-4
+0
 
 // --
 
@@ -7,8 +7,3 @@ const int APP_EDITOR2D_ID    = 1;
 const int APP_EDITOR3D_ID    = 2;
 const int APP_IK_ID          = 3;
 const int APP_LOCO_ID        = 4;
-
-24 => .5fps
-52 => .35fps
-97 => .15fps
-TODO: Adjust material parameters

@@ -1115,7 +1115,7 @@ const auto glSphereVec = [](vector<P3D> &s_vec) {
 const auto quiver = [](const vector<P3D> &x_vec, const vector<V3D> &F_vec, int D) {
 
 	double ZERO_W = 0.;
-	double UNIT_W = .001; // unit force produces this width
+	double UNIT_W = .01; // unit force produces this width; TODO: Make this an argument
 
 	for (size_t i = 0; i< x_vec.size(); ++i) {
 		P3D x = x_vec[i];
