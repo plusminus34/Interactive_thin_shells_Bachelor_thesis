@@ -57,6 +57,7 @@ AppSoftIK::AppSoftIK() {
 	} else if (TEST_CASE == "luca") {
 		// mesh->add_contacts_to_boundary_nodes();
 		// mesh->nudge_mesh_up();
+		mesh->rig_all_lower_simplices();
 		mesh->pinToFloor();
 		mesh->timeStep = .01; 
 	} else if (TEST_CASE == "sugar") {
@@ -144,9 +145,9 @@ void AppSoftIK::process() {
 	ik->SOLVE_DYNAMICS = SOLVE_DYNAMICS;
 	ik->timeStep = timeStep;
 	// --
-	if (INTEGRATE_FORWARD_IN_TIME) { ik->x_0 = mesh->x; ik->v_0 = mesh->v; }
-	if (SOLVE_IK) { ik->step(); }
-	if (INTEGRATE_FORWARD_IN_TIME) { mesh->xvPair_INTO_Mesh((SOLVE_DYNAMICS) ? mesh->solve_dynamics(ik->x_0, ik->v_0, ik->alphac_curr) : mesh->solve_statics(ik->x_0, ik->alphac_curr)); }
+	if (true) { ik->x_0 = mesh->x; ik->v_0 = mesh->v; }
+	if (true) { ik->step(); }
+	if (true) { mesh->xvPair_INTO_Mesh(mesh->solve_statics(ik->x_0, ik->alphac_curr)); }
 
 	// ik->x_0 = mesh->x;
 	// ik->step();

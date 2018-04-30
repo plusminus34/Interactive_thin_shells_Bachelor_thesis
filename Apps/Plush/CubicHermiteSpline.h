@@ -42,7 +42,7 @@ public:
 public:
 	pair<int, double> calculate_kt(const double &s);
 	dVector calculate_U(const dVector &Y);
-	SparseMatrix dUdY;
+	vector<SparseMatrix> dudyJ;
 	// --
 	SparseMatrix calculate_dUdY_();
 	// --

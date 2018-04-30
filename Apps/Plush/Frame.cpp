@@ -14,6 +14,12 @@ Frame::Frame(const vector<V3D> &V, const P3D &s) {
 	*this = Frame(B, s);
 }
 
+Frame::Frame() {
+	Matrix3x3 B; B.setIdentity();
+	P3D s = P3D();
+	*this = Frame(B, s);
+}
+
 void Frame::draw() {}
 
 void Frame::glAffineTransform() { 

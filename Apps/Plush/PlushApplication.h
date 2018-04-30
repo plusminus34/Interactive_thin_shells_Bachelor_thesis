@@ -6,6 +6,7 @@
 #include <GUILib/GLTrackingCamera.h>
 // --
 #include "Handler.h"
+#include "Handler_v2.h"
 
 class PlushApplication : public GLApplication {
 
@@ -56,9 +57,11 @@ public:
 
 public:
 	vector<Handler *> handlers; 
+	vector<Handler_v2 *> handlers2; 
 
 public:
 	inline void push_back_handler(Handler *handler) { handlers.push_back(handler); }
+	inline void push_back_handler2(Handler_v2 *handler_v2) { handlers2.push_back(handler_v2); }
 
 public:
     virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);

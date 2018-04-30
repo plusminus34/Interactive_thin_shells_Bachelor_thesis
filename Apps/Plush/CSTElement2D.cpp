@@ -142,30 +142,10 @@ double CSTElement2D::getEnergy(const dVector& x, const dVector&){
 	computeDeformationGradient(x, dVector(), F);
 	double energyDensity = 0;
 
-	if (matModel == MaterialModel2D::MM_STVK){
-		//compute the Green Strain = 1/2 * (F'F-I)
-		strain = F * F.transpose(); strain(0,0) -= 1; strain(1,1) -= 1; strain *= 0.5;
+	double normF2 = F(0,0)*F(0,0) + F(0,1)*F(0,1) + F(1,0)*F(1,0) + F(1,1)*F(1,1);
+	double detF = F.determinant();
 
-		//add the deviatoric part of the energy, which penalizes the change in the shape of the element - the frobenius norm of E [tr (E'E)] measures just that
-		energyDensity += shearModulus * (strain(0,0)*strain(0,0) + strain(0,1)*strain(0,1) + strain(1,0)*strain(1,0) + strain(1,1)*strain(1,1));
-
-		//and the volumetric/hydrostatic part, which is approximated as the trace of E and aims to maintain a constant volume
-		energyDensity += bulkModulus/2 * (strain(0,0) + strain(1,1)) * (strain(0,0) + strain(1,1));
-	}else if (matModel == MaterialModel2D::MM_LINEAR_ISOTROPIC){
-		//compute the Cauchy strain: 1/2 (F+F') - I
-		strain = (F + F.transpose()) * 0.5; strain(0, 0) -= 1; strain(1, 1) -= 1;
-
-		//add the deviatoric part of the energy, which penalizes the change in the shape of the element - the frobenius norm of E [tr (E'E)] measures just that
-		energyDensity += shearModulus * (strain(0,0)*strain(0,0) + strain(0,1)*strain(0,1) + strain(1,0)*strain(1,0) + strain(1,1)*strain(1,1));
-
-		//and the volumetric/hydrostatic part, which is approximated as the trace of E and aims to maintain a constant volume
-		energyDensity += bulkModulus/2 * (strain(0,0) + strain(1,1)) * (strain(0,0) + strain(1,1));
-	}else if (matModel == MaterialModel2D::MM_NEO_HOOKEAN){
-		double normF2 = F(0,0)*F(0,0) + F(0,1)*F(0,1) + F(1,0)*F(1,0) + F(1,1)*F(1,1);
-		double detF = F.determinant();
-
-		energyDensity += shearModulus/2 * (normF2-2) - shearModulus * log(detF) + bulkModulus/2 * log(detF) * log(detF);
-	}
+	energyDensity += shearModulus/2 * (normF2-2) - shearModulus * log(detF) + bulkModulus/2 * log(detF) * log(detF);
 
 	return energyDensity * restShapeArea;
 
@@ -179,26 +159,11 @@ void CSTElement2D::computeGradientComponents(const dVector& x, const dVector&){
 	dEdF.setZero();
 	Finv = F.inverse();
 	FinvT = Finv.transpose();
-	if (matModel == MaterialModel2D::MM_STVK){
-        strain = F.transpose() * F; strain(0, 0) -= 1; strain(1, 1) -= 1;
-        strain *= 0.5;
-        dEdF = strain;
-        dEdF *= 2.0 * shearModulus;
-        dEdF(0, 0) += bulkModulus * (strain(0, 0) + strain(1, 1));
-        dEdF(1, 1) += bulkModulus * (strain(0, 0) + strain(1, 1));
-        dEdF = F * dEdF;
-	}else if (matModel == MaterialModel2D::MM_LINEAR_ISOTROPIC){
-		//compute the Cauchy strain: 1/2 (F+F') - I
-		strain = (F + F.transpose()) * 0.5; strain(0, 0) -= 1; strain(1, 1) -= 1;
-		dEdF = strain; dEdF *= 2*shearModulus;
-		dEdF(0,0) += (strain(0,0) + strain(1,1)) * bulkModulus;
-		dEdF(1,1) += (strain(0,0) + strain(1,1)) * bulkModulus;
-	}else if (matModel == MaterialModel2D::MM_NEO_HOOKEAN){
-		double normF2 = F(0,0)*F(0,0) + F(0,1)*F(0,1) + F(1,0)*F(1,0) + F(1,1)*F(1,1);
-		double detF = F.determinant();
 
-		dEdF = F * shearModulus + FinvT * (-shearModulus + bulkModulus*log(detF));
-	}
+	double normF2 = F(0,0)*F(0,0) + F(0,1)*F(0,1) + F(1,0)*F(1,0) + F(1,1)*F(1,1);
+	double detF = F.determinant();
+
+	dEdF = F * shearModulus + FinvT * (-shearModulus + bulkModulus*log(detF));
 
 	//dF/dx is going to be some +/- Xinv terms. The forces on nodes 1,2 can be writen as: dE/dF * XInv', while the force on node 0 is -f1-f2;
 	dEdx[1] = V3D(dEdF(0,0) * dXInv(0,0) + dEdF(0,1) * dXInv(0,1), dEdF(1,0) * dXInv(0,0) + dEdF(1,1) * dXInv(0,1), 0) * restShapeArea;
@@ -218,100 +183,33 @@ void CSTElement2D::computeHessianComponents(const dVector& x, const dVector&) {
     we can calculate 6 elements of H in each turn ( {l = 0..5}ddEd(xk)d(xl) ), and finally
     fill out whole H matrix. (3*3=9 small 2x2 matrices)
     */
-    if (matModel == MaterialModel2D::MM_STVK)
-    {
-        /*
-        dPdx(F; dFdx) = dFdx * (2 * shearModulus * E + bulkModulus * trace(E) * I) +
-        F * (2 * shearModulus * dEdx + bulkModulus * trace(dEdx) * I)
-        dEdx = 0.5 * (transpose(dFdx) * F + transpose(F) * dFdx)
-        */
-        computeDeformationGradient(x, dVector(), F);
-        Matrix2x2 FT = F.transpose();
-        Matrix2x2 E = 0.5 * (FT * F);
-        E(0, 0) -= 0.5; E(1, 1) -= 0.5;
-        Matrix2x2 I;
-        I(0, 0) = I(1, 1) = 1; I(0, 1) = I(1, 0) = 0;
-        for (int i = 0;i < 3;++i)
-            for (int j = 0;j < 2;++j)
-            {
-                Matrix2x2 dFdXij;
-                dFdXij(0, 0) = dFdXij(0, 1) = dFdXij(1, 0) = dFdXij(1, 1) = 0;
-                if (i > 0)
-                    dFdXij(j, i - 1) = 1;
-                else
-                    dFdXij(j, 0) = dFdXij(j, 1) = -1;
-                dFdXij = dFdXij * dXInv;
-                Matrix2x2 dEdXij = 0.5 * (dFdXij.transpose() * F + FT * dFdXij);
-                Matrix2x2 dPdXij = dFdXij * (2.0 * shearModulus * E + bulkModulus * E.trace() * I);
-                dPdXij += F * (2.0 * shearModulus * dEdXij + bulkModulus * dEdXij.trace() * I);
-                Matrix2x2 dHdXij = restShapeArea * dPdXij * dXInv.transpose();
-                for (int ii = 0;ii < 2;++ii)
-                    for (int jj = 0;jj < 2;++jj)
-                    ddEdxdx[ii + 1][i](jj, j) = dHdXij(jj, ii);
-                ddEdxdx[0][i](0, j) = -dHdXij(0, 1) - dHdXij(0, 0);
-                ddEdxdx[0][i](1, j) = -dHdXij(1, 1) - dHdXij(1, 0);
-            }
-        //Logger::consolePrint("%lf %lf\n%lf %lf\n", ddEdxdx[0][1](0, 0), ddEdxdx[0][1](0, 1), ddEdxdx[0][1](1, 0), ddEdxdx[1][1](1, 1));
-    }
-    else if (matModel == MaterialModel2D::MM_LINEAR_ISOTROPIC)
-    {
-        //dPdx(F; dFdx) = shearModulus * (dFdx + transpose(dFdx)) + bulkModulus * trace(dFdx) * I
-        Matrix2x2 dSdX[6], dFdX, dPdX, dHdX;
-        Matrix2x2 MI;
-        MI << 1.0, 0.0, 0.0, 1.0;
-        dSdX[0] << -1.0, -1.0, 0.0, 0.0;
-        dSdX[1] << 1.0, 0.0, 0.0, 0.0;
-        dSdX[2] << 0.0, 1.0, 0.0, 0.0;
-        dSdX[3] << 0.0, 0.0, -1.0, -1.0;
-        dSdX[4] << 0.0, 0.0, 1.0, 0.0;
-        dSdX[5] << 0.0, 0.0, 0.0, 1.0;
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                ddEdxdx[i][j].setZero();
-            }
-        }
-        for (int i = 0; i < 6; i++) {
-            dFdX = dSdX[i] * dXInv;
-            dPdX = shearModulus*(dFdX + dFdX.transpose()) + bulkModulus*(dFdX(0, 0) + dFdX(1, 1))*MI;
-            dHdX = restShapeArea * dPdX * dXInv.transpose();
-            ddEdxdx[i % 3][1](i / 3, 0) = dHdX(0, 0);
-            ddEdxdx[i % 3][1](i / 3, 1) = dHdX(1, 0);
-            ddEdxdx[i % 3][2](i / 3, 0) = dHdX(0, 1);
-            ddEdxdx[i % 3][2](i / 3, 1) = dHdX(1, 1);
-            ddEdxdx[i % 3][0](i / 3, 0) = -ddEdxdx[i % 3][2](i / 3, 0) - ddEdxdx[i % 3][1](i / 3, 0);
-            ddEdxdx[i % 3][0](i / 3, 1) = -ddEdxdx[i % 3][2](i / 3, 1) - ddEdxdx[i % 3][1](i / 3, 1);
-        }
-    }
-    else if (matModel == MaterialModel2D::MM_NEO_HOOKEAN)
-    {
-        /*
-        dPdx(F; dFdx) = shearModulus * dFdx +
-        (shearModulus - bulkModulus * log(det(F))) * FinvT * transpose(dFdx) * FinvT +
-        bulkModulus * trace(Finv * dFdx) * FinvT
-        Finv = inverse(F)
-        FinvT = transpose(Finv)
-        */
-        computeDeformationGradient(x, dVector(), F);
-        Finv = F.inverse();
-        FinvT = Finv.transpose();
-        Matrix2x2 dF, dP, tmpM, dH;
-        const double dDs[6][4] = { { -1,-1,0,0 },{ 0,0,-1,-1 },{ 1,0,0,0 },{ 0,0,1,0 },{ 0,1,0,0 },{ 0,0,0,1 } };
-        for (int i = 0; i < 6; ++i)
-        {
-            for (int x = 0; x < 4; ++x)
-                dF(x / 2, x % 2) = dDs[i][x];
-            dF = dF * dXInv;
-            dP = shearModulus * dF;
-            double J = F.determinant();
-            dP = dP + (shearModulus - bulkModulus * log(J)) * FinvT * dF.transpose() * FinvT;
-            tmpM = Finv * dF;
-            dP = dP + bulkModulus * (tmpM(0, 0) + tmpM(1, 1)) * FinvT;
-            dH = restShapeArea * dP * dXInv.transpose();
-            int row = i / 2, subrow = i % 2;
-            ddEdxdx[row][1](subrow, 0) = dH(0, 0); ddEdxdx[row][1](subrow, 1) = dH(1, 0);
-            ddEdxdx[row][2](subrow, 0) = dH(0, 1); ddEdxdx[row][2](subrow, 1) = dH(1, 1);
-            ddEdxdx[row][0](subrow, 0) = -(dH(0, 0) + dH(0, 1));
-            ddEdxdx[row][0](subrow, 1) = -(dH(1, 0) + dH(1, 1));
-        }
-    }
+	/*
+	dPdx(F; dFdx) = shearModulus * dFdx +
+	(shearModulus - bulkModulus * log(det(F))) * FinvT * transpose(dFdx) * FinvT +
+	bulkModulus * trace(Finv * dFdx) * FinvT
+	Finv = inverse(F)
+	FinvT = transpose(Finv)
+	*/
+	computeDeformationGradient(x, dVector(), F);
+	Finv = F.inverse();
+	FinvT = Finv.transpose();
+	Matrix2x2 dF, dP, tmpM, dH;
+	const double dDs[6][4] = { { -1,-1,0,0 },{ 0,0,-1,-1 },{ 1,0,0,0 },{ 0,0,1,0 },{ 0,1,0,0 },{ 0,0,0,1 } };
+	for (int i = 0; i < 6; ++i)
+	{
+		for (int x = 0; x < 4; ++x)
+			dF(x / 2, x % 2) = dDs[i][x];
+		dF = dF * dXInv;
+		dP = shearModulus * dF;
+		double J = F.determinant();
+		dP = dP + (shearModulus - bulkModulus * log(J)) * FinvT * dF.transpose() * FinvT;
+		tmpM = Finv * dF;
+		dP = dP + bulkModulus * (tmpM(0, 0) + tmpM(1, 1)) * FinvT;
+		dH = restShapeArea * dP * dXInv.transpose();
+		int row = i / 2, subrow = i % 2;
+		ddEdxdx[row][1](subrow, 0) = dH(0, 0); ddEdxdx[row][1](subrow, 1) = dH(1, 0);
+		ddEdxdx[row][2](subrow, 0) = dH(0, 1); ddEdxdx[row][2](subrow, 1) = dH(1, 1);
+		ddEdxdx[row][0](subrow, 0) = -(dH(0, 0) + dH(0, 1));
+		ddEdxdx[row][0](subrow, 1) = -(dH(1, 0) + dH(1, 1));
+	}
 }

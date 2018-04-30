@@ -209,7 +209,7 @@ dRowVector SoftIKSolver::calculate_dQdx(const dVector &alphac, const dVector &x)
 	dRowVector dQdx; dQdx.setZero(DN());
 
 	if (SPEC_FREESTYLE) {
-		dQdx += (x - mesh->x_prime)*Z().asDiagonal();
+		dQdx += (x - mesh->x_prime).transpose()*Z().asDiagonal();
 	}
 
 	if (SPEC_COM) {
