@@ -2,6 +2,7 @@
 #include <OptimizationLib/NewtonFunctionMinimizer.h>
 #include <FEMSimLib/CSTriangle3D.h>
 #include <FEMSimLib/FixedPointSpring3D.h>
+#include "BendingEdge.h"
 
 Paper3DMesh::Paper3DMesh(){
 }
@@ -11,7 +12,7 @@ Paper3DMesh::~Paper3DMesh(){
 
 void Paper3DMesh::generateTestSystem(char* fName, int num_nodes) {
 	FILE* fp = fopen(fName, "w");
-	fprintf(fp, "%d %d\n\n", num_nodes, num_nodes - 2);
+	fprintf(fp, "%d %d %d\n\n", num_nodes, num_nodes - 2, num_nodes - 3);
 
 	//generate nodes
 	for (int j = 0; j<num_nodes; j++)
@@ -23,6 +24,10 @@ void Paper3DMesh::generateTestSystem(char* fName, int num_nodes) {
 	for (int j = 2; j<num_nodes; j++)
 		fprintf(fp, "%li %li %li\n", j, j - 1, j - 2);
 
+	//generate bending edges
+	for (int j = 3; j < num_nodes; j++)
+		fprintf(fp, "%li %li %li %li\n", j-2, j - 1, j - 3, j);
+
 	fclose(fp);
 }
 
@@ -31,8 +36,8 @@ void Paper3DMesh::readMeshFromFile(const char* fName){
 	clear();
 	FILE* fp = fopen(fName, "r");
 
-	int nodeCount = 0, triangleCount = 0;
-	fscanf(fp, "%d %d", &nodeCount, &triangleCount);
+	int nodeCount = 0, triangleCount = 0, bendingEdgeCount;
+	fscanf(fp, "%d %d %d", &nodeCount, &triangleCount, &bendingEdgeCount);
 
 	x.resize(3 * nodeCount);
 	X.resize(3 * nodeCount);
@@ -60,6 +65,14 @@ void Paper3DMesh::readMeshFromFile(const char* fName){
 		fscanf(fp, "%d %d %d", &i1, &i2, &i3);
 
 		CSTriangle3D* newElem = new CSTriangle3D(this, nodes[i1], nodes[i2], nodes[i3]);
+		elements.push_back(newElem);
+	}
+
+	for (int i = 0; i<bendingEdgeCount; i++) {
+		int i1, i2, i3, i4;
+		fscanf(fp, "%d %d %d %d", &i1, &i2, &i3, & i4);
+
+		BendingEdge* newElem = new BendingEdge(this, nodes[i1], nodes[i2], nodes[i3], nodes[i4]);
 		elements.push_back(newElem);
 	}
 

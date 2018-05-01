@@ -21,7 +21,7 @@ Paper3DApp::Paper3DApp() {
 
 	bgColorR = bgColorG = bgColorB = 0.5;
 
-	int N = 11;
+	int N = 4;
 	
 	Paper3DMesh::generateTestSystem("../data/FEM/3d/testCSTriangleSystem.tri3d", N);
 	simMesh = new Paper3DMesh();
