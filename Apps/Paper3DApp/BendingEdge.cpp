@@ -1,6 +1,7 @@
 #include "BendingEdge.h"
 #include <GUILib/GLUtils.h>
 #include <FEMSimLib/SimulationMesh.h>
+#include <iostream>
 
 BendingEdge::BendingEdge(SimulationMesh* simMesh, Node* n1, Node* n2, Node* n3, Node* n4) : SimMeshElement(simMesh) {
 	this->n[0] = n1;
@@ -117,6 +118,7 @@ void BendingEdge::addEnergyHessianTo(const dVector& x, const dVector& X, std::ve
 	double K = k * 6 * restEdgeLength*restEdgeLength / restArea;
 	double zeta = K * d_angle;//actually = K*(phi-rest_phi)*(1+psi*psi)
 	double xi = K * d_angle;//actually = K*(1+psi*psi)*(2*(psi-rest_psi)*psi + (1+psi*psi))
+	xi = K;
 
 	//start copied code from gradient
 	Vector3d x0 = n[0]->getCoordinates(x);
@@ -157,12 +159,12 @@ void BendingEdge::addEnergyHessianTo(const dVector& x, const dVector& X, std::ve
 	grad_angle[3] = -n2 / h_02;
 
 	// vectors m
-	Vector3d m1 = e1.cross(n1);
+	Vector3d m1 = -e1.cross(n1);//-
 	Vector3d m2 = e2.cross(n2);
 	Vector3d m3 = e3.cross(n1);
-	Vector3d m4 = -e4.cross(n2);
+	Vector3d m4 = -e4.cross(n2);//-
 	Vector3d m01 = e0.cross(n1);
-	Vector3d m02 = -e0.cross(n2);
+	Vector3d m02 = -e0.cross(n2);//-
 
 	//Hessian of angle
 	Matrix3x3 H_angle[4][4];
@@ -179,8 +181,8 @@ void BendingEdge::addEnergyHessianTo(const dVector& x, const dVector& X, std::ve
 	Matrix3x3 B2 = n2 * m02_t / (l_e0*l_e0);
 	H_angle[0][0] = cos(angle_3) / (h_3*h_3) * (m3 * n1_t + n1 * m3_t) - B1
 		+ cos(angle_4) / (h_4*h_4) * (m4 * n2_t + n2 * m4_t) - B2;
-	H_angle[0][1] = cos(angle_3) / (h_3*h_3) * m3*n1_t + cos(angle_1) / (h_1*h_3)*n1*m3_t + B1
-		+ cos(angle_4) / (h_4*h_4)*m4*n2_t + cos(angle_2) / (h_2*h_4)*n2*m4_t + B2;
+	H_angle[0][1] = cos(angle_3) / (h_1*h_3) * m1*n1_t + cos(angle_1) / (h_1*h_3)*n1*m3_t + B1
+		+ cos(angle_4) / (h_2*h_4)*m2*n2_t + cos(angle_2) / (h_2*h_4)*n2*m4_t + B2;
 	H_angle[0][2] = cos(angle_3) / (h_3*h_01)*m01*n1_t - n1 * m3_t / (h_01*h_3);
 	H_angle[0][3] = cos(angle_4) / (h_4*h_02)*m02*n2_t - n2 * m4_t / (h_02*h_4);
 	H_angle[1][1] = cos(angle_1) / (h_1*h_1)*(m1*n1_t + n1 * m1_t) - B1
@@ -190,25 +192,56 @@ void BendingEdge::addEnergyHessianTo(const dVector& x, const dVector& X, std::ve
 	H_angle[2][2] = -(n1*m01_t + m01 * n1_t) / (h_01*h_01);
 	H_angle[2][3].setZero();
 	H_angle[3][3] = -(n2*m02_t + m02 * n2_t) / (h_02*h_02);
-	for (int i = 2; i < 4;++i)
+	for (int i = 1; i < 4;++i)
 		for (int j = i - 1;j >= 0;--j)
 			H_angle[i][j] = H_angle[j][i].transpose();
 	//BOY THIS IS REALLY EXPENSIVE
 
 	//H(E) =  zeta * H(angle) + xi * grad(angle).transpose * grad(angle)
+	// or K = k*6e/A	H = K*d_angle*H_angle + K *gradgrad
 	Eigen::RowVector3d grad_angle_t[4];
 	for (int i = 0;i < 4;++i) grad_angle_t[i] = grad_angle[i].transpose();
 	Matrix3x3 H[4][4];
 	for (int i = 0;i < 4;++i)
 		for (int j = 0;j < 4;++j)
 			H[i][j] = zeta * H_angle[i][j] + xi * grad_angle[i] * grad_angle_t[j];
+
 	//Finally, triplets
-	//TODO
 	for(int i=0;i<4;++i)
-		for(int j=0;j<=i;++j)
+		for(int j=0;j<4;++j)
 			for(int ii=0;ii<3;++ii)
-				for(int jj=0;jj<=ii;++jj)
-					hesEntries.push_back(MTriplet(n[i]->dataStartIndex+ii, n[j]->dataStartIndex + jj, H[i][j](ii,jj)));
+				for(int jj=0;jj<3;++jj)
+					if (n[i]->dataStartIndex + ii >= n[j]->dataStartIndex + jj)
+						hesEntries.push_back(MTriplet(n[i]->dataStartIndex+ii, n[j]->dataStartIndex + jj, H[i][j](ii,jj)));
+	//debugging
+	std::cout << "d_angle " << d_angle << "\n";
+	//std::cout << "Behold\nangles " << angle_1 << " " << angle_2 << " " << angle_3 << " " << angle_4 << "\n";
+	//std::cout << "heights " << h_1 << " " << h_2 << " " << h_3 << " " << h_4 << " " << h_01 << " " << h_02 << "\n";
+	//std::cout << "lengths " << l_e0 << " " << l_e1 << " " << l_e2 << " " << l_e3 << " " << l_e4 << "\n";
+	//std::cout << "m1 " << m1.transpose() << " with norm2 " << m1.squaredNorm() << "\n";
+	//std::cout << "m2 " << m2.transpose() << " with norm2 " << m2.squaredNorm() << "\n";
+	//std::cout << "m3 " << m3.transpose() << " with norm2 " << m3.squaredNorm() << "\n";
+	//std::cout << "m4 " << m4.transpose() << " with norm2 " << m4.squaredNorm() << "\n";
+	//std::cout << "m01 " << m01.transpose() << " with norm2 " << m01.squaredNorm() << "\n";
+	//std::cout << "m02 " << m02.transpose() << " with norm2 " << m02.squaredNorm() << "\n";
+	//std::cout << x0.transpose() << "\n";
+	//std::cout << "zeta, xi = " << zeta << ", " << xi << "\n";
+	//std::cout << "H_angle 0\n" << H_angle[0][0] << "\n";
+	//std::cout << "gradgrad 0\n" << grad_angle[0]*grad_angle_t[0] << "\n";
+	//std::cout << "H 0\n" << H[0][0] << "\n";
+	for (int i = 0;i < 4;++i)
+		//std::cout << "i " << i << " corresponds to global " << n[i]->dataStartIndex << "\n";
+//	    i 0 corresponds to global 3
+//		i 1 corresponds to global 6
+//		i 2 corresponds to global 0
+//		i 3 corresponds to global 9
+		//std::cout << "Calculated H " << i <<" is " << H[i][i](0, 0) << std::endl;//3,3 in the final H for 0,0
+		for (int j = 0;j < 4;++j) {
+//			std::cout << "block ij" << i << j << " is off by " << (H_angle[i][j] - H_angle[j][i].transpose()).squaredNorm() << "\n";
+//			std::cout << "H[" << i << "][" << j << "] is\n" << H[i][j] << std::endl;//it's symmetric all right
+//			std::cout << "should be the sum of\n" << zeta * H_angle[i][j] << std::endl;
+//			std::cout << "and\n" << xi * grad_angle[i] * grad_angle_t[j] << std::endl;
+		}
 }
 
 void BendingEdge::draw(const dVector& x) {
