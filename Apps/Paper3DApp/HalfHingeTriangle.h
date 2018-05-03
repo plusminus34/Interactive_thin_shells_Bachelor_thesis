@@ -4,10 +4,10 @@
 #include <MathLib/MathLib.h>
 #include <MathLib/Matrix.h>
 
-/*
-Element that defines a preferred angle between 2 triangles
+/*TODO
+Triangle where where each edge is one half of a BendingEdge
 */
-class BendingEdge : public SimMeshElement {
+class HalfHingeTriangle : public SimMeshElement {
 private:
 	//material parameters...
 	double k = 0.05;
@@ -32,7 +32,7 @@ private:
 	virtual void drawRestConfiguration(const dVector& X);
 
 public:
-	BendingEdge(SimulationMesh* simMesh, Node* n1, Node* n2, Node* n3, Node* n4);
-	~BendingEdge();
+	HalfHingeTriangle(SimulationMesh* simMesh, Node* n1, Node* n2, Node* n3, Node* n4);
+	~HalfHingeTriangle();
 
 };

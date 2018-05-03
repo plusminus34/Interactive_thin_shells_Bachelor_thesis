@@ -21,14 +21,18 @@ Paper3DApp::Paper3DApp() {
 
 	bgColorR = bgColorG = bgColorB = 0.5;
 
-	int N = 7;
+	int dim_x = 6;
+	int dim_y = 4;
 	
-	Paper3DMesh::generateTestSystem("../data/FEM/3d/testCSTriangleSystem.tri3d", N);
+	//Paper3DMesh::generateTestSystem("../data/FEM/3d/testCSTriangleSystem.tri3d", 4);
+	Paper3DMesh::generateRectangleSystem("../data/FEM/3d/testCSTriangleSystem.tri3d", dim_x, dim_y, 0.1*dim_x, 0.1*dim_y);
 	simMesh = new Paper3DMesh();
 	simMesh->readMeshFromFile("../data/FEM/3d/testCSTriangleSystem.tri3d");
-	simMesh->setPinnedNode(0, simMesh->nodes[0]->getUndeformedPosition());
-	//simMesh->setPinnedNode(2, simMesh->nodes[2]->getUndeformedPosition());
-	simMesh->setPinnedNode(N-1, simMesh->nodes[N-1]->getUndeformedPosition());
+
+	//pin left half of top node row
+	for (int i=0;i<dim_x/2;++i)
+		simMesh->setPinnedNode(i*dim_y+dim_y-1, simMesh->nodes[i*dim_y+dim_y-1]->getUndeformedPosition());
+
 	simMesh->addGravityForces(V3D(0, -9.8, 0));
 	/*
 	Paper2DMesh::generateSinMassSpringSystem("../data/FEM/3d/sinMassSpringSystem.ms",N);

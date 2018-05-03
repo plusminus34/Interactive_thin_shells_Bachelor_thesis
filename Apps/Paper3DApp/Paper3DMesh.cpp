@@ -31,6 +31,57 @@ void Paper3DMesh::generateTestSystem(char* fName, int num_nodes) {
 	fclose(fp);
 }
 
+void Paper3DMesh::generateRectangleSystem(char* fName, int nodes_x, int nodes_y, double length_x, double length_y) {
+	if (nodes_x < 2 || nodes_y < 2) return;//at least 4 nodes
+	int num_nodes = nodes_x * nodes_y;
+	int num_triangles = 2 * (nodes_x - 1)*(nodes_y - 1);
+	int num_edges = num_triangles / 2 + (nodes_x - 2) * (nodes_y-1) + (nodes_x-1) * (nodes_y - 2);//that right? nooo
+
+	FILE* fp = fopen(fName, "w");
+	fprintf(fp, "%d %d %d\n\n", num_nodes, num_triangles, num_edges);
+
+	double h_x = length_x / (nodes_x - 1);
+	double h_y = length_y / (nodes_y - 1);
+
+	// node positions
+	for (int i = 0; i < nodes_x; ++i)
+		for (int j = 0; j < nodes_y;++j)
+			fprintf(fp, "%lf %lf %lf\n", i*h_x, j*h_y, 0.0);
+
+	fprintf(fp, "\n\n");
+
+	// triangles
+	for (int i = 1; i < nodes_x; ++i)
+		for (int j = 1; j < nodes_y;++j) {
+			int n = i * nodes_y + j;//index of node (i,j)
+			fprintf(fp, "%li %li %li\n", n, n - 1, n - nodes_y - 1);
+			fprintf(fp, "%li %li %li\n", n, n - nodes_y -1, n - nodes_y);
+		}
+
+	fprintf(fp, "\n\n");
+
+	//connect triangle pairs
+	for (int i = 1; i < nodes_x; ++i)
+		for (int j = 1; j < nodes_y;++j) {
+			int n = i * nodes_y + j;//index of node (i,j)
+			fprintf(fp, "%li %li %li %li\n", n, n - nodes_y - 1, n - nodes_y, n - 1);
+		}
+	//connect rows
+	for (int i = 1;i<nodes_x;++i)
+		for (int j = 2;j < nodes_y;++j) {
+			int n = i * nodes_y + j;
+			fprintf(fp, "%li %li %li %li\n", n - nodes_y - 1, n - 1, n - nodes_y - 2, n);
+		}
+	//connect columns
+	for(int i=2; i<nodes_x;++i)
+		for (int j = 1; j < nodes_y;++j) {
+			int n = i * nodes_y + j;
+			fprintf(fp, "%li %li %li %li\n", n - nodes_y, n - nodes_y - 1, n - 2 * nodes_y - 1, n);
+		}
+
+	fclose(fp);
+}
+
 //
 void Paper3DMesh::readMeshFromFile(const char* fName){
 	clear();
