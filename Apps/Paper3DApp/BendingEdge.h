@@ -10,8 +10,8 @@ Spring that defines a preferred angle between 3 nodes
 class BendingEdge : public SimMeshElement {
 private:
 	//material parameters...
-	double k = 500;
-	//keep track of the rest length of the spring
+	double k = 0.05;
+	//keep track of the rest shape
 	double restAngle = 0;
 	double restEdgeLength = 1;
 	double restArea = 1;

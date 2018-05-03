@@ -16,17 +16,18 @@ Paper3DApp::Paper3DApp() {
 
 	delete camera;
 	GLTrackingCamera *cam = new GLTrackingCamera();
-	cam->ignoreRotations = true;
+	cam->ignoreRotations = false;
 	camera = cam;
 
 	bgColorR = bgColorG = bgColorB = 0.5;
 
-	int N = 4;
+	int N = 7;
 	
 	Paper3DMesh::generateTestSystem("../data/FEM/3d/testCSTriangleSystem.tri3d", N);
 	simMesh = new Paper3DMesh();
 	simMesh->readMeshFromFile("../data/FEM/3d/testCSTriangleSystem.tri3d");
 	simMesh->setPinnedNode(0, simMesh->nodes[0]->getUndeformedPosition());
+	//simMesh->setPinnedNode(2, simMesh->nodes[2]->getUndeformedPosition());
 	simMesh->setPinnedNode(N-1, simMesh->nodes[N-1]->getUndeformedPosition());
 	simMesh->addGravityForces(V3D(0, -9.8, 0));
 	/*

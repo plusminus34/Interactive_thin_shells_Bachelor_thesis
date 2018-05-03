@@ -16,7 +16,7 @@ void Paper3DMesh::generateTestSystem(char* fName, int num_nodes) {
 
 	//generate nodes
 	for (int j = 0; j<num_nodes; j++)
-		fprintf(fp, "%lf %lf %lf\n", j*0.2, cos(j*PI), -0.1*j*j);
+		fprintf(fp, "%lf %lf %lf\n", j*0.2, 0.4*cos(j*PI), -0.01*j*j);
 
 	fprintf(fp, "\n\n");
 
