@@ -14,7 +14,7 @@ enum MaterialModel2D {MM_LINEAR_ISOTROPIC=0, MM_STVK, MM_NEO_HOOKEAN};
 	This class implements Constant Strain Triangles elements in 2D
 */
 class CSTriangle3D : public SimMeshElement {
-	//friend class none;//Poor CSTriangle3D has no friends
+	friend class Paper3DApp;
 private:
 	//material parameters...
 	double shearModulus = 50, bulkModulus = 50;

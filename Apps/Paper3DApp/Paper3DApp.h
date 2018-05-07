@@ -22,6 +22,10 @@ private:
 
 	bool checkDerivatives = true;
 
+	double shearModulus;
+	double bulkModulus;
+	double bend_k;
+
 public:
 	// constructor
 	Paper3DApp();
@@ -55,6 +59,8 @@ public:
 	virtual void saveFile(const char* fName);
 	virtual void loadFile(const char* fName);
 
+	//Update the mesh with parameters from menu
+	virtual void updateParams();
 };
 
 
