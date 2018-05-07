@@ -26,7 +26,7 @@ TopOptApp::TopOptApp() {
 	setWindowTitle("Test FEM Sim Application...");
 
 	int nRows = 60;
-	int nCols = 20;
+	int nCols = 10;
 	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, nRows, nCols);
 
 	delete camera;
@@ -48,7 +48,7 @@ TopOptApp::TopOptApp() {
 	externalLoads.resize(simMesh->nodes.size());
 	resize(densityParams, simMesh->elements.size()); densityParams.setOnes();
 
-	externalLoads[nCols * (nRows -1)] = V3D(0,-0.05,0);
+//	externalLoads[nCols * (nRows -1)] = V3D(0,-0.05,0);
 
 	showGroundPlane = false;
 
