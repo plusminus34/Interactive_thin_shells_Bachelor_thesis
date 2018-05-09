@@ -1,5 +1,8 @@
 #pragma once
-#include <FEMSimLib/BilateralSpring3D.h>
+#include <FEMSimLib/SimMeshElement.h>
+#include <FEMSimLib/Node.h>
+#include <MathLib/MathLib.h>
+#include <MathLib/Matrix.h>
 
 /*
 	Spring that pins two nodes together
@@ -7,7 +10,7 @@
 class ZeroLengthSpring3D : public SimMeshElement {
 protected:
 	//material parameters...
-	double k = 500;
+	double k = 0.5;
 
 	//the collection of nodes that define the edge element
 	Node* n[2];

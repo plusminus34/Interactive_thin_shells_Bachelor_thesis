@@ -23,14 +23,14 @@ Paper3DApp::Paper3DApp() {
 
 	bgColorR = bgColorG = bgColorB = 0.5;
 
-	shearModulus = 80;
+	shearModulus = 750;
 	bulkModulus = 0.5;
-	bend_k = 1;
+	bend_k = 0.0008;
 
-#define NRECT
+#define RECT
 #ifdef RECT
-	int dim_x = 9;
-	int dim_y = 6;
+	int dim_x = 11;
+	int dim_y = 7;
 	Paper3DMesh::generateRectangleSystem("../data/FEM/3d/testCSTriangleSystem.tri3d", dim_x, dim_y, 0.1*dim_x, 0.1*dim_y);
 #else
 	int N = 13;
@@ -42,7 +42,7 @@ Paper3DApp::Paper3DApp() {
 
 #ifdef RECT
 	//pin left half of top node row
-	for (int i=0;i<dim_y;++i)
+	for (int i=0;i<2*dim_y;++i)
 		simMesh->setPinnedNode(i, simMesh->nodes[i]->getUndeformedPosition());
 	//simMesh->elements.push_back(new ZeroLengthSpring3D(simMesh, simMesh->nodes[0], simMesh->nodes[dim_y * (dim_x-1)]));
 #else
@@ -51,6 +51,8 @@ Paper3DApp::Paper3DApp() {
 	simMesh->setPinnedNode(N- 1, simMesh->nodes[N - 1]->getUndeformedPosition());
 	//simMesh->elements.push_back(new ZeroLengthSpring3D(simMesh, simMesh->nodes[3], simMesh->nodes[5]));
 #endif
+
+	//simMesh->addGravityForces(V3D(0.0, 0.0, 0.0));
 
 	mainMenu->addGroup("FEM Sim options");
 	mainMenu->addVariable("Shear modulus", shearModulus);
@@ -66,7 +68,7 @@ Paper3DApp::~Paper3DApp(void){
 
 //triggered when mouse moves
 bool Paper3DApp::onMouseMoveEvent(double xPos, double yPos) {
-	lastClickedRay = getRayFromScreenCoords(xPos, yPos);
+	lastClickedRay = getRayFromScreenCoords(xPos, yPos);//TODO: Drag in 3D and without altering camera
 	if (GlobalMouseState::dragging) {
 		if (selectedNodeID >= 0) {
 			P3D p;
@@ -174,7 +176,6 @@ bool Paper3DApp::processCommandLine(const std::string& cmdLine) {
 
 void Paper3DApp::updateParams() {
 	for (uint i = 0; i < simMesh->elements.size(); i++) {
-		simMesh->elements[i]->getMass();
 		if (BendingEdge* e = dynamic_cast<BendingEdge*>(simMesh->elements[i])) {
 			e->k = bend_k;
 		}

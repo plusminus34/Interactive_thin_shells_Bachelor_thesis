@@ -32,10 +32,10 @@ void Paper3DMesh::generateTestSystem(char* fName, int num_nodes) {
 }
 
 void Paper3DMesh::generateRectangleSystem(char* fName, int nodes_x, int nodes_y, double length_x, double length_y) {
-	if (nodes_x < 2 || nodes_y < 2) return;//at least 4 nodes
+	if (nodes_x < 2 || nodes_y < 2) return;//at least one rectangle
 	int num_nodes = nodes_x * nodes_y;
 	int num_triangles = 2 * (nodes_x - 1)*(nodes_y - 1);
-	int num_edges = num_triangles / 2 + (nodes_x - 2) * (nodes_y-1) + (nodes_x-1) * (nodes_y - 2);//that right? nooo
+	int num_edges = num_triangles / 2 + (nodes_x - 2) * (nodes_y-1) + (nodes_x-1) * (nodes_y - 2);
 
 	FILE* fp = fopen(fName, "w");
 	fprintf(fp, "%d %d %d\n\n", num_nodes, num_triangles, num_edges);
