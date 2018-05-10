@@ -70,12 +70,15 @@ Paper3DApp::~Paper3DApp(void){
 
 //triggered when mouse moves
 bool Paper3DApp::onMouseMoveEvent(double xPos, double yPos) {
-	lastClickedRay = getRayFromScreenCoords(xPos, yPos);//TODO: Drag in 3D and without altering camera
+	lastClickedRay = getRayFromScreenCoords(xPos, yPos);
 	if (GlobalMouseState::dragging) {
 		if (selectedNodeID >= 0) {
 			P3D p;
-			lastClickedRay.getDistanceToPlane(Plane(P3D(), V3D(0, 0, -1)), &p);
+			P3D selectedNodePos = simMesh->nodes[selectedNodeID]->getWorldPosition();
+			V3D planeNormal = lastClickedRay.direction;
+			lastClickedRay.getDistanceToPlane(Plane(selectedNodePos, planeNormal), &p);
 			simMesh->setPinnedNode(selectedNodeID, p);
+			return true;//For some reason, this stops the camera from being moved while dragging
 		}
 	}
 	else {
@@ -87,16 +90,6 @@ bool Paper3DApp::onMouseMoveEvent(double xPos, double yPos) {
 
 //triggered when mouse buttons are pressed
 bool Paper3DApp::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
-	lastClickedRay = getRayFromScreenCoords(xPos, yPos);
-
-	if (button == GLFW_MOUSE_BUTTON_LEFT) {
-		if (action == GLFW_PRESS) {
-			if (selectedNodeID < 0) {
-				lastClickedRay.getDistanceToPlane(Plane(P3D(), V3D(0, 0, -1)), &startDragPoint);
-				endDragPoint = startDragPoint;
-			}
-		}
-	}
 	if (GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
 	return false;
 }
