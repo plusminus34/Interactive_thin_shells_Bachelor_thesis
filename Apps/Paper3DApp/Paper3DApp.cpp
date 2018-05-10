@@ -26,6 +26,7 @@ Paper3DApp::Paper3DApp() {
 	shearModulus = 750;
 	bulkModulus = 0.5;
 	bend_k = 0.0008;
+	pin_k = 0;
 
 #define RECT
 #ifdef RECT
@@ -44,7 +45,7 @@ Paper3DApp::Paper3DApp() {
 	//pin left half of top node row
 	for (int i=0;i<2*dim_y;++i)
 		simMesh->setPinnedNode(i, simMesh->nodes[i]->getUndeformedPosition());
-	//simMesh->elements.push_back(new ZeroLengthSpring3D(simMesh, simMesh->nodes[0], simMesh->nodes[dim_y * (dim_x-1)]));
+	//simMesh->elements.push_back(new ZeroLengthSpring3D(simMesh, simMesh->nodes[5*dim_y], simMesh->nodes[dim_y * dim_x-1]));
 #else
 	//Pin the two ends
 	simMesh->setPinnedNode(0, simMesh->nodes[0]->getUndeformedPosition());
@@ -58,6 +59,7 @@ Paper3DApp::Paper3DApp() {
 	mainMenu->addVariable("Shear modulus", shearModulus);
 	mainMenu->addVariable("Bulk modulus", bulkModulus);
 	mainMenu->addVariable("Bending stiffness", bend_k);
+	mainMenu->addVariable("Pin stiffness", pin_k);
 
 	menuScreen->performLayout();
 
@@ -144,6 +146,7 @@ void Paper3DApp::drawScene() {
 	glDisable(GL_LIGHTING);
 	glColor3d(1, 1, 1);
 
+	//simMesh->drawRestConfiguration();
 	simMesh->drawSimulationMesh();
 
 	if (GlobalMouseState::dragging && GlobalMouseState::lButtonPressed && selectedNodeID < 0) {
@@ -182,6 +185,9 @@ void Paper3DApp::updateParams() {
 		else if (CSTriangle3D* e = dynamic_cast<CSTriangle3D*>(simMesh->elements[i])) {
 			e->shearModulus = shearModulus;
 			e->bulkModulus = bulkModulus;
+		}
+		else if (ZeroLengthSpring3D* e = dynamic_cast<ZeroLengthSpring3D*>(simMesh->elements[i])) {
+			e->k = pin_k;
 		}
 	}
 }

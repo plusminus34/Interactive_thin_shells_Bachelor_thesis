@@ -25,6 +25,7 @@ private:
 	double shearModulus;
 	double bulkModulus;
 	double bend_k;
+	double pin_k;
 
 public:
 	// constructor

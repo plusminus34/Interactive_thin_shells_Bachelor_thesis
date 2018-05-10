@@ -8,6 +8,7 @@
 	Spring that pins two nodes together
 */
 class ZeroLengthSpring3D : public SimMeshElement {
+	friend class Paper3DApp;
 protected:
 	//material parameters...
 	double k = 0.5;
