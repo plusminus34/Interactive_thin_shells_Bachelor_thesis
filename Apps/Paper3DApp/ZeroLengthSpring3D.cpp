@@ -37,7 +37,7 @@ void ZeroLengthSpring3D::addEnergyGradientTo(const dVector& x, const dVector& X,
 }
 
 void ZeroLengthSpring3D::addEnergyHessianTo(const dVector& x, const dVector& X, std::vector<MTriplet>& hesEntries) {
-	//Hessian blocks are constant and were prepared during initialization
+	computeHessianComponents();
 	for (int i = 0; i<2; i++)
 		for (int j = 0; j < 2; j++)
 			addSparseMatrixDenseBlockToTriplet(hesEntries, n[i]->dataStartIndex, n[j]->dataStartIndex, ddEdxdx[i][j], true);
@@ -56,11 +56,9 @@ void ZeroLengthSpring3D::computeGradientComponents(const dVector& x, const dVect
 }
 
 void ZeroLengthSpring3D::computeHessianComponents() {
-	V3D kkk(k, k, k);
 	for(int i=0;i<2;++i)
 		for (int j = 0; j < 2; ++j) {
-			ddEdxdx[i][j].setIdentity();
-			ddEdxdx[i][j] *= k;
-			if (i != j) ddEdxdx[i][j] *= -1;
+			ddEdxdx[i][j]= k*Matrix3x3::Identity();
+			if (i != j) { ddEdxdx[i][j] *= -1; }
 		}
 }
