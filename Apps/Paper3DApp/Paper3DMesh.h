@@ -4,7 +4,12 @@
 
 class Paper3DMesh : public SimulationMesh {
 private:
-
+	// M by 3 matrix to store node indices of each triangle
+	Eigen::MatrixXi triangles;
+	// N by 2 matrix to store edges between two triangles
+	Eigen::MatrixXi edges;
+	//generate elements after defining triangles
+	void init();
 public:
 	Paper3DMesh();
     ~Paper3DMesh();
