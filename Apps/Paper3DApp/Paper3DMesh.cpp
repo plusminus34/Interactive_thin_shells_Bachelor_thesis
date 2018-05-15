@@ -43,7 +43,6 @@ void Paper3DMesh::init() {
 
 	//Generate triangle elements
 	for (int i = 0; i < triangles.rows(); ++i) {
-		printf("triangle %i %i %i", triangles(i, 0), triangles(i, 1),triangles(i, 2));
 		CSTriangle3D* newElem = new CSTriangle3D(this, nodes[triangles(i,0)], nodes[triangles(i, 1)], nodes[triangles(i, 2)]);
 		elements.push_back(newElem);
 	}

@@ -7,8 +7,10 @@
 #include <FEMSimLib/CSTriangle3D.h>
 //#include <OptimizationLib/ConstrainedObjectiveFunction.h>
 
-/**
- * Test App
+enum MouseMode { mouse_none, mouse_drag, mouse_select, mouse_cut, mouse_pin };
+
+/*
+  Test App
  */
 class Paper3DApp : public GLApplication {
 private:
@@ -20,12 +22,13 @@ private:
 	P3D startDragPoint, endDragPoint;
 	bool dragging = false;
 
-	bool checkDerivatives = true;
+	bool checkDerivatives = false;
 
 	double shearModulus;
 	double bulkModulus;
 	double bend_k;
 	double pin_k;
+	MouseMode mouse_mode;
 
 public:
 	// constructor

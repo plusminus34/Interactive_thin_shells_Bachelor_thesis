@@ -12,6 +12,7 @@
 #include "Paper3DMesh.h"
 #include "BendingEdge.h"
 #include "ZeroLengthSpring3D.h"
+#include "BarycentricZeroLengthSpring.h"
 
 Paper3DApp::Paper3DApp() {
 	setWindowTitle("Test Paper3D Application...");
@@ -26,7 +27,8 @@ Paper3DApp::Paper3DApp() {
 	shearModulus = 750;
 	bulkModulus = 0.5;
 	bend_k = 0.0008;
-	pin_k = 0;
+	pin_k = 0;//50 is a reasonable value, ... at least for rectangle with dimensions 11 x 7
+	mouse_mode = mouse_drag;
 
 #define RECT
 #ifdef RECT
@@ -42,24 +44,36 @@ Paper3DApp::Paper3DApp() {
 	simMesh->readMeshFromFile("../data/FEM/3d/testCSTriangleSystem.tri3d");
 
 #ifdef RECT
-	//pin left half of top node row
+	//Fix left edge of the rectangle
 	for (int i=0;i<2*dim_y;++i)
 		simMesh->setPinnedNode(i, simMesh->nodes[i]->getUndeformedPosition());
+	//Pin the top right corner to a spot on the bottom edge
 	//simMesh->elements.push_back(new ZeroLengthSpring3D(simMesh, simMesh->nodes[5*dim_y], simMesh->nodes[dim_y * dim_x-1]));
+	BarycentricZeroLengthSpring* zrl = new BarycentricZeroLengthSpring(simMesh,
+		simMesh->nodes[2*dim_y],
+		simMesh->nodes[3 * dim_y+1],
+		simMesh->nodes[3 * dim_y],
+		simMesh->nodes[dim_y * dim_x - 1],
+		simMesh->nodes[dim_y * (dim_x-1) - 2],
+		simMesh->nodes[dim_y * (dim_x-1) - 1]
+	);
+	simMesh->elements.push_back(zrl);
 #else
-	//Pin the two ends
+	//Fix the two ends
 	simMesh->setPinnedNode(0, simMesh->nodes[0]->getUndeformedPosition());
 	simMesh->setPinnedNode(N- 1, simMesh->nodes[N - 1]->getUndeformedPosition());
-	//simMesh->elements.push_back(new ZeroLengthSpring3D(simMesh, simMesh->nodes[3], simMesh->nodes[5]));
 #endif
 
 	//simMesh->addGravityForces(V3D(0.0, 0.0, 0.0));
+
+	mainMenu->addVariable("Check derivatives", checkDerivatives);
 
 	mainMenu->addGroup("FEM Sim options");
 	mainMenu->addVariable("Shear modulus", shearModulus);
 	mainMenu->addVariable("Bulk modulus", bulkModulus);
 	mainMenu->addVariable("Bending stiffness", bend_k);
 	mainMenu->addVariable("Pin stiffness", pin_k);
+	//mainMenu->addVariable("Mouse Mode", mouse_mode, true)->setItems({ mouse_drag, mouse_none, mouse_pin });//not yet working
 
 	menuScreen->performLayout();
 
@@ -128,7 +142,6 @@ void Paper3DApp::saveFile(const char* fName) {
 void Paper3DApp::process() {
 	//do the work here...
 	updateParams();
-	simMesh->checkDerivatives = true;
 	simMesh->solve_statics();
 	//simMesh->solve_dynamics(0.25);
 }
@@ -171,6 +184,7 @@ bool Paper3DApp::processCommandLine(const std::string& cmdLine) {
 }
 
 void Paper3DApp::updateParams() {
+	simMesh->checkDerivatives = checkDerivatives;
 	for (uint i = 0; i < simMesh->elements.size(); i++) {
 		if (BendingEdge* e = dynamic_cast<BendingEdge*>(simMesh->elements[i])) {
 			e->k = bend_k;
@@ -180,6 +194,9 @@ void Paper3DApp::updateParams() {
 			e->bulkModulus = bulkModulus;
 		}
 		else if (ZeroLengthSpring3D* e = dynamic_cast<ZeroLengthSpring3D*>(simMesh->elements[i])) {
+			e->k = pin_k;
+		}
+		else if (BarycentricZeroLengthSpring* e = dynamic_cast<BarycentricZeroLengthSpring*>(simMesh->elements[i])) {
 			e->k = pin_k;
 		}
 	}
