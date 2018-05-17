@@ -7,8 +7,8 @@
 
 #include <GUILib/GLUtils.h>
 #include <GUILib/GLTrackingCamera.h>
-#include <OptimizationLib\SQPFunctionMinimizer.h>
-#include <OptimizationLib\GradientDescentFunctionMinimizer.h>
+#include <OptimizationLib/SQPFunctionMinimizer.h>
+#include <OptimizationLib/GradientDescentFunctionMinimizer.h>
 
 //sag-free simulations as an application of shape optimization
 //adjoint method for non-linear top-opt

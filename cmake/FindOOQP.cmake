@@ -89,6 +89,9 @@ else()
 endif()
 
 set(OOQP_LIBRARIES ${BLAS_LIBRARIES} ${F2CLIBS_LIBRARIES} ${CLAPACK_LIBRARIES})
+if(WIN32)
+  set(OOQP_LIBRARIES_DEBUG ${OOQP_LIBRARIES})
+endif(WIN32)
 
 # find_package(BLAS REQUIRED)
 ################################
@@ -123,6 +126,12 @@ set(OOQP_LIBS_LIST
   ooqpgensparse ooqpsparse ooqpgondzio ooqpbase ma27
 )
 
+if(APPLE)
+set(OOQP_LIBS_LIST
+  ${OOQP_LIBS_LIST} gfortran quadmath gcc
+)
+endif(APPLE)
+
 set(OOQP_FOUND_LIBS TRUE)
 foreach(LIB ${OOQP_LIBS_LIST})
   
@@ -142,13 +151,35 @@ foreach(LIB ${OOQP_LIBS_LIST})
     message(FATAL_ERROR "Could not find " ${LIB})
     set(OOQP_FOUND_LIBS FALSE)
   endif()
+
+  if(WIN32)
+    find_library(OOQP_LIB_${LIB}_DEBUG NAMES ${LIB} HINTS ${PROJECT_SOURCE_DIR}/../../libs/thirdPartyCode/OOQP/lib/Debug)
+    if(OOQP_LIB_${LIB}_DEBUG)
+      set(OOQP_LIBRARIES_DEBUG ${OOQP_LIBRARIES_DEBUG} ${OOQP_LIB_${LIB}_DEBUG})
+    else()
+      message(FATAL_ERROR "Could not find Debug version of " ${LIB})
+      set(OOQP_FOUND_LIBS FALSE)
+    endif()
+  endif(WIN32)
+
 endforeach()
 
 # TODO: this is not very clean, use find package
-if (UNIX)
+if (UNIX AND NOT APPLE)
   set(OOQP_LIBRARIES ${OOQP_LIBRARIES} gfortran blas)
-endif (UNIX)
+endif (UNIX AND NOT APPLE)
 
+# also find debug libraries
+if(WIN32)
+  set(OOQP_LIBRARIES_FOR_WIN "")
+  foreach(lib ${OOQP_LIBRARIES_DEBUG})
+    list(APPEND OOQP_LIBRARIES_FOR_WIN debug ${lib})
+  endforeach(lib)
+  foreach(lib ${OOQP_LIBRARIES})
+    list(APPEND OOQP_LIBRARIES_FOR_WIN optimized ${lib})
+  endforeach(lib)
+  set(OOQP_LIBRARIES ${OOQP_LIBRARIES_FOR_WIN})
+endif(WIN32)
 
 # print OOQP_LIBRARIES
 if(OOQP_FOUND_LIBS)
