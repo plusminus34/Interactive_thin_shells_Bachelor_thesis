@@ -9,6 +9,7 @@
 */
 class BarycentricZeroLengthSpring : public SimMeshElement {
 	friend class Paper3DApp;
+	friend class Pin;
 protected:
 	//material parameters...
 	double k = 0.5;
