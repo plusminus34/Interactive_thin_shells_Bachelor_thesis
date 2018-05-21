@@ -7,7 +7,7 @@ SimulationWindow::SimulationWindow(int x, int y, int w, int h, Paper3DApp *glApp
 
 //	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutRightAxis = 0.75;
 //	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutUpAxis = 0.95;
-	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -4.5;
+	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -4.0;
 }
 
 SimulationWindow::~SimulationWindow(){
@@ -34,11 +34,12 @@ bool SimulationWindow::onMouseMoveEvent(double xPos, double yPos) {
 }
 
 void SimulationWindow::drawScene() {
-	pushViewportTransformation();
+	preDraw();
 
 	paperApp->simMesh->drawSimulationMesh();
+	drawBorders();
 
-	popViewportTransformation();
+	postDraw();
 }
 
 void SimulationWindow::drawAuxiliarySceneInfo() {
