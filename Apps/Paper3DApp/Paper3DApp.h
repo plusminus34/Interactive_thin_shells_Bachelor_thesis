@@ -4,8 +4,9 @@
 #include <string>
 #include <map>
 
-#include <FEMSimLib/CSTriangle3D.h>
-//#include <OptimizationLib/ConstrainedObjectiveFunction.h>
+#include <FEMSimLib/SimulationMesh.h>
+#include "ShapeWindow.h"
+#include "SimulationWindow.h"
 
 enum MouseMode { mouse_none, mouse_drag, mouse_select, mouse_cut, mouse_pin };
 
@@ -13,7 +14,12 @@ enum MouseMode { mouse_none, mouse_drag, mouse_select, mouse_cut, mouse_pin };
   Test App
  */
 class Paper3DApp : public GLApplication {
+	friend class SimulationWindow;
+	friend class ShapeWindow;
 private:
+	ShapeWindow* shapeWindow = NULL;
+	SimulationWindow* simWindow = NULL;
+
 	SimulationMesh* simMesh;
 
 	Ray lastClickedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
@@ -30,6 +36,8 @@ private:
 	double pin_k;
 	MouseMode mouse_mode;
 
+	P3D getNodePos(int i);
+
 public:
 	// constructor
 	Paper3DApp();
@@ -43,6 +51,8 @@ public:
 	virtual void drawAuxiliarySceneInfo();
 	// Restart the application.
 	virtual void restart();
+
+	void setupWindows();
 
 	//input callbacks...
 

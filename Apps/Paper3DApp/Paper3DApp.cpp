@@ -10,17 +10,23 @@
 //#include <OptimizationLib\SQPFunctionMinimizer.h>
 #include <vector>
 #include "Paper3DMesh.h"
+#include <FEMSimLib/CSTriangle3D.h>
 #include "BendingEdge.h"
 #include "ZeroLengthSpring3D.h"
 #include "BarycentricZeroLengthSpring.h"
 
 Paper3DApp::Paper3DApp() {
 	setWindowTitle("Test Paper3D Application...");
-
+	/*
 	delete camera;
 	GLTrackingCamera *cam = new GLTrackingCamera();
 	cam->ignoreRotations = false;
 	camera = cam;
+	*/
+	showGroundPlane = false;
+
+	simWindow = new SimulationWindow(0, 0, 100, 100, this);
+	shapeWindow = new ShapeWindow(0, 0, 100, 100, this);
 
 	bgColorR = bgColorG = bgColorB = 0.5;
 
@@ -30,39 +36,18 @@ Paper3DApp::Paper3DApp() {
 	pin_k = 0;//50 is a reasonable value, ... at least for rectangle with dimensions 11 x 7
 	mouse_mode = mouse_drag;
 
-#define RECT
-#ifdef RECT
 	int dim_x = 11;
 	int dim_y = 7;
 	Paper3DMesh::generateRectangleSystem("../data/FEM/3d/testCSTriangleSystem.tri3d", dim_x, dim_y, 0.1*dim_x, 0.1*dim_y);
-#else
-	int N = 13;
-	Paper3DMesh::generateTestSystem("../data/FEM/3d/testCSTriangleSystem.tri3d", N);
-#endif
 
 	simMesh = new Paper3DMesh();
 	simMesh->readMeshFromFile("../data/FEM/3d/testCSTriangleSystem.tri3d");
 
-#ifdef RECT
 	//Fix left edge of the rectangle
 	for (int i=0;i<2*dim_y;++i)
 		simMesh->setPinnedNode(i, simMesh->nodes[i]->getUndeformedPosition());
 	//Pin the top right corner to a spot on the bottom edge
 	//simMesh->elements.push_back(new ZeroLengthSpring3D(simMesh, simMesh->nodes[5*dim_y], simMesh->nodes[dim_y * dim_x-1]));
-	BarycentricZeroLengthSpring* zrl = new BarycentricZeroLengthSpring(simMesh,
-		simMesh->nodes[2*dim_y],
-		simMesh->nodes[3 * dim_y+1],
-		simMesh->nodes[3 * dim_y],
-		simMesh->nodes[dim_y * dim_x - 1],
-		simMesh->nodes[dim_y * (dim_x-1) - 2],
-		simMesh->nodes[dim_y * (dim_x-1) - 1]
-	);
-	simMesh->elements.push_back(zrl);
-#else
-	//Fix the two ends
-	simMesh->setPinnedNode(0, simMesh->nodes[0]->getUndeformedPosition());
-	simMesh->setPinnedNode(N- 1, simMesh->nodes[N - 1]->getUndeformedPosition());
-#endif
 
 	//simMesh->addGravityForces(V3D(0.0, 0.0, 0.0));
 
@@ -76,30 +61,42 @@ Paper3DApp::Paper3DApp() {
 	//mainMenu->addVariable("Mouse Mode", mouse_mode, true)->setItems({ mouse_drag, mouse_none, mouse_pin });//not yet working
 
 	menuScreen->performLayout();
-
+	setupWindows();
+	followCameraTarget = false;
 }
 
 Paper3DApp::~Paper3DApp(void){
 }
 
+void Paper3DApp::setupWindows() {
+	int w, h;
+
+	//int offset = (int)(mainMenu->window()->width() * menuScreen->pixelRatio());
+
+	//w = (GLApplication::getMainWindowWidth()) - offset;
+	w = GLApplication::getMainWindowWidth();
+	h = GLApplication::getMainWindowHeight();
+
+	shapeWindow->setViewportParameters(0, 0, w / 2, h);
+	simWindow->setViewportParameters(w / 2, 0, w / 2, h);
+	consoleWindow->setViewportParameters(0, 0, w, 50);
+}
+
+P3D Paper3DApp::getNodePos(int i) {
+	return simMesh->nodes[i]->getWorldPosition();
+}
+
 //triggered when mouse moves
 bool Paper3DApp::onMouseMoveEvent(double xPos, double yPos) {
-	lastClickedRay = getRayFromScreenCoords(xPos, yPos);
-	if (GlobalMouseState::dragging) {
-		if (selectedNodeID >= 0) {
-			P3D p;
-			P3D selectedNodePos = simMesh->nodes[selectedNodeID]->getWorldPosition();
-			V3D planeNormal = lastClickedRay.direction;
-			lastClickedRay.getDistanceToPlane(Plane(selectedNodePos, planeNormal), &p);
-			simMesh->setPinnedNode(selectedNodeID, p);
-			return true;//For some reason, this stops the camera from being moved while dragging
-		}
+	if (simWindow->mouseIsWithinWindow(xPos, yPos)) {
+		simWindow->onMouseMoveEvent(xPos, yPos);
 	}
-	else {
-		selectedNodeID = simMesh->getSelectedNodeID(lastClickedRay);
+	else if (shapeWindow->mouseIsWithinWindow(xPos, yPos)) {
+		shapeWindow->onMouseMoveEvent(xPos, yPos);
 	}
-	if (GLApplication::onMouseMoveEvent(xPos, yPos) == true) return true;
-	return false;
+	return true;
+	//if (GLApplication::onMouseMoveEvent(xPos, yPos) == true) return true;
+	//return false;
 }
 
 //triggered when mouse buttons are pressed
@@ -110,6 +107,12 @@ bool Paper3DApp::onMouseButtonEvent(int button, int action, int mods, double xPo
 
 //triggered when using the mouse wheel
 bool Paper3DApp::onMouseWheelScrollEvent(double xOffset, double yOffset) {
+	//if (simWindow->mouseIsWithinWindow(xPos, yPos)) {
+		simWindow->onMouseWheelScrollEvent(xOffset, yOffset);
+	//}
+	//else if (shapeWindow->mouseIsWithinWindow(xPos, yPos)) {
+		shapeWindow->onMouseWheelScrollEvent(xOffset, yOffset);
+	//}
 	if (GLApplication::onMouseWheelScrollEvent(xOffset, yOffset)) return true;
 
 	return false;
@@ -153,7 +156,7 @@ void Paper3DApp::drawScene() {
 	glColor3d(1, 1, 1);
 
 	//simMesh->drawRestConfiguration();
-	simMesh->drawSimulationMesh();
+	//simMesh->drawSimulationMesh();
 
 	if (GlobalMouseState::dragging && GlobalMouseState::lButtonPressed && selectedNodeID < 0) {
 		glColor3d(0.5, 0.5, 1.0);
@@ -169,6 +172,10 @@ void Paper3DApp::drawScene() {
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
 void Paper3DApp::drawAuxiliarySceneInfo() {
 
+	shapeWindow->drawScene();
+	shapeWindow->drawAuxiliarySceneInfo();
+	simWindow->drawScene();
+	simWindow->drawAuxiliarySceneInfo();
 }
 
 // Restart the application.
