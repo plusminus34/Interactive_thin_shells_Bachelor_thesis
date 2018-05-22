@@ -38,11 +38,10 @@ protected:
 	virtual void draw(const dVector& x);
 	virtual void drawRestConfiguration(const dVector& X);
 
-	virtual void setWeights(int triangle, double w1, double w2, double w3);
-
 public:
 	BarycentricZeroLengthSpring(SimulationMesh* simMesh, Node* n11, Node* n12, Node* n13, Node* n21, Node* n22, Node* n23);
 	~BarycentricZeroLengthSpring();
 
+	virtual void setWeights(int triangle, double w1, double w2, double w3);
 };
 

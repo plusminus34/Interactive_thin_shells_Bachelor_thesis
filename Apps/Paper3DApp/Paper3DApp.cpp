@@ -35,11 +35,12 @@ Paper3DApp::Paper3DApp() {
 	bulkModulus = 0.5;
 	bend_k = 0.0008;
 	pin_k = 0;//50 is a reasonable value, ... at least for rectangle with dimensions 11 x 7
-	mouse_mode = mouse_drag;
+	mouse_mode = mouse_pin;
 
-	int dim_x = 11;
+	int dim_x = 11;// TODO connect to shapeWindow parameters
 	int dim_y = 7;
-	Paper3DMesh::generateRectangleSystem("../data/FEM/3d/testCSTriangleSystem.tri3d", dim_x, dim_y, 0.1*dim_x, 0.1*dim_y);
+	double h = 0.1;
+	Paper3DMesh::generateRectangleSystem("../data/FEM/3d/testCSTriangleSystem.tri3d", dim_x, dim_y, h*(dim_x-1), h*(dim_y-1));
 
 	simMesh = new Paper3DMesh();
 	simMesh->readMeshFromFile("../data/FEM/3d/testCSTriangleSystem.tri3d");
@@ -66,9 +67,10 @@ Paper3DApp::Paper3DApp() {
 	zrl3->setWeights(0, 0.7, 0.1, 0.2);
 	zrl3->setWeights(1, 0.5, 0.2, 0.3);
 	Pin* pin = new Pin(simMesh, zrl1, zrl2, zrl3);
-	simMesh->elements.push_back(zrl1);
-	simMesh->elements.push_back(zrl2);
-	simMesh->elements.push_back(zrl3);
+	//simMesh->elements.push_back(zrl1);
+	//simMesh->elements.push_back(zrl2);
+	//simMesh->elements.push_back(zrl3);
+	//simMesh->elements.push_back(pin);
 
 	//simMesh->addGravityForces(V3D(0.0, 0.0, 0.0));
 
@@ -79,7 +81,7 @@ Paper3DApp::Paper3DApp() {
 	mainMenu->addVariable("Bulk modulus", bulkModulus);
 	mainMenu->addVariable("Bending stiffness", bend_k);
 	mainMenu->addVariable("Pin stiffness", pin_k);
-	//mainMenu->addVariable("Mouse Mode", mouse_mode, true)->setItems({ mouse_drag, mouse_none, mouse_pin });//not yet working
+	mainMenu->addVariable("Mouse Mode", mouse_mode, true)->setItems({ "None", "Drag", "Select", "Cut", "Pin" });//selectable but nonfunctional
 
 	menuScreen->performLayout();
 	setupWindows();
@@ -122,6 +124,12 @@ bool Paper3DApp::onMouseMoveEvent(double xPos, double yPos) {
 
 //triggered when mouse buttons are pressed
 bool Paper3DApp::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
+	if (simWindow->mouseIsWithinWindow(xPos, yPos)) {
+		simWindow->onMouseButtonEvent(button, action, mods, xPos, yPos);
+	}
+	else if (shapeWindow->mouseIsWithinWindow(xPos, yPos)) {
+		shapeWindow->onMouseButtonEvent(button, action, mods, xPos, yPos);
+	}
 	if (GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
 	return false;
 }
@@ -176,8 +184,8 @@ void Paper3DApp::drawScene() {
 	glDisable(GL_LIGHTING);
 	glColor3d(1, 1, 1);
 
-	//simMesh->drawRestConfiguration();
-	//simMesh->drawSimulationMesh();
+	shapeWindow->drawScene();
+	simWindow->drawScene();
 
 	if (GlobalMouseState::dragging && GlobalMouseState::lButtonPressed && selectedNodeID < 0) {
 		glColor3d(0.5, 0.5, 1.0);
@@ -193,9 +201,7 @@ void Paper3DApp::drawScene() {
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
 void Paper3DApp::drawAuxiliarySceneInfo() {
 
-	shapeWindow->drawScene();
 	shapeWindow->drawAuxiliarySceneInfo();
-	simWindow->drawScene();
 	simWindow->drawAuxiliarySceneInfo();
 }
 
@@ -226,6 +232,9 @@ void Paper3DApp::updateParams() {
 		}
 		else if (BarycentricZeroLengthSpring* e = dynamic_cast<BarycentricZeroLengthSpring*>(simMesh->elements[i])) {
 			e->k = pin_k;
+		}
+		else if (Pin* e = dynamic_cast<Pin*>(simMesh->elements[i])) {
+			e->setStiffness(pin_k);
 		}
 	}
 }

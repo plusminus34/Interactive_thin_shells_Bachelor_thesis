@@ -5,6 +5,7 @@
 #include <MathLib/Matrix.h>
 
 #include "BarycentricZeroLengthSpring.h"
+typedef BarycentricZeroLengthSpring ZLSpring;
 
 /*
 	Spring that pins two nodes together
@@ -13,7 +14,7 @@ class Pin : public SimMeshElement {
 	friend class Paper3DApp;
 protected:
 	//A Pin consists of three barycentric 0-length springs
-	BarycentricZeroLengthSpring* springs[3];
+	ZLSpring* springs[3];
 
 	virtual double getMass();
 
@@ -24,8 +25,9 @@ protected:
 	virtual void drawRestConfiguration(const dVector& X);
 
 public:
-	Pin(SimulationMesh* simMesh, BarycentricZeroLengthSpring* s1, BarycentricZeroLengthSpring* s2, BarycentricZeroLengthSpring* s3);
+	Pin(SimulationMesh* simMesh, ZLSpring* s1, ZLSpring* s2, ZLSpring* s3);
 	~Pin();
 
+	virtual void setStiffness(double k);
 };
 

@@ -36,7 +36,12 @@ private:
 	double pin_k;
 	MouseMode mouse_mode;
 
+	//Provide values for the subwindows
 	P3D getNodePos(int i);
+	MouseMode getMouseMode() { return mouse_mode; }
+	SimulationMesh* acessMesh() { return simMesh; }
+	Node* acessNode(int i) { return simMesh->nodes[i]; }
+	void addMeshElement(SimMeshElement* added) { simMesh->elements.push_back(added); }
 
 public:
 	// constructor
