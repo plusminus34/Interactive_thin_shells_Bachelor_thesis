@@ -50,9 +50,24 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 				}
 				else {
 					BarycentricZeroLengthSpring* ols[3];
-					ols[0] = createConnection(xPin - 0.01, yPin, p[0] - 0.01, p[1]);
-					ols[1] = createConnection(xPin + 0.01, yPin, p[0] + 0.01, p[1]);
-					ols[2] = createConnection(xPin, yPin - 0.02, p[0], p[1] + 0.02);
+					Vector2d end0(xPin, yPin);
+					Vector2d end1(p[0], p[1]);
+					Vector2d dir = (end1 - end0).normalized();
+					Matrix2x2 R;
+					R << cos(PI*2.0 / 3.0), -sin(PI*2.0 / 3.0), sin(PI*2.0 / 3.0), cos(PI*2.0 / 3.0);
+					Vector2d dp[3];
+					dp[0] = dir * 0.02;
+					dp[1] = R * dp[0];
+					dp[2] = R * dp[1];
+					Vector2d p0 = end0 - dp[0];
+					Vector2d p1 = end1 + dp[0];
+					ols[0] = createZeroLengthSpring(p0[0], p0[1], p1[0], p1[1]);
+					p0 = end0 - dp[2];
+					p1 = end1 + dp[1];
+					ols[1] = createZeroLengthSpring(p0[0], p0[1], p1[0], p1[1]);
+					p0 = end0 - dp[1];
+					p1 = end1 + dp[2];
+					ols[2] = createZeroLengthSpring(p0[0], p0[1], p1[0], p1[1]);
 					bool addpin = true;
 					for (int i = 0; i < 3; ++i)
 						if (ols[i] == NULL) {
@@ -108,7 +123,7 @@ int ShapeWindow::findNodeClosestTo(double x, double y) {
 	return (a*dim_y + b);
 }
 
-BarycentricZeroLengthSpring* ShapeWindow::createConnection(double x0, double y0, double x1, double y1) {
+BarycentricZeroLengthSpring* ShapeWindow::createZeroLengthSpring(double x0, double y0, double x1, double y1) {
 	SimulationMesh* simMesh = paperApp->acessMesh();
 
 	int ni[2][3];

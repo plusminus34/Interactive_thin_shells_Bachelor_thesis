@@ -1,8 +1,8 @@
 #pragma once
 
 #include <GUILib/GLWindow3D.h>
-
 #include "Paper3DApp.h"
+
 class BarycentricZeroLengthSpring;
 
 class ShapeWindow: public GLWindow3D{
@@ -23,7 +23,7 @@ protected:
 	double h=0.1;// distance between neighboring nodes
 
 	int findNodeClosestTo(double x, double y);
-	BarycentricZeroLengthSpring* createConnection(double x0, double y0, double x1, double y1);
+	BarycentricZeroLengthSpring* createZeroLengthSpring(double x0, double y0, double x1, double y1);
 
 public:
 	ShapeWindow(int x, int y, int w, int h, Paper3DApp *glApp);
