@@ -73,23 +73,33 @@ void CSTriangle3D::addEnergyHessianTo(const dVector& x, const dVector& X, std::v
 }
 
 void CSTriangle3D::draw(const dVector& x) {
-	//draw a heatmap-sort-of-thing representing internal stresses...
-	glBegin(GL_TRIANGLES);
-	for (int idx = 0; idx < 3; idx++){
-		P3D p = n[idx]->getCoordinates(x);
-		double color = pow(n[idx]->avgDefEnergyForDrawing, 0.75);
-		color = mapTo01Range(color, 0, 0.05);
-		glColor4d(color, 0, 1 - color, densityForDrawing);
-		glVertex3d(p[0], p[1], p[2]);
+
+	double dn = 0.00005;
+	P3D p[3];
+	for (int idx = 0; idx < 3; idx++) {
+		p[idx] = n[idx]->getCoordinates(x);
 	}
+	V3D normal = V3D(p[1], p[0]).cross(V3D(p[2], p[0])).normalized();
+
+	glBegin(GL_TRIANGLES);
+	glColor3d(1.0, 0.75, 0.75);//light red front side
+		glNormal3d(normal[0], normal[1], normal[2]);
+		for (int idx = 0; idx < 3; idx++) {
+			glVertex3d(p[idx][0] + dn * normal[0], p[idx][1] + dn * normal[1], p[idx][2] + dn * normal[2]);
+		}
+	glColor3d(0.75, 0.75, 1.0);//light blue back side
+		glNormal3d(-normal[0], -normal[1], -normal[2]);
+		for (int idx = 0; idx < 3; idx++) {
+			glVertex3d(p[idx][0] - dn * normal[0], p[idx][1] - dn * normal[1], p[idx][2] - dn * normal[2]);
+		}
 	glEnd();
 
-	glColor3d(0, 0, 0);
+	glColor3d(0.5, 0.5, 0.5);
 	glBegin(GL_LINES);
 	for (int i = 0; i < 2; i++)
 		for (int j = i + 1; j < 3; j++) {
-			P3D pi = n[i]->getCoordinates(x);
-			P3D pj = n[j]->getCoordinates(x);
+			P3D pi = p[i];
+			P3D pj = p[j];
 			glVertex3d(pi[0], pi[1], pi[2]);
 			glVertex3d(pj[0], pj[1], pj[2]);
 		}
