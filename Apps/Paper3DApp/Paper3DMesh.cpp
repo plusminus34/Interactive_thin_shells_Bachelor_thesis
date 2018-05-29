@@ -190,3 +190,13 @@ void Paper3DMesh::setPinnedNode(int ID, const P3D& point) {
 	pinnedNodeElements.push_back(new FixedPointSpring3D(this, nodes[ID], point));
 }
 
+void Paper3DMesh::unpinNode(int ID) {//why was this not implemented in the simMesh?
+	for (auto it = pinnedNodeElements.begin(); it != pinnedNodeElements.end(); ++it) {
+		FixedPointSpring3D* fps = dynamic_cast<FixedPointSpring3D*>(*it);
+		if (fps->node == nodes[ID]) {
+			delete *it;
+			pinnedNodeElements.erase(it);
+			return;
+		}
+	}
+}

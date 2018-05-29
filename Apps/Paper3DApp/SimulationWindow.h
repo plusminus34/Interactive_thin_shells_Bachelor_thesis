@@ -8,6 +8,9 @@ class SimulationWindow: public GLWindow3D{
 protected:
 	Paper3DApp* paperApp;
 
+	//Dragging nodes
+	bool dragging;
+	Plane draggingPlane;
 	int selectedNodeID;
 	Ray lastClickedRay;
 
@@ -19,5 +22,6 @@ public:
 	virtual void drawAuxiliarySceneInfo();
 
 	virtual bool onMouseMoveEvent(double xPos, double yPos);
+	virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
 };
 

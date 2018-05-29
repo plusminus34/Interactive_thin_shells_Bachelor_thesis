@@ -20,5 +20,6 @@ public:
 
     virtual int getSelectedNodeID(Ray ray);
 	virtual void setPinnedNode(int ID, const P3D& p);
+	virtual void unpinNode(int ID);
 };
 

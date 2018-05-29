@@ -34,8 +34,8 @@ Paper3DApp::Paper3DApp() {
 	shearModulus = 750;
 	bulkModulus = 0.5;
 	bend_k = 0.0008;
-	pin_k = 0;//50 is a reasonable value, ... at least for rectangle with dimensions 11 x 7
-	mouse_mode = mouse_pin;
+	pin_k = 100;//50 is a reasonable value, ... at least for rectangle with dimensions 11 x 7
+	mouse_mode = mouse_drag;
 
 	int dim_x = 11;// TODO connect to shapeWindow parameters
 	int dim_y = 7;
@@ -46,10 +46,12 @@ Paper3DApp::Paper3DApp() {
 	simMesh->readMeshFromFile("../data/FEM/3d/testCSTriangleSystem.tri3d");
 
 	//Fix left edge of the rectangle
-	for (int i=0;i<2*dim_y;++i)
-		simMesh->setPinnedNode(i, simMesh->nodes[i]->getUndeformedPosition());
-	//Pin the top right corner to a spot on the bottom edge
-	//simMesh->elements.push_back(new ZeroLengthSpring3D(simMesh, simMesh->nodes[5*dim_y], simMesh->nodes[dim_y * dim_x-1]));
+//	for (int i=0;i<2*dim_y;++i)
+//		simMesh->setPinnedNode(i, simMesh->nodes[i]->getUndeformedPosition());
+
+	simMesh->setPinnedNode(0, simMesh->nodes[0]->getUndeformedPosition());
+	simMesh->setPinnedNode(dim_y, simMesh->nodes[dim_y]->getUndeformedPosition());
+	simMesh->setPinnedNode(dim_y + 1, simMesh->nodes[dim_y + 1]->getUndeformedPosition());
 
 	Node* n00 = simMesh->nodes[2 * dim_y];
 	Node* n01 = simMesh->nodes[3 * dim_y + 1];

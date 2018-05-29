@@ -38,13 +38,11 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 		clickedRay.getDistanceToPlane(Plane(P3D(), V3D(0, 0, 1)), &p);
 		if (p[0] >= 0 && p[0] <= h * dim_x && p[1] >= 0 && p[1] <= h * dim_y) {
 			if (!first_point_set) {
-				printf("Pin from point %f %f\n", p[0], p[1]);
 				xPin = p[0];
 				yPin = p[1];
 				first_point_set = true;
 			}
 			else {
-				printf("Pin to point %f %f\n", p[0], p[1]);
 				if ((p[0] - xPin)*(p[0] - xPin) + (p[1] - yPin)*(p[1] - yPin) < 4*h*h) {// TODO: better distance measure
 					printf("Error: Pin endpoints are too close\n");
 				}
@@ -56,7 +54,7 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 					Matrix2x2 R;
 					R << cos(PI*2.0 / 3.0), -sin(PI*2.0 / 3.0), sin(PI*2.0 / 3.0), cos(PI*2.0 / 3.0);
 					Vector2d dp[3];
-					dp[0] = dir * 0.02;
+					dp[0] = dir * 0.05;
 					dp[1] = R * dp[0];
 					dp[2] = R * dp[1];
 					Vector2d p0 = end0 - dp[0];

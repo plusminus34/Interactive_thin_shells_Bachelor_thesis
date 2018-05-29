@@ -3,6 +3,7 @@
 SimulationWindow::SimulationWindow(int x, int y, int w, int h, Paper3DApp *glApp) : GLWindow3D(x, y, w, h) {
 	paperApp = glApp;
 
+	dragging = false;
 	selectedNodeID = -1;
 
 //	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutRightAxis = 0.75;
@@ -16,21 +17,46 @@ SimulationWindow::~SimulationWindow(){
 bool SimulationWindow::onMouseMoveEvent(double xPos, double yPos) {
 	pushViewportTransformation();
 	lastClickedRay = getRayFromScreenCoords(xPos, yPos);
-	if (GlobalMouseState::dragging) {
+	if (dragging) {
 		if (selectedNodeID >= 0) {
 			P3D p;
-			P3D selectedNodePos = paperApp->getNodePos(selectedNodeID);
-			V3D planeNormal = lastClickedRay.direction;
-			lastClickedRay.getDistanceToPlane(Plane(selectedNodePos, planeNormal), &p);
+			lastClickedRay.getDistanceToPlane(draggingPlane, &p);
 			paperApp->simMesh->setPinnedNode(selectedNodeID, p);
+			popViewportTransformation();
 			return true;
 		}
 	}
-	else {
-		selectedNodeID = paperApp->simMesh->getSelectedNodeID(lastClickedRay);
-	}
 	popViewportTransformation();
 	return camera->onMouseMoveEvent(xPos, yPos);
+}
+
+bool SimulationWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
+	//action=1: button down, 0: button up
+	printf("click\n");
+	pushViewportTransformation();
+	if (paperApp->getMouseMode() == mouse_drag && action == 1) {// action==1 means the mouse button is being pressed
+		printf("letsstart\n");
+		lastClickedRay = getRayFromScreenCoords(xPos, yPos);
+		selectedNodeID = paperApp->simMesh->getSelectedNodeID(lastClickedRay);
+		if (selectedNodeID != -1) {
+			dragging = true;
+			draggingPlane = Plane(paperApp->getNodePos(selectedNodeID), - lastClickedRay.direction);
+		}
+		popViewportTransformation();
+		return true;
+	}
+	else if (paperApp->getMouseMode() == mouse_drag && action == 0) {// action==1 means the mouse button is being released
+		printf("let the shackles be released\n");
+		if (selectedNodeID != -1) {
+			paperApp->simMesh->unpinNode(selectedNodeID);
+			dragging = false;
+			selectedNodeID = -1;
+		}
+		popViewportTransformation();
+		return true;
+	}
+	popViewportTransformation();
+	return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
 }
 
 void SimulationWindow::drawScene() {
