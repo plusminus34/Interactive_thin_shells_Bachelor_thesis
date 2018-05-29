@@ -38,6 +38,23 @@ void Pin::addEnergyHessianTo(const dVector& x, const dVector& X, std::vector<MTr
 }
 
 void Pin::draw(const dVector& x) {
+	P3D points[6];
+	for (int i = 0; i < 3; ++i)
+		for (int j = 0; j < 2; ++j)
+			points[2 * i + j] = springs[i]->getCurrentPoint(j, x, x);
+
+	glColor3d(1, 1, 1);
+	glBegin(GL_LINES);
+	glVertex3d(points[0][0], points[0][1], points[0][2]);
+	glVertex3d(points[1][0], points[1][1], points[1][2]);
+	glEnd();
+	for (int i = 0; i < 2; ++i) {
+		glColor3d(i, 1, 0);
+		glBegin(GL_LINE_LOOP);
+		for (int j = 0; j < 3; ++j)
+			glVertex3d(points[i + 2 * j][0], points[i + 2 * j][1], points[i + 2 * j][2]);
+		glEnd();
+	}
 }
 
 void Pin::drawRestConfiguration(const dVector& X) {
