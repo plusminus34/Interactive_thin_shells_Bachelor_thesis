@@ -38,6 +38,7 @@
 #include <OptimizationLib/ConstrainedObjectiveFunction.h>
 #include <OptimizationLib/SQPFunctionMinimizer.h>
 #include <OptimizationLib/NewtonFunctionMinimizer.h>
+#include <OptimizationLib/BFGSFunctionMinimizer.h>
 
 #define OPT_END_EFFECTORS 0x0001
 #define OPT_COM_POSITIONS 0x0002
@@ -71,6 +72,10 @@ public:
 	bool useObjectivesOnly = false;
 	bool writeParamsToFile = true;
 	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod;
+	enum class OptMethod { Newton, lbfgs } optimizationMethod;
+
+	NewtonFunctionMinimizer minimizerNewton;
+	BFGSFunctionMinimizer minimizerBFGS;
 public:
 	LocomotionEngineManager();
 	virtual ~LocomotionEngineManager() = 0;

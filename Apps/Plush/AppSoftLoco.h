@@ -7,7 +7,11 @@
 #include "CSTSimulationMesh2D.h"
 #include "CSTSimulationMesh3D.h"
 #include "P2DDragger.h"
+#include "P2DDragger_v2.h"
 #include "Poser.h"
+#include "Handler_v2.h"
+#include "CubicHermiteSpline_v2.h"
+#include "Scrubber.h"
 
 class AppSoftLoco : public PlushApplication {
 
@@ -25,31 +29,31 @@ public:
 
 public:
 	vector<P2DDragger *> COM_handlers;
+	vector<vector<P3D*>> all_positions;
+	vector<vector<P3D*>> all_tangents;
+	P2DDragger_v2 *splinePositionsDragger;
+	P2DDragger_v2 *splineTangentsDragger;
+	Frame splinePositionsFrame = Frame(Matrix3x3::Identity(), V3D(0., -1.));
+	Frame splineTangentsFrame = Frame(Matrix3x3::Identity(), V3D(1.33, -1.)); // TODO V2DDragger
+	// TODO: test out use of Handler_v2
+	// TODO: Consider exposing translation and scaling as widgets
+	bool DRAG_POSITIONS_TANGENTS_TOGGLE = false;
+
+public:
+	bool ENABLE_SPLINE_INTERACTION = true;
 
 public:
 	bool PLAY_PREVIEW = false;
 	bool POPULATED_PREVIEW_TRAJEC = false;
-	const int LEADIN_FRAMES = 25;
-	const int LEADOUT_FRAMES = 250;
-	int PREVIEW_i = -LEADIN_FRAMES;
+	const int NUM_PREVIEW_CYCLES = 1;
+	int PREVIEW_LENGTH() { return NUM_PREVIEW_CYCLES * ik->K; }
+	int PREVIEW_i = 0;
 	vector<dVector> uJ_preview;
 	vector<dVector> xJ_preview;
+	Scrubber *scrubber = nullptr; 
 
 public:
-	bool CAPTURE_TEST_SESSION = false;
-	bool CAPTURED_TEST_SESSION_ = false;
-	// --
-	bool PLAY_CAPTURE = false;
-	bool POPULATED_CAPTURE_TRAJEC = false;
-	int CAPTURE_i = -30;
-	vector<dVector> uJ_capture;
-	vector<dVector> xJ_capture;
-	// -- 
-	dVector xm1_capture;
-	dVector vm1_capture;
-
-public:
-	bool SOLVE_IK = true;
+	bool SOLVE_IK = false;
 	bool INTEGRATE_FORWARD_IN_TIME = true;
 
 public:
@@ -65,6 +69,11 @@ public:
     virtual bool onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos);
     virtual bool onMouseMoveEvent(double xPos, double yPos);
     virtual bool onMouseWheelScrollEvent(double xOffset, double yOffset);
+
+public:
+	void save_uJ();
+	void load_uJ();
+	void populatePreviewTrajec();
 
  
 };

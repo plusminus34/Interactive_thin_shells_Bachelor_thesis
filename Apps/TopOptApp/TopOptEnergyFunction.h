@@ -14,14 +14,54 @@ public:
 	void updateRegularizingSolutionTo(const dVector &currentP);
 	virtual double computeValue(const dVector& p);
 
+	double computeDeformationEnergyObjective(const dVector& p);
+
 	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
-//	virtual void addGradientTo(dVector& grad, const dVector& p);
+	virtual void addGradientTo(dVector& grad, const dVector& p);
 
 	//this method gets called whenever a new best solution to the objective function is found
 	virtual void setCurrentBestSolution(const dVector& p);
 
+
+	void applyDensityParametersToSimMesh(const dVector& densityParams) {
+		for (uint i = 0; i < simMesh->elements.size(); i++) {
+			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
+				e->topOptInterpolationDensity = minPVal + pow(densityParams[i], rho);
+			}
+		}
+	}
+
+	void applyDensityParametersForMeshDisplay(const dVector& densityParams) {
+		for (uint i = 0; i < simMesh->elements.size(); i++) {
+			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
+				e->topOptInterpolationDensity = densityParams[i];
+			}
+		}
+	}
+
+
+	void applyConstantDensityParametersToSimMesh() {
+		for (uint i = 0; i < simMesh->elements.size(); i++) {
+			if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i])) {
+				e->topOptInterpolationDensity = 1;
+			}
+		}
+	}
+
+
+
 	bool printDebugInfo;
 	double regularizer = 0.001;
+
+	double smoothnessObjectiveWeight = 0.1;
+	double binaryDensityObjectiveWeight = 0.001 * 0;
+	double complianceObjectiveWeight = 1.0;
+
+	bool minimizeOriginalCompliance = true;
+
+	double rho = 5.0;
+	double minPVal = 0.0001;
+
 private:
 
 	//this is the configuration of the sim mesh that is used as a regularizing solution...

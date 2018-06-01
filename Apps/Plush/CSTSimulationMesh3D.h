@@ -15,7 +15,7 @@ public:
 	virtual void add_simplices(const vector<vector<int>> &);
 	virtual void analyze_lower_simplices();
 	virtual void spawnSimplexMesh();
-	virtual void spawnSavedMesh(const char *);
+	virtual void spawnSavedMesh(const char *, bool loadTendons=false);
 
 // stelian impure virtuals
     virtual int getSelectedNodeID(Ray ray);

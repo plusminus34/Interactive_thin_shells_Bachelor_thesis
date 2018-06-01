@@ -5,6 +5,8 @@
 SimulationMesh::SimulationMesh(){
 	energyFunction = NULL;
 	checkDerivatives = false;
+
+	targetSolverResidual = 1e-10;
 }
 
 SimulationMesh::~SimulationMesh(){
@@ -77,6 +79,7 @@ void SimulationMesh::solve_dynamics(double dt){
    
 	NewtonFunctionMinimizer minimizer(3);
 	minimizer.printOutput = true;
+	minimizer.solveResidual = targetSolverResidual;
 	minimizer.minimize(energyFunction, xSolver, functionValue);
 
 //	Logger::consolePrint("energy value after solve: %lf\n", functionValue);
@@ -88,7 +91,7 @@ void SimulationMesh::solve_dynamics(double dt){
 
 void SimulationMesh::solve_statics(){
 	xSolver = x;
-	energyFunction->setToStaticsMode(0.01);
+	energyFunction->setToStaticsMode(0.00001);
 
 	if (checkDerivatives){
 		energyFunction->testGradientWithFD(xSolver);
@@ -100,6 +103,7 @@ void SimulationMesh::solve_statics(){
 
 	NewtonFunctionMinimizer minimizer(50);
 	minimizer.printOutput = false;
+	minimizer.solveResidual = targetSolverResidual;
 	minimizer.minimize(energyFunction, xSolver, functionValue);
 
 //	Logger::consolePrint("energy value after solve: %lf\n", functionValue);

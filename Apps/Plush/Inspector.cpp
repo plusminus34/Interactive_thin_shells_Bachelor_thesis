@@ -78,7 +78,7 @@ pair<int, double> Inspector::get_closest_node_i(double xPos, double yPos) {
 	double min_d = INFINITY;
 	int min_i = -1;
 	for (size_t i = 0; i < nodes.size(); ++i) {
-		P3D p = nodes[i]->getCurrentPosition() + *offset; // FORNOW
+		P3D p = nodes[i]->getCurrentPosition(); // FORNOW
 		double d = ray.getDistanceToPoint(p);
 		bool better_candidate = (d < min_d);
 		if (d < min_d) {
@@ -103,8 +103,8 @@ pair<int, double> Inspector::get_closest_tendon_i(double xPos, double yPos) {
 		auto &tendon = tendons[i];
 		for (int a = 0; a < (int) tendon->waypoints.size() - 1; ++a) {
 			int b = a + 1;
-			P3D pa = tendon->waypoints[a]->getCurrentPosition() + *offset; // FORNOW
-			P3D pb = tendon->waypoints[b]->getCurrentPosition() + *offset; // FORNOW
+			P3D pa = tendon->waypoints[a]->getCurrentPosition(); // FORNOW
+			P3D pb = tendon->waypoints[b]->getCurrentPosition(); // FORNOW
 
 			double d = ray.getDistanceToSegment(pa, pb);
 			bool better_candidate = (d < min_d);
@@ -133,12 +133,12 @@ void Inspector::interrogate(double xPos, double yPos, int &node_i, double &node_
 
 }
  
-bool Inspector::key_event(int key, int action, int mods) {
+bool Inspector::key_event_(int key, int action, int mods) {
 	PREFER_NODES = mods & GLFW_MOD_SHIFT;
 	return true;
 }
 
-bool Inspector::mouse_move(double xPos, double yPos) {
+bool Inspector::mouse_move_(double xPos, double yPos) {
 	if (selected_tendon_i != -1) {
 		tendons[selected_tendon_i]->set_alphac(TMP_ALPHAC);
 	}
@@ -173,7 +173,7 @@ bool Inspector::mouse_move(double xPos, double yPos) {
 	return false;
 }
 
-bool Inspector::mouse_button(int button, int action, int mods, double xPos, double yPos) {
+bool Inspector::mouse_button_(int button, int action, int mods, double xPos, double yPos) {
 	int node_i, tendon_i;               double node_d, tendon_d;
 	interrogate(xPos, yPos, node_i, node_d, tendon_i, tendon_d);
 
@@ -235,7 +235,7 @@ bool Inspector::mouse_button(int button, int action, int mods, double xPos, doub
 	return false;
 }
  
-bool Inspector::mouse_wheel(double xOffset, double yOffset) {
+bool Inspector::mouse_wheel_(double xOffset, double yOffset) {
 	if (selected_tendon_i != -1) {
 		auto &tendon = tendons[selected_tendon_i];
 		TMP_ALPHAC = tendon->get_alphac(mesh->balphac) + .01*yOffset;

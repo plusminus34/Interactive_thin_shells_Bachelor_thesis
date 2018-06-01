@@ -31,7 +31,7 @@ void SQPFunctionMinimizer::computeGradient(ConstrainedObjectiveFunction *functio
 	resize(gradient, nParameters);
 	gradient.setZero();
 	function->getObjectiveFunction()->addGradientTo(gradient, pi);
-
+//	print("..\\out\\gradient.m", gradient);
 }
 
 void SQPFunctionMinimizer::computeHessian(ConstrainedObjectiveFunction *function, const dVector& pi) {
@@ -54,6 +54,9 @@ void SQPFunctionMinimizer::computeConstraintsAndJacobians(ConstrainedObjectiveFu
 	resize(C, function->getFunctionConstraints()->getInequalityConstraintCount(), nParameters);
 	function->getFunctionConstraints()->addInequalityConstraintsJacobianEntriesTo(smEntries, pi);
 	C.setFromTriplets(smEntries.begin(), smEntries.end());
+
+//	print("C2.m", C);
+
 }
 
 

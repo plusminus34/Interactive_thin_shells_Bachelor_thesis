@@ -26,17 +26,17 @@ private:
 
 	double forceScale = 10.0;
 
-	MaterialModel2D matModel = MM_NEO_HOOKEAN;
-	double shearModulus = 50, bulkModulus = 50;
+	MaterialModel2D matModel = MM_LINEAR_ISOTROPIC;// MM_NEO_HOOKEAN;
+	double shearModulus = 50000, bulkModulus = 50;
 	bool checkDerivatives = false;
+	bool checkSimDerivatives = false;
 
 	DynamicArray<V3D> externalLoads;
 	dVector densityParams;
 
-	double targetMassRatio = 100;
+	double targetMassRatio = 30;// pow(0.3, 1.0 / 3) * 100;// 30; //pow(0.3, 3) * 100;
 	double initialMass = 0;
 	bool optimizeTopology = false;
-
 
 	void applyDensityParametersToSimMesh();
 
