@@ -37,7 +37,7 @@ Paper3DApp::Paper3DApp() {
 	pin_k = 100;//50 is a reasonable value, ... at least for rectangle with dimensions 11 x 7
 	mouse_mode = mouse_drag;
 
-	int dim_x = 11;// TODO connect to shapeWindow parameters
+	int dim_x = 11;
 	int dim_y = 7;
 	double h = 0.1;
 	Paper3DMesh::generateRectangleSystem("../data/FEM/3d/testCSTriangleSystem.tri3d", dim_x, dim_y, h*(dim_x-1), h*(dim_y-1));
@@ -53,27 +53,6 @@ Paper3DApp::Paper3DApp() {
 	simMesh->setPinnedNode(dim_y, simMesh->nodes[dim_y]->getUndeformedPosition());
 	simMesh->setPinnedNode(dim_y + 1, simMesh->nodes[dim_y + 1]->getUndeformedPosition());
 
-	Node* n00 = simMesh->nodes[2 * dim_y];
-	Node* n01 = simMesh->nodes[3 * dim_y + 1];
-	Node* n02 = simMesh->nodes[3 * dim_y];
-	Node* n10 = simMesh->nodes[dim_y * dim_x - 1];
-	Node* n11 = simMesh->nodes[dim_y * (dim_x - 1) - 2];
-	Node* n12 = simMesh->nodes[dim_y * (dim_x - 1) - 1];
-	BarycentricZeroLengthSpring* zrl1 = new BarycentricZeroLengthSpring(simMesh, n00, n01, n02, n10, n11, n12);
-	zrl1->setWeights(0, 0.1, 0.2, 0.7);
-	zrl1->setWeights(1, 0.2, 0.3, 0.5);
-	BarycentricZeroLengthSpring* zrl2 = new BarycentricZeroLengthSpring(simMesh, n00, n01, n02, n10, n11, n12);
-	zrl2->setWeights(0, 0.2, 0.7, 0.1);
-	zrl2->setWeights(1, 0.3, 0.5, 0.2);
-	BarycentricZeroLengthSpring* zrl3 = new BarycentricZeroLengthSpring(simMesh, n00, n01, n02, n10, n11, n12);
-	zrl3->setWeights(0, 0.7, 0.1, 0.2);
-	zrl3->setWeights(1, 0.5, 0.2, 0.3);
-	Pin* pin = new Pin(simMesh, zrl1, zrl2, zrl3);
-	//simMesh->elements.push_back(zrl1);
-	//simMesh->elements.push_back(zrl2);
-	//simMesh->elements.push_back(zrl3);
-	//simMesh->elements.push_back(pin);
-
 	//simMesh->addGravityForces(V3D(0.0, 0.0, 0.0));
 
 	mainMenu->addVariable("Check derivatives", checkDerivatives);
@@ -87,6 +66,7 @@ Paper3DApp::Paper3DApp() {
 
 	menuScreen->performLayout();
 	setupWindows();
+	shapeWindow->setGridDimensions(dim_x, dim_y, h);
 	followCameraTarget = false;
 }
 

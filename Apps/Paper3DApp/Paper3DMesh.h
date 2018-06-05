@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Pin.h"
 #include <FEMSimLib/SimulationMesh.h>
 
 class Paper3DMesh : public SimulationMesh {
@@ -8,6 +9,7 @@ private:
 	Eigen::MatrixXi triangles;
 	// N by 2 matrix to store edges between two triangles
 	Eigen::MatrixXi edges;
+
 	//generate elements after defining triangles
 	void init();
 public:
@@ -21,5 +23,7 @@ public:
     virtual int getSelectedNodeID(Ray ray);
 	virtual void setPinnedNode(int ID, const P3D& p);
 	virtual void unpinNode(int ID);
+
+	virtual void replacePin(int ID, Pin* replacement);
 };
 

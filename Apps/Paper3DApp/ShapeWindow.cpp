@@ -1,4 +1,5 @@
 #include "ShapeWindow.h"
+#include "Paper3DMesh.h"
 #include "Pin.h"
 #include <GUILib/GLTrackingCamera.h>
 
@@ -13,8 +14,22 @@ ShapeWindow::ShapeWindow(int x, int y, int w, int h, Paper3DApp *glApp) : GLWind
 ShapeWindow::~ShapeWindow(){
 }
 
+void ShapeWindow::setGridDimensions(int dim_x, int dim_y, double h) {
+	this->dim_x = dim_x;
+	this->dim_y = dim_y;
+	this->h = h;
+}
+
 bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
 	pushViewportTransformation();
+	Ray lastClickedRay = getRayFromScreenCoords(xPos, yPos);
+	P3D p;
+	lastClickedRay.getDistanceToPlane(Plane(P3D(), V3D(0, 0, 1)), &p);
+	if (paperApp->getMouseMode() == mouse_drag && dragging && selected_i != -1) {
+		pinHandles[selected_i]->x = p[0];
+		pinHandles[selected_i]->y = p[1];
+	}
+	/*TODO camera
 	if (GlobalMouseState::dragging) {
 		if (dragging) {
 			//TODO: move camera instead of target
@@ -26,16 +41,17 @@ bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
 		dragging = true;
 		xDrag = xPos; yDrag = yPos;
 	}
+	*/
 	popViewportTransformation();
 	return true;
 }
 
 bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
 	pushViewportTransformation();
-	if (paperApp->getMouseMode() == mouse_pin) {
-		Ray clickedRay = getRayFromScreenCoords(xPos, yPos);
-		P3D p;
-		clickedRay.getDistanceToPlane(Plane(P3D(), V3D(0, 0, 1)), &p);
+	Ray clickedRay = getRayFromScreenCoords(xPos, yPos);
+	P3D p;
+	clickedRay.getDistanceToPlane(Plane(P3D(), V3D(0, 0, 1)), &p);
+	if (paperApp->getMouseMode() == mouse_pin  && action == 1) {
 		if (p[0] >= 0 && p[0] <= h * dim_x && p[1] >= 0 && p[1] <= h * dim_y) {
 			if (!first_point_set) {
 				xPin = p[0];
@@ -51,33 +67,57 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 					Vector2d end0(xPin, yPin);
 					Vector2d end1(p[0], p[1]);
 					Vector2d dir = (end1 - end0).normalized();
-					Matrix2x2 R;
-					R << cos(PI*2.0 / 3.0), -sin(PI*2.0 / 3.0), sin(PI*2.0 / 3.0), cos(PI*2.0 / 3.0);
-					Vector2d dp[3];
-					dp[0] = dir * 0.05;
-					dp[1] = R * dp[0];
-					dp[2] = R * dp[1];
-					Vector2d p0 = end0 - dp[0];
-					Vector2d p1 = end1 + dp[0];
-					ols[0] = createZeroLengthSpring(p0[0], p0[1], p1[0], p1[1]);
-					p0 = end0 - dp[2];
-					p1 = end1 + dp[1];
-					ols[1] = createZeroLengthSpring(p0[0], p0[1], p1[0], p1[1]);
-					p0 = end0 - dp[1];
-					p1 = end1 + dp[2];
-					ols[2] = createZeroLengthSpring(p0[0], p0[1], p1[0], p1[1]);
-					bool addpin = true;
-					for (int i = 0; i < 3; ++i)
-						if (ols[i] == NULL) {
-							addpin = false;
-						}
-					if (addpin) {
-						Pin* toAdd = new Pin(paperApp->acessMesh(), ols[0], ols[1], ols[2]);
+
+					int new_id = next_pin_id++;
+
+					PinHandle* new_handle = new PinHandle;
+					new_handle->pin_id = new_id;
+					new_handle->index = 0;
+					new_handle->x = end0[0];
+					new_handle->y = end0[1];
+					new_handle->angle = atan2(dir[1], dir[0]);
+					new_handle->flipped = true;
+					pinHandles.push_back(new_handle);
+
+					new_handle = new PinHandle;
+					new_handle->pin_id = new_id;
+					new_handle->index = 1;
+					new_handle->x = end1[0];
+					new_handle->y = end1[1];
+					new_handle->angle = atan2(-dir[1], -dir[0]);
+					new_handle->flipped = false;
+					pinHandles.push_back(new_handle);
+
+					Pin* toAdd = createPinFromHandles(pinHandles.size() - 2, pinHandles.size() - 1);
+					if(toAdd != NULL)
 						paperApp->addMeshElement(toAdd);
-						first_point_set = false;
-					}
+
+					first_point_set = false;
 				}
 			}
+		}
+	}
+	else if (paperApp->getMouseMode() == mouse_drag && action == 1) {
+		dragging = true;
+		xDrag = p[0];
+		yDrag = p[1];
+		selected_i = findPinHandleClosestTo(p[0], p[1]);
+	}
+	else if (paperApp->getMouseMode() == mouse_drag && action == 0) {
+		dragging = false;
+		if (selected_i != -1) {
+			int i_handle_a = selected_i - (selected_i % 2);
+			int i_handle_b = i_handle_a + 1;
+			Pin* toAdd = createPinFromHandles(i_handle_a, i_handle_b);
+			if (toAdd != NULL) {
+				Paper3DMesh* paperMesh = dynamic_cast<Paper3DMesh*>(paperApp->acessMesh());
+				paperMesh->replacePin(toAdd->getID(), toAdd);
+			}
+			else {
+				pinHandles[selected_i]->x = xDrag;
+				pinHandles[selected_i]->y = yDrag;
+			}
+			selected_i = -1;
 		}
 	}
 	popViewportTransformation();
@@ -102,6 +142,21 @@ void ShapeWindow::drawScene() {
 		glEnd();
 	}
 
+	if (dragging && selected_i != -1) {
+		int other_i = selected_i;
+		if (selected_i % 2 == 0) {
+			other_i += 1;
+		}
+		else {
+			other_i -= 1;
+		}
+		glColor3d(0, 1, 1);
+		glBegin(GL_LINES);
+		glVertex3d(pinHandles[selected_i]->x, pinHandles[selected_i]->y, 0.01);
+		glVertex3d(pinHandles[other_i]->x, pinHandles[other_i]->y, 0.01);
+		glEnd();
+	}
+
 	drawBorders();
 
 	postDraw();
@@ -121,6 +176,19 @@ int ShapeWindow::findNodeClosestTo(double x, double y) {
 	return (a*dim_y + b);
 }
 
+int ShapeWindow::findPinHandleClosestTo(double x, double y) {
+	double smallest_distance = HUGE_VAL;
+	int res = -1;
+	for (uint i = 0; i < pinHandles.size(); ++i) {
+		double distance = (pinHandles[i]->x - x) * (pinHandles[i]->x - x) + (pinHandles[i]->y - y) * (pinHandles[i]->y - y);
+		if (distance < smallest_distance) {
+			smallest_distance = distance;
+			res = i;
+		}
+	}
+	return res;
+}
+
 BarycentricZeroLengthSpring* ShapeWindow::createZeroLengthSpring(double x0, double y0, double x1, double y1) {
 	SimulationMesh* simMesh = paperApp->acessMesh();
 
@@ -129,7 +197,6 @@ BarycentricZeroLengthSpring* ShapeWindow::createZeroLengthSpring(double x0, doub
 
 	x[0] = x0; y[0] = y0;
 	x[1] = x1; y[1] = y1;
-	printf("to connect: (%f, %f) and (%f, %f)\n", x[0], y[0], x[1], y[1]);
 
 	for (int i = 0; i < 2; ++i) {
 		ni[i][0] = findNodeClosestTo(x[i], y[i]);
@@ -190,16 +257,37 @@ BarycentricZeroLengthSpring* ShapeWindow::createZeroLengthSpring(double x0, doub
 		b << x[i], y[i], 1.0;
 		w[i] = A.inverse() * b;// TODO: don't compute the inverse!
 
+		for (int j = 0; j < 3; ++j)
+			if (w[i][j] < 0.0) return NULL;
+
 		double outx = nx[0] * w[i][0] + nx[1] * w[i][1] + nx[2] * w[i][2];
 		double outy = ny[0] * w[i][0] + ny[1] * w[i][1] + ny[2] * w[i][2];
-		printf("after weights (%f, %f)\n", outx, outy);
 	}
 
 	BarycentricZeroLengthSpring* res = new BarycentricZeroLengthSpring(simMesh, n[0], n[1], n[2], n[3], n[4], n[5]);
 	for (int i = 0; i < 2; ++i)
 		res->setWeights(i, w[i][0], w[i][1], w[i][2]);
 
-	//printf("Spring point %f %f\n", p[0], p[1]);
+	return res;
+}
 
+Pin* ShapeWindow::createPinFromHandles(int h0, int h1) {
+
+	if (h0 >= pinHandles.size() || h1 >= pinHandles.size()) return NULL;
+	if (pinHandles[h0]->pin_id != pinHandles[h1]->pin_id) return NULL;
+	if (pinHandles[h0]->index != 0) std::swap(h0, h1);
+
+	BarycentricZeroLengthSpring* ols[3];
+	Vector2d p0, p1;
+	for (int i = 0; i < 3; ++i) {
+		p0 = pinHandles[h0]->getPoint(i);
+		p1 = pinHandles[h1]->getPoint(i);
+		ols[i] = createZeroLengthSpring(p0[0], p0[1], p1[0], p1[1]);
+		if (ols[i] == NULL) {
+			for (int j = 0; j < i; ++j) delete ols[j];
+			return NULL;
+		}
+	}
+	Pin* res = new Pin(paperApp->acessMesh(), pinHandles[h0]->pin_id, ols[0], ols[1], ols[2]);
 	return res;
 }

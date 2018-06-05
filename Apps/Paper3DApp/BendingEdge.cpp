@@ -45,7 +45,8 @@ double BendingEdge::getAngle(const dVector& x) {
 	P3D n1 = e0.cross(x2 - x0);
 	P3D n2 = (x3 - x0).cross(e0);
 	int sign = SGN(n1.cross(n2).dot(e0));
-	return acos(n1.dot(n2)/(n1.norm()*n2.norm()))*sign;
+	double ratio = std::max(std::min(n1.dot(n2) / (n1.norm()*n2.norm()), 1.0), -1.0);
+	return acos(ratio)*sign;
 }
 
 double BendingEdge::getEnergy(const dVector& x, const dVector& X) {

@@ -200,3 +200,14 @@ void Paper3DMesh::unpinNode(int ID) {//why was this not implemented in the simMe
 		}
 	}
 }
+
+void Paper3DMesh::replacePin(int ID, Pin* replacement) {
+	for (uint i = 0; i < elements.size(); i++) {
+		if (Pin* e = dynamic_cast<Pin*>(elements[i])) {
+			if (e->getID() == ID) {
+				delete elements[i];
+				elements[i] = replacement;
+			}
+		}
+	}
+}
