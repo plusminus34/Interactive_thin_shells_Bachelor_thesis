@@ -8,7 +8,7 @@
 #include "ShapeWindow.h"
 #include "SimulationWindow.h"
 
-enum MouseMode { mouse_none, mouse_drag, mouse_select, mouse_cut, mouse_pin };
+enum MouseMode { mouse_drag, mouse_cut, mouse_pin_create, mouse_pin_move, mouse_pin_rotate, mouse_pin_flip, mouse_pin_delete };
 
 /*
   Test App

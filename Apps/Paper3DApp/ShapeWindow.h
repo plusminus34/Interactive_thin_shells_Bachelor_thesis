@@ -18,7 +18,7 @@ protected:
 
 	//helper variables for pinning
 	bool first_point_set = false;
-	double xPin, yPin;
+	double xPin, yPin, initialAngle;
 	int next_pin_id = 0;
 	std::vector<PinHandle*> pinHandles;
 
@@ -31,7 +31,7 @@ protected:
 	int findPinHandleClosestTo(double x, double y);
 
 	BarycentricZeroLengthSpring* createZeroLengthSpring(double x0, double y0, double x1, double y1);
-	Pin* createPinFromHandles(int h0, int h1);
+	Pin* createPinFromHandles(uint h0, uint h1);
 
 public:
 	ShapeWindow(int x, int y, int w, int h, Paper3DApp *glApp);

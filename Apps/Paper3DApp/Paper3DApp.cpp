@@ -62,7 +62,8 @@ Paper3DApp::Paper3DApp() {
 	mainMenu->addVariable("Bulk modulus", bulkModulus);
 	mainMenu->addVariable("Bending stiffness", bend_k);
 	mainMenu->addVariable("Pin stiffness", pin_k);
-	mainMenu->addVariable("Mouse Mode", mouse_mode, true)->setItems({ "None", "Drag", "Select", "Cut", "Pin" });//selectable but nonfunctional
+	mainMenu->addVariable("Mouse Mode", mouse_mode, true)->setItems(
+		{ "Drag", "Cut", "Create Pin", "Move Pin", "Rotate Pin", "Flip Pin", "Delete Pin" });
 
 	menuScreen->performLayout();
 	setupWindows();

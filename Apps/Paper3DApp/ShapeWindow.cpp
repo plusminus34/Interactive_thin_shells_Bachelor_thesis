@@ -18,6 +18,31 @@ void ShapeWindow::setGridDimensions(int dim_x, int dim_y, double h) {
 	this->dim_x = dim_x;
 	this->dim_y = dim_y;
 	this->h = h;
+
+	if (true) {//starting pin TODO: move elsewhere
+		int new_id = next_pin_id++;
+
+		PinHandle* new_handle = new PinHandle;
+		new_handle->pin_id = new_id;
+		new_handle->index = 0;
+		new_handle->x = 0.11;
+		new_handle->y = 0.5;
+		new_handle->angle = PI*7/4;
+		new_handle->flipped = true;
+		pinHandles.push_back(new_handle);
+
+		new_handle = new PinHandle;
+		new_handle->pin_id = new_id;
+		new_handle->index = 1;
+		new_handle->x = 0.95;
+		new_handle->y = 0.2;
+		new_handle->angle = PI*3/4;
+		new_handle->flipped = false;
+		pinHandles.push_back(new_handle);
+
+		Pin* toAdd = createPinFromHandles(pinHandles.size() - 2, pinHandles.size() - 1);
+		paperApp->addMeshElement(toAdd);
+	}
 }
 
 bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
@@ -25,9 +50,14 @@ bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
 	Ray lastClickedRay = getRayFromScreenCoords(xPos, yPos);
 	P3D p;
 	lastClickedRay.getDistanceToPlane(Plane(P3D(), V3D(0, 0, 1)), &p);
-	if (paperApp->getMouseMode() == mouse_drag && dragging && selected_i != -1) {
+	if (paperApp->getMouseMode() == mouse_pin_move && dragging && selected_i != -1) {
 		pinHandles[selected_i]->x = p[0];
 		pinHandles[selected_i]->y = p[1];
+	} else if (paperApp->getMouseMode() == mouse_pin_rotate && dragging && selected_i != -1) {
+		//TODO update angle
+		double angle_current = atan2(p[1] - pinHandles[selected_i]->y, p[0] - pinHandles[selected_i]->x);
+		double angle_start = atan2(yDrag - pinHandles[selected_i]->y, xDrag - pinHandles[selected_i]->x);
+		pinHandles[selected_i]->angle = initialAngle + angle_current - angle_start;
 	}
 	/*TODO camera
 	if (GlobalMouseState::dragging) {
@@ -48,10 +78,11 @@ bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
 
 bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
 	pushViewportTransformation();
+	MouseMode mode = paperApp->getMouseMode();
 	Ray clickedRay = getRayFromScreenCoords(xPos, yPos);
 	P3D p;
 	clickedRay.getDistanceToPlane(Plane(P3D(), V3D(0, 0, 1)), &p);
-	if (paperApp->getMouseMode() == mouse_pin  && action == 1) {
+	if (mode == mouse_pin_create  && action == 1) {
 		if (p[0] >= 0 && p[0] <= h * dim_x && p[1] >= 0 && p[1] <= h * dim_y) {
 			if (!first_point_set) {
 				xPin = p[0];
@@ -63,7 +94,6 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 					printf("Error: Pin endpoints are too close\n");
 				}
 				else {
-					BarycentricZeroLengthSpring* ols[3];
 					Vector2d end0(xPin, yPin);
 					Vector2d end1(p[0], p[1]);
 					Vector2d dir = (end1 - end0).normalized();
@@ -97,13 +127,13 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 			}
 		}
 	}
-	else if (paperApp->getMouseMode() == mouse_drag && action == 1) {
+	else if (mode == mouse_pin_move && action == 1) {
 		dragging = true;
 		xDrag = p[0];
 		yDrag = p[1];
 		selected_i = findPinHandleClosestTo(p[0], p[1]);
 	}
-	else if (paperApp->getMouseMode() == mouse_drag && action == 0) {
+	else if (mode == mouse_pin_move && action == 0) {
 		dragging = false;
 		if (selected_i != -1) {
 			int i_handle_a = selected_i - (selected_i % 2);
@@ -116,6 +146,29 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 			else {
 				pinHandles[selected_i]->x = xDrag;
 				pinHandles[selected_i]->y = yDrag;
+			}
+			selected_i = -1;
+		}
+	}
+	else if (mode == mouse_pin_rotate && action == 1) {
+		dragging = true;
+		xDrag = p[0];
+		yDrag = p[1];
+		selected_i = findPinHandleClosestTo(p[0], p[1]);
+		initialAngle = pinHandles[selected_i]->angle;
+	}
+	else if (mode == mouse_pin_rotate && action == 0) {
+		dragging = false;
+		if (selected_i != -1) {
+			int i_handle_a = selected_i - (selected_i % 2);
+			int i_handle_b = i_handle_a + 1;
+			Pin* toAdd = createPinFromHandles(i_handle_a, i_handle_b);
+			if (toAdd != NULL) {
+				Paper3DMesh* paperMesh = dynamic_cast<Paper3DMesh*>(paperApp->acessMesh());
+				paperMesh->replacePin(toAdd->getID(), toAdd);
+			}
+			else {
+				pinHandles[selected_i]->angle = initialAngle;
 			}
 			selected_i = -1;
 		}
@@ -142,7 +195,7 @@ void ShapeWindow::drawScene() {
 		glEnd();
 	}
 
-	if (dragging && selected_i != -1) {
+	if (dragging && paperApp->getMouseMode() == mouse_pin_move && selected_i != -1) {
 		int other_i = selected_i;
 		if (selected_i % 2 == 0) {
 			other_i += 1;
@@ -154,6 +207,16 @@ void ShapeWindow::drawScene() {
 		glBegin(GL_LINES);
 		glVertex3d(pinHandles[selected_i]->x, pinHandles[selected_i]->y, 0.01);
 		glVertex3d(pinHandles[other_i]->x, pinHandles[other_i]->y, 0.01);
+		glEnd();
+	}
+
+	if (dragging && paperApp->getMouseMode() == mouse_pin_rotate && selected_i != -1) {
+		Vector2d corners[3];
+		for (int i = 0; i < 3; ++i)corners[i] = pinHandles[selected_i]->getPoint(i);
+		glColor3d(0, 1, 1);
+		glBegin(GL_LINE_LOOP);
+		for (int i = 0; i < 3; ++i)
+			glVertex3d(corners[i][0], corners[i][1], 0.01);
 		glEnd();
 	}
 
@@ -271,7 +334,7 @@ BarycentricZeroLengthSpring* ShapeWindow::createZeroLengthSpring(double x0, doub
 	return res;
 }
 
-Pin* ShapeWindow::createPinFromHandles(int h0, int h1) {
+Pin* ShapeWindow::createPinFromHandles(uint h0, uint h1) {
 
 	if (h0 >= pinHandles.size() || h1 >= pinHandles.size()) return NULL;
 	if (pinHandles[h0]->pin_id != pinHandles[h1]->pin_id) return NULL;
