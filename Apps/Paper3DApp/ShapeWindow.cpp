@@ -128,10 +128,10 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 		}
 	}
 	else if (mode == mouse_pin_move && action == 1) {
-		dragging = true;
 		xDrag = p[0];
 		yDrag = p[1];
 		selected_i = findPinHandleClosestTo(p[0], p[1]);
+		dragging = (selected_i != -1);
 	}
 	else if (mode == mouse_pin_move && action == 0) {
 		dragging = false;
@@ -151,11 +151,13 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 		}
 	}
 	else if (mode == mouse_pin_rotate && action == 1) {
-		dragging = true;
 		xDrag = p[0];
 		yDrag = p[1];
 		selected_i = findPinHandleClosestTo(p[0], p[1]);
-		initialAngle = pinHandles[selected_i]->angle;
+		if (selected_i != -1) {
+			initialAngle = pinHandles[selected_i]->angle;
+			dragging = true;
+		}
 	}
 	else if (mode == mouse_pin_rotate && action == 0) {
 		dragging = false;
@@ -172,6 +174,37 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 			}
 			selected_i = -1;
 		}
+	}
+	else if (mode == mouse_pin_flip && action == 1) {
+		int handle_i = findPinHandleClosestTo(p[0], p[1]);
+		if (handle_i != -1) {
+			pinHandles[handle_i]->flipped = !(pinHandles[handle_i]->flipped);
+			int i_handle_a = handle_i - (handle_i % 2);
+			int i_handle_b = i_handle_a + 1;
+			Pin* toAdd = createPinFromHandles(i_handle_a, i_handle_b);
+			if (toAdd != NULL) {
+				Paper3DMesh* paperMesh = dynamic_cast<Paper3DMesh*>(paperApp->acessMesh());
+				paperMesh->replacePin(toAdd->getID(), toAdd);
+			}
+			else {
+				pinHandles[handle_i]->flipped = !(pinHandles[handle_i]->flipped);
+			}
+		}
+
+	}
+	else if (mode == mouse_pin_delete && action == 1) {
+		int handle_i = findPinHandleClosestTo(p[0], p[1]);
+		if (handle_i != -1) {
+			int i_handle_a = handle_i - (handle_i % 2);
+			int i_handle_b = i_handle_a + 1;
+			paperApp->acessMesh()->deletePin(pinHandles[handle_i]->pin_id);
+			delete pinHandles[i_handle_a];
+			delete pinHandles[i_handle_b];
+			pinHandles[i_handle_a] = pinHandles[pinHandles.size() - 2];
+			pinHandles[i_handle_b] = pinHandles[pinHandles.size() - 1];
+			pinHandles.pop_back(); pinHandles.pop_back();
+		}
+
 	}
 	popViewportTransformation();
 	return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
@@ -239,7 +272,7 @@ int ShapeWindow::findNodeClosestTo(double x, double y) {
 	return (a*dim_y + b);
 }
 
-int ShapeWindow::findPinHandleClosestTo(double x, double y) {
+int ShapeWindow::findPinHandleClosestTo(double x, double y, double max_distance) {
 	double smallest_distance = HUGE_VAL;
 	int res = -1;
 	for (uint i = 0; i < pinHandles.size(); ++i) {
@@ -249,6 +282,7 @@ int ShapeWindow::findPinHandleClosestTo(double x, double y) {
 			res = i;
 		}
 	}
+	if (smallest_distance > max_distance * max_distance) res = -1;
 	return res;
 }
 

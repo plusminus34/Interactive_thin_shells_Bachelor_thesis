@@ -7,6 +7,7 @@
 #include <FEMSimLib/SimulationMesh.h>
 #include "ShapeWindow.h"
 #include "SimulationWindow.h"
+#include "Paper3DMesh.h"
 
 enum MouseMode { mouse_drag, mouse_cut, mouse_pin_create, mouse_pin_move, mouse_pin_rotate, mouse_pin_flip, mouse_pin_delete };
 
@@ -20,7 +21,7 @@ private:
 	ShapeWindow* shapeWindow = NULL;
 	SimulationWindow* simWindow = NULL;
 
-	SimulationMesh* simMesh;
+	Paper3DMesh* simMesh;
 
 	Ray lastClickedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
 	int selectedNodeID = -1;
@@ -39,7 +40,7 @@ private:
 	//Provide values for the subwindows
 	P3D getNodePos(int i);
 	MouseMode getMouseMode() { return mouse_mode; }
-	SimulationMesh* acessMesh() { return simMesh; }
+	Paper3DMesh* acessMesh() { return simMesh; }
 	Node* acessNode(int i) { return simMesh->nodes[i]; }
 	void addMeshElement(SimMeshElement* added) { simMesh->elements.push_back(added); }
 

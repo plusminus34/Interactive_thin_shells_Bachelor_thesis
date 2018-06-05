@@ -211,3 +211,15 @@ void Paper3DMesh::replacePin(int ID, Pin* replacement) {
 		}
 	}
 }
+
+void Paper3DMesh::deletePin(int ID) {
+	for (uint i = 0; i < elements.size(); i++) {
+		if (Pin* e = dynamic_cast<Pin*>(elements[i])) {
+			if (e->getID() == ID) {
+				delete elements[i];
+				elements[i] = elements[elements.size() - 1];
+				elements.pop_back();
+			}
+		}
+	}
+}

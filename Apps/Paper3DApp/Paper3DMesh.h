@@ -25,5 +25,6 @@ public:
 	virtual void unpinNode(int ID);
 
 	virtual void replacePin(int ID, Pin* replacement);
+	virtual void deletePin(int ID);
 };
 

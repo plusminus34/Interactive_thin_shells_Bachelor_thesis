@@ -28,7 +28,7 @@ protected:
 	double h;// distance between neighboring nodes
 
 	int findNodeClosestTo(double x, double y);
-	int findPinHandleClosestTo(double x, double y);
+	int findPinHandleClosestTo(double x, double y, double max_distance = 0.1);
 
 	BarycentricZeroLengthSpring* createZeroLengthSpring(double x0, double y0, double x1, double y1);
 	Pin* createPinFromHandles(uint h0, uint h1);
