@@ -3,7 +3,6 @@
 SimulationWindow::SimulationWindow(int x, int y, int w, int h, Paper3DApp *glApp) : GLWindow3D(x, y, w, h) {
 	paperApp = glApp;
 
-	dragging = false;
 	selectedNodeID = -1;
 
 //	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutRightAxis = 0.75;
@@ -17,7 +16,7 @@ SimulationWindow::~SimulationWindow(){
 bool SimulationWindow::onMouseMoveEvent(double xPos, double yPos) {
 	pushViewportTransformation();
 	lastClickedRay = getRayFromScreenCoords(xPos, yPos);
-	if (dragging) {
+	if (GlobalMouseState::dragging) {
 		if (selectedNodeID >= 0) {
 			P3D p;
 			lastClickedRay.getDistanceToPlane(draggingPlane, &p);
@@ -31,22 +30,20 @@ bool SimulationWindow::onMouseMoveEvent(double xPos, double yPos) {
 }
 
 bool SimulationWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
-	//action=1: button down, 0: button up
 	pushViewportTransformation();
-	if (paperApp->getMouseMode() == mouse_drag && action == 1) {// action==1 means the mouse button is being pressed
+	if (paperApp->getMouseMode() == mouse_drag && action == GLFW_PRESS) {
 		lastClickedRay = getRayFromScreenCoords(xPos, yPos);
 		selectedNodeID = paperApp->simMesh->getSelectedNodeID(lastClickedRay);
 		if (selectedNodeID != -1) {
-			dragging = true;
 			draggingPlane = Plane(paperApp->getNodePos(selectedNodeID), - lastClickedRay.direction);
 		}
 		popViewportTransformation();
 		return true;
 	}
-	else if (paperApp->getMouseMode() == mouse_drag && action == 0) {// action==1 means the mouse button is being released
+	else if (paperApp->getMouseMode() == mouse_drag && action == GLFW_RELEASE) {
 		if (selectedNodeID != -1) {
-			paperApp->simMesh->unpinNode(selectedNodeID);
-			dragging = false;
+			if(!(mods & GLFW_MOD_CONTROL))
+				paperApp->simMesh->unpinNode(selectedNodeID);
 			selectedNodeID = -1;
 		}
 		popViewportTransformation();

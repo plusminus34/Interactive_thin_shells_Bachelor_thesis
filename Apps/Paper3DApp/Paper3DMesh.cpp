@@ -45,6 +45,8 @@ void Paper3DMesh::init() {
 	for (int i = 0; i < triangles.rows(); ++i) {
 		CSTriangle3D* newElem = new CSTriangle3D(this, nodes[triangles(i,0)], nodes[triangles(i, 1)], nodes[triangles(i, 2)]);
 		elements.push_back(newElem);
+		for (int j = 0; j < 3; ++j)
+			nodes[triangles(i, j)]->adjacentElements.push_back(newElem);
 	}
 	//Generate edge elements
 	for (int i = 0; i < edges.rows(); ++i) {
@@ -70,6 +72,21 @@ void Paper3DMesh::init() {
 		BendingEdge* newElem = new BendingEdge(this, nodes[n0], nodes[n1], nodes[n2], nodes[n3]);
 		elements.push_back(newElem);
 
+		nodes[n0]->adjacentElements.push_back(newElem);
+		nodes[n1]->adjacentElements.push_back(newElem);
+		nodes[n2]->adjacentElements.push_back(newElem);
+		nodes[n3]->adjacentElements.push_back(newElem);
+	}
+
+	bool curved_initial = true;
+	if (curved_initial) {
+		for (uint i = 0; i < nodes.size(); ++i) {
+			P3D p = nodes[i]->getWorldPosition();
+			double angle = (-2*p[0]*p[0] + p[0]) * 0.07 * PI;
+			p[2] = p[0] * sin(angle);
+			p[0] *= cos(angle);
+			nodes[i]->setWorldPosition(p);
+		}
 	}
 }
 

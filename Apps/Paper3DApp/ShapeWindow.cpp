@@ -7,8 +7,6 @@ ShapeWindow::ShapeWindow(int x, int y, int w, int h, Paper3DApp *glApp) : GLWind
 	paperApp = glApp;
 
 	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -4.0;
-
-	dragging = false;
 }
 
 ShapeWindow::~ShapeWindow(){
@@ -50,10 +48,10 @@ bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
 	Ray lastClickedRay = getRayFromScreenCoords(xPos, yPos);
 	P3D p;
 	lastClickedRay.getDistanceToPlane(Plane(P3D(), V3D(0, 0, 1)), &p);
-	if (paperApp->getMouseMode() == mouse_pin_move && dragging && selected_i != -1) {
+	if (paperApp->getMouseMode() == mouse_pin_move && GlobalMouseState::dragging && selected_i != -1) {
 		pinHandles[selected_i]->x = p[0];
 		pinHandles[selected_i]->y = p[1];
-	} else if (paperApp->getMouseMode() == mouse_pin_rotate && dragging && selected_i != -1) {
+	} else if (paperApp->getMouseMode() == mouse_pin_rotate && GlobalMouseState::dragging && selected_i != -1) {
 		double angle_current = atan2(p[1] - pinHandles[selected_i]->y, p[0] - pinHandles[selected_i]->x);
 		double angle_start = atan2(yDrag - pinHandles[selected_i]->y, xDrag - pinHandles[selected_i]->x);
 		pinHandles[selected_i]->angle = initialAngle + angle_current - angle_start;
@@ -75,14 +73,11 @@ bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
 	}
 	/*TODO camera
 	if (GlobalMouseState::dragging) {
-		if (dragging) {
 			//TODO: move camera instead of target
 			P3D new_target(-(xPos - xDrag) / viewportWidth, (yPos - yDrag) / viewportHeight, 0);
 			camera->setCameraTarget(new_target);
-		}
 	}
 	else {
-		dragging = true;
 		xDrag = xPos; yDrag = yPos;
 	}
 	*/
@@ -96,7 +91,7 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 	Ray clickedRay = getRayFromScreenCoords(xPos, yPos);
 	P3D p;
 	clickedRay.getDistanceToPlane(Plane(P3D(), V3D(0, 0, 1)), &p);
-	if (mode == mouse_pin_create  && action == 1) {
+	if (mode == mouse_pin_create  && action == GLFW_PRESS) {
 		if (p[0] >= 0 && p[0] <= h * dim_x && p[1] >= 0 && p[1] <= h * dim_y) {
 			if (!first_point_set) {
 				xPin = p[0];
@@ -141,14 +136,12 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 			}
 		}
 	}
-	else if (mode == mouse_pin_move && action == 1) {
+	else if (mode == mouse_pin_move && action == GLFW_PRESS) {
 		xDrag = p[0];
 		yDrag = p[1];
 		selected_i = findPinHandleClosestTo(p[0], p[1]);
-		dragging = (selected_i != -1);
 	}
-	else if (mode == mouse_pin_move && action == 0) {
-		dragging = false;
+	else if (mode == mouse_pin_move && action == GLFW_RELEASE) {
 		if (selected_i != -1) {
 			int i_handle_a = selected_i - (selected_i % 2);
 			int i_handle_b = i_handle_a + 1;
@@ -164,17 +157,15 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 			selected_i = -1;
 		}
 	}
-	else if (mode == mouse_pin_rotate && action == 1) {
+	else if (mode == mouse_pin_rotate && action == GLFW_PRESS) {
 		xDrag = p[0];
 		yDrag = p[1];
 		selected_i = findPinHandleClosestTo(p[0], p[1]);
 		if (selected_i != -1) {
 			initialAngle = pinHandles[selected_i]->angle;
-			dragging = true;
 		}
 	}
-	else if (mode == mouse_pin_rotate && action == 0) {
-		dragging = false;
+	else if (mode == mouse_pin_rotate && action == GLFW_RELEASE) {
 		if (selected_i != -1) {
 			int i_handle_a = selected_i - (selected_i % 2);
 			int i_handle_b = i_handle_a + 1;
@@ -189,7 +180,7 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 			selected_i = -1;
 		}
 	}
-	else if (mode == mouse_pin_flip && action == 1) {
+	else if (mode == mouse_pin_flip && action == GLFW_PRESS) {
 		int handle_i = findPinHandleClosestTo(p[0], p[1]);
 		if (handle_i != -1) {
 			pinHandles[handle_i]->flipped = !(pinHandles[handle_i]->flipped);
@@ -206,7 +197,7 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 		}
 
 	}
-	else if (mode == mouse_pin_flip && action == 1) {
+	else if (mode == mouse_pin_flip && action == GLFW_PRESS) {
 		int handle_i = findPinHandleClosestTo(p[0], p[1]);
 		if (handle_i != -1) {
 			pinHandles[handle_i]->flipped = !(pinHandles[handle_i]->flipped);
@@ -223,7 +214,7 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 		}
 
 	}
-	else if (mode == mouse_pin_delete && action == 1) {
+	else if (mode == mouse_pin_delete && action == GLFW_PRESS) {
 		int handle_i = findPinHandleClosestTo(p[0], p[1]);
 		if (handle_i != -1) {
 			int i_handle_a = handle_i - (handle_i % 2);
@@ -237,7 +228,7 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 		}
 
 	}
-	else if (mode == mouse_cut && action == 1) {
+	else if (mode == mouse_cut && action == GLFW_PRESS) {
 		cutPath.clear();
 		cutPath.push_back(findNodeClosestTo(p[0], p[1]));
 	}
@@ -263,7 +254,7 @@ void ShapeWindow::drawScene() {
 		glEnd();
 	}
 
-	if (dragging && paperApp->getMouseMode() == mouse_pin_move && selected_i != -1) {
+	if (paperApp->getMouseMode() == mouse_pin_move && selected_i != -1 && GlobalMouseState::dragging) {
 		int other_i = selected_i;
 		if (selected_i % 2 == 0) {
 			other_i += 1;
@@ -278,7 +269,7 @@ void ShapeWindow::drawScene() {
 		glEnd();
 	}
 
-	if (dragging && paperApp->getMouseMode() == mouse_pin_rotate && selected_i != -1) {
+	if (paperApp->getMouseMode() == mouse_pin_rotate && selected_i != -1 && GlobalMouseState::dragging) {
 		Vector2d corners[3];
 		for (int i = 0; i < 3; ++i)corners[i] = pinHandles[selected_i]->getPoint(i);
 		glColor3d(0, 1, 1);
@@ -305,7 +296,7 @@ void ShapeWindow::drawAuxiliarySceneInfo() {
 }
 
 int ShapeWindow::findNodeClosestTo(double x, double y) {
-	//currently works only for rectangular mesh
+	//currently works only for rectangular mesh without cuts
 	x = std::max(0.0, std::min(x, h * (dim_x - 1)));
 	y = std::max(0.0, std::min(y, h * (dim_y - 1)));
 	int a = (int)round(x / h);

@@ -12,7 +12,6 @@ protected:
 	Paper3DApp* paperApp;
 
 	//helper variables for dragging
-	bool dragging;
 	double xDrag, yDrag;
 	int selected_i;
 

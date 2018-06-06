@@ -9,7 +9,6 @@ protected:
 	Paper3DApp* paperApp;
 
 	//Dragging nodes
-	bool dragging;
 	Plane draggingPlane;
 	int selectedNodeID;
 	Ray lastClickedRay;
