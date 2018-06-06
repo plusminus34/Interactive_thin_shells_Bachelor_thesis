@@ -54,10 +54,24 @@ bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
 		pinHandles[selected_i]->x = p[0];
 		pinHandles[selected_i]->y = p[1];
 	} else if (paperApp->getMouseMode() == mouse_pin_rotate && dragging && selected_i != -1) {
-		//TODO update angle
 		double angle_current = atan2(p[1] - pinHandles[selected_i]->y, p[0] - pinHandles[selected_i]->x);
 		double angle_start = atan2(yDrag - pinHandles[selected_i]->y, xDrag - pinHandles[selected_i]->x);
 		pinHandles[selected_i]->angle = initialAngle + angle_current - angle_start;
+	}
+	else if (paperApp->getMouseMode() == mouse_cut && GlobalMouseState::dragging) {
+		int n = findNodeClosestTo(p[0], p[1]);
+		bool present = false;
+		for (uint i = 0; i < cutPath.size(); ++i) present = (present || cutPath[i] == n);
+		if (!present) {
+			int last = cutPath[cutPath.size() - 1];
+			int dx = (n / dim_y) - (last / dim_y);
+			int dy = (n % dim_y) - (last % dim_y);
+			bool neighbour = (dx == 1 && dy == 0) || (dx == -1 && dy == 0) || (dx == 0 && dy == 1)
+				|| (dx == 0 && dy == -1) || (dx == 1 && dy == 1) || (dx == -1 && dy == -1);
+			if (neighbour) {
+				cutPath.push_back(n);
+			}
+		}
 	}
 	/*TODO camera
 	if (GlobalMouseState::dragging) {
@@ -192,6 +206,23 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 		}
 
 	}
+	else if (mode == mouse_pin_flip && action == 1) {
+		int handle_i = findPinHandleClosestTo(p[0], p[1]);
+		if (handle_i != -1) {
+			pinHandles[handle_i]->flipped = !(pinHandles[handle_i]->flipped);
+			int i_handle_a = handle_i - (handle_i % 2);
+			int i_handle_b = i_handle_a + 1;
+			Pin* toAdd = createPinFromHandles(i_handle_a, i_handle_b);
+			if (toAdd != NULL) {
+				Paper3DMesh* paperMesh = dynamic_cast<Paper3DMesh*>(paperApp->acessMesh());
+				paperMesh->replacePin(toAdd->getID(), toAdd);
+			}
+			else {
+				pinHandles[handle_i]->flipped = !(pinHandles[handle_i]->flipped);
+			}
+		}
+
+	}
 	else if (mode == mouse_pin_delete && action == 1) {
 		int handle_i = findPinHandleClosestTo(p[0], p[1]);
 		if (handle_i != -1) {
@@ -205,6 +236,10 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 			pinHandles.pop_back(); pinHandles.pop_back();
 		}
 
+	}
+	else if (mode == mouse_cut && action == 1) {
+		cutPath.clear();
+		cutPath.push_back(findNodeClosestTo(p[0], p[1]));
 	}
 	popViewportTransformation();
 	return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
@@ -252,6 +287,14 @@ void ShapeWindow::drawScene() {
 			glVertex3d(corners[i][0], corners[i][1], 0.01);
 		glEnd();
 	}
+	else if (paperApp->getMouseMode() == mouse_cut && GlobalMouseState::dragging && cutPath.size() > 1) {
+		glColor3d(1, 1, 0);
+		glBegin(GL_LINE_STRIP);
+		for (uint i = 0; i < cutPath.size(); ++i) {
+			glVertex3d(h * (cutPath[i] / dim_y), h * (cutPath[i] % dim_y), 0.011);
+		}
+		glEnd();
+	}
 
 	drawBorders();
 
@@ -263,10 +306,8 @@ void ShapeWindow::drawAuxiliarySceneInfo() {
 
 int ShapeWindow::findNodeClosestTo(double x, double y) {
 	//currently works only for rectangular mesh
-	if (x < 0) x = 0;
-	if (x > h * dim_x) x = h * dim_x;
-	if (y < 0) y = 0;
-	if (y > h * dim_y) y = h * dim_y;
+	x = std::max(0.0, std::min(x, h * (dim_x - 1)));
+	y = std::max(0.0, std::min(y, h * (dim_y - 1)));
 	int a = (int)round(x / h);
 	int b = (int)round(y / h);
 	return (a*dim_y + b);

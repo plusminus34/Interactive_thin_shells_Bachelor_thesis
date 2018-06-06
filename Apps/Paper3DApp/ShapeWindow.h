@@ -20,12 +20,15 @@ protected:
 	bool first_point_set = false;
 	double xPin, yPin, initialAngle;
 	int next_pin_id = 0;
-	std::vector<PinHandle*> pinHandles;
+	DynamicArray<PinHandle*> pinHandles;
 
 	//Paper shape parameters
 	int dim_x;// number of nodes in x
 	int dim_y;// number of nodes in y
 	double h;// distance between neighboring nodes
+
+	//helper variables for cutting
+	DynamicArray<int> cutPath;
 
 	int findNodeClosestTo(double x, double y);
 	int findPinHandleClosestTo(double x, double y, double max_distance = 0.1);
