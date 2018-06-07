@@ -8,9 +8,7 @@ CubicHermiteSpline::CubicHermiteSpline(const dVector &X, const dVector &S) {
 	M.setZero(X.size());
 	// --
 	this->S = S;
-	populate_KT();
-
-	dUdY = calculate_dUdY_();
+	populate_KT(); 
 }
  
 void CubicHermiteSpline::draw(const dVector &Y) {
@@ -83,15 +81,15 @@ dVector CubicHermiteSpline::calculate_U(const dVector &Y) {
 
 SparseMatrix CubicHermiteSpline::calculate_dUdY_() {
 	vector<MTriplet> triplets;
-	SparseMatrix dUdY; dUdY.resize(S_SIZE(), X_SIZE());
-	for (int i = 0; i < dUdY.rows(); ++i) {     // U[i]
+	SparseMatrix dUdY_; dUdY_.resize(S_SIZE(), X_SIZE());
+	for (int i = 0; i < dUdY_.rows(); ++i) {     // U[i]
 		int    &k = K[i];
 		double &t = T[i];
 		triplets.push_back(MTriplet(i, k, h00(t)));
 		triplets.push_back(MTriplet(i, k + 1, h01(t)));
 	}
-	dUdY.setFromTriplets(triplets.begin(), triplets.end());
-	return dUdY;
+	dUdY_.setFromTriplets(triplets.begin(), triplets.end());
+	return dUdY_;
 }
 
 // TODO: calculate_dUDM

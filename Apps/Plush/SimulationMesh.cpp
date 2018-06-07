@@ -28,10 +28,11 @@ SimulationMesh::~SimulationMesh() {
 	delete energyFunction;
 }
 
-void SimulationMesh::draw(dVector &x, dVector &alphac) {
+void SimulationMesh::draw(dVector &x, dVector &alphac, dVector &x0) {
 
 	if (x.size() == 0)      { x      = this->x;       }
 	if (alphac.size() == 0) { alphac = this->balphac; }
+	if (x0.size() == 0)     { x0     = this->x; } // FORNOW, equivalent to v <- 0
 
 	// https://stackoverflow.com/questions/3388294/opengl-question-about-the-usage-of-gldepthmask 
 	// // All opaque 
@@ -47,8 +48,8 @@ void SimulationMesh::draw(dVector &x, dVector &alphac) {
 		if (DRAW_NON_E)     { for (auto &non_E_element : non_E_elements) { non_E_element->draw(x); } }
 	}
 	// -- 
-	if (DRAW_NODAL_FORCES) { drawNodalForces(); }
-	if (DRAW_NODAL_VELOCITIES) { drawNodalVelocities(); }
+	if (DRAW_NODAL_FORCES) { drawNodalForces(x, alphac, x0); }
+	// if (DRAW_NODAL_VELOCITIES) { drawNodalVelocities(x); }
 
 	// // All transparent 
 	// -- 
@@ -217,13 +218,13 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const 
 			energyFunction->testHessianWithFD(xSolver);
 		}
 
-		int    MAX_ITERATIONS = 10;
-		double SOLVE_RESIDUAL = 10e-5;
+		int    MAX_ITERATIONS = _DYNAMICS_MAX_ITERATIONS; //100;
+		double SOLVE_RESIDUAL = _DYNAMICS_SOLVE_RESIDUAL; // 1e-6;
 		int MAX_LINE_SEARCH_ITERATIONS = 15;
 		double LINE_SEARCH_START_VALUE = 1.;
 		if (HIGH_PRECISION_NEWTON) {
 			MAX_ITERATIONS = 1000;
-			SOLVE_RESIDUAL = 1e-8;
+			SOLVE_RESIDUAL = 1e-10;
 			MAX_LINE_SEARCH_ITERATIONS = 48;
 			LINE_SEARCH_START_VALUE = 1.;
 		}
@@ -231,10 +232,12 @@ pair<dVector, dVector> SimulationMesh::solve_dynamics(const dVector &x_0, const 
 		minimizer.solveResidual = SOLVE_RESIDUAL;
 		minimizer.maxLineSearchIterations = MAX_LINE_SEARCH_ITERATIONS;
 		minimizer.lineSearchStartValue = LINE_SEARCH_START_VALUE;
-		minimizer.printOutput = true;
+		minimizer.printOutput = false;
 
 		double functionValue = energyFunction->computeValue(xSolver); // TODO:See AppSoftIK notes.
 		minimizer.minimize(energyFunction, xSolver, functionValue);
+
+		magG_tmp = minimizer.magG_tmp; // FORNOW
 
 		x_new = xSolver;
 		v_new = (x_new - x_0) / timeStep;
@@ -1032,31 +1035,31 @@ void SimulationMesh::prep_nodal_force_dVectors() {
 	resize_zero(F_sum,  DN);
 }
 
-void SimulationMesh::computeTotalNodalForces(const dVector &y) {
-	// F: Total nodal force|y (considers everything, including dynamics)
-	//    NOTE: In statics, F = F_sum.
-	F.setZero();
-	energyFunction->addGradientTo(F, y);
-	F *= -1;
-}
+// void SimulationMesh::computeTotalNodalForces(const dVector &y) {
+// 	// F: Total nodal force|y (considers everything, including dynamics)
+// 	//    NOTE: In statics, F = F_sum.
+// 	F.setZero();
+// 	energyFunction->addGradientTo(F, y);
+// 	F *= -1;
+// }
 
-void SimulationMesh::computeConstituentNodalForces(const dVector &y) {
+void SimulationMesh::computeConstituentNodalForces(const dVector &x, const dVector &balphac, const dVector &x0) {
 	/* Computes total nodal forces, as well as useful constituent forces.
 	   Usage note: y is typically going to be x or x_prime. */
  
 	// F_spx: Simplex (material) forces
 	F_spx.setZero();
-	for (auto &simplex : simplices) { simplex->addEnergyGradientTo(y, X, F_spx); }
+	for (auto &simplex : simplices) { simplex->addEnergyGradientTo(x, dVector(), F_spx); }
 	F_spx *= -1;
 
 	// F_tdn: Tendon forces
 	F_tdn.setZero();
-	for (auto &tendon : tendons) { tendon->addEnergyGradientTo(y, X, F_tdn); }
+	for (auto &tendon : tendons) { tendon->addEnergyGradientTo(x, balphac, F_tdn); }
 	F_tdn *= -1;
  
 	// F_pin: Pin forces
 	F_pin.setZero();
-	for (auto &pin : pins) { pin->addEnergyGradientTo(y, X, F_pin); }
+	for (auto &pin : pins) { pin->addEnergyGradientTo(x, dVector(), F_pin); }
 	F_pin *= -1;
 
 	// F_ext: External forces (gravity?)
@@ -1065,7 +1068,7 @@ void SimulationMesh::computeConstituentNodalForces(const dVector &y) {
 	// F_ctc: Contact forces
 	// F_ctc = f_ctc; // TODO: CHECKME
 	F_ctc.setZero();
-	for (auto &ctc : contacts) { ctc->addEnergyGradientTo(y, X, F_ctc); }
+	for (auto &ctc : contacts) { update_contacts(x0); ctc->addEnergyGradientTo(x, dVector(), F_ctc); }
 	F_ctc *= -1;
 
 	// F_sum: Summed force (_not_ counting intertial term used for dynamics)
@@ -1073,10 +1076,10 @@ void SimulationMesh::computeConstituentNodalForces(const dVector &y) {
 
 }
 
-void SimulationMesh::drawNodalForces() {
+void SimulationMesh::drawNodalForces(const dVector &x, const dVector &alphac, const dVector &x0) {
 	// NOTE: Need to call this first.
-	computeTotalNodalForces(x);
-	computeConstituentNodalForces(x);
+	// computeTotalNodalForces(x);
+	computeConstituentNodalForces(x, alphac, x0);
 
 	auto quiver_caller = [this] (const dVector &y, const dVector &G, const P3D &color) {
 		vector<P3D> y_vec;
@@ -1109,30 +1112,30 @@ void SimulationMesh::drawNodalForces() {
 	} glPopMatrix();
 }
 
-void SimulationMesh::drawNodalVelocities() {
+// void SimulationMesh::drawNodalVelocities(const dVector &x) {
 
-	// FORNOW
-	auto quiver_caller = [this](const dVector &y, const dVector &G, const P3D &color) {
-		vector<P3D> y_vec;
-		vector<V3D> G_vec;
-		if (D() == 2) {
-			y_vec = pack_dVector2_into_vecP3D(y);
-			G_vec = pack_dVector2_into_vecV3D(G);
-		}
-		else {
-			y_vec = pack_dVector3_into_vecP3D(y);
-			G_vec = pack_dVector3_into_vecV3D(G);
-		}
-		set_color(color);
-		// --
-		quiver(y_vec, G_vec, D());
-	};
+// 	// FORNOW
+// 	auto quiver_caller = [this](const dVector &y, const dVector &G, const P3D &color) {
+// 		vector<P3D> y_vec;
+// 		vector<V3D> G_vec;
+// 		if (D() == 2) {
+// 			y_vec = pack_dVector2_into_vecP3D(y);
+// 			G_vec = pack_dVector2_into_vecV3D(G);
+// 		}
+// 		else {
+// 			y_vec = pack_dVector3_into_vecP3D(y);
+// 			G_vec = pack_dVector3_into_vecV3D(G);
+// 		}
+// 		set_color(color);
+// 		// --
+// 		quiver(y_vec, G_vec, D());
+// 	};
 
-	glPushMatrix(); {
-		quiver_caller(x, v, COL_V);
-	} glPopMatrix();
+// 	glPushMatrix(); {
+// 		quiver_caller(x, v, COL_V);
+// 	} glPopMatrix();
 
-}
+// }
 
 /*
 

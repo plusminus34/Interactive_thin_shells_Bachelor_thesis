@@ -11,7 +11,7 @@ PlushApplication::PlushApplication() {
 	showGroundPlane = false;
 	bgColorR = 0.; bgColorG = 0.; bgColorB = 0.; bgColorA = 1.;
 	// --
-	push_back_handler(new P2DDragger({ &test_P3D }));
+	// push_back_handler(new P2DDragger({ &test_P3D }));
 	// --
 	// menuScreen->removeChild(0);
 	// mainMenu->addWindow(Eigen::Vector2i(0, 0), "Main Menu");
@@ -81,6 +81,7 @@ void PlushApplication::processToggles() {
 
 
 void PlushApplication::flashError() {
+	set_color(PUMPKIN);
 	if (BERN_ERROR) {
 		BERN_ERROR = false;
 		BERN_ERROR_REPORTING = true;
@@ -99,9 +100,7 @@ void PlushApplication::flashError() {
 }
 
 void PlushApplication::drawHandlers() { 
-	for (auto &handler : handlers) {
-		handler->draw();
-	}
+	for (auto &handler : handlers) { handler->draw(); }
 }
 
 void PlushApplication::recordVideo() { 
@@ -140,12 +139,14 @@ void PlushApplication::printCamera() {
 
 bool PlushApplication::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos) {
 	for (auto handler : handlers) { if (handler->mouse_button(button, action, mods, xPos, yPos)) { return true; } }
+	for (auto handler : handlers2) { if (handler->mouse_button(button, action, mods, xPos, yPos)) { return true; } }
 	if (GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos)) { return true; }
 	return false;
 }
 
 bool PlushApplication::onMouseMoveEvent(double xPos, double yPos) {
 	for (auto handler : handlers) { if (handler->mouse_move(xPos, yPos)) { return true; } } 
+	for (auto handler : handlers2) { if (handler->mouse_move(xPos, yPos)) { return true; } } 
 	if (GLApplication::onMouseMoveEvent(xPos, yPos) == true) { return true; }
 	if (SPOOF_2D_CAMERA) { 
 		((GLTrackingCamera *)camera)->rotAboutRightAxis = 0.;
@@ -156,12 +157,13 @@ bool PlushApplication::onMouseMoveEvent(double xPos, double yPos) {
 
 bool PlushApplication::onMouseWheelScrollEvent(double xOffset, double yOffset) {
 	for (auto handler : handlers) { if (handler->mouse_wheel(xOffset, yOffset)) { return true; }; } 
+	for (auto handler : handlers2) { if (handler->mouse_wheel(xOffset, yOffset)) { return true; }; } 
 	if (GLApplication::onMouseWheelScrollEvent(xOffset, yOffset)) { return true; };
 	return false;
 }
 
 bool PlushApplication::onKeyEvent(int key, int action, int mods) { 
-	for (auto handler : handlers) { handler->key_event(key, action, mods); } // FORNOW
+	for (auto handler : handlers2) { handler->key_event(key, action, mods); } // FORNOW
 	if (GLApplication::onKeyEvent(key, action, mods)) { return true; } 
 	return false;
 }
@@ -174,6 +176,7 @@ bool PlushApplication::onCharacterPressedEvent(int key, int mods) {
 		printCamera();
 	}
 	// -- //
+	for (auto handler : handlers2) { handler->character_event(key, mods); } // FORNOW
 	if (GLApplication::onCharacterPressedEvent(key, mods)) { return true; } 
 	return false;
 }

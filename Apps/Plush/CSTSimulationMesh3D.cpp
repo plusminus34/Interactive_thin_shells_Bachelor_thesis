@@ -50,7 +50,7 @@ void CSTSimulationMesh3D::spawnSimplexMesh() {
 	spawnMesh(nodes_as_vecP3D, simplices_as_vecVecInt);
 }
 
-void CSTSimulationMesh3D::spawnSavedMesh(const char *prefix) {
+void CSTSimulationMesh3D::spawnSavedMesh(const char *prefix, bool loadTendons) {
 	vector<P3D> nodes_as_vecP3D;
 	vector<vector<int>> simplices_as_vecVecInt;
 

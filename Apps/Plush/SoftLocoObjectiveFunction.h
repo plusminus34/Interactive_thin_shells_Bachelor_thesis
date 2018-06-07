@@ -16,7 +16,7 @@ public:
  
 	virtual double computeValue(const dVector &x); 
 	virtual void addGradientTo(dVector &grad, const dVector &x);
-	// virtual void addHessianEntriesTo(DynamicArray<MTriplet> &hessianEntries, const dVector &x); 
+	virtual void addHessianEntriesTo(DynamicArray<MTriplet> &hessianEntries, const dVector &x); 
 	virtual void setCurrentBestSolution(const dVector& x);
 
 };

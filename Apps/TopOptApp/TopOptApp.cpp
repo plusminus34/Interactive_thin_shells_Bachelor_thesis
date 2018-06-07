@@ -7,8 +7,8 @@
 
 #include <GUILib/GLUtils.h>
 #include <GUILib/GLTrackingCamera.h>
-#include <OptimizationLib\SQPFunctionMinimizer.h>
-#include <OptimizationLib\GradientDescentFunctionMinimizer.h>
+#include <OptimizationLib/SQPFunctionMinimizer.h>
+#include <OptimizationLib/GradientDescentFunctionMinimizer.h>
 
 
 //#define MANUAL_OPT_DEMO

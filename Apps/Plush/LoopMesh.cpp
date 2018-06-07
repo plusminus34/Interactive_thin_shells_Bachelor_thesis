@@ -312,7 +312,7 @@ void LoopMesh::draw() {
 
 	set_color(LIGHT_PUMPKIN);
 	glBegin(GL_POINTS);
-	for (auto &p : boundary) { glP3Dz(*p, 4); }
+	for (auto &p : boundary) { glP3D(*p); }
 	glEnd();
 
 	// Warning of points being close
@@ -322,7 +322,7 @@ void LoopMesh::draw() {
 		P3D p = *boundary[i];
 		P3D q = *boundary[(i + 1) % N];
 		if ((p - q).norm() < 1e-2) {
-			glP3Dz(p, 3);
+			glP3D(p);
 		}
 	}
 	glEndBernCircles();
@@ -333,7 +333,7 @@ void LoopMesh::draw() {
 		store_triangulation(in, out);
 		cleanup_triangulation(in, out);
 
-		set_color(HENN1NK);
+		set_color(CLAY);
 		for (auto &triangle : triangulated_triangles) {
 			glBegin(GL_LINE_LOOP);
 			for (auto &i : triangle) {
@@ -342,7 +342,7 @@ void LoopMesh::draw() {
 			glEnd();
 		}
 
-		set_color(LIGHT_HENN1NK);
+		set_color(LIGHT_CLAY);
 		for (auto &triangle : triangulated_triangles) {
 			glBegin(GL_TRIANGLES);
 			for (auto &i : triangle) {

@@ -47,10 +47,10 @@ public:
 	int selected_tendon_i = -1;
 
 public:
-	virtual bool mouse_move(double xPos, double yPos); 
-	virtual bool mouse_button(int button, int action, int mods, double xPos, double yPos);
-	virtual bool mouse_wheel(double xOffset, double yOffset);
-	virtual bool key_event(int key, int action, int mods);
+	virtual bool mouse_move_(double xPos, double yPos); 
+	virtual bool mouse_button_(int button, int action, int mods, double xPos, double yPos);
+	virtual bool mouse_wheel_(double xOffset, double yOffset);
+	virtual bool key_event_(int key, int action, int mods);
 
 public:
 	const double POINT_THRESH = .05;
