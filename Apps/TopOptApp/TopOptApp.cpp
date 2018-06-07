@@ -10,13 +10,12 @@
 #include <OptimizationLib\SQPFunctionMinimizer.h>
 #include <OptimizationLib\GradientDescentFunctionMinimizer.h>
 
-//sag-free simulations as an application of shape optimization
-//adjoint method for non-linear top-opt
+
+//#define MANUAL_OPT_DEMO
 
 //Objectives:
 //- compliance/stored energy
 //- smoothness of solution (in case dithering artifacts come up)
-//- L0 regularizer to force solution to choose a side...
 
 //Constraints:
 //- upper bound on total mass based on desired value
@@ -26,7 +25,7 @@ TopOptApp::TopOptApp() {
 	setWindowTitle("Test FEM Sim Application...");
 
 	int nRows = 60;
-	int nCols = 10;
+	int nCols = 20;
 	CSTSimulationMesh2D::generateSquareTriMesh("../data/FEM/2d/triMeshTMP.tri2d", -1, 0, 0.1, 0.1, nRows, nCols);
 
 	delete camera;
@@ -48,9 +47,13 @@ TopOptApp::TopOptApp() {
 	externalLoads.resize(simMesh->nodes.size());
 	resize(densityParams, simMesh->elements.size()); densityParams.setOnes();
 
-//	externalLoads[nCols * (nRows -1)] = V3D(0,-0.05,0);
-
 	showGroundPlane = false;
+
+#ifdef MANUAL_OPT_DEMO
+	targetMassRatio = 100;
+#else
+	externalLoads[nCols * (nRows - 1)] = V3D(0, -0.15, 0);
+#endif
 
 	mainMenu->addGroup("FEM Sim options");
 	mainMenu->addVariable<MaterialModel2D>("MaterialModel",
@@ -147,6 +150,12 @@ TopOptApp::TopOptApp() {
 }
 
 void TopOptApp::applyDensityParametersToSimMesh() {
+	for (uint i = 0; i < simMesh->elements.size(); i++) {
+		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i]))
+			e->matModel = matModel;
+	}
+
+
 	constraints->setTotalMassUpperBound(initialMass * targetMassRatio / 100.0);
 
 	for (uint i = 0; i < simMesh->elements.size(); i++)
