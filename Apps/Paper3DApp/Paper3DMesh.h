@@ -10,6 +10,12 @@ private:
 	// N by 2 matrix to store edges between two triangles
 	Eigen::MatrixXi edges;
 
+	// Helper data structures for cutting
+	// Is node i on the boundary?
+	DynamicArray<bool> boundary;
+	// Store (ordered) neighbours of each node
+	DynamicArray<DynamicArray<int>> orderedAdjacentNodes;
+
 	//generate elements after defining triangles
 	void init();
 public:
@@ -26,5 +32,7 @@ public:
 
 	virtual void replacePin(int ID, Pin* replacement);
 	virtual void deletePin(int ID);
+
+	virtual void makeCut(const DynamicArray<uint>& path);
 };
 

@@ -78,6 +78,74 @@ void Paper3DMesh::init() {
 		nodes[n3]->adjacentElements.push_back(newElem);
 	}
 
+	// helper data structure 3: stores edges between nodes adjacent to node i (aka edges on the 1-ring of node i)
+	std::vector<std::vector<std::vector<int>>> hjg;
+	hjg.resize(nodes.size());
+	for (int i = 0; i < triangles.rows(); ++i) {
+		for (int j = 0; j < 3; ++j) {
+			int j1 = (j + 1) % 3;
+			int j2 = (j + 2) % 3;
+			int n = triangles(i, j);
+			std::vector<int> r(2);
+			r[0] = triangles(i,j2); r[1] = triangles(i,j1);
+			hjg[n].push_back(r);
+		}
+	}
+
+	boundary.resize(nodes.size());
+	orderedAdjacentNodes.resize(nodes.size());
+	for (uint i = 0; i < nodes.size(); ++i) {
+		boundary[i] = false;
+		if (hjg[i].size() == 0) continue;// avoid problems with unconnected nodes
+
+		int n_segments = hjg[i].size();
+		orderedAdjacentNodes[i].resize(n_segments + 1);
+
+		// arbitrary starting point
+		orderedAdjacentNodes[i][0] = hjg[i][0][1];
+		//find forward path
+		for (uint j = 1; j < n_segments + 1; ++j) {
+			orderedAdjacentNodes[i][j] = -1;
+			for (uint k = 0; k < hjg[i].size(); ++k) {
+				if (orderedAdjacentNodes[i][j - 1] == hjg[i][k][0])
+					orderedAdjacentNodes[i][j] = hjg[i][k][1];
+			}
+			if (orderedAdjacentNodes[i][j] == -1) {
+				boundary[i] = true;
+				//current neighbour must be at the end
+				orderedAdjacentNodes[i][n_segments] = orderedAdjacentNodes[i][j - 1];
+				break;
+			}
+		}
+
+		if (boundary[i]) {
+			//On boundary
+			// Find entire path by going backwards from the end
+			for (int j = n_segments - 1; j >= 0; --j) {
+				orderedAdjacentNodes[i][j] = -1;
+				for (uint k = 0; k < hjg[i].size(); ++k) {
+					if (orderedAdjacentNodes[i][j + 1] == hjg[i][k][1])
+						orderedAdjacentNodes[i][j] = hjg[i][k][0];
+				}
+			}
+			
+		}
+		else {
+			//Not on boundary
+			// Last element is the same as the first one -> remove it
+			orderedAdjacentNodes[i].pop_back();
+		}
+	}
+
+	//Debugging output
+	for (uint i = 0; i < orderedAdjacentNodes.size(); ++i) {
+		printf("Node %d\thas %d\tneighbours",i, orderedAdjacentNodes[i].size());
+		for (uint j = 0; j < orderedAdjacentNodes[i].size(); ++j) {
+			printf("\t%d", orderedAdjacentNodes[i][j]);
+		}
+		printf("\n");
+	}
+	//TODO do this elsewhere
 	bool curved_initial = true;
 	if (curved_initial) {
 		for (uint i = 0; i < nodes.size(); ++i) {
@@ -239,4 +307,14 @@ void Paper3DMesh::deletePin(int ID) {
 			}
 		}
 	}
+}
+
+void Paper3DMesh::makeCut(const DynamicArray<uint>& path) {
+	if (path.size() < 2) return;
+	/*
+	nodes[1]->getUndeformedPosition();
+	if (CSTriangle3D* e = dynamic_cast<CSTriangle3D*>(elements[1])) {
+		
+	}
+	*/
 }
