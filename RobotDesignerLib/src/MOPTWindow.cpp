@@ -5,7 +5,7 @@
 #include <RobotDesignerLib/LocomotionEngineManagerIP.h>
 #include "../Apps/RobotDesignerApp/RobotDesignerApp.h"
 
-MOPTWindow::MOPTWindow(int x, int y, int w, int h, RobotDesignerApp* theApp) : GLWindow3D(x, y, w, h) {
+MOPTWindow::MOPTWindow(int x, int y, int w, int h, BaseRobotControlApp* theApp) : GLWindow3D(x, y, w, h) {
 	this->theApp = theApp;
 
 	ffpViewer = new FootFallPatternViewer(x, 0, (int)(w), (int)(h / 4.0));

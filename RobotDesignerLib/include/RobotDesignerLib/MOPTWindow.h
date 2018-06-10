@@ -6,6 +6,7 @@
 #include <RobotDesignerLib/LocomotionEngineManager.h>
 #include <GUILib/TranslateWidget.h>
 #include <GUILib/CompositeWidget.h>
+#include <RobotDesignerLib/BaseRobotControlApp.h>
 #include <memory>
 
 struct MOPTParams {
@@ -59,7 +60,7 @@ class RobotDesignerApp;
 class MOPTWindow : public GLWindow3D {
 public:
 	bool initialized = false;
-	RobotDesignerApp* theApp;
+	BaseRobotControlApp* theApp;
 
 	int nTimeSteps = 12;
 	double globalMOPTRegularizer = 0.01;
@@ -95,7 +96,7 @@ public:
 	std::list<shared_ptr<TranslateWidget>> EEwidgets;
 	std::list<shared_ptr<CompositeWidget>> COMWidgets;
 public:
-	MOPTWindow(int x, int y, int w, int h, RobotDesignerApp* glApp);
+	MOPTWindow(int x, int y, int w, int h, BaseRobotControlApp* glApp);
 	~MOPTWindow();
 
 	void clear();

@@ -21,35 +21,26 @@
 #include <RobotDesignerLib/EnergyWindow.h>
 #include <RobotDesignerLib/BaseRobotControlApp.h>
 
-#ifdef USE_MATLAB
-	#define RUN_IN_MATLAB(x) x
-	#include <igl/matlab/matlabinterface.h>
-#else
-//	RUN_IN_MATLAB(x)
-#endif
-
-#define START_WITH_VISUAL_DESIGNER
+//work towards: 
+//	- long horizon motion plans that include a change in gait, legs being used as arms, etc
+//	- mopt that combines locomotion and manipulation
+//	- MOPT for multi-robot systems, including locomotion and manipulation
 
 class IntelligentRobotEditingWindow;
 class EnergyWindow;
+
 /**
  * Robot Design and Simulation interface
  */
-class RobotDesignerApp : public BaseRobotControlApp {
+class FastRobotControlApp : public BaseRobotControlApp {
 public:
-	ModularDesignWindow *designWindow = NULL;
 	MOPTWindow* moptWindow = NULL;
 	SimWindow* simWindow = NULL;
-	IntelligentRobotEditingWindow* iEditWindow = NULL;
 	MotionPlanAnalysis *motionPlanAnalysis = nullptr;
-	EnergyWindow *energyWindow = nullptr;
-
 	bool doMotionAnalysis = true;
 
 	bool shouldShowSimWindow();
 	bool shouldShowMOPTWindow();
-	bool shouldShowIEditWindow();
-	bool shouldShowDesignWindow();
 
 	bool drawMotionPlan = false;
 
@@ -65,32 +56,20 @@ public:
 		MOTION_PLAN_ANIMATION,
 		PHYSICS_SIMULATION_WITH_POSITION_CONTROL,
 		PHYSICS_SIMULATION_WITH_TORQUE_CONTROL,
-		PHYSICAL_ROBOT_CONTROL_VIA_POLOLU_MAESTRO
 	};
 	RD_RUN_OPTIONS runOption = MOTION_PLAN_OPTIMIZATION;
 
+	bool showSimWindowOnly = false;
+
 	int walkCycleIndex = 0;
 
-	enum RD_VIEW_OPTIONS {
-		SIM_WINDOW_ONLY = 0,
-		SIM_AND_MOPT,
-		SIM_AND_DESIGN,
-		MOPT_AND_IEDIT,
-		MOPT_WINDOW_ONLY
-	};
-#ifdef START_WITH_VISUAL_DESIGNER
-	RD_VIEW_OPTIONS viewOptions = SIM_AND_DESIGN;
-#else //  START_WITH_VISUAL_DESIGNER
-	RD_VIEW_OPTIONS viewOptions = SIM_AND_MOPT;// MOPT_AND_IEDIT;// SIM_AND_DESIGN;
-#endif
 	bool doDebug = false;
-
 
 public:
 	// constructor
-	RobotDesignerApp();
+	FastRobotControlApp();
 	// destructor
-	virtual ~RobotDesignerApp(void);
+	virtual ~FastRobotControlApp(void);
 	// Run the App tasks
 	virtual void process();
 	// Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
@@ -128,22 +107,6 @@ public:
 	void createRobotFromCurrentDesign();
 
 	void exportMeshes();
-
-	SymmetricParameterizedRobotDesign* prd = NULL;
-
-#ifdef USE_MATLAB
-	Engine *matlabengine;
-#endif
-
-	MatrixNxM dmdp; //The jacobian at a point
-	dVector m0;
-	bool useSVD = false;
-	MatrixNxM dmdp_V;
-	dVector p0;
-	dVector slidervalues;
-	bool updateMotionBasedOnJacobian = false;
-	bool optimizeWhileAnimating = false;
-	bool syncCameras = false;
 };
 
 
