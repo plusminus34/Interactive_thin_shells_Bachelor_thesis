@@ -21,10 +21,7 @@
 #include <RobotDesignerLib/EnergyWindow.h>
 #include <RobotDesignerLib/BaseRobotControlApp.h>
 
-//work towards: 
-//	- long horizon motion plans that include a change in gait, legs being used as arms, etc
-//	- mopt that combines locomotion and manipulation
-//	- MOPT for multi-robot systems, including locomotion and manipulation
+
 
 class IntelligentRobotEditingWindow;
 class EnergyWindow;
@@ -37,6 +34,7 @@ public:
 	MOPTWindow* moptWindow = NULL;
 	SimWindow* simWindow = NULL;
 	MotionPlanAnalysis *motionPlanAnalysis = nullptr;
+	EnergyWindow *energyWindow = nullptr;
 	bool doMotionAnalysis = true;
 
 	bool shouldShowSimWindow();

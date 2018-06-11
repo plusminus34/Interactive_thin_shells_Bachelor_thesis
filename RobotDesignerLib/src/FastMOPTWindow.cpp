@@ -1,11 +1,11 @@
 #pragma warning(disable : 4996)
 
-#include <RobotDesignerLib/MOPTWindow.h>
+#include <RobotDesignerLib/FastMOPTWindow.h>
 #include <RobotDesignerLib/LocomotionEngineManagerGRF.h>
 #include <RobotDesignerLib/LocomotionEngineManagerIP.h>
 #include "../Apps/RobotDesignerApp/RobotDesignerApp.h"
 
-MOPTWindow::MOPTWindow(int x, int y, int w, int h, BaseRobotControlApp* theApp) : GLWindow3D(x, y, w, h) {
+FastMOPTWindow::FastMOPTWindow(int x, int y, int w, int h, BaseRobotControlApp* theApp) : GLWindow3D(x, y, w, h) {
 	this->theApp = theApp;
 
 	ffpViewer = new FootFallPatternViewer(x, 0, (int)(w), (int)(h / 4.0));
@@ -22,7 +22,7 @@ MOPTWindow::MOPTWindow(int x, int y, int w, int h, BaseRobotControlApp* theApp) 
 
 }
 
-void MOPTWindow::addMenuItems() {
+void FastMOPTWindow::addMenuItems() {
 /*
 	auto tmp = new nanoFui::Label(theApp->mainMenu->window(), "Popup buttons", "sans-bold");
 	theApp->mainMenu->addWidget("", tmp);
@@ -186,17 +186,17 @@ void MOPTWindow::addMenuItems() {
 }
 
 
-MOPTWindow::~MOPTWindow()
+FastMOPTWindow::~FastMOPTWindow()
 {
 	clear();
 }
 
-void MOPTWindow::clear()
+void FastMOPTWindow::clear()
 {
 
 }
 
-void MOPTWindow::loadRobot(Robot* robot){
+void FastMOPTWindow::loadRobot(Robot* robot){
 	clear();
 
 	initialized = true;
@@ -217,7 +217,7 @@ void MOPTWindow::loadRobot(Robot* robot){
 	}
 }
 
-void MOPTWindow::syncMOPTWindowParameters() {
+void FastMOPTWindow::syncFastMOPTWindowParameters() {
 	moptParams.swingFootHeight = locomotionManager->motionPlan->swingFootHeight;
 	moptParams.desTravelDistX = locomotionManager->motionPlan->desDistanceToTravel.x();
 	moptParams.desTravelDistZ = locomotionManager->motionPlan->desDistanceToTravel.z();
@@ -249,7 +249,7 @@ void MOPTWindow::syncMOPTWindowParameters() {
 	moptParams.optimizationMethod = (MOPTParams::OptMethod) locomotionManager->optimizationMethod;
 }
 
-void MOPTWindow::syncMotionPlanParameters(){
+void FastMOPTWindow::syncMotionPlanParameters(){
 	locomotionManager->motionPlan->swingFootHeight = moptParams.swingFootHeight;
 	locomotionManager->motionPlan->desDistanceToTravel.x() = moptParams.desTravelDistX;
 	locomotionManager->motionPlan->desDistanceToTravel.z() = moptParams.desTravelDistZ;
@@ -284,7 +284,7 @@ void MOPTWindow::syncMotionPlanParameters(){
 
 }
 
-LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
+LocomotionEngineManager* FastMOPTWindow::initializeNewMP(bool doWarmStart){
 	delete locomotionManager;
 
 	footFallPattern.writeToFile("../out/tmpFFP.ffp");
@@ -316,7 +316,7 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	if (doWarmStart)
 		locomotionManager->warmStartMOpt();
 
-	syncMOPTWindowParameters();
+	syncFastMOPTWindowParameters();
 
 	locomotionManager->setDefaultOptimizationFlags();
 	locomotionManager->energyFunction->regularizer = globalMOPTRegularizer;
@@ -324,7 +324,7 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	return locomotionManager;
 }
 
-double MOPTWindow::runMOPTStep(){
+double FastMOPTWindow::runMOPTStep(){
 	syncMotionPlanParameters();
 
 	locomotionManager->energyFunction->regularizer = globalMOPTRegularizer;
@@ -344,21 +344,21 @@ double MOPTWindow::runMOPTStep(){
 	return energyVal;
 }
 
-void MOPTWindow::reset(){
+void FastMOPTWindow::reset(){
 	locomotionManager = NULL;
 }
 
-void MOPTWindow::setAnimationParams(double f, int animationCycle){
+void FastMOPTWindow::setAnimationParams(double f, int animationCycle){
 	moptParams.phase = f;
 	moptParams.gaitCycle = animationCycle;
 	ffpViewer->cursorPosition = f;
 }
 
-void MOPTWindow::loadFFPFromFile(const char* fName){
+void FastMOPTWindow::loadFFPFromFile(const char* fName){
 	footFallPattern.loadFromFile(fName);
 }
 
-void MOPTWindow::drawScene() {
+void FastMOPTWindow::drawScene() {
 	glColor3d(1, 1, 1);
 	glEnable(GL_LIGHTING);
 
@@ -439,7 +439,7 @@ void MOPTWindow::drawScene() {
 	}
 }
 
-void MOPTWindow::drawAuxiliarySceneInfo(){
+void FastMOPTWindow::drawAuxiliarySceneInfo(){
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	preDraw();
@@ -451,7 +451,7 @@ void MOPTWindow::drawAuxiliarySceneInfo(){
 }
 
 //any time a physical key is pressed, this event will trigger. Useful for reading off special keys...
-bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
+bool FastMOPTWindow::onKeyEvent(int key, int action, int mods) {
 	if (initialized) {
 		if (ffpViewer && showFFPViewer && ffpViewer->onKeyEvent(key, action, mods))
 			return true;
@@ -491,7 +491,7 @@ bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
 	return false;
 }
 
-bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
+bool FastMOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	if (initialized) {
 		if (showFFPViewer && (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging()))
 			if (ffpViewer->onMouseMoveEvent(xPos, yPos)) return true;
@@ -546,7 +546,7 @@ bool MOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 	return GLWindow3D::onMouseMoveEvent(xPos, yPos);
 }
 
-void MOPTWindow::updateJointVelocityProfileWindowOnMouseMove(Ray &ray, double xPos, double yPos)
+void FastMOPTWindow::updateJointVelocityProfileWindowOnMouseMove(Ray &ray, double xPos, double yPos)
 {
 	return;
 
@@ -592,7 +592,7 @@ void MOPTWindow::updateJointVelocityProfileWindowOnMouseMove(Ray &ray, double xP
 	}
 }
 
-bool MOPTWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos)
+bool FastMOPTWindow::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos)
 {
 	if (initialized) {
 		if (showFFPViewer && (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging()))
@@ -625,7 +625,7 @@ bool MOPTWindow::onMouseButtonEvent(int button, int action, int mods, double xPo
 	return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
 }
 
-void MOPTWindow::setViewportParameters(int posX, int posY, int sizeX, int sizeY){
+void FastMOPTWindow::setViewportParameters(int posX, int posY, int sizeX, int sizeY){
 	GLWindow3D::setViewportParameters(posX, posY, sizeX, sizeY);
 	ffpViewer->setViewportParameters(posX, (int)(sizeY * 3.0 / 4), sizeX, (int)(sizeY / 4.0));
 }

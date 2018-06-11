@@ -12,7 +12,7 @@ class IntelligentRobotEditingWindow;
 class EnergyWindow
 {
 public:
-	EnergyWindow(RobotDesignerApp *app);
+	EnergyWindow(IntelligentRobotEditingWindow *iEditWindow);
 
 	void createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunction, nanogui::Screen *screen);
 
@@ -21,7 +21,7 @@ public:
 	void updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFunction, const dVector &params);
 
 	void setVisible(bool visible);
-	RobotDesignerApp *rdApp;
+	IntelligentRobotEditingWindow *iEditWindow;
 
 private:
 	void hideEnergyGroup(bool visible, const std::string &groupName);

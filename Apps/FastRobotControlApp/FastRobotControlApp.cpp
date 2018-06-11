@@ -7,10 +7,16 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-//debug joint velocity limits some more...
-//add the option to start non-periodic mopt from zero or from two other motion plans...
-//fix the bulk write...
-//BEAUTIFICATION: nice/clean motor/bracket meshes, eyes?
+have a separate footfall planner - this is the thing that takes into account current state, feedback terms for foot placement, desired body motions, and it just tells mopt initial boundary conditions (based on current robot state) as well as desired speed/turning
+
+simple first order dynamics model for body trajectories which then informs the footfall placement. This model is sync'ed with the robot state, so that some footfall placement and so on can emerge automatically...
+
+
+//work towards: 
+//	- long horizon motion plans that include a change in gait, legs being used as arms, etc
+//	- mopt that combines locomotion and manipulation
+//	- MOPT for multi-robot systems, including locomotion and manipulation
+//	- interactive MOPT - add an obstacle in the scene, given current state of robot it figures out how to avoid it, etc.
 
 FastRobotControlApp::FastRobotControlApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
@@ -19,8 +25,10 @@ FastRobotControlApp::FastRobotControlApp(){
 	showGroundPlane = false;
 
 	moptWindow = new MOPTWindow(0, 0, 100, 100, this);
+	moptWindow->optimizeOption = MOPTWindow::GRF_OPT_V3;
 	simWindow = new SimWindow(0, 0, 100, 100, this);
 	motionPlanAnalysis = new MotionPlanAnalysis(menuScreen);
+	energyWindow = new EnergyWindow(NULL);
 
 	mainMenu->addGroup("RobotDesigner Options");
 	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});

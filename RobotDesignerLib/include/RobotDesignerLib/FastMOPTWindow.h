@@ -7,57 +7,13 @@
 #include <GUILib/TranslateWidget.h>
 #include <GUILib/CompositeWidget.h>
 #include <RobotDesignerLib/BaseRobotControlApp.h>
+#include <RobotDesignerLib/MoptWindow.h>
+
 #include <memory>
-
-struct MOPTParams {
-	double phase = 0;
-
-	bool drawRobotMesh = false;
-	bool drawSkeleton = true;
-	bool drawAxesOfRotation = false;
-	bool drawWheels = true;
-	bool drawContactForces = false;
-	bool drawSupportPolygon = false;
-	bool drawEndEffectorTrajectories = true;
-	bool drawCOMTrajectory = true;
-	bool drawOrientation = false;
-
-	int gaitCycle = 0;
-
-	double swingFootHeight = 0.02;
-	double desTravelDistX = 0;
-	double desTravelDistZ = 0;
-	double desTurningAngle = 0;
-
-	double jointVelocityLimit = 10;
-	double jointVelocityEpsilon = 0.4;
-	double jointAngleLimit = PI / 4;
-	double EEminDistance = 0.02;
-
-	double jointL0Delta = 1;
-
-	double wheelSpeedLimit = 20;
-	double wheelSpeedEpsilon = 0.4;
-
-	double wheelAccelLimit = 20;
-	double wheelAccelEpsilon = 1.0;
-
-	double frictionCoeff = 0.5;
-
-	bool writeJointVelocityProfile = false;
-	double motionPlanDuration = 0.8;
-	bool checkDerivatives = false;
-	bool useDynamicRegularization = true;
-	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod = NewtonFunctionMinimizer::DynamicRegularization;
-	bool checkHessianPSD = false;
-	double externalForceX = 0;
-	double externalForceZ = 0;
-	enum class OptMethod { Newton, lbfgs } optimizationMethod = OptMethod::Newton;
-};
 
 class RobotDesignerApp;
 
-class MOPTWindow : public GLWindow3D {
+class FastMOPTWindow : public GLWindow3D {
 public:
 	bool initialized = false;
 	BaseRobotControlApp* theApp;
@@ -98,13 +54,13 @@ public:
 	std::list<shared_ptr<TranslateWidget>> EEwidgets;
 	std::list<shared_ptr<CompositeWidget>> COMWidgets;
 public:
-	MOPTWindow(int x, int y, int w, int h, BaseRobotControlApp* glApp);
-	~MOPTWindow();
+	FastMOPTWindow(int x, int y, int w, int h, BaseRobotControlApp* glApp);
+	~FastMOPTWindow();
 
 	void clear();
 	void loadRobot(Robot* robot);
 	void syncMotionPlanParameters();
-	void syncMOPTWindowParameters();
+	void syncFastMOPTWindowParameters();
 
 	LocomotionEngineManager* initializeNewMP(bool doWarmStart = true);
 
