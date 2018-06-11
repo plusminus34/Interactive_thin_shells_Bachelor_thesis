@@ -15,6 +15,7 @@ enum MaterialModel2D {MM_LINEAR_ISOTROPIC=0, MM_STVK, MM_NEO_HOOKEAN};
 */
 class CSTriangle3D : public SimMeshElement {
 	friend class Paper3DApp;
+	friend class Paper3DMesh;
 private:
 	//material parameters...
 	double shearModulus = 50, bulkModulus = 50;

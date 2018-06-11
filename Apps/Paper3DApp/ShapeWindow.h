@@ -27,7 +27,7 @@ protected:
 	double h;// distance between neighboring nodes
 
 	//helper variables for cutting
-	DynamicArray<int> cutPath;
+	DynamicArray<uint> cutPath;
 
 	int findNodeClosestTo(double x, double y);
 	int findPinHandleClosestTo(double x, double y, double max_distance = 0.1);

@@ -18,6 +18,8 @@ private:
 
 	//generate elements after defining triangles
 	void init();
+
+	void cutAtNode(int n_prev, int n, int n_next, int &copy_index);
 public:
 	Paper3DMesh();
     ~Paper3DMesh();

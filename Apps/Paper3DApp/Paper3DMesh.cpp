@@ -79,7 +79,7 @@ void Paper3DMesh::init() {
 	}
 
 	// helper data structure 3: stores edges between nodes adjacent to node i (aka edges on the 1-ring of node i)
-	std::vector<std::vector<std::vector<int>>> hjg;
+	std::vector<std::vector<std::vector<int>>> hjg;//TODO rename this, hjg is not a good name
 	hjg.resize(nodes.size());
 	for (int i = 0; i < triangles.rows(); ++i) {
 		for (int j = 0; j < 3; ++j) {
@@ -138,6 +138,7 @@ void Paper3DMesh::init() {
 	}
 
 	//Debugging output
+	/*
 	for (uint i = 0; i < orderedAdjacentNodes.size(); ++i) {
 		printf("Node %d\thas %d\tneighbours",i, orderedAdjacentNodes[i].size());
 		for (uint j = 0; j < orderedAdjacentNodes[i].size(); ++j) {
@@ -145,6 +146,8 @@ void Paper3DMesh::init() {
 		}
 		printf("\n");
 	}
+	*/
+
 	//TODO do this elsewhere
 	bool curved_initial = true;
 	if (curved_initial) {
@@ -312,9 +315,281 @@ void Paper3DMesh::deletePin(int ID) {
 void Paper3DMesh::makeCut(const DynamicArray<uint>& path) {
 	if (path.size() < 2) return;
 	/*
-	nodes[1]->getUndeformedPosition();
-	if (CSTriangle3D* e = dynamic_cast<CSTriangle3D*>(elements[1])) {
-		
+	how to implement?
+	"duplicate node" is not that simple: have to connect stuff correctly too!
+	possibility: during cutting, store a "left" and "right" node (or "original" and "duplicate")
+		or not:
+		remove edges along path
+		duplicate first node in path if needed
+		for each node n, decide how many duplicates there need to be, then create them
+		  for each neighbour node(except those on the path), assign one new node(original node or one of up to two duplicates)
+		  for each adjacent element, map it to one adjacent node and replace n in the element by the node assigned previously
+	*/
+	// remove edges along path
+	for (int i = 0; i < elements.size(); ++i) {
+		if (BendingEdge* e = dynamic_cast<BendingEdge*>(elements[i])) {
+			for(int j=1;j<path.size();++j)
+				if ( (e->n[0] == nodes[path[j]] && e->n[1] == nodes[path[j - 1]]) 
+					|| (e->n[1] == nodes[path[j]] && e->n[0] == nodes[path[j - 1]])){
+					delete e;
+					elements[i] = elements[elements.size() - 1];
+					elements.pop_back();
+				}
+		}
 	}
+	//TODO cut_at_node
+	//TODO update edges matrix(not that it really matters)
+	printf("cut path:");
+	for (int i = 0; i < path.size(); ++i)printf(" %d", path[i]);
+	printf("\n");
+	int nNodes = nodes.size();
+	printf("(start with %d nodes)\n", nNodes);
+	for (int i = 0; i < path.size(); ++i) {
+		bool is_endpoint = (i == 0) || (i == path.size() - 1);
+		bool on_boundary = boundary[path[i]];
+		int n = path[i];
+		if (is_endpoint && on_boundary) {
+			if (i == 0 && boundary[path[i + 1]]){
+				printf("do nothing to node %d\t(first cut is along boundary)\n", n);
+			}
+			else if (i == path.size() - 1 && boundary[path[i - 1]]) {
+				printf("do nothing to node %d\t(last cut is along boundary)\n", n);
+			}
+			else {
+				printf("duplicate node %d\t(endpoint on boundary)\n", n);
+				++nNodes;
+			}
+		}
+		else if (is_endpoint && !on_boundary) {
+			printf("do nothing to node %d\t(endpoint inside)\n", n);
+		}
+		else if (!is_endpoint && !on_boundary) {
+			printf("duplicate node %d\t(ordinary point inside mesh)\n", n);
+			++nNodes;
+		}
+		else if (!is_endpoint && on_boundary) {
+			if (boundary[path[i - 1]] && boundary[path[i + 1]]) {
+				printf("do nothing to node %d\t(cut along boundary)\n", n);
+			}
+			else if(boundary[path[i - 1]] && !boundary[path[i + 1]]) {
+				printf("duplicate node %d\t(next is no longer on boundary)\n", n);
+				++nNodes;
+			}
+			else if (!boundary[path[i - 1]] && boundary[path[i + 1]]) {
+				printf("duplicate node %d\t(previous wasn't on boundary)\n", n);
+				++nNodes;
+			}
+			else if (!boundary[path[i - 1]] && !boundary[path[i + 1]]) {
+				printf("duplicate node %d twice\t(previous and next are inside)\n", n);
+				++nNodes;
+				++nNodes;
+			}
+		}
+	}
+	printf("(end with %d nodes)\n", nNodes);
+}
+
+void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
+	int num_adjacent = orderedAdjacentNodes[n].size();
+
+	/*
+	how to use copy_index
+	as input, it is either the index of the copy of n_prev(if node n_prev was copied)
+		or -1 (if n_prev wasn't copied, or n is the first node on the path)
+	as output, it is n_copy (if node n gets copied) or -1 (otherwise)
+	*/
+	
+	//TODO there are 3 cases here: 0, 1, 2 copies of n need to be made
+	//currently, case 1 is ... finished? except end on bouundary maybe and b-b-i
+	if (!boundary[n] && n_prev != -1 && n_next != -1) {//TODO this condition is wrong: should happen if n has to be copied once
+		// if not on boundary and not end of cut: there will be two regions (left and right of cut)
+		/*
+		TODO
+		x  make new node (copy of n) and store its index in n_copy
+		x  resize and update all vectors depending on nodes.size
+		x  fill new_n with -1, n, n_copy where appropriate
+		  update all neighbours of n using new_n
+		  use copy_index and boundary correctly
+		*/
+
+		// create a new node
+		int n_copy = nodes.size();
+		Node* newNode = new Node(this, n_copy, 3 * n_copy, 3);
+		nodes.push_back(newNode);
+		// also need to copy data for the node
+		int nodeCount = n_copy + 1;
+		x.conservativeResize(3 * nodeCount);
+		X.conservativeResize(3 * nodeCount);
+		v.conservativeResize(3 * nodeCount);
+		f_ext.conservativeResize(3 * nodeCount);
+		m.conservativeResize(3 * nodeCount);
+		for (int i = 0; i < 3; ++i) {
+			x[3 * n_copy + i] = x[3 * n + i];
+			X[3 * n_copy + i] = X[3 * n + i];
+			v[3 * n_copy + i] = v[3 * n + i];
+			f_ext[3 * n_copy + i] = f_ext[3 * n + i];
+			m[3 * n_copy + i] = m[3 * n + i];
+		}
+		//boundary[n] = true;//set this later to avoid trouble with boundary[n_prev]
+		boundary.push_back(true);
+
+		int start_i = 0;
+		for (int i = 0; i < num_adjacent; ++i) {
+			if (orderedAdjacentNodes[n][i] == n_prev) {
+				start_i = i;
+				break;
+			}
+		}
+		bool in_first_region = true;
+		// update orderedAdjacentNodes
+		DynamicArray<int> adjacent_to_n, adjacent_to_n_copy;
+		if (n_next != -1) {
+			for (int ii = start_i; ii%num_adjacent != ii; ++ii) {
+				int i = ii % num_adjacent;
+				if (orderedAdjacentNodes[n][i] == n_next) {
+					in_first_region = false;
+					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
+					adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
+				}
+				else if (in_first_region) {
+					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
+				}
+				else {
+					adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
+				}
+			}
+			if (copy_index != -1) {
+				adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][start_i]);
+			}
+			else {
+				adjacent_to_n_copy.push_back(copy_index);
+			}
+		}
+		else {
+			//only happens if n_prev is inside the mesh and n (the last node on the path) is on the boundary
+			for (int i = 0; i < num_adjacent; ++i) {
+				if (orderedAdjacentNodes[n][i] == n_prev) {
+					in_first_region = false;
+					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
+					adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
+				}
+				else if (in_first_region) {
+					adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
+				}
+				else {
+					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
+				}
+			}
+		}
+		orderedAdjacentNodes[n] = adjacent_to_n;
+		orderedAdjacentNodes.push_back(adjacent_to_n_copy);
+
+		//replace n in triangles matrix
+		for (int i = 0; i < triangles.rows(); ++i) {
+			if (triangles(i,0) == n || triangles(i,1) == n || triangles(i,2) == n) {
+				// find out which side of the cut the triangle belongs to
+				int replacement = -1;
+				for(int j=0;j<3;++j){
+					if (triangles(i, j) == n_next) continue;
+					for (int k = 0; k < orderedAdjacentNodes[n].size(); ++k)
+						if (triangles(i, j) == orderedAdjacentNodes[n][k])
+							replacement = n;
+					for (int k = 0; k < orderedAdjacentNodes[n_copy].size(); ++k)
+						if (triangles(i, j) == orderedAdjacentNodes[n_copy][k])
+							replacement = n_copy;
+				}
+				for (int j = 0; j < 3; ++j)
+					if (triangles(i, j) == n)
+						triangles(i, j) = replacement;
+			}
+		}
+		// update adjacentElements (array in nodes as well as the elements themselves)
+		DynamicArray<SimMeshElement*> adjacentElements = nodes[n]->adjacentElements;
+		nodes[n]->adjacentElements.clear();
+		for (int i = 0; i < adjacentElements.size(); ++i) {
+			if (CSTriangle3D* e = dynamic_cast<CSTriangle3D*>(adjacentElements[i])) {
+				// find out which side of the cut the triangle belongs to
+				int replacement = -1;
+				for (int j = 0; j < 3; ++j) {
+					if (e->n[j] == nodes[n_next]) continue;
+					for (int k = 0; k < orderedAdjacentNodes[n].size(); ++k)
+						if (e->n[j] == nodes[orderedAdjacentNodes[n][k]])
+							replacement = n;
+					for (int k = 0; k < orderedAdjacentNodes[n_copy].size(); ++k)
+						if (e->n[j] == nodes[orderedAdjacentNodes[n_copy][k]])
+							replacement = n_copy;
+				}
+				if (replacement == n_copy) {
+					for (int j = 0; j < 3; ++j)
+						if (e->n[j] == nodes[n])
+							e->n[j] = nodes[replacement];
+					nodes[n_copy]->adjacentElements.push_back(e);
+				}
+				else if (replacement == n) {
+					nodes[n]->adjacentElements.push_back(e);
+				}
+			}
+			else if (BendingEdge* e = dynamic_cast<BendingEdge*>(adjacentElements[i])) {
+				// find out which side of the cut the edge belongs to
+				int replacement = -1;
+				for (int j = 0; j < 4; ++j) {
+					if (e->n[j] == nodes[n_next]) continue;
+					for (int k = 0; k < orderedAdjacentNodes[n].size(); ++k)
+						if (e->n[j] == nodes[orderedAdjacentNodes[n][k]])
+							replacement = n;
+					for (int k = 0; k < orderedAdjacentNodes[n_copy].size(); ++k)
+						if (e->n[j] == nodes[orderedAdjacentNodes[n_copy][k]])
+							replacement = n_copy;
+				}
+				if (replacement == n_copy) {
+					for (int j = 0; j < 4; ++j)
+						if (e->n[j] == nodes[n])
+							e->n[j] = nodes[replacement];
+					nodes[n_copy]->adjacentElements.push_back(e);
+				}
+				else if (replacement == n) {
+					nodes[n]->adjacentElements.push_back(e);
+				}
+			}
+		}
+		// update orderedAdjacentNodes[not_n]
+		for (int i = 0; i < orderedAdjacentNodes[n_copy].size(); ++i) {
+			int n_adj = orderedAdjacentNodes[n_copy][i];
+			if (n_adj == n_next || (n_adj==n_prev && copy_index == -1)) continue;
+			for (int j = 0; j < orderedAdjacentNodes[n_adj].size(); ++j)
+				if (orderedAdjacentNodes[n_adj][j] == n)
+					orderedAdjacentNodes[n_adj][j] = n_copy;
+		}
+		// n_next will do its own updates
+		// if n_prev was duplicated, its copies can be treated like any other nodes
+		//attention: if n_prev was not duplicated, this has to be done
+		if (n_prev != -1 && copy_index == -1) {
+			int n_index = -1;
+			for (int i = 0; i < orderedAdjacentNodes[n_prev].size(); ++i)
+				if (orderedAdjacentNodes[n_prev][i] == n) {
+					n_index = i;
+					break;
+				}
+			DynamicArray<int> adjacent_to_n_prev;
+			adjacent_to_n_prev.push_back(n_copy);
+			for (int i = 0; i < orderedAdjacentNodes[n_prev].size(); ++i)
+				adjacent_to_n_prev.push_back((n_index + i + 1) % orderedAdjacentNodes[n_prev].size());
+		}
+		copy_index = n_copy;
+	}
+	else if (false) {
+		//TODO all other cases
+	}
+	/*
+	case 0 copies must be made
+	need only update orderedAdjacentNodes?
+	3 cases
+	b-b-b
+	nothing
+	i-b-b
+	reorder from n_prev to copy_index
+	b-b-i
+	...actually, n_next will do it
+	|-i-x
 	*/
 }
