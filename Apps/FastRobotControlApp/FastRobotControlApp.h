@@ -15,7 +15,7 @@
 #include <RobotDesignerLib/LocomotionEngineManagerIP.h>
 #include <RobotDesignerLib/ModularDesignWindow.h>
 #include <RobotDesignerLib/ParameterizedRobotDesign.h>
-#include <RobotDesignerLib/MOPTWindow.h>
+#include <RobotDesignerLib/FastMOPTWindow.h>
 #include <RobotDesignerLib/SimWindow.h>
 #include <RobotDesignerLib/MotionPlanAnalysis.h>
 #include <RobotDesignerLib/EnergyWindow.h>
@@ -31,7 +31,7 @@ class EnergyWindow;
  */
 class FastRobotControlApp : public BaseRobotControlApp {
 public:
-	MOPTWindow* moptWindow = NULL;
+	FastMOPTWindow* moptWindow = NULL;
 	SimWindow* simWindow = NULL;
 	MotionPlanAnalysis *motionPlanAnalysis = nullptr;
 	EnergyWindow *energyWindow = nullptr;

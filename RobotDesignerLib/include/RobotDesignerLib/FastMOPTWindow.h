@@ -60,7 +60,7 @@ public:
 	void clear();
 	void loadRobot(Robot* robot);
 	void syncMotionPlanParameters();
-	void syncFastMOPTWindowParameters();
+	void syncMOPTWindowParameters();
 
 	LocomotionEngineManager* initializeNewMP(bool doWarmStart = true);
 

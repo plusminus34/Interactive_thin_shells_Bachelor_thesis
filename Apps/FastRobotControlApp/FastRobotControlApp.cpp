@@ -7,10 +7,9 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-have a separate footfall planner - this is the thing that takes into account current state, feedback terms for foot placement, desired body motions, and it just tells mopt initial boundary conditions (based on current robot state) as well as desired speed/turning
+//have a separate footfall planner - this is the thing that takes into account current state, feedback terms for foot placement, desired body motions, and it just tells mopt initial boundary conditions (based on current robot state) as well as desired speed/turning
 
-simple first order dynamics model for body trajectories which then informs the footfall placement. This model is sync'ed with the robot state, so that some footfall placement and so on can emerge automatically...
-
+//simple first order dynamics model for body trajectories which then informs the footfall placement. This model is sync'ed with the robot state, so that some footfall placement and so on can emerge automatically...
 
 //work towards: 
 //	- long horizon motion plans that include a change in gait, legs being used as arms, etc
@@ -24,8 +23,8 @@ FastRobotControlApp::FastRobotControlApp(){
 
 	showGroundPlane = false;
 
-	moptWindow = new MOPTWindow(0, 0, 100, 100, this);
-	moptWindow->optimizeOption = MOPTWindow::GRF_OPT_V3;
+	moptWindow = new FastMOPTWindow(0, 0, 100, 100, this);
+	moptWindow->optimizeOption = FastMOPTWindow::GRF_OPT_V3;
 	simWindow = new SimWindow(0, 0, 100, 100, this);
 	motionPlanAnalysis = new MotionPlanAnalysis(menuScreen);
 	energyWindow = new EnergyWindow(NULL);
@@ -49,6 +48,47 @@ FastRobotControlApp::FastRobotControlApp(){
 	button->setIcon(ENTYPO_ICON_BAIDU);
 	button->setCallback([this]() { warmStartMOPT(true); });
 	button->setTooltip("Warmstart MOPT (M)");
+
+	mainMenu->addGroup("Analysis");
+
+	nanogui::Widget *widget = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", widget);
+	widget->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal, nanogui::Alignment::Middle, 0, 4));
+
+	// button to toggle motion plan analysis
+	nanogui::Button *mpaButton = new nanogui::Button(widget, "Motion Plan Analysis");
+	mpaButton->setFontSize(14);
+	mpaButton->setFlags(nanogui::Button::Flags::ToggleButton);
+	mpaButton->setChangeCallback([this](bool state) {
+		motionPlanAnalysis->window->setVisible(state);
+		if (moptWindow->locomotionManager->motionPlan)
+			motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
+	});
+
+	// button to toggle energy window
+	button = new nanogui::Button(widget, "Energy Window");
+	button->setFontSize(14);
+	button->setFlags(nanogui::Button::Flags::ToggleButton);
+	button->setChangeCallback([this](bool state) {
+		if (moptWindow->locomotionManager->energyFunction && doMotionAnalysis) {
+			if (state)
+				energyWindow->createEnergyMenu(moptWindow->locomotionManager->energyFunction, menuScreen);
+			energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, moptWindow->locomotionManager->motionPlan->getMPParameters());
+			energyWindow->setVisible(state);
+		}
+	});
+
+	// button to check energy
+	button = new nanogui::Button(widget, "Update");
+	button->setIcon(ENTYPO_ICON_PUBLISH);
+	button->setFontSize(14);
+	button->setCallback([this]() {
+		if (moptWindow->locomotionManager->energyFunction && doMotionAnalysis) {
+			LocomotionEngineMotionPlan * motionPlan = moptWindow->locomotionManager->motionPlan;
+			energyWindow->updateEnergiesWith(moptWindow->locomotionManager->energyFunction, motionPlan->getMPParameters());
+			motionPlanAnalysis->updateFromMotionPlan(moptWindow->locomotionManager->motionPlan);
+		}
+	});
 
 	mainMenu->addGroup("MOPT Options");
 	moptWindow->addMenuItems();

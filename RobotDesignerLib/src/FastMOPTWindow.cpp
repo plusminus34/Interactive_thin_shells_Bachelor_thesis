@@ -217,7 +217,7 @@ void FastMOPTWindow::loadRobot(Robot* robot){
 	}
 }
 
-void FastMOPTWindow::syncFastMOPTWindowParameters() {
+void FastMOPTWindow::syncMOPTWindowParameters() {
 	moptParams.swingFootHeight = locomotionManager->motionPlan->swingFootHeight;
 	moptParams.desTravelDistX = locomotionManager->motionPlan->desDistanceToTravel.x();
 	moptParams.desTravelDistZ = locomotionManager->motionPlan->desDistanceToTravel.z();
@@ -316,7 +316,7 @@ LocomotionEngineManager* FastMOPTWindow::initializeNewMP(bool doWarmStart){
 	if (doWarmStart)
 		locomotionManager->warmStartMOpt();
 
-	syncFastMOPTWindowParameters();
+	syncMOPTWindowParameters();
 
 	locomotionManager->setDefaultOptimizationFlags();
 	locomotionManager->energyFunction->regularizer = globalMOPTRegularizer;
