@@ -337,12 +337,7 @@ void Paper3DMesh::makeCut(const DynamicArray<uint>& path) {
 				}
 		}
 	}
-	//TODO cut_at_node
-	int copindex = -1;
-	cutAtNode(-1, path[0], path[1], copindex);
-	for (int i = 1; i < path.size() - 1; ++i) cutAtNode(path[i - 1], path[i], path[i + 1], copindex);
-	cutAtNode(path[path.size() - 2], path[path.size() - 1], -1, copindex);
-	//TODO update edges matrix(not that it really matters)
+	//Plan
 	printf("cut path:");
 	for (int i = 0; i < path.size(); ++i)printf(" %d", path[i]);
 	printf("\n");
@@ -391,6 +386,13 @@ void Paper3DMesh::makeCut(const DynamicArray<uint>& path) {
 		}
 	}
 	printf("(end with %d nodes)\n", nNodes);
+	//TODO cut_at_node
+	int copindex = -1;
+	cutAtNode(-1, path[0], path[1], copindex);
+	for (int i = 1; i < path.size() - 1; ++i) cutAtNode(path[i - 1], path[i], path[i + 1], copindex);
+	cutAtNode(path[path.size() - 2], path[path.size() - 1], -1, copindex);
+	for (int i = 0; i < path.size(); ++i) boundary[path[i]] = true;
+	//TODO update edges matrix(not that it really matters)
 }
 
 void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
@@ -415,8 +417,10 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 	else if (boundary[n] && !is_endpoint && boundary[n_prev] != boundary[n_next]) num_copies = 1;
 
 	else if (boundary[n] && !is_endpoint && !boundary[n_prev] && !boundary[n_next]) num_copies = 2;
-	
+
+	printf("cutAtNode %d - %d - %d (copy_index %d)\n", n_prev, n, n_next, copy_index);
 	if (num_copies == 0) {
+		printf("\tmake no copy\n");
 		if (copy_index != -1) {
 			//only happens if n is an endpoint and not on the boundary
 			int start_i = 0;
@@ -438,6 +442,7 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 		copy_index = -1;
 	}
 	else if (num_copies == 1) {
+		printf("\tmake one copy\n");//TODO problem at |-b-i
 		// copy node n and reconnect mesh parts so the copy will be on the left side of the cut
 
 		// create a new node
@@ -460,7 +465,7 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 		}
 		//boundary[n] = true;//set this later to avoid trouble with boundary[n_prev] in the next step
 		boundary.push_back(true);
-
+		printf("\tnew node created\n");
 		int start_i = 0;
 		for (int i = 0; i < num_adjacent; ++i) {
 			if (orderedAdjacentNodes[n][i] == n_prev) {
@@ -469,11 +474,12 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 			}
 		}
 		bool in_first_region = true;
+		printf("\twill update orderedAdjacent\n");
 		// update orderedAdjacentNodes
 		DynamicArray<int> adjacent_to_n, adjacent_to_n_copy;
 		if (n_next != -1) {
-			for (int ii = start_i; ii%num_adjacent != ii; ++ii) {
-				int i = ii % num_adjacent;
+			for (int ii = 0; ii < num_adjacent; ++ii) {
+				int i = (start_i + ii) % num_adjacent;
 				if (orderedAdjacentNodes[n][i] == n_next) {
 					in_first_region = false;
 					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
@@ -487,12 +493,17 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 					adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
 				}
 			}
-			if (copy_index != -1) {
+			if (copy_index == -1 && n_prev != -1) {
 				adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][start_i]);
 			}
-			else {
+			else if (n_prev != -1) {
 				adjacent_to_n_copy.push_back(copy_index);
 			}
+			printf("\tn:");
+			for (int i = 0; i < adjacent_to_n.size(); ++i)printf("\t%d", adjacent_to_n[i]);
+			printf("\n\tn_c:");
+			for (int i = 0; i < adjacent_to_n_copy.size(); ++i)printf("\t%d", adjacent_to_n_copy[i]);
+			printf("\n");
 		}
 		else {
 			//only happens if n_prev is inside the mesh and n (the last node on the path) is on the boundary
@@ -501,25 +512,29 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 					in_first_region = false;
 					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
 					adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
+					printf("\t\t%d to both\n", orderedAdjacentNodes[n][i]);
 				}
 				else if (in_first_region) {
 					adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
+					printf("\t\t%d to copy\n", orderedAdjacentNodes[n][i]);
 				}
 				else {
 					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
+					printf("\t\t%d to n\n", orderedAdjacentNodes[n][i]);
 				}
 			}
 		}
 		orderedAdjacentNodes[n] = adjacent_to_n;
 		orderedAdjacentNodes.push_back(adjacent_to_n_copy);
 
+		printf("\tupdated orderedAdjacent\n");
 		//replace n in triangles matrix
 		for (int i = 0; i < triangles.rows(); ++i) {
 			if (triangles(i,0) == n || triangles(i,1) == n || triangles(i,2) == n) {
 				// find out which side of the cut the triangle belongs to
 				int replacement = -1;
 				for(int j = 0; j < 3; ++j){
-					if (triangles(i, j) == n_next) continue;
+					if (triangles(i, j) == n_prev || triangles(i, j) == n_next) continue;
 					for (int k = 0; k < orderedAdjacentNodes[n].size(); ++k)
 						if (triangles(i, j) == orderedAdjacentNodes[n][k])
 							replacement = n;
@@ -532,58 +547,49 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 						triangles(i, j) = replacement;
 			}
 		}
+		printf("\tupdated triangles\n");
 		// update adjacentElements (array in nodes as well as the elements themselves)
 		DynamicArray<SimMeshElement*> adjacentElements = nodes[n]->adjacentElements;
 		nodes[n]->adjacentElements.clear();
 		for (int i = 0; i < adjacentElements.size(); ++i) {
 			if (CSTriangle3D* e = dynamic_cast<CSTriangle3D*>(adjacentElements[i])) {
 				// find out which side of the cut the triangle belongs to
-				int replacement = -1;
+				int replacement = n;
 				for (int j = 0; j < 3; ++j) {
-					if (e->n[j] == nodes[n_next]) continue;
-					for (int k = 0; k < orderedAdjacentNodes[n].size(); ++k)
-						if (e->n[j] == nodes[orderedAdjacentNodes[n][k]])
-							replacement = n;
+					if (e->n[j] == nodes[n_prev] || e->n[j] == nodes[n_next]) continue;
 					for (int k = 0; k < orderedAdjacentNodes[n_copy].size(); ++k)
 						if (e->n[j] == nodes[orderedAdjacentNodes[n_copy][k]])
 							replacement = n_copy;
 				}
-				if (replacement == n_copy) {
+				if (replacement != n) {
 					for (int j = 0; j < 3; ++j)
 						if (e->n[j] == nodes[n])
 							e->n[j] = nodes[replacement];
-					nodes[n_copy]->adjacentElements.push_back(e);
 				}
-				else if (replacement == n) {
-					nodes[n]->adjacentElements.push_back(e);
-				}
+				nodes[replacement]->adjacentElements.push_back(e);
 			}
 			else if (BendingEdge* e = dynamic_cast<BendingEdge*>(adjacentElements[i])) {
 				// find out which side of the cut the edge belongs to
-				int replacement = -1;
+				int replacement = n;
 				for (int j = 0; j < 4; ++j) {
-					if (e->n[j] == nodes[n_next]) continue;
-					for (int k = 0; k < orderedAdjacentNodes[n].size(); ++k)
-						if (e->n[j] == nodes[orderedAdjacentNodes[n][k]])
-							replacement = n;
+					if (e->n[j] == nodes[n_prev] || e->n[j] == nodes[n_next]) continue;
 					for (int k = 0; k < orderedAdjacentNodes[n_copy].size(); ++k)
 						if (e->n[j] == nodes[orderedAdjacentNodes[n_copy][k]])
 							replacement = n_copy;
 				}
-				if (replacement == n_copy) {
+				if (replacement != n) {
 					for (int j = 0; j < 4; ++j)
 						if (e->n[j] == nodes[n])
 							e->n[j] = nodes[replacement];
-					nodes[n_copy]->adjacentElements.push_back(e);
 				}
-				else if (replacement == n) {
-					nodes[n]->adjacentElements.push_back(e);
-				}
+				nodes[replacement]->adjacentElements.push_back(e);
 			}
 		}
+		printf("\tupdated adjacentElements\n");
 		// update orderedAdjacentNodes[not_n]
 		for (int i = 0; i < orderedAdjacentNodes[n_copy].size(); ++i) {
 			int n_adj = orderedAdjacentNodes[n_copy][i];
+			printf("\t\tupdating orderedAdj[%d]\n", n_adj);
 			if (n_adj == n_next || (n_adj==n_prev && copy_index == -1)) continue;
 			for (int j = 0; j < orderedAdjacentNodes[n_adj].size(); ++j)
 				if (orderedAdjacentNodes[n_adj][j] == n)
@@ -601,10 +607,16 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 				}
 			DynamicArray<int> adjacent_to_n_prev;
 			adjacent_to_n_prev.push_back(n_copy);
-			for (int i = 0; i < orderedAdjacentNodes[n_prev].size(); ++i)
-				adjacent_to_n_prev.push_back((n_index + i + 1) % orderedAdjacentNodes[n_prev].size());
+			for (int ii = 0; ii < orderedAdjacentNodes[n_prev].size(); ++ii) {
+				int i = (n_index + ii + 1) % orderedAdjacentNodes[n_prev].size();
+				adjacent_to_n_prev.push_back(orderedAdjacentNodes[n_prev][i]);
+			}
 			orderedAdjacentNodes[n_prev] = adjacent_to_n_prev;
+			printf("\tn_prev:");
+			for (int i = 0; i < adjacent_to_n_prev.size(); ++i)printf("\t%d", adjacent_to_n_prev[i]);
+			printf("\n");
 		}
+		printf("\tupdated more orderedAdjacent\n");
 
 		bool next_needs_copy = false;
 		for (int i = 0; i < adjacent_to_n_copy.size(); ++i)
@@ -618,6 +630,7 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 		}
 	}
 	else if (num_copies == 2) {
+		printf("\tmake two copies\n");
 		// this happens only if n is on the boundary and n_prev and n_next aren't
 		// make 2 copies of n
 		//  the first connects to n_prev or its copy
