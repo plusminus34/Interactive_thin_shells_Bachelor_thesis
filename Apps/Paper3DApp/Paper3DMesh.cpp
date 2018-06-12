@@ -391,26 +391,50 @@ void Paper3DMesh::makeCut(const DynamicArray<uint>& path) {
 
 void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 	int num_adjacent = orderedAdjacentNodes[n].size();
+	bool is_endpoint = (n_prev == -1 || n_next == -1);
 
 	/*
 	how to use copy_index
-	as input, it is either the index of the copy of n_prev(if node n_prev was copied)
+	as input, it is either the index of a copy of n_prev(if node n_prev was copied and its copy is adjacent to n)
 		or -1 (if n_prev wasn't copied, or n is the first node on the path)
-	as output, it is n_copy (if node n gets copied) or -1 (otherwise)
+	as output, it is n_copy (if node n gets copied and an_copy is adjacent to n_next) or -1 (otherwise)
 	*/
+	int num_copies;
+	if (!boundary[n] && is_endpoint) num_copies = 0;
+	else if (boundary[n] && !is_endpoint && boundary[n_prev] && boundary[n_next]) num_copies = 0;
+	else if (boundary[n] && n_prev == -1 && boundary[n_next]) num_copies = 0;
+	else if (boundary[n] && n_next == -1 && boundary[n_prev]) num_copies = 0;
+
+	else if (!boundary[n] && !is_endpoint) num_copies = 1;
+	else if (boundary[n] && n_prev == -1 && !boundary[n_next]) num_copies = 1;
+	else if (boundary[n] && n_next == -1 && !boundary[n_prev]) num_copies = 1;
+	else if (boundary[n] && !is_endpoint && boundary[n_prev] != boundary[n_next]) num_copies = 1;
+
+	else if (boundary[n] && !is_endpoint && !boundary[n_prev] && !boundary[n_next]) num_copies = 2;
 	
-	//TODO there are 3 cases here: 0, 1, 2 copies of n need to be made
-	//currently, case 1 is ... finished? except end on bouundary maybe and b-b-i
-	if (!boundary[n] && n_prev != -1 && n_next != -1) {//TODO this condition is wrong: should happen if n has to be copied once
-		// if not on boundary and not end of cut: there will be two regions (left and right of cut)
-		/*
-		TODO
-		x  make new node (copy of n) and store its index in n_copy
-		x  resize and update all vectors depending on nodes.size
-		x  fill new_n with -1, n, n_copy where appropriate
-		  update all neighbours of n using new_n
-		  use copy_index and boundary correctly
-		*/
+	if (num_copies == 0) {
+		if (copy_index != -1) {
+			//only happens if n is an endpoint and not on the boundary
+			int start_i = 0;
+			for (int i = 0; i < num_adjacent; ++i) {
+				if (orderedAdjacentNodes[n][i] == n_prev) {
+					start_i = i;
+					break;
+				}
+			}
+			bool in_first_region = true;
+			DynamicArray<int> adjacent_to_n;
+			//n_prev-x-y-z-copy_index
+			for (int i = 0; i < num_adjacent; ++i) {
+				adjacent_to_n.push_back(orderedAdjacentNodes[n][(start_i + 1) % num_adjacent]);
+			}
+			adjacent_to_n.push_back(copy_index);
+			orderedAdjacentNodes[n] = adjacent_to_n;
+		}
+		copy_index = -1;
+	}
+	else if (num_copies == 1) {
+		// copy node n and reconnect mesh parts so the copy will be on the left side of the cut
 
 		// create a new node
 		int n_copy = nodes.size();
@@ -430,7 +454,7 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 			f_ext[3 * n_copy + i] = f_ext[3 * n + i];
 			m[3 * n_copy + i] = m[3 * n + i];
 		}
-		//boundary[n] = true;//set this later to avoid trouble with boundary[n_prev]
+		//boundary[n] = true;//set this later to avoid trouble with boundary[n_prev] in the next step
 		boundary.push_back(true);
 
 		int start_i = 0;
@@ -449,7 +473,8 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 				if (orderedAdjacentNodes[n][i] == n_next) {
 					in_first_region = false;
 					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
-					adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
+					if (!(boundary[n] && boundary[n_next]))
+						adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
 				}
 				else if (in_first_region) {
 					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
@@ -489,7 +514,7 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 			if (triangles(i,0) == n || triangles(i,1) == n || triangles(i,2) == n) {
 				// find out which side of the cut the triangle belongs to
 				int replacement = -1;
-				for(int j=0;j<3;++j){
+				for(int j = 0; j < 3; ++j){
 					if (triangles(i, j) == n_next) continue;
 					for (int k = 0; k < orderedAdjacentNodes[n].size(); ++k)
 						if (triangles(i, j) == orderedAdjacentNodes[n][k])
@@ -562,8 +587,8 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 		}
 		// n_next will do its own updates
 		// if n_prev was duplicated, its copies can be treated like any other nodes
-		//attention: if n_prev was not duplicated, this has to be done
-		if (n_prev != -1 && copy_index == -1) {
+		//attention: if n_prev wasn't on the boundary was not duplicated, this has to be done
+		if (n_prev != -1 && copy_index == -1 && !boundary[n_prev]) {
 			int n_index = -1;
 			for (int i = 0; i < orderedAdjacentNodes[n_prev].size(); ++i)
 				if (orderedAdjacentNodes[n_prev][i] == n) {
@@ -574,22 +599,21 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 			adjacent_to_n_prev.push_back(n_copy);
 			for (int i = 0; i < orderedAdjacentNodes[n_prev].size(); ++i)
 				adjacent_to_n_prev.push_back((n_index + i + 1) % orderedAdjacentNodes[n_prev].size());
+			orderedAdjacentNodes[n_prev] = adjacent_to_n_prev;
 		}
-		copy_index = n_copy;
+
+		bool next_needs_copy = false;
+		for (int i = 0; i < adjacent_to_n_copy.size(); ++i)
+			if (adjacent_to_n_copy[i] == n_next)
+				next_needs_copy = true;
+		if (next_needs_copy) {
+			copy_index = n_copy;
+		}
+		else {
+			copy_index = -1;
+		}
 	}
-	else if (false) {
-		//TODO all other cases
+	else if (num_copies == 2) {
+		//this happens only if n is on the boundary and n_prev and n_next aren't
 	}
-	/*
-	case 0 copies must be made
-	need only update orderedAdjacentNodes?
-	3 cases
-	b-b-b
-	nothing
-	i-b-b
-	reorder from n_prev to copy_index
-	b-b-i
-	...actually, n_next will do it
-	|-i-x
-	*/
 }

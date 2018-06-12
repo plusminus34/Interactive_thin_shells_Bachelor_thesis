@@ -19,7 +19,7 @@ void ShapeWindow::setGridDimensions(int dim_x, int dim_y, double h) {
 
 	if (true) {//starting pin TODO: move elsewhere
 		int new_id = next_pin_id++;
-
+		
 		PinHandle* new_handle = new PinHandle;
 		new_handle->pin_id = new_id;
 		new_handle->index = 0;
@@ -232,6 +232,9 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 		cutPath.clear();
 		cutPath.push_back(findNodeClosestTo(p[0], p[1]));
 	}
+	else if (mode == mouse_cut && action == GLFW_RELEASE) {
+		paperApp->acessMesh()->makeCut(cutPath);
+	}
 	popViewportTransformation();
 	return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
 }
@@ -296,6 +299,7 @@ void ShapeWindow::drawAuxiliarySceneInfo() {
 }
 
 int ShapeWindow::findNodeClosestTo(double x, double y) {
+	//TODO update for cuts: (x,y) -> triangle -> corner
 	//currently works only for rectangular mesh without cuts
 	x = std::max(0.0, std::min(x, h * (dim_x - 1)));
 	y = std::max(0.0, std::min(y, h * (dim_y - 1)));
