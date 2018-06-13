@@ -462,7 +462,6 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 			f_ext[3 * n_copy + i] = f_ext[3 * n + i];
 			m[3 * n_copy + i] = m[3 * n + i];
 		}
-		//boundary[n] = true;//set this later to avoid trouble with boundary[n_prev] in the next step
 		boundary.push_back(true);
 		int start_i = 0;
 		for (int i = 0; i < num_adjacent; ++i) {
@@ -475,14 +474,14 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 
 		// update orderedAdjacentNodes
 		DynamicArray<int> adjacent_to_n, adjacent_to_n_copy;
-		if (n_next != -1) {
+		if (!boundary[n]) {
+			//case 1: n is inside mesh
 			for (int ii = 0; ii < num_adjacent; ++ii) {
 				int i = (start_i + ii) % num_adjacent;
 				if (orderedAdjacentNodes[n][i] == n_next) {
 					in_first_region = false;
 					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
-					if (!(boundary[n] && boundary[n_next]))
-						adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
+					adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
 				}
 				else if (in_first_region) {
 					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
@@ -491,15 +490,15 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 					adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
 				}
 			}
-			if (copy_index == -1 && n_prev != -1) {
-				adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][start_i]);
+			if (copy_index == -1) {
+				adjacent_to_n_copy.push_back(n_prev);
 			}
-			else if (n_prev != -1) {
+			else{
 				adjacent_to_n_copy.push_back(copy_index);
 			}
 		}
-		else {
-			//only happens if n_prev is inside the mesh and n (the last node on the path) is on the boundary
+		else if(n_prev != -1 && !boundary[n_prev]){
+			//case 2: n is on boundary, n_prev wasn't
 			for (int i = 0; i < num_adjacent; ++i) {
 				if (orderedAdjacentNodes[n][i] == n_prev) {
 					in_first_region = false;
@@ -511,6 +510,22 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 				}
 				else {
 					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
+				}
+			}
+		}
+		else {//boundary[n] && !boundary[n_next]
+			//case 3: n is on boundary, n_next isn't
+			for (int i = 0; i < num_adjacent; ++i) {
+				if (orderedAdjacentNodes[n][i] == n_next) {
+					in_first_region = false;
+					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
+					adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
+				}
+				else if (in_first_region) {
+					adjacent_to_n.push_back(orderedAdjacentNodes[n][i]);
+				}
+				else {
+					adjacent_to_n_copy.push_back(orderedAdjacentNodes[n][i]);
 				}
 			}
 		}
@@ -574,6 +589,7 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 					if (e->n[jj] == nodes[n]) j = jj;
 				if (j < 2) {
 					// n is actually on the edge
+					//no trouble here because the edges n_prev-n and n-n_next have already been deleted
 					int k = (j + 1) % 2;
 					for (int l = 0; l < adjacent_to_n_copy.size(); ++l)
 						if (e->n[k] == nodes[adjacent_to_n_copy[l]])
@@ -581,15 +597,20 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 				}
 				else {
 					// n is a corner of a triangle adjacent to te edge
-					int k = 0;
-					if (n_next != -1 && e->n[k] == nodes[n_next]) k = 1;
-					if (n_prev != -1 && e->n[k] == nodes[n_prev] && copy_index == -1) {
-						if((k + j) % 2 == 0)//k=0 and j=2 OR k=1 and j=3
-							replacement = n_copy;
+					int k = j % 2;
+					bool prev_before_next = true; int n_copy_2 = n_copy,n_copy_1=n_copy;
+					if (n_next != -1 && e->n[k] == nodes[n_next]) {
+						//replacement = n;
+					}
+					else if (n_prev != -1 && e->n[k] == nodes[n_prev]&& copy_index == -1) {
+						replacement = n_copy;
+					}
+					else if (copy_index != -1 && e->n[k] == nodes[copy_index]) {
+						replacement = n_copy;
 					}
 					else {
-						for (int l = 0; l < adjacent_to_n_copy.size(); ++l)
-							if (e->n[k] == nodes[adjacent_to_n_copy[l]])
+						for (int l = 0; l < orderedAdjacentNodes[n_copy].size(); ++l)
+							if (e->n[k] == nodes[orderedAdjacentNodes[n_copy][l]])
 								replacement = n_copy;
 					}
 				}
@@ -766,25 +787,6 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 		orderedAdjacentNodes.push_back(adjacent_to_n_copy_2);
 
 		// update triangles matrix
-		/*for (int i = 0; i < triangles.rows(); ++i) {
-			if (triangles(i, 0) == n || triangles(i, 1) == n || triangles(i, 2) == n) {
-				int replacement = n;
-				for (int j = 0; j < 3; ++j) {
-					if (triangles(i, j) == n_prev || triangles(i,j) == n_next) continue;
-					for (int k = 0; k < orderedAdjacentNodes[n_copy_1].size(); ++k)
-						if (triangles(i, j) == orderedAdjacentNodes[n_copy_1][k])
-							replacement = n_copy_1;
-					for (int k = 0; k < orderedAdjacentNodes[n_copy_2].size(); ++k)
-						if (triangles(i, j) == orderedAdjacentNodes[n_copy_2][k])
-							replacement = n_copy_2;
-				}
-				if (replacement != n)
-					for (int j = 0; j < 3; ++j)
-						if (triangles(i, j) == n)
-							triangles(i, j) = replacement;
-			}
-		}*/
-		
 		for (int i = 0; i < triangles.rows(); ++i) {
 			for (int j = 0; j < 3; ++j)
 				if (triangles(i, j) == n) {
@@ -891,48 +893,7 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 				nodes[replacement]->adjacentElements.push_back(e);
 			}
 		}
-		/*
-		for (int i = 0; i < adjacentElements.size(); ++i) {
-			if (CSTriangle3D* e = dynamic_cast<CSTriangle3D*>(adjacentElements[i])) {
-				int replacement = n;
-				for (int j = 0; j < 3; ++j) {
-					if (e->n[j] == nodes[n_prev] || e->n[j] == nodes[n_next]) continue;
-					for (int k = 0; k < orderedAdjacentNodes[n_copy_1].size(); ++k)
-						if (e->n[j] == nodes[orderedAdjacentNodes[n_copy_1][k]])
-							replacement = n_copy_1;
-					for (int k = 0; k < orderedAdjacentNodes[n_copy_2].size(); ++k)
-						if (e->n[j] == nodes[orderedAdjacentNodes[n_copy_2][k]])
-							replacement = n_copy_2;
-				}
-				if (replacement != n) {
-					for (int j = 0; j < 3; ++j)
-						if (e->n[j] == nodes[n])
-							e->n[j] = nodes[replacement];
-				}
-				nodes[replacement]->adjacentElements.push_back(e);
-			}
-			else if (BendingEdge* e = dynamic_cast<BendingEdge*>(adjacentElements[i])) {
-				// find out which side of the cut the edge belongs to
-				int replacement = n;
-				for (int j = 0; j < 4; ++j) {
-					if (e->n[j] == nodes[n_prev] || e->n[j] == nodes[n_next]) continue;
-					for (int k = 0; k < orderedAdjacentNodes[n_copy_1].size(); ++k)
-						if (e->n[j] == nodes[orderedAdjacentNodes[n_copy_1][k]])
-							replacement = n_copy_1;
-					for (int k = 0; k < orderedAdjacentNodes[n_copy_2].size(); ++k)
-						if (e->n[j] == nodes[orderedAdjacentNodes[n_copy_2][k]])
-							replacement = n_copy_2;
-				}
-				if (replacement != n) {
-					for (int j = 0; j < 4; ++j)
-						if (e->n[j] == nodes[n])
-							e->n[j] = nodes[replacement];
-				}
-				nodes[replacement]->adjacentElements.push_back(e);
-			}
-		}
-		*/
-		//TODO update orderedAdjacent not n
+		//TODO check if all is right
 		// update orderedAdjacentNodes[not_n]
 		for (int i = 0; i < orderedAdjacentNodes[n_copy_1].size(); ++i) {
 			int n_adj = orderedAdjacentNodes[n_copy_1][i];
