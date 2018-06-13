@@ -29,6 +29,8 @@ public:
     void readMeshFromFile(const char* fName);
 
     virtual int getSelectedNodeID(Ray ray);
+	virtual void cornersOfTriangle(int t, int &c0, int &c1, int &c2);
+	virtual bool areNodesAdjacent(int n0, int n1);
 	virtual void setPinnedNode(int ID, const P3D& p);
 	virtual void unpinNode(int ID);
 

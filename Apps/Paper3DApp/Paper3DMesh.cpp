@@ -265,6 +265,20 @@ int Paper3DMesh::getSelectedNodeID(Ray ray){
     return ID;
 }
 
+void Paper3DMesh::cornersOfTriangle(int t, int &c0, int &c1, int &c2) {
+	if (t < 0 || t >= triangles.rows()) return;
+	c0 = triangles(t, 0);
+	c1 = triangles(t, 1);
+	c2 = triangles(t, 2);
+}
+
+bool Paper3DMesh::areNodesAdjacent(int n0, int n1) {
+	for (int i = 0; i < orderedAdjacentNodes[n0].size(); ++i) {
+		if (orderedAdjacentNodes[n0][i] == n1)
+			return true;
+	}
+	return false;
+}
 
 void Paper3DMesh::setPinnedNode(int ID, const P3D& point) {
 	for (auto it = pinnedNodeElements.begin(); it != pinnedNodeElements.end(); ++it) {
@@ -314,20 +328,9 @@ void Paper3DMesh::deletePin(int ID) {
 
 void Paper3DMesh::makeCut(const DynamicArray<uint>& path) {
 	if (path.size() < 2) return;
-	/*
-	how to implement?
-	"duplicate node" is not that simple: have to connect stuff correctly too!
-	possibility: during cutting, store a "left" and "right" node (or "original" and "duplicate")
-		or not:
-		remove edges along path
-		duplicate first node in path if needed
-		for each node n, decide how many duplicates there need to be, then create them
-		  for each neighbour node(except those on the path), assign one new node(original node or one of up to two duplicates)
-		  for each adjacent element, map it to one adjacent node and replace n in the element by the node assigned previously
-	*/
 	// remove edges along path
 	for (int i = 0; i < elements.size(); ++i) {
-		if (BendingEdge* e = dynamic_cast<BendingEdge*>(elements[i])) {//TODOcheck this
+		if (BendingEdge* e = dynamic_cast<BendingEdge*>(elements[i])) {
 			for(int j=1;j<path.size();++j)
 				if ( (e->n[0] == nodes[path[j]] && e->n[1] == nodes[path[j - 1]]) 
 					|| (e->n[1] == nodes[path[j]] && e->n[0] == nodes[path[j - 1]])){
@@ -335,11 +338,10 @@ void Paper3DMesh::makeCut(const DynamicArray<uint>& path) {
 					elements[i] = elements[elements.size() - 1];
 					elements.pop_back();
 					--i;
-					printf("deleted an edge %d - %d\n", path[j - 1], path[j]);
 				}
 		}
 	}
-	//Plan
+	/*debugging: output of what will be done
 	printf("cut path:");
 	for (int i = 0; i < path.size(); ++i)printf(" %d", path[i]);
 	printf("\n");
@@ -388,11 +390,13 @@ void Paper3DMesh::makeCut(const DynamicArray<uint>& path) {
 		}
 	}
 	printf("(end with %d nodes)\n", nNodes);
-	//TODO cut_at_node
-	int copindex = -1;
-	cutAtNode(-1, path[0], path[1], copindex);
-	for (int i = 1; i < path.size() - 1; ++i) cutAtNode(path[i - 1], path[i], path[i + 1], copindex);
-	cutAtNode(path[path.size() - 2], path[path.size() - 1], -1, copindex);
+	*/
+	//duplicate and reconnect nodes
+	int copy_index = -1;
+	cutAtNode(-1, path[0], path[1], copy_index);
+	for (int i = 1; i < path.size() - 1; ++i) cutAtNode(path[i - 1], path[i], path[i + 1], copy_index);
+	cutAtNode(path[path.size() - 2], path[path.size() - 1], -1, copy_index);
+	// everything along the cut is now on the boundary
 	for (int i = 0; i < path.size(); ++i) boundary[path[i]] = true;
 	//TODO update edges matrix(not that it really matters)
 }

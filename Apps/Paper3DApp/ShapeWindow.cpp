@@ -17,7 +17,7 @@ void ShapeWindow::setGridDimensions(int dim_x, int dim_y, double h) {
 	this->dim_y = dim_y;
 	this->h = h;
 
-	if (true) {//starting pin TODO: move elsewhere
+	if (false) {//starting pin TODO: move elsewhere
 		int new_id = next_pin_id++;
 		
 		PinHandle* new_handle = new PinHandle;
@@ -58,17 +58,13 @@ bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
 	}
 	else if (paperApp->getMouseMode() == mouse_cut && GlobalMouseState::dragging) {
 		int n = findNodeClosestTo(p[0], p[1]);
-		bool present = false;
-		for (uint i = 0; i < cutPath.size(); ++i) present = (present || cutPath[i] == n);
-		if (!present) {
+		bool is_in_path = false;
+		for (uint i = 0; i < cutPath.size(); ++i) is_in_path = (is_in_path || cutPath[i] == n);
+		if (!is_in_path) {
 			int last = cutPath[cutPath.size() - 1];
-			int dx = (n / dim_y) - (last / dim_y);
-			int dy = (n % dim_y) - (last % dim_y);
-			bool neighbour = (dx == 1 && dy == 0) || (dx == -1 && dy == 0) || (dx == 0 && dy == 1)
-				|| (dx == 0 && dy == -1) || (dx == 1 && dy == 1) || (dx == -1 && dy == -1);
-			if (neighbour) {
+			bool is_adjacent = paperApp->acessMesh()->areNodesAdjacent(last, n);
+			if (is_adjacent)
 				cutPath.push_back(n);
-			}
 		}
 	}
 	/*TODO camera
@@ -285,7 +281,8 @@ void ShapeWindow::drawScene() {
 		glColor3d(1, 1, 0);
 		glBegin(GL_LINE_STRIP);
 		for (uint i = 0; i < cutPath.size(); ++i) {
-			glVertex3d(h * (cutPath[i] / dim_y), h * (cutPath[i] % dim_y), 0.011);
+			P3D p = paperApp->getNodeRestPos(cutPath[i]);
+			glVertex3d(p[0], p[1], 0.011);
 		}
 		glEnd();
 	}
@@ -299,13 +296,29 @@ void ShapeWindow::drawAuxiliarySceneInfo() {
 }
 
 int ShapeWindow::findNodeClosestTo(double x, double y) {
-	//TODO update for cuts: (x,y) -> triangle -> corner
-	//currently works only for rectangular mesh without cuts
-	x = std::max(0.0, std::min(x, h * (dim_x - 1)));
-	y = std::max(0.0, std::min(y, h * (dim_y - 1)));
-	int a = (int)round(x / h);
-	int b = (int)round(y / h);
-	return (a*dim_y + b);
+	// map (x,y) to triangle
+	double x_c = std::max(0.0, std::min(x, h * (dim_x - 2)));
+	double y_c = std::max(0.0, std::min(y, h * (dim_y - 2)));
+	int a = (int)floor(x_c / h);
+	int b = (int)floor(y_c / h);
+	int ufe = 0;
+	if (x_c - a * h < y_c - b * h)ufe = 1;
+	int t = 2 * (a*(dim_y - 1)+b)+ufe;
+	// compute distance to triangle corners
+	int c[3];
+	double d[3];
+	paperApp->acessMesh()->cornersOfTriangle(t, c[0], c[1], c[2]);
+	for (int i = 0; i < 3; ++i) {
+		P3D p = paperApp->getNodeRestPos(c[i]);
+		d[i] = (p[0] - x)*(p[0] - x) + (p[1] - y)*(p[1] - y);
+	}
+	double d_min = std::min(d[0], std::min(d[1], d[2]));
+	// closest triangle corner is the closest node
+	for (int i = 0; i < 3; ++i) {
+		if (d[i] == d_min)
+			return c[i];
+	}
+	return 0;
 }
 
 int ShapeWindow::findPinHandleClosestTo(double x, double y, double max_distance) {

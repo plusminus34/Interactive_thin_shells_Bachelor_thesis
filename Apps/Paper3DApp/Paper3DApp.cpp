@@ -92,6 +92,10 @@ P3D Paper3DApp::getNodePos(int i) {
 	return simMesh->nodes[i]->getWorldPosition();
 }
 
+P3D Paper3DApp::getNodeRestPos(int i) {
+	return simMesh->nodes[i]->getUndeformedPosition();
+}
+
 //triggered when mouse moves
 bool Paper3DApp::onMouseMoveEvent(double xPos, double yPos) {
 	if (simWindow->mouseIsWithinWindow(xPos, yPos)) {

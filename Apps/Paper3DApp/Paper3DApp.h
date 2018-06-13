@@ -39,6 +39,7 @@ private:
 
 	//Provide values for the subwindows
 	P3D getNodePos(int i);
+	P3D getNodeRestPos(int i);
 	MouseMode getMouseMode() { return mouse_mode; }
 	Paper3DMesh* acessMesh() { return simMesh; }
 	Node* acessNode(int i) { return simMesh->nodes[i]; }
