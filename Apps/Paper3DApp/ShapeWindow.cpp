@@ -1,4 +1,5 @@
 #include "ShapeWindow.h"
+#include "BendingEdge.h"
 #include "Paper3DMesh.h"
 #include "Pin.h"
 #include <GUILib/GLTrackingCamera.h>
@@ -60,7 +61,7 @@ bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
 		int n = findNodeClosestTo(p[0], p[1]);
 		bool is_in_path = false;
 		for (uint i = 0; i < cutPath.size(); ++i) is_in_path = (is_in_path || cutPath[i] == n);
-		if (!is_in_path) {
+		if (!is_in_path && cutPath.size() > 0) {
 			int last = cutPath[cutPath.size() - 1];
 			bool is_adjacent = paperApp->acessMesh()->areNodesAdjacent(last, n);
 			if (is_adjacent)
@@ -230,6 +231,7 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 	}
 	else if (mode == mouse_cut && action == GLFW_RELEASE) {
 		paperApp->acessMesh()->makeCut(cutPath);
+		cutPath.clear();
 	}
 	popViewportTransformation();
 	return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
@@ -240,14 +242,34 @@ void ShapeWindow::drawScene() {
 	
 	paperApp->simMesh->drawRestConfiguration();
 
+	if(display_bending){
+		// colour edges according to their current energy
+		Paper3DMesh* mesh = paperApp->acessMesh();
+		double max_energy_now = 0.0;
+		for (uint i = 0; i < mesh->elements.size(); ++i) {
+			if (BendingEdge* e = dynamic_cast<BendingEdge*>(mesh->elements[i])) {
+				double energy = e->getEnergy(mesh->x, mesh->X);
+				max_energy_now = std::max(max_energy_now, e_bend_max);
+				P3D p0 = e->n[0]->getUndeformedPosition();
+				P3D p1 = e->n[1]->getUndeformedPosition();
+				double c = std::min(1.0, energy / e_bend_max);
+				glColor3d(c, 0.5 + 0.25 * c, 0.75 - 0.25 * c);
+				glBegin(GL_LINES);
+				glVertex3d(p0[0], p0[1], 0.001);
+				glVertex3d(p1[0], p1[1], 0.001);
+				glEnd();
+			}
+		}
+		// adapt to current maximum bending energy
+		e_bend_max = std::max(max_energy_now, 0.002);
+	}
+
 	if (first_point_set) {
 		//Draw cross at pin start point
 		glColor3d(0, 1, 1);
 		glBegin(GL_LINES);
 		glVertex3d(xPin-0.03, yPin-0.03, 0.01);
 		glVertex3d(xPin+0.03, yPin+0.03, 0.01);
-		glEnd();
-		glBegin(GL_LINES);
 		glVertex3d(xPin + 0.03, yPin - 0.03, 0.01);
 		glVertex3d(xPin - 0.03, yPin + 0.03, 0.01);
 		glEnd();

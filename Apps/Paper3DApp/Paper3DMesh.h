@@ -4,6 +4,7 @@
 #include <FEMSimLib/SimulationMesh.h>
 
 class Paper3DMesh : public SimulationMesh {
+	friend class ShapeWindow;
 private:
 	// M by 3 matrix to store node indices of each triangle
 	Eigen::MatrixXi triangles;

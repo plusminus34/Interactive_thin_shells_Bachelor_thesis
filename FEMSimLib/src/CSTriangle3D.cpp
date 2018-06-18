@@ -36,7 +36,7 @@ void CSTriangle3D::setRestShapeFromCurrentConfiguration(){
 	dX << V1[0], V2[0],
 		V1[1], V2[1];//Rest shape is in the plane
 
-	dXInv = dX.inverse();
+	dXInv = dX.inverse();//TODO .inverse() is baaad
 
 	//compute the area of the element...
 	restShapeArea = computeRestShapeArea(this->simMesh->X);
@@ -107,7 +107,7 @@ void CSTriangle3D::draw(const dVector& x) {
 }
 
 void CSTriangle3D::drawRestConfiguration(const dVector& X) {
-	glColor3d(1, 0, 0);
+	glColor3d(0, 0, 0);
 	glBegin(GL_LINES);
 	for (int i = 0; i<2;i++)
 		for (int j = i + 1;j<3;j++) {
@@ -187,7 +187,6 @@ void CSTriangle3D::computeGradientComponents(const dVector& x, const dVector& X)
 
 void CSTriangle3D::computeHessianComponents(const dVector& x, const dVector& X) {
     /*TODO update description
-	TODO: z coordinates of H are zero and shouldn't be
     H = dfdx = ddEdxdx.
     H = restShapeArea * dPdx(F; dFdx) * transpose(dXInv)
     There are different formula of dPdx in different models. See below.

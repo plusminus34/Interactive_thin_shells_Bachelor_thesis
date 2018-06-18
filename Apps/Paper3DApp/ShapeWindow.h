@@ -29,6 +29,10 @@ protected:
 	//helper variables for cutting
 	DynamicArray<uint> cutPath;
 
+	//helper variables for display
+	bool display_bending = true;
+	double e_bend_max = 0.002;
+
 	int findNodeClosestTo(double x, double y);
 	int findPinHandleClosestTo(double x, double y, double max_distance = 0.1);
 

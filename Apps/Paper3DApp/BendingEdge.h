@@ -10,6 +10,7 @@ Element that defines a preferred angle between 2 triangles
 class BendingEdge : public SimMeshElement {
 	friend class Paper3DApp;
 	friend class Paper3DMesh;
+	friend class ShapeWindow;
 private:
 	//material parameters...
 	double k = 0.05;
