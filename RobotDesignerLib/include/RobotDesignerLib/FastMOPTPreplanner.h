@@ -14,13 +14,14 @@ public:
 	Trajectory3D comTrajectory;
 	Trajectory3D comVelocityTrajectory;
 	Trajectory1D headingTrajectory;
+	Trajectory1D turningSpeedTrajectory;
 	ContinuousFootFallPattern cffp;
 
 	DynamicArray<Trajectory3D> eeTrajectories;
 
 	RobotState startState = RobotState(13);
 
-	void getRobotStateAtTime(double t);
+	RobotState getRobotStateAtTime(double t);
 
 public:
 	FastMOPTPreplanner(FastMOPTWindow* moptWindow);

@@ -202,20 +202,22 @@ public:
 			}
 		return true;
 	}
-
-
 };
 
 class ContinuousStepPattern {
 public:
 	//this is the limb - for fast access
 	GenericLimb* limb;
+	RigidBody* eeRB;
+	P3D eeLocalCoords;
 
 	//keep track of the start and end time (in an absolute timeframe) for the swing phases (e.g. when the limb starts to lift off the ground, and when it strikes the ground again)
 	DynamicArray<double> swingPhases;
 
-	ContinuousStepPattern(GenericLimb* l) {
+	ContinuousStepPattern(GenericLimb* l, RigidBody* eeRB, const P3D& eeLocalCoords) {
 		this->limb = l;
+		this->eeRB = eeRB;
+		this->eeLocalCoords = eeLocalCoords;
 	}
 
 	void addSwingPhase(double start, double end) {
@@ -286,24 +288,15 @@ public:
 			swingPhases.erase(swingPhases.begin());
 		}
 	}
-
 };
 
 class ContinuousFootFallPattern {
 public:
-	//keep track of the desired foot fall pattern for all feet...
+	//keep track of the desired stepping pattern for each end effector...
 	DynamicArray<ContinuousStepPattern> stepPatterns;
 
-	int getStepPatternIndexForLimb(GenericLimb* limb) {
-		for (uint i = 0; i < stepPatterns.size(); i++)
-			if (stepPatterns[i].limb == limb)
-				return i;
-		return -1;
-	}
-
-	void addStepPattern(GenericLimb* limb) {
-		if (getStepPatternIndexForLimb(limb) < 0)
-			stepPatterns.push_back(ContinuousStepPattern(limb));
+	void addStepPattern(GenericLimb* limb, RigidBody* eeRB, const P3D& eeLocalCoords) {
+		stepPatterns.push_back(ContinuousStepPattern(limb, eeRB, eeLocalCoords));
 	}
 
 	void populateFrom(FootFallPattern& ffp, double ffpDuration, double timeStart, double timeEnd) {

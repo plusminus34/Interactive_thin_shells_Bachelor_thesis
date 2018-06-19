@@ -302,6 +302,8 @@ void FastMOPTWindow::loadFFPFromFile(const char* fName){
 	footFallPattern.loadFromFile(fName);
 }
 
+double planTime = 0;
+
 void FastMOPTWindow::drawScene() {
 	glColor3d(1, 1, 1);
 	glEnable(GL_LIGHTING);
@@ -310,6 +312,12 @@ void FastMOPTWindow::drawScene() {
 		defaultFootFallPattern = footFallPattern;
 	fmpp->preplan(&locomotionManager->motionPlan->initialRS);
 	fmpp->draw();
+
+	RobotState animationState = fmpp->getRobotStateAtTime(planTime);
+	planTime += 0.001;
+
+	robot->setState(&animationState);
+	robot->draw(SHOW_ABSTRACT_VIEW);
 
 	return;
 
