@@ -54,7 +54,7 @@ public:
 
 public:
 	LocomotionEngineManagerGRFv3();
-	LocomotionEngineManagerGRFv3(Robot* robot, FootFallPattern* footFallPattern, int nSamplePoints, bool periodicMotion = true);
+	LocomotionEngineManagerGRFv3(Robot* robot, FootFallPattern* footFallPattern, int nSamplePoints);
 
 	~LocomotionEngineManagerGRFv3();
 	void setupObjectives();

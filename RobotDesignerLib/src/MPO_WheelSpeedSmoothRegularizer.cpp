@@ -20,7 +20,7 @@ double MPO_WheelSpeedSmoothRegularizer::computeValue(const dVector& s){
 
 	for (int j=0;j<end;j++){
 		int jp = (j+1 > end-1) ? 0 : j+1;
-		for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
+		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i) {
 			if(theMotionPlan->endEffectorTrajectories[i].isWheel)
 			{
 				double tmpV = theMotionPlan->endEffectorTrajectories[i].wheelSpeed[j] - theMotionPlan->endEffectorTrajectories[i].wheelSpeed[jp];
@@ -41,7 +41,7 @@ void MPO_WheelSpeedSmoothRegularizer::addGradientTo(dVector& grad, const dVector
 
 	//and now compute the gradient with respect to the robot q's
 	if (theMotionPlan->wheelParamsStartIndex >= 0){
-		for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i)
+		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i)
 			if(theMotionPlan->endEffectorTrajectories[i].isWheel)
 				for (int j=0;j<end;j++)
 				{
@@ -62,7 +62,7 @@ void MPO_WheelSpeedSmoothRegularizer::addHessianEntriesTo(DynamicArray<MTriplet>
 
 	//and now compute the gradient with respect to the robot q's
 	if (theMotionPlan->wheelParamsStartIndex >= 0){
-		for (int i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i)
+		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); ++i)
 			if(theMotionPlan->endEffectorTrajectories[i].isWheel)
 				for (int j=0;j<end;j++)
 				{

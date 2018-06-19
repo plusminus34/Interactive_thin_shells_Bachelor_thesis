@@ -53,6 +53,9 @@ public:
 	RigidBody* endEffectorRB;
 	P3D endEffectorLocalCoords;
 
+	//stored in the coordinate frame of the root
+	V3D rootToEEOriginalOffset_local;
+
 	DynamicArray<double> targetEEPosY;
 
 	//this is the limb the end effector trajectory belongs to
@@ -232,6 +235,7 @@ public:
 	double jointAngleLimit = PI / 4;
 	double EEminDistance = 0.02;
 	dVector initialRobotState;
+	RobotState initialRS;
 	
 	// Parameters for wheel motor speed constraint
 	double wheelSpeedLimit = 0;

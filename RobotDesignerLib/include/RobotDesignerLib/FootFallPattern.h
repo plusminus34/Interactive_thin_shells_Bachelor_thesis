@@ -8,9 +8,9 @@ public:
 	//this is the limb - for fast access
 	GenericLimb* limb;
 
-	//keep track of the time index where the limb starts to 
+	//keep track of the time index when the limb starts the swing phase
 	int startIndex;
-	//and the relative phase when the limb should strikes the ground...
+	//and when it should strike the ground again
 	int endIndex;
 
 	StepPattern(GenericLimb* l, int start, int end){
@@ -206,4 +206,117 @@ public:
 
 };
 
+class ContinuousStepPattern {
+public:
+	//this is the limb - for fast access
+	GenericLimb* limb;
+
+	//keep track of the start and end time (in an absolute timeframe) for the swing phases (e.g. when the limb starts to lift off the ground, and when it strikes the ground again)
+	DynamicArray<double> swingPhases;
+
+	ContinuousStepPattern(GenericLimb* l) {
+		this->limb = l;
+	}
+
+	void addSwingPhase(double start, double end) {
+		if (start > end) return;
+		if (swingPhases.size() > 0 && start < swingPhases[swingPhases.size() - 1]) return;
+		swingPhases.push_back(start);
+		swingPhases.push_back(end);
+	}
+
+	double getFirstTimeInStanceAfter(double t) {
+		if (isInStanceAt(t))
+			return t;
+
+		int i = getSwingPhaseIndexForTime(t);
+		return swingPhases[2 * i + 1];
+	}
+
+	double getFirstTimeInSwingAfter(double t) {
+		if (isInSwingAt(t))
+			return t;
+
+		uint i = 0;
+		while (i < swingPhases.size()) {
+			if (swingPhases[i] > t)
+				return swingPhases[i];
+			i += 2;
+		}
+		return -1;
+	}
+
+	int getSwingPhaseIndexForTime(double t) {
+		uint i = 0;
+		while (i < swingPhases.size()) {
+			if (swingPhases[i] <= t && swingPhases[i + 1] >= t)
+				return i/2;
+			i += 2;
+		}
+		return -1;
+	}
+
+	double getDurationOfSwingPhaseAt(double t) {
+		int i = getSwingPhaseIndexForTime(t);
+		if (i < 0) return -1;
+
+		return (swingPhases[2 * i + 1] - swingPhases[2 * i]);
+	}
+
+	double getSwingPhase(double t) {
+		int i = getSwingPhaseIndexForTime(t);
+		if (i < 0) return -1;
+		return (t - swingPhases[2 * i]) / (swingPhases[2 * i + 1] - swingPhases[2 * i]);
+	}
+
+	double isInSwingAt(double t) {
+		int i = getSwingPhaseIndexForTime(t);
+		if (i >= 0)
+			return true;
+		return false;
+	}
+
+	double isInStanceAt(double t) {
+		return !isInSwingAt(t);
+	}
+
+	void clearSwingPhasesBefore(double t) {
+		while (swingPhases.size() > 0 && swingPhases[1] < t) {
+			swingPhases.erase(swingPhases.begin());
+			swingPhases.erase(swingPhases.begin());
+		}
+	}
+
+};
+
+class ContinuousFootFallPattern {
+public:
+	//keep track of the desired foot fall pattern for all feet...
+	DynamicArray<ContinuousStepPattern> stepPatterns;
+
+	int getStepPatternIndexForLimb(GenericLimb* limb) {
+		for (uint i = 0; i < stepPatterns.size(); i++)
+			if (stepPatterns[i].limb == limb)
+				return i;
+		return -1;
+	}
+
+	void addStepPattern(GenericLimb* limb) {
+		if (getStepPatternIndexForLimb(limb) < 0)
+			stepPatterns.push_back(ContinuousStepPattern(limb));
+	}
+
+	void populateFrom(FootFallPattern& ffp, double ffpDuration, double timeStart, double timeEnd) {
+		for (uint i = 0; i < stepPatterns.size(); i++) {
+			if (StepPattern* p = ffp.getStepPatternForLimb(stepPatterns[i].limb)) {
+				int n = (int)(timeStart / ffpDuration);
+				double t = n * ffpDuration;
+				while (t < timeEnd) {
+					stepPatterns[i].addSwingPhase(t + (double)p->startIndex / (ffp.strideSamplePoints) * ffpDuration, t + (double)(p->endIndex+1) / (ffp.strideSamplePoints) * ffpDuration);
+					t += ffpDuration;
+				}
+			}
+		}
+	}
+};
 

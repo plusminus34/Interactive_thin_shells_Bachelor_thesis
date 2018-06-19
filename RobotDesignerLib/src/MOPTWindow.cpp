@@ -300,7 +300,7 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 	case GRF_OPT_V2:
 		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nTimeSteps + 1, periodicMotion); break;
 	case GRF_OPT_V3:
-		locomotionManager = new LocomotionEngineManagerGRFv3(robot, &footFallPattern, nTimeSteps + 1, periodicMotion); break;
+		locomotionManager = new LocomotionEngineManagerGRFv3(robot, &footFallPattern, nTimeSteps + 1); break;
 	case IP_OPT:
 		locomotionManager = new LocomotionEngineManagerIPv1(robot, &footFallPattern, nTimeSteps + 1); break;
 	case IP_OPT_V2:

@@ -210,6 +210,13 @@ public:
 		return root;
 	}
 
+	inline void draw(int flags) {
+		//draw the robot configuration...
+		getRoot()->draw(flags);
+		for (int i = 0; i<getJointCount(); i++)
+			getJoint(i)->child->draw(flags);
+	}
+
 	double getMass(){
 		return mass;
 	}

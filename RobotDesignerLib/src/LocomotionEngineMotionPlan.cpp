@@ -358,7 +358,6 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	/**
 		we must set up the robot such that its feet are all on the ground...
 	*/
-	RobotState startState = RobotState(robot);
 	IK_Solver ikSolver(robot);
 	ikSolver.ikPlan->setTargetIKStateFromRobot();
 
@@ -424,6 +423,7 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 	//and now proceed to initialize everything else...
 	this->robotRepresentation = new GeneralizedCoordinatesRobotRepresentation(robot);
 	robotRepresentation->getQ(initialRobotState);
+	initialRS = RobotState(robot);
 
 	//create the end effector trajectories here based on the robot configuration...
 	for (int i=0;i<nLegs;i++){
@@ -572,6 +572,8 @@ void LocomotionEngineMotionPlan::addEndEffector(GenericLimb* theLimb, RigidBody*
 		eeTraj.EEPos[k] = eeWorldCoords;
 		eeTraj.contactFlag[k] = 1.0;
 	}
+
+	eeTraj.rootToEEOriginalOffset_local = robot->getRoot()->getLocalCoordinates(V3D(robot->getRoot()->getCMPosition(), eeWorldCoords));
 }
 
 //syncs the footfall pattern with the current motion plan
@@ -1603,10 +1605,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f,
 		if (drawSkeleton)
 			flags = SHOW_ABSTRACT_VIEW;
 		flags |= HIGHLIGHT_SELECTED;
-		//draw the robot configuration...
-		robot->getRoot()->draw(flags);
-		for (int i=0;i<robot->getJointCount();i++)
-			robot->getJoint(i)->child->draw(flags);
+		robot->draw(flags);
 		//-------------------------------------
 
 		robot->setState(&oldState);	

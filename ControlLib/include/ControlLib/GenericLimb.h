@@ -15,9 +15,12 @@ public:
 	//this is the name of the limb
 	std::string name;
 	//this is the body frame the limb is attached to
-	BodyFrame* parentBodyFrame;
+	BodyFrame* parentBodyFrame = NULL;
 	//all limbs have an origin. This is it.
-	RigidBody *origin;
+	RigidBody *origin = NULL;
+	//assumes the limb goes down the stream of joints all the way until the end of the limb
+	Joint* rootJoint = NULL;
+
 	//and this is a list of all the limb's joints - for easy access...
 	DynamicArray<Joint*> jointList;
 
@@ -98,7 +101,7 @@ public:
 		this method is used to collect all the joint links of the leg to the list...
 	*/
 	virtual void initializeJointList() = 0;
-	
+
 };
 
 

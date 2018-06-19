@@ -12,9 +12,8 @@
 */
 class SimpleLimb : public GenericLimb{
 public:
-	double limbLength;
-	//assumes the limb goes down the stream of joints all the way until the end of the limb
-	Joint* rootJoint;
+	double limbLength = 0;
+
 public:
 	/**
 		constructor
@@ -45,7 +44,7 @@ public:
 		this method is used to collect all the joint links of the leg to the list...
 	*/
 	virtual void initializeJointList();
-	
+
 };
 
 

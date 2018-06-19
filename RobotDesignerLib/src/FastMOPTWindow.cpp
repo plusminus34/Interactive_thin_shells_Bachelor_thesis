@@ -4,6 +4,7 @@
 #include <RobotDesignerLib/LocomotionEngineManagerGRF.h>
 #include <RobotDesignerLib/LocomotionEngineManagerIP.h>
 #include "../Apps/RobotDesignerApp/RobotDesignerApp.h"
+#include <RobotDesignerLib/FastMOPTPreplanner.h>
 
 FastMOPTWindow::FastMOPTWindow(int x, int y, int w, int h, BaseRobotControlApp* theApp) : GLWindow3D(x, y, w, h) {
 	this->theApp = theApp;
@@ -16,29 +17,36 @@ FastMOPTWindow::FastMOPTWindow(int x, int y, int w, int h, BaseRobotControlApp* 
 	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutUpAxis = 0.95;
 	dynamic_cast<GLTrackingCamera*>(this->camera)->camDistance = -1.5;
 	
+	fmpp = new FastMOPTPreplanner(this);
 
 	showGroundPlane = true;
 	showReflections = true;
 
+	forwardSpeedTarget = 1.0;
+	sidewaysSpeedTarget = 0;
+	bodyHeightTarget = 0;
+	turningSpeedTarget = 0;
 }
 
 void FastMOPTWindow::addMenuItems() {
-/*
-	auto tmp = new nanoFui::Label(theApp->mainMenu->window(), "Popup buttons", "sans-bold");
-	theApp->mainMenu->addWidget("", tmp);
-
-	nanogui::PopupButton *popupBtn = new nanogui::PopupButton(theApp->mainMenu->window(), "Popup", ENTYPO_ICON_EXPORT);
-	theApp->mainMenu->addWidget("", popupBtn);
-
-	nanogui::Popup *popup = popupBtn->popup();
-	popup->setLayout(new nanogui::GroupLayout());
-	new nanogui::Label(popup, "Arbitrary widgets can be placed here");
-	new nanogui::CheckBox(popup, "A check box");
-*/
-
 	{
-		auto tmpVar = theApp->mainMenu->addVariable("generate periodic motion", periodicMotion);
+		auto tmpVar = theApp->mainMenu->addVariable("Forward Speed", forwardSpeedTarget);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
+	{
+		auto tmpVar = theApp->mainMenu->addVariable("Sideways Speed", sidewaysSpeedTarget);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
+		auto tmpVar = theApp->mainMenu->addVariable("Turning Speed", turningSpeedTarget);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
+	}
+	{
+		auto tmpVar = theApp->mainMenu->addVariable("Body Height", bodyHeightTarget);
+		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
+	}
+
+
 
 	{
 		auto tmpVar = theApp->mainMenu->addVariable("# of MOPT sample points", nTimeSteps);
@@ -57,74 +65,8 @@ void FastMOPTWindow::addMenuItems() {
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
 	}
 	{
-		auto tmpVar = theApp->mainMenu->addVariable("des speed X", moptParams.desTravelDistX);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
-	}
-
-	theApp->mainMenu->addVariable("curr speed X", COMSpeed(0))->setEditable(false);
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("des Speed Z", moptParams.desTravelDistZ);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
-	}
-	theApp->mainMenu->addVariable("curr speed Z", COMSpeed(2))->setEditable(false);
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("des turning angle", moptParams.desTurningAngle);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
-	}
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("Ext force X", moptParams.externalForceX);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
-	}
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("Ext force Z", moptParams.externalForceZ);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
-	}
-	{
 		auto tmpVar = theApp->mainMenu->addVariable("gait duration", moptParams.motionPlanDuration);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
-	}
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("joint velocity limit", moptParams.jointVelocityLimit);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
-	}
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("joint velocity epsilon", moptParams.jointVelocityEpsilon);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
-	}
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("EE min distance", moptParams.EEminDistance);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
-	}
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("joint angle limit", moptParams.jointAngleLimit);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
-	}
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("wheel speed limit", moptParams.wheelSpeedLimit);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
-	}
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("wheel speed epsilon", moptParams.wheelSpeedEpsilon);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
-	}
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("wheel accel. limit", moptParams.wheelAccelLimit);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.5);
-	}
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("wheel accel. epsilon", moptParams.wheelAccelEpsilon);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
-	}
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("joint velocity L0 delta", moptParams.jointL0Delta);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
-	}
-	{
-		auto tmpVar = theApp->mainMenu->addVariable("friction coeff", moptParams.frictionCoeff);
-		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
-	}
-	{
-		theApp->mainMenu->addVariable("write joint velocity profile", moptParams.writeJointVelocityProfile);
 	}
 
 	theApp->mainMenu->addButton("Check Derivatives", [this]() {
@@ -298,9 +240,9 @@ LocomotionEngineManager* FastMOPTWindow::initializeNewMP(bool doWarmStart){
 	case GRF_OPT:
 		locomotionManager = new LocomotionEngineManagerGRFv1(robot, &footFallPattern, nTimeSteps + 1); break;
 	case GRF_OPT_V2:
-		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nTimeSteps + 1, periodicMotion); break;
+		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nTimeSteps + 1, true); break;
 	case GRF_OPT_V3:
-		locomotionManager = new LocomotionEngineManagerGRFv3(robot, &footFallPattern, nTimeSteps + 1, periodicMotion); break;
+		locomotionManager = new LocomotionEngineManagerGRFv3(robot, &footFallPattern, nTimeSteps + 1); break;
 	case IP_OPT:
 		locomotionManager = new LocomotionEngineManagerIPv1(robot, &footFallPattern, nTimeSteps + 1); break;
 	case IP_OPT_V2:
@@ -308,6 +250,8 @@ LocomotionEngineManager* FastMOPTWindow::initializeNewMP(bool doWarmStart){
 	default:
 		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nTimeSteps + 1); break;
 	}
+
+	bodyHeightTarget = locomotionManager->motionPlan->initialRS.getPosition().getComponentAlong(Globals::worldUp);
 
 	syncMotionPlanParameters();
 
@@ -361,6 +305,13 @@ void FastMOPTWindow::loadFFPFromFile(const char* fName){
 void FastMOPTWindow::drawScene() {
 	glColor3d(1, 1, 1);
 	glEnable(GL_LIGHTING);
+
+	if (defaultFootFallPattern.stepPatterns.size() < footFallPattern.stepPatterns.size())
+		defaultFootFallPattern = footFallPattern;
+	fmpp->preplan(&locomotionManager->motionPlan->initialRS);
+	fmpp->draw();
+
+	return;
 
 	if (locomotionManager){
 

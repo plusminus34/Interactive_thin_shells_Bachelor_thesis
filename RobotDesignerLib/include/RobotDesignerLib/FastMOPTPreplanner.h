@@ -2,20 +2,33 @@
 
 #include <Utils/Utils.h>
 #include <ControlLib/GenericLimb.h>
+#include <RobotDesignerLib/FastMOPTWindow.h>
 
 /**
-	This class is used to parameterize a gait by specifying the typical foot-fall pattern. In particular, this class stores, for each foot of a character,
-	the relative phase at which it is supposed to switch from stance to swing and the other way around.
+	Sync'ed with the robot state, this class implements a very simple first 
+	order model to generate body trajectories and footfall placement.
 */
 class FastMOPTPreplanner{
 public:
+	FastMOPTWindow* moptWindow;
+	Trajectory3D comTrajectory;
+	Trajectory3D comVelocityTrajectory;
+	Trajectory1D headingTrajectory;
+	ContinuousFootFallPattern cffp;
+
+	DynamicArray<Trajectory3D> eeTrajectories;
+
+	RobotState startState = RobotState(13);
+
+	void getRobotStateAtTime(double t);
 
 public:
-	FastMOPTPreplanner();
+	FastMOPTPreplanner(FastMOPTWindow* moptWindow);
 	~FastMOPTPreplanner(void);
 
+	void preplan(RobotState* currentRobotState);
 
+	void draw();
 
 };
-
 

@@ -7,15 +7,15 @@
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
 
-//have a separate footfall planner - this is the thing that takes into account current state, feedback terms for foot placement, desired body motions, and it just tells mopt initial boundary conditions (based on current robot state) as well as desired speed/turning
 
-//simple first order dynamics model for body trajectories which then informs the footfall placement. This model is sync'ed with the robot state, so that some footfall placement and so on can emerge automatically...
+
 
 //work towards: 
 //	- long horizon motion plans that include a change in gait, legs being used as arms, etc
 //	- mopt that combines locomotion and manipulation
 //	- MOPT for multi-robot systems, including locomotion and manipulation
 //	- interactive MOPT - add an obstacle in the scene, given current state of robot it figures out how to avoid it, etc.
+
 
 FastRobotControlApp::FastRobotControlApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
@@ -103,6 +103,8 @@ FastRobotControlApp::FastRobotControlApp(){
 	setupWindows();
 
 	loadFile("..\\data\\RobotDesigner\\SpotMiniDemo.batch");
+	robot->forward = V3D(0, 0, 1);
+	robot->right = V3D(-1, 0, 0);
 
 	followCameraTarget = true;
 }
@@ -115,27 +117,35 @@ void FastRobotControlApp::setupWindows() {
 	w = (GLApplication::getMainWindowWidth()) - offset;
 	h = GLApplication::getMainWindowHeight();
 
-	if (!showSimWindowOnly) {
+	if (viewOptions == SIM_AND_MOPT_WINDOWS) {
 		moptWindow->setViewportParameters(offset, 0, w / 2, h);
 		moptWindow->ffpViewer->setViewportParameters(offset, 0, w / 2, h / 4);
 
 		consoleWindow->setViewportParameters(offset + w / 2, 0, w / 2, 280);
 		simWindow->setViewportParameters(offset + w / 2, 0, w / 2, h);
-	} else {
+		showConsole = true;
+	} else if (viewOptions == SIM_WINDOW_ONLY) {
 		consoleWindow->setViewportParameters(offset, 0, w, 280);
 		simWindow->setViewportParameters(offset, 0, w, h);
+		showConsole = true;
 	}
+	else {
+		moptWindow->setViewportParameters(offset, 0, w, h);
+		moptWindow->ffpViewer->setViewportParameters(offset, 0, w, h / 4);
+		showConsole = false;
+	}
+
 }
 
 FastRobotControlApp::~FastRobotControlApp(void){
 }
 
 bool FastRobotControlApp::shouldShowSimWindow() {
-	return true;
+	return viewOptions != MOPT_WINDOW_ONLY;
 }
 
 bool FastRobotControlApp::shouldShowMOPTWindow() {
-	return !showSimWindowOnly;
+	return viewOptions != SIM_WINDOW_ONLY;
 }
 
 //triggered when mouse moves
@@ -189,21 +199,18 @@ bool FastRobotControlApp::onKeyEvent(int key, int action, int mods) {
 
 	if (moptWindow->locomotionManager && moptWindow->locomotionManager->motionPlan) {
 		if (key == GLFW_KEY_UP && action == GLFW_PRESS)
-			moptWindow->moptParams.desTravelDistZ += 0.1;
+			moptWindow->forwardSpeedTarget += 0.1;
 		if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
-			moptWindow->moptParams.desTravelDistZ -= 0.1;
+			moptWindow->forwardSpeedTarget -= 0.1;
 		if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
-			moptWindow->moptParams.desTravelDistX += 0.1;
+			moptWindow->sidewaysSpeedTarget += 0.1;
 		if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
-			moptWindow->moptParams.desTravelDistX -= 0.1;
+			moptWindow->sidewaysSpeedTarget -= 0.1;
 		if (key == GLFW_KEY_PERIOD && action == GLFW_PRESS)
-			moptWindow->moptParams.desTurningAngle += 0.1;
+			moptWindow->turningSpeedTarget += 0.1;
 		if (key == GLFW_KEY_SLASH && action == GLFW_PRESS)
-			moptWindow->moptParams.desTurningAngle -= 0.1;
+			moptWindow->turningSpeedTarget -= 0.1;
 
-		boundToRange(&moptWindow->moptParams.desTravelDistZ, -1.5, 1.5);
-		boundToRange(&moptWindow->moptParams.desTravelDistX, -1.5, 1.5);
-		boundToRange(&moptWindow->moptParams.desTurningAngle, -1.5, 1.5);
 		if (key == GLFW_KEY_O && action == GLFW_PRESS)
 			moptWindow->locomotionManager->motionPlan->writeRobotMotionAnglesToFile("../out/tmpMPAngles.mpa");
 	}
@@ -221,13 +228,18 @@ bool FastRobotControlApp::onKeyEvent(int key, int action, int mods) {
 	}
 
 	if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
-		showSimWindowOnly = true;
+		viewOptions = SIM_WINDOW_ONLY;
 		setupWindows();
 	}
 	if (key == GLFW_KEY_F2 && action == GLFW_PRESS) {
-		showSimWindowOnly = false;
+		viewOptions = MOPT_WINDOW_ONLY;
 		setupWindows();
 	}
+	if (key == GLFW_KEY_F3 && action == GLFW_PRESS) {
+		viewOptions = SIM_AND_MOPT_WINDOWS;
+		setupWindows();
+	}
+
 
 	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
 		runOption = MOTION_PLAN_OPTIMIZATION;

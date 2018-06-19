@@ -57,7 +57,12 @@ public:
 	};
 	RD_RUN_OPTIONS runOption = MOTION_PLAN_OPTIMIZATION;
 
-	bool showSimWindowOnly = false;
+	enum VIEW_OPTIONS {
+		SIM_WINDOW_ONLY = 0,
+		MOPT_WINDOW_ONLY,
+		SIM_AND_MOPT_WINDOWS
+	};
+	VIEW_OPTIONS viewOptions = MOPT_WINDOW_ONLY;
 
 	int walkCycleIndex = 0;
 

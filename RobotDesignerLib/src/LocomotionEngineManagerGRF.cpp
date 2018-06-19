@@ -492,7 +492,7 @@ LocomotionEngineManagerGRFv2::~LocomotionEngineManagerGRFv2(){
 LocomotionEngineManagerGRFv3::LocomotionEngineManagerGRFv3() : LocomotionEngineManagerGRF() {
 }
 
-LocomotionEngineManagerGRFv3::LocomotionEngineManagerGRFv3(Robot* robot, FootFallPattern* ffp, int nSamplePoints, bool periodicMotion) : LocomotionEngineManagerGRF(robot, ffp, nSamplePoints, periodicMotion) {
+LocomotionEngineManagerGRFv3::LocomotionEngineManagerGRFv3(Robot* robot, FootFallPattern* ffp, int nSamplePoints) : LocomotionEngineManagerGRF(robot, ffp, nSamplePoints, false) {
 	setupObjectives();
 	useObjectivesOnly = true;
 }
