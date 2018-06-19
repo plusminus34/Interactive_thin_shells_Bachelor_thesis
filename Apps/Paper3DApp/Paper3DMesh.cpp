@@ -254,6 +254,63 @@ void Paper3DMesh::readMeshFromFile(const char* fName){
 
 }
 
+void Paper3DMesh::getSaveData(MatrixNxM &xX, Eigen::MatrixXi &T, VectorXT<int> &fixNode, MatrixNxM &fixPos) {
+	xX.resize(nodes.size(), 6);
+	for (uint i = 0; i < nodes.size(); ++i)
+		xX.row(i) << x[3 * i], x[3 * i + 1], x[3 * i + 2], X[3 * i], X[3 * i + 1], X[3 * i + 2];
+
+	T = triangles;
+
+	fixNode.resize(pinnedNodeElements.size());
+	fixPos.resize(pinnedNodeElements.size(), 3);
+	for (uint i = 0; i < pinnedNodeElements.size(); ++i) {
+		FixedPointSpring3D* fps = dynamic_cast<FixedPointSpring3D*>(pinnedNodeElements[i]);
+		fixNode[i] = fps->node->nodeIndex;
+		fixPos.row(i) << fps->targetPosition[0], fps->targetPosition[1], fps->targetPosition[2];
+	}
+}
+
+void Paper3DMesh::applyLoadData(MatrixNxM &xX, Eigen::MatrixXi &T, VectorXT<int> &fixNode, MatrixNxM &fixPos) {
+
+	clear();
+
+	int num_nodes = xX.rows();
+
+	dVector x_temp(3 * num_nodes);
+	x.resize(3 * num_nodes);
+	X.resize(3 * num_nodes);
+	v.resize(3 * num_nodes);
+	f_ext.resize(3 * num_nodes);
+	m.resize(3 * num_nodes);
+
+	for (int i = 0; i < num_nodes; ++i) {
+		Node* newNode = new Node(this, i, 3 * i, 3);
+		P3D p(xX(i, 0), xX(i, 1), xX(i, 2));
+		P3D P(xX(i, 3), xX(i, 4), xX(i, 5));
+		for (int j = 0; j < 3; j++) {
+			x_temp[3 * i + j] = p[j];
+			X[3 * i + j] = P[j];
+			v[3 * i + j] = 0;
+			f_ext[3 * i + j] = 0;
+			m[3 * i + j] = 0;
+		}
+		nodes.push_back(newNode);
+	}
+	x = X;
+
+	triangles = T;
+
+	init();
+
+	energyFunction = new FEMEnergyFunction();
+	energyFunction->initialize(this);
+
+	x = x_temp;
+
+	for (int i = 0; i < fixNode.size(); ++i)
+		setPinnedNode(fixNode[i], P3D(fixPos(i, 0), fixPos(i, 1), fixPos(i, 2)));
+}
+
 int Paper3DMesh::getSelectedNodeID(Ray ray){
     int ID = -1;
     double dis = 2e9;

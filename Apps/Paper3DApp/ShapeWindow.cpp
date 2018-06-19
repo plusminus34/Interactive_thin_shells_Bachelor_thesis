@@ -13,6 +13,68 @@ ShapeWindow::ShapeWindow(int x, int y, int w, int h, Paper3DApp *glApp) : GLWind
 ShapeWindow::~ShapeWindow(){
 }
 
+void ShapeWindow::getSaveData(int &grid_width, int &grid_height, double &cell_size, MatrixNxM &pins) {
+	grid_width = dim_x;
+	grid_height = dim_y;
+	cell_size = h;
+	int num_pins = pinHandles.size() / 2;
+	pins.resize(num_pins, 8);
+	for (int i = 0; i < num_pins; ++i) {
+		// convert flip to double: -1.0 (< 0.0) for false, 1.0 (>= 0.0) for true
+		double f0 = -1.0, f1 = -1.0;
+		if (pinHandles[2 * i]->flipped) f0 = 1.0;
+		if (pinHandles[2 * i + 1]->flipped) f1 = 1.0;
+		pins.row(i) << pinHandles[2 * i]->x, pinHandles[2 * i]->y, pinHandles[2 * i]->angle, f0,
+			pinHandles[2 * i + 1]->x, pinHandles[2 * i + 1]->y, pinHandles[2 * i + 1]->angle, f1;
+	}
+}
+
+void ShapeWindow::applyLoadData(int &grid_width, int &grid_height, double &cell_size, MatrixNxM &pins) {
+	setGridDimensions(grid_width, grid_height, cell_size);
+	for (uint i = 0; i < pinHandles.size(); ++i)
+		delete pinHandles[i];
+	pinHandles.clear();
+	next_pin_id = 0;
+
+	for (int i = 0; i < pins.rows(); ++i) {
+		/*
+		// Id of the pin this handle belongs to
+		int pin_id;
+		// Which end of the pin it is (always 0 or 1)
+		int index;
+		// Position of the handle in 2D
+		double x;
+		double y;
+		// Orientation
+		double angle;
+		bool flipped;
+		*/
+		int new_id = next_pin_id++;
+
+		PinHandle* new_handle = new PinHandle;
+		new_handle->pin_id = new_id;
+		new_handle->index = 0;
+		new_handle->x = pins(i, 0);
+		new_handle->y = pins(i, 1);
+		new_handle->angle = pins(i, 2);
+		new_handle->flipped = (pins(i, 3) >= 0.0);
+		pinHandles.push_back(new_handle);
+
+		new_handle = new PinHandle;
+		new_handle->pin_id = new_id;
+		new_handle->index = 1;
+		new_handle->x = pins(i, 4);
+		new_handle->y = pins(i, 5);
+		new_handle->angle = pins(i, 6);
+		new_handle->flipped = (pins(i, 7) >= 0.0);
+		pinHandles.push_back(new_handle);
+
+		Pin* toAdd = createPinFromHandles(2 * i, 2 * i + 1);
+		if (toAdd != NULL)
+			paperApp->addMeshElement(toAdd);
+	}
+}
+
 void ShapeWindow::setGridDimensions(int dim_x, int dim_y, double h) {
 	this->dim_x = dim_x;
 	this->dim_y = dim_y;

@@ -43,6 +43,9 @@ public:
 	ShapeWindow(int x, int y, int w, int h, Paper3DApp *glApp);
 	~ShapeWindow();
 
+	virtual void getSaveData(int &grid_width, int &grid_height, double &cell_size, MatrixNxM &pins);
+	virtual void applyLoadData(int &grid_width, int &grid_height, double &cell_size, MatrixNxM &pins);
+
 	virtual void setGridDimensions(int l, int h, double d);
 
 	virtual void drawScene();

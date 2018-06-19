@@ -34,7 +34,7 @@ Paper3DApp::Paper3DApp() {
 	shearModulus = 750;
 	bulkModulus = 0.5;
 	bend_k = 0.0008;
-	pin_k = 100;//50 is a reasonable value, ... at least for rectangle with dimensions 11 x 7
+	pin_k = 100;
 	mouse_mode = mouse_drag;
 
 	int dim_x = 11;
@@ -55,9 +55,25 @@ Paper3DApp::Paper3DApp() {
 
 	//simMesh->addGravityForces(V3D(0.0, 0.0, 0.0));
 
-	mainMenu->addVariable("Check derivatives", checkDerivatives);
+	mainMenu->addGroup("File options");
+	nanogui::Widget *tools = new nanogui::Widget(mainMenu->window());
+	mainMenu->addWidget("", tools);
+	tools->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
+		nanogui::Alignment::Middle, 0, 4));
+	nanogui::Button* button;
+	//TODO select file in a dialog?
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_SAVE);
+	button->setCallback([this]() { saveFile("../out/Paper3DAppQuickSave"); });
+	button->setTooltip("Quick Save (S)");
+
+	button = new nanogui::Button(tools, "");
+	button->setIcon(ENTYPO_ICON_DOWNLOAD);
+	button->setCallback([this]() { loadFile("../out/Paper3DAppQuickSave"); });
+	button->setTooltip("Quick Load (R)");
 
 	mainMenu->addGroup("FEM Sim options");
+	mainMenu->addVariable("Check derivatives", checkDerivatives);
 	mainMenu->addVariable("Shear modulus", shearModulus);
 	mainMenu->addVariable("Bulk modulus", bulkModulus);
 	mainMenu->addVariable("Bending stiffness", bend_k);
@@ -148,12 +164,73 @@ bool Paper3DApp::onCharacterPressedEvent(int key, int mods) {
 
 
 void Paper3DApp::loadFile(const char* fName) {
-	Logger::consolePrint("Loading file \'%s\'...\n", fName);
-	Logger::consolePrint("...or not.\n");
+	Logger::consolePrint("LOAD FILE: Loading file \'%s\'...\n", fName);
+
+	int num_nodes, num_triangles, num_fixed, num_pins;
+	MatrixNxM xX;
+	Eigen::MatrixXi T;
+	VectorXT<int> fixNode;
+	MatrixNxM fixPos;
+	MatrixNxM pins;
+	int grid_width, grid_height;
+	double cell_size;
+
+	FILE* fp = fopen(fName, "r");
+	fscanf(fp, "%d %d %d", &num_nodes, &num_triangles, &num_fixed);
+	fscanf(fp, "%d %d %lf %d", &grid_width, &grid_height, &cell_size, &num_pins);
+	xX.resize(num_nodes, 6);
+	for (int i = 0; i < num_nodes; ++i)
+		fscanf(fp, "%lf %lf %lf %lf %lf %lf", &xX(i, 0), &xX(i, 1), &xX(i, 2), &xX(i, 3), &xX(i, 4), &xX(i, 5));
+	T.resize(num_triangles, 3);
+	for (int i = 0; i < num_triangles; ++i)
+		fscanf(fp, "%d %d %d", &T(i, 0), &T(i, 1), &T(i, 2));
+	fixNode.resize(num_fixed);
+	fixPos.resize(num_fixed, 3);
+	for (int i = 0; i < num_fixed; ++i)
+		fscanf(fp, "%d %lf %lf %lf", &fixNode[i], &fixPos(i,0), &fixPos(i, 1), &fixPos(i, 2));
+	pins.resize(num_pins, 8);
+	for (int i = 0; i < num_pins; ++i)
+		fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf", &pins(i, 0), &pins(i, 1), &pins(i, 2), &pins(i, 3),
+			&pins(i, 4), &pins(i, 5), &pins(i, 6), &pins(i, 7));
+	fclose(fp);
+	Logger::consolePrint("LOAD FILE: File \'%s\' read\n", fName);
+
+	simMesh->applyLoadData(xX, T, fixNode, fixPos);
+	shapeWindow->applyLoadData(grid_width, grid_height, cell_size, pins);
+	Logger::consolePrint("LOAD FILE: Loading complete\n", fName);
 }
 
 void Paper3DApp::saveFile(const char* fName) {
-	Logger::consolePrint("SAVE FILE: Do not know what to do with file \'%s\'\n", fName);
+	Logger::consolePrint("SAVE FILE: Write to file \'%s\'\n", fName);
+	// Should material parameters be saved too?
+	MatrixNxM xX;
+	Eigen::MatrixXi T;
+	VectorXT<int> fixNode;
+	MatrixNxM fixPos;
+	MatrixNxM pins;
+	int grid_width, grid_height;
+	double cell_size;
+
+	simMesh->getSaveData(xX,T,fixNode,fixPos);
+	shapeWindow->getSaveData(grid_width, grid_height, cell_size, pins);
+
+	FILE* fp = fopen(fName, "w");
+	fprintf(fp, "%d %d %d\n", xX.rows(), T.rows(), fixNode.size());
+	fprintf(fp, "%d %d %f %d\n\n", grid_width, grid_height, cell_size, pins.rows());
+	for (int i = 0; i < xX.rows(); ++i)
+		fprintf(fp, "%f %f %f %f %f %f\n", xX(i, 0), xX(i, 1), xX(i, 2), xX(i, 3), xX(i, 4), xX(i, 5));
+	fprintf(fp, "\n");
+	for (int i = 0; i < T.rows(); ++i)
+		fprintf(fp, "%d %d %d\n", T(i, 0), T(i, 1), T(i, 2));
+	fprintf(fp, "\n");
+	for (int i = 0; i < fixNode.size(); ++i)
+		fprintf(fp, "%d %f %f %f\n", fixNode[i], fixPos(i, 0), fixPos(i, 1), fixPos(i, 2));
+	fprintf(fp, "\n");
+	for (int i = 0; i < pins.rows(); ++i)
+		fprintf(fp, "%f %f %f %f %f %f %f %f\n", pins(i,0), pins(i, 1), pins(i, 2), pins(i, 3),
+			pins(i, 4), pins(i, 5), pins(i, 6), pins(i, 7));
+	fclose(fp);
+	Logger::consolePrint("SAVE FILE: File \'%s\' written\n", fName);
 }
 
 

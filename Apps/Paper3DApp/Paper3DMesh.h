@@ -30,6 +30,8 @@ public:
 	static void generateTestSystem(char* fName, int num_nodes);
 	static void generateRectangleSystem(char* fName, int nodes_x, int nodes_y, double length_x, double length_y);
     void readMeshFromFile(const char* fName);
+	virtual void getSaveData(MatrixNxM &xX,Eigen::MatrixXi &T, VectorXT<int> &fixNode, MatrixNxM &fixPos);
+	virtual void applyLoadData(MatrixNxM &xX, Eigen::MatrixXi &T, VectorXT<int> &fixNode, MatrixNxM &fixPos);
 
     virtual int getSelectedNodeID(Ray ray);
 	virtual void cornersOfTriangle(int t, int &c0, int &c1, int &c2);
