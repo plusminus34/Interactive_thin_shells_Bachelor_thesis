@@ -143,7 +143,7 @@ void FastMOPTPreplanner::preplan(RobotState* currentRobotState) {
 //have a play through where time advances and starting from where the robot is the motion plan gets reinitialized/updated, and we should see it being coherent and just growing...
 }
 
-void FastMOPTPreplanner::getRobotStateAt(double t) {
+void FastMOPTPreplanner::getRobotStateAtTime(double t) {
 
 }
 
