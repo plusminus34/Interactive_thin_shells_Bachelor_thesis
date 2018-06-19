@@ -37,18 +37,6 @@ void ShapeWindow::applyLoadData(int &grid_width, int &grid_height, double &cell_
 	next_pin_id = 0;
 
 	for (int i = 0; i < pins.rows(); ++i) {
-		/*
-		// Id of the pin this handle belongs to
-		int pin_id;
-		// Which end of the pin it is (always 0 or 1)
-		int index;
-		// Position of the handle in 2D
-		double x;
-		double y;
-		// Orientation
-		double angle;
-		bool flipped;
-		*/
 		int new_id = next_pin_id++;
 
 		PinHandle* new_handle = new PinHandle;
@@ -79,31 +67,6 @@ void ShapeWindow::setGridDimensions(int dim_x, int dim_y, double h) {
 	this->dim_x = dim_x;
 	this->dim_y = dim_y;
 	this->h = h;
-
-	if (false) {//starting pin TODO: move elsewhere
-		int new_id = next_pin_id++;
-		
-		PinHandle* new_handle = new PinHandle;
-		new_handle->pin_id = new_id;
-		new_handle->index = 0;
-		new_handle->x = 0.11;
-		new_handle->y = 0.5;
-		new_handle->angle = PI*7/4;
-		new_handle->flipped = true;
-		pinHandles.push_back(new_handle);
-
-		new_handle = new PinHandle;
-		new_handle->pin_id = new_id;
-		new_handle->index = 1;
-		new_handle->x = 0.95;
-		new_handle->y = 0.2;
-		new_handle->angle = PI*3/4;
-		new_handle->flipped = false;
-		pinHandles.push_back(new_handle);
-
-		Pin* toAdd = createPinFromHandles(pinHandles.size() - 2, pinHandles.size() - 1);
-		paperApp->addMeshElement(toAdd);
-	}
 }
 
 bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
@@ -121,9 +84,17 @@ bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
 	}
 	else if (paperApp->getMouseMode() == mouse_cut && GlobalMouseState::dragging) {
 		int n = findNodeClosestTo(p[0], p[1]);
+		// each node may only show up once
 		bool is_in_path = false;
-		for (uint i = 0; i < cutPath.size(); ++i) is_in_path = (is_in_path || cutPath[i] == n);
-		if (!is_in_path && cutPath.size() > 0) {
+		for (uint i = 0; i < cutPath.size(); ++i)
+			is_in_path = (is_in_path || cutPath[i] == n);
+		// checking only proximity often leads to unwanted results -> extra condition
+		P3D pos_before = paperApp->getNodeRestPos(cutPath[cutPath.size() - 1]);
+		P3D pos_n = paperApp->getNodeRestPos(n);
+		V3D dir_n = (pos_n - pos_before).normalized();
+		V3D dir_mouse = (P3D(p[0], p[1], 0) - pos_before).normalized();
+		bool direction_matches = (dir_mouse.dot(dir_n) > 0.95);
+		if (direction_matches && !is_in_path && cutPath.size() > 0) {
 			int last = cutPath[cutPath.size() - 1];
 			bool is_adjacent = paperApp->acessMesh()->areNodesAdjacent(last, n);
 			if (is_adjacent)
