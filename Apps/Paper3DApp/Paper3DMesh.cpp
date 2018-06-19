@@ -435,7 +435,28 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 	else if (boundary[n] && n_prev == -1 && !boundary[n_next]) num_copies = 1;
 	else if (boundary[n] && n_next == -1 && !boundary[n_prev]) num_copies = 1;
 	else if (boundary[n] && !is_endpoint && boundary[n_prev] != boundary[n_next]) num_copies = 1;
+
 	//TODO case where n_prev, n, n_next are all on the boundary and the same triangle, but not adjacent along the boundary
+	//For now, have some error messages
+	if (boundary[n] && ((n_next != -1 && boundary[n_next]) || (n_prev != -1 && boundary[n_prev]))) {
+		int last = orderedAdjacentNodes[n].size() - 1;
+		if (n_prev != -1 && boundary[n_prev]) {
+			if (orderedAdjacentNodes[n][0] != n_prev && orderedAdjacentNodes[n][last] != n_prev) {
+				Logger::consolePrint("CUTTING PROBLEM AT NODE %d!\n", n);
+				Logger::consolePrint("n_prev is on boundary, but not adjacent to n on boundary\n");
+				copy_index = -1;
+				return;
+			}
+		}
+		if (n_next != -1 && boundary[n_next]) {
+			if (orderedAdjacentNodes[n][0] != n_next && orderedAdjacentNodes[n][last] != n_next) {
+				Logger::consolePrint("CUTTING PROBLEM AT NODE %d!\n", n);
+				Logger::consolePrint("n_next is on boundary, but not adjacent to n on boundary\n");
+				copy_index = -1;
+				return;
+			}
+		}
+	}
 
 	else if (boundary[n] && !is_endpoint && !boundary[n_prev] && !boundary[n_next]) num_copies = 2;
 
