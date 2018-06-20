@@ -11,6 +11,9 @@ class ShapeWindow: public GLWindow3D{
 protected:
 	Paper3DApp* paperApp;
 
+	double camera_x = 0.0;
+	double camera_y = 0.0;
+
 	//helper variables for dragging
 	double xDrag, yDrag;
 	int selected_i;

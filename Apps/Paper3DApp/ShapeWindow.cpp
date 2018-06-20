@@ -101,16 +101,11 @@ bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
 				cutPath.push_back(n);
 		}
 	}
-	/*TODO camera
-	if (GlobalMouseState::dragging) {
-			//TODO: move camera instead of target
-			P3D new_target(-(xPos - xDrag) / viewportWidth, (yPos - yDrag) / viewportHeight, 0);
-			camera->setCameraTarget(new_target);
+	else if (GlobalMouseState::dragging) {
+		P3D new_target(camera_x -(xPos - xDrag) / viewportWidth, camera_y + (yPos - yDrag) / viewportHeight, 0);
+		camera->setCameraTarget(new_target);
 	}
-	else {
-		xDrag = xPos; yDrag = yPos;
-	}
-	*/
+
 	popViewportTransformation();
 	return true;
 }
@@ -265,6 +260,15 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 	else if (mode == mouse_cut && action == GLFW_RELEASE) {
 		paperApp->acessMesh()->makeCut(cutPath);
 		cutPath.clear();
+	}
+	else if (action==GLFW_PRESS){
+		xDrag = xPos;
+		yDrag = yPos;
+	}
+	else if (action == GLFW_RELEASE) {
+		P3D cameraPos = camera->getCameraPosition();
+		camera_x = cameraPos[0];
+		camera_y = cameraPos[1];
 	}
 	popViewportTransformation();
 	return GLWindow3D::onMouseButtonEvent(button, action, mods, xPos, yPos);
