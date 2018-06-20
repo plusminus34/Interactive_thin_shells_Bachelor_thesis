@@ -6,7 +6,7 @@
 #include <MathLib/MathLib.h>
 #include <ControlLib/SimpleLimb.h>
 #include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
-
+#include <RobotDesignerLib/FastMOPTPreplanner.h>
 
 
 
@@ -105,6 +105,7 @@ FastRobotControlApp::FastRobotControlApp(){
 	loadFile("..\\data\\RobotDesigner\\SpotMiniDemo.batch");
 	robot->forward = V3D(0, 0, 1);
 	robot->right = V3D(-1, 0, 0);
+	moptWindow->generateMotionPlanFromCurrentRobotState();
 
 	followCameraTarget = true;
 }
@@ -425,6 +426,14 @@ void FastRobotControlApp::setActiveController() {
 
 // Run the App tasks
 void FastRobotControlApp::process() {
+	moptWindow->advanceGlobalPlanTime(1 / 30.0);
+
+	RobotState plannedRobotState = moptWindow->fmpp->getRobotStateAtTime(moptWindow->currentGlobalTime);
+	robot->setState(&plannedRobotState);
+	moptWindow->generateMotionPlanFromCurrentRobotState();
+
+	return;
+
 	//we need to sync the state of the robot with the motion plan when we first start physics-based tracking...
 	static int lastRunOptionSelected = runOption + 1;
 	setActiveController();
@@ -464,6 +473,7 @@ void FastRobotControlApp::process() {
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
 void FastRobotControlApp::drawScene() {
+	moptWindow->generateMotionPlanFromCurrentRobotState();
 
 }
 

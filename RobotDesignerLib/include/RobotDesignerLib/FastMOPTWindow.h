@@ -27,9 +27,6 @@ public:
 	FootFallPattern defaultFootFallPattern; //TODO: at some point we can also change the footfall pattern to make transitions, stand-to-walk-to-stand, etc...
 	double defaultFFPStrideDuration = 0.7;
 
-
-
-
 	FastMOPTPreplanner* fmpp;
 
 	bool initialized = false;
@@ -87,6 +84,9 @@ public:
 		locomotionManager->energyFunction->setCurrentBestSolution(params);
 		Logger::consolePrint("Current MOPT objective function: %lf\n", locomotionManager->energyFunction->computeValue(params));
 	}
+
+	void generateMotionPlanFromCurrentRobotState();
+	void advanceGlobalPlanTime(double dt);
 
 	void reset();
 

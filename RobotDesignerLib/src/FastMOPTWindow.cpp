@@ -252,6 +252,7 @@ LocomotionEngineManager* FastMOPTWindow::initializeNewMP(bool doWarmStart){
 	}
 
 	bodyHeightTarget = locomotionManager->motionPlan->initialRS.getPosition().getComponentAlong(Globals::worldUp);
+	robot->setState(&locomotionManager->motionPlan->initialRS);
 
 	syncMotionPlanParameters();
 
@@ -302,22 +303,29 @@ void FastMOPTWindow::loadFFPFromFile(const char* fName){
 	footFallPattern.loadFromFile(fName);
 }
 
-double planTime = 0;
+void FastMOPTWindow::generateMotionPlanFromCurrentRobotState() {
+	if (defaultFootFallPattern.stepPatterns.size() < footFallPattern.stepPatterns.size())
+		defaultFootFallPattern = footFallPattern;
+
+	RobotState rs(robot);
+	fmpp->preplan(&rs);
+}
+
+void FastMOPTWindow::advanceGlobalPlanTime(double dt) {
+	currentGlobalTime += dt;
+}
 
 void FastMOPTWindow::drawScene() {
 	glColor3d(1, 1, 1);
 	glEnable(GL_LIGHTING);
 
-	if (defaultFootFallPattern.stepPatterns.size() < footFallPattern.stepPatterns.size())
-		defaultFootFallPattern = footFallPattern;
-	fmpp->preplan(&locomotionManager->motionPlan->initialRS);
+
 	fmpp->draw();
 
-	RobotState animationState = fmpp->getRobotStateAtTime(planTime);
-	planTime += 0.001;
-
-	robot->setState(&animationState);
-	robot->draw(SHOW_ABSTRACT_VIEW);
+//	RobotState animationState = fmpp->getRobotStateAtTime();
+//	planTime += 0.001;
+//	robot->setState(&animationState);
+//	robot->draw(SHOW_ABSTRACT_VIEW);
 
 	return;
 

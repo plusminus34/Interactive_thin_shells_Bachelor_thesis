@@ -2,6 +2,15 @@
 #include <MathLib/MathLib.h>
 #include <ControlLib/QPControlPlan.h>
 
+/*
+	TODO: 
+	- learn parameters of first order dynamics model, including acceleration limits, perhaps state dependent
+	- add step feedback based on velocity error...
+	- learn step feedback parameters as well
+	- add MOPT based on pre-plan
+	- figure out how to sync the MOPT plan and the pre-plan. They will not be the same, of course, but they mean the same thing, so one shouldn't overreact to mismatches between the two...
+*/
+
 FastMOPTPreplanner::FastMOPTPreplanner(FastMOPTWindow* moptWindow){
 	this->moptWindow = moptWindow;
 }
@@ -125,8 +134,11 @@ void FastMOPTPreplanner::preplan(RobotState* currentRobotState) {
 			if (swingPhaseAtStart < 0.5) {
 				double timeToGroundStrike = cffp.stepPatterns[eeIndex].getFirstTimeInStanceAfter(moptWindow->currentGlobalTime) - moptWindow->currentGlobalTime;
 				double swingDuration = timeToGroundStrike / (1 - swingPhaseAtStart);
-				double timeToMidSwing = timeToGroundStrike - 0.5 * swingDuration;
-				P3D eePosMidSwing = (eeTrajectories[eeIndex].getKnotValue(0) + eeTrajectories[eeIndex].getKnotValue(1)) / 2.0;
+				Logger::consolePrint("swing duration: %lf\n", swingDuration);
+				double timeToMidSwing = moptWindow->currentGlobalTime + timeToGroundStrike - 0.5 * swingDuration;
+				double w1 = (0.5 - swingPhaseAtStart) / (1 - swingPhaseAtStart);
+				double w2 = 1 - w1;
+				P3D eePosMidSwing = eeTrajectories[eeIndex].getKnotValue(0) * (1-w1) + eeTrajectories[eeIndex].getKnotValue(1) * (1-w2);
 				eePosMidSwing.setComponentAlong(Globals::worldUp, moptWindow->moptParams.swingFootHeight);
 				eeTrajectories[eeIndex].addKnot(timeToMidSwing, V3D() + eePosMidSwing);
 				count = 2;
@@ -178,6 +190,7 @@ RobotState FastMOPTPreplanner::getRobotStateAtTime(double t) {
 }
 
 void FastMOPTPreplanner::draw() {
+
 	glColor3d(1,0,0);
 
 	RobotState tmpState(moptWindow->robot);
@@ -196,7 +209,7 @@ void FastMOPTPreplanner::draw() {
 	glEnd();
 
 	glColor3d(0, 0, 1);
-	dt = 0.01;
+	dt = 0.001;
 	for (uint i = 0; i < eeTrajectories.size(); i++) {
 		glBegin(GL_LINE_STRIP);
 		for (double t = moptWindow->currentGlobalTime; t <= moptWindow->currentGlobalTime + moptWindow->preplanTimeHorizon; t += dt) {
@@ -216,4 +229,3 @@ void FastMOPTPreplanner::draw() {
 	}
 
 }
-
