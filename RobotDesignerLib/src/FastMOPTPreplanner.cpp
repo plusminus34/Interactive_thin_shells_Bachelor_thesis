@@ -9,6 +9,7 @@
 	- learn step feedback parameters as well
 	- add MOPT based on pre-plan
 	- figure out how to sync the MOPT plan and the pre-plan. They will not be the same, of course, but they mean the same thing, so one shouldn't overreact to mismatches between the two...
+	- add tracking controller...
 */
 
 FastMOPTPreplanner::FastMOPTPreplanner(FastMOPTWindow* moptWindow){
@@ -229,3 +230,10 @@ void FastMOPTPreplanner::draw() {
 	}
 
 }
+
+void FastMOPTPreplanner::prepareMOPTPlan(double moptDuration) {
+//	...
+}
+
+
+
