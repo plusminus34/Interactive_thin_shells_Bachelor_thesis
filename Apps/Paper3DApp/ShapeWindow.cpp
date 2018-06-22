@@ -101,7 +101,7 @@ bool ShapeWindow::onMouseMoveEvent(double xPos, double yPos) {
 				cutPath.push_back(n);
 		}
 	}
-	else if (GlobalMouseState::dragging) {
+	else if (paperApp->getMouseMode() == mouse_drag && GlobalMouseState::dragging) {
 		P3D new_target(camera_x -(xPos - xDrag) / viewportWidth, camera_y + (yPos - yDrag) / viewportHeight, 0);
 		camera->setCameraTarget(new_target);
 	}
@@ -161,6 +161,7 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 			}
 		}
 	}
+	else if (mode == mouse_pin_create && action == GLFW_RELEASE) {}
 	else if (mode == mouse_pin_move && action == GLFW_PRESS) {
 		xDrag = p[0];
 		yDrag = p[1];
@@ -220,25 +221,8 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 				pinHandles[handle_i]->flipped = !(pinHandles[handle_i]->flipped);
 			}
 		}
-
 	}
-	else if (mode == mouse_pin_flip && action == GLFW_PRESS) {
-		int handle_i = findPinHandleClosestTo(p[0], p[1]);
-		if (handle_i != -1) {
-			pinHandles[handle_i]->flipped = !(pinHandles[handle_i]->flipped);
-			int i_handle_a = handle_i - (handle_i % 2);
-			int i_handle_b = i_handle_a + 1;
-			Pin* toAdd = createPinFromHandles(i_handle_a, i_handle_b);
-			if (toAdd != NULL) {
-				Paper3DMesh* paperMesh = dynamic_cast<Paper3DMesh*>(paperApp->acessMesh());
-				paperMesh->replacePin(toAdd->getID(), toAdd);
-			}
-			else {
-				pinHandles[handle_i]->flipped = !(pinHandles[handle_i]->flipped);
-			}
-		}
-
-	}
+	else if (mode == mouse_pin_flip && action == GLFW_RELEASE) {}
 	else if (mode == mouse_pin_delete && action == GLFW_PRESS) {
 		int handle_i = findPinHandleClosestTo(p[0], p[1]);
 		if (handle_i != -1) {
@@ -253,6 +237,7 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 		}
 
 	}
+	else if (mode == mouse_pin_delete && action == GLFW_RELEASE) {}
 	else if (mode == mouse_cut && action == GLFW_PRESS) {
 		cutPath.clear();
 		cutPath.push_back(findNodeClosestTo(p[0], p[1]));
@@ -261,11 +246,11 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 		paperApp->acessMesh()->makeCut(cutPath);
 		cutPath.clear();
 	}
-	else if (action==GLFW_PRESS){
+	else if (mode == mouse_drag && action == GLFW_PRESS){
 		xDrag = xPos;
 		yDrag = yPos;
 	}
-	else if (action == GLFW_RELEASE) {
+	else if (mode == mouse_drag && action == GLFW_RELEASE) {
 		P3D cameraPos = camera->getCameraPosition();
 		camera_x = cameraPos[0];
 		camera_y = cameraPos[1];
