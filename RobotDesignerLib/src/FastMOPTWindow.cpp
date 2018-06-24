@@ -390,8 +390,8 @@ void FastMOPTWindow::drawScene() {
 
 		int startIndex = locomotionManager->motionPlan->wrapAroundBoundaryIndex;
 		if (startIndex < 0)  startIndex = 0;
-		COMSpeed = locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(locomotionManager->motionPlan->nSamplePoints - 1) - 
-			       locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(startIndex);
+		COMSpeed = locomotionManager->motionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(locomotionManager->motionPlan->nSamplePoints - 1) - 
+			       locomotionManager->motionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(startIndex);
 			
 	}
 	for (auto widget : EEwidgets)
@@ -452,7 +452,7 @@ bool FastMOPTWindow::onKeyEvent(int key, int action, int mods) {
 			auto widget = std::make_shared<CompositeWidget>();
 			COMWidgets.push_back(widget);
 
-			widget->setPos(locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeStep));
+			widget->setPos(locomotionManager->motionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(timeStep));
 			auto bodyPosObj = make_shared<BodyFrameObjective>();
 			bodyPosObj->sampleNum = timeStep;
 			bodyPosObj->pos = P3D(widget->getPos());

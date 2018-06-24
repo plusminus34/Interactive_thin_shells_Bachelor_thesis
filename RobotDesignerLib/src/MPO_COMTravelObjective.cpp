@@ -16,7 +16,7 @@ double MPO_COMTravelObjective::computeValue(const dVector& p){
 	V3D err;
 	int startIndex = std::max(0, theMotionPlan->wrapAroundBoundaryIndex);
 
-	V3D v(theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(startIndex), theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(theMotionPlan->nSamplePoints - 1));
+	V3D v(theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(startIndex), theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(theMotionPlan->nSamplePoints - 1));
 	err = v - theMotionPlan->desDistanceToTravel;
 
 	return 0.5 * err.length2() * weight;
@@ -29,7 +29,7 @@ void MPO_COMTravelObjective::addGradientTo(dVector& grad, const dVector& p){
 	V3D err;
 	int startIndex = std::max(0, theMotionPlan->wrapAroundBoundaryIndex);
 
-	V3D v(theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(startIndex), theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(theMotionPlan->nSamplePoints - 1));
+	V3D v(theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(startIndex), theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(theMotionPlan->nSamplePoints - 1));
 	err = v - theMotionPlan->desDistanceToTravel;
 	if (theMotionPlan->COMPositionsParamsStartIndex >= 0) {
 		grad[theMotionPlan->COMPositionsParamsStartIndex + 3 * startIndex + 0] += -err[0] * weight;

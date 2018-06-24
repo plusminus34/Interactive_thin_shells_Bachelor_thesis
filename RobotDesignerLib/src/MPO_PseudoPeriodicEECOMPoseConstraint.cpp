@@ -18,8 +18,8 @@ double MPO_PseudoPeriodicEECOMPoseConstraint::computeValue(const dVector & p){
 	uint timeIndexend = theMotionPlan->wrapAroundBoundaryIndex;
 
 	for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); i++) {
-		V3D temp=(theMotionPlan->endEffectorTrajectories[i].EEPos[timeIndexend] - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeIndexend)) -
-			(theMotionPlan->endEffectorTrajectories[i].EEPos[timeIndexstart] - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeIndexstart));
+		V3D temp=(theMotionPlan->endEffectorTrajectories[i].EEPos[timeIndexend] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(timeIndexend)) -
+			(theMotionPlan->endEffectorTrajectories[i].EEPos[timeIndexstart] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(timeIndexstart));
 				
 		retVal += temp.length2();
 	}
@@ -35,8 +35,8 @@ void MPO_PseudoPeriodicEECOMPoseConstraint::addGradientTo(dVector & grad, const 
 		V3D dFdcom=V3D();
 		
 		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); i++) {
-			V3D temp = (theMotionPlan->endEffectorTrajectories[i].EEPos[timeIndexend] - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeIndexend)) -
-				(theMotionPlan->endEffectorTrajectories[i].EEPos[timeIndexstart] - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeIndexstart));
+			V3D temp = (theMotionPlan->endEffectorTrajectories[i].EEPos[timeIndexend] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(timeIndexend)) -
+				(theMotionPlan->endEffectorTrajectories[i].EEPos[timeIndexstart] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(timeIndexstart));
 			
 			if (theMotionPlan->feetPositionsParamsStartIndex >= 0) {
 				//dFdEE_end

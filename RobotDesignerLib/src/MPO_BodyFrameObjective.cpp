@@ -17,9 +17,9 @@ double MPO_BodyFrameObjective::computeValue(const dVector& p){
 	double retVal = 0;
 	for (auto PosObj : theMotionPlan->BodyFrameObjectives)
 	{
-		P3D pos = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(PosObj->sampleNum);
+		P3D pos = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(PosObj->sampleNum);
 		retVal += 0.5*(pos - PosObj->pos).squaredNorm();
-		P3D orientation = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(PosObj->sampleNum);
+		P3D orientation = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(PosObj->sampleNum);
 		V3D PermedOrietation = V3D(PosObj->orientation(1), PosObj->orientation(2), PosObj->orientation(0));
 		retVal += 0.5*(orientation - PermedOrietation).squaredNorm();
 	}
@@ -36,14 +36,14 @@ void MPO_BodyFrameObjective::addGradientTo(dVector& grad, const dVector& p) {
 	for (auto PosObj : theMotionPlan->BodyFrameObjectives)
 	{
 		int I = theMotionPlan->COMPositionsParamsStartIndex + PosObj->sampleNum * 3;
-		P3D pos = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(PosObj->sampleNum);
+		P3D pos = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(PosObj->sampleNum);
 		V3D dp = pos - PosObj->pos;
 		grad[I] +=   weight*dp(0);
 		grad[I+1] += weight*dp(1);
 		grad[I+2] += weight*dp(2);
 
 		I = theMotionPlan->COMOrientationsParamsStartIndex + PosObj->sampleNum * 3;
-		P3D orientation = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(PosObj->sampleNum);
+		P3D orientation = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(PosObj->sampleNum);
 		V3D PermedOrietation = V3D(PosObj->orientation(1), PosObj->orientation(2), PosObj->orientation(0));
 		dp = orientation - PermedOrietation;
 		grad[I] += weight * dp(0);

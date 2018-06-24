@@ -18,8 +18,8 @@ double MPO_COMZeroVelocityConstraint::computeValue(const dVector& s) {
 	int j = timeIndex;
 	int jp = (timeIndex == theMotionPlan->nSamplePoints-1) ? 0 : timeIndex+1;
 
-	V3T<double> comPos0 = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
-	V3T<double> comPos1 = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jp);
+	V3T<double> comPos0 = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
+	V3T<double> comPos1 = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jp);
 
 	retVal = computeEnergy(comPos0, comPos1);
 
@@ -33,8 +33,8 @@ void MPO_COMZeroVelocityConstraint::addGradientTo(dVector& grad, const dVector& 
 		int j = timeIndex;
 		int jp = (timeIndex == theMotionPlan->nSamplePoints-1) ? 0 : timeIndex+1;
 
-		V3T<ScalarDiff> comPos0 = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
-		V3T<ScalarDiff> comPos1 = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jp);
+		V3T<ScalarDiff> comPos0 = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
+		V3T<ScalarDiff> comPos1 = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jp);
 
 		std::vector<DOF<ScalarDiff>> dofs(6);
 		int index = 0;
@@ -66,8 +66,8 @@ void MPO_COMZeroVelocityConstraint::addHessianEntriesTo(DynamicArray<MTriplet>& 
 		int j = timeIndex;
 		int jp = (timeIndex == theMotionPlan->nSamplePoints-1) ? 0 : timeIndex+1;
 
-		V3T<ScalarDiffDiff> comPos0 = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
-		V3T<ScalarDiffDiff> comPos1 = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jp);
+		V3T<ScalarDiffDiff> comPos0 = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
+		V3T<ScalarDiffDiff> comPos1 = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jp);
 
 		std::vector<DOF<ScalarDiffDiff>> dofs(6);
 		int index = 0;

@@ -17,7 +17,7 @@ double MPO_COMTurningObjective::computeValue(const dVector& s){
 
 	int startIndex = std::max(0, theMotionPlan->wrapAroundBoundaryIndex);
 
-	double val = (theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(theMotionPlan->nSamplePoints - 1)[0] - theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(startIndex)[0]) - theMotionPlan->desTurningAngle;
+	double val = (theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(theMotionPlan->nSamplePoints - 1)[0] - theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(startIndex)[0]) - theMotionPlan->desTurningAngle;
 	return 0.5 * val * val * weight;
 }
 
@@ -27,7 +27,7 @@ void MPO_COMTurningObjective::addGradientTo(dVector& grad, const dVector& p) {
 
 	int startIndex = std::max(0, theMotionPlan->wrapAroundBoundaryIndex);
 
-	double val = (theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(theMotionPlan->nSamplePoints - 1)[0] - theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(startIndex)[0]) - theMotionPlan->desTurningAngle;
+	double val = (theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(theMotionPlan->nSamplePoints - 1)[0] - theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(startIndex)[0]) - theMotionPlan->desTurningAngle;
 	if (theMotionPlan->COMOrientationsParamsStartIndex >= 0) {
 		grad[theMotionPlan->COMOrientationsParamsStartIndex + 3 * startIndex] -= val*weight;
 		grad[theMotionPlan->COMOrientationsParamsStartIndex + 3 * (theMotionPlan->nSamplePoints - 1)] += val*weight;

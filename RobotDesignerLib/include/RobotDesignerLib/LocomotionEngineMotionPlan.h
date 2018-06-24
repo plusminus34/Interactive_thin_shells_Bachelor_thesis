@@ -302,7 +302,7 @@ public:
 
 public:
 	DynamicArray<LocomotionEngine_EndEffectorTrajectory> endEffectorTrajectories;
-	LocomotionEngine_COMTrajectory COMTrajectory;
+	LocomotionEngine_COMTrajectory bodyTrajectory;
 	LocomotionEngine_RobotStateTrajectory robotStateTrajectory;
 
 	Robot* robot;

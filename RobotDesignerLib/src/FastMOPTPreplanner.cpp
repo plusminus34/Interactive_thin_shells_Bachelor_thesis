@@ -247,8 +247,8 @@ void FastMOPTPreplanner::prepareMOPTPlan(LocomotionEngineMotionPlan* motionPlan)
 
 		P3D comPos = comTrajectory.evaluate_linear(t);
 		for (int k=0;k<3;k++)
-			motionPlan->COMTrajectory.pos[k][i] = comPos[k];
-		motionPlan->COMTrajectory.orientation[0][i] = headingTrajectory.evaluate_linear(t);
+			motionPlan->bodyTrajectory.pos[k][i] = comPos[k];
+		motionPlan->bodyTrajectory.orientation[0][i] = headingTrajectory.evaluate_linear(t);
 	}
 
 	motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);

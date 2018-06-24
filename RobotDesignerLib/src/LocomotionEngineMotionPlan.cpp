@@ -443,7 +443,7 @@ LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSampli
 
 	V3D comRotationAngles(initialRobotState[3], initialRobotState[4], initialRobotState[5]);
 
-	COMTrajectory.initialize(nSamplePoints, defaultCOMPosition, comRotationAngles, robotRepresentation->getQAxis(3),
+	bodyTrajectory.initialize(nSamplePoints, defaultCOMPosition, comRotationAngles, robotRepresentation->getQAxis(3),
 		robotRepresentation->getQAxis(4), robotRepresentation->getQAxis(5));
 
 	verticalGRFLowerBoundVal = fabs(totalMass * Globals::g / endEffectorTrajectories.size() / 5.0);
@@ -853,13 +853,13 @@ void LocomotionEngineMotionPlan::writeMPParametersToList(dVector &p){
 	if (optimizeCOMPositions){
 		for (int i=0; i<nSamplePoints;i++)
 			for (int j=0;j<3;j++)
-				params.push_back(COMTrajectory.pos[j][i]);
+				params.push_back(bodyTrajectory.pos[j][i]);
 	}
 
 	if (optimizeCOMOrientations) {
 		for (int i = 0; i < nSamplePoints; i++)
 			for (int j = 0; j < 3; j++)
-				params.push_back(COMTrajectory.orientation[j][i]);
+				params.push_back(bodyTrajectory.orientation[j][i]);
 	}
 
 	if (optimizeEndEffectorPositions){
@@ -914,13 +914,13 @@ void LocomotionEngineMotionPlan::setMPParametersFromList(const dVector &p){
 	if (optimizeCOMPositions){
 		for (int i=0; i<nSamplePoints;i++)
 			for (int j=0;j<3;j++)
-				COMTrajectory.pos[j][i] = p[pIndex++];
+				bodyTrajectory.pos[j][i] = p[pIndex++];
 	}
 
 	if (optimizeCOMOrientations) {
 		for (int i = 0; i < nSamplePoints; i++)
 			for (int j = 0; j < 3; j++)
-				COMTrajectory.orientation[j][i] = p[pIndex++];
+				bodyTrajectory.orientation[j][i] = p[pIndex++];
 	}
 
 	if (optimizeEndEffectorPositions){
@@ -1012,12 +1012,12 @@ void LocomotionEngineMotionPlan::writeParamsToFile(FILE *fp) {
 	fprintf(fp, "\n\n");
 
 	for (int i = 0; i < nSamplePoints; i++)
-		fprintf(fp, "%10.10lf %10.10lf %10.10lf\n", COMTrajectory.pos[0][i], COMTrajectory.pos[1][i], COMTrajectory.pos[2][i]);
+		fprintf(fp, "%10.10lf %10.10lf %10.10lf\n", bodyTrajectory.pos[0][i], bodyTrajectory.pos[1][i], bodyTrajectory.pos[2][i]);
 
 	fprintf(fp, "\n\n");
 
 	for (int i = 0; i < nSamplePoints; i++)
-		fprintf(fp, "%10.10lf %10.10lf %10.10lf\n", COMTrajectory.orientation[0][i], COMTrajectory.orientation[1][i], COMTrajectory.orientation[2][i]);
+		fprintf(fp, "%10.10lf %10.10lf %10.10lf\n", bodyTrajectory.orientation[0][i], bodyTrajectory.orientation[1][i], bodyTrajectory.orientation[2][i]);
 
 	fprintf(fp, "\n\n");
 
@@ -1088,15 +1088,15 @@ void LocomotionEngineMotionPlan::readParamsFromFile(FILE *fp) {
 		endEffectorTrajectories[i].initialize(nSamplePoints);
 
 	V3D comRotationAngles(initialRobotState[3], initialRobotState[4], initialRobotState[5]);
-	COMTrajectory.initialize(nSamplePoints, defaultCOMPosition, comRotationAngles, robotRepresentation->getQAxis(3),
+	bodyTrajectory.initialize(nSamplePoints, defaultCOMPosition, comRotationAngles, robotRepresentation->getQAxis(3),
 		robotRepresentation->getQAxis(4), robotRepresentation->getQAxis(5));
 
 
 	for (int i = 0; i < nSamplePoints; i++)
-		fscanf(fp, "%lf %lf %lf", &COMTrajectory.pos[0][i], &COMTrajectory.pos[1][i], &COMTrajectory.pos[2][i]);
+		fscanf(fp, "%lf %lf %lf", &bodyTrajectory.pos[0][i], &bodyTrajectory.pos[1][i], &bodyTrajectory.pos[2][i]);
 
 	for (int i = 0; i < nSamplePoints; i++)
-		fscanf(fp, "%lf %lf %lf", &COMTrajectory.orientation[0][i], &COMTrajectory.orientation[1][i], &COMTrajectory.orientation[2][i]);
+		fscanf(fp, "%lf %lf %lf", &bodyTrajectory.orientation[0][i], &bodyTrajectory.orientation[1][i], &bodyTrajectory.orientation[2][i]);
 
 	for (int j = 0; j < nSamplePoints; j++)
 		for (uint i = 0; i < endEffectorTrajectories.size(); i++)
@@ -1275,7 +1275,7 @@ void LocomotionEngineMotionPlan::writeRobotMotionAnglesToFile(const char* fName)
 }
 */
 P3D LocomotionEngineMotionPlan::getCOP(int tIndex) {
-	P3D x = COMTrajectory.getCOMPositionAtTimeIndex(tIndex);
+	P3D x = bodyTrajectory.getCOMPositionAtTimeIndex(tIndex);
 	double h = x[1];
 	x[1] = 0;
 
@@ -1286,8 +1286,8 @@ P3D LocomotionEngineMotionPlan::getCOP(int tIndex) {
 	int jmm, jm, jp, jpp;
 	getAccelerationTimeIndicesFor(tIndex, jmm, jm, jp, jpp);
 	if (jmm >= 0 && jm >= 0 && jp >= 0 && jpp >= 0) {
-		V3D vp = (COMTrajectory.getCOMPositionAtTimeIndex(jpp) - COMTrajectory.getCOMPositionAtTimeIndex(jp)) / t;
-		V3D vm = (COMTrajectory.getCOMPositionAtTimeIndex(jm) - COMTrajectory.getCOMPositionAtTimeIndex(jmm)) / t;
+		V3D vp = (bodyTrajectory.getCOMPositionAtTimeIndex(jpp) - bodyTrajectory.getCOMPositionAtTimeIndex(jp)) / t;
+		V3D vm = (bodyTrajectory.getCOMPositionAtTimeIndex(jm) - bodyTrajectory.getCOMPositionAtTimeIndex(jmm)) / t;
 		V3D xDotDot = (vp - vm) / t;
 		double hDotDot = xDotDot[1];
 		xDotDot[1] = 0;
@@ -1547,7 +1547,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f,
 	if (drawCOMTrajectory) {
 		//draw the COM trajectory
 		glColor3d(1, 0.0, 0.0);
-		P3D comP = COMTrajectory.getCOMPositionAt(f);
+		P3D comP = bodyTrajectory.getCOMPositionAt(f);
 		drawSphere(comP, 0.007, 12);
 
 /*
@@ -1557,7 +1557,7 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f,
 		glColor3d(0.7, 0.7, 0.7);
 		glBegin(GL_LINE_STRIP);
 		for (int i = 0; i < nSamplePoints; i++) {
-			glVertex3d(COMTrajectory.pos[0][i], 0.001, COMTrajectory.pos[2][i]);
+			glVertex3d(bodyTrajectory.pos[0][i], 0.001, bodyTrajectory.pos[2][i]);
 		}
 		glEnd();
 		glLineWidth(1.0);
@@ -1566,9 +1566,9 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f,
 		glColor3d(1.0, 0.5, 0.5);
 //		glBegin(GL_LINE_STRIP);
 		for (int i = 1; i < nSamplePoints; i++) {
-			//glVertex3d(COMTrajectory.pos[0][i], COMTrajectory.pos[1][i], COMTrajectory.pos[2][i]);
-			P3D p1(COMTrajectory.pos[0][i-1], COMTrajectory.pos[1][i-1], COMTrajectory.pos[2][i-1]);
-			P3D p2(COMTrajectory.pos[0][i], COMTrajectory.pos[1][i], COMTrajectory.pos[2][i]);
+			//glVertex3d(bodyTrajectory.pos[0][i], bodyTrajectory.pos[1][i], bodyTrajectory.pos[2][i]);
+			P3D p1(bodyTrajectory.pos[0][i-1], bodyTrajectory.pos[1][i-1], bodyTrajectory.pos[2][i-1]);
+			P3D p2(bodyTrajectory.pos[0][i], bodyTrajectory.pos[1][i], bodyTrajectory.pos[2][i]);
 			drawCylinder(p1, p2, 0.001, 12, false);
 		}
 //		glEnd();
@@ -1709,11 +1709,11 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f,
 	// drawOrientation
 	if (drawOrientation) {
 		glPushMatrix();
-		P3D comPos = COMTrajectory.getCOMPositionAt(f);
+		P3D comPos = bodyTrajectory.getCOMPositionAt(f);
 		glTranslated(comPos[0], comPos[1], comPos[2]);
 		//and rotation part
 		V3D rotAxis; double rotAngle;
-		Quaternion q = COMTrajectory.getCOMOrientationAt(f);
+		Quaternion q = bodyTrajectory.getCOMOrientationAt(f);
 		q.getAxisAngle(rotAxis, rotAngle);
 		glRotated(DEG(rotAngle), rotAxis[0], rotAxis[1], rotAxis[2]);
 		glEnable(GL_BLEND);

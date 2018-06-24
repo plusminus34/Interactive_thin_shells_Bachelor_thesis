@@ -16,7 +16,7 @@ void MPO_TorqueAngularAccelObjective::updateDummyMatrices(){
 
 	V3D axis[3];
 	for (int i = 0; i < 3; i++) {
-		axis[i] = theMotionPlan->COMTrajectory.getAxis(i);
+		axis[i] = theMotionPlan->bodyTrajectory.getAxis(i);
 	}
 
 	int end = theMotionPlan->nSamplePoints;
@@ -32,10 +32,10 @@ void MPO_TorqueAngularAccelObjective::updateDummyMatrices(){
 
 		Matrix3x3 R1, R2, R3, R4;
 		R1.setIdentity(); R2.setIdentity(); R3.setIdentity(); R4.setIdentity();
-		V3D eulerAngles_jpp = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jpp);
-		V3D eulerAngles_jp = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jp);
-		V3D eulerAngles_jmm = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jmm);
-		V3D eulerAngles_jm = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jm);
+		V3D eulerAngles_jpp = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jpp);
+		V3D eulerAngles_jp = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jp);
+		V3D eulerAngles_jmm = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jmm);
+		V3D eulerAngles_jm = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jm);
 
 		for (int i = 0; i < 3; i++){
 			R1 *= getRotationQuaternion(eulerAngles_jp[i], axis[i]).getRotationMatrix();
@@ -62,7 +62,7 @@ double MPO_TorqueAngularAccelObjective::computeValue(const dVector& p) {
 
 	V3D axis[3];
 	for (int i = 0; i < 3; i++) {
-		axis[i] = theMotionPlan->COMTrajectory.getAxis(i);
+		axis[i] = theMotionPlan->bodyTrajectory.getAxis(i);
 	}
 
 	int end = theMotionPlan->nSamplePoints;
@@ -76,10 +76,10 @@ double MPO_TorqueAngularAccelObjective::computeValue(const dVector& p) {
 		AngleAxisd angVel_j, angVel_jp;
 		Matrix3x3 R_jp, R_jpp, R_jmm, R_jm;
 		R_jp.setIdentity(); R_jpp.setIdentity(); R_jmm.setIdentity(); R_jm.setIdentity();
-		V3D eulerAngles_jpp = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jpp);
-		V3D eulerAngles_jp = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jp);
-		V3D eulerAngles_jmm = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jmm);
-		V3D eulerAngles_jm = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jm);
+		V3D eulerAngles_jpp = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jpp);
+		V3D eulerAngles_jp = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jp);
+		V3D eulerAngles_jmm = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jmm);
+		V3D eulerAngles_jm = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jm);
 
 		for (int i = 0; i < 3; i++) {
 			R_jp *= getRotationQuaternion(eulerAngles_jp[i], axis[i]).getRotationMatrix();
@@ -102,7 +102,7 @@ double MPO_TorqueAngularAccelObjective::computeValue(const dVector& p) {
 		Vector3d torque(0, 0, 0);
 
 		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); i++) {
-			V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
+			V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
 			torque += R.cross(theMotionPlan->endEffectorTrajectories[i].contactForce[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j]);
 		}
 
@@ -124,7 +124,7 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 	Matrix3x3 crossMat[3];
 	for (int i = 0; i < 3; i++)
 	{
-		axis[i] = theMotionPlan->COMTrajectory.getAxis(i);
+		axis[i] = theMotionPlan->bodyTrajectory.getAxis(i);
 		crossMat[i] = getCrossProductMatrix(axis[i]);
 	}
 
@@ -140,10 +140,10 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 		Matrix3x3 A1[3], A2[3], A3[3], A4[3];
 		Matrix3x3 R1, R2, R3, R4;
 		R1.setIdentity(); R2.setIdentity(); R3.setIdentity(); R4.setIdentity();
-		V3D eulerAngles_jpp = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jpp);
-		V3D eulerAngles_jp = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jp);
-		V3D eulerAngles_jmm = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jmm);
-		V3D eulerAngles_jm = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jm);
+		V3D eulerAngles_jpp = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jpp);
+		V3D eulerAngles_jp = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jp);
+		V3D eulerAngles_jmm = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jmm);
+		V3D eulerAngles_jm = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jm);
 
 		for (int i = 0; i < 3; i++)
 		{
@@ -173,7 +173,7 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 
 			if (theMotionPlan->endEffectorTrajectories[i].contactFlag[j] > 0) {
 
-				V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
+				V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
 				torque += R.cross(theMotionPlan->endEffectorTrajectories[i].contactForce[j]);
 			}
 		}
@@ -245,7 +245,7 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 
 			if (theMotionPlan->endEffectorTrajectories[i].contactFlag[j] > 0) {
 
-				V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
+				V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
 				V3D F = theMotionPlan->endEffectorTrajectories[i].contactForce[j];
 
 				Matrix3x3 dTdF = -getCrossProductMatrix(R);
@@ -289,7 +289,7 @@ void MPO_TorqueAngularAccelObjective::addHessianEntriesTo(DynamicArray<MTriplet>
 	Matrix3x3 crossMat[3];
 	for (int i = 0; i < 3; i++)
 	{
-		axis[i] = theMotionPlan->COMTrajectory.getAxis(i);
+		axis[i] = theMotionPlan->bodyTrajectory.getAxis(i);
 		crossMat[i] = getCrossProductMatrix(axis[i]);
 	}
 
@@ -305,10 +305,10 @@ void MPO_TorqueAngularAccelObjective::addHessianEntriesTo(DynamicArray<MTriplet>
 		Matrix3x3 A1[3], A2[3], A3[3], A4[3];
 		Matrix3x3 R1, R2, R3, R4;
 		R1.setIdentity(); R2.setIdentity(); R3.setIdentity(); R4.setIdentity();
-		V3D eulerAngles_jpp = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jpp);
-		V3D eulerAngles_jp = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jp);
-		V3D eulerAngles_jmm = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jmm);
-		V3D eulerAngles_jm = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(jm);
+		V3D eulerAngles_jpp = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jpp);
+		V3D eulerAngles_jp = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jp);
+		V3D eulerAngles_jmm = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jmm);
+		V3D eulerAngles_jm = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jm);
 
 		for (int i = 0; i < 3; i++)
 		{
@@ -338,7 +338,7 @@ void MPO_TorqueAngularAccelObjective::addHessianEntriesTo(DynamicArray<MTriplet>
 
 			if (theMotionPlan->endEffectorTrajectories[i].contactFlag[j] > 0) {
 
-				V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
+				V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
 				torque += R.cross(theMotionPlan->endEffectorTrajectories[i].contactForce[j]);
 			}
 		}
@@ -372,7 +372,7 @@ void MPO_TorqueAngularAccelObjective::AngleAxisTorqueCrossHessianHelper(DynamicA
 
 		if (theMotionPlan->endEffectorTrajectories[i].contactFlag[j] > 0) {
 
-			V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
+			V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
 			V3D F = theMotionPlan->endEffectorTrajectories[i].contactForce[j];
 
 			Matrix3x3 dTdF = -getCrossProductMatrix(R);
@@ -483,7 +483,7 @@ void MPO_TorqueAngularAccelObjective::TorqueInnerHessianHelper(DynamicArray<MTri
 
 		if (theMotionPlan->endEffectorTrajectories[i].contactFlag[j] > 0) {
 
-			V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
+			V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
 			V3D F = theMotionPlan->endEffectorTrajectories[i].contactForce[j];
 
 			Matrix3x3 dTdF = -getCrossProductMatrix(R);
@@ -498,7 +498,7 @@ void MPO_TorqueAngularAccelObjective::TorqueInnerHessianHelper(DynamicArray<MTri
 			{
 				if (theMotionPlan->endEffectorTrajectories[k].contactFlag[j] > 0) {
 
-					V3D t_R = theMotionPlan->endEffectorTrajectories[k].EEPos[j] - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
+					V3D t_R = theMotionPlan->endEffectorTrajectories[k].EEPos[j] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
 					V3D t_F = theMotionPlan->endEffectorTrajectories[k].contactForce[j];
 
 					Matrix3x3 t_dTdF = -getCrossProductMatrix(t_R);

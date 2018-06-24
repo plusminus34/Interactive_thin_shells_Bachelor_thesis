@@ -22,8 +22,8 @@ double MPO_ForceAccelObjective::computeValue(const dVector& p) {
 		if (jmm == -1 || jm == -1 || jp == -1 || jpp == -1) continue;
 
 		//we want the COM acceleration to be as small as possible
-		V3D acceleration = (theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jpp) - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jp))
-			- (theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jm) - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jmm));
+		V3D acceleration = (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jpp) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jp))
+			- (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jm) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jmm));
 		acceleration /= h * h;
 
 		V3D ma = acceleration * theMotionPlan->totalMass;
@@ -52,8 +52,8 @@ void MPO_ForceAccelObjective::addGradientTo(dVector& grad, const dVector& p) {
 		if (jmm == -1 || jm == -1 || jp == -1 || jpp == -1) continue;
 
 		//we want the COM acceleration to be as small as possible
-		V3D acceleration = (theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jpp) - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jp))
-			- (theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jm) - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jmm));
+		V3D acceleration = (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jpp) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jp))
+			- (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jm) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jmm));
 		acceleration /= h * h;
 
 		V3D ma = acceleration * theMotionPlan->totalMass;
