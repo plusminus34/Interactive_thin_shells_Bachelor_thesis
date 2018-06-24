@@ -271,14 +271,14 @@ public:
 		return (t - swingPhases[2 * i]) / (swingPhases[2 * i + 1] - swingPhases[2 * i]);
 	}
 
-	double isInSwingAt(double t) {
+	bool isInSwingAt(double t) {
 		int i = getSwingPhaseIndexForTime(t);
 		if (i >= 0)
 			return true;
 		return false;
 	}
 
-	double isInStanceAt(double t) {
+	bool isInStanceAt(double t) {
 		return !isInSwingAt(t);
 	}
 

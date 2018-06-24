@@ -192,7 +192,7 @@ RobotState FastMOPTPreplanner::getRobotStateAtTime(double t) {
 
 void FastMOPTPreplanner::draw() {
 
-	glColor3d(1,0,0);
+	glColor4d(1,0,0,0.2);
 
 	RobotState tmpState(moptWindow->robot);
 	moptWindow->robot->setState(&startState);
@@ -209,7 +209,7 @@ void FastMOPTPreplanner::draw() {
 	}
 	glEnd();
 
-	glColor3d(0, 0, 1);
+	glColor4d(0, 0, 1, 0.2);
 	dt = 0.001;
 	for (uint i = 0; i < eeTrajectories.size(); i++) {
 		glBegin(GL_LINE_STRIP);
@@ -220,7 +220,7 @@ void FastMOPTPreplanner::draw() {
 		glEnd();
 	}
 
-	glColor3d(1, 0, 0);
+	glColor4d(1, 0, 0, 0.2);
 	dt = moptWindow->preplanTimeHorizon / 20.0;
 	for (double t = moptWindow->currentGlobalTime; t <= moptWindow->currentGlobalTime + moptWindow->preplanTimeHorizon; t += dt) {
 		P3D pos = comTrajectory.evaluate_linear(t);
@@ -231,8 +231,28 @@ void FastMOPTPreplanner::draw() {
 
 }
 
-void FastMOPTPreplanner::prepareMOPTPlan(double moptDuration) {
-//	...
+void FastMOPTPreplanner::prepareMOPTPlan(LocomotionEngineMotionPlan* motionPlan) {
+	//the motion plan will be synced with the start of the motion pre-plan
+	double h = motionPlan->motionPlanDuration / (motionPlan->nSamplePoints - 1);
+
+	for (uint i = 0; i < motionPlan->nSamplePoints; i++) {
+		double t = moptWindow->currentGlobalTime + h * i;
+		//take care of contact flags and end effector trajectories
+		for (uint j = 0; j < motionPlan->endEffectorTrajectories.size(); j++) {
+			auto eeTraj = &motionPlan->endEffectorTrajectories[j];
+			eeTraj->contactForce[i] = V3D();
+			eeTraj->EEPos[i] = eeTrajectories[j].evaluate_linear(t);
+			eeTraj->contactFlag[i] = (cffp.stepPatterns[j].isInStanceAt(t))?1:0;
+		}
+
+		P3D comPos = comTrajectory.evaluate_linear(t);
+		for (int k=0;k<3;k++)
+			motionPlan->COMTrajectory.pos[k][i] = comPos[k];
+		motionPlan->COMTrajectory.orientation[0][i] = headingTrajectory.evaluate_linear(t);
+	}
+
+	motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
+	
 }
 
 

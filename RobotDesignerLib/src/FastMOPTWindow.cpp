@@ -309,6 +309,8 @@ void FastMOPTWindow::generateMotionPlanFromCurrentRobotState() {
 
 	RobotState rs(robot);
 	fmpp->preplan(&rs);
+
+//	fmpp->prepareMOPTPlan(locomotionManager->motionPlan);
 }
 
 void FastMOPTWindow::advanceGlobalPlanTime(double dt) {
@@ -319,8 +321,12 @@ void FastMOPTWindow::drawScene() {
 	glColor3d(1, 1, 1);
 	glEnable(GL_LIGHTING);
 
-
 	fmpp->draw();
+	moptParams.drawRobotMesh = moptParams.drawSkeleton = moptParams.drawAxesOfRotation = moptParams.drawWheels = moptParams.drawSupportPolygon =false;
+	moptParams.drawContactForces = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawOrientation = true;
+
+	glTranslated(1, 0, 0);
+	locomotionManager->motionPlan->drawMotionPlan(moptParams.phase, moptParams.drawRobotMesh, moptParams.drawSkeleton, moptParams.drawAxesOfRotation, moptParams.drawWheels, moptParams.drawContactForces, moptParams.drawSupportPolygon, moptParams.drawEndEffectorTrajectories, moptParams.drawCOMTrajectory, moptParams.drawOrientation);
 
 //	RobotState animationState = fmpp->getRobotStateAtTime();
 //	planTime += 0.001;

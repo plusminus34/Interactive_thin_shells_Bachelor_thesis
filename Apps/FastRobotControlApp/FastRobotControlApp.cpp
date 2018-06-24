@@ -92,6 +92,12 @@ FastRobotControlApp::FastRobotControlApp(){
 
 	mainMenu->addGroup("MOPT Options");
 	moptWindow->addMenuItems();
+	button = new nanogui::Button(widget, "initMOPT");
+	button->setIcon(ENTYPO_ICON_PUBLISH);
+	button->setFontSize(14);
+	button->setCallback([this]() {
+		moptWindow->fmpp->prepareMOPTPlan(moptWindow->locomotionManager->motionPlan);
+	});
 
 	mainMenu->addGroup("Sim Options");
 	simWindow->addMenuItems();

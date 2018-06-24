@@ -28,7 +28,8 @@ public:
 	~FastMOPTPreplanner(void);
 
 	void preplan(RobotState* currentRobotState);
-	void prepareMOPTPlan(double moptDuration);
+
+	void prepareMOPTPlan(LocomotionEngineMotionPlan* motionPlan);
 
 	void draw();
 
