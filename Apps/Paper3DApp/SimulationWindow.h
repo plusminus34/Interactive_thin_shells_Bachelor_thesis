@@ -13,6 +13,9 @@ protected:
 	int selectedNodeID;
 	Ray lastClickedRay;
 
+	//cutting
+	DynamicArray<uint> cutPath;
+
 public:
 	SimulationWindow(int x, int y, int w, int h, Paper3DApp *glApp);
 	~SimulationWindow();
