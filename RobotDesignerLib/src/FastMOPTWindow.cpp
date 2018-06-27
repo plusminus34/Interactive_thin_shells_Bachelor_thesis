@@ -46,8 +46,6 @@ void FastMOPTWindow::addMenuItems() {
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
 	}
 
-
-
 	{
 		auto tmpVar = theApp->mainMenu->addVariable("# of MOPT sample points", nTimeSteps);
 		tmpVar->setSpinnable(true);
@@ -64,6 +62,7 @@ void FastMOPTWindow::addMenuItems() {
 		auto tmpVar = theApp->mainMenu->addVariable("swingFootHeight", moptParams.swingFootHeight);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
 	}
+
 	{
 		auto tmpVar = theApp->mainMenu->addVariable("gait duration", moptParams.motionPlanDuration);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
@@ -303,18 +302,28 @@ void FastMOPTWindow::loadFFPFromFile(const char* fName){
 	footFallPattern.loadFromFile(fName);
 }
 
-void FastMOPTWindow::generateMotionPlanFromCurrentRobotState() {
+void FastMOPTWindow::generateMotionPreplan() {
 	if (defaultFootFallPattern.stepPatterns.size() < footFallPattern.stepPatterns.size())
 		defaultFootFallPattern = footFallPattern;
 
 	RobotState rs(robot);
 	fmpp->preplan(&rs);
-
-//	fmpp->prepareMOPTPlan(locomotionManager->motionPlan);
+	fmpp->prepareMOPTPlan(locomotionManager->motionPlan);
 }
 
-void FastMOPTWindow::advanceGlobalPlanTime(double dt) {
-	currentGlobalTime += dt;
+void FastMOPTWindow::optimizeMotionPlan() {
+	locomotionManager->printDebugInfo = true;
+	locomotionManager->checkDerivatives = true;
+
+	locomotionManager->runMOPTStep(OPT_GRFS);
+
+//	is the problem right now still periodic in any way? What happens to the acceleration at the start and end, in this case? Must it be 0, or what?
+//	add a new objective for the COM position/orientation trajectory
+//	for acceleration, do we want an initial velocity too, maybe?
+}
+
+void FastMOPTWindow::advanceMotionPlanGlobalTime(int nSteps) {
+	motionPlanStartTime += nSteps * moptParams.motionPlanDuration / (locomotionManager->motionPlan->nSamplePoints - 1);
 }
 
 void FastMOPTWindow::drawScene() {
@@ -336,7 +345,6 @@ void FastMOPTWindow::drawScene() {
 	return;
 
 	if (locomotionManager){
-
 		//hacks...
 		if (0){
 			moptParams.drawRobotMesh = moptParams.drawSkeleton = moptParams.drawAxesOfRotation = moptParams.drawWheels = moptParams.drawContactForces = moptParams.drawSupportPolygon = moptParams.drawEndEffectorTrajectories = moptParams.drawCOMTrajectory = moptParams.drawOrientation = false;
@@ -469,8 +477,6 @@ bool FastMOPTWindow::onMouseMoveEvent(double xPos, double yPos){
 		if (showFFPViewer && (ffpViewer->mouseIsWithinWindow(xPos, yPos) || ffpViewer->isDragging()))
 			if (ffpViewer->onMouseMoveEvent(xPos, yPos)) return true;
 	}
-
-
 
 	pushViewportTransformation();
 	Ray ray = getRayFromScreenCoords(xPos, yPos);

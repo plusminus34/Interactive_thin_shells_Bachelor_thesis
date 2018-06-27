@@ -227,10 +227,14 @@ Quaternion LocomotionEngine_COMTrajectory::getCOMOrientationAt(double t) {
 }
 
 P3D LocomotionEngine_COMTrajectory::getCOMPositionAtTimeIndex(int j){
+	if (j < 0)
+		return P3D();
 	return P3D(pos[0][j], pos[1][j], pos[2][j]);
 }
 
 P3D LocomotionEngine_COMTrajectory::getCOMEulerAnglesAtTimeIndex(int j) {
+	if (j < 0)
+		return P3D();
 	return P3D(orientation[0][j], orientation[1][j], orientation[2][j]);
 }
 
@@ -1540,7 +1544,9 @@ void LocomotionEngineMotionPlan::drawMotionPlan(double f,
 				else
 					glColor3d(0, 1, 0);
 */
-			drawSphere(endEffectorTrajectories[i].getEEPositionAt(f), 0.007, 12);
+			P3D p = endEffectorTrajectories[i].getEEPositionAt(f);
+			drawSphere(p, 0.007, 12);
+//			Logger::consolePrint("ee %d: %lf\n", i, p.y());
 		}
 	}
 

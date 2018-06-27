@@ -31,6 +31,9 @@ class EnergyWindow;
  */
 class FastRobotControlApp : public BaseRobotControlApp {
 public:
+	double time = 0;
+	double phase = 0;
+
 	FastMOPTWindow* moptWindow = NULL;
 	SimWindow* simWindow = NULL;
 	MotionPlanAnalysis *motionPlanAnalysis = nullptr;

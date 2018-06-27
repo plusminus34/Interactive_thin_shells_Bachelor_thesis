@@ -132,6 +132,10 @@ public:
 	dVector orientation[3];
 	V3D axis[3];
 
+	//for non-periodic motions, we might sometimes want to account for the initial velocity
+	bool useInitialVelocities = false;
+	V3D initialLinearVelocity, initialAngularVelocity;
+
 public:
 	LocomotionEngine_COMTrajectory();
 

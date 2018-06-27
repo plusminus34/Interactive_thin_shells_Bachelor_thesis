@@ -92,12 +92,13 @@ FastRobotControlApp::FastRobotControlApp(){
 
 	mainMenu->addGroup("MOPT Options");
 	moptWindow->addMenuItems();
-	button = new nanogui::Button(widget, "initMOPT");
-	button->setIcon(ENTYPO_ICON_PUBLISH);
+
+	button = new nanogui::Button(widget, "goMOPT");
 	button->setFontSize(14);
 	button->setCallback([this]() {
-		moptWindow->fmpp->prepareMOPTPlan(moptWindow->locomotionManager->motionPlan);
+		moptWindow->optimizeMotionPlan();
 	});
+
 
 	mainMenu->addGroup("Sim Options");
 	simWindow->addMenuItems();
@@ -111,7 +112,7 @@ FastRobotControlApp::FastRobotControlApp(){
 	loadFile("..\\data\\RobotDesigner\\SpotMiniDemo.batch");
 	robot->forward = V3D(0, 0, 1);
 	robot->right = V3D(-1, 0, 0);
-	moptWindow->generateMotionPlanFromCurrentRobotState();
+	moptWindow->generateMotionPreplan();
 
 	followCameraTarget = true;
 }
@@ -432,11 +433,21 @@ void FastRobotControlApp::setActiveController() {
 
 // Run the App tasks
 void FastRobotControlApp::process() {
-	moptWindow->advanceGlobalPlanTime(1 / 30.0);
+	double dt = 1.0 / desiredFrameRate;
 
-	RobotState plannedRobotState = moptWindow->fmpp->getRobotStateAtTime(moptWindow->currentGlobalTime);
-	robot->setState(&plannedRobotState);
-	moptWindow->generateMotionPlanFromCurrentRobotState();
+	if (slowMo)
+		dt /= slowMoFactor;
+	time += dt;
+	phase += dt / moptWindow->locomotionManager->motionPlan->motionPlanDuration;
+	double dPhase = 1.0 / (moptWindow->locomotionManager->motionPlan->nSamplePoints - 1);
+	int n = 1;
+	if (phase > n * dPhase) {
+		phase -= n * dPhase;
+		RobotState plannedRobotState = moptWindow->fmpp->getRobotStateAtTime(time);
+		robot->setState(&plannedRobotState);
+		moptWindow->advanceMotionPlanGlobalTime(n);
+		moptWindow->generateMotionPreplan();
+	}
 
 	return;
 
@@ -468,7 +479,6 @@ void FastRobotControlApp::process() {
 		bool motionPhaseReset = simWindow->advanceSimulation(dt);
 		if (motionPhaseReset)
 			walkCycleIndex++;
-
 	}
 	else if (runOption == MOTION_PLAN_OPTIMIZATION)
 		DoMOPTStep();
@@ -479,13 +489,15 @@ void FastRobotControlApp::process() {
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
 void FastRobotControlApp::drawScene() {
-	moptWindow->generateMotionPlanFromCurrentRobotState();
-
+//	moptWindow->generateMotionPreplan();
 }
 
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
 void FastRobotControlApp::drawAuxiliarySceneInfo() {
 	if (shouldShowMOPTWindow()) {
+		if (appIsRunning)
+			moptWindow->ffpViewer->cursorPosition = phase;
+
 		moptWindow->setAnimationParams(moptWindow->ffpViewer->cursorPosition, walkCycleIndex);
 		moptWindow->draw();
 		moptWindow->drawAuxiliarySceneInfo();

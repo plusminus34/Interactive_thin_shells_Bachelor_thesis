@@ -618,7 +618,7 @@ void IntelligentRobotEditingWindow::CreateParametersDesignWindow()
 		check->setCaption("");
 		Slider *slider = new Slider(panel);
 		slider->setValue((float)p[i]);
-		slider->setRange({ -0.1,0.1 });
+		slider->setRange({ (float)-0.1,(float)0.1 });
 		slider->setFixedWidth(70);
 		TextBox *textBox = new TextBox(panel);
 		textBox->setValue(removeTrailingZeros(to_string(p[i])));

@@ -30,6 +30,9 @@ void FastMOPTPreplanner::preplan(RobotState* currentRobotState) {
 	double currentHeading = currentRobotState->getHeading();
 	double currentTurningSpeed = currentRobotState->getAngularVelocity().dot(Globals::worldUp);
 
+	initialLinearVelocity = currentRobotState->getVelocity();
+	initialAngularVelocity = currentRobotState->getAngularVelocity();
+
 	comTrajectory.clear();
 	comVelocityTrajectory.clear();
 	headingTrajectory.clear();
@@ -37,7 +40,7 @@ void FastMOPTPreplanner::preplan(RobotState* currentRobotState) {
 
 	//we will be adding samples every 0.1s
 	double dt = 0.1;
-	for (double t = moptWindow->currentGlobalTime; t <= moptWindow->currentGlobalTime + moptWindow->preplanTimeHorizon; t += dt) {
+	for (double t = moptWindow->motionPlanStartTime; t <= moptWindow->motionPlanStartTime + moptWindow->preplanTimeHorizon; t += dt) {
 		comTrajectory.addKnot(t, V3D() + currentBodyPos);
 		comVelocityTrajectory.addKnot(t, currentBodyVel);
 		headingTrajectory.addKnot(t, currentHeading);
@@ -82,17 +85,17 @@ void FastMOPTPreplanner::preplan(RobotState* currentRobotState) {
 	auto eeTraj = moptWindow->locomotionManager->motionPlan->endEffectorTrajectories;
 	for (uint i = 0; i < eeTraj.size(); i++) {
 		eeTrajectories.push_back(Trajectory3D());
-		eeTrajectories[i].addKnot(moptWindow->currentGlobalTime, V3D() + eeTraj[i].endEffectorRB->getWorldCoordinates(eeTraj[i].endEffectorLocalCoords));
+		eeTrajectories[i].addKnot(moptWindow->motionPlanStartTime, V3D() + eeTraj[i].endEffectorRB->getWorldCoordinates(eeTraj[i].endEffectorLocalCoords));
 		cffp.addStepPattern(eeTraj[i].theLimb, eeTraj[i].endEffectorRB, eeTraj[i].endEffectorLocalCoords);
 	}
 
-	cffp.populateFrom(moptWindow->defaultFootFallPattern, moptWindow->defaultFFPStrideDuration, moptWindow->currentGlobalTime, moptWindow->currentGlobalTime + moptWindow->preplanTimeHorizon);
+	cffp.populateFrom(moptWindow->defaultFootFallPattern, moptWindow->moptParams.motionPlanDuration, moptWindow->motionPlanStartTime - moptWindow->moptParams.motionPlanDuration, moptWindow->motionPlanStartTime + moptWindow->preplanTimeHorizon);
 	for (uint eeIndex = 0; eeIndex < eeTraj.size(); eeIndex++) {
 		//we must determine the stance phases for each limb
-		double t = moptWindow->currentGlobalTime;
+		double t = moptWindow->motionPlanStartTime;
 		bool eeStartsInStance = false;
 
-		while (t < moptWindow->currentGlobalTime + moptWindow->preplanTimeHorizon){
+		while (t < moptWindow->motionPlanStartTime + moptWindow->preplanTimeHorizon){
 			double stancePhaseStart = cffp.stepPatterns[eeIndex].getFirstTimeInStanceAfter(t);
 			double stancePhaseEnd = cffp.stepPatterns[eeIndex].getFirstTimeInSwingAfter(stancePhaseStart+0.01);
 
@@ -105,7 +108,7 @@ void FastMOPTPreplanner::preplan(RobotState* currentRobotState) {
 				P3D eePosAtStancePhaseEnd = comTrajectory.evaluate_linear(stancePhaseEnd) + (V3D() + localCoordsEEPos).rotate(headingTrajectory.evaluate_linear(stancePhaseEnd), Globals::worldUp);
 
 				//now, decide where this stance location should be in world coordinates (assuming the leg wasn't in stance to begin with)
-				if (stancePhaseStart > moptWindow->currentGlobalTime) {
+				if (stancePhaseStart > moptWindow->motionPlanStartTime) {
 					P3D worldEEPos = (eePosAtStancePhaseStart + eePosAtStancePhaseEnd) / 2.0;
 					worldEEPos.setComponentAlong(Globals::worldUp, 0);
 					eeTrajectories[eeIndex].addKnot(stancePhaseStart, worldEEPos);
@@ -120,7 +123,7 @@ void FastMOPTPreplanner::preplan(RobotState* currentRobotState) {
 				t = stancePhaseEnd + 0.01;
 			}
 			else
-				t = moptWindow->currentGlobalTime + moptWindow->preplanTimeHorizon + 0.01;
+				t = moptWindow->motionPlanStartTime + moptWindow->preplanTimeHorizon + 0.01;
 		}
 
 		//the stance phases are all in there, so now add the swing phases too...
@@ -130,13 +133,13 @@ void FastMOPTPreplanner::preplan(RobotState* currentRobotState) {
 		else {
 			count = 1;
 			//if the end effector starts out in swing, then we need to make sure the height profile is still ok
-			double swingPhaseAtStart = cffp.stepPatterns[eeIndex].getSwingPhase(moptWindow->currentGlobalTime);
+			double swingPhaseAtStart = cffp.stepPatterns[eeIndex].getSwingPhase(moptWindow->motionPlanStartTime);
 			if (swingPhaseAtStart < 0) Logger::consolePrint("Uh-oh, we have a problem...\n");
 			if (swingPhaseAtStart < 0.5) {
-				double timeToGroundStrike = cffp.stepPatterns[eeIndex].getFirstTimeInStanceAfter(moptWindow->currentGlobalTime) - moptWindow->currentGlobalTime;
+				double timeToGroundStrike = cffp.stepPatterns[eeIndex].getFirstTimeInStanceAfter(moptWindow->motionPlanStartTime) - moptWindow->motionPlanStartTime;
 				double swingDuration = timeToGroundStrike / (1 - swingPhaseAtStart);
-				Logger::consolePrint("swing duration: %lf\n", swingDuration);
-				double timeToMidSwing = moptWindow->currentGlobalTime + timeToGroundStrike - 0.5 * swingDuration;
+//				Logger::consolePrint("swing duration: %lf\n", swingDuration);
+				double timeToMidSwing = moptWindow->motionPlanStartTime + timeToGroundStrike - 0.5 * swingDuration;
 				double w1 = (0.5 - swingPhaseAtStart) / (1 - swingPhaseAtStart);
 				double w2 = 1 - w1;
 				P3D eePosMidSwing = eeTrajectories[eeIndex].getKnotValue(0) * (1-w1) + eeTrajectories[eeIndex].getKnotValue(1) * (1-w2);
@@ -203,7 +206,7 @@ void FastMOPTPreplanner::draw() {
 
 	double dt = 0.1;
 	glBegin(GL_LINE_STRIP);
-	for (double t = moptWindow->currentGlobalTime; t <= moptWindow->currentGlobalTime + moptWindow->preplanTimeHorizon; t += dt) {
+	for (double t = moptWindow->motionPlanStartTime; t <= moptWindow->motionPlanStartTime + moptWindow->preplanTimeHorizon; t += dt) {
 		P3D pos = comTrajectory.evaluate_linear(t);
 		glVertex3d(pos.x(), pos.y(), pos.z());
 	}
@@ -213,7 +216,7 @@ void FastMOPTPreplanner::draw() {
 	dt = 0.001;
 	for (uint i = 0; i < eeTrajectories.size(); i++) {
 		glBegin(GL_LINE_STRIP);
-		for (double t = moptWindow->currentGlobalTime; t <= moptWindow->currentGlobalTime + moptWindow->preplanTimeHorizon; t += dt) {
+		for (double t = moptWindow->motionPlanStartTime; t <= moptWindow->motionPlanStartTime + moptWindow->preplanTimeHorizon; t += dt) {
 			P3D pos = eeTrajectories[i].evaluate_linear(t);
 			glVertex3d(pos.x(), pos.y(), pos.z());
 		}
@@ -222,7 +225,7 @@ void FastMOPTPreplanner::draw() {
 
 	glColor4d(1, 0, 0, 0.2);
 	dt = moptWindow->preplanTimeHorizon / 20.0;
-	for (double t = moptWindow->currentGlobalTime; t <= moptWindow->currentGlobalTime + moptWindow->preplanTimeHorizon; t += dt) {
+	for (double t = moptWindow->motionPlanStartTime; t <= moptWindow->motionPlanStartTime + moptWindow->preplanTimeHorizon; t += dt) {
 		P3D pos = comTrajectory.evaluate_linear(t);
 		drawSphere(pos, 0.01);
 		V3D forward = moptWindow->robot->forward.rotate(headingTrajectory.evaluate_linear(t), Globals::worldUp);
@@ -233,16 +236,31 @@ void FastMOPTPreplanner::draw() {
 
 void FastMOPTPreplanner::prepareMOPTPlan(LocomotionEngineMotionPlan* motionPlan) {
 	//the motion plan will be synced with the start of the motion pre-plan
+	motionPlan->motionPlanDuration = moptWindow->moptParams.motionPlanDuration;
+	motionPlan->wrapAroundBoundaryIndex = -1;
+
 	double h = motionPlan->motionPlanDuration / (motionPlan->nSamplePoints - 1);
 
-	for (uint i = 0; i < motionPlan->nSamplePoints; i++) {
-		double t = moptWindow->currentGlobalTime + h * i;
+	for (int i = 0; i < motionPlan->nSamplePoints; i++) {
+		double t = moptWindow->motionPlanStartTime + h * i;
 		//take care of contact flags and end effector trajectories
 		for (uint j = 0; j < motionPlan->endEffectorTrajectories.size(); j++) {
 			auto eeTraj = &motionPlan->endEffectorTrajectories[j];
 			eeTraj->contactForce[i] = V3D();
 			eeTraj->EEPos[i] = eeTrajectories[j].evaluate_linear(t);
-			eeTraj->contactFlag[i] = (cffp.stepPatterns[j].isInStanceAt(t))?1:0;
+
+			bool inStanceNow = cffp.stepPatterns[j].isInStanceAt(t);
+			bool inStanceNext = cffp.stepPatterns[j].isInStanceAt(t + h / 2);
+
+			if (inStanceNow && !inStanceNext) {				//transitioning from stance to swing right now
+				eeTraj->contactFlag[i] = false;
+			} else if (!inStanceNow && inStanceNext)		//transitioning from swing to stance
+				eeTraj->contactFlag[i] = true;
+			else
+				eeTraj->contactFlag[i] = (inStanceNow)?1:0;
+
+			if (eeTraj->contactFlag[i] != 0)
+				eeTraj->contactForce[i].y() = motionPlan->verticalGRFLowerBoundVal + motionPlan->GRFEpsilon;
 		}
 
 		P3D comPos = comTrajectory.evaluate_linear(t);
@@ -251,8 +269,11 @@ void FastMOPTPreplanner::prepareMOPTPlan(LocomotionEngineMotionPlan* motionPlan)
 		motionPlan->bodyTrajectory.orientation[0][i] = headingTrajectory.evaluate_linear(t);
 	}
 
+	motionPlan->bodyTrajectory.useInitialVelocities = true;
+	motionPlan->bodyTrajectory.initialLinearVelocity = initialLinearVelocity;
+	motionPlan->bodyTrajectory.initialAngularVelocity = initialAngularVelocity;
+
 	motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
-	
 }
 
 

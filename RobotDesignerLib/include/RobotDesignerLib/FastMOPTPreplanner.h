@@ -17,6 +17,8 @@ public:
 	Trajectory1D turningSpeedTrajectory;
 	ContinuousFootFallPattern cffp;
 
+	V3D initialLinearVelocity, initialAngularVelocity;
+
 	DynamicArray<Trajectory3D> eeTrajectories;
 
 	RobotState startState = RobotState(13);

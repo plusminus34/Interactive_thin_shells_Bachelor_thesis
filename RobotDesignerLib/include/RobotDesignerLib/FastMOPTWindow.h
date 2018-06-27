@@ -22,10 +22,9 @@ public:
 	double sidewaysSpeedTarget;		//speed target for the longer horizon plan
 	double turningSpeedTarget;		//turning speed target for the longer horizon plan
 	double bodyHeightTarget;		//body height target for the longer horizon plan
-	double currentGlobalTime = 0;	//the global time for the entire planning/control framework
+	double motionPlanStartTime = 0;	//the global time for the entire planning/control framework
 
 	FootFallPattern defaultFootFallPattern; //TODO: at some point we can also change the footfall pattern to make transitions, stand-to-walk-to-stand, etc...
-	double defaultFFPStrideDuration = 0.7;
 
 	FastMOPTPreplanner* fmpp;
 
@@ -85,8 +84,11 @@ public:
 		Logger::consolePrint("Current MOPT objective function: %lf\n", locomotionManager->energyFunction->computeValue(params));
 	}
 
-	void generateMotionPlanFromCurrentRobotState();
-	void advanceGlobalPlanTime(double dt);
+	void generateMotionPreplan();
+
+	void optimizeMotionPlan();
+
+	void advanceMotionPlanGlobalTime(int nSteps);
 
 	void reset();
 

@@ -19,12 +19,18 @@ double MPO_ForceAccelObjective::computeValue(const dVector& p) {
 		int jmm, jm, jp, jpp;
 
 		theMotionPlan->getAccelerationTimeIndicesFor(j, jmm, jm, jp, jpp);
-		if (jmm == -1 || jm == -1 || jp == -1 || jpp == -1) continue;
+		if (jp == -1 || jpp == -1) continue;
+		if ((jmm == -1 || jm == -1) && theMotionPlan->bodyTrajectory.useInitialVelocities == false) continue;
 
-		//we want the COM acceleration to be as small as possible
-		V3D acceleration = (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jpp) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jp))
-			- (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jm) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jmm));
-		acceleration /= h * h;
+		V3D vP, vM;
+		vP = (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jpp) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jp)) / h;
+		if (jmm == -1 || jm == -1)
+			vM = theMotionPlan->bodyTrajectory.initialLinearVelocity;
+		else
+			vM = (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jm) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jmm)) / h;
+
+		//compute COM acceleration
+		V3D acceleration = (vP - vM) / h;
 
 		V3D ma = acceleration * theMotionPlan->totalMass;
 		V3D force = Globals::worldUp * Globals::g * theMotionPlan->totalMass;
@@ -49,12 +55,18 @@ void MPO_ForceAccelObjective::addGradientTo(dVector& grad, const dVector& p) {
 		int jmm, jm, jp, jpp;
 
 		theMotionPlan->getAccelerationTimeIndicesFor(j, jmm, jm, jp, jpp);
-		if (jmm == -1 || jm == -1 || jp == -1 || jpp == -1) continue;
+		if (jp == -1 || jpp == -1) continue;
+		if ((jmm == -1 || jm == -1) && theMotionPlan->bodyTrajectory.useInitialVelocities == false) continue;
 
-		//we want the COM acceleration to be as small as possible
-		V3D acceleration = (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jpp) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jp))
-			- (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jm) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jmm));
-		acceleration /= h * h;
+		V3D vP, vM;
+		vP = (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jpp) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jp)) / h;
+		if (jmm == -1 || jm == -1)
+			vM = theMotionPlan->bodyTrajectory.initialLinearVelocity;
+		else
+			vM = (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jm) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jmm)) / h;
+
+		//compute COM acceleration
+		V3D acceleration = (vP - vM) / h;
 
 		V3D ma = acceleration * theMotionPlan->totalMass;
 		V3D force = Globals::worldUp * Globals::g * theMotionPlan->totalMass;
@@ -67,15 +79,14 @@ void MPO_ForceAccelObjective::addGradientTo(dVector& grad, const dVector& p) {
 		if (theMotionPlan->COMPositionsParamsStartIndex > -1) {
 			V3D pGrad = (ma - force) * theMotionPlan->totalMass / (h * h) * weight;
 
-			grad.segment<3>(theMotionPlan->COMPositionsParamsStartIndex + 3 * jpp) += pGrad;
-			grad.segment<3>(theMotionPlan->COMPositionsParamsStartIndex + 3 * jmm) += pGrad;
-			grad.segment<3>(theMotionPlan->COMPositionsParamsStartIndex + 3 * jp) -= pGrad;
-			grad.segment<3>(theMotionPlan->COMPositionsParamsStartIndex + 3 * jm) -= pGrad;
+			if (jpp > -1) grad.segment<3>(theMotionPlan->COMPositionsParamsStartIndex + 3 * jpp) += pGrad;
+			if (jmm > -1) grad.segment<3>(theMotionPlan->COMPositionsParamsStartIndex + 3 * jmm) += pGrad;
+			if (jp > -1) grad.segment<3>(theMotionPlan->COMPositionsParamsStartIndex + 3 * jp) -= pGrad;
+			if (jm > -1) grad.segment<3>(theMotionPlan->COMPositionsParamsStartIndex + 3 * jm) -= pGrad;
 		}
 
 		if (theMotionPlan->contactForcesParamsStartIndex > -1) {
 			for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); i++) {
-
 				if (theMotionPlan->endEffectorTrajectories[i].contactFlag[j] > 0)
 					grad.segment<3>(theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i)) += weight * (force - ma);
 			}
@@ -95,7 +106,8 @@ void MPO_ForceAccelObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessia
 		int jmm, jm, jp, jpp;
 
 		theMotionPlan->getAccelerationTimeIndicesFor(j, jmm, jm, jp, jpp);
-		if (jmm == -1 || jm == -1 || jp == -1 || jpp == -1) continue;
+		if (jp == -1 || jpp == -1) continue;
+		if ((jmm == -1 || jm == -1) && theMotionPlan->bodyTrajectory.useInitialVelocities == false) continue;
 
 		int startIndexjpp = theMotionPlan->COMPositionsParamsStartIndex + 3 * jpp;
 		int startIndexjmm = theMotionPlan->COMPositionsParamsStartIndex + 3 * jmm;
@@ -105,21 +117,21 @@ void MPO_ForceAccelObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessia
 		if (theMotionPlan->COMPositionsParamsStartIndex > -1)
 		{
 			double HVal = scale * scale;
-			addDiagonalHessianBlock(hessianEntries, startIndexjpp, startIndexjpp, HVal);
-			addDiagonalHessianBlock(hessianEntries, startIndexjmm, startIndexjmm, HVal);
-			addDiagonalHessianBlock(hessianEntries, startIndexjp, startIndexjp, HVal);
-			addDiagonalHessianBlock(hessianEntries, startIndexjm, startIndexjm, HVal);
+			if (jpp > -1) addDiagonalHessianBlock(hessianEntries, startIndexjpp, startIndexjpp, HVal);
+			if (jmm > -1) addDiagonalHessianBlock(hessianEntries, startIndexjmm, startIndexjmm, HVal);
+			if (jp > -1) addDiagonalHessianBlock(hessianEntries, startIndexjp, startIndexjp, HVal);
+			if (jm > -1) addDiagonalHessianBlock(hessianEntries, startIndexjm, startIndexjm, HVal);
 
-			addDiagonalHessianBlock(hessianEntries, startIndexjpp, startIndexjp, -HVal);
-			addDiagonalHessianBlock(hessianEntries, startIndexjpp, startIndexjmm, HVal);
-			addDiagonalHessianBlock(hessianEntries, startIndexjpp, startIndexjm, -HVal);
-			addDiagonalHessianBlock(hessianEntries, startIndexjmm, startIndexjp, -HVal);
-			addDiagonalHessianBlock(hessianEntries, startIndexjmm, startIndexjm, -HVal);
-			addDiagonalHessianBlock(hessianEntries, startIndexjp, startIndexjm, HVal);
+			if (jpp > -1 && jp > -1) addDiagonalHessianBlock(hessianEntries, startIndexjpp, startIndexjp, -HVal);
+			if (jpp > -1 && jmm > -1) addDiagonalHessianBlock(hessianEntries, startIndexjpp, startIndexjmm, HVal);
+			if (jpp > -1 && jm > -1) addDiagonalHessianBlock(hessianEntries, startIndexjpp, startIndexjm, -HVal);
+			if (jmm > -1 && jp > -1) addDiagonalHessianBlock(hessianEntries, startIndexjmm, startIndexjp, -HVal);
+			if (jmm > -1 && jm > -1) addDiagonalHessianBlock(hessianEntries, startIndexjmm, startIndexjm, -HVal);
+			if (jp > -1 && jm > -1) addDiagonalHessianBlock(hessianEntries, startIndexjp, startIndexjm, HVal);
 
 			// no reflect for diagonal block in Hessian, so we need to count twice.
 			if (jp == jm)
-				addDiagonalHessianBlock(hessianEntries, startIndexjp, startIndexjm, HVal);
+				if (jp > -1 && jm > -1) addDiagonalHessianBlock(hessianEntries, startIndexjp, startIndexjm, HVal);
 
 			if (theMotionPlan->contactForcesParamsStartIndex > -1)
 			{
@@ -127,10 +139,10 @@ void MPO_ForceAccelObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessia
 
 					if (theMotionPlan->endEffectorTrajectories[i].contactFlag[j] > 0) {
 						int startIndexF = theMotionPlan->contactForcesParamsStartIndex + 3 * (j * theMotionPlan->endEffectorTrajectories.size() + i);
-						addDiagonalHessianBlock(hessianEntries, startIndexF, startIndexjpp, -scale);
-						addDiagonalHessianBlock(hessianEntries, startIndexF, startIndexjmm, -scale);
-						addDiagonalHessianBlock(hessianEntries, startIndexF, startIndexjp, scale);
-						addDiagonalHessianBlock(hessianEntries, startIndexF, startIndexjm, scale);
+						if (jpp > -1) addDiagonalHessianBlock(hessianEntries, startIndexF, startIndexjpp, -scale);
+						if (jmm > -1) addDiagonalHessianBlock(hessianEntries, startIndexF, startIndexjmm, -scale);
+						if (jp > -1) addDiagonalHessianBlock(hessianEntries, startIndexF, startIndexjp, scale);
+						if (jm > -1) addDiagonalHessianBlock(hessianEntries, startIndexF, startIndexjm, scale);
 					}
 				}
 			}
