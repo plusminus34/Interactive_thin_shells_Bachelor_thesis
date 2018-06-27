@@ -419,8 +419,9 @@ BarycentricZeroLengthSpring* ShapeWindow::createZeroLengthSpring(double x0, doub
 	for (int i = 0; i < 2; ++i) {
 		double nx[3], ny[3];
 		for (int j = 0; j < 3; ++j) {
-			nx[j] = (ni[i][j] / dim_y) * h;
-			ny[j] = (ni[i][j] % dim_y) * h;
+			P3D p = paperApp->getNodeRestPos(ni[i][j]);
+			nx[j] = p[0];
+			ny[j] = p[1];
 		}
 		Matrix3x3 A;
 		Vector3d b;
