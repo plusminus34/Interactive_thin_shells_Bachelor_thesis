@@ -345,9 +345,9 @@ int ShapeWindow::findNodeClosestTo(double x, double y) {
 	double y_c = std::max(0.0, std::min(y, h * (dim_y - 2)));
 	int a = (int)floor(x_c / h);
 	int b = (int)floor(y_c / h);
-	int ufe = 0;
-	if (x_c - a * h < y_c - b * h)ufe = 1;
-	int t = 2 * (a*(dim_y - 1)+b)+ufe;
+	int upper = 0;
+	if (x_c - a * h < y_c - b * h) upper = 1;
+	int t = 2 * (a*(dim_y - 1) + b) + upper;
 	// compute distance to triangle corners
 	int c[3];
 	double d[3];
@@ -382,50 +382,33 @@ int ShapeWindow::findPinHandleClosestTo(double x, double y, double max_distance)
 BarycentricZeroLengthSpring* ShapeWindow::createZeroLengthSpring(double x0, double y0, double x1, double y1) {
 	SimulationMesh* simMesh = paperApp->acessMesh();
 
-	int ni[2][3];
-	double x[2], y[2], dx[2], dy[2];
-
+	double x[2], y[2];
 	x[0] = x0; y[0] = y0;
 	x[1] = x1; y[1] = y1;
 
+	int ni[2][3];
+	for (int i = 0; i < 6; ++i)
+		ni[i / 3][i % 3] = -1;
+	//figure out the triangle corners ni
 	for (int i = 0; i < 2; ++i) {
-		ni[i][0] = findNodeClosestTo(x[i], y[i]);
-		dx[i] = x[i] - (ni[i][0] / dim_y) * h;
-		dy[i] = y[i] - (ni[i][0] % dim_y) * h;
-	}
-
-	//figure out the triangle corners (rectangle mesh only)
-	for (int i = 0; i < 2; ++i) {
-		if (dx[i] < 0 && dy[i] < 0 && dx[i] < dy[i]) {
-			ni[i][1] = ni[i][0] - dim_y;
-			ni[i][2] = ni[i][0] - dim_y - 1;
-		}
-		else if (dx[i] < 0 && dy[i] < 0 && dx[i] >= dy[i]) {
-			ni[i][1] = ni[i][0] - dim_y - 1;
-			ni[i][2] = ni[i][0] - 1;
-		}
-		else if (dx[i] >= 0 && dy[i] < 0) {
-			ni[i][1] = ni[i][0] - 1;
-			ni[i][2] = ni[i][0] + dim_y;
-		}
-		else if (dx[i] >= 0 && dy[i] >= 0 && dx[i] > dy[i]) {
-			ni[i][1] = ni[i][0] + dim_y;
-			ni[i][2] = ni[i][0] + dim_y + 1;
-		}
-		else if (dx[i] >= 0 && dy[i] >= 0 && dx[i] <= dy[i]) {
-			ni[i][1] = ni[i][0] + dim_y + 1;
-			ni[i][2] = ni[i][0] + 1;
-		}
-		else if (dx[i] < 0 && dy[i] >= 0) {
-			ni[i][1] = ni[i][0] + 1;
-			ni[i][2] = ni[i][0] - dim_y;
-		}
+		// map (x,y) to triangle
+		double x_c = std::max(0.0, std::min(x[i], h * (dim_x - 2)));
+		double y_c = std::max(0.0, std::min(y[i], h * (dim_y - 2)));
+		int a = (int)floor(x_c / h);
+		int b = (int)floor(y_c / h);
+		int upper = 0;
+		if (x_c - a * h < y_c - b * h) upper = 1;
+		int t = 2 * (a*(dim_y - 1) + b) + upper;
+		// compute distance to triangle corners
+		paperApp->acessMesh()->cornersOfTriangle(t, ni[i][0], ni[i][1], ni[i][2]);
 	}
 
 	Node* n[6];
 	for (int i = 0; i < 2; ++i)
 		for (int j = 0; j < 3; ++j) {
-			if (ni[i][j] < 0 || ni[i][j] >= dim_x * dim_y) { return NULL; }
+			if (ni[i][j] == -1) {
+				return NULL;
+			}
 			else {
 				n[3 * i + j] = paperApp->acessNode(ni[i][j]);
 			}
