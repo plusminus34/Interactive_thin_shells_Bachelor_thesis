@@ -168,6 +168,10 @@ void LocomotionEngine_COMTrajectory::initialize(int nPoints, const P3D &desComPo
 	this->nPoints = nPoints;
 	pos[0] = dVector(nPoints); pos[1] = dVector(nPoints); pos[2] = dVector(nPoints);
 	orientation[0] = dVector(nPoints); orientation[1] = dVector(nPoints); orientation[2] = dVector(nPoints);
+
+	desiredPos[0] = dVector(nPoints); desiredPos[1] = dVector(nPoints); desiredPos[2] = dVector(nPoints);
+	desiredOrientation[0] = dVector(nPoints); desiredOrientation[1] = dVector(nPoints); desiredOrientation[2] = dVector(nPoints);
+
 	axis[0] = axis_0; axis[1] = axis_1; axis[2] = axis_2;
 
 	//note - fixed parameterization!
@@ -226,6 +230,13 @@ Quaternion LocomotionEngine_COMTrajectory::getCOMOrientationAt(double t) {
 			getRotationQuaternion(eulerAngles[1], axis[1]) * getRotationQuaternion(eulerAngles[2], axis[2]);
 }
 
+P3D LocomotionEngine_COMTrajectory::getTargetCOMPositionAtTimeIndex(int j) {
+	if (j < 0)
+		return P3D();
+	return P3D(desiredPos[0][j], desiredPos[1][j], desiredPos[2][j]);
+}
+
+
 P3D LocomotionEngine_COMTrajectory::getCOMPositionAtTimeIndex(int j){
 	if (j < 0)
 		return P3D();
@@ -237,6 +248,13 @@ P3D LocomotionEngine_COMTrajectory::getCOMEulerAnglesAtTimeIndex(int j) {
 		return P3D();
 	return P3D(orientation[0][j], orientation[1][j], orientation[2][j]);
 }
+
+P3D LocomotionEngine_COMTrajectory::getTargetCOMEulerAnglesAtTimeIndex(int j) {
+	if (j < 0)
+		return P3D();
+	return P3D(desiredOrientation[0][j], desiredOrientation[1][j], desiredOrientation[2][j]);
+}
+
 
 Quaternion LocomotionEngine_COMTrajectory::getCOMOrientationAtTimeIndex(int j) {
 	P3D eulerAngles = getCOMEulerAnglesAtTimeIndex(j);

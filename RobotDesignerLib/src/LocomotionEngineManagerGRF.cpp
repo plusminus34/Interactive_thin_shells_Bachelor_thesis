@@ -506,10 +506,12 @@ void LocomotionEngineManagerGRFv3::setupObjectives() {
 		delete ef->objectives[i];
 	ef->objectives.clear();
 
+	//we will assume here that only GRFs and COM trajectories will be optimized here...
+
 	//consistancy constraints (between robot states and other auxiliary variables)
-	ef->addObjectiveFunction(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0), "Consistency Constraints (Kinematics)");
-	ef->addObjectiveFunction(new MPO_EndEffectorGroundObjective(ef->theMotionPlan, "EE height objective (stance)", 10000.0), "Consistency Constraints (Kinematics)");
-	ef->addObjectiveFunction(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE height objective (swing)", 10000.0), "Consistency Constraints (Kinematics)");
+//	ef->addObjectiveFunction(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0), "Consistency Constraints (Kinematics)");
+//	ef->addObjectiveFunction(new MPO_EndEffectorGroundObjective(ef->theMotionPlan, "EE height objective (stance)", 10000.0), "Consistency Constraints (Kinematics)");
+//	ef->addObjectiveFunction(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE height objective (swing)", 10000.0), "Consistency Constraints (Kinematics)");
 
 	//consistancy constraints (dynamics, F=ma, GRF feasibility, etc)
 	ef->addObjectiveFunction(new MPO_GRFSwingRegularizer(ef->theMotionPlan, "GRF 0 in swing constraint", 10000.0), "Consistency Constraints (Dynamics)");
@@ -517,21 +519,22 @@ void LocomotionEngineManagerGRFv3::setupObjectives() {
 	ef->addObjectiveFunction(new MPO_ForceAccelObjective(ef->theMotionPlan, "force acceleration objective", 100.0), "Consistency Constraints (Dynamics)");
 	ef->addObjectiveFunction(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 100.0), "Consistency Constraints (Dynamics)");
 	ef->addObjectiveFunction(new MPO_GRFFrictionConstraints(ef->theMotionPlan, "GRF friction constraints", 100.0), "Consistency Constraints (Dynamics)");
-	ef->addObjectiveFunction(new MPO_PassiveWheelsGRFConstraints(ef->theMotionPlan, "Passive wheels (w/o friction)", 100.0), "Consistency Constraints (Dynamics)");
+//	ef->addObjectiveFunction(new MPO_PassiveWheelsGRFConstraints(ef->theMotionPlan, "Passive wheels (w/o friction)", 100.0), "Consistency Constraints (Dynamics)");
 
 	//range of motion/speed/acceleration constraints
-	ef->addObjectiveFunction(new MPO_EndEffectorCollisionEnergy(ef->theMotionPlan, "EE collision objective", 10000), "Bound Constraints");
+//	ef->addObjectiveFunction(new MPO_EndEffectorCollisionEnergy(ef->theMotionPlan, "EE collision objective", 10000), "Bound Constraints");
 
 	//periodic/boundary constraints...
 
 	//functional objectives
-	ef->addObjectiveFunction(new MPO_COMTravelObjective(ef->theMotionPlan, "COM Travel objective", 50.0), "Objectives");
-	ef->addObjectiveFunction(new MPO_COMTurningObjective(ef->theMotionPlan, "COM turning objective (YAW)", 50.0), "Objectives");
-	ef->addObjectiveFunction(new MPO_BodyFrameObjective(ef->theMotionPlan, "Body choreography objective", 10000), "Objectives");
-	ef->addObjectiveFunction(new MPO_EEPosObjective(ef->theMotionPlan, "EE choreography objective", 10000), "Objectives");
-
+//	ef->addObjectiveFunction(new MPO_COMTravelObjective(ef->theMotionPlan, "COM Travel objective", 50.0), "Objectives");
+//	ef->addObjectiveFunction(new MPO_COMTurningObjective(ef->theMotionPlan, "COM turning objective (YAW)", 50.0), "Objectives");
+//	ef->addObjectiveFunction(new MPO_BodyFrameObjective(ef->theMotionPlan, "Body choreography objective", 10000), "Objectives");
+//	ef->addObjectiveFunction(new MPO_EEPosObjective(ef->theMotionPlan, "EE choreography objective", 10000), "Objectives");
+	ef->addObjectiveFunction(new MPO_DesiredBodyTrajectoryObjective(ef->theMotionPlan, "Body trajectories objective", 10000), "Objectives");
+	
 	//smooth motion regularizers
-	ef->addObjectiveFunction(new MPO_FeetPathSmoothnessObjective(ef->theMotionPlan, "foot path smoothness objective", 10.0), "Smooth Regularizer");
+//	ef->addObjectiveFunction(new MPO_FeetPathSmoothnessObjective(ef->theMotionPlan, "foot path smoothness objective", 10.0), "Smooth Regularizer");
 	ef->addObjectiveFunction(new MPO_SmoothCOMTrajectories(ef->theMotionPlan, "smoothCOM", 50), "Smooth Regularizer");
 
 	ef->addObjectiveFunction(new MPO_GRFStanceRegularizer(ef->theMotionPlan, "GRF stance regularizer", 1e-5), "Regularizers");
@@ -756,7 +759,7 @@ void LocomotionEngineManagerGRFv3::warmStartMOpt() {
 }
 
 void LocomotionEngineManagerGRFv3::setDefaultOptimizationFlags() {
-	motionPlan->optimizeEndEffectorPositions = true;
+	motionPlan->optimizeEndEffectorPositions = false;
 	motionPlan->optimizeWheels = false;
 	motionPlan->optimizeCOMPositions = true;
 	motionPlan->optimizeCOMOrientations = true;

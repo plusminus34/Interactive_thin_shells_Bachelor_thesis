@@ -130,6 +130,10 @@ public:
 	dVector pos[3];
 	//orientation is stored as euler angles...
 	dVector orientation[3];
+
+	dVector desiredPos[3];
+	dVector desiredOrientation[3];
+
 	V3D axis[3];
 
 	//for non-periodic motions, we might sometimes want to account for the initial velocity
@@ -151,8 +155,11 @@ public:
 	Quaternion getCOMOrientationAt(double t);
 
 	P3D getCOMPositionAtTimeIndex(int j);
+	P3D getTargetCOMPositionAtTimeIndex(int j);
+
 
 	P3D getCOMEulerAnglesAtTimeIndex(int j);
+	P3D getTargetCOMEulerAnglesAtTimeIndex(int j);
 
 	Quaternion getCOMOrientationAtTimeIndex(int j);
 };

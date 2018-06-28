@@ -72,3 +72,89 @@ void MPO_BodyFrameObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessian
 		ADD_HES_ELEMENT(hessianEntries, I + 2, I + 2, 1, weight);
 	}
 }
+
+
+
+/////////////////////////////////////////////////////////////////////
+MPO_DesiredBodyTrajectoryObjective::MPO_DesiredBodyTrajectoryObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
+	theMotionPlan = mp;
+	this->description = objectiveDescription;
+	this->weight = weight;
+}
+
+MPO_DesiredBodyTrajectoryObjective::~MPO_DesiredBodyTrajectoryObjective(void) {
+}
+
+double MPO_DesiredBodyTrajectoryObjective::computeValue(const dVector& p) {
+	// assume the parameters of the motion plan have been set already by the collection of objective functions class
+	// theMotionPlan->setMPParametersFromList(p);
+	double retVal = 0;
+	for (uint i = 0; i < theMotionPlan->nSamplePoints; i++) {
+		double w = 1;
+		if (i == 0) w = weightAtStart;
+		if (i >= theMotionPlan->nSamplePoints - 2) w = weightAtEnd;
+		P3D pos = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(i);
+		P3D dPos = theMotionPlan->bodyTrajectory.getTargetCOMPositionAtTimeIndex(i);
+		retVal += 0.5*(pos - dPos).squaredNorm()*w;
+		P3D orientation = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(i);
+		P3D dOrientation = theMotionPlan->bodyTrajectory.getTargetCOMEulerAnglesAtTimeIndex(i);
+		retVal += 0.5*(orientation - dOrientation).squaredNorm()*w;
+	}
+	return retVal * weight;
+}
+
+void MPO_DesiredBodyTrajectoryObjective::addGradientTo(dVector& grad, const dVector& p) {
+	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
+	//	theMotionPlan->setMPParametersFromList(p);
+
+	for (uint i = 0; i < theMotionPlan->nSamplePoints; i++){
+		double w = 1;
+		if (i == 0) w = weightAtStart;
+		if (i >= theMotionPlan->nSamplePoints - 2) w = weightAtEnd;
+		if (theMotionPlan->COMPositionsParamsStartIndex >= 0) {
+			int I = theMotionPlan->COMPositionsParamsStartIndex + i * 3;
+
+			P3D pos = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(i);
+			P3D dPos = theMotionPlan->bodyTrajectory.getTargetCOMPositionAtTimeIndex(i);
+			V3D dp = pos - dPos;
+
+			grad[I + 0] += w*weight*dp(0);
+			grad[I + 1] += w*weight*dp(1);
+			grad[I + 2] += w*weight*dp(2);
+		}
+		if (theMotionPlan->COMOrientationsParamsStartIndex >= 0) {
+			int I = theMotionPlan->COMOrientationsParamsStartIndex + i * 3;
+			P3D orientation = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(i);
+			P3D dOrientation = theMotionPlan->bodyTrajectory.getTargetCOMEulerAnglesAtTimeIndex(i);
+			V3D dp = orientation - dOrientation;
+			grad[I + 0] += w*weight * dp(0);
+			grad[I + 1] += w*weight * dp(1);
+			grad[I + 2] += w*weight * dp(2);
+		}
+	}
+}
+
+void MPO_DesiredBodyTrajectoryObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
+	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
+	//	theMotionPlan->setMPParametersFromList(p);
+
+	for (uint i = 0; i < theMotionPlan->nSamplePoints; i++){
+		double w = 1;
+		if (i == 0) w = weightAtStart;
+		if (i >= theMotionPlan->nSamplePoints - 2) w = weightAtEnd;
+
+		if (theMotionPlan->COMPositionsParamsStartIndex >= 0) {
+			int I = theMotionPlan->COMPositionsParamsStartIndex + i * 3;
+			ADD_HES_ELEMENT(hessianEntries, I, I, 1, w*weight);
+			ADD_HES_ELEMENT(hessianEntries, I + 1, I + 1, 1, w*weight);
+			ADD_HES_ELEMENT(hessianEntries, I + 2, I + 2, 1, w*weight);
+		}
+
+		if (theMotionPlan->COMOrientationsParamsStartIndex >= 0) {
+			int I = theMotionPlan->COMOrientationsParamsStartIndex + i * 3;
+			ADD_HES_ELEMENT(hessianEntries, I, I, 1, w*weight);
+			ADD_HES_ELEMENT(hessianEntries, I + 1, I + 1, 1, w*weight);
+			ADD_HES_ELEMENT(hessianEntries, I + 2, I + 2, 1, w*weight);
+		}
+	}
+}

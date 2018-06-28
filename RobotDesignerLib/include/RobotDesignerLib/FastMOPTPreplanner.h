@@ -11,13 +11,14 @@
 class FastMOPTPreplanner{
 public:
 	FastMOPTWindow* moptWindow;
-	Trajectory3D comTrajectory;
-	Trajectory3D comVelocityTrajectory;
+	Trajectory3D bodyTrajectory;
+	Trajectory3D bodyVelocityTrajectory;
 	Trajectory1D headingTrajectory;
 	Trajectory1D turningSpeedTrajectory;
 	ContinuousFootFallPattern cffp;
 
 	V3D initialLinearVelocity, initialAngularVelocity;
+	Quaternion initialOrientation;
 
 	DynamicArray<Trajectory3D> eeTrajectories;
 

@@ -21,8 +21,6 @@
 #include <RobotDesignerLib/EnergyWindow.h>
 #include <RobotDesignerLib/BaseRobotControlApp.h>
 
-
-
 class IntelligentRobotEditingWindow;
 class EnergyWindow;
 
@@ -34,19 +32,11 @@ public:
 	double time = 0;
 	double phase = 0;
 
-	FastMOPTWindow* moptWindow = NULL;
+	FastMOPTWindow* plannerWindow = NULL;
 	SimWindow* simWindow = NULL;
-	MotionPlanAnalysis *motionPlanAnalysis = nullptr;
-	EnergyWindow *energyWindow = nullptr;
-	bool doMotionAnalysis = true;
 
 	bool shouldShowSimWindow();
-	bool shouldShowMOPTWindow();
-
-	bool drawMotionPlan = false;
-
-	bool drawControllerDebugInfo = false;
-	bool doubleCheckControllerSolution = false;
+	bool shouldShowPlannerWindow();
 
 	P3D getCameraTarget();
 
@@ -69,8 +59,6 @@ public:
 
 	int walkCycleIndex = 0;
 
-	bool doDebug = false;
-
 public:
 	// constructor
 	FastRobotControlApp();
@@ -86,8 +74,6 @@ public:
 	virtual void restart();
 
 	void setActiveController();
-
-	void runMOPTStep();
 
 	//input callbacks...
 
@@ -108,11 +94,7 @@ public:
 	virtual void saveFile(const char* fName);
 	virtual void loadFile(const char* fName);
 
-	void warmStartMOPT(bool initializeMotionPlan);
-	void loadToSim(bool initializeMOPT = true);
-	void createRobotFromCurrentDesign();
-
-	void exportMeshes();
+	void loadToSim();
 };
 
 
