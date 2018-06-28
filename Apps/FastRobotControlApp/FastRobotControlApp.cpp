@@ -315,6 +315,11 @@ void FastRobotControlApp::setActiveController() {
 
 // Run the App tasks
 void FastRobotControlApp::process() {
+
+	plannerWindow->optimizeMotionPlan();
+	return;
+
+
 	double dt = 1.0 / desiredFrameRate;
 
 	if (slowMo)
