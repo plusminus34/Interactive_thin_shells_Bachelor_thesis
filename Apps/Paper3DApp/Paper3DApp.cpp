@@ -37,8 +37,8 @@ Paper3DApp::Paper3DApp() {
 	pin_k = 100;
 	mouse_mode = mouse_drag;
 
-	int dim_x = 11;
-	int dim_y = 7;
+	int dim_x = 30;
+	int dim_y = 21;
 	double h = 0.1;
 	Paper3DMesh::generateRectangleSystem("../data/FEM/3d/testCSTriangleSystem.tri3d", dim_x, dim_y, h*(dim_x-1), h*(dim_y-1));
 
@@ -64,13 +64,21 @@ Paper3DApp::Paper3DApp() {
 	//TODO select file in a dialog?
 	button = new nanogui::Button(tools, "");
 	button->setIcon(ENTYPO_ICON_SAVE);
-	button->setCallback([this]() { saveFile("../out/Paper3DAppQuickSave"); });
-	button->setTooltip("Quick Save (S)");
+	button->setCallback([this]() {
+		std::string fileName = nanogui::file_dialog({ { "pap3d","Paper 3D file" } }, true);
+		if (fileName.length() < 6 || 0 != fileName.compare(fileName.length() - 6, 6, ".pap3d"))
+			fileName.append(".pap3d");
+		saveFile(fileName.c_str());
+	});
+	button->setTooltip("Save File");
 
 	button = new nanogui::Button(tools, "");
 	button->setIcon(ENTYPO_ICON_DOWNLOAD);
-	button->setCallback([this]() { loadFile("../out/Paper3DAppQuickSave"); });
-	button->setTooltip("Quick Load (R)");
+	button->setCallback([this]() {
+		std::string fileName = nanogui::file_dialog({ { "pap3d","Paper 3D file" } }, false);
+		loadFile(fileName.c_str());
+	});
+	button->setTooltip("Load File");
 
 	mainMenu->addGroup("FEM Sim options");
 	mainMenu->addVariable("Check derivatives", checkDerivatives);
