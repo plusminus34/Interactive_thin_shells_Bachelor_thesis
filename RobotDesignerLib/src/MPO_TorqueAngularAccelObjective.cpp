@@ -11,7 +11,7 @@ MPO_TorqueAngularAccelObjective::MPO_TorqueAngularAccelObjective(LocomotionEngin
 	updateDummyMatrices();
 }
 
-void MPO_TorqueAngularAccelObjective::updateDummyMatrices(){
+void MPO_TorqueAngularAccelObjective::updateDummyMatrices() {
 	Matrix3x3 dummy = AngleAxisd(DUMMY_ANGLE, Vector3d(0, 1, 0)).toRotationMatrix();
 
 	V3D axis[3];
@@ -28,8 +28,7 @@ void MPO_TorqueAngularAccelObjective::updateDummyMatrices(){
 		dummyQ[j].setIdentity();
 
 		theMotionPlan->getAccelerationTimeIndicesFor(j, jmm, jm, jp, jpp);
-		if (jp == -1 || jpp == -1) continue;
-		if ((jmm == -1 || jm == -1) && theMotionPlan->bodyTrajectory.useInitialVelocities == false) continue;
+		if (jmm == -1 || jm == -1 || jp == -1 || jpp == -1) continue;
 
 		Matrix3x3 R1, R2, R3, R4;
 		R1.setIdentity(); R2.setIdentity(); R3.setIdentity(); R4.setIdentity();
@@ -38,7 +37,7 @@ void MPO_TorqueAngularAccelObjective::updateDummyMatrices(){
 		V3D eulerAngles_jmm = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jmm);
 		V3D eulerAngles_jm = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jm);
 
-		for (int i = 0; i < 3; i++){
+		for (int i = 0; i < 3; i++) {
 			R1 *= getRotationQuaternion(eulerAngles_jp[i], axis[i]).getRotationMatrix();
 			R2 *= getRotationQuaternion(eulerAngles_jpp[i], axis[i]).getRotationMatrix();
 			R3 *= getRotationQuaternion(eulerAngles_jmm[i], axis[i]).getRotationMatrix();
@@ -72,8 +71,7 @@ double MPO_TorqueAngularAccelObjective::computeValue(const dVector& p) {
 		int jmm, jm, jp, jpp;
 
 		theMotionPlan->getAccelerationTimeIndicesFor(j, jmm, jm, jp, jpp);
-		if (jp == -1 || jpp == -1) continue;
-		if ((jmm == -1 || jm == -1) && theMotionPlan->bodyTrajectory.useInitialVelocities == false) continue;
+		if (jmm == -1 || jm == -1 || jp == -1 || jpp == -1) continue;
 
 		AngleAxisd angVel_j, angVel_jp;
 		Matrix3x3 R_jp, R_jpp, R_jmm, R_jm;
@@ -92,17 +90,8 @@ double MPO_TorqueAngularAccelObjective::computeValue(const dVector& p) {
 
 		//note: dummies are used to prevent rotations from being exactly the identity, as the axis of that rotation is not defined
 		//these are the angular velocities that, when applied for time h, lead from R_t to R_t+1: R_t+1 = R(w * h) * R_t
-		angVel_jp = (dummyR[j] * R_jpp * R_jp.transpose()); 
-		angVel_jp.angle() *= 1 / h;
-		if ((jmm == -1 || jm == -1)){
-			if (theMotionPlan->bodyTrajectory.initialAngularVelocity.length() < 1e-5)
-				angVel_j = AngleAxisd(DUMMY_ANGLE, Vector3d(0, 1, 0));
-			else
-				angVel_j = AngleAxisd(theMotionPlan->bodyTrajectory.initialAngularVelocity.length() * h, theMotionPlan->bodyTrajectory.initialAngularVelocity.unit());
-		}
-		else
-			angVel_j = (dummyQ[j] * R_jm * R_jmm.transpose());
-		angVel_j.angle() *= 1 / h;
+		angVel_jp = (dummyR[j] * R_jpp * R_jp.transpose()); angVel_jp.angle() *= 1 / h;
+		angVel_j = (dummyQ[j] * R_jm * R_jmm.transpose()); angVel_j.angle() *= 1 / h;
 
 		//w_t+1 = w_t + h * angAccel
 		Vector3d angularAccel = (angVel_jp.axis() * angVel_jp.angle() - angVel_j.axis() * angVel_j.angle()) / h;
@@ -113,8 +102,8 @@ double MPO_TorqueAngularAccelObjective::computeValue(const dVector& p) {
 		Vector3d torque(0, 0, 0);
 
 		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); i++) {
-			V3D r = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
-			torque += r.cross(theMotionPlan->endEffectorTrajectories[i].contactForce[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j]);
+			V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
+			torque += R.cross(theMotionPlan->endEffectorTrajectories[i].contactForce[j] * theMotionPlan->endEffectorTrajectories[i].contactFlag[j]);
 		}
 
 		err += 0.5 * weight * (torque - dLdt).squaredNorm();
@@ -127,7 +116,7 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
-//	updateDummyMatrices();
+	updateDummyMatrices();
 
 	double h = theMotionPlan->motionPlanDuration / (theMotionPlan->nSamplePoints - 1);
 
@@ -145,13 +134,12 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 		int jmm, jm, jp, jpp;
 
 		theMotionPlan->getAccelerationTimeIndicesFor(j, jmm, jm, jp, jpp);
-		if (jp == -1 || jpp == -1) continue;
-		if ((jmm == -1 || jm == -1) && theMotionPlan->bodyTrajectory.useInitialVelocities == false) continue;
+		if (jmm == -1 || jm == -1 || jp == -1 || jpp == -1) continue;
 
-		AngleAxisd angVel_j, angVel_jp;
+		AngleAxisd tmpAngleAxis1, tmpAngleAxis2;
 		Matrix3x3 A1[3], A2[3], A3[3], A4[3];
-		Matrix3x3 R_jp, R_jpp, R_jmm, R_jm;
-		R_jp.setIdentity(); R_jpp.setIdentity(); R_jmm.setIdentity(); R_jm.setIdentity();
+		Matrix3x3 R1, R2, R3, R4;
+		R1.setIdentity(); R2.setIdentity(); R3.setIdentity(); R4.setIdentity();
 		V3D eulerAngles_jpp = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jpp);
 		V3D eulerAngles_jp = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jp);
 		V3D eulerAngles_jmm = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(jmm);
@@ -163,29 +151,21 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 			A2[i] = getRotationQuaternion(eulerAngles_jpp[i], axis[i]).getRotationMatrix();
 			A3[i] = getRotationQuaternion(eulerAngles_jmm[i], axis[i]).getRotationMatrix();
 			A4[i] = getRotationQuaternion(eulerAngles_jm[i], axis[i]).getRotationMatrix();
-			R_jp *= A1[i];
-			R_jpp *= A2[i];
-			R_jmm *= A3[i];
-			R_jm *= A4[i];
+			R1 *= A1[i];
+			R2 *= A2[i];
+			R3 *= A3[i];
+			R4 *= A4[i];
 		}
 
-		Matrix3x3 R = dummyR[j] * R_jpp * R_jp.transpose();
-		Matrix3x3 Q = dummyQ[j] * R_jm * R_jmm.transpose();
+		Matrix3x3 R = dummyR[j] * R2 * R1.transpose();
+		Matrix3x3 Q = dummyQ[j] * R4 * R3.transpose();
 
-		angVel_jp = R;
-		angVel_jp.angle() *= 1 / h;
-		if ((jmm == -1 || jm == -1)) {
-			if (theMotionPlan->bodyTrajectory.initialAngularVelocity.length() < 1e-5)
-				angVel_j = AngleAxisd(DUMMY_ANGLE, Vector3d(0, 1, 0));
-			else
-				angVel_j = AngleAxisd(theMotionPlan->bodyTrajectory.initialAngularVelocity.length() * h, theMotionPlan->bodyTrajectory.initialAngularVelocity.unit());
-		}
-		else
-			angVel_j = Q;
-		angVel_j.angle() *= 1 / h;
-		Vector3d angularAccel = (angVel_jp.axis() * angVel_jp.angle() - angVel_j.axis() * angVel_j.angle()) / h;
-		Vector3d dLdt = angularAccel * theMotionPlan->totalInertia;
-		double scale = theMotionPlan->totalInertia / (h*h);
+		tmpAngleAxis1 = R;
+		tmpAngleAxis2 = Q;
+
+		double scale = theMotionPlan->totalInertia / (h * h);
+		V3D angularAccel = (V3D)(tmpAngleAxis1.axis() * tmpAngleAxis1.angle() - tmpAngleAxis2.axis() * tmpAngleAxis2.angle());
+		angularAccel *= scale;
 
 		V3D torque(0, 0, 0);
 
@@ -193,8 +173,8 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 
 			if (theMotionPlan->endEffectorTrajectories[i].contactFlag[j] > 0) {
 
-				V3D r = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
-				torque += r.cross(theMotionPlan->endEffectorTrajectories[i].contactForce[j]);
+				V3D R = theMotionPlan->endEffectorTrajectories[i].EEPos[j] - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
+				torque += R.cross(theMotionPlan->endEffectorTrajectories[i].contactForce[j]);
 			}
 		}
 
@@ -207,61 +187,56 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 
 		getdwdRFromRotationMatrix(dwdR, R);
 
-		if (theMotionPlan->COMOrientationsParamsStartIndex > -1){
+		if (theMotionPlan->COMOrientationsParamsStartIndex > -1)
+		{
 			// jp
-			if (jp > -1){
-				dR1[0] = dummyR[j] * R_jpp * (crossMat[0] * R_jp).transpose();
-				dR1[1] = dummyR[j] * R_jpp * (A1[0] * crossMat[1] * A1[1] * A1[2]).transpose();
-				dR1[2] = dummyR[j] * R_jpp * (A1[0] * A1[1] * crossMat[2] * A1[2]).transpose();
-				for (int i = 0; i < 3; i++)
-					for (int j = 0; j < 3; j++)
-						dw1(i, j) = (dwdR[j].array() * dR1[i].array()).sum();
 
-				grad.segment<3>(theMotionPlan->COMOrientationsParamsStartIndex + 3 * jp)
-					+= weight * scale * dw1 * (dLdt - torque);
-			}
+			dR1[0] = dummyR[j] * R2 * (crossMat[0] * R1).transpose();
+			dR1[1] = dummyR[j] * R2 * (A1[0] * crossMat[1] * A1[1] * A1[2]).transpose();
+			dR1[2] = dummyR[j] * R2 * (A1[0] * A1[1] * crossMat[2] * A1[2]).transpose();
+			for (int i = 0; i < 3; i++)
+				for (int j = 0; j < 3; j++)
+					dw1(i, j) = (dwdR[j].array() * dR1[i].array()).sum();
+
+			grad.segment<3>(theMotionPlan->COMOrientationsParamsStartIndex + 3 * jp)
+				+= weight * scale * dw1 * (angularAccel - torque);
 
 			// jpp
-			if (jpp > -1) {
-				dR2[0] = dummyR[j] * crossMat[0] * R_jpp * R_jp.transpose();
-				dR2[1] = dummyR[j] * A2[0] * crossMat[1] * A2[1] * A2[2] * R_jp.transpose();
-				dR2[2] = dummyR[j] * A2[0] * A2[1] * crossMat[2] * A2[2] * R_jp.transpose();
+			dR2[0] = dummyR[j] * crossMat[0] * R2 * R1.transpose();
+			dR2[1] = dummyR[j] * A2[0] * crossMat[1] * A2[1] * A2[2] * R1.transpose();
+			dR2[2] = dummyR[j] * A2[0] * A2[1] * crossMat[2] * A2[2] * R1.transpose();
 
-				for (int i = 0; i < 3; i++)
-					for (int j = 0; j < 3; j++)
-						dw2(i, j) = (dwdR[j].array() * dR2[i].array()).sum();
+			for (int i = 0; i < 3; i++)
+				for (int j = 0; j < 3; j++)
+					dw2(i, j) = (dwdR[j].array() * dR2[i].array()).sum();
 
-				grad.segment<3>(theMotionPlan->COMOrientationsParamsStartIndex + 3 * jpp)
-					+= weight * scale * dw2 * (dLdt - torque);
-			}
+			grad.segment<3>(theMotionPlan->COMOrientationsParamsStartIndex + 3 * jpp)
+				+= weight * scale * dw2 * (angularAccel - torque);
+
 
 			getdwdRFromRotationMatrix(dwdR, Q);
 
 			// jmm
-			if (jmm > -1) {
-				dR3[0] = dummyQ[j] * R_jm * (crossMat[0] * R_jmm).transpose();
-				dR3[1] = dummyQ[j] * R_jm * (A3[0] * crossMat[1] * A3[1] * A3[2]).transpose();
-				dR3[2] = dummyQ[j] * R_jm * (A3[0] * A3[1] * crossMat[2] * A3[2]).transpose();
-				for (int i = 0; i < 3; i++)
-					for (int j = 0; j < 3; j++)
-						dw3(i, j) = (dwdR[j].array() * dR3[i].array()).sum();
+			dR3[0] = dummyQ[j] * R4 * (crossMat[0] * R3).transpose();
+			dR3[1] = dummyQ[j] * R4 * (A3[0] * crossMat[1] * A3[1] * A3[2]).transpose();
+			dR3[2] = dummyQ[j] * R4 * (A3[0] * A3[1] * crossMat[2] * A3[2]).transpose();
+			for (int i = 0; i < 3; i++)
+				for (int j = 0; j < 3; j++)
+					dw3(i, j) = (dwdR[j].array() * dR3[i].array()).sum();
 
-				grad.segment<3>(theMotionPlan->COMOrientationsParamsStartIndex + 3 * jmm)
-					-= weight * scale * dw3 * (dLdt - torque);
-			}
+			grad.segment<3>(theMotionPlan->COMOrientationsParamsStartIndex + 3 * jmm)
+				-= weight * scale * dw3 * (angularAccel - torque);
 
 			// jm
-			if (jm > -1) {
-				dR4[0] = dummyQ[j] * crossMat[0] * R_jm * R_jmm.transpose();
-				dR4[1] = dummyQ[j] * A4[0] * crossMat[1] * A4[1] * A4[2] * R_jmm.transpose();
-				dR4[2] = dummyQ[j] * A4[0] * A4[1] * crossMat[2] * A4[2] * R_jmm.transpose();
-				for (int i = 0; i < 3; i++)
-					for (int j = 0; j < 3; j++)
-						dw4(i, j) = (dwdR[j].array() * dR4[i].array()).sum();
+			dR4[0] = dummyQ[j] * crossMat[0] * R4 * R3.transpose();
+			dR4[1] = dummyQ[j] * A4[0] * crossMat[1] * A4[1] * A4[2] * R3.transpose();
+			dR4[2] = dummyQ[j] * A4[0] * A4[1] * crossMat[2] * A4[2] * R3.transpose();
+			for (int i = 0; i < 3; i++)
+				for (int j = 0; j < 3; j++)
+					dw4(i, j) = (dwdR[j].array() * dR4[i].array()).sum();
 
-				grad.segment<3>(theMotionPlan->COMOrientationsParamsStartIndex + 3 * jm)
-					-= weight * scale * dw4 * (dLdt - torque);
-			}
+			grad.segment<3>(theMotionPlan->COMOrientationsParamsStartIndex + 3 * jm)
+				-= weight * scale * dw4 * (angularAccel - torque);
 		}
 
 		//************************* Torque Gradient ************************
@@ -281,18 +256,18 @@ void MPO_TorqueAngularAccelObjective::addGradientTo(dVector& grad, const dVector
 				{
 					grad.segment<3>(theMotionPlan->contactForcesParamsStartIndex +
 						3 * (j * theMotionPlan->endEffectorTrajectories.size() + i))
-						+= weight * dTdF * (torque - dLdt);
+						+= weight * dTdF * (torque - angularAccel);
 				}
 
 				if (theMotionPlan->COMPositionsParamsStartIndex > -1)
 				{
 					grad.segment<3>(theMotionPlan->COMPositionsParamsStartIndex + 3 * j)
-						+= weight * dTdC * (torque - dLdt);
+						+= weight * dTdC * (torque - angularAccel);
 				}
 
 				if (theMotionPlan->feetPositionsParamsStartIndex > -1)
 				{
-                    V3D tmp = (V3D)(dTdE * (torque - angularAccel));
+					V3D tmp = (V3D)(dTdE * (torque - angularAccel));
 					grad.segment<3>(theMotionPlan->feetPositionsParamsStartIndex +
 						3 * (j * theMotionPlan->endEffectorTrajectories.size() + i))
 						+= weight * Vector3d(tmp[0], tmp[1], tmp[2]);
@@ -324,10 +299,9 @@ void MPO_TorqueAngularAccelObjective::addHessianEntriesTo(DynamicArray<MTriplet>
 		int jmm, jm, jp, jpp;
 
 		theMotionPlan->getAccelerationTimeIndicesFor(j, jmm, jm, jp, jpp);
-		if (jp == -1 || jpp == -1) continue;
-		if ((jmm == -1 || jm == -1) && theMotionPlan->bodyTrajectory.useInitialVelocities == false) continue;
+		if (jmm == -1 || jm == -1 || jp == -1 || jpp == -1) continue;
 
-		AngleAxisd angVel_jp, angVel_j;
+		AngleAxisd tmpAngleAxis1, tmpAngleAxis2;
 		Matrix3x3 A1[3], A2[3], A3[3], A4[3];
 		Matrix3x3 R1, R2, R3, R4;
 		R1.setIdentity(); R2.setIdentity(); R3.setIdentity(); R4.setIdentity();
@@ -351,20 +325,12 @@ void MPO_TorqueAngularAccelObjective::addHessianEntriesTo(DynamicArray<MTriplet>
 		Matrix3x3 R = dummyR[j] * R2 * R1.transpose();
 		Matrix3x3 Q = dummyQ[j] * R4 * R3.transpose();
 
-		angVel_jp = R;
-		angVel_jp.angle() *= 1 / h;
-		if ((jmm == -1 || jm == -1)) {
-			if (theMotionPlan->bodyTrajectory.initialAngularVelocity.length() < 1e-5)
-				angVel_j = AngleAxisd(DUMMY_ANGLE, Vector3d(0, 1, 0));
-			else
-				angVel_j = AngleAxisd(theMotionPlan->bodyTrajectory.initialAngularVelocity.length() * h, theMotionPlan->bodyTrajectory.initialAngularVelocity.unit());
-		}
-		else
-			angVel_j = Q;
-		angVel_j.angle() *= 1 / h;
-		Vector3d angularAccel = (angVel_jp.axis() * angVel_jp.angle() - angVel_j.axis() * angVel_j.angle()) / h;
-		Vector3d dLdt = angularAccel * theMotionPlan->totalInertia;
-		double scale = theMotionPlan->totalInertia / (h*h);
+		tmpAngleAxis1 = R;
+		tmpAngleAxis2 = Q;
+
+		double scale = theMotionPlan->totalInertia / (h * h);
+		V3D angularAccel = (V3D)(tmpAngleAxis1.axis() * tmpAngleAxis1.angle() - tmpAngleAxis2.axis() * tmpAngleAxis2.angle());
+		angularAccel *= scale;
 
 		V3D torque(0, 0, 0);
 
@@ -378,7 +344,7 @@ void MPO_TorqueAngularAccelObjective::addHessianEntriesTo(DynamicArray<MTriplet>
 		}
 
 		Matrix3x3 dw1, dw2, dw3, dw4;
-		Vector3d vec = dLdt - torque;
+		Vector3d vec = angularAccel - torque;
 
 		TorqueInnerHessianHelper(hessianEntries, -vec, j);
 
@@ -386,23 +352,21 @@ void MPO_TorqueAngularAccelObjective::addHessianEntriesTo(DynamicArray<MTriplet>
 			continue;
 
 		AngleAxisInnerHessianHelper(hessianEntries, vec, jp, jpp, dummyR[j], R, R1, R2, A1, A2, crossMat, dw1, dw2, scale);
-
-		if (jmm > -1 && jm > -1)
-			AngleAxisInnerHessianHelper(hessianEntries, vec, jmm, jm, dummyQ[j], Q, R3, R4, A3, A4, crossMat, dw3, dw4, -scale);
+		AngleAxisInnerHessianHelper(hessianEntries, vec, jmm, jm, dummyQ[j], Q, R3, R4, A3, A4, crossMat, dw3, dw4, -scale);
 
 		AngleAxisOutterHessianHelper(hessianEntries, jpp, jp, jm, jmm, dw1, dw2, dw3, dw4, scale);
 
 		AngleAxisTorqueCrossHessianHelper(hessianEntries, j, jpp, jp, jm, jmm, dw1, dw2, dw3, dw4, scale);
 	}
-}
 
+}
 #endif
 void MPO_TorqueAngularAccelObjective::AngleAxisTorqueCrossHessianHelper(DynamicArray<MTriplet>& hessianEntries, int j, int jpp, int jp, int jm, int jmm, Matrix3x3& dw1, Matrix3x3& dw2, Matrix3x3& dw3, Matrix3x3& dw4, double scale)
 {
-	int startIndexjmm = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jmm; if (jmm < 0) startIndexjmm = -1;
-	int startIndexjp = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jp; if (jp < 0) startIndexjp = -1;
-	int startIndexjm = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jm; if (jm < 0) startIndexjm = -1;
-	int startIndexjpp = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jpp; if (jpp < 0) startIndexjpp = -1;
+	int startIndexjmm = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jmm;
+	int startIndexjp = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jp;
+	int startIndexjm = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jm;
+	int startIndexjpp = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jpp;
 
 	for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); i++) {
 
@@ -436,16 +400,15 @@ void MPO_TorqueAngularAccelObjective::AngleAxisTorqueCrossHessianHelper(DynamicA
 
 				H = dTdF * scale * dw3.transpose();
 
-				if (startIndexjmm > -1 && startIndexjm > -1)
-					for (int i = 0; i < 3; i++)
-						for (int j = 0; j < 3; j++)
-							ADD_HES_ELEMENT(hessianEntries, startIndexF + i, startIndexjmm + j, H(i, j), weight);
+				for (int i = 0; i < 3; i++)
+					for (int j = 0; j < 3; j++)
+						ADD_HES_ELEMENT(hessianEntries, startIndexF + i, startIndexjmm + j, H(i, j), weight);
 
 				H = dTdF * scale * dw4.transpose();
-				if (startIndexjmm > -1 && startIndexjm > -1)
-					for (int i = 0; i < 3; i++)
-						for (int j = 0; j < 3; j++)
-							ADD_HES_ELEMENT(hessianEntries, startIndexF + i, startIndexjm + j, H(i, j), weight);
+
+				for (int i = 0; i < 3; i++)
+					for (int j = 0; j < 3; j++)
+						ADD_HES_ELEMENT(hessianEntries, startIndexF + i, startIndexjm + j, H(i, j), weight);
 
 			}
 
@@ -466,17 +429,15 @@ void MPO_TorqueAngularAccelObjective::AngleAxisTorqueCrossHessianHelper(DynamicA
 
 				H = dTdC * scale * dw3.transpose();
 
-				if (startIndexjmm > -1 && startIndexjm > -1)
-					for (int i = 0; i < 3; i++)
-						for (int j = 0; j < 3; j++)
-							ADD_HES_ELEMENT(hessianEntries, startIndexC + i, startIndexjmm + j, H(i, j), weight);
+				for (int i = 0; i < 3; i++)
+					for (int j = 0; j < 3; j++)
+						ADD_HES_ELEMENT(hessianEntries, startIndexC + i, startIndexjmm + j, H(i, j), weight);
 
 				H = dTdC * scale * dw4.transpose();
 
-				if (startIndexjmm > -1 && startIndexjm > -1)
-					for (int i = 0; i < 3; i++)
-						for (int j = 0; j < 3; j++)
-							ADD_HES_ELEMENT(hessianEntries, startIndexC + i, startIndexjm + j, H(i, j), weight);
+				for (int i = 0; i < 3; i++)
+					for (int j = 0; j < 3; j++)
+						ADD_HES_ELEMENT(hessianEntries, startIndexC + i, startIndexjm + j, H(i, j), weight);
 			}
 
 			if (theMotionPlan->feetPositionsParamsStartIndex > -1)
@@ -496,17 +457,15 @@ void MPO_TorqueAngularAccelObjective::AngleAxisTorqueCrossHessianHelper(DynamicA
 
 				H = dTdE * scale * dw3.transpose();
 
-				if (startIndexjmm > -1 && startIndexjm > -1)
-					for (int i = 0; i < 3; i++)
-						for (int j = 0; j < 3; j++)
-							ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjmm + j, H(i, j), weight);
+				for (int i = 0; i < 3; i++)
+					for (int j = 0; j < 3; j++)
+						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjmm + j, H(i, j), weight);
 
 				H = dTdE * scale * dw4.transpose();
 
-				if (startIndexjmm > -1 && startIndexjm > -1)
-					for (int i = 0; i < 3; i++)
-						for (int j = 0; j < 3; j++)
-							ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjm + j, H(i, j), weight);
+				for (int i = 0; i < 3; i++)
+					for (int j = 0; j < 3; j++)
+						ADD_HES_ELEMENT(hessianEntries, startIndexE + i, startIndexjm + j, H(i, j), weight);
 			}
 
 		}
@@ -517,9 +476,6 @@ void MPO_TorqueAngularAccelObjective::AngleAxisTorqueCrossHessianHelper(DynamicA
 
 void MPO_TorqueAngularAccelObjective::TorqueInnerHessianHelper(DynamicArray<MTriplet>& hessianEntries, Vector3d vec, int j)
 {
-	if (j < 0)
-		return;
-
 	Matrix3x3 tensor[3];
 	getCrossProductTensor(tensor);
 
@@ -628,7 +584,7 @@ void MPO_TorqueAngularAccelObjective::TorqueInnerHessianHelper(DynamicArray<MTri
 							H = t_dTdE * dTdE.transpose();
 
 							for (int p = 0; p < 3; p++)
-								for (int j = 0; j < (i == k ? p+1 : 3); j++) // MGSTUCK: what's happening here? `j <= ... ` correct?
+								for (int j = 0; j < (i == k ? p + 1 : 3); j++) // MGSTUCK: what's happening here? `j <= ... ` correct?
 									ADD_HES_ELEMENT(hessianEntries, t_startIndexE + p, startIndexE + j, H(p, j), weight);
 						}
 					}
@@ -644,39 +600,39 @@ void MPO_TorqueAngularAccelObjective::TorqueInnerHessianHelper(DynamicArray<MTri
 
 void MPO_TorqueAngularAccelObjective::AngleAxisOutterHessianHelper(DynamicArray<MTriplet>& hessianEntries, int jpp, int jp, int jm, int jmm, Matrix3x3& dw1, Matrix3x3& dw2, Matrix3x3& dw3, Matrix3x3& dw4, double scale)
 {
-	int startIndexjmm = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jmm; if (jmm < 0) startIndexjmm = -1;
-	int startIndexjp = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jp; if (jp < 0) startIndexjp = -1;
-	int startIndexjm = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jm; if (jm < 0) startIndexjm = -1;
-	int startIndexjpp = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jpp; if (jpp < 0) startIndexjpp = -1;
+	int startIndexjmm = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jmm;
+	int startIndexjp = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jp;
+	int startIndexjm = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jm;
+	int startIndexjpp = theMotionPlan->COMOrientationsParamsStartIndex + 3 * jpp;
 
 	// jp / jmm
 	Matrix3x3 H;
 	H = -scale * dw3 * scale * dw1.transpose();
-	if (startIndexjmm > -1 && startIndexjm > -1)
-		for (int i = 0; i < 3; i++)
-			for (int j = 0; j < 3; j++)
-				ADD_HES_ELEMENT(hessianEntries, startIndexjmm + i, startIndexjp + j, H(i, j), weight);
+
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			ADD_HES_ELEMENT(hessianEntries, startIndexjmm + i, startIndexjp + j, H(i, j), weight);
 
 	// jp / jm
 	H = -scale * dw4 * scale * dw1.transpose();
-	if (startIndexjmm > -1 && startIndexjm > -1)
-		for (int i = 0; i < 3; i++)
-			for (int j = 0; j < 3; j++)
-				ADD_HES_ELEMENT(hessianEntries, startIndexjm + i, startIndexjp + j, (i == j && jm == jp ? 2 : 1) * H(i, j), weight);
+
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			ADD_HES_ELEMENT(hessianEntries, startIndexjm + i, startIndexjp + j, (i == j && jm == jp ? 2 : 1) * H(i, j), weight);
 
 	// jpp / jmm
 	H = -scale * dw3 * scale * dw2.transpose();
-	if (startIndexjmm > -1 && startIndexjm > -1)
-		for (int i = 0; i < 3; i++)
-			for (int j = 0; j < 3; j++)
-				ADD_HES_ELEMENT(hessianEntries, startIndexjmm + i, startIndexjpp + j, H(i, j), weight);
+
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			ADD_HES_ELEMENT(hessianEntries, startIndexjmm + i, startIndexjpp + j, H(i, j), weight);
 
 	// jpp / jm
 	H = -scale * dw4 * scale * dw2.transpose();
-	if (startIndexjmm > -1 && startIndexjm > -1)
-		for (int i = 0; i < 3; i++)
-			for (int j = 0; j < 3; j++)
-				ADD_HES_ELEMENT(hessianEntries, startIndexjm + i, startIndexjpp + j, H(i, j), weight);
+
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			ADD_HES_ELEMENT(hessianEntries, startIndexjm + i, startIndexjpp + j, H(i, j), weight);
 }
 
 
