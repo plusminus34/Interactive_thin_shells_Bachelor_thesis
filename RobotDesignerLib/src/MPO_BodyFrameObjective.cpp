@@ -89,10 +89,10 @@ double MPO_DesiredBodyTrajectoryObjective::computeValue(const dVector& p) {
 	// assume the parameters of the motion plan have been set already by the collection of objective functions class
 	// theMotionPlan->setMPParametersFromList(p);
 	double retVal = 0;
-	for (uint i = 0; i < theMotionPlan->nSamplePoints; i++) {
+	for (int i = 0; i < theMotionPlan->nSamplePoints; i++) {
 		double w = 1;
 		if (i == 0) w = weightAtStart;
-		if (i >= theMotionPlan->nSamplePoints - 2) w = weightAtEnd;
+		if (i == theMotionPlan->nSamplePoints - 2) w = weightAtEnd;
 		P3D pos = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(i);
 		P3D dPos = theMotionPlan->bodyTrajectory.getTargetCOMPositionAtTimeIndex(i);
 		retVal += 0.5*(pos - dPos).squaredNorm()*w;
@@ -110,7 +110,7 @@ void MPO_DesiredBodyTrajectoryObjective::addGradientTo(dVector& grad, const dVec
 	for (uint i = 0; i < theMotionPlan->nSamplePoints; i++){
 		double w = 1;
 		if (i == 0) w = weightAtStart;
-		if (i >= theMotionPlan->nSamplePoints - 2) w = weightAtEnd;
+		if (i == theMotionPlan->nSamplePoints - 2) w = weightAtEnd;
 		if (theMotionPlan->COMPositionsParamsStartIndex >= 0) {
 			int I = theMotionPlan->COMPositionsParamsStartIndex + i * 3;
 
@@ -141,7 +141,7 @@ void MPO_DesiredBodyTrajectoryObjective::addHessianEntriesTo(DynamicArray<MTripl
 	for (uint i = 0; i < theMotionPlan->nSamplePoints; i++){
 		double w = 1;
 		if (i == 0) w = weightAtStart;
-		if (i >= theMotionPlan->nSamplePoints - 2) w = weightAtEnd;
+		if (i == theMotionPlan->nSamplePoints - 2) w = weightAtEnd;
 
 		if (theMotionPlan->COMPositionsParamsStartIndex >= 0) {
 			int I = theMotionPlan->COMPositionsParamsStartIndex + i * 3;

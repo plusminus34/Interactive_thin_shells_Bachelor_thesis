@@ -72,7 +72,7 @@ public:
 	bool useObjectivesOnly = false;
 	bool writeParamsToFile = true;
 	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod;
-	enum class OptMethod { Newton, lbfgs } optimizationMethod;
+	enum class OptMethod { Newton, lbfgs } optimizationMethod = OptMethod::Newton;
 
 	NewtonFunctionMinimizer minimizerNewton;
 	BFGSFunctionMinimizer minimizerBFGS;

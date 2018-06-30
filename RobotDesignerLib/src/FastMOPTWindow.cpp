@@ -118,8 +118,8 @@ void FastMOPTWindow::loadFFPFromFile(const char* fName){
 }
 
 void FastMOPTWindow::generateMotionPreplan() {
-	locomotionManager->printDebugInfo = true;
-	locomotionManager->checkDerivatives = true;
+	locomotionManager->printDebugInfo = false;
+	locomotionManager->checkDerivatives = false;
 
 	Timer t;
 
@@ -130,17 +130,21 @@ void FastMOPTWindow::generateMotionPreplan() {
 	fmpp->preplan(&rs);
 	fmpp->prepareMOPTPlan(locomotionManager->motionPlan);
 	locomotionManager->runMOPTStep(OPT_GRFS);
-	locomotionManager->runMOPTStep(OPT_GRFS);
 	Logger::consolePrint("It took %lfs to generate motion plan\n", t.timeEllapsed());
 }
 
 void FastMOPTWindow::optimizeMotionPlan() {
 	Timer t;
-	locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_COM_ORIENTATIONS);
-//	locomotionManager->runMOPTStep(OPT_COM_POSITIONS);
-	Logger::consolePrint("It took %lfs to run optimization step\n", t.timeEllapsed());
+//	locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_COM_ORIENTATIONS);
 
-//	add a new objective for the COM position/orientation trajectory
+
+//	locomotionManager->runMOPTStep(OPT_GRFS);
+//	locomotionManager->runMOPTStep(OPT_COM_POSITIONS);
+
+	for (int i=0;i<10;i++)
+		locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
+
+	Logger::consolePrint("It took %lfs to run optimization step\n", t.timeEllapsed());
 }
 
 void FastMOPTWindow::advanceMotionPlanGlobalTime(int nSteps) {

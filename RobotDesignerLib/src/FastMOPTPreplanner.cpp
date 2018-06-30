@@ -277,6 +277,3 @@ void FastMOPTPreplanner::prepareMOPTPlan(LocomotionEngineMotionPlan* motionPlan)
 
 	motionPlan->syncFootFallPatternWithMotionPlan(moptWindow->footFallPattern);
 }
-
-
-

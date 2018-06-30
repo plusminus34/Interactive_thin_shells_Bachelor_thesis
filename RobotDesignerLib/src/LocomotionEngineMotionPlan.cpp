@@ -177,8 +177,8 @@ void LocomotionEngine_COMTrajectory::initialize(int nPoints, const P3D &desComPo
 	//note - fixed parameterization!
 	for (int i=0;i<nPoints;i++)
 		for (int j = 0; j < 3; j++) {
-			pos[j][i] = desComPos[j];
-			orientation[j][i] = comRotationAngles[j];
+			pos[j][i] = desiredPos[j][i] = desComPos[j];
+			orientation[j][i] = desiredOrientation[j][i] = comRotationAngles[j];
 		}
 }
 
