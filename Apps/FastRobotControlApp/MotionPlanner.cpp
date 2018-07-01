@@ -161,7 +161,7 @@ RobotState MotionPlanner::getPreplanedRobotStateAtTime(double t) {
 	newState.setPosition(prePlanBodyTrajectory.evaluate_linear(t));
 	newState.setOrientation(getRotationQuaternion(prePlanHeadingTrajectory.evaluate_linear(t), Globals::worldUp));
 	newState.setVelocity(prePlanBodyVelocityTrajectory.evaluate_linear(t));
-	newState.setAngularVelocity(Globals::worldUp * prePlanHeadingTrajectory.evaluate_linear(t));
+	newState.setAngularVelocity(Globals::worldUp * prePlanTurningSpeedTrajectory.evaluate_linear(t));
 	robot->setState(&newState);
 
 	IK_Solver ikSolver(robot);
@@ -297,10 +297,10 @@ void MotionPlanner::generateMotionPlan() {
 	preplan(&rs);
 	prepareMOPTPlan(locomotionManager->motionPlan);
 
-//	locomotionManager->runMOPTStep(OPT_GRFS);
+	locomotionManager->runMOPTStep(OPT_GRFS);
 	double energyVal = 0;
-//	for (int i = 0; i<10; i++)
-//		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
+	for (int i = 0; i<10; i++)
+		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
 
 	Logger::consolePrint("It took %lfs to generate motion plan, final energy value: %lf\n", t.timeEllapsed(), energyVal);
 }
