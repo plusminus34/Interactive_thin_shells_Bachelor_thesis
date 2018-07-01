@@ -33,7 +33,7 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 	prePlanBodyTrajectory.clear();
 	prePlanBodyVelocityTrajectory.clear();
 	prePlanHeadingTrajectory.clear();
-	prePlanHeadingTrajectory.clear();
+	prePlanTurningSpeedTrajectory.clear();
 
 	//we will be adding samples every 0.1s
 	double dt = 0.1;
@@ -41,7 +41,7 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 		prePlanBodyTrajectory.addKnot(t, V3D() + currentBodyPos);
 		prePlanBodyVelocityTrajectory.addKnot(t, currentBodyVel);
 		prePlanHeadingTrajectory.addKnot(t, currentHeading);
-		prePlanHeadingTrajectory.addKnot(t, currentTurningSpeed);
+		prePlanTurningSpeedTrajectory.addKnot(t, currentTurningSpeed);
 
 		V3D targetSpeed =
 			robot->forward * forwardSpeedTarget +
@@ -297,11 +297,10 @@ void MotionPlanner::generateMotionPlan() {
 	preplan(&rs);
 	prepareMOPTPlan(locomotionManager->motionPlan);
 
-	locomotionManager->runMOPTStep(OPT_GRFS);
-
+//	locomotionManager->runMOPTStep(OPT_GRFS);
 	double energyVal = 0;
-	for (int i = 0; i<10; i++)
-		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
+//	for (int i = 0; i<10; i++)
+//		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
 
 	Logger::consolePrint("It took %lfs to generate motion plan, final energy value: %lf\n", t.timeEllapsed(), energyVal);
 }
@@ -310,5 +309,3 @@ void MotionPlanner::advanceMotionPlanGlobalTime(int nSteps) {
 	//we are using a discrete number of steps to keep the (discrete) footfall pattern consistent. Otherwise we'd need to interpolate between stance/swing phases and there are no good answers...
 	motionPlanStartTime += nSteps * moptParams.motionPlanDuration / (locomotionManager->motionPlan->nSamplePoints - 1);
 }
-
-
