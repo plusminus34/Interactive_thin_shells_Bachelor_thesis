@@ -15,7 +15,7 @@
 #include <RobotDesignerLib/LocomotionEngineManagerIP.h>
 #include <RobotDesignerLib/ModularDesignWindow.h>
 #include <RobotDesignerLib/ParameterizedRobotDesign.h>
-#include <RobotDesignerLib/FastMOPTWindow.h>
+#include "MotionPlannerWindow.h"
 #include <RobotDesignerLib/SimWindow.h>
 #include <RobotDesignerLib/MotionPlanAnalysis.h>
 #include <RobotDesignerLib/EnergyWindow.h>
@@ -32,7 +32,7 @@ public:
 	double time = 0;
 	double phase = 0;
 
-	FastMOPTWindow* plannerWindow = NULL;
+	MotionPlannerWindow* plannerWindow = NULL;
 	SimWindow* simWindow = NULL;
 
 	bool shouldShowSimWindow();

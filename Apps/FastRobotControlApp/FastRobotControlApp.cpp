@@ -5,8 +5,7 @@
 #include <GUILib/GLContentManager.h>
 #include <MathLib/MathLib.h>
 #include <ControlLib/SimpleLimb.h>
-#include <RobotDesignerLib/IntelligentRobotEditingWindow.h>
-#include <RobotDesignerLib/FastMOPTPreplanner.h>
+#include "MotionPlanner.h"
 
 //work towards:
 //  - implement some graceful failure mode, when the robot gets too far from the plan, or when the plan generation seems to fail...
@@ -22,7 +21,7 @@ FastRobotControlApp::FastRobotControlApp(){
 
 	showGroundPlane = false;
 
-	plannerWindow = new FastMOPTWindow(0, 0, 100, 100, this);
+	plannerWindow = new MotionPlannerWindow(0, 0, 100, 100, this);
 	simWindow = new SimWindow(0, 0, 100, 100, this);
 
 	mainMenu->addGroup("Options");
@@ -33,6 +32,7 @@ FastRobotControlApp::FastRobotControlApp(){
 	tools->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 		nanogui::Alignment::Middle, 0, 4));
 
+/*
 	nanogui::Button* button;
 
 	button = new nanogui::Button(tools, "goMOPT");
@@ -40,7 +40,7 @@ FastRobotControlApp::FastRobotControlApp(){
 	button->setCallback([this]() {
 		plannerWindow->optimizeMotionPlan();
 	});
-
+*/
 
 
 	mainMenu->addGroup("MOPT Options");
@@ -59,7 +59,7 @@ FastRobotControlApp::FastRobotControlApp(){
 	loadFile("..\\data\\RobotDesigner\\SpotMiniDemo.batch");
 	robot->forward = V3D(0, 0, 1);
 	robot->right = V3D(-1, 0, 0);
-	plannerWindow->generateMotionPreplan();
+	plannerWindow->motionPlanner->generateMotionPlan();
 
 	followCameraTarget = true;
 }
@@ -152,22 +152,19 @@ bool FastRobotControlApp::onKeyEvent(int key, int action, int mods) {
 		plannerWindow->onKeyEvent(key, action, mods);
 	}
 
-	if (plannerWindow->locomotionManager && plannerWindow->locomotionManager->motionPlan) {
+	if (plannerWindow) {
 		if (key == GLFW_KEY_UP && action == GLFW_PRESS)
-			plannerWindow->forwardSpeedTarget += 0.1;
+			plannerWindow->motionPlanner->forwardSpeedTarget += 0.1;
 		if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
-			plannerWindow->forwardSpeedTarget -= 0.1;
+			plannerWindow->motionPlanner->forwardSpeedTarget -= 0.1;
 		if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
-			plannerWindow->sidewaysSpeedTarget += 0.1;
+			plannerWindow->motionPlanner->sidewaysSpeedTarget += 0.1;
 		if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
-			plannerWindow->sidewaysSpeedTarget -= 0.1;
+			plannerWindow->motionPlanner->sidewaysSpeedTarget -= 0.1;
 		if (key == GLFW_KEY_PERIOD && action == GLFW_PRESS)
-			plannerWindow->turningSpeedTarget += 0.1;
+			plannerWindow->motionPlanner->turningSpeedTarget += 0.1;
 		if (key == GLFW_KEY_SLASH && action == GLFW_PRESS)
-			plannerWindow->turningSpeedTarget -= 0.1;
-
-		if (key == GLFW_KEY_O && action == GLFW_PRESS)
-			plannerWindow->locomotionManager->motionPlan->writeRobotMotionAnglesToFile("../out/tmpMPAngles.mpa");
+			plannerWindow->motionPlanner->turningSpeedTarget -= 0.1;
 	}
 
 	if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
@@ -259,19 +256,19 @@ void FastRobotControlApp::loadFile(const char* fName) {
 	}
 
 	if (fNameExt.compare("ffp") == 0) {
-		plannerWindow->footFallPattern.loadFromFile(fName);
-		plannerWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+		plannerWindow->motionPlanner->defaultFootFallPattern.loadFromFile(fName);
+		plannerWindow->motionPlanner->defaultFootFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+		plannerWindow->motionPlanner->moptFootFallPattern = plannerWindow->motionPlanner->defaultFootFallPattern;
 		return;
 	}
 
 	if (fNameExt.compare("p") == 0) {
-		if (plannerWindow->locomotionManager && plannerWindow->locomotionManager->motionPlan){
-			plannerWindow->locomotionManager->motionPlan->readParamsFromFile(fName);
-			plannerWindow->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(plannerWindow->footFallPattern);
-			plannerWindow->locomotionManager->motionPlan->syncMotionPlanWithFootFallPattern(plannerWindow->footFallPattern);
+		if (plannerWindow->motionPlanner->locomotionManager && plannerWindow->motionPlanner->locomotionManager->motionPlan){
+			plannerWindow->motionPlanner->locomotionManager->motionPlan->readParamsFromFile(fName);
+			plannerWindow->motionPlanner->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(plannerWindow->motionPlanner->moptFootFallPattern);
+			plannerWindow->motionPlanner->locomotionManager->motionPlan->syncMotionPlanWithFootFallPattern(plannerWindow->motionPlanner->moptFootFallPattern);
 
-			plannerWindow->footFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
-			plannerWindow->printCurrentObjectiveValues();
+			plannerWindow->motionPlanner->moptFootFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
 		}
 		return;
 	}
@@ -286,7 +283,7 @@ void FastRobotControlApp::loadToSim(){
 	robot->setState(&startingRobotState);
 
 	plannerWindow->initializeLocomotionEngine();
-	simWindow->loadMotionPlan(plannerWindow->locomotionManager->motionPlan);
+	simWindow->loadMotionPlan(plannerWindow->motionPlanner->locomotionManager->motionPlan);
 
 	Logger::consolePrint("The robot has %d legs, weighs %lf kgs and is %lf m tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
 }
@@ -315,15 +312,15 @@ void FastRobotControlApp::setActiveController() {
 
 // Run the App tasks
 void FastRobotControlApp::process() {
-
-	plannerWindow->optimizeMotionPlan();
+	plannerWindow->motionPlanner->generateMotionPlan();
 	return;
-
 
 	double dt = 1.0 / desiredFrameRate;
 
 	if (slowMo)
 		dt /= slowMoFactor;
+
+/*
 	time += dt;
 	phase += dt / plannerWindow->locomotionManager->motionPlan->motionPlanDuration;
 	double dPhase = 1.0 / (plannerWindow->locomotionManager->motionPlan->nSamplePoints - 1);
@@ -335,7 +332,7 @@ void FastRobotControlApp::process() {
 		plannerWindow->advanceMotionPlanGlobalTime(n);
 		plannerWindow->generateMotionPreplan();
 	}
-
+*/
 	return;
 
 	//we need to sync the state of the robot with the motion plan when we first start physics-based tracking...

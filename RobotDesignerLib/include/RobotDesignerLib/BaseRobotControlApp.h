@@ -1,7 +1,8 @@
 #pragma once
 
-
 #include <GUILib/GLApplication.h>
+#include <ControlLib/Robot.h>
+
 
 /**
  * Robot Design and Simulation interface

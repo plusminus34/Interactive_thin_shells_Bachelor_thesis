@@ -3,7 +3,6 @@
 #include <GUILib/GLApplication.h>
 #include <GUILib/GLWindow3D.h>
 #include <GUILib/GLTrackingCamera.h>
-#include <RobotDesignerLib/LocomotionEngineManager.h>
 #include <GUILib/TranslateWidget.h>
 #include <GUILib/CompositeWidget.h>
 #include <RobotDesignerLib/BaseRobotControlApp.h>
@@ -12,58 +11,25 @@
 #include <memory>
 
 class RobotDesignerApp;
-class FastMOPTPreplanner;
+class MotionPlanner;
 
-class FastMOPTWindow : public GLWindow3D {
+class MotionPlannerWindow : public GLWindow3D {
 public:
-	//these are the global goals for the longer horizon plan...
-	double preplanTimeHorizon = 5;	//seconds
-	double forwardSpeedTarget;		//speed target for the longer horizon plan
-	double sidewaysSpeedTarget;		//speed target for the longer horizon plan
-	double turningSpeedTarget;		//turning speed target for the longer horizon plan
-	double bodyHeightTarget;		//body height target for the longer horizon plan
-	double motionPlanStartTime = 0;	//the global time for the entire planning/control framework
-
-	FootFallPattern defaultFootFallPattern; //TODO: at some point we can also change the footfall pattern to make transitions, stand-to-walk-to-stand, etc...
-
-	FastMOPTPreplanner* fmpp;
-
+	MotionPlanner* motionPlanner;
 	BaseRobotControlApp* theApp;
-
-	int nTimeSteps = 12;
-	double globalMOPTRegularizer = 0.01;
-
-	MOPTParams moptParams;
-
 	Robot* robot = nullptr;
-
-	FootFallPattern footFallPattern;
 	FootFallPatternViewer* ffpViewer = nullptr;
 	bool showFFPViewer = true;
-	LocomotionEngineManager* locomotionManager = nullptr;	
 
 	void addMenuItems();
 
 public:
-	FastMOPTWindow(int x, int y, int w, int h, BaseRobotControlApp* glApp);
-	~FastMOPTWindow() {}
+	MotionPlannerWindow(int x, int y, int w, int h, BaseRobotControlApp* glApp);
+	~MotionPlannerWindow() {}
 
 	void loadRobot(Robot* robot);
 
 	LocomotionEngineManager* initializeLocomotionEngine();
-
-	void printCurrentObjectiveValues() {
-		locomotionManager->setDefaultOptimizationFlags();
-		dVector params = locomotionManager->motionPlan->getMPParameters();
-		locomotionManager->energyFunction->setCurrentBestSolution(params);
-		Logger::consolePrint("Current MOPT objective function: %lf\n", locomotionManager->energyFunction->computeValue(params));
-	}
-
-	void generateMotionPreplan();
-
-	void optimizeMotionPlan();
-
-	void advanceMotionPlanGlobalTime(int nSteps);
 
 	void setAnimationParams(double f, int animationCycle);
 
