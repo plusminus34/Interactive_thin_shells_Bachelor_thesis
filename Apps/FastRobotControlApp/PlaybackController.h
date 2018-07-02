@@ -1,17 +1,16 @@
 #pragma once
 
-#include <RBSimLib/AbstractRBEngine.h>
-#include <RBSimLib/WorldOracle.h>
 #include <RobotDesignerLib/LocomotionEngineMotionPlan.h>
 #include <RobotDesignerLib/LocomotionEngine.h>
 #include <RobotDesignerLib/FootFallPatternViewer.h>
 #include <RobotDesignerLib/LocomotionEngineManagerGRF.h>
 #include <RobotDesignerLib/LocomotionEngineManagerIP.h>
+#include <RobotDesignerLib/RobotController.h>
 
-class RobotController {
+class PlaybackController : public RobotController {
 public:
-	RobotController(Robot *robot, LocomotionEngineMotionPlan *motionPlan);
-	virtual ~RobotController(void);
+	PlaybackController(Robot* robot, LocomotionEngineMotionPlan *motionPlan);
+	~PlaybackController(void);
 
 	//advance the phase of the motion by timeStep...
 	virtual bool advanceInTime(double timeStep);
@@ -25,15 +24,12 @@ public:
 	//compute the desired state of the robot at the current stride phase
 	virtual void computeDesiredState();
 
+
 	virtual void drawDebugInfo();
 	virtual void initialize();
-	virtual void setDebugMode(bool doDebug) {}
 
-public:
-	double stridePhase = 0;
-	Robot *robot;
-	LocomotionEngineMotionPlan *motionPlan;
-	//this is the pose that the virtual agent is aiming to achieve
-	RobotState desiredState;
+	virtual void loadMotionPlan(LocomotionEngineMotionPlan* motionPlan, double phase = 0);
+
+	virtual void draw();
 };
 

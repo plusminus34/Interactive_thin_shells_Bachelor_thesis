@@ -1,15 +1,15 @@
-#include <RobotDesignerLib/TorqueBasedRobotController.h>
+#include "TrackingController.h"
 #include <GUILib/GLUtils.h>
 #include <RBSimLib/AbstractRBEngine.h>
 
-TorqueBasedRobotController::TorqueBasedRobotController(Robot *robot, LocomotionEngineMotionPlan *motionPlan) : RobotController(robot, motionPlan) {
+TrackingController::TrackingController(Robot *robot, LocomotionEngineMotionPlan *motionPlan) : RobotController(robot, motionPlan) {
 	this->robot = robot;
 	this->motionPlan = motionPlan;
 
 	controller = new MOPTQPTrackingController(robot);
 }
 
-void TorqueBasedRobotController::initialize() {
+void TrackingController::initialize() {
 	//all the joints of the robots will be controlled via position control, so initialize this mode of operation
 	for (uint i = 0; i < robot->jointList.size(); i++)
 		robot->jointList[i]->controlMode = TORQUE_MODE;
@@ -18,20 +18,20 @@ void TorqueBasedRobotController::initialize() {
 	robot->setState(&rs);
 }
 
-TorqueBasedRobotController::~TorqueBasedRobotController(void){
+TrackingController::~TrackingController(void){
 }
 
-void TorqueBasedRobotController::drawDebugInfo() {
+void TrackingController::drawDebugInfo() {
 	controller->draw();
 }
 
-void TorqueBasedRobotController::computeControlSignals(double timeStep){
+void TrackingController::computeControlSignals(double timeStep){
 	robot->bFrame->updateLimbGroundContactInformation();
 	robot->bFrame->updateStateInformation();
 	controller->computeControlSignals(motionPlan, stridePhase, timeStep);
 }
 
-void TorqueBasedRobotController::applyControlSignals(double timeStep) {
+void TrackingController::applyControlSignals(double timeStep) {
 	GeneralizedCoordinatesRobotRepresentation gcrr(robot);
 	gcrr.computeWorldCoordinateTorquesFromU(controller->qpPlan->u);
 }

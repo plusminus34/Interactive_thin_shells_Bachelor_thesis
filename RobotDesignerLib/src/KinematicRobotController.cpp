@@ -24,7 +24,6 @@ bool KinematicRobotController::advanceInTime(double timeStep) {
 
 	motionPlan->robotStateTrajectory.getRobotPoseAt(stridePhase, currentMPState);
 
-	totalTime += timeStep;
 	stridePhase += timeStep / this->motionPlan->motionPlanDuration;
 
 	if (stridePhase > 1.0) {

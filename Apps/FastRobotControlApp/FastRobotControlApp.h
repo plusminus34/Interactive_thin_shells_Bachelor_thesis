@@ -16,7 +16,7 @@
 #include <RobotDesignerLib/ModularDesignWindow.h>
 #include <RobotDesignerLib/ParameterizedRobotDesign.h>
 #include "MotionPlannerWindow.h"
-#include <RobotDesignerLib/SimWindow.h>
+#include "SimulationWindow.h"
 #include <RobotDesignerLib/MotionPlanAnalysis.h>
 #include <RobotDesignerLib/EnergyWindow.h>
 #include <RobotDesignerLib/BaseRobotControlApp.h>
@@ -33,7 +33,7 @@ public:
 	double phase = 0;
 
 	MotionPlannerWindow* plannerWindow = NULL;
-	SimWindow* simWindow = NULL;
+	SimulationWindow* simWindow = NULL;
 
 	bool shouldShowSimWindow();
 	bool shouldShowPlannerWindow();
@@ -43,12 +43,10 @@ public:
 	void setupWindows();
 
 	enum RD_RUN_OPTIONS {
-		MOTION_PLAN_OPTIMIZATION = 0,
-		MOTION_PLAN_ANIMATION,
-		PHYSICS_SIMULATION_WITH_POSITION_CONTROL,
-		PHYSICS_SIMULATION_WITH_TORQUE_CONTROL,
+		MOTION_PLAN_PLAYBACK = 0,
+		MOTION_PLAN_TRACKING
 	};
-	RD_RUN_OPTIONS runOption = MOTION_PLAN_OPTIMIZATION;
+	RD_RUN_OPTIONS runOption = MOTION_PLAN_PLAYBACK;
 
 	enum VIEW_OPTIONS {
 		SIM_WINDOW_ONLY = 0,

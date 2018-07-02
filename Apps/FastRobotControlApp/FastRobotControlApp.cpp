@@ -22,10 +22,10 @@ FastRobotControlApp::FastRobotControlApp(){
 	showGroundPlane = false;
 
 	plannerWindow = new MotionPlannerWindow(0, 0, 100, 100, this);
-	simWindow = new SimWindow(0, 0, 100, 100, this);
+	simWindow = new SimulationWindow(0, 0, 100, 100, this);
 
 	mainMenu->addGroup("Options");
-	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "MOPT", "Play", "SimPD", "SimTau"});
+	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "Playback", "Tracking"});
 
 	nanogui::Widget *tools = new nanogui::Widget(mainMenu->window());
 	mainMenu->addWidget("", tools);
@@ -186,13 +186,9 @@ bool FastRobotControlApp::onKeyEvent(int key, int action, int mods) {
 
 
 	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
-		runOption = MOTION_PLAN_OPTIMIZATION;
+		runOption = MOTION_PLAN_PLAYBACK;
 	if (key == GLFW_KEY_2 && action == GLFW_PRESS)
-		runOption = MOTION_PLAN_ANIMATION;
-	if (key == GLFW_KEY_3 && action == GLFW_PRESS)
-		runOption = PHYSICS_SIMULATION_WITH_POSITION_CONTROL;
-	if (key == GLFW_KEY_4 && action == GLFW_PRESS)
-		runOption = PHYSICS_SIMULATION_WITH_TORQUE_CONTROL;
+		runOption = MOTION_PLAN_TRACKING;
 
 	mainMenu->refresh();
 
@@ -230,13 +226,6 @@ void FastRobotControlApp::loadFile(const char* fName) {
 				break;
 		}
 		fclose(fp);
-	}
-
-	if (fNameExt.compare("pololu") == 0) {
-		Logger::consolePrint("Loading servomotor mapping/calibration file '%s'\n", fName);
-		if (simWindow && simWindow->pololuMaestroController)
-			simWindow->pololuMaestroController->readRobotMappingParametersFromFile(fName);
-		return;
 	}
 
 	if (fNameExt.compare("rs") == 0) {
@@ -300,12 +289,10 @@ P3D FastRobotControlApp::getCameraTarget() {
 }
 
 void FastRobotControlApp::setActiveController() {
-	if (runOption == PHYSICS_SIMULATION_WITH_POSITION_CONTROL)
-		simWindow->setActiveController(simWindow->positionController);
-	else if (runOption == PHYSICS_SIMULATION_WITH_TORQUE_CONTROL)
-		simWindow->setActiveController(simWindow->torqueController);
-	else if (runOption == MOTION_PLAN_ANIMATION)
-		simWindow->setActiveController(simWindow->kinematicController);
+	if (runOption == MOTION_PLAN_PLAYBACK)
+		simWindow->setActiveController(simWindow->playbackController);
+	else if (runOption == MOTION_PLAN_TRACKING)
+		simWindow->setActiveController(simWindow->trackingController);
 	else
 		simWindow->setActiveController(NULL);
 }
@@ -335,6 +322,7 @@ void FastRobotControlApp::process() {
 */
 	return;
 
+/*
 	//we need to sync the state of the robot with the motion plan when we first start physics-based tracking...
 	static int lastRunOptionSelected = runOption + 1;
 	setActiveController();
@@ -360,6 +348,7 @@ void FastRobotControlApp::process() {
 
 	if (simWindow->getActiveController())
 		plannerWindow->ffpViewer->cursorPosition = simWindow->getActiveController()->stridePhase;
+*/
 }
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
