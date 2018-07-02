@@ -28,7 +28,7 @@ KS_LockedComponentConstraint* KS_LockedComponentConstraint::clone(KS_MechanicalC
 KS_LockedComponentConstraint::~KS_LockedComponentConstraint(void){
 }
 
-void KS_LockedComponentConstraint::setTargetPosition(const Point3d& pos){
+void KS_LockedComponentConstraint::setTargetPosition(const P3D& pos){
 	pxD = pos.x;
 	pyD = pos.y;
 	pzD = pos.z;

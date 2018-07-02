@@ -1,4 +1,4 @@
-H#pragma once
+#pragma once
 
 #include "KS_Connection.h"
 #include "KS_PointOnLineConstraint.h"
@@ -12,8 +12,8 @@ H#pragma once
 
 class KS_PointOnLineConnection : public KS_Connection{
 private:
-	Point3d xOnC1, pOnC2;
-	Vector3d lOnC2, nOnC1, nOnC2;
+	P3D xOnC1, pOnC2;
+	V3D lOnC2, nOnC1, nOnC2;
 	KS_PointOnLineConstraint* pOnlConstraint;
 	KS_V2VConstraint* v2vConstraint;
 	bool constrainedNormal;

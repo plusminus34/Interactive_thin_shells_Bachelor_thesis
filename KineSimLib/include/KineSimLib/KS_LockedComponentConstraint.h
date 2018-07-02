@@ -21,7 +21,7 @@ public:
 	virtual dVector* get_dE_dsi(int i) {return &dE_ds;}
 	virtual Matrix* get_ddE_dsidsj(int i, int j) {return &ddE_dsds;}
 
-	void setTargetPosition(const Point3d& pos);
+	void setTargetPosition(const P3D& pos);
 
 
 	//each constraint is composed of several scalar constraints - this is how many

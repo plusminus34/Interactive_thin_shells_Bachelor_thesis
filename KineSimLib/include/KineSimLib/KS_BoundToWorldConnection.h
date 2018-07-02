@@ -25,7 +25,7 @@ public:
 
 	void setFreezePhase(bool fp);
 
-	void setTargetPosition(const Point3d& pos){
+	void setTargetPosition(const P3D& pos){
 		if (lcCon)
 			lcCon->setTargetPosition(pos);
 	}

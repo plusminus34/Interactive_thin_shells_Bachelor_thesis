@@ -8,14 +8,14 @@
 */
 class KS_PointOnLineConstraint : public KS_Constraint{
 private:
-	Point3d x;									//on c1
-	Point3d p;									//on c2
-	Vector3d l;									//on c2
+	P3D x;									//on c1
+	P3D p;									//on c2
+	V3D l;									//on c2
 	KS_MechanicalComponent *c1, *c2;
 
-	Vector3d getErrorVector();
-	Point3d wx, wp;
-	Vector3d wl;
+	V3D getErrorVector();
+	P3D wx, wp;
+	V3D wl;
 
 	//tmp variables
 	Matrix dwx_ds1, dwp_ds2, dwl_ds2;
@@ -32,7 +32,7 @@ private:
 	//scalar constraints
 	dVector C;
 public:
-	KS_PointOnLineConstraint(const Point3d& xOnC1_, KS_MechanicalComponent* c1_, const Point3d& pOnC2_, const Vector3d& lOnC2_, KS_MechanicalComponent* c2_);
+	KS_PointOnLineConstraint(const P3D& xOnC1_, KS_MechanicalComponent* c1_, const P3D& pOnC2_, const V3D& lOnC2_, KS_MechanicalComponent* c2_);
 	virtual KS_PointOnLineConstraint* clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut)const;
 	~KS_PointOnLineConstraint(void);
 

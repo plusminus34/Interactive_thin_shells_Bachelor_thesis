@@ -6,14 +6,14 @@ int KS_MechanicalComponent::m_stateSize = 6;
 
 KS_MechanicalComponent::KS_MechanicalComponent(const char* name){
 	setName(name);
-	position = Point3d(0,0,0);
+	position = P3D(0,0,0);
 
 	//we'll assume the main rotation axis (around which the phase/alpha angle operates) is fixed
-	n_alpha = Vector3d(0,0,1);
+	n_alpha = V3D(0,0,1);
 	//NOTE: the two axis below should be a function of the global orientation that is expected for the component. The good thing is that
 	//these should be swapable at run-time, as the angle beta goes close to pi/2 or -pi/2. For now we'll assume they're constant
-	n_beta = Vector3d(0,1,0);
-	n_gamma = Vector3d(1,0,0);
+	n_beta = V3D(0,1,0);
+	n_gamma = V3D(1,0,0);
 	setAngles(0, 0, 0);
 
 	selected = false;
@@ -27,36 +27,36 @@ KS_MechanicalComponent::~KS_MechanicalComponent(void){
 }
 
 //w represents the world coordinates for the point (or vector) x, which is expressed in the local coordinate frame of the component. 
-Point3d KS_MechanicalComponent::get_x(const Point3d& w) const{
-	return (R_gamma*R_beta*R_alpha).getInverse()*Vector3d(position,w);
+P3D KS_MechanicalComponent::get_x(const P3D& w) const{
+	return (R_gamma*R_beta*R_alpha).getInverse()*V3D(position,w);
 }
 
 //w represents the world coordinates for the point (or vector) x, which is expressed in the local coordinate frame of the component. 
-Vector3d KS_MechanicalComponent::get_x(const Vector3d& w) const{
+V3D KS_MechanicalComponent::get_x(const V3D& w) const{
 	return (R_gamma*R_beta*R_alpha).getInverse()*w;
 }
 
 //w represents the world coordinates for the point (or vector) x, which is expressed in the local coordinate frame of the component. The function works both for local points or vectors
-Point3d KS_MechanicalComponent::get_w(const Point3d& x) const {
+P3D KS_MechanicalComponent::get_w(const P3D& x) const {
 	//w = (R*x) + p where R is the overall rotation, and p is the global position of the component
 	return R_gamma*(R_beta*(R_alpha*x)) + position;
 }
 
 //w represents the world coordinates for the point (or vector) x, which is expressed in the local coordinate frame of the component. The function works both for local points or vectors
-Vector3d KS_MechanicalComponent::get_w(const Vector3d& x) const {
+V3D KS_MechanicalComponent::get_w(const V3D& x) const {
 	//w = (R*x) where R is the overall rotation
 	return R_gamma*(R_beta*(R_alpha*x));
 }
 
 //return the jacobian that relates the change in world coordinates w with the change in state s=(alpha, p.x, p.y, p.z)
-void KS_MechanicalComponent::get_dw_ds(const Point3d& x, Matrix& dw_ds){
+void KS_MechanicalComponent::get_dw_ds(const P3D& x, Matrix& dw_ds){
 	//given that dR(alpha)/dalpha = n x R (where n is the axis of rotation), it is easy to compute derivatives of w wrt s...
 	assert(dw_ds.getRowCount() == 3);
 	assert(dw_ds.getColCount() == getStateSize());
 
-	Vector3d dw_dalpha = R_gamma*(R_beta*(n_alpha.cross(R_alpha*x)));
-	Vector3d dw_dbeta  = R_gamma*( n_beta.cross(R_beta*(R_alpha*x)));
-	Vector3d dw_dgamma = n_gamma.cross(R_gamma*(R_beta*(R_alpha*x)));
+	V3D dw_dalpha = R_gamma*(R_beta*(n_alpha.cross(R_alpha*x)));
+	V3D dw_dbeta  = R_gamma*( n_beta.cross(R_beta*(R_alpha*x)));
+	V3D dw_dgamma = n_gamma.cross(R_gamma*(R_beta*(R_alpha*x)));
 
 	dw_ds.setToZeros();
 	for (int i=0;i<3;i++){
@@ -68,14 +68,14 @@ void KS_MechanicalComponent::get_dw_ds(const Point3d& x, Matrix& dw_ds){
 }
 
 //return the jacobian that relates the change in world coordinates w with the change in state s=(alpha, p.x, p.y, p.z)
-void KS_MechanicalComponent::get_dw_ds(const Vector3d& x, Matrix& dw_ds){
+void KS_MechanicalComponent::get_dw_ds(const V3D& x, Matrix& dw_ds){
 	//given that dR(alpha)/dalpha = n x R (where n is the axis of rotation), it is easy to compute derivatives of w wrt s...
 	assert(dw_ds.getRowCount() == 3);
 	assert(dw_ds.getColCount() == getStateSize());
 
-	Vector3d dw_dalpha = R_gamma*(R_beta*(n_alpha.cross(R_alpha*x)));
-	Vector3d dw_dbeta  = R_gamma*( n_beta.cross(R_beta*(R_alpha*x)));
-	Vector3d dw_dgamma = n_gamma.cross(R_gamma*(R_beta*(R_alpha*x)));
+	V3D dw_dalpha = R_gamma*(R_beta*(n_alpha.cross(R_alpha*x)));
+	V3D dw_dbeta  = R_gamma*( n_beta.cross(R_beta*(R_alpha*x)));
+	V3D dw_dgamma = n_gamma.cross(R_gamma*(R_beta*(R_alpha*x)));
 
 	dw_ds.setToZeros();
 	for (int i=0;i<3;i++){
@@ -87,10 +87,10 @@ void KS_MechanicalComponent::get_dw_ds(const Vector3d& x, Matrix& dw_ds){
 
 
 //return the matrix that relates the change in change of w with the change in rotation angle alpha
-void KS_MechanicalComponent::get_ddw_dads(const Point3d& x, Matrix& ddw_das){
-	Vector3d ddw_daa = R_gamma*(R_beta*(n_alpha.cross(n_alpha.cross(R_alpha*x))));
-	Vector3d ddw_dab = R_gamma*(n_beta.cross(R_beta*(n_alpha.cross(R_alpha*x))));
-	Vector3d ddw_dag = n_gamma.cross(R_gamma*(R_beta*(n_alpha.cross(R_alpha*x))));
+void KS_MechanicalComponent::get_ddw_dads(const P3D& x, Matrix& ddw_das){
+	V3D ddw_daa = R_gamma*(R_beta*(n_alpha.cross(n_alpha.cross(R_alpha*x))));
+	V3D ddw_dab = R_gamma*(n_beta.cross(R_beta*(n_alpha.cross(R_alpha*x))));
+	V3D ddw_dag = n_gamma.cross(R_gamma*(R_beta*(n_alpha.cross(R_alpha*x))));
 
 	ddw_das.setToZeros();
 	for (int i=0;i<3;i++){
@@ -102,10 +102,10 @@ void KS_MechanicalComponent::get_ddw_dads(const Point3d& x, Matrix& ddw_das){
 
 
 //return the matrix that relates the change in change of w with the change in rotation angle alpha
-void KS_MechanicalComponent::get_ddw_dads(const Vector3d& x, Matrix& ddw_das){
-	Vector3d ddw_daa = R_gamma*(R_beta*(n_alpha.cross(n_alpha.cross(R_alpha*x))));
-	Vector3d ddw_dab = R_gamma*(n_beta.cross(R_beta*(n_alpha.cross(R_alpha*x))));
-	Vector3d ddw_dag = n_gamma.cross(R_gamma*(R_beta*(n_alpha.cross(R_alpha*x))));
+void KS_MechanicalComponent::get_ddw_dads(const V3D& x, Matrix& ddw_das){
+	V3D ddw_daa = R_gamma*(R_beta*(n_alpha.cross(n_alpha.cross(R_alpha*x))));
+	V3D ddw_dab = R_gamma*(n_beta.cross(R_beta*(n_alpha.cross(R_alpha*x))));
+	V3D ddw_dag = n_gamma.cross(R_gamma*(R_beta*(n_alpha.cross(R_alpha*x))));
 
 	ddw_das.setToZeros();
 	for (int i=0;i<3;i++){
@@ -116,10 +116,10 @@ void KS_MechanicalComponent::get_ddw_dads(const Vector3d& x, Matrix& ddw_das){
 }
 
 //return the matrix that relates the change in change of w with the change in rotation angle beta
-void KS_MechanicalComponent::get_ddw_dbds(const Point3d& x, Matrix& ddw_dbs){
-	Vector3d ddw_dba = R_gamma*(n_beta.cross(R_beta*(n_alpha.cross(R_alpha*x))));
-	Vector3d ddw_dbb = R_gamma*(n_beta.cross(n_beta.cross(R_beta*(R_alpha*x))));
-	Vector3d ddw_dbg = n_gamma.cross(R_gamma*(n_beta.cross(R_beta*(R_alpha*x))));
+void KS_MechanicalComponent::get_ddw_dbds(const P3D& x, Matrix& ddw_dbs){
+	V3D ddw_dba = R_gamma*(n_beta.cross(R_beta*(n_alpha.cross(R_alpha*x))));
+	V3D ddw_dbb = R_gamma*(n_beta.cross(n_beta.cross(R_beta*(R_alpha*x))));
+	V3D ddw_dbg = n_gamma.cross(R_gamma*(n_beta.cross(R_beta*(R_alpha*x))));
 
 	ddw_dbs.setToZeros();
 	for (int i=0;i<3;i++){
@@ -130,10 +130,10 @@ void KS_MechanicalComponent::get_ddw_dbds(const Point3d& x, Matrix& ddw_dbs){
 }
 
 //return the matrix that relates the change in change of w with the change in rotation angle beta
-void KS_MechanicalComponent::get_ddw_dbds(const Vector3d& x, Matrix& ddw_dbs){
-	Vector3d ddw_dba = R_gamma*(n_beta.cross(R_beta*(n_alpha.cross(R_alpha*x))));
-	Vector3d ddw_dbb = R_gamma*(n_beta.cross(n_beta.cross(R_beta*(R_alpha*x))));
-	Vector3d ddw_dbg = n_gamma.cross(R_gamma*(n_beta.cross(R_beta*(R_alpha*x))));
+void KS_MechanicalComponent::get_ddw_dbds(const V3D& x, Matrix& ddw_dbs){
+	V3D ddw_dba = R_gamma*(n_beta.cross(R_beta*(n_alpha.cross(R_alpha*x))));
+	V3D ddw_dbb = R_gamma*(n_beta.cross(n_beta.cross(R_beta*(R_alpha*x))));
+	V3D ddw_dbg = n_gamma.cross(R_gamma*(n_beta.cross(R_beta*(R_alpha*x))));
 
 	ddw_dbs.setToZeros();
 	for (int i=0;i<3;i++){
@@ -145,10 +145,10 @@ void KS_MechanicalComponent::get_ddw_dbds(const Vector3d& x, Matrix& ddw_dbs){
 
 
 //return the matrix that relates the change in change of w with the change in rotation angle gamma
-void KS_MechanicalComponent::get_ddw_dgds(const Point3d& x, Matrix& ddw_dgs){
-	Vector3d ddw_dga = n_gamma.cross(R_gamma*(R_beta*(n_alpha.cross(R_alpha*x))));
-	Vector3d ddw_dgb = n_gamma.cross(R_gamma*( n_beta.cross(R_beta*(R_alpha*x))));
-	Vector3d ddw_dgg = n_gamma.cross(n_gamma.cross(R_gamma*(R_beta*(R_alpha*x))));
+void KS_MechanicalComponent::get_ddw_dgds(const P3D& x, Matrix& ddw_dgs){
+	V3D ddw_dga = n_gamma.cross(R_gamma*(R_beta*(n_alpha.cross(R_alpha*x))));
+	V3D ddw_dgb = n_gamma.cross(R_gamma*( n_beta.cross(R_beta*(R_alpha*x))));
+	V3D ddw_dgg = n_gamma.cross(n_gamma.cross(R_gamma*(R_beta*(R_alpha*x))));
 
 	ddw_dgs.setToZeros();
 	for (int i=0;i<3;i++){
@@ -160,10 +160,10 @@ void KS_MechanicalComponent::get_ddw_dgds(const Point3d& x, Matrix& ddw_dgs){
 
 
 //return the matrix that relates the change in change of w with the change in rotation angle gamma
-void KS_MechanicalComponent::get_ddw_dgds(const Vector3d& x, Matrix& ddw_dgs){
-	Vector3d ddw_dga = n_gamma.cross(R_gamma*(R_beta*(n_alpha.cross(R_alpha*x))));
-	Vector3d ddw_dgb = n_gamma.cross(R_gamma*( n_beta.cross(R_beta*(R_alpha*x))));
-	Vector3d ddw_dgg = n_gamma.cross(n_gamma.cross(R_gamma*(R_beta*(R_alpha*x))));
+void KS_MechanicalComponent::get_ddw_dgds(const V3D& x, Matrix& ddw_dgs){
+	V3D ddw_dga = n_gamma.cross(R_gamma*(R_beta*(n_alpha.cross(R_alpha*x))));
+	V3D ddw_dgb = n_gamma.cross(R_gamma*( n_beta.cross(R_beta*(R_alpha*x))));
+	V3D ddw_dgg = n_gamma.cross(n_gamma.cross(R_gamma*(R_beta*(R_alpha*x))));
 
 	ddw_dgs.setToZeros();
 	for (int i=0;i<3;i++){
@@ -174,11 +174,11 @@ void KS_MechanicalComponent::get_ddw_dgds(const Vector3d& x, Matrix& ddw_dgs){
 }
 
 
-void KS_MechanicalComponent::setWorldCenterPosition(const Point3d& pos){
+void KS_MechanicalComponent::setWorldCenterPosition(const P3D& pos){
 	position = pos;
 }
 
-Point3d KS_MechanicalComponent::getWorldCenterPosition() const{
+P3D KS_MechanicalComponent::getWorldCenterPosition() const{
 	return position;
 }
 
@@ -194,20 +194,20 @@ void KS_MechanicalComponent::clearTracerParticles(){
 	}
 }
 
-void KS_MechanicalComponent::addTracerParticlesToList(DynamicArray<Point3d>& tracerParticleList){
+void KS_MechanicalComponent::addTracerParticlesToList(DynamicArray<P3D>& tracerParticleList){
 	for (uint i=0;i<tracerParticles.size();i++)
 		tracerParticleList.push_back(get_w(tracerParticles[i].pLocal));
 }
 
-Point3d KS_MechanicalComponent::getTracerParticlePosition(int i){
+P3D KS_MechanicalComponent::getTracerParticlePosition(int i){
 	if ((uint)i<0 || (uint)i>=tracerParticles.size())
-		return get_w(Point3d(0,0,0));
+		return get_w(P3D(0,0,0));
 	return get_w(tracerParticles[i].pLocal);
 }
 
-Point3d KS_MechanicalComponent::getTracerParticleLocalPosition(int i){
+P3D KS_MechanicalComponent::getTracerParticleLocalPosition(int i){
 	if ((uint)i<0 || (uint)i>=tracerParticles.size())
-		return Point3d(0,0,0);
+		return P3D(0,0,0);
 	return tracerParticles[i].pLocal;
 }
 
@@ -249,7 +249,7 @@ void KS_MechanicalComponent::writeBaseComponentToFile(FILE* f){
 	str = getKSString(KS_COLOR);
 	fprintf(f, "\t%s %lf %lf %lf\n", str, meshColor[0], meshColor[1], meshColor[2]);
 	str = getKSString(KS_POSITION_IN_WORLD);
-	Point3d tmpP = getWorldCenterPosition();
+	P3D tmpP = getWorldCenterPosition();
 	fprintf(f, "\t%s %lf %lf %lf\n", str, tmpP[0], tmpP[1], tmpP[2]);
 	str = getKSString(KS_ANGLE);
 	fprintf(f, "\t%s %lf\n", str, alpha);
@@ -294,7 +294,7 @@ bool KS_MechanicalComponent::processInputLine(char* line){
 			return true;
 			break;
 		case KS_TRACER_PARTICLE:{
-				Point3d tmpP;
+				P3D tmpP;
 				if (sscanf(line, "%lf %lf %lf", &tmpP.x, &tmpP.y, &tmpP.z) != 3) assert(false);
 				tracerParticles.push_back(TracerParticle(this, tmpP));
 				return true;
@@ -330,21 +330,21 @@ bool KS_MechanicalComponent::processInputLine(char* line){
 	return false;
 }
 
-void KS_MechanicalComponent::addCylinderMesh(int nrVerts, double radius, double length, Point3d localCoords, Vector3d v, bool setMeshColor){
+void KS_MechanicalComponent::addCylinderMesh(int nrVerts, double radius, double length, P3D localCoords, V3D v, bool setMeshColor){
   //we'll start out by getting a vector that is perpendicular to the given vector.
 
-	double rotAngle = safeACOS(v.dotProductWith(Vector3d(0,0,1)));
-	Vector3d rotAxis = v.crossProductWith(Vector3d(0,0,1)).toUnit();
+	double rotAngle = safeACOS(v.dotProductWith(V3D(0,0,1)));
+	V3D rotAxis = v.crossProductWith(V3D(0,0,1)).toUnit();
 
-	if (IS_ZERO(rotAngle)) rotAxis = Vector3d(1,0,0);
+	if (IS_ZERO(rotAngle)) rotAxis = V3D(1,0,0);
 
 	GLMesh* tmpMesh = new GLMesh();
 
 	for (int i=0;i<nrVerts;i++){
 		double angle = 2 * PI / nrVerts * i;
 
-		tmpMesh->addVertex(localCoords+Vector3d(cos(angle) * radius, sin(angle) * radius, length/2.0).rotate(rotAngle, rotAxis));
-		tmpMesh->addVertex(localCoords+Vector3d(cos(angle) * radius, sin(angle) * radius, -length/2.0).rotate(rotAngle, rotAxis));
+		tmpMesh->addVertex(localCoords+V3D(cos(angle) * radius, sin(angle) * radius, length/2.0).rotate(rotAngle, rotAxis));
+		tmpMesh->addVertex(localCoords+V3D(cos(angle) * radius, sin(angle) * radius, -length/2.0).rotate(rotAngle, rotAxis));
 	}
 
 	for (int i=0; i<nrVerts;i++){
@@ -356,8 +356,8 @@ void KS_MechanicalComponent::addCylinderMesh(int nrVerts, double radius, double 
 	}
 
 	int middleVertexIndex = (int)tmpMesh->getVertexCount();
-	tmpMesh->addVertex(localCoords + Vector3d(0, 0, length/2.0).rotate(rotAngle, rotAxis));
-	tmpMesh->addVertex(localCoords + Vector3d(0, 0, -length/2.0).rotate(rotAngle, rotAxis));
+	tmpMesh->addVertex(localCoords + V3D(0, 0, length/2.0).rotate(rotAngle, rotAxis));
+	tmpMesh->addVertex(localCoords + V3D(0, 0, -length/2.0).rotate(rotAngle, rotAxis));
 
 	for (int i=0; i<nrVerts; i++){
 		int nextIndex = i+1;
@@ -397,7 +397,7 @@ void KS_MechanicalComponent::draw(){
 	TransformationMatrix toWorld;
 	Quaternion qToWorld = R_gamma*R_beta*R_alpha;
 	qToWorld.getRotationMatrix(&toWorld);
-	toWorld.setTranslation(position + Vector3d(0, 0, 1) * layerNumber * LAYER_THICKNESS);
+	toWorld.setTranslation(position + V3D(0, 0, 1) * layerNumber * LAYER_THICKNESS);
 
 	double values[16];
 	toWorld.getOGLValues(values);
@@ -429,7 +429,7 @@ void KS_MechanicalComponent::drawTracerParticles(){
 
 
 //returns true if the ray intersects the object, false otherwise...
-bool KS_MechanicalComponent::isIntersectedByRay(const Ray& r, Point3d& res){
+bool KS_MechanicalComponent::isIntersectedByRay(const Ray& r, P3D& res){
 	//TODO: we might want to reintroduce the AABB as a first test, perhaps even a bounding/encapsulating sphere
 	Ray localCoordRay(get_x(r.origin), get_x(r.direction));
 	for (uint i=0;i<meshes.size();i++){
@@ -464,12 +464,12 @@ uint KS_MechanicalComponent::renderToObjFile(FILE* fp, uint vertexIdxOffset, dou
 }
 
 AABoundingBox KS_MechanicalComponent::computeAABB(){
-	Point3d AABB_blf(DBL_MAX, DBL_MAX, DBL_MAX);
-	Point3d AABB_trb(-DBL_MAX, -DBL_MAX, -DBL_MAX);
+	P3D AABB_blf(DBL_MAX, DBL_MAX, DBL_MAX);
+	P3D AABB_trb(-DBL_MAX, -DBL_MAX, -DBL_MAX);
 
 	for (uint i=0; i<meshes.size();i++){
 		for (int j=0; j<meshes[i]->getVertexCount(); j++){
-			Point3d p = get_w(meshes[i]->getVertex(j));
+			P3D p = get_w(meshes[i]->getVertex(j));
 			if (p.x < AABB_blf.x) AABB_blf.x = p.x;
 			if (p.y < AABB_blf.y) AABB_blf.y = p.y;
 			if (p.z < AABB_blf.z) AABB_blf.z = p.z;

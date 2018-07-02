@@ -35,8 +35,8 @@ public:
 
 	//compute the constraints and their jacobian, as well as the energy (1/2 C'C), and its gradient and hessian, all of them evaluated at the current state of the assembly
 	virtual double getEnergy(){
-		Vector3d v = getErrorVector();
-		return 0.5 * v.dotProductWith(v);
+		V3D v = getErrorVector();
+		return 0.5 * v.dot(v);
 	}
 
 	virtual void computeEnergyGradient(){
@@ -46,7 +46,7 @@ public:
 		FAST_RESIZE_VEC(dE_ds2, KS_MechanicalComponent::getStateSize());
 		FAST_RESIZE_VEC(tmpV, 3);
 
-		Vector3d v = getErrorVector();
+		V3D v = getErrorVector();
 
 		//the energy of the constraint is 1/2 * v' * v, and gradient follows
 
@@ -72,7 +72,7 @@ public:
 		FAST_RESIZE_MAT(ddE_ds2ds2, KS_MechanicalComponent::getStateSize(), KS_MechanicalComponent::getStateSize());
 
 		//the energy of the constraint is 1/2 * v' * v, and the hessian follows
-		Vector3d v = getErrorVector();
+		V3D v = getErrorVector();
 
 		c1->get_dw_ds(x1, dw1_ds1);
 		dw1_ds1*=weight;
@@ -114,7 +114,7 @@ public:
 	}
 	//returns the current values of the constraints
 	virtual dVector* getConstraintValues(){
-		Vector3d v = getErrorVector();
+		V3D v = getErrorVector();
 		C.resize(3, 0);
 		C[0] = v.x; C[1] = v.y; C[2] = v.z;
 		return &C;
@@ -123,7 +123,7 @@ public:
 	virtual Matrix* getConstraintJacobian(int i) {if (i == 0) return &dCds1; return &dCds2;}
 
 private:
-	Vector3d getErrorVector(){
+	V3D getErrorVector(){
 		return (c1->get_w(x1) - c2->get_w(x2))*weight;
 	}
 	//we need to ensure that c1.W(x1) == c2.W(x2)

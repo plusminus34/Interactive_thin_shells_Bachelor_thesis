@@ -69,7 +69,7 @@ void KS_Constraint::setAffectedComponentsState(const dVector& state){
 	for (int i=0;i<getNumberOfAffectedComponents();i++){
 		KS_MechanicalComponent* c = getIthAffectedComponent(i);
 		c->setAngles(state[KS_MechanicalComponent::getStateSize() * i + 0], state[KS_MechanicalComponent::getStateSize() * i + 1], state[KS_MechanicalComponent::getStateSize() * i + 2]);
-		c->setWorldCenterPosition(Point3d(state[KS_MechanicalComponent::getStateSize() * i + 3], state[KS_MechanicalComponent::getStateSize() * i + 4], state[KS_MechanicalComponent::getStateSize() * i + 5]));
+		c->setWorldCenterPosition(P3D(state[KS_MechanicalComponent::getStateSize() * i + 3], state[KS_MechanicalComponent::getStateSize() * i + 4], state[KS_MechanicalComponent::getStateSize() * i + 5]));
 	}
 }
 
@@ -115,14 +115,14 @@ void KS_Constraint::testEnergyGradientAndHessian(){
 
 	setAffectedComponentsState(state);
 
-	logPrint("Checking gradient!\n");
+	Logger::print("Checking gradient!\n");
 
 	//now we can compute the error in the gradient...
 	for (int i=0;i<getNumberOfAffectedComponents();i++){
 		dVector* analyticGradient = get_dE_dsi(i);
 		for (int j=0;j<KS_MechanicalComponent::getStateSize(); j++){
 			if (fabs(analyticGradient->at(j) - gradient[KS_MechanicalComponent::getStateSize()*i+j]) > 0.0001){
-				logPrint("Mismatch in gradient at(%d)! analytic: %lf, fd:%lf, error: %lf\n", KS_MechanicalComponent::getStateSize()*i+j, analyticGradient->at(j), gradient[KS_MechanicalComponent::getStateSize()*i+j], fabs(analyticGradient->at(j) - gradient[KS_MechanicalComponent::getStateSize()*i+j]));
+				Logger::print("Mismatch in gradient at(%d)! analytic: %lf, fd:%lf, error: %lf\n", KS_MechanicalComponent::getStateSize()*i+j, analyticGradient->at(j), gradient[KS_MechanicalComponent::getStateSize()*i+j], fabs(analyticGradient->at(j) - gradient[KS_MechanicalComponent::getStateSize()*i+j]));
 			}
 		}
 	}
@@ -166,12 +166,12 @@ void KS_Constraint::testEnergyGradientAndHessian(){
 	setAffectedComponentsState(state);
 
 	//now compare the hessians...
-	logPrint("Checking hessian!\n");
+	Logger::print("Checking hessian!\n");
 	for (int i=0;i<hessian.getRowCount();i++){
 		for (int j=0;j<hessian.getColCount();j++){
 			double valAnalytic = get_ddE_dsidsj(i/KS_MechanicalComponent::getStateSize(), j/KS_MechanicalComponent::getStateSize())->operator () (i % KS_MechanicalComponent::getStateSize(), j % KS_MechanicalComponent::getStateSize());
 			if (fabs(hessian(i,j) - valAnalytic) > 0.0001){
-				logPrint("Mismatch in hessian at (%d, %d)! analytic: %lf, fd:%lf, error: %lf\n", i,j,valAnalytic, hessian(i,j), fabs(hessian(i,j) - valAnalytic));
+				Logger::print("Mismatch in hessian at (%d, %d)! analytic: %lf, fd:%lf, error: %lf\n", i,j,valAnalytic, hessian(i,j), fabs(hessian(i,j) - valAnalytic));
 			}
 		}
 	}

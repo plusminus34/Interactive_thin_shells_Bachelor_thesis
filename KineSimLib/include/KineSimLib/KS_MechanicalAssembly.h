@@ -40,7 +40,7 @@ public:
 	void drawTracerParticles();
 
 	void clearTracerParticles();
-	void getTracerParticles(DynamicArray<Point3d>& tracerParticleList);
+	void getTracerParticles(DynamicArray<P3D>& tracerParticleList);
 
 	KS_MechanicalComponent* getComponent(int i){return m_components[i];}
 	KS_Connection* getConnection(int i){return m_connections[i];}
@@ -63,7 +63,7 @@ public:
 
 	KS_MechanicalComponent* getFirstComponentIntersectedByRay(const Ray& ray);
 
-	KS_MechanicalComponent* getFirstComponentIntersectedByRay(const Ray& ray, Point3d& worldP);
+	KS_MechanicalComponent* getFirstComponentIntersectedByRay(const Ray& ray, P3D& worldP);
 
 
 	void setTickerValue(double val){

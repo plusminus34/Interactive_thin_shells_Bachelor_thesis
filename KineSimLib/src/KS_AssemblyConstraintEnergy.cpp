@@ -56,7 +56,7 @@ double KS_AssemblyConstraintEnergy::computeValue(const dVector& s){
 	
 	//add the regularizer contribution
 	dVector vd((int)s.size(), 0);
-	add(s,1.0,m_s0,-1.0,vd);// gradient part better handling?
+	add(s,1.0,m_s0,-1.0,vd);// 
 	double nrmvd2 = vd.squaredNorm();	//double nrmvd2 = dotprod(vd, vd);
 
 	totalConstraintEnergy += 0.5*regularizer*nrmvd2;

@@ -13,7 +13,7 @@
 #include <GUILib/OBJReader.h>
 #include <MathLib/Matrix.h>
 #include <MathLib/Ray.h>
-//#include <MathLib/AABoundingBox.h> no longer present in the mathlib
+#include <MathLib/BoundingBox.h>
 
 class KS_MechanicalComponent;
 
@@ -53,12 +53,12 @@ public:
 	double getAlpha() const { return alpha; }
 	double getBeta() const { return beta; }
 	double getGamma() const { return gamma; }
-	Vector3d getAlphaAxis(){return n_alpha;}
-	Vector3d getBetaAxis(){return n_beta;}
-	Vector3d getGammaAxis(){return n_gamma;}
-	void setAlphaAxis(const Vector3d& alphaAxis) {n_alpha = alphaAxis; n_beta.normalize(); setAngles(gamma, beta, alpha);}
-	void setBetaAxis(const Vector3d& betaAxis){n_beta = betaAxis; n_beta.normalize(); setAngles(gamma, beta, alpha);}
-	void setGammaAxis(const Vector3d& gammaAxis){n_gamma = gammaAxis; n_gamma.normalize(); setAngles(gamma, beta, alpha);}
+	V3D getAlphaAxis(){return n_alpha;}
+	V3D getBetaAxis(){return n_beta;}
+	V3D getGammaAxis(){return n_gamma;}
+	void setAlphaAxis(const V3D& alphaAxis) {n_alpha = alphaAxis; n_beta.normalize(); setAngles(gamma, beta, alpha);}
+	void setBetaAxis(const V3D& betaAxis){n_beta = betaAxis; n_beta.normalize(); setAngles(gamma, beta, alpha);}
+	void setGammaAxis(const V3D& gammaAxis){n_gamma = gammaAxis; n_gamma.normalize(); setAngles(gamma, beta, alpha);}
 	void setPhase(double a);
 	void setAngles(double val_gamma, double val_beta, double val_alpha);
 
@@ -72,22 +72,22 @@ public:
 	
 	//w represents the world coordinates for the point (or vector) x, which is expressed in the local coordinate frame of the component. 
 	P3D get_x(const P3D& w) const;
-	Vector3d get_x(const Vector3d& w) const;
+	V3D get_x(const V3D& w) const;
 	//w represents the world coordinates for the point (or vector) x, which is expressed in the local coordinate frame of the component. The function works both for local points or vectors
 	P3D get_w(const P3D& x) const;
-	Vector3d get_w(const Vector3d& x) const;
+	V3D get_w(const V3D& x) const;
 	//return the jacobian that relates the change in world coordinates w with the change in state s=(gamma, beta, alpha, p.x, p.y, p.z)
-	void get_dw_ds(const P3D& x, Matrix& dw_ds);
-	void get_dw_ds(const Vector3d& x, Matrix& dw_ds);
+	void get_dw_ds(const P3D& x, Eigen::MatrixXd& dw_ds);
+	void get_dw_ds(const V3D& x, Matrix& dw_ds);
 	//return the matrix that relates the change in change of w with the change in rotation angle alpha(phase)
 	void get_ddw_dads(const P3D& x, Matrix& ddw_das);
-	void get_ddw_dads(const Vector3d& x, Matrix& ddw_das);
+	void get_ddw_dads(const V3D& x, Matrix& ddw_das);
 	//return the matrix that relates the change in change of w with the change in rotation angle beta
 	void get_ddw_dbds(const P3D& x, Matrix& ddw_dbs);
-	void get_ddw_dbds(const Vector3d& x, Matrix& ddw_dbs);
+	void get_ddw_dbds(const V3D& x, Matrix& ddw_dbs);
 	//return the matrix that relates the change in change of w with the change in rotation angle gamma
 	void get_ddw_dgds(const P3D& x, Matrix& ddw_dgs);
-	void get_ddw_dgds(const Vector3d& x, Matrix& ddw_dgs);
+	void get_ddw_dgds(const V3D& x, Matrix& ddw_dgs);
 
 	virtual bool loadFromFile(FILE* f) = 0;
 	virtual bool writeToFile(FILE* f) = 0;
@@ -120,13 +120,13 @@ public:
 
 	void setTracerParticles(DynamicArray<TracerParticle> v) { tracerParticles.clear(); tracerParticles.resize(v.size()); std::copy(v.begin(), v.end(), tracerParticles.begin());}
 
-	void addCylinderMesh(int nrVerts, double radius, double length, P3D localCoords, Vector3d v, bool setMeshColor = false);
+	void addCylinderMesh(int nrVerts, double radius, double length, P3D localCoords, V3D v, bool setMeshColor = false);
 
 	//returns true if the ray intersects the object, false otherwise...
 	bool isIntersectedByRay(const Ray& r, P3D& res);
 
 
-	//AABoundingBox computeAABB();
+	AxisAlignedBoundingBox computeAABB();// double check!!
 	
 	/**
 		This method renders the mechanical component in its current state as a set of vertices 
@@ -163,7 +163,7 @@ protected:
 	//so it remains constant.
 	P3D position;							//position of component in world coordinates
 	double alpha, beta, gamma;					//rotation angles along the normal of the component
-	Vector3d n_alpha, n_beta, n_gamma;			//rotation axes (n_alpha is special because it represents the component's local coordinates normal)
+	V3D n_alpha, n_beta, n_gamma;			//rotation axes (n_alpha is special because it represents the component's local coordinates normal)
 	//from the quantities above we compute these quaternions for ease of use
 	Quaternion R_alpha, R_beta, R_gamma;
 

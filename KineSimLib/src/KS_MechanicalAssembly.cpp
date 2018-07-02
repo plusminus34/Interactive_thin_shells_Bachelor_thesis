@@ -1,21 +1,21 @@
 #include "KineSimLib/KS_MechanicalAssembly.h"
 #include "KineSimLib/KS_LoaderUtils.h"
-#include "KineSimLib/KS_Gear.h"
-#include "KineSimLib/KS_Phase2PhaseConnection.h"
-#include "KineSimLib/KS_PhaseDriverConnection.h"
-#include "KineSimLib/KS_Gear2GearConnection.h"
+//#include "KineSimLib/KS_Gear.h"
+//#include "KineSimLib/KS_Phase2PhaseConnection.h"
+//#include "KineSimLib/KS_PhaseDriverConnection.h"
+//#include "KineSimLib/KS_Gear2GearConnection.h"
 #include "KineSimLib/KS_BindComponentsConnection.h"
 #include "KineSimLib/KS_BoundToWorldConnection.h"
 #include "KineSimLib/KS_PointOnLineConnection.h"
-#include "KineSimLib/KS_MotorConnection.h"
-#include "KineSimLib/KS_Bar.h"
-#include "KineSimLib/KS_Shaft.h"
+//#include "KineSimLib/KS_MotorConnection.h"
+//#include "KineSimLib/KS_Bar.h"
+//#include "KineSimLib/KS_Shaft.h"
 #include "KineSimLib/KS_GenericComponent.h"
-#include "KineSimLib/KS_NonCircularGear.h"
-#include "KineSimLib/KS_NonCircularGearsConnection.h"
-#include "KineSimLib/KS_Quad.h"
-#include "KineSimLib/KS_MultiLinkBar.h"
-#include "KineSimLib/KS_HermiteSplineLinkBar.h"
+//#include "KineSimLib/KS_NonCircularGear.h"
+//#include "KineSimLib/KS_NonCircularGearsConnection.h"
+//#include "KineSimLib/KS_Quad.h"
+//#include "KineSimLib/KS_MultiLinkBar.h"
+//#include "KineSimLib/KS_HermiteSplineLinkBar.h"
 #include "KineSimLib/KS_PlanarComponentConnection.h"
 #include <GUILib/GLUtils.h>
 #include <string>
@@ -76,7 +76,7 @@ void KS_MechanicalAssembly::setAssemblyState(const dVector& state){
 	for (int i=0;i<getComponentCount();i++){
 		KS_MechanicalComponent* c = getComponent(i);
 		c->setAngles(state[KS_MechanicalComponent::getStateSize() * i + 0], state[KS_MechanicalComponent::getStateSize() * i + 1], state[KS_MechanicalComponent::getStateSize() * i + 2]);
-		c->setWorldCenterPosition(Point3d(state[KS_MechanicalComponent::getStateSize() * i + 3], state[KS_MechanicalComponent::getStateSize() * i + 4], state[KS_MechanicalComponent::getStateSize() * i + 5]));
+		c->setWorldCenterPosition(P3D(state[KS_MechanicalComponent::getStateSize() * i + 3], state[KS_MechanicalComponent::getStateSize() * i + 4], state[KS_MechanicalComponent::getStateSize() * i + 5]));
 	}
 }
 
@@ -87,7 +87,7 @@ void KS_MechanicalAssembly::setAssemblyState(const dVector& state){
 bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 	FILE* f = fopen(szFile, "r");
 	if (f == NULL){
-		logPrint("KS_MechanicalAssembly: Cannot load input file \'%s\'\n", szFile);
+		Logger::print("KS_MechanicalAssembly: Cannot load input file \'%s\'\n", szFile);
 		return false;
 	}
 
@@ -105,7 +105,7 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 				if(sscanf(line, "%lf", &m_ticker.m_stepPhase) != 1) assert(false);
 				}
 				break;
-			case KS_SPUR_GEAR:{
+			/*case KS_SPUR_GEAR:{
 					KS_Gear* gear = new KS_Gear(trim(line));
 					if (!gear->loadFromFile(f))
 					{
@@ -164,7 +164,7 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 					}
 					if(!addComponent(quad))
 						delete quad;
-				}break;
+				}break;*/
 			case KS_GENERIC_COMPONENT:{
 					KS_GenericComponent* gc = new KS_GenericComponent(trim(line));
 					if (!gc->loadFromFile(f))
@@ -175,7 +175,7 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 					if(!addComponent(gc))
 						delete gc;
 				}break;
-			case KS_SHAFT:{
+			/*case KS_SHAFT:{
 					KS_Shaft* shaft = new KS_Shaft(trim(line));
 					if (!shaft->loadFromFile(f))
 					{
@@ -186,7 +186,7 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 						delete shaft;
 				}break;
 			case KS_PHASE_DRIVER:{
-					logPrint("KS_MechanicalAssembly - Warning: Phase Drivers are no longer used! PhaseDriverConnections connect to the ticker directly.\n");
+					Logger::print("KS_MechanicalAssembly - Warning: Phase Drivers are no longer used! PhaseDriverConnections connect to the ticker directly.\n");
 					Logger::printStatic("KS_MechanicalAssembly - Warning: Phase Drivers are no longer used! PhaseDriverConnections connect to the ticker directly.\n");
 					while (!feof(f)){
 						//get a line from the file...
@@ -211,7 +211,7 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 					KS_NonCircularGearsConnection* g2gC = new KS_NonCircularGearsConnection();
 					g2gC->loadFromFile(f, this);
 					this->addConnection(g2gC);
-				}break;
+				}break;*/
 			case KS_POINT_ON_LINE_CON:{
 					KS_PointOnLineConnection* p2lC = new KS_PointOnLineConnection();
 					p2lC->loadFromFile(f, this);
@@ -222,11 +222,11 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 					bcC->loadFromFile(f, this);
 					this->addConnection(bcC);
 				}break;
-			case KS_MOTOR_CON:{
+			/*case KS_MOTOR_CON:{
 					KS_MotorConnection* mC = new KS_MotorConnection();
 					mC->loadFromFile(f, this);
 					this->addConnection(mC);
-				}break;
+				}break;*/
 			case KS_BOUND_TO_WORLD_CON:{
 					KS_BoundToWorldConnection* bwC = new KS_BoundToWorldConnection();
 					bwC->loadFromFile(f, this);
@@ -239,12 +239,12 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 				}break;
 			case KS_NOT_IMPORTANT:
 				if (strlen(trim(buffer)) > 0)
-					logPrint("KS_MechanicalAssembly warning: Ignoring input line: \'%s\'\n", buffer);
+					Logger::print("KS_MechanicalAssembly warning: Ignoring input line: \'%s\'\n", buffer);
 				break;
 			case KS_COMMENT:
 				break;
 			default:
-				logPrint("Incorrect KS input file. Unexpected line: %s\n", buffer);
+				Logger::print("Incorrect KS input file. Unexpected line: %s\n", buffer);
 				fclose(f);
 				return false;
 		}
@@ -258,7 +258,7 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 void KS_MechanicalAssembly::writeToFile(const char* szFile){
 	FILE* f = fopen(szFile, "w");
 	if (f == NULL){
-		logPrint("KS_MechanicalAssembly: Cannot open input file \'%s\' for writing\n", szFile);
+		Logger::print("KS_MechanicalAssembly: Cannot open input file \'%s\' for writing\n", szFile);
 		return;
 	}
 
@@ -350,7 +350,7 @@ void KS_MechanicalAssembly::clearTracerParticles(){
 	}
 }
 
-void KS_MechanicalAssembly::getTracerParticles(DynamicArray<Point3d>& tracerParticleList){
+void KS_MechanicalAssembly::getTracerParticles(DynamicArray<P3D>& tracerParticleList){
 	tracerParticleList.clear();
 	for (uint i=0;i<this->m_components.size();i++)
 		m_components[i]->addTracerParticlesToList(tracerParticleList);
@@ -385,9 +385,9 @@ KS_MechanicalComponent* KS_MechanicalAssembly::getFirstComponentIntersectedByRay
 	double minDistance = DBL_MAX;
 	KS_MechanicalComponent* closestComponent = NULL;
 	for (uint i=0;i<m_components.size();i++){
-		Point3d p;
+		P3D p;
 		if (m_components[i]->isIntersectedByRay(ray, p)){
-			double dist = Vector3d(ray.origin, p).length();
+			double dist = V3D(ray.origin, p).length();
 			if (dist < minDistance){
 				minDistance = dist;
 				closestComponent = m_components[i];
@@ -399,13 +399,13 @@ KS_MechanicalComponent* KS_MechanicalAssembly::getFirstComponentIntersectedByRay
 }
 
 
-KS_MechanicalComponent* KS_MechanicalAssembly::getFirstComponentIntersectedByRay(const Ray& ray, Point3d& worldP){
+KS_MechanicalComponent* KS_MechanicalAssembly::getFirstComponentIntersectedByRay(const Ray& ray, P3D& worldP){
 	double minDistance = DBL_MAX;
 	KS_MechanicalComponent* closestComponent = NULL;
 	for (uint i=0;i<m_components.size();i++){
-		Point3d p;
+		P3D p;
 		if (m_components[i]->isIntersectedByRay(ray, p)){
-			double dist = Vector3d(ray.origin, p).length();
+			double dist = V3D(ray.origin, p).length();
 			if (dist < minDistance){
 				worldP = p;
 				minDistance = dist;
@@ -501,7 +501,7 @@ AABoundingBox KS_MechanicalAssembly::computeAABB(){
 void KS_MechanicalAssembly::writeMeshToFile(const char* objFName){
 	FILE* f = fopen(objFName, "w");
 	if (f == NULL){
-		logPrint("KS_MechanicalAssembly: Cannot load output file \'%s\'\n", objFName);
+		Logger::print("KS_MechanicalAssembly: Cannot load output file \'%s\'\n", objFName);
 		return;
 	}
 	int vertexIdxOffset = 0;

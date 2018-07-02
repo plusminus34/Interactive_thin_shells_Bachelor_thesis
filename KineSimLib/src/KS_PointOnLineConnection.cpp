@@ -5,10 +5,10 @@
 KS_PointOnLineConnection::KS_PointOnLineConnection(void){
 	pOnlConstraint = NULL;
 	v2vConstraint = NULL;
-	xOnC1 = Point3d(0,0,0);
-	pOnC2 = Point3d(0,0,0);
-	lOnC2 = Vector3d(1,0,0);
-	nOnC1 = nOnC2 = Vector3d(0,0,1);
+	xOnC1 = P3D(0,0,0);
+	pOnC2 = P3D(0,0,0);
+	lOnC2 = V3D(1,0,0);
+	nOnC1 = nOnC2 = V3D(0,0,1);
 	constrainedNormal = true;
 }
 
@@ -32,7 +32,7 @@ void KS_PointOnLineConnection::connect(KS_MechanicalComponent* pCompIn, KS_Mecha
 
 bool KS_PointOnLineConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* ma){
 	if (f == NULL){
-		logPrint("BindComponentsConnection: Cannot load input file.\n");
+		Logger::print("BindComponentsConnection: Cannot load input file.\n");
 		return false;
 	}
 	//have a temporary buffer used to read the file line by line...
@@ -73,12 +73,12 @@ bool KS_PointOnLineConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* ma){
 				constrainedNormal = false;
 				break;
 			default:
-				logPrint("Incorrect KS input file. Unexpected line: %s\n", buffer);
+				Logger::print("Incorrect KS input file. Unexpected line: %s\n", buffer);
 				return false;
 		}
 	}
 
-	logPrint("BindComponentsConnection: Warning - end of file met before END primitive\n");
+	Logger::print("BindComponentsConnection: Warning - end of file met before END primitive\n");
 	return false;
 }
 

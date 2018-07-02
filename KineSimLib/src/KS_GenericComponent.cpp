@@ -39,7 +39,7 @@ bool KS_GenericComponent::writeToFile(FILE* f){
 
 bool KS_GenericComponent::loadFromFile(FILE* f){
 	if (f == NULL){
-		logPrint("KS_GenericComponent: Cannot load input file.\n");
+		Logger::print("KS_GenericComponent: Cannot load input file.\n");
 		return false;
 	}
 	//have a temporary buffer used to read the file line by line...
@@ -63,11 +63,11 @@ bool KS_GenericComponent::loadFromFile(FILE* f){
 				loadTriangleMeshFromFile(meshName);
 				break;
 			default:
-				logPrint("Incorrect KS input file. Unexpected line: %s\n", buffer);
+				Logger::print("Incorrect KS input file. Unexpected line: %s\n", buffer);
 				return false;
 		}
 	}
 
-	logPrint("KS_GenericComponent: Warning - end of file met before END primitive\n");
+	Logger::print("KS_GenericComponent: Warning - end of file met before END primitive\n");
 	return false;
 }

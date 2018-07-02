@@ -2,7 +2,7 @@
 #include "KineSimLib/KS_PointOnLineConstraint.h"
 
 
-KS_PointOnLineConstraint::KS_PointOnLineConstraint(const Point3d& xOnC1_, KS_MechanicalComponent* c1_, const Point3d& pOnC2_, const Vector3d& lOnC2_, KS_MechanicalComponent* c2_){
+KS_PointOnLineConstraint::KS_PointOnLineConstraint(const P3D& xOnC1_, KS_MechanicalComponent* c1_, const P3D& pOnC2_, const V3D& lOnC2_, KS_MechanicalComponent* c2_){
 	x = xOnC1_;
 	c1 = c1_;
 	p = pOnC2_;
@@ -21,11 +21,11 @@ KS_PointOnLineConstraint::~KS_PointOnLineConstraint(void){
 }
 
 double KS_PointOnLineConstraint::getEnergy(){
-	Vector3d v = getErrorVector();
-	return 0.5 * v.dotProductWith(v);
+	V3D v = getErrorVector();
+	return 0.5 * v.dot(v);
 }
 
-Vector3d KS_PointOnLineConstraint::getErrorVector(){
+V3D KS_PointOnLineConstraint::getErrorVector(){
 	wx = c1->get_w(x);
 	wp = c2->get_w(p);
 	wl = c2->get_w(l);
@@ -42,7 +42,7 @@ int KS_PointOnLineConstraint::getConstraintCount(){
 
 //returns the current values of the constraints
 dVector* KS_PointOnLineConstraint::getConstraintValues(){
-	Vector3d v = getErrorVector();
+	V3D v = getErrorVector();
 	C.resize(3, 0);
 	C[0] = v.x; C[1] = v.y; C[2] = v.z;
 	return &C;
@@ -58,7 +58,7 @@ void KS_PointOnLineConstraint::computeConstraintJacobian(){
 	FAST_RESIZE_MAT(dCds1, getConstraintCount(), KS_MechanicalComponent::getStateSize());
 	FAST_RESIZE_MAT(dCds2, getConstraintCount(), KS_MechanicalComponent::getStateSize());
 
-	Vector3d v = (wx - wp);
+	V3D v = (wx - wp);
 	//the energy of the constraint is 1/2 * y' * y, and gradient and hessian follow
 	c1->get_dw_ds(x, dwx_ds1);
 	c2->get_dw_ds(p, dwp_ds2);
@@ -90,8 +90,8 @@ void KS_PointOnLineConstraint::computeEnergyGradient(){
 	FAST_RESIZE_VEC(tmpE, KS_MechanicalComponent::getStateSize());
 	FAST_RESIZE_VEC(tmpY, 3);
 
-	Vector3d y = getErrorVector();
-	Vector3d v = (wx - wp);
+	V3D y = getErrorVector();
+	V3D v = (wx - wp);
 
 	//the energy of the constraint is 1/2 * y' * y, and gradient and hessian follow
 	c1->get_dw_ds(x, dwx_ds1);
@@ -135,8 +135,8 @@ void KS_PointOnLineConstraint::computeEnergyHessian(){
 	FAST_RESIZE_MAT(dCds1, getConstraintCount(), KS_MechanicalComponent::getStateSize());
 	FAST_RESIZE_MAT(dCds2, getConstraintCount(), KS_MechanicalComponent::getStateSize());
 
-	Vector3d y = getErrorVector();
-	Vector3d v = (wx - wp);
+	V3D y = getErrorVector();
+	V3D v = (wx - wp);
 
 	//the energy of the constraint is 1/2 * y' * y, and gradient and hessian follow
 	c1->get_dw_ds(x, dwx_ds1);
@@ -169,7 +169,7 @@ void KS_PointOnLineConstraint::computeEnergyHessian(){
 	preMultiply(wvCross, tmpY, -1, tmpV);
 	ADD_v_TIMES_ddx_dsds_TO_HESSIAN(tmpV, ddE_ds2ds2, l, c2, 1);
 
-	Vector3d col_i;
+	V3D col_i;
 	for (int i=0;i<KS_MechanicalComponent::getStateSize();i++){
 		col_i[0] = dwp_ds2(0, i); col_i[1] = dwp_ds2(1, i); col_i[2] = dwp_ds2(2, i);
 		toCrossProductMatrix(tmpCross, col_i);

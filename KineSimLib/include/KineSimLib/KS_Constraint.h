@@ -54,7 +54,7 @@ public:
 
 	virtual dVector* get_dE_dsi(int i) = 0;
 
-	virtual SparseMatrix* get_ddE_dsidsj(int i, int j) = 0;
+	virtual Matrix* get_ddE_dsidsj(int i, int j) = 0;
 	//Sparse matrix correction
 	//each constraint is composed of several scalar constraints - this is how many
 	virtual int getConstraintCount() = 0;

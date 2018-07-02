@@ -13,7 +13,7 @@ void KS_BoundToWorldConnection::connect(KS_MechanicalComponent* pCompIn, KS_Mech
 	assignConnectedComponents(pCompIn, pCompOut);
 	m_compIn = pCompIn;
 	m_compOut = pCompOut;
-//	m_compOut->addCylinderMesh(20, 0.1, 0.08, Point3d(), Vector3d(0,0,1));
+//	m_compOut->addCylinderMesh(20, 0.1, 0.08, P3D(), V3D(0,0,1));
 //	m_pin=m_compOut->getNumOfMeshes()-1;
 	if(!freezePhase) m_compOut->getMesh(m_pin)->setColour(1.0,0.0,0.0,1.0);
 
@@ -28,7 +28,7 @@ void KS_BoundToWorldConnection::setFreezePhase(bool fp){
 
 bool KS_BoundToWorldConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* ma){
 	if (f == NULL){
-		logPrint("KS_BoundToWorldConnection: Cannot load input file.\n");
+		Logger::print("KS_BoundToWorldConnection: Cannot load input file.\n");
 		return false;
 	}
 	//have a temporary buffer used to read the file line by line...
@@ -48,7 +48,7 @@ bool KS_BoundToWorldConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* ma)
 				break;
 			case KS_END:
 				if (m_compIn != NULL){
-					logPrint("KS_BoundToWorldConnection: Warning! Component IN should be NULL! Ignoring...");
+					Logger::print("KS_BoundToWorldConnection: Warning! Component IN should be NULL! Ignoring...");
 					m_compIn = NULL;
 				}
 				connect(this->m_compIn, this->m_compOut);
@@ -58,12 +58,12 @@ bool KS_BoundToWorldConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* ma)
 				freezePhase = true;
 				break;
 			default:
-				logPrint("Incorrect KS input file. Unexpected line: %s\n", buffer);
+				Logger::print("Incorrect KS input file. Unexpected line: %s\n", buffer);
 				return false;
 		}
 	}
 
-	logPrint("KS_BoundToWorldConnection: Warning - end of file met before END primitive\n");
+	Logger::print("KS_BoundToWorldConnection: Warning - end of file met before END primitive\n");
 	return false;
 }
 

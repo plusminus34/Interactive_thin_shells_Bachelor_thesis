@@ -12,7 +12,7 @@ void KS_PlanarComponentConnection::connect(KS_MechanicalComponent* pCompIn, KS_M
 	assignConnectedComponents(pCompIn, pCompOut);
 	m_compIn = pCompIn;
 	m_compOut = pCompOut;
-	m_compOut->addCylinderMesh(20, 0.015, 0.08, Point3d(), Vector3d(0,0,1));
+	m_compOut->addCylinderMesh(20, 0.015, 0.08, P3D(), V3D(0,0,1));
 	m_pin=m_compOut->getNumOfMeshes()-1;
 
 	assert(m_compIn == NULL);
@@ -22,7 +22,7 @@ void KS_PlanarComponentConnection::connect(KS_MechanicalComponent* pCompIn, KS_M
 
 bool KS_PlanarComponentConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* ma){
 	if (f == NULL){
-		logPrint("KS_PlanarComponentConnection: Cannot load input file.\n");
+		Logger::print("KS_PlanarComponentConnection: Cannot load input file.\n");
 		return false;
 	}
 	//have a temporary buffer used to read the file line by line...
@@ -42,19 +42,19 @@ bool KS_PlanarComponentConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* 
 				break;
 			case KS_END:
 				if (m_compIn != NULL){
-					logPrint("KS_PlanarComponentConnection: Warning! Component IN should be NULL! Ignoring...");
+					Logger::print("KS_PlanarComponentConnection: Warning! Component IN should be NULL! Ignoring...");
 					m_compIn = NULL;
 				}
 				connect(this->m_compIn, this->m_compOut);
 				return true;
 				break;
 			default:
-				logPrint("Incorrect KS input file. Unexpected line: %s\n", buffer);
+				Logger::print("Incorrect KS input file. Unexpected line: %s\n", buffer);
 				return false;
 		}
 	}
 
-	logPrint("KS_PlanarComponentConnection: Warning - end of file met before END primitive\n");
+	Logger::print("KS_PlanarComponentConnection: Warning - end of file met before END primitive\n");
 	return false;
 }
 
