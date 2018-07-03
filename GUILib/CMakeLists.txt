@@ -25,6 +25,7 @@ set(NANOGUI_BUILD_EXAMPLE OFF CACHE BOOL " " FORCE)
 set(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL " " FORCE)
 set(NANOGUI_INSTALL       OFF CACHE BOOL " " FORCE)
 set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
+set(NANOGUI_EIGEN_INCLUDE_DIR ${EIGEN3_INCLUDE_DIR})
 # add nanogui subirectory
 add_subdirectory(ext/nanogui)
 # For reliability of parallel build, make the NanoGUI targets dependencies
