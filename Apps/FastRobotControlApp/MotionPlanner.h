@@ -21,6 +21,7 @@ public:
 	double turningSpeedTarget = 0;		//turning speed target for the longer horizon plan
 	double bodyHeightTarget = 0.5;		//body height target for the longer horizon plan
 	double motionPlanStartTime = 0;		//the global time for the entire planning/control framework
+	double swingFootHeight = 0.03;	
 
 	FootFallPattern defaultFootFallPattern; //TODO: at some point we can also change the footfall pattern to make transitions, stand-to-walk-to-stand, etc...
 
@@ -37,7 +38,7 @@ public:
 	RobotState getPreplanedRobotStateAtTime(double t);
 
 	double globalMOPTRegularizer = 0.01;
-	MOPTParams moptParams;
+	double motionPlanDuration = 0.8;
 	FootFallPattern currentMOPTFootFallPattern;
 	LocomotionEngineManager* locomotionManager = nullptr;
 

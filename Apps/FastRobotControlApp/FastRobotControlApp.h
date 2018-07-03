@@ -52,7 +52,7 @@ public:
 		MOPT_WINDOW_ONLY,
 		SIM_AND_MOPT_WINDOWS
 	};
-	VIEW_OPTIONS viewOptions = MOPT_WINDOW_ONLY;
+	VIEW_OPTIONS viewOptions = SIM_AND_MOPT_WINDOWS;
 
 	int walkCycleIndex = 0;
 

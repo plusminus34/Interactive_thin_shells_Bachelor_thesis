@@ -86,7 +86,7 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 		cffp.addStepPattern(eeTraj[i].theLimb, eeTraj[i].endEffectorRB, eeTraj[i].endEffectorLocalCoords);
 	}
 
-	cffp.populateFrom(defaultFootFallPattern, moptParams.motionPlanDuration, motionPlanStartTime - moptParams.motionPlanDuration, motionPlanStartTime + preplanTimeHorizon);
+	cffp.populateFrom(defaultFootFallPattern, motionPlanDuration, motionPlanStartTime - motionPlanDuration, motionPlanStartTime + preplanTimeHorizon);
 	for (uint eeIndex = 0; eeIndex < eeTraj.size(); eeIndex++) {
 		//we must determine the stance phases for each limb
 		double t = motionPlanStartTime;
@@ -139,7 +139,7 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 				double w1 = (0.5 - swingPhaseAtStart) / (1 - swingPhaseAtStart);
 				double w2 = 1 - w1;
 				P3D eePosMidSwing = prePlanEETrajectories[eeIndex].getKnotValue(0) * (1-w1) + prePlanEETrajectories[eeIndex].getKnotValue(1) * (1-w2);
-				eePosMidSwing.setComponentAlong(Globals::worldUp, moptParams.swingFootHeight);
+				eePosMidSwing.setComponentAlong(Globals::worldUp, swingFootHeight);
 				prePlanEETrajectories[eeIndex].addKnot(timeToMidSwing, V3D() + eePosMidSwing);
 				count = 2;
 			}
@@ -147,7 +147,7 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 		for (count; count < prePlanEETrajectories[eeIndex].getKnotCount()-2; count+=3) {
 			P3D eePosMidSwing = (prePlanEETrajectories[eeIndex].getKnotValue(count+1) + prePlanEETrajectories[eeIndex].getKnotValue(count+2))/2.0;
 			double t = (prePlanEETrajectories[eeIndex].getKnotPosition(count + 1) + prePlanEETrajectories[eeIndex].getKnotPosition(count + 2)) / 2.0;
-			eePosMidSwing.setComponentAlong(Globals::worldUp, moptParams.swingFootHeight);
+			eePosMidSwing.setComponentAlong(Globals::worldUp, swingFootHeight);
 			prePlanEETrajectories[eeIndex].addKnot(t, V3D() + eePosMidSwing);
 		}
 	}
@@ -232,7 +232,7 @@ void MotionPlanner::prepareMOPTPlan(LocomotionEngineMotionPlan* motionPlan) {
 		return;
 
 	//the motion plan will be synced with the start of the motion pre-plan
-	motionPlan->motionPlanDuration = moptParams.motionPlanDuration;
+	motionPlan->motionPlanDuration = motionPlanDuration;
 	motionPlan->wrapAroundBoundaryIndex = -1;
 
 	double h = motionPlan->motionPlanDuration / (motionPlan->nSamplePoints - 1);

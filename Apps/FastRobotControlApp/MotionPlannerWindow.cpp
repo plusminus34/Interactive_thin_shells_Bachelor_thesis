@@ -45,12 +45,12 @@ void MotionPlannerWindow::addMenuItems() {
 	}
 
 	{
-		auto tmpVar = theApp->mainMenu->addVariable("swingFootHeight", motionPlanner->moptParams.swingFootHeight);
+		auto tmpVar = theApp->mainMenu->addVariable("swingFootHeight", motionPlanner->swingFootHeight);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.01);
 	}
 
 	{
-		auto tmpVar = theApp->mainMenu->addVariable("gait duration", motionPlanner->moptParams.motionPlanDuration);
+		auto tmpVar = theApp->mainMenu->addVariable("gait duration", motionPlanner->motionPlanDuration);
 		tmpVar->setSpinnable(true); tmpVar->setValueIncrement(0.05);
 	}
 }
@@ -72,8 +72,6 @@ LocomotionEngineManager* MotionPlannerWindow::initializeLocomotionEngine(){
 }
 
 void MotionPlannerWindow::setAnimationParams(double f, int animationCycle){
-	motionPlanner->moptParams.phase = f;
-	motionPlanner->moptParams.gaitCycle = animationCycle;
 	ffpViewer->cursorPosition = f;
 }
 
@@ -89,11 +87,8 @@ void MotionPlannerWindow::drawScene() {
 		ffpViewer->ffp = &motionPlanner->currentMOPTFootFallPattern;
 
 		motionPlanner->draw();
-		motionPlanner->moptParams.drawRobotMesh = motionPlanner->moptParams.drawSkeleton = motionPlanner->moptParams.drawAxesOfRotation = motionPlanner->moptParams.drawWheels = motionPlanner->moptParams.drawSupportPolygon = false;
-		motionPlanner->moptParams.drawContactForces = motionPlanner->moptParams.drawEndEffectorTrajectories = motionPlanner->moptParams.drawCOMTrajectory = motionPlanner->moptParams.drawOrientation = true;
-
 		glTranslated(1, 0, 0);
-		motionPlanner->locomotionManager->motionPlan->drawMotionPlan(motionPlanner->moptParams.phase, motionPlanner->moptParams.drawRobotMesh, motionPlanner->moptParams.drawSkeleton, motionPlanner->moptParams.drawAxesOfRotation, motionPlanner->moptParams.drawWheels, motionPlanner->moptParams.drawContactForces, motionPlanner->moptParams.drawSupportPolygon, motionPlanner->moptParams.drawEndEffectorTrajectories, motionPlanner->moptParams.drawCOMTrajectory, motionPlanner->moptParams.drawOrientation);
+		motionPlanner->locomotionManager->motionPlan->drawMotionPlan(ffpViewer->cursorPosition, false, false, false, false, true, true, true, true, true);
 	}
 
 //	RobotState animationState = motionPlanner->getRobotStateAtTime();

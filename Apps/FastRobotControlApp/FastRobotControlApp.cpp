@@ -57,6 +57,8 @@ FastRobotControlApp::FastRobotControlApp(){
 	robot->forward = V3D(0, 0, 1);
 	robot->right = V3D(-1, 0, 0);
 
+	plannerWindow->motionPlanner->generateMotionPlan();
+
 	followCameraTarget = true;
 }
 
