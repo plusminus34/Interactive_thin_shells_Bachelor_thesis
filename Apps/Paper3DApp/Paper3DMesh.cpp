@@ -118,18 +118,6 @@ void Paper3DMesh::init() {
 		printf("\n");
 	}
 	*/
-
-	//TODO do curved initial configuration elsewhere
-	bool curved_initial = true;
-	if (curved_initial) {
-		for (uint i = 0; i < nodes.size(); ++i) {
-			P3D p = nodes[i]->getWorldPosition();
-			double angle = (-2*p[0]*p[0] + p[0]) * 0.07 * PI;
-			p[2] = p[0] * sin(angle);
-			p[0] *= cos(angle);
-			nodes[i]->setWorldPosition(p);
-		}
-	}
 }
 
 void Paper3DMesh::setEdgesFromTriangles() {
@@ -398,7 +386,7 @@ void Paper3DMesh::makeCut(const DynamicArray<uint>& path) {
 					delete e;
 					for (int k = 0; k < 4; ++k) {
 						int num_adjacent_elements = e->n[k]->adjacentElements.size();
-						for (uint l = 0; l < num_adjacent_elements; ++l)
+						for (int l = 0; l < num_adjacent_elements; ++l)
 							if (e->n[k]->adjacentElements[l] == e) {
 								e->n[k]->adjacentElements[l] = e->n[k]->adjacentElements[num_adjacent_elements - 1];
 								e->n[k]->adjacentElements.pop_back();
@@ -569,7 +557,7 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 		}
 	}
 
-	//update n_adjacent_after
+	//update adjacent_to_n_after
 	for (int i = 0; i < num_regions; ++i) {
 		adjacent_to_n_after[i].push_back(adjacent_to_n_before[i_region_end[i][0]]);
 		for (int j = (i_region_end[i][0] + 1) % num_adjacent; j != i_region_end[i][1]; ++j) {

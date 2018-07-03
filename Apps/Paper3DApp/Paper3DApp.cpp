@@ -12,7 +12,6 @@
 #include "Paper3DMesh.h"
 #include <FEMSimLib/CSTriangle3D.h>
 #include "BendingEdge.h"
-#include "ZeroLengthSpring3D.h"
 #include "BarycentricZeroLengthSpring.h"
 #include "Pin.h"
 
@@ -40,19 +39,16 @@ Paper3DApp::Paper3DApp() {
 	int dim_x = 30;
 	int dim_y = 21;
 	double h = 0.1;
-	Paper3DMesh::generateRectangleSystem("../data/FEM/3d/testCSTriangleSystem.tri3d", dim_x, dim_y, h*(dim_x-1), h*(dim_y-1));
+	Paper3DMesh::generateRectangleSystem("../data/FEM/3d/PaperSheet.tri3d", dim_x, dim_y, h*(dim_x-1), h*(dim_y-1));
 
 	simMesh = new Paper3DMesh();
-	simMesh->readMeshFromFile("../data/FEM/3d/testCSTriangleSystem.tri3d");
-
-	//Fix left edge of the rectangle
-//	for (int i=0;i<2*dim_y;++i)
-//		simMesh->setPinnedNode(i, simMesh->nodes[i]->getUndeformedPosition());
+	simMesh->readMeshFromFile("../data/FEM/3d/PaperSheet.tri3d");
 
 	simMesh->setPinnedNode(0, simMesh->nodes[0]->getUndeformedPosition());
 	simMesh->setPinnedNode(dim_y, simMesh->nodes[dim_y]->getUndeformedPosition());
 	simMesh->setPinnedNode(dim_y + 1, simMesh->nodes[dim_y + 1]->getUndeformedPosition());
 
+	// obvious note: real paper is affected by gravity
 	//simMesh->addGravityForces(V3D(0.0, 0.0, 0.0));
 
 	mainMenu->addGroup("File options");
@@ -61,7 +57,6 @@ Paper3DApp::Paper3DApp() {
 	tools->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 		nanogui::Alignment::Middle, 0, 4));
 	nanogui::Button* button;
-	//TODO select file in a dialog?
 	button = new nanogui::Button(tools, "");
 	button->setIcon(ENTYPO_ICON_SAVE);
 	button->setCallback([this]() {
@@ -298,9 +293,6 @@ void Paper3DApp::updateParams() {
 		else if (CSTriangle3D* e = dynamic_cast<CSTriangle3D*>(simMesh->elements[i])) {
 			e->shearModulus = shearModulus;
 			e->bulkModulus = bulkModulus;
-		}
-		else if (ZeroLengthSpring3D* e = dynamic_cast<ZeroLengthSpring3D*>(simMesh->elements[i])) {
-			e->k = pin_k;
 		}
 		else if (BarycentricZeroLengthSpring* e = dynamic_cast<BarycentricZeroLengthSpring*>(simMesh->elements[i])) {
 			e->k = pin_k;

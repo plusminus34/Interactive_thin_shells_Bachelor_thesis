@@ -124,40 +124,35 @@ bool ShapeWindow::onMouseButtonEvent(int button, int action, int mods, double xP
 				first_point_set = true;
 			}
 			else {
-				if ((p[0] - xPin)*(p[0] - xPin) + (p[1] - yPin)*(p[1] - yPin) < 4*h*h) {// TODO: better distance measure
-					printf("Error: Pin endpoints are too close\n");
-				}
-				else {
-					Vector2d end0(xPin, yPin);
-					Vector2d end1(p[0], p[1]);
-					Vector2d dir = (end1 - end0).normalized();
+				Vector2d end0(xPin, yPin);
+				Vector2d end1(p[0], p[1]);
+				Vector2d dir = (end1 - end0).normalized();
 
-					int new_id = next_pin_id++;
+				int new_id = next_pin_id++;
 
-					PinHandle* new_handle = new PinHandle;
-					new_handle->pin_id = new_id;
-					new_handle->index = 0;
-					new_handle->x = end0[0];
-					new_handle->y = end0[1];
-					new_handle->angle = atan2(dir[1], dir[0]);
-					new_handle->flipped = true;
-					pinHandles.push_back(new_handle);
+				PinHandle* new_handle = new PinHandle;
+				new_handle->pin_id = new_id;
+				new_handle->index = 0;
+				new_handle->x = end0[0];
+				new_handle->y = end0[1];
+				new_handle->angle = atan2(dir[1], dir[0]);
+				new_handle->flipped = true;
+				pinHandles.push_back(new_handle);
 
-					new_handle = new PinHandle;
-					new_handle->pin_id = new_id;
-					new_handle->index = 1;
-					new_handle->x = end1[0];
-					new_handle->y = end1[1];
-					new_handle->angle = atan2(-dir[1], -dir[0]);
-					new_handle->flipped = false;
-					pinHandles.push_back(new_handle);
+				new_handle = new PinHandle;
+				new_handle->pin_id = new_id;
+				new_handle->index = 1;
+				new_handle->x = end1[0];
+				new_handle->y = end1[1];
+				new_handle->angle = atan2(-dir[1], -dir[0]);
+				new_handle->flipped = false;
+				pinHandles.push_back(new_handle);
 
-					Pin* toAdd = createPinFromHandles(pinHandles.size() - 2, pinHandles.size() - 1);
-					if(toAdd != NULL)
-						paperApp->addMeshElement(toAdd);
+				Pin* toAdd = createPinFromHandles(pinHandles.size() - 2, pinHandles.size() - 1);
+				if (toAdd != NULL)
+					paperApp->addMeshElement(toAdd);
 
-					first_point_set = false;
-				}
+				first_point_set = false;
 			}
 		}
 	}

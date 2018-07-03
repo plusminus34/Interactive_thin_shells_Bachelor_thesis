@@ -50,6 +50,11 @@ void Pin::draw(const dVector& x) {
 	glVertex3d(points[0][0], points[0][1], points[0][2]);
 	glVertex3d(points[1][0], points[1][1], points[1][2]);
 	glEnd();
+	glColor3d(0.5, 1, 1);
+	glBegin(GL_LINES);
+	glVertex3d(points[2][0], points[2][1], points[2][2]);
+	glVertex3d(points[3][0], points[3][1], points[3][2]);
+	glEnd();
 	for (int i = 0; i < 2; ++i) {
 		glColor3d(i, 1, 0);
 		glBegin(GL_LINE_LOOP);

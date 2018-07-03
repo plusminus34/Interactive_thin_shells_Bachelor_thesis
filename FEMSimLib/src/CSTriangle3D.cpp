@@ -169,10 +169,10 @@ void CSTriangle3D::computeGradientComponents(const dVector& x, const dVector& X)
 	if (matModel == MM_STVK){
         strain = F.transpose() * F; strain(0, 0) -= 1; strain(1, 1) -= 1; strain(2,2) -= 1;
         strain *= 0.5;
-		Matrix2x2 tmp = 2 * shearModulus * strain;// TODO avoid temporary matrix or at least rename it
-		tmp(0, 0) += bulkModulus * (strain(0, 0) + strain(1, 1));
-		tmp(1, 1) += bulkModulus * (strain(0, 0) + strain(1, 1));
-        dEdF = F * tmp;
+		Matrix2x2 stress = 2 * shearModulus * strain;
+		stress(0, 0) += bulkModulus * (strain(0, 0) + strain(1, 1));
+		stress(1, 1) += bulkModulus * (strain(0, 0) + strain(1, 1));
+        dEdF = F * stress;
 	}else if (matModel == MM_LINEAR_ISOTROPIC){
 		// not implemented
 	}else if (matModel == MM_NEO_HOOKEAN){
@@ -186,16 +186,19 @@ void CSTriangle3D::computeGradientComponents(const dVector& x, const dVector& X)
 }
 
 void CSTriangle3D::computeHessianComponents(const dVector& x, const dVector& X) {
-    /*TODO update description
+    /*
+	Most of this is simply copied from CSTElement2D.
+	 The only thing that's different is that some matrices are 3x2 or 3x3 as opposed to 2x2.
     H = dfdx = ddEdxdx.
     H = restShapeArea * dPdx(F; dFdx) * transpose(dXInv)
     There are different formula of dPdx in different models. See below.
     dFdx = dDsdx * dXInv
     dDs = [	dx1 - dx0, dx2 - dx0
-    dy1 - dy0, dy2 - dy0 ]
+            dy1 - dy0, dy2 - dy0
+			dz1 - dz0, dz2 - dz0 ] (that is one extra row not in the 2D case)
     let dx0,dy0,dx1,dy1,dx2,dy2 be 1 respectively (while others keep 0 so that we get dDsd(xk)),
     we can calculate 6 elements of H in each turn ( {l = 0..5}ddEd(xk)d(xl) ), and finally
-    fill out whole H matrix. (3*3=9 small 2x2 matrices)
+    fill out whole H matrix. (9 3x3 matrices as opposed to the 2x2 matrices of the 2D case)
     */
     if (matModel == MM_STVK)
     {
