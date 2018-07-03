@@ -292,6 +292,7 @@ LocomotionEngineManager* MotionPlanner::initializeMOPTEngine() {
 
 void MotionPlanner::generateMotionPlan() {
 	initialized = true;
+	double energyVal = 0;
 
 	locomotionManager->printDebugInfo = false;
 	locomotionManager->checkDerivatives = false;
@@ -302,10 +303,10 @@ void MotionPlanner::generateMotionPlan() {
 
 	RobotState rs(robot);
 	preplan(&rs);
+
 	prepareMOPTPlan(locomotionManager->motionPlan);
 
 	locomotionManager->runMOPTStep(OPT_GRFS);
-	double energyVal = 0;
 	for (int i = 0; i<10; i++)
 		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
 
