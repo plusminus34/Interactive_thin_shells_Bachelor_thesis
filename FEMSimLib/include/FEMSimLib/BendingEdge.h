@@ -6,6 +6,13 @@
 
 /*
 Element that defines a preferred angle between 2 triangles
+ 4 nodes are required and not all of them are equal:
+  nodes 0 and 1 are on the actual edge
+  nodes 2 and 3 are the other triangle corners
+
+    0 - 2
+   / \ /
+  3 - 1
 */
 class BendingEdge : public SimMeshElement {
 	friend class Paper3DApp;

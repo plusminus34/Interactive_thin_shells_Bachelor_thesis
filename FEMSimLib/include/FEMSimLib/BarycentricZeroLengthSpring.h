@@ -5,7 +5,7 @@
 #include <MathLib/Matrix.h>
 
 /*
-	Spring that pins two points (given as a linear combination of three nodes each) together
+	Zero-length Spring that connects two points given as a linear combination of three nodes each
 */
 class BarycentricZeroLengthSpring : public SimMeshElement {
 	friend class Paper3DApp;

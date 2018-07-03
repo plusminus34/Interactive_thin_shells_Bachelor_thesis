@@ -1,4 +1,4 @@
-#include "BendingEdge.h"
+#include <FEMSimLib/BendingEdge.h>
 #include <GUILib/GLUtils.h>
 #include <FEMSimLib/SimulationMesh.h>
 

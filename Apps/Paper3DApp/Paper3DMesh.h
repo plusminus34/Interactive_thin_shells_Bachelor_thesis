@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Pin.h"
+#include <FEMSimLib/Pin.h>
 #include <FEMSimLib/SimulationMesh.h>
 
 class Paper3DMesh : public SimulationMesh {

@@ -10,8 +10,10 @@ typedef Eigen::Matrix<double, 2, 3> Matrix2x3;
 
 enum MaterialModel2D {MM_LINEAR_ISOTROPIC=0, MM_STVK, MM_NEO_HOOKEAN};
 
-/**
-	This class implements Constant Strain Triangles elements in 2D
+/*
+	This class implements Constant Strain Triangles elements in 3D
+
+	Mostly the same as CSTElement2D except for matrix sizes
 */
 class CSTriangle3D : public SimMeshElement {
 	friend class Paper3DApp;
@@ -35,7 +37,6 @@ private:
 	V3D dEdx[3];
 	Matrix3x3 ddEdxdx[3][3];
 	//tmp matrices used to speed up computation of the deformation gradient, green strain, etc
-	//TODO: correct sizes
 	Matrix2x2 dXInv, strain;
 	Matrix3x2 dx, F, dEdF;
 

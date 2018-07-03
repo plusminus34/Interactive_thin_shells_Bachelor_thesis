@@ -1,4 +1,4 @@
-#include "BarycentricZeroLengthSpring.h"
+#include <FEMSimLib/BarycentricZeroLengthSpring.h>
 #include <GUILib/GLUtils.h>
 
 BarycentricZeroLengthSpring::BarycentricZeroLengthSpring(SimulationMesh* simMesh, Node* n11, Node* n12, Node* n13, Node* n21, Node* n22, Node* n23) : SimMeshElement(simMesh) {

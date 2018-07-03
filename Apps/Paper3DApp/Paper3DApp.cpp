@@ -11,8 +11,8 @@
 #include <vector>
 #include "Paper3DMesh.h"
 #include <FEMSimLib/CSTriangle3D.h>
-#include "BendingEdge.h"
-#include "Pin.h"
+#include <FEMSimLib/BendingEdge.h>
+#include <FEMSimLib/Pin.h>
 
 Paper3DApp::Paper3DApp() {
 	setWindowTitle("Test Paper3D Application...");

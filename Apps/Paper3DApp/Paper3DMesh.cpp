@@ -2,7 +2,7 @@
 #include <OptimizationLib/NewtonFunctionMinimizer.h>
 #include <FEMSimLib/CSTriangle3D.h>
 #include <FEMSimLib/FixedPointSpring3D.h>
-#include "BendingEdge.h"
+#include <FEMSimLib/BendingEdge.h>
 
 Paper3DMesh::Paper3DMesh(){
 }

@@ -1,4 +1,4 @@
-#include "Pin.h"
+#include <FEMSimLib/Pin.h>
 #include <GUILib/GLUtils.h>
 
 Pin::Pin(SimulationMesh* simMesh, int id, ZLSpring* s1, ZLSpring* s2, ZLSpring* s3) : SimMeshElement(simMesh) {

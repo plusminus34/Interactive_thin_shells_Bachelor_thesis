@@ -3,12 +3,14 @@
 #include <FEMSimLib/Node.h>
 #include <MathLib/MathLib.h>
 #include <MathLib/Matrix.h>
-#include "BarycentricZeroLengthSpring.h"
+#include <FEMSimLib/BarycentricZeroLengthSpring.h>
 
 typedef BarycentricZeroLengthSpring ZLSpring;
 
 /*
-	Spring that pins two nodes together
+	Pin connecting two triangles together using zero-length springs on the triangle corners
+
+	Created for Paper3DApp, the general usefulness of this class is questionable
 */
 class Pin : public SimMeshElement {
 	friend class Paper3DApp;
@@ -20,6 +22,7 @@ protected:
 
 	virtual double getMass();
 
+	// NOTE: Energy is computed by summing over the component springs. A pin and its springs should not be part of the same mesh
 	virtual double getEnergy(const dVector& x, const dVector& X);
 	virtual void addEnergyGradientTo(const dVector& x, const dVector& X, dVector& grad);
 	virtual void addEnergyHessianTo(const dVector& x, const dVector& X, std::vector<MTriplet>& hesEntries);

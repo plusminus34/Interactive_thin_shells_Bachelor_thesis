@@ -1,7 +1,6 @@
 #include "ShapeWindow.h"
-#include "BendingEdge.h"
 #include "Paper3DMesh.h"
-#include "Pin.h"
+#include <FEMSimLib/BendingEdge.h>
 #include <GUILib/GLTrackingCamera.h>
 
 ShapeWindow::ShapeWindow(int x, int y, int w, int h, Paper3DApp *glApp) : GLWindow3D(x, y, w, h) {

@@ -1,11 +1,9 @@
-#include "ZeroLengthSpring3D.h"
+#include <FEMSimLib\ZeroLengthSpring3D.h>
 
 ZeroLengthSpring3D::ZeroLengthSpring3D(SimulationMesh* simMesh, Node* n1, Node* n2) : SimMeshElement(simMesh) {
 
     this->n[0] = n1;
     this->n[1] = n2;
-
-	computeHessianComponents();
 }
 
 ZeroLengthSpring3D::~ZeroLengthSpring3D() {
