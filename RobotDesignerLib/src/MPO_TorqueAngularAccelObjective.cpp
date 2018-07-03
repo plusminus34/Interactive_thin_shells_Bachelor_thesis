@@ -6,13 +6,16 @@ MPO_TorqueAngularAccelObjective::MPO_TorqueAngularAccelObjective(LocomotionEngin
 	this->description = objectiveDescription;
 	this->weight = weight;
 
-	dummyR.resize(theMotionPlan->nSamplePoints, Matrix3x3::Identity());
-	dummyQ.resize(theMotionPlan->nSamplePoints, Matrix3x3::Identity());
 	updateDummyMatrices();
 }
 
 void MPO_TorqueAngularAccelObjective::updateDummyMatrices() {
 	Matrix3x3 dummy = AngleAxisd(DUMMY_ANGLE, Vector3d(0, 1, 0)).toRotationMatrix();
+
+	if (dummyR.size() != theMotionPlan->nSamplePoints || dummyQ.size() != theMotionPlan->nSamplePoints){
+		dummyR.resize(theMotionPlan->nSamplePoints, Matrix3x3::Identity());
+		dummyQ.resize(theMotionPlan->nSamplePoints, Matrix3x3::Identity());
+	}
 
 	V3D axis[3];
 	for (int i = 0; i < 3; i++) {

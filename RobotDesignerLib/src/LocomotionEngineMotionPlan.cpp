@@ -27,6 +27,7 @@ void LocomotionEngine_EndEffectorTrajectory::initialize(int nPos){
 	wheelSpeed.resize(nPos);
 	wheelYawAngle.resize(nPos);
 	wheelTiltAngle.resize(nPos, 0/*M_PI*0.25*/);
+	targetEEPosY.resize(nPos);
 
 	contactFlag.resize(nPos, 0);
 	EEWeights.resize(nPos, 0.05);
@@ -1112,7 +1113,6 @@ void LocomotionEngineMotionPlan::readParamsFromFile(FILE *fp) {
 	V3D comRotationAngles(initialRobotState[3], initialRobotState[4], initialRobotState[5]);
 	bodyTrajectory.initialize(nSamplePoints, defaultCOMPosition, comRotationAngles, robotRepresentation->getQAxis(3),
 		robotRepresentation->getQAxis(4), robotRepresentation->getQAxis(5));
-
 
 	for (int i = 0; i < nSamplePoints; i++)
 		fscanf(fp, "%lf %lf %lf", &bodyTrajectory.pos[0][i], &bodyTrajectory.pos[1][i], &bodyTrajectory.pos[2][i]);

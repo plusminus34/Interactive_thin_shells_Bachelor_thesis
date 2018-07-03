@@ -189,7 +189,6 @@ void LocomotionEngine_EnergyFunction::setCurrentBestSolution(const dVector& p){
 			tmpObj->updateDummyMatrices();
 	}
 
-
 	if (printDebugInfo){
 		Logger::consolePrint("-------------------------------\n");
 		Logger::logPrint("-------------------------------\n");
