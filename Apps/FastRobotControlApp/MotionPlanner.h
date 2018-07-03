@@ -11,6 +11,7 @@
 */
 class MotionPlanner{
 public:
+	bool initialized = false;
 	Robot* robot = NULL;
 
 	//these are the global goals for the longer horizon plan...
@@ -51,9 +52,6 @@ public:
 
 	void generateMotionPlan();
 
-	void advanceMotionPlanGlobalTime(int nSteps);
-
 	void draw();
-
 };
 

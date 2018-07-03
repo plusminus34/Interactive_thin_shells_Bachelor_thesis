@@ -186,6 +186,8 @@ RobotState MotionPlanner::getPreplanedRobotStateAtTime(double t) {
 }
 
 void MotionPlanner::draw() {
+	if (!initialized)
+		return;
 
 	glColor4d(1,0,0,0.2);
 
@@ -226,6 +228,9 @@ void MotionPlanner::draw() {
 }
 
 void MotionPlanner::prepareMOPTPlan(LocomotionEngineMotionPlan* motionPlan) {
+	if (!initialized)
+		return;
+
 	//the motion plan will be synced with the start of the motion pre-plan
 	motionPlan->motionPlanDuration = moptParams.motionPlanDuration;
 	motionPlan->wrapAroundBoundaryIndex = -1;
@@ -286,6 +291,8 @@ LocomotionEngineManager* MotionPlanner::initializeMOPTEngine() {
 }
 
 void MotionPlanner::generateMotionPlan() {
+	initialized = true;
+
 	locomotionManager->printDebugInfo = false;
 	locomotionManager->checkDerivatives = false;
 
@@ -303,9 +310,4 @@ void MotionPlanner::generateMotionPlan() {
 		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
 
 	Logger::consolePrint("It took %lfs to generate motion plan, final energy value: %lf\n", t.timeEllapsed(), energyVal);
-}
-
-void MotionPlanner::advanceMotionPlanGlobalTime(int nSteps) {
-	
-	;
 }

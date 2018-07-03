@@ -32,16 +32,13 @@ FastRobotControlApp::FastRobotControlApp(){
 	tools->setLayout(new nanogui::BoxLayout(nanogui::Orientation::Horizontal,
 		nanogui::Alignment::Middle, 0, 4));
 
-/*
 	nanogui::Button* button;
 
 	button = new nanogui::Button(tools, "goMOPT");
 	button->setFontSize(14);
 	button->setCallback([this]() {
-		plannerWindow->optimizeMotionPlan();
+		plannerWindow->motionPlanner->generateMotionPlan();
 	});
-*/
-
 
 	mainMenu->addGroup("MOPT Options");
 	plannerWindow->addMenuItems();
@@ -59,7 +56,6 @@ FastRobotControlApp::FastRobotControlApp(){
 	loadFile("..\\data\\RobotDesigner\\SpotMiniDemo.batch");
 	robot->forward = V3D(0, 0, 1);
 	robot->right = V3D(-1, 0, 0);
-	plannerWindow->motionPlanner->generateMotionPlan();
 
 	followCameraTarget = true;
 }
