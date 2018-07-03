@@ -11,7 +11,7 @@ MotionPlannerWindow::MotionPlannerWindow(int x, int y, int w, int h, BaseRobotCo
 
 	ffpViewer = new FootFallPatternViewer(x, 0, (int)(w), (int)(h / 4.0));
 	ffpViewer->cursorMovable = true;
-	ffpViewer->ffp = &motionPlanner->moptFootFallPattern;
+	ffpViewer->ffp = &motionPlanner->currentMOPTFootFallPattern;
 
 	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutRightAxis = 0.25;
 	dynamic_cast<GLTrackingCamera*>(this->camera)->rotAboutUpAxis = 0.95;
@@ -63,8 +63,8 @@ void MotionPlannerWindow::loadRobot(Robot* robot){
 	int nLegs = robot->bFrame->limbs.size();
 
 	// ******************* footfall patern *******************
-	motionPlanner->moptFootFallPattern = FootFallPattern();
-	motionPlanner->moptFootFallPattern.strideSamplePoints = 10;
+	motionPlanner->currentMOPTFootFallPattern = FootFallPattern();
+	motionPlanner->currentMOPTFootFallPattern.strideSamplePoints = 10;
 }
 
 LocomotionEngineManager* MotionPlannerWindow::initializeLocomotionEngine(){
@@ -78,7 +78,7 @@ void MotionPlannerWindow::setAnimationParams(double f, int animationCycle){
 }
 
 void MotionPlannerWindow::loadFFPFromFile(const char* fName){
-	motionPlanner->moptFootFallPattern.loadFromFile(fName);
+	motionPlanner->currentMOPTFootFallPattern.loadFromFile(fName);
 }
 
 void MotionPlannerWindow::drawScene() {
@@ -86,7 +86,7 @@ void MotionPlannerWindow::drawScene() {
 	glEnable(GL_LIGHTING);
 
 	if (motionPlanner) {
-		ffpViewer->ffp = &motionPlanner->moptFootFallPattern;
+		ffpViewer->ffp = &motionPlanner->currentMOPTFootFallPattern;
 
 		motionPlanner->draw();
 		motionPlanner->moptParams.drawRobotMesh = motionPlanner->moptParams.drawSkeleton = motionPlanner->moptParams.drawAxesOfRotation = motionPlanner->moptParams.drawWheels = motionPlanner->moptParams.drawSupportPolygon = false;

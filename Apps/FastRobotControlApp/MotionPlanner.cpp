@@ -273,13 +273,13 @@ void MotionPlanner::prepareMOPTPlan(LocomotionEngineMotionPlan* motionPlan) {
 	motionPlan->bodyTrajectory.initialLinearVelocity = plannerStartState.getVelocity();
 	motionPlan->bodyTrajectory.initialAngularVelocity = plannerStartState.getAngularVelocity();
 
-	motionPlan->syncFootFallPatternWithMotionPlan(moptFootFallPattern);
+	motionPlan->syncFootFallPatternWithMotionPlan(currentMOPTFootFallPattern);
 }
 
 LocomotionEngineManager* MotionPlanner::initializeMOPTEngine() {
 	delete locomotionManager;
 
-	locomotionManager = new LocomotionEngineManagerGRFv3(robot, &moptFootFallPattern, moptFootFallPattern.strideSamplePoints + 1);
+	locomotionManager = new LocomotionEngineManagerGRFv3(robot, &currentMOPTFootFallPattern, currentMOPTFootFallPattern.strideSamplePoints + 1);
 
 	bodyHeightTarget = locomotionManager->motionPlan->initialRS.getPosition().getComponentAlong(Globals::worldUp);
 	robot->setState(&locomotionManager->motionPlan->initialRS);
@@ -298,8 +298,8 @@ void MotionPlanner::generateMotionPlan() {
 	locomotionManager->checkDerivatives = false;
 
 	Timer t;
-	if (defaultFootFallPattern.stepPatterns.size() < moptFootFallPattern.stepPatterns.size())
-		defaultFootFallPattern = moptFootFallPattern;
+	if (defaultFootFallPattern.stepPatterns.size() < currentMOPTFootFallPattern.stepPatterns.size())
+		defaultFootFallPattern = currentMOPTFootFallPattern;
 
 	RobotState rs(robot);
 	preplan(&rs);

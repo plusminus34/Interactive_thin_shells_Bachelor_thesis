@@ -243,17 +243,17 @@ void FastRobotControlApp::loadFile(const char* fName) {
 	if (fNameExt.compare("ffp") == 0) {
 		plannerWindow->motionPlanner->defaultFootFallPattern.loadFromFile(fName);
 		plannerWindow->motionPlanner->defaultFootFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
-		plannerWindow->motionPlanner->moptFootFallPattern = plannerWindow->motionPlanner->defaultFootFallPattern;
+		plannerWindow->motionPlanner->currentMOPTFootFallPattern = plannerWindow->motionPlanner->defaultFootFallPattern;
 		return;
 	}
 
 	if (fNameExt.compare("p") == 0) {
 		if (plannerWindow->motionPlanner->locomotionManager && plannerWindow->motionPlanner->locomotionManager->motionPlan){
 			plannerWindow->motionPlanner->locomotionManager->motionPlan->readParamsFromFile(fName);
-			plannerWindow->motionPlanner->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(plannerWindow->motionPlanner->moptFootFallPattern);
-			plannerWindow->motionPlanner->locomotionManager->motionPlan->syncMotionPlanWithFootFallPattern(plannerWindow->motionPlanner->moptFootFallPattern);
+			plannerWindow->motionPlanner->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(plannerWindow->motionPlanner->currentMOPTFootFallPattern);
+			plannerWindow->motionPlanner->locomotionManager->motionPlan->syncMotionPlanWithFootFallPattern(plannerWindow->motionPlanner->currentMOPTFootFallPattern);
 
-			plannerWindow->motionPlanner->moptFootFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+			plannerWindow->motionPlanner->currentMOPTFootFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
 		}
 		return;
 	}

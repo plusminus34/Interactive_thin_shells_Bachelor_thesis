@@ -38,7 +38,7 @@ public:
 
 	double globalMOPTRegularizer = 0.01;
 	MOPTParams moptParams;
-	FootFallPattern moptFootFallPattern;
+	FootFallPattern currentMOPTFootFallPattern;
 	LocomotionEngineManager* locomotionManager = nullptr;
 
 	void preplan(RobotState* currentRobotState);
