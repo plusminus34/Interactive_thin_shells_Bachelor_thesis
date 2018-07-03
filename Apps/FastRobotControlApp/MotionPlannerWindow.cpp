@@ -64,7 +64,16 @@ void MotionPlannerWindow::loadRobot(Robot* robot){
 
 	// ******************* footfall patern *******************
 	motionPlanner->currentMOPTFootFallPattern = FootFallPattern();
-	motionPlanner->currentMOPTFootFallPattern.strideSamplePoints = 10;
+
+	if (nLegs > 0) {
+		int iMin = 0, iMax = 12 / nLegs - 1;
+		motionPlanner->currentMOPTFootFallPattern.strideSamplePoints = 12;
+		for (int j = 0; j < nLegs; j++)
+			motionPlanner->currentMOPTFootFallPattern.addStepPattern(robot->bFrame->limbs[j], iMin + j*12 / nLegs, iMax + j*12 / nLegs);
+
+		motionPlanner->currentMOPTFootFallPattern.loadFromFile("../out/tmpFFP.ffp");
+	}
+
 }
 
 LocomotionEngineManager* MotionPlannerWindow::initializeLocomotionEngine(){
