@@ -12,7 +12,6 @@
 #include "Paper3DMesh.h"
 #include <FEMSimLib/CSTriangle3D.h>
 #include "BendingEdge.h"
-#include "BarycentricZeroLengthSpring.h"
 #include "Pin.h"
 
 Paper3DApp::Paper3DApp() {
@@ -50,6 +49,13 @@ Paper3DApp::Paper3DApp() {
 
 	// obvious note: real paper is affected by gravity
 	//simMesh->addGravityForces(V3D(0.0, 0.0, 0.0));
+
+	//slightly deformed initial configuration to avoid some annoying problems occurring if everything is in one plane
+	for (int i = 0; i < dim_x; ++i)
+		for (int j = 0; j < dim_y; ++j) {
+			P3D newPos(i*h, j*h, (i + j) * h / (dim_x + dim_y));
+			simMesh->nodes[dim_y*i + j]->setWorldPosition(newPos);
+		}
 
 	mainMenu->addGroup("File options");
 	nanogui::Widget *tools = new nanogui::Widget(mainMenu->window());
@@ -293,9 +299,6 @@ void Paper3DApp::updateParams() {
 		else if (CSTriangle3D* e = dynamic_cast<CSTriangle3D*>(simMesh->elements[i])) {
 			e->shearModulus = shearModulus;
 			e->bulkModulus = bulkModulus;
-		}
-		else if (BarycentricZeroLengthSpring* e = dynamic_cast<BarycentricZeroLengthSpring*>(simMesh->elements[i])) {
-			e->k = pin_k;
 		}
 		else if (Pin* e = dynamic_cast<Pin*>(simMesh->elements[i])) {
 			e->setStiffness(pin_k);
