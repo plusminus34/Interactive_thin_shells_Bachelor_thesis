@@ -29,8 +29,7 @@ class EnergyWindow;
  */
 class FastRobotControlApp : public BaseRobotControlApp {
 public:
-	double time = 0;
-	double phase = 0;
+	double globalTime = 0;
 
 	MotionPlannerWindow* plannerWindow = NULL;
 	SimulationWindow* simWindow = NULL;

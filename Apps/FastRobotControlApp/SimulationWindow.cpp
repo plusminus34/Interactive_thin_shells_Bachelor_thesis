@@ -111,6 +111,9 @@ Robot* SimulationWindow::loadRobot(const char* fName) {
 
 	worldOracle->writeRBSFile("../out/tmpEnvironment.rbs");
 	rbEngine->loadRBsFromFile("../out/tmpEnvironment.rbs");
+
+	stridePhase = 0;
+
 	return robot;
 }
 
@@ -120,6 +123,8 @@ void SimulationWindow::loadMotionPlan(LocomotionEngineMotionPlan* mp) {
 
 	trackingController = new TrackingController(robot, mp);
 	playbackController = new PlaybackController(robot, mp);
+
+	stridePhase = 0;
 }
 
 void SimulationWindow::drawScene() {
@@ -165,7 +170,9 @@ void SimulationWindow::doPhysicsStep(double simStep) {
 
 void SimulationWindow::advanceSimulation(double dt) {
 	if (!activeController)
-		return ;
+		return;
+
+	activeController->stridePhase = stridePhase;
 
 	if (activeController == playbackController){
 		activeController->computeControlSignals(dt);
@@ -185,4 +192,5 @@ void SimulationWindow::advanceSimulation(double dt) {
 		}
 	}
 
+	stridePhase = activeController->stridePhase;
 }

@@ -15,8 +15,8 @@ class MotionPlanner;
 
 class MotionPlannerWindow : public GLWindow3D {
 public:
-	MotionPlanner* motionPlanner;
-	BaseRobotControlApp* theApp;
+	MotionPlanner* motionPlanner = NULL;
+	BaseRobotControlApp* theApp = NULL;
 	Robot* robot = nullptr;
 	FootFallPatternViewer* ffpViewer = nullptr;
 	bool showFFPViewer = true;

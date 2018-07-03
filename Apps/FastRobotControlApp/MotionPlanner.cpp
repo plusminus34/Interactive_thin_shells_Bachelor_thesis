@@ -306,6 +306,6 @@ void MotionPlanner::generateMotionPlan() {
 }
 
 void MotionPlanner::advanceMotionPlanGlobalTime(int nSteps) {
-	//we are using a discrete number of steps to keep the (discrete) footfall pattern consistent. Otherwise we'd need to interpolate between stance/swing phases and there are no good answers...
-	motionPlanStartTime += nSteps * moptParams.motionPlanDuration / (locomotionManager->motionPlan->nSamplePoints - 1);
+	
+	;
 }

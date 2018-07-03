@@ -299,27 +299,31 @@ void FastRobotControlApp::setActiveController() {
 
 // Run the App tasks
 void FastRobotControlApp::process() {
-	plannerWindow->motionPlanner->generateMotionPlan();
-	return;
+//	plannerWindow->motionPlanner->generateMotionPlan();
+//	return;
 
 	double dt = 1.0 / desiredFrameRate;
 
 	if (slowMo)
 		dt /= slowMoFactor;
 
-/*
-	time += dt;
-	phase += dt / plannerWindow->locomotionManager->motionPlan->motionPlanDuration;
-	double dPhase = 1.0 / (plannerWindow->locomotionManager->motionPlan->nSamplePoints - 1);
+	globalTime += dt;
+	simWindow->advanceSimulation(dt);
+
+	double dPhase = 1.0 / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
 	int n = 1;
-	if (phase > n * dPhase) {
-		phase -= n * dPhase;
-		RobotState plannedRobotState = plannerWindow->fmpp->getRobotStateAtTime(time);
-		robot->setState(&plannedRobotState);
-		plannerWindow->advanceMotionPlanGlobalTime(n);
-		plannerWindow->generateMotionPreplan();
+	if (simWindow->stridePhase > n * dPhase) {
+		simWindow->stridePhase -= n * dPhase;
+//		double timeAfterSwitch = ;
+		
+//		RobotState plannedRobotState = plannerWindow->motionPlanner->getPreplanedRobotStateAtTime(globalTime);
+//		robot->setState(&plannedRobotState);
+
+//we are using a discrete number of steps to keep the (discrete) footfall pattern consistent. Otherwise we'd need to interpolate between stance/swing phases and there are no good answers...
+		plannerWindow->motionPlanner->motionPlanStartTime += n * plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
+		plannerWindow->motionPlanner->generateMotionPlan();
 	}
-*/
+
 	return;
 
 /*
@@ -359,8 +363,8 @@ void FastRobotControlApp::drawScene() {
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
 void FastRobotControlApp::drawAuxiliarySceneInfo() {
 	if (shouldShowPlannerWindow()) {
-		if (appIsRunning)
-			plannerWindow->ffpViewer->cursorPosition = phase;
+		if (appIsRunning && simWindow && simWindow->activeController)
+			plannerWindow->ffpViewer->cursorPosition = simWindow->activeController->stridePhase;
 
 		plannerWindow->setAnimationParams(plannerWindow->ffpViewer->cursorPosition, walkCycleIndex);
 		plannerWindow->draw();

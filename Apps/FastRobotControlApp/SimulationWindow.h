@@ -16,6 +16,8 @@ public:
 
 	Robot* robot = NULL;
 
+	double stridePhase = 0;
+
 	bool drawMeshes = true, drawMOIs = false, drawCDPs = false, drawSkeletonView = true, drawContactForces = true, drawOrientation = true;
 
 	void addMenuItems();
