@@ -31,7 +31,7 @@ public:
 	DynamicArray<Trajectory3D> prePlanEETrajectories;
 	ContinuousFootFallPattern cffp;
 
-	RobotState plannerStartState = RobotState(13);
+	RobotState plannerStartState;
 
 	RobotState getPreplanedRobotStateAtTime(double t);
 

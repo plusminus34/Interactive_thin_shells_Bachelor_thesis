@@ -10,7 +10,7 @@
 class BaseRobotControlApp : public GLApplication {
 public:
 	Robot* robot = NULL;
-	RobotState startingRobotState = RobotState(13);
+	RobotState startingRobotState;
 
 	double slowMoFactor = 5.0;
 

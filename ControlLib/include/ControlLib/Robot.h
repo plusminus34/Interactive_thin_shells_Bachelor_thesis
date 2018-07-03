@@ -248,6 +248,16 @@ public:
 	~RobotState() {
 	}
 
+	RobotState(const RobotState& other) {
+		rootQ = other.rootQ;
+		rootPos = other.rootPos;
+		rootVel = other.rootVel;
+		rootAngVel = other.rootAngVel;
+		headingAxis = other.headingAxis;
+		joints = other.joints;
+		auxiliaryJoints = other.auxiliaryJoints;
+	}
+
 	RobotState(int jCount = 0, int aJCount = 0){
 		joints.resize(jCount);
 		auxiliaryJoints.resize(aJCount);
