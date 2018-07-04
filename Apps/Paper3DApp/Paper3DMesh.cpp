@@ -439,15 +439,21 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 	// Occurs on strips that are one triangle wide and in corners (-> literal corner case)
 	bool is_corner_case = false;
 	if (boundary[n] && ((n_next != -1 && boundary[n_next]) || (n_prev != -1 && boundary[n_prev]))) {
-		is_corner_case = true;
-		num_copies = 0;
 		int last = orderedAdjacentNodes[n].size() - 1;
 		if (n_prev != -1 && boundary[n_prev])
-			if (orderedAdjacentNodes[n][0] != n_prev && orderedAdjacentNodes[n][last] != n_prev)
-				++num_copies;
+			if (orderedAdjacentNodes[n][0] != n_prev && orderedAdjacentNodes[n][last] != n_prev) {
+				is_corner_case = true;
+				num_copies = 1;
+			}
 		if (n_next != -1 && boundary[n_next])
-			if (orderedAdjacentNodes[n][0] != n_next && orderedAdjacentNodes[n][last] != n_next)
-				num_copies++;
+			if (orderedAdjacentNodes[n][0] != n_next && orderedAdjacentNodes[n][last] != n_next) {
+				if (is_corner_case)
+					num_copies = 2;
+				else {
+					is_corner_case = true;
+					num_copies = 1;
+				}
+			}
 	}
 
 	int num_regions = num_copies + 1;// = num_copies + 1, 3 at most
@@ -569,6 +575,12 @@ void Paper3DMesh::cutAtNode(int n_prev, int n, int n_next, int &copy_index) {
 	if (num_regions == 2 && boundary[n] && (n_next == -1 || boundary[n_next])) {
 		if(!is_corner_case || (n_prev != -1 && boundary[n_prev]))
 			std::swap(adjacent_to_n_after[0], adjacent_to_n_after[1]);
+		if (is_corner_case) {
+			int last = adjacent_to_n_before.size() - 1;
+			if (n_prev != -1 && (n_prev == adjacent_to_n_before[0] || n_prev == adjacent_to_n_before[last]))
+				std::swap(adjacent_to_n_after[0], adjacent_to_n_after[1]);
+			// this just swaps it back in most cases, but hey: it works!
+		}
 	}
 	if (region_of_n_prev_copy != -1)
 		adjacent_to_n_after[region_of_n_prev_copy][adjacent_to_n_after[region_of_n_prev_copy].size() - 1] = copy_index;
