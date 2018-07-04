@@ -32,6 +32,8 @@ public:
 
 	RobotController* activeController = NULL;
 
+	LocomotionEngineMotionPlan* mp = NULL;
+
 	void setActiveController(RobotController* con) { activeController = con; }
 	RobotController* getActiveController() { return activeController; }
 

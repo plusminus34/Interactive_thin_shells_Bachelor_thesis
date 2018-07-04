@@ -124,6 +124,8 @@ void SimulationWindow::loadMotionPlan(LocomotionEngineMotionPlan* mp) {
 	trackingController = new TrackingController(robot, mp);
 	playbackController = new PlaybackController(robot, mp);
 
+	this->mp = mp;
+
 	stridePhase = 0;
 }
 
@@ -169,8 +171,10 @@ void SimulationWindow::doPhysicsStep(double simStep) {
 }
 
 void SimulationWindow::advanceSimulation(double dt) {
-	if (!activeController)
+	if (!activeController){
+		stridePhase += dt / mp->motionPlanDuration;
 		return;
+	}
 
 	activeController->stridePhase = stridePhase;
 

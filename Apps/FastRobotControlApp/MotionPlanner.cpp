@@ -86,7 +86,7 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 		cffp.addStepPattern(eeTraj[i].theLimb, eeTraj[i].endEffectorRB, eeTraj[i].endEffectorLocalCoords);
 	}
 
-	cffp.populateFrom(defaultFootFallPattern, motionPlanDuration, motionPlanStartTime - motionPlanDuration, motionPlanStartTime + preplanTimeHorizon);
+	cffp.populateFromRepeatingFootFallPattern(defaultFootFallPattern, motionPlanDuration, motionPlanStartTime - motionPlanDuration, motionPlanStartTime + preplanTimeHorizon);
 	for (uint eeIndex = 0; eeIndex < eeTraj.size(); eeIndex++) {
 		//we must determine the stance phases for each limb
 		double t = motionPlanStartTime;

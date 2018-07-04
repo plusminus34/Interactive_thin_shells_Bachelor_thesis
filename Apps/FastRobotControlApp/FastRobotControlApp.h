@@ -30,6 +30,7 @@ class EnergyWindow;
 class FastRobotControlApp : public BaseRobotControlApp {
 public:
 	double globalTime = 0;
+	double controlFrequency = 1 / 120.0;
 
 	MotionPlannerWindow* plannerWindow = NULL;
 	SimulationWindow* simWindow = NULL;

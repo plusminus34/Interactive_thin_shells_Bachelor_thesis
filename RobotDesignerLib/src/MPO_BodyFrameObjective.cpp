@@ -107,7 +107,7 @@ void MPO_DesiredBodyTrajectoryObjective::addGradientTo(dVector& grad, const dVec
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
-	for (uint i = 0; i < theMotionPlan->nSamplePoints; i++){
+	for (int i = 0; i < theMotionPlan->nSamplePoints; i++){
 		double w = 1;
 		if (i == 0) w = weightAtStart;
 		if (i == theMotionPlan->nSamplePoints - 2) w = weightAtEnd;
@@ -138,7 +138,7 @@ void MPO_DesiredBodyTrajectoryObjective::addHessianEntriesTo(DynamicArray<MTripl
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
-	for (uint i = 0; i < theMotionPlan->nSamplePoints; i++){
+	for (int i = 0; i < theMotionPlan->nSamplePoints; i++){
 		double w = 1;
 		if (i == 0) w = weightAtStart;
 		if (i == theMotionPlan->nSamplePoints - 2) w = weightAtEnd;

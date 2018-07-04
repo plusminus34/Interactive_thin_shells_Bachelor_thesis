@@ -237,26 +237,17 @@ void FastRobotControlApp::loadFile(const char* fName) {
 
 	if (fNameExt.compare("rbs") == 0 ){ 
 		robot = simWindow->loadRobot(fName);
-
 		startingRobotState = RobotState(robot);
 		return;
 	}
 
 	if (fNameExt.compare("ffp") == 0) {
-		plannerWindow->motionPlanner->defaultFootFallPattern.loadFromFile(fName);
-		plannerWindow->motionPlanner->defaultFootFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
-		plannerWindow->motionPlanner->currentMOPTFootFallPattern = plannerWindow->motionPlanner->defaultFootFallPattern;
+		plannerWindow->loadFFPFromFile(fName);
 		return;
 	}
 
 	if (fNameExt.compare("p") == 0) {
-		if (plannerWindow->motionPlanner->locomotionManager && plannerWindow->motionPlanner->locomotionManager->motionPlan){
-			plannerWindow->motionPlanner->locomotionManager->motionPlan->readParamsFromFile(fName);
-			plannerWindow->motionPlanner->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(plannerWindow->motionPlanner->currentMOPTFootFallPattern);
-			plannerWindow->motionPlanner->locomotionManager->motionPlan->syncMotionPlanWithFootFallPattern(plannerWindow->motionPlanner->currentMOPTFootFallPattern);
-
-			plannerWindow->motionPlanner->currentMOPTFootFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
-		}
+		plannerWindow->loadMotionPlanFromFile(fName);
 		return;
 	}
 
@@ -270,8 +261,8 @@ void FastRobotControlApp::loadToSim(){
 	robot->setState(&startingRobotState);
 
 	plannerWindow->initializeLocomotionEngine();
+	startingRobotState = plannerWindow->motionPlanner->locomotionManager->motionPlan->initialRS;
 	simWindow->loadMotionPlan(plannerWindow->motionPlanner->locomotionManager->motionPlan);
-
 	Logger::consolePrint("The robot has %d legs, weighs %lf kgs and is %lf m tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
 }
 
@@ -300,57 +291,31 @@ void FastRobotControlApp::process() {
 //	plannerWindow->motionPlanner->generateMotionPlan();
 //	return;
 
-	double dt = 1.0 / desiredFrameRate;
+	double dt = controlFrequency;
 
-	if (slowMo)
-		dt /= slowMoFactor;
+	double stepTime = 0;
 
-	globalTime += dt;
-	simWindow->advanceSimulation(dt);
+	while (stepTime < 1.0 / desiredFrameRate) {
+		stepTime += dt;
+		globalTime += dt;
+		simWindow->advanceSimulation(dt);
 
-	double dPhase = 1.0 / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
-	int n = 1;
-	if (simWindow->stridePhase > n * dPhase) {
-		simWindow->stridePhase -= n * dPhase;
-//		double timeAfterSwitch = ;
-		
-//		RobotState plannedRobotState = plannerWindow->motionPlanner->getPreplanedRobotStateAtTime(globalTime);
-//		robot->setState(&plannedRobotState);
+		double dPhase = 1.0 / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
+		double timePerdPhase = plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
+		int n = 2;
 
-//we are using a discrete number of steps to keep the (discrete) footfall pattern consistent. Otherwise we'd need to interpolate between stance/swing phases and there are no good answers...
-		plannerWindow->motionPlanner->motionPlanStartTime += n * plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
-		plannerWindow->motionPlanner->generateMotionPlan();
+		//we are using a discrete number of steps to keep the (discrete) footfall pattern consistent. Otherwise we'd need to interpolate between stance/swing phases and there are no good answers...
+		if (simWindow->stridePhase > n * dPhase) {
+			//restart the entire motion planning process...
+			double timeAtStrideStart = globalTime - simWindow->stridePhase * plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration;
+			simWindow->stridePhase -= n * dPhase;
+			plannerWindow->motionPlanner->motionPlanStartTime = timeAtStrideStart + n * timePerdPhase;
+			plannerWindow->ffpViewer->cursorPosition = simWindow->stridePhase;
+			plannerWindow->motionPlanner->generateMotionPlan();
+		}
+		if (slowMo)
+			break;
 	}
-
-	return;
-
-/*
-	//we need to sync the state of the robot with the motion plan when we first start physics-based tracking...
-	static int lastRunOptionSelected = runOption + 1;
-	setActiveController();
-
-	if (lastRunOptionSelected != runOption && (runOption != MOTION_PLAN_OPTIMIZATION)) {
-		Logger::consolePrint("Syncronizing robot state\n");
-		simWindow->getActiveController()->initialize();
-		lastRunOptionSelected = runOption;
-	}
-
-	if (runOption != MOTION_PLAN_OPTIMIZATION && simWindow->getActiveController()) {
-//		if (optimizeWhileAnimating)
-//			DoMOPTStep();
-
-		double dt = 1.0 / desiredFrameRate;
-		if (slowMo) 
-			dt /= slowMoFactor;
-
-		bool motionPhaseReset = simWindow->advanceSimulation(dt);
-		if (motionPhaseReset)
-			walkCycleIndex++;
-	}
-
-	if (simWindow->getActiveController())
-		plannerWindow->ffpViewer->cursorPosition = simWindow->getActiveController()->stridePhase;
-*/
 }
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
@@ -361,8 +326,8 @@ void FastRobotControlApp::drawScene() {
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
 void FastRobotControlApp::drawAuxiliarySceneInfo() {
 	if (shouldShowPlannerWindow()) {
-		if (appIsRunning && simWindow && simWindow->activeController)
-			plannerWindow->ffpViewer->cursorPosition = simWindow->activeController->stridePhase;
+		if (appIsRunning && simWindow)
+			plannerWindow->ffpViewer->cursorPosition = simWindow->stridePhase;
 
 		plannerWindow->setAnimationParams(plannerWindow->ffpViewer->cursorPosition, walkCycleIndex);
 		plannerWindow->draw();

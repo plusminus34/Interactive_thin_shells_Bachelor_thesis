@@ -35,6 +35,8 @@ public:
 
 	void loadFFPFromFile(const char* fName);
 
+	void loadMotionPlanFromFile(const char* fName);
+
 	virtual void drawScene();
 	virtual void drawAuxiliarySceneInfo();
 

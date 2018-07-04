@@ -76,7 +76,16 @@ void MotionPlannerWindow::setAnimationParams(double f, int animationCycle){
 }
 
 void MotionPlannerWindow::loadFFPFromFile(const char* fName){
-	motionPlanner->currentMOPTFootFallPattern.loadFromFile(fName);
+	motionPlanner->defaultFootFallPattern.loadFromFile(fName);
+	motionPlanner->defaultFootFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
+	motionPlanner->currentMOPTFootFallPattern = motionPlanner->defaultFootFallPattern;
+}
+
+void MotionPlannerWindow::loadMotionPlanFromFile(const char* fName) {
+	motionPlanner->locomotionManager->motionPlan->readParamsFromFile(fName);
+	motionPlanner->locomotionManager->motionPlan->syncFootFallPatternWithMotionPlan(motionPlanner->currentMOPTFootFallPattern);
+	motionPlanner->defaultFootFallPattern = motionPlanner->currentMOPTFootFallPattern;
+	motionPlanner->currentMOPTFootFallPattern.writeToFile("..\\out\\tmpFFP.ffp");
 }
 
 void MotionPlannerWindow::drawScene() {
