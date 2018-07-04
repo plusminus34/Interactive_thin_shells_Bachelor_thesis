@@ -18,16 +18,16 @@ private:
 	V3D wl;
 
 	//tmp variables
-	Matrix dwx_ds1, dwp_ds2, dwl_ds2;
+	MatrixNxM dwx_ds1, dwp_ds2, dwl_ds2;
 	dVector tmpV, tmpY;
-	Matrix wlCross, wvCross, tmpCross;
+	MatrixNxM wlCross, wvCross, tmpCross;
 
 	//these are the blocks for the energy hessian
-	Matrix ddE_ds1ds1, ddE_ds1ds2, ddE_ds2ds2, ddE_ds2ds1, dy_ds1, dy_ds2, tmpMat;
+	MatrixNxM ddE_ds1ds1, ddE_ds1ds2, ddE_ds2ds2, ddE_ds2ds1, dy_ds1, dy_ds2, tmpMat;
 	dVector dE_ds1, dE_ds2, tmpE;
 
 	//and these are the blocks for the constraint jacobian
-	Matrix dCds1, dCds2;
+	MatrixNxM dCds1, dCds2;
 
 	//scalar constraints
 	dVector C;
@@ -47,7 +47,7 @@ public:
 
 	//for testing purposes only...
 	virtual dVector* get_dE_dsi(int i) {if (i==0) return &dE_ds1; else return &dE_ds2;}
-	virtual Matrix* get_ddE_dsidsj(int i, int j) {if (i == 0 && j == 0) return &ddE_ds1ds1; if (i==0 && j==1) return &ddE_ds1ds2; if (i==1 && j==0) return &ddE_ds2ds1; return &ddE_ds2ds2;}
+	virtual MatrixNxM* get_ddE_dsidsj(int i, int j) {if (i == 0 && j == 0) return &ddE_ds1ds1; if (i==0 && j==1) return &ddE_ds1ds2; if (i==1 && j==0) return &ddE_ds2ds1; return &ddE_ds2ds2;}
 
 
 	//each constraint is composed of several scalar constraints - this is how many
@@ -55,7 +55,7 @@ public:
 	//returns the current values of the constraints
 	virtual dVector* getConstraintValues();
 	//returns the jacobian that tells us how the values of the constraint change with the state of the ith component involved in the constraint
-	virtual Matrix* getConstraintJacobian(int i) {if (i == 0) return &dCds1; return &dCds2;}
+	virtual MatrixNxM* getConstraintJacobian(int i) {if (i == 0) return &dCds1; return &dCds2;}
 
 
 

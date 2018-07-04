@@ -16,8 +16,8 @@ void KS_PlanarComponentConnection::connect(KS_MechanicalComponent* pCompIn, KS_M
 	m_pin=m_compOut->getNumOfMeshes()-1;
 
 	assert(m_compIn == NULL);
-
-	lcCon = new KS_LockedComponentConstraint(m_compOut, m_compOut->getAlpha(), false, m_compOut->getBeta(), true, m_compOut->getGamma(), true, m_compOut->getWorldCenterPosition().x, false, m_compOut->getWorldCenterPosition().y, false, m_compOut->getWorldCenterPosition().z, true); 
+	//replaced x y z
+	lcCon = new KS_LockedComponentConstraint(m_compOut, m_compOut->getAlpha(), false, m_compOut->getBeta(), true, m_compOut->getGamma(), true, m_compOut->getWorldCenterPosition()[0], false, m_compOut->getWorldCenterPosition()[1], false, m_compOut->getWorldCenterPosition()[2], true); 
 }
 
 bool KS_PlanarComponentConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* ma){

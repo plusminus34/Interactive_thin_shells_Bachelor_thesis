@@ -15,11 +15,11 @@ void KS_BoundToWorldConnection::connect(KS_MechanicalComponent* pCompIn, KS_Mech
 	m_compOut = pCompOut;
 //	m_compOut->addCylinderMesh(20, 0.1, 0.08, P3D(), V3D(0,0,1));
 //	m_pin=m_compOut->getNumOfMeshes()-1;
-	if(!freezePhase) m_compOut->getMesh(m_pin)->setColour(1.0,0.0,0.0,1.0);
+	//if(!freezePhase) m_compOut->getMesh(m_pin)->setColour(1.0,0.0,0.0,1.0);
 
 	assert(m_compIn == NULL);
-
-	lcCon = new KS_LockedComponentConstraint(m_compOut, m_compOut->getAlpha(), freezePhase, m_compOut->getBeta(), true, m_compOut->getGamma(), true, m_compOut->getWorldCenterPosition().x, true, m_compOut->getWorldCenterPosition().y, true, m_compOut->getWorldCenterPosition().z, true); 
+	// replaced three tuples x y z
+	lcCon = new KS_LockedComponentConstraint(m_compOut, m_compOut->getAlpha(), freezePhase, m_compOut->getBeta(), true, m_compOut->getGamma(), true, m_compOut->getWorldCenterPosition()[0], true, m_compOut->getWorldCenterPosition()[1], true, m_compOut->getWorldCenterPosition()[2], true); 
 }
 
 void KS_BoundToWorldConnection::setFreezePhase(bool fp){

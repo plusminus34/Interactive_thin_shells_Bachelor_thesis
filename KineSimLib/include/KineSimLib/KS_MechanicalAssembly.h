@@ -4,6 +4,7 @@
 #include "KS_Ticker.h"
 #include "KS_Connection.h"
 #include <MathLib/Ray.h>
+#include "KS_AssemblyConstraintEnergy.h"
 
 class KS_MechanicalAssembly{
 friend class APP_KSSimulator;
@@ -16,6 +17,7 @@ public:
 	typedef ConnectionArray::iterator ConnectionIt;
 
 public:
+
 	KS_MechanicalAssembly(void);
 	KS_MechanicalAssembly(KS_MechanicalAssembly &a);
 	~KS_MechanicalAssembly(void);
@@ -61,9 +63,9 @@ public:
 
 	void draw();
 
-	KS_MechanicalComponent* getFirstComponentIntersectedByRay(const Ray& ray);
+	//KS_MechanicalComponent* getFirstComponentIntersectedByRay(const Ray& ray);
 
-	KS_MechanicalComponent* getFirstComponentIntersectedByRay(const Ray& ray, P3D& worldP);
+	//KS_MechanicalComponent* getFirstComponentIntersectedByRay(const Ray& ray, P3D& worldP);
 
 
 	void setTickerValue(double val){
@@ -77,15 +79,22 @@ public:
 		return m_ticker.tick();
 	}
 
-	AABoundingBox computeAABB();
+	//AABoundingBox computeAABB();
 
 	void writeMeshToFile(const char* objFName);
+
+	KS_AssemblyConstraintEnergy* AConstraintEnergy;
+
+	virtual void solveAssembly();
 
 protected:
 	ComponentArray m_components;
 	ConnectionArray m_connections;
 
 	KS_Ticker m_ticker;
+
+	// preparing for solveAssembly
+	dVector s, sSolver;
 
 
 };

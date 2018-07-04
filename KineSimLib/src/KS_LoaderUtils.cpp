@@ -1,10 +1,10 @@
 #include <string.h>
 #include "KineSimLib/KS_LoaderUtils.h"
 
-typedef struct key_word{
+/*typedef struct key_word{
 	char keyWord[100];
 	int retVal;
-}KeyWord;
+}KeyWord;*/
 
 KeyWord keywords[] = {
 	{"SpurGear", KS_SPUR_GEAR},

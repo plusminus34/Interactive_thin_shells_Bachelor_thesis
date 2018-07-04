@@ -58,8 +58,10 @@ public:
 		tmpV[0] = v[0]; tmpV[1] = v[1]; tmpV[2] = v[2];
 
 		//compute the gradient of the energy with respect to s1 and s2...
-		preMultiply(dw1_ds1, tmpV, 1, dE_ds1);
-		preMultiply(dw2_ds2, tmpV, -1, dE_ds2);
+		//preMultiply(dw1_ds1, tmpV, 1, dE_ds1);
+		dE_ds1 = tmpV.transpose()*dw1_ds1;
+		//preMultiply(dw2_ds2, tmpV, -1, dE_ds2);
+		dE_ds2 = -1 * tmpV.transpose()*dw2_ds2;
 	}
 
 	virtual void computeEnergyHessian(){
@@ -79,16 +81,20 @@ public:
 		c2->get_dw_ds(x2, dw2_ds2);
 		dw2_ds2*=weight;
 
-		ddE_ds1ds1.setToATransposedB(dw1_ds1, dw1_ds1);
+		//ddE_ds1ds1.setToATransposedB(dw1_ds1, dw1_ds1);
+		ddE_ds1ds1 = dw1_ds1.transpose()*dw1_ds1;
 		ADD_v_TIMES_ddx_dsds_TO_HESSIAN(v, ddE_ds1ds1, x1, c1, 1);
 
-		ddE_ds2ds2.setToATransposedB(dw2_ds2, dw2_ds2);
+		//ddE_ds2ds2.setToATransposedB(dw2_ds2, dw2_ds2);
+		ddE_ds2ds2 = dw2_ds2.transpose()*dw2_ds2;
 		ADD_v_TIMES_ddx_dsds_TO_HESSIAN(v, ddE_ds2ds2, x2, c2, -1);
 
-		ddE_ds1ds2.setToATransposedB(dw1_ds1, dw2_ds2);
+		//ddE_ds1ds2.setToATransposedB(dw1_ds1, dw2_ds2);
+		ddE_ds1ds2=dw1_ds1.transpose()*dw2_ds2;
 		ddE_ds1ds2 *= -1;
 
-		ddE_ds2ds1.setToTransposeOf(ddE_ds1ds2);
+		//ddE_ds2ds1.setToTransposeOf(ddE_ds1ds2);
+		ddE_ds2ds1=ddE_ds1ds2.transpose();
 	}
 
 	virtual void computeConstraintJacobian(){
@@ -106,7 +112,7 @@ public:
 
 	//for testing purposes only...
 	virtual dVector* get_dE_dsi(int i) {if (i==0) return &dE_ds1; else return &dE_ds2;}
-	virtual Matrix* get_ddE_dsidsj(int i, int j) {if (i == 0 && j == 0) return &ddE_ds1ds1; if (i==0 && j==1) return &ddE_ds1ds2; if (i==1 && j==0) return &ddE_ds2ds1; return &ddE_ds2ds2;}
+	virtual MatrixNxM* get_ddE_dsidsj(int i, int j) {if (i == 0 && j == 0) return &ddE_ds1ds1; if (i==0 && j==1) return &ddE_ds1ds2; if (i==1 && j==0) return &ddE_ds2ds1; return &ddE_ds2ds2;}
 
 	//each constraint is composed of several scalar constraints - this is how many
 	virtual int getConstraintCount(){
@@ -116,11 +122,11 @@ public:
 	virtual dVector* getConstraintValues(){
 		V3D v = getErrorVector();
 		C.resize(3, 0);
-		C[0] = v.x; C[1] = v.y; C[2] = v.z;
+		C[0] = v[0]; C[1] = v[1]; C[2] = v[2];//replaced previous three tuple x y z
 		return &C;
 	}
 	//returns the jacobian that tells us how the values of the constraint change with the state of the ith component involved in the constraint
-	virtual Matrix* getConstraintJacobian(int i) {if (i == 0) return &dCds1; return &dCds2;}
+	virtual MatrixNxM* getConstraintJacobian(int i) {if (i == 0) return &dCds1; return &dCds2;}
 
 private:
 	V3D getErrorVector(){
@@ -133,15 +139,15 @@ private:
 	KS_MechanicalComponent *c2;
 
 	//tmp variables
-	Matrix dw1_ds1, dw2_ds2;
+	MatrixNxM dw1_ds1, dw2_ds2;
 	dVector dE_ds1, dE_ds2;
 	dVector tmpV;
 
 	//these are the blocks for the energy hessian
-	Matrix ddE_ds1ds1, ddE_ds1ds2, ddE_ds2ds2, ddE_ds2ds1, tmpMat;
+	MatrixNxM ddE_ds1ds1, ddE_ds1ds2, ddE_ds2ds2, ddE_ds2ds1, tmpMat;
 
 	//and these are the blocks for the constraint jacobian
-	Matrix dCds1, dCds2;
+	MatrixNxM dCds1, dCds2;
 
 	//scalar constraints
 	dVector C;

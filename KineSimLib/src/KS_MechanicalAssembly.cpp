@@ -21,16 +21,23 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <OptimizationLib/NewtonFunctionMinimizer.h>
+#include <OptimizationLib/BFGSFunctionMinimizer.h>
+#include <OptimizationLib/CMAFunctionMinimizer.h>
 
 using namespace std;
 
 KS_MechanicalAssembly::KS_MechanicalAssembly(void){
 	m_ticker = KS_Ticker();
+	AConstraintEnergy = NULL;
+	
 }
 
 KS_MechanicalAssembly::KS_MechanicalAssembly(KS_MechanicalAssembly &a){
 	m_components.resize(a.getComponents().size());
 	m_connections.resize(a.getConnections().size());
+	//m_components.clear();
+	//m_connections.clear();
 	for(uint i=0;i<m_components.size();i++){
 		m_components[i] = a.getComponent(i)->clone();
 	}
@@ -54,6 +61,7 @@ KS_MechanicalAssembly::~KS_MechanicalAssembly(void){
 	ConnectionIt it2 = m_connections.begin();
 	for(it2; it2!=m_connections.end();it2++)
 		delete *it2;
+	delete AConstraintEnergy;
 }
 
 void KS_MechanicalAssembly::getAssemblyState(dVector& state){
@@ -65,9 +73,9 @@ void KS_MechanicalAssembly::getAssemblyState(dVector& state){
 		state[i0+0] = c->getGamma();
 		state[i0+1] = c->getBeta();
 		state[i0+2] = c->getAlpha();
-		state[i0+3] = c->getWorldCenterPosition().x;
-		state[i0+4] = c->getWorldCenterPosition().y;
-		state[i0+5] = c->getWorldCenterPosition().z;
+		state[i0+3] = c->getWorldCenterPosition()[0];
+		state[i0+4] = c->getWorldCenterPosition()[1];
+		state[i0+5] = c->getWorldCenterPosition()[2];
 	}
 
 }
@@ -85,6 +93,11 @@ void KS_MechanicalAssembly::setAssemblyState(const dVector& state){
 	This method is used to load the details of a mechanical assembly from file.
 */
 bool KS_MechanicalAssembly::readFromFile(const char* szFile){
+
+	 m_components.clear();
+     m_connections.clear();
+
+
 	FILE* f = fopen(szFile, "r");
 	if (f == NULL){
 		Logger::print("KS_MechanicalAssembly: Cannot load input file \'%s\'\n", szFile);
@@ -252,6 +265,11 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 
 	fclose(f);
 	initConstraints();
+	s.resize(6 * getComponentCount()); s.setZero();
+	sSolver.resize(6 * getComponentCount()); sSolver.setZero();
+	Logger::print("%d\n", getComponentCount());
+	AConstraintEnergy = new KS_AssemblyConstraintEnergy();
+	AConstraintEnergy->initialize(this);
 	return true;
 }
 
@@ -358,7 +376,7 @@ void KS_MechanicalAssembly::getTracerParticles(DynamicArray<P3D>& tracerParticle
 
 void KS_MechanicalAssembly::draw(){
 	for (uint i=0;i<this->m_components.size();i++){
-		GLUtils::glLColor(0.5, 0.5, 0.5);
+		//GLUtils::glLColor(0.5, 0.5, 0.5);
 		m_components[i]->draw();
 	}
 }
@@ -381,7 +399,7 @@ void KS_MechanicalAssembly::initConstraints(){
 	}
 }
 
-KS_MechanicalComponent* KS_MechanicalAssembly::getFirstComponentIntersectedByRay(const Ray& ray){
+/*KS_MechanicalComponent* KS_MechanicalAssembly::getFirstComponentIntersectedByRay(const Ray& ray){
 	double minDistance = DBL_MAX;
 	KS_MechanicalComponent* closestComponent = NULL;
 	for (uint i=0;i<m_components.size();i++){
@@ -396,10 +414,10 @@ KS_MechanicalComponent* KS_MechanicalAssembly::getFirstComponentIntersectedByRay
 	}
 
 	return closestComponent;
-}
+}*/
 
 
-KS_MechanicalComponent* KS_MechanicalAssembly::getFirstComponentIntersectedByRay(const Ray& ray, P3D& worldP){
+/*KS_MechanicalComponent* KS_MechanicalAssembly::getFirstComponentIntersectedByRay(const Ray& ray, P3D& worldP){
 	double minDistance = DBL_MAX;
 	KS_MechanicalComponent* closestComponent = NULL;
 	for (uint i=0;i<m_components.size();i++){
@@ -415,7 +433,7 @@ KS_MechanicalComponent* KS_MechanicalAssembly::getFirstComponentIntersectedByRay
 	}
 
 	return closestComponent;
-}
+}*/
 
 
 void replaceSymbolsInString(const string& symbol, const string& val, const string& inputString, string& outputString){
@@ -490,12 +508,12 @@ void KS_MechanicalAssembly::createParameterizedAssemblyFrom(const char* inputKSF
 
 }
 
-AABoundingBox KS_MechanicalAssembly::computeAABB(){
+/*AABoundingBox KS_MechanicalAssembly::computeAABB(){
 	AABoundingBox result;
 	for (uint i=0;i<m_components.size();i++)
 		result.combine(result, m_components[i]->computeAABB());
 	return result;
-}
+}*/
 
 
 void KS_MechanicalAssembly::writeMeshToFile(const char* objFName){
@@ -509,5 +527,29 @@ void KS_MechanicalAssembly::writeMeshToFile(const char* objFName){
 		vertexIdxOffset += m_components[i]->renderToObjFile(f, vertexIdxOffset);
 
 	fclose(f);
+}
+
+void KS_MechanicalAssembly::solveAssembly()
+{
+	sSolver = s;
+
+	if (1) {
+		AConstraintEnergy->testGradientWithFD(sSolver);
+		AConstraintEnergy->testHessianWithFD(sSolver);
+	}
+
+	double functionValue = AConstraintEnergy->computeValue(sSolver);
+	Logger::consolePrint("energy value before solve C: %lf\n", functionValue);
+
+	NewtonFunctionMinimizer minimizer(20);
+	//BFGSFunctionMinimizer minimizer(10);
+	minimizer.printOutput = false;
+	minimizer.minimize(AConstraintEnergy, sSolver, functionValue);
+
+	Logger::consolePrint("energy value after solve C: %lf\n", functionValue);
+	
+
+	s = sSolver;
+
 }
 

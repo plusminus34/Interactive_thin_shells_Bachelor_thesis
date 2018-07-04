@@ -19,7 +19,7 @@ public:
 
 	//for testing purposes only...
 	virtual dVector* get_dE_dsi(int i) {return &dE_ds;}
-	virtual Matrix* get_ddE_dsidsj(int i, int j) {return &ddE_dsds;}
+	virtual MatrixNxM* get_ddE_dsidsj(int i, int j) {return &ddE_dsds;}
 
 	void setTargetPosition(const P3D& pos);
 
@@ -29,7 +29,7 @@ public:
 	//returns the current values of the constraints
 	virtual dVector* getConstraintValues();
 	//returns the jacobian that tells us how the values of the constraint change with the state of the ith component involved in the constraint
-	virtual Matrix* getConstraintJacobian(int i) {return &dCds;}
+	virtual MatrixNxM* getConstraintJacobian(int i) {return &dCds;}
 
 
 protected:
@@ -39,13 +39,14 @@ protected:
 	int freezeAlpha, freezeBeta, freezeGamma, freezePx, freezePy, freezePz;
 	//tmp variables
 	dVector dE_ds;
-	Matrix ddE_dsds;
+	MatrixNxM ddE_dsds;
 
 	//and these are the blocks for the constraint jacobian
-	Matrix dCds;
+	MatrixNxM dCds;
 
 	//scalar constraints
 	dVector C;
+
 
 	double anglesWeight;
 	double positionWeight;

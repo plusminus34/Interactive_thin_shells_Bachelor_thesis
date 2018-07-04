@@ -77,17 +77,17 @@ public:
 	P3D get_w(const P3D& x) const;
 	V3D get_w(const V3D& x) const;
 	//return the jacobian that relates the change in world coordinates w with the change in state s=(gamma, beta, alpha, p.x, p.y, p.z)
-	void get_dw_ds(const P3D& x, Eigen::MatrixXd& dw_ds);
-	void get_dw_ds(const V3D& x, Matrix& dw_ds);
+	void get_dw_ds(const P3D& x, MatrixNxM& dw_ds);
+	void get_dw_ds(const V3D& x, MatrixNxM& dw_ds);
 	//return the matrix that relates the change in change of w with the change in rotation angle alpha(phase)
-	void get_ddw_dads(const P3D& x, Matrix& ddw_das);
-	void get_ddw_dads(const V3D& x, Matrix& ddw_das);
+	void get_ddw_dads(const P3D& x, MatrixNxM& ddw_das);
+	void get_ddw_dads(const V3D& x, MatrixNxM& ddw_das);
 	//return the matrix that relates the change in change of w with the change in rotation angle beta
-	void get_ddw_dbds(const P3D& x, Matrix& ddw_dbs);
-	void get_ddw_dbds(const V3D& x, Matrix& ddw_dbs);
+	void get_ddw_dbds(const P3D& x, MatrixNxM& ddw_dbs);
+	void get_ddw_dbds(const V3D& x, MatrixNxM& ddw_dbs);
 	//return the matrix that relates the change in change of w with the change in rotation angle gamma
-	void get_ddw_dgds(const P3D& x, Matrix& ddw_dgs);
-	void get_ddw_dgds(const V3D& x, Matrix& ddw_dgs);
+	void get_ddw_dgds(const P3D& x, MatrixNxM& ddw_dgs);
+	void get_ddw_dgds(const V3D& x, MatrixNxM& ddw_dgs);
 
 	virtual bool loadFromFile(FILE* f) = 0;
 	virtual bool writeToFile(FILE* f) = 0;
@@ -100,8 +100,8 @@ public:
 	void addMesh(GLMesh* m){meshes.push_back(m);}
 	void removeMesh(uint i){delete meshes[i]; meshes.erase(meshes.begin()+i);}
 	void clearMeshes(){meshes.clear();}
-	void setMeshColor(double r, double g, double b){meshColor.x=r; meshColor.y=g; meshColor.z=b;}
-	const ThreeTuple& getMeshColor() { return meshColor; }
+	//void setMeshColor(double r, double g, double b){meshColor.x=r; meshColor.y=g; meshColor.z=b;}
+	//const ThreeTuple& getMeshColor() { return meshColor; }
 
 	void updateTracerParticles();
 	void draw();
@@ -123,10 +123,10 @@ public:
 	void addCylinderMesh(int nrVerts, double radius, double length, P3D localCoords, V3D v, bool setMeshColor = false);
 
 	//returns true if the ray intersects the object, false otherwise...
-	bool isIntersectedByRay(const Ray& r, P3D& res);
+	//bool isIntersectedByRay(const Ray& r, P3D& res);
 
 
-	AxisAlignedBoundingBox computeAABB();// double check!!
+	//AxisAlignedBoundingBox computeAABB();// double check!!
 	
 	/**
 		This method renders the mechanical component in its current state as a set of vertices 
@@ -156,7 +156,7 @@ protected:
 	bool selected;
 
 	//this is the colour of the mesh of this component
-	ThreeTuple meshColor;
+	//ThreeTuple meshColor;
 
 	//State of the component is defined by its position and rotation. The rotation is defined by Euler angles. To avoid gimbal locks, the rotation
 	//axes of the last two euler angles can be changed as needed. The first rotation axis has a special meaning, as it defines the phase of the component,

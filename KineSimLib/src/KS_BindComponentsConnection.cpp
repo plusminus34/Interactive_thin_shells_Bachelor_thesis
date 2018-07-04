@@ -59,7 +59,7 @@ void KS_BindComponentsConnection::connect(KS_MechanicalComponent* pCompIn, KS_Me
 */
 	m_compOut->addCylinderMesh(20, 0.03, 0.08, pOnC2, nOnC2);
 	m_pin=m_compOut->getNumOfMeshes()-1;
-	m_compOut->getMesh(m_pin)->setColour(0.0,0.0,0.0,1.0);
+	//m_compOut->getMesh(m_pin)->setColour(0.0,0.0,0.0,1.0);
 
 	p2pConstraint = new KS_P2PConstraint(pOnC1, m_compIn, pOnC2, m_compOut); 
 	if (allowArbitraryRelativeRotation == false){
@@ -80,7 +80,7 @@ void KS_BindComponentsConnection::connect(KS_MechanicalComponent* pCompIn, KS_Me
 			}else{
 				rotAxis.normalize();
 				double angle = nOnC1.angleWith(nOnC2);
-				n2OnC2 = rotate(n2OnC1, angle, rotAxis);
+				n2OnC2 = n2OnC1.rotate(angle, rotAxis);//using rotate function from the V3D class not from Qauternion
 				n2OnC2 -= nOnC2 * (n2OnC2.dot(nOnC2)); 
 				n2OnC2.normalize();
 			}

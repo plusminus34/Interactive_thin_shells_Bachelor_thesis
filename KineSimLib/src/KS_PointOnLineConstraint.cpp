@@ -44,7 +44,7 @@ int KS_PointOnLineConstraint::getConstraintCount(){
 dVector* KS_PointOnLineConstraint::getConstraintValues(){
 	V3D v = getErrorVector();
 	C.resize(3, 0);
-	C[0] = v.x; C[1] = v.y; C[2] = v.z;
+	C[0] = v[0]; C[1] = v[1]; C[2] = v[2];
 	return &C;
 }
 
@@ -64,15 +64,20 @@ void KS_PointOnLineConstraint::computeConstraintJacobian(){
 	c2->get_dw_ds(p, dwp_ds2);
 	c2->get_dw_ds(l, dwl_ds2);
 
-	toCrossProductMatrix(wlCross, wl);
-	toCrossProductMatrix(wvCross, v);
-
+	//toCrossProductMatrix(wlCross, wl);
+	wlCross = getCrossProductMatrix(wl);
+	//toCrossProductMatrix(wvCross, v);
+	wvCross= getCrossProductMatrix(v);
+	
 	//compute dC_ds1 = lx * dx/ds1 (lx = cross product matrix corresponding to l)
-	dCds1.setToAB(wlCross, dwx_ds1);
+	//dCds1.setToAB(wlCross, dwx_ds1);
+	dCds1=wlCross*dwx_ds1;
 
 	//compute dE_ds2 = -lx * dp/ds2 -v'* vx * (lx = cross product matrix corresponding to l, vx same, but for v)
-	dCds2.setToAB(wlCross, dwp_ds2);
-	dCds2.addProductAB(wvCross, dwl_ds2);
+	/*dCds2.setToAB(wlCross, dwp_ds2);
+	dCds2.addProductAB(wvCross, dwl_ds2);*/
+	dCds2 = wlCross * dwp_ds2;
+	dCds2 += wvCross * dwl_ds2;
 	dCds2 *= -1;
 }
 
@@ -98,19 +103,25 @@ void KS_PointOnLineConstraint::computeEnergyGradient(){
 	c2->get_dw_ds(p, dwp_ds2);
 	c2->get_dw_ds(l, dwl_ds2);
 
-	toCrossProductMatrix(wlCross, wl);
-	toCrossProductMatrix(wvCross, v);
+	//toCrossProductMatrix(wlCross, wl);
+	wlCross = getCrossProductMatrix(wl);
+   //toCrossProductMatrix(wvCross, v);
+	wvCross = getCrossProductMatrix(v);
 	tmpY[0] = y[0]; tmpY[1] = y[1]; tmpY[2] = y[2];
 
 	//compute dE_ds1 = y' * lx * dx/ds1 (lx = cross product matrix corresponding to l)
-	dy_ds1.setToAB(wlCross, dwx_ds1);
+	//dy_ds1.setToAB(wlCross, dwx_ds1);
+	dy_ds1 = wlCross * dwx_ds1;
 	dCds1 = dy_ds1;
-	preMultiply(dy_ds1, tmpY, 1, dE_ds1);
-	
+	//preMultiply(dy_ds1, tmpY, 1, dE_ds1);
+	dE_ds1 = tmpY.transpose()*dy_ds1;
 	//compute dE_ds2 = -y' * lx * dp/ds2 -v'* vx * (lx = cross product matrix corresponding to l, vx same, but for v)
-	dy_ds2.setToAB(wlCross, dwp_ds2);
-	dy_ds2.addProductAB(wvCross, dwl_ds2);
-	preMultiply(dy_ds2, tmpY, -1, dE_ds2);
+	//dy_ds2.setToAB(wlCross, dwp_ds2);
+	dy_ds2 = wlCross * dwp_ds2;
+	//dy_ds2.addProductAB(wvCross, dwl_ds2);
+	dy_ds2 += wvCross * dwl_ds2;
+	//preMultiply(dy_ds2, tmpY, -1, dE_ds2);
+	dE_ds2 = -1 * tmpY.transpose() * dy_ds2; // double check
 }
 
 void KS_PointOnLineConstraint::computeEnergyHessian(){
@@ -143,60 +154,81 @@ void KS_PointOnLineConstraint::computeEnergyHessian(){
 	c2->get_dw_ds(p, dwp_ds2);
 	c2->get_dw_ds(l, dwl_ds2);
 
-	toCrossProductMatrix(wlCross, wl);
-	toCrossProductMatrix(wvCross, v);
+	//toCrossProductMatrix(wlCross, wl);
+	wlCross=getCrossProductMatrix(wl),
+	//toCrossProductMatrix(wvCross, v);
+	wvCross = getCrossProductMatrix(v);
 	tmpY[0] = y[0]; tmpY[1] = y[1]; tmpY[2] = y[2];
 
 	//compute dE_ds1 = y' * lx * dx/ds1 (lx = cross product matrix corresponding to l)
-	dy_ds1.setToAB(wlCross, dwx_ds1);
+	//dy_ds1.setToAB(wlCross, dwx_ds1);
+	dy_ds1=wlCross*dwx_ds1;
 	
 
 	//compute dE_ds2 = -y' * lx * dp/ds2 -v'* vx * (lx = cross product matrix corresponding to l, vx same, but for v)
-	dy_ds2.setToAB(wlCross, dwp_ds2);
-	dy_ds2.addProductAB(wvCross, dwl_ds2);
+	//dy_ds2.setToAB(wlCross, dwp_ds2);
+	dy_ds2=wlCross*dwp_ds2;
+	//dy_ds2.addProductAB(wvCross, dwl_ds2);
+	dy_ds2 += wvCross * dwl_ds2;
 	dy_ds2 *= -1;
 
 	//now ddE_ds1ds1
-	ddE_ds1ds1.setToATransposedB(dy_ds1, dy_ds1);
+	//ddE_ds1ds1.setToATransposedB(dy_ds1, dy_ds1);
+	ddE_ds1ds1=dy_ds1.transpose()*dy_ds1;
 	//below is the tensor product between y'*lx and ddx/ds1ds1
-	preMultiply(wlCross, tmpY, 1, tmpV);
+	//preMultiply(wlCross, tmpY, 1, tmpV);
+	tmpV = tmpY.transpose()*wlCross;
 	ADD_v_TIMES_ddx_dsds_TO_HESSIAN(tmpV, ddE_ds1ds1, x, c1, 1);
 
 	//and ddE_ds2ds2
-	ddE_ds2ds2.setToATransposedB(dy_ds2, dy_ds2);
-	preMultiply(wlCross, tmpY, -1, tmpV);
+	//ddE_ds2ds2.setToATransposedB(dy_ds2, dy_ds2);
+	ddE_ds2ds2 = dy_ds2.transpose()*dy_ds2;
+	//preMultiply(wlCross, tmpY, -1, tmpV);
+	tmpV = -1 * tmpY.transpose()*wlCross;
 	ADD_v_TIMES_ddx_dsds_TO_HESSIAN(tmpV, ddE_ds2ds2, p, c2, 1);
-	preMultiply(wvCross, tmpY, -1, tmpV);
+	//preMultiply(wvCross, tmpY, -1, tmpV);
+	tmpV = -1 * tmpY.transpose()*wvCross;
 	ADD_v_TIMES_ddx_dsds_TO_HESSIAN(tmpV, ddE_ds2ds2, l, c2, 1);
 
 	V3D col_i;
 	for (int i=0;i<KS_MechanicalComponent::getStateSize();i++){
 		col_i[0] = dwp_ds2(0, i); col_i[1] = dwp_ds2(1, i); col_i[2] = dwp_ds2(2, i);
-		toCrossProductMatrix(tmpCross, col_i);
-		preMultiply(tmpCross, tmpY, 1, tmpV);
-		preMultiply(dwl_ds2, tmpV, 1, tmpE);
+		//toCrossProductMatrix(tmpCross, col_i);
+		tmpCross = getCrossProductMatrix(col_i);
+		//preMultiply(tmpCross, tmpY, 1, tmpV);
+		tmpV = tmpY.transpose()*tmpCross;
+		//preMultiply(dwl_ds2, tmpV, 1, tmpE);
+		tmpE = tmpV.transpose()*dwl_ds2;
 		for (int j=0;j<KS_MechanicalComponent::getStateSize();j++)
 			ddE_ds2ds2(i,j) += tmpE[j];
 
 		col_i[0] = dwl_ds2(0, i); col_i[1] = dwl_ds2(1, i); col_i[2] = dwl_ds2(2, i);
-		toCrossProductMatrix(tmpCross, col_i);
-		preMultiply(tmpCross, tmpY, -1, tmpV);
-		preMultiply(dwp_ds2, tmpV, 1, tmpE);
+		//toCrossProductMatrix(tmpCross, col_i);
+		tmpCross = getCrossProductMatrix(col_i);
+		//preMultiply(tmpCross, tmpY, -1, tmpV);
+		tmpV = -1 * tmpY.transpose()*tmpCross;
+		//preMultiply(dwp_ds2, tmpV, 1, tmpE);
+		tmpE = tmpV.transpose()*dwp_ds2;
 		for (int j=0;j<KS_MechanicalComponent::getStateSize();j++)
 			ddE_ds2ds2(i,j) += tmpE[j];
 	}
 
 	//finally the mixed derivatives - start with ddE_ds1ds2
-	ddE_ds2ds1.setToATransposedB(dy_ds2, dy_ds1);
+	//ddE_ds2ds1.setToATransposedB(dy_ds2, dy_ds1);
+	ddE_ds2ds1=dy_ds2.transpose()*dy_ds1;
 	for (int i=0;i<KS_MechanicalComponent::getStateSize();i++){
 		col_i[0] = dwx_ds1(0, i); col_i[1] = dwx_ds1(1, i); col_i[2] = dwx_ds1(2, i);
-		toCrossProductMatrix(tmpCross, col_i);
-		preMultiply(tmpCross, tmpY, -1, tmpV);
-		preMultiply(dwl_ds2, tmpV, 1, tmpE);
+		//toCrossProductMatrix(tmpCross, col_i);
+		tmpCross = getCrossProductMatrix(col_i);
+		//preMultiply(tmpCross, tmpY, -1, tmpV);
+		tmpV = -1 * tmpY.transpose()*tmpCross;
+		//preMultiply(dwl_ds2, tmpV, 1, tmpE);
+		tmpE = tmpV.transpose()*dwl_ds2;
 		for (int j=0;j<KS_MechanicalComponent::getStateSize();j++)
 			ddE_ds2ds1(j,i) += tmpE[j];
 	}
 
-	ddE_ds1ds2.setToTransposeOf(ddE_ds2ds1);
+	//ddE_ds1ds2.setToTransposeOf(ddE_ds2ds1);
+	ddE_ds1ds2=ddE_ds2ds1.transpose();
 }
 

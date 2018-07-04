@@ -1,6 +1,8 @@
 #include "KineSimLib/KS_MechanicalComponent.h"
 #include "KineSimLib/KS_LoaderUtils.h"
-#include <MathLib/Triangle.h>
+#include <MathLib/Quaternion.h>
+#include <MathLib/Transformation.h>
+#include <KineSimLib/Triangle.h>
 
 int KS_MechanicalComponent::m_stateSize = 6;
 
@@ -17,7 +19,7 @@ KS_MechanicalComponent::KS_MechanicalComponent(const char* name){
 	setAngles(0, 0, 0);
 
 	selected = false;
-	meshColor = ThreeTuple(0.5, 0.5, 0.8);
+	//meshColor = ThreeTuple(0.5, 0.5, 0.8);
 	layerNumber = 0;
 }
 
@@ -49,16 +51,16 @@ V3D KS_MechanicalComponent::get_w(const V3D& x) const {
 }
 
 //return the jacobian that relates the change in world coordinates w with the change in state s=(alpha, p.x, p.y, p.z)
-void KS_MechanicalComponent::get_dw_ds(const P3D& x, Matrix& dw_ds){
+void KS_MechanicalComponent::get_dw_ds(const P3D& x, MatrixNxM& dw_ds){
 	//given that dR(alpha)/dalpha = n x R (where n is the axis of rotation), it is easy to compute derivatives of w wrt s...
-	assert(dw_ds.getRowCount() == 3);
-	assert(dw_ds.getColCount() == getStateSize());
+	assert(dw_ds.rows() == 3);
+	assert(dw_ds.cols() == getStateSize());
 
 	V3D dw_dalpha = R_gamma*(R_beta*(n_alpha.cross(R_alpha*x)));
 	V3D dw_dbeta  = R_gamma*( n_beta.cross(R_beta*(R_alpha*x)));
 	V3D dw_dgamma = n_gamma.cross(R_gamma*(R_beta*(R_alpha*x)));
 
-	dw_ds.setToZeros();
+	dw_ds.setZero();
 	for (int i=0;i<3;i++){
 		dw_ds(i,0) = dw_dgamma[i];
 		dw_ds(i,1) =  dw_dbeta[i];
@@ -68,16 +70,16 @@ void KS_MechanicalComponent::get_dw_ds(const P3D& x, Matrix& dw_ds){
 }
 
 //return the jacobian that relates the change in world coordinates w with the change in state s=(alpha, p.x, p.y, p.z)
-void KS_MechanicalComponent::get_dw_ds(const V3D& x, Matrix& dw_ds){
+void KS_MechanicalComponent::get_dw_ds(const V3D& x, MatrixNxM& dw_ds){
 	//given that dR(alpha)/dalpha = n x R (where n is the axis of rotation), it is easy to compute derivatives of w wrt s...
-	assert(dw_ds.getRowCount() == 3);
-	assert(dw_ds.getColCount() == getStateSize());
+	assert(dw_ds.rows() == 3);
+	assert(dw_ds.cols() == getStateSize());
 
 	V3D dw_dalpha = R_gamma*(R_beta*(n_alpha.cross(R_alpha*x)));
 	V3D dw_dbeta  = R_gamma*( n_beta.cross(R_beta*(R_alpha*x)));
 	V3D dw_dgamma = n_gamma.cross(R_gamma*(R_beta*(R_alpha*x)));
 
-	dw_ds.setToZeros();
+	dw_ds.setZero();
 	for (int i=0;i<3;i++){
 		dw_ds(i,0) = dw_dgamma[i];
 		dw_ds(i,1) =  dw_dbeta[i];
@@ -87,12 +89,12 @@ void KS_MechanicalComponent::get_dw_ds(const V3D& x, Matrix& dw_ds){
 
 
 //return the matrix that relates the change in change of w with the change in rotation angle alpha
-void KS_MechanicalComponent::get_ddw_dads(const P3D& x, Matrix& ddw_das){
+void KS_MechanicalComponent::get_ddw_dads(const P3D& x, MatrixNxM& ddw_das){
 	V3D ddw_daa = R_gamma*(R_beta*(n_alpha.cross(n_alpha.cross(R_alpha*x))));
 	V3D ddw_dab = R_gamma*(n_beta.cross(R_beta*(n_alpha.cross(R_alpha*x))));
 	V3D ddw_dag = n_gamma.cross(R_gamma*(R_beta*(n_alpha.cross(R_alpha*x))));
 
-	ddw_das.setToZeros();
+	ddw_das.setZero();
 	for (int i=0;i<3;i++){
 		ddw_das(i,0) = ddw_dag[i];
 		ddw_das(i,1) =  ddw_dab[i];
@@ -102,12 +104,12 @@ void KS_MechanicalComponent::get_ddw_dads(const P3D& x, Matrix& ddw_das){
 
 
 //return the matrix that relates the change in change of w with the change in rotation angle alpha
-void KS_MechanicalComponent::get_ddw_dads(const V3D& x, Matrix& ddw_das){
+void KS_MechanicalComponent::get_ddw_dads(const V3D& x, MatrixNxM& ddw_das){
 	V3D ddw_daa = R_gamma*(R_beta*(n_alpha.cross(n_alpha.cross(R_alpha*x))));
 	V3D ddw_dab = R_gamma*(n_beta.cross(R_beta*(n_alpha.cross(R_alpha*x))));
 	V3D ddw_dag = n_gamma.cross(R_gamma*(R_beta*(n_alpha.cross(R_alpha*x))));
 
-	ddw_das.setToZeros();
+	ddw_das.setZero();
 	for (int i=0;i<3;i++){
 		ddw_das(i,0) = ddw_dag[i];
 		ddw_das(i,1) =  ddw_dab[i];
@@ -116,12 +118,12 @@ void KS_MechanicalComponent::get_ddw_dads(const V3D& x, Matrix& ddw_das){
 }
 
 //return the matrix that relates the change in change of w with the change in rotation angle beta
-void KS_MechanicalComponent::get_ddw_dbds(const P3D& x, Matrix& ddw_dbs){
+void KS_MechanicalComponent::get_ddw_dbds(const P3D& x, MatrixNxM& ddw_dbs){
 	V3D ddw_dba = R_gamma*(n_beta.cross(R_beta*(n_alpha.cross(R_alpha*x))));
 	V3D ddw_dbb = R_gamma*(n_beta.cross(n_beta.cross(R_beta*(R_alpha*x))));
 	V3D ddw_dbg = n_gamma.cross(R_gamma*(n_beta.cross(R_beta*(R_alpha*x))));
 
-	ddw_dbs.setToZeros();
+	ddw_dbs.setZero();
 	for (int i=0;i<3;i++){
 		ddw_dbs(i,0) = ddw_dbg[i];
 		ddw_dbs(i,1) = ddw_dbb[i];
@@ -130,12 +132,12 @@ void KS_MechanicalComponent::get_ddw_dbds(const P3D& x, Matrix& ddw_dbs){
 }
 
 //return the matrix that relates the change in change of w with the change in rotation angle beta
-void KS_MechanicalComponent::get_ddw_dbds(const V3D& x, Matrix& ddw_dbs){
+void KS_MechanicalComponent::get_ddw_dbds(const V3D& x, MatrixNxM& ddw_dbs){
 	V3D ddw_dba = R_gamma*(n_beta.cross(R_beta*(n_alpha.cross(R_alpha*x))));
 	V3D ddw_dbb = R_gamma*(n_beta.cross(n_beta.cross(R_beta*(R_alpha*x))));
 	V3D ddw_dbg = n_gamma.cross(R_gamma*(n_beta.cross(R_beta*(R_alpha*x))));
 
-	ddw_dbs.setToZeros();
+	ddw_dbs.setZero();
 	for (int i=0;i<3;i++){
 		ddw_dbs(i,0) = ddw_dbg[i];
 		ddw_dbs(i,1) = ddw_dbb[i];
@@ -145,12 +147,12 @@ void KS_MechanicalComponent::get_ddw_dbds(const V3D& x, Matrix& ddw_dbs){
 
 
 //return the matrix that relates the change in change of w with the change in rotation angle gamma
-void KS_MechanicalComponent::get_ddw_dgds(const P3D& x, Matrix& ddw_dgs){
+void KS_MechanicalComponent::get_ddw_dgds(const P3D& x, MatrixNxM& ddw_dgs){
 	V3D ddw_dga = n_gamma.cross(R_gamma*(R_beta*(n_alpha.cross(R_alpha*x))));
 	V3D ddw_dgb = n_gamma.cross(R_gamma*( n_beta.cross(R_beta*(R_alpha*x))));
 	V3D ddw_dgg = n_gamma.cross(n_gamma.cross(R_gamma*(R_beta*(R_alpha*x))));
 
-	ddw_dgs.setToZeros();
+	ddw_dgs.setZero();
 	for (int i=0;i<3;i++){
 		ddw_dgs(i,0) = ddw_dgg[i];
 		ddw_dgs(i,1) = ddw_dgb[i];
@@ -160,12 +162,12 @@ void KS_MechanicalComponent::get_ddw_dgds(const P3D& x, Matrix& ddw_dgs){
 
 
 //return the matrix that relates the change in change of w with the change in rotation angle gamma
-void KS_MechanicalComponent::get_ddw_dgds(const V3D& x, Matrix& ddw_dgs){
+void KS_MechanicalComponent::get_ddw_dgds(const V3D& x, MatrixNxM& ddw_dgs){
 	V3D ddw_dga = n_gamma.cross(R_gamma*(R_beta*(n_alpha.cross(R_alpha*x))));
 	V3D ddw_dgb = n_gamma.cross(R_gamma*( n_beta.cross(R_beta*(R_alpha*x))));
 	V3D ddw_dgg = n_gamma.cross(n_gamma.cross(R_gamma*(R_beta*(R_alpha*x))));
 
-	ddw_dgs.setToZeros();
+	ddw_dgs.setZero();
 	for (int i=0;i<3;i++){
 		ddw_dgs(i,0) = ddw_dgg[i];
 		ddw_dgs(i,1) = ddw_dgb[i];
@@ -213,7 +215,7 @@ P3D KS_MechanicalComponent::getTracerParticleLocalPosition(int i){
 
 void KS_MechanicalComponent::setPhase(double a){
 	alpha = a;
-	R_alpha = Quaternion::getRotationQuaternion(alpha, n_alpha);
+	R_alpha = getRotationQuaternion(alpha, n_alpha);
 }
 
 void KS_MechanicalComponent::setAngles(double val_gamma, double val_beta, double val_alpha) { 
@@ -221,13 +223,13 @@ void KS_MechanicalComponent::setAngles(double val_gamma, double val_beta, double
 	beta = val_beta;
 	gamma = val_gamma;
 
-	R_alpha = Quaternion::getRotationQuaternion(alpha, n_alpha);
-	R_beta = Quaternion::getRotationQuaternion(beta, n_beta);
-	R_gamma = Quaternion::getRotationQuaternion(gamma, n_gamma);
+	R_alpha = getRotationQuaternion(alpha, n_alpha);
+	R_beta = getRotationQuaternion(beta, n_beta);
+	R_gamma = getRotationQuaternion(gamma, n_gamma);
 
 	//check for singularities. If it's a X-Y-X type of euler angle configuration, then the second angle needs to stay away from 0 and pi.
 	//if it's Z-Y-X, then it needs to stay away from -pi/2 and pi/2
-	if (n_alpha.dotProductWith(n_gamma) > 0.99 || n_alpha.dotProductWith(n_gamma) < -0.99){
+	if (n_alpha.dot(n_gamma) > 0.99 || n_alpha.dot(n_gamma) < -0.99){
 		if (beta < 0.2 || beta > PI - 0.2){
 //			logPrint("Component orientation getting close to singularity! Should consider changing Euler angle representation\n");
 			assert(false);
@@ -246,8 +248,8 @@ void KS_MechanicalComponent::writeBaseComponentToFile(FILE* f){
 
 	str = getKSString(KS_NAME);
 	fprintf(f, "\t%s %s\n", str, m_name);
-	str = getKSString(KS_COLOR);
-	fprintf(f, "\t%s %lf %lf %lf\n", str, meshColor[0], meshColor[1], meshColor[2]);
+	/*str = getKSString(KS_COLOR);
+	fprintf(f, "\t%s %lf %lf %lf\n", str, meshColor[0], meshColor[1], meshColor[2]);*/
 	str = getKSString(KS_POSITION_IN_WORLD);
 	P3D tmpP = getWorldCenterPosition();
 	fprintf(f, "\t%s %lf %lf %lf\n", str, tmpP[0], tmpP[1], tmpP[2]);
@@ -281,7 +283,7 @@ bool KS_MechanicalComponent::processInputLine(char* line){
 			return true;
 			break;
 		case KS_POSITION_IN_WORLD:
-			if (sscanf(line, "%lf %lf %lf", &position.x, &position.y, &position.z) != 3) assert(false);
+			if (sscanf(line, "%lf %lf %lf", &position[0], &position[1], &position[2]) != 3) assert(false);
 			return true;
 			break;
 		case KS_ANGLE:
@@ -289,25 +291,25 @@ bool KS_MechanicalComponent::processInputLine(char* line){
 			setAngles(gamma, beta, alpha);
 			return true;
 			break;
-		case KS_COLOR:
+		/*case KS_COLOR:
 			if (sscanf(line, "%lf %lf %lf", &meshColor.x, &meshColor.y, &meshColor.z) != 3) assert(false);
 			return true;
-			break;
+			break;*/
 		case KS_TRACER_PARTICLE:{
 				P3D tmpP;
-				if (sscanf(line, "%lf %lf %lf", &tmpP.x, &tmpP.y, &tmpP.z) != 3) assert(false);
+				if (sscanf(line, "%lf %lf %lf", &tmpP[0], &tmpP[1], &tmpP[2]) != 3) assert(false);
 				tracerParticles.push_back(TracerParticle(this, tmpP));
 				return true;
 			}
 			break;
 		case KS_BETA_AXIS:
-			if (sscanf(line, "%lf %lf %lf", &n_beta.x, &n_beta.y, &n_beta.z) != 3) assert(false);
+			if (sscanf(line, "%lf %lf %lf", &n_beta[0], &n_beta[1], &n_beta[2]) != 3) assert(false);
 			n_beta.normalize();
 			setAngles(gamma, beta, alpha);
 			return true;
 			break;
 		case KS_GAMMA_AXIS:
-			if (sscanf(line, "%lf %lf %lf", &n_gamma.x, &n_gamma.y, &n_gamma.z) != 3) assert(false);
+			if (sscanf(line, "%lf %lf %lf", &n_gamma[0], &n_gamma[1], &n_gamma[2]) != 3) assert(false);
 			n_gamma.normalize();
 			setAngles(gamma, beta, alpha);
 			return true;
@@ -333,8 +335,8 @@ bool KS_MechanicalComponent::processInputLine(char* line){
 void KS_MechanicalComponent::addCylinderMesh(int nrVerts, double radius, double length, P3D localCoords, V3D v, bool setMeshColor){
   //we'll start out by getting a vector that is perpendicular to the given vector.
 
-	double rotAngle = safeACOS(v.dotProductWith(V3D(0,0,1)));
-	V3D rotAxis = v.crossProductWith(V3D(0,0,1)).toUnit();
+	double rotAngle = safeACOS(v.dot(V3D(0,0,1)));
+	V3D rotAxis = v.cross(V3D(0,0,1)).toUnit();
 
 	if (IS_ZERO(rotAngle)) rotAxis = V3D(1,0,0);
 
@@ -370,8 +372,8 @@ void KS_MechanicalComponent::addCylinderMesh(int nrVerts, double radius, double 
 		tmpMesh->addPoly(poly);
 	}
 
-	if (setMeshColor)
-		tmpMesh->setColour(meshColor[0], meshColor[1], meshColor[2], 1);
+	/*if (setMeshColor)
+		tmpMesh->setColour(meshColor[0], meshColor[1], meshColor[2], 1);*/
 	tmpMesh->computeNormals();
 	meshes.push_back(tmpMesh);
 }
@@ -379,7 +381,7 @@ void KS_MechanicalComponent::addCylinderMesh(int nrVerts, double radius, double 
 void KS_MechanicalComponent::loadTriangleMeshFromFile(char* fName){
 	GLMesh* tmpMesh = OBJReader::loadOBJFile(fName);
 	tmpMesh->computeNormals();
-	tmpMesh->setColour(meshColor[0], meshColor[1], meshColor[2], 1);
+	//tmpMesh->setColour(meshColor[0], meshColor[1], meshColor[2], 1);
 	meshes.push_back(tmpMesh);
 }
 
@@ -429,7 +431,7 @@ void KS_MechanicalComponent::drawTracerParticles(){
 
 
 //returns true if the ray intersects the object, false otherwise...
-bool KS_MechanicalComponent::isIntersectedByRay(const Ray& r, P3D& res){
+/*bool KS_MechanicalComponent::isIntersectedByRay(const Ray& r, P3D& res){
 	//TODO: we might want to reintroduce the AABB as a first test, perhaps even a bounding/encapsulating sphere
 	Ray localCoordRay(get_x(r.origin), get_x(r.direction));
 	for (uint i=0;i<meshes.size();i++){
@@ -446,24 +448,29 @@ bool KS_MechanicalComponent::isIntersectedByRay(const Ray& r, P3D& res){
 	}
 
 	return false;
-}
+}*/
 
 uint KS_MechanicalComponent::renderToObjFile(FILE* fp, uint vertexIdxOffset, double scale)
 {
-	TransformationMatrix mat;
+	//TransformationMatrix mat;
+	//Transformation Tf;
 	Quaternion quat = R_gamma*R_beta*R_alpha;
 
-	quat.getRotationMatrix(&mat);
-	mat.setTranslation(this->position);
-	mat.setScale(scale);
+	//quat.getRotationMatrix(&mat);
+	//Tf.R = quat.getRotationMatrix();
+
+	//mat.setTranslation(this->position);
+	//Tf.T = this->position;
+	//mat.setScale(scale);
 
 	uint retVal = 0;
 	for (uint i=0;i<meshes.size();i++)
-		retVal += meshes[i]->renderToObjFile( fp, vertexIdxOffset + retVal, mat);
+		//retVal += meshes[i]->renderToObjFile( fp, vertexIdxOffset + retVal, mat);
+		retVal += meshes[i]->renderToObjFile(fp, vertexIdxOffset + retVal, quat, this->position);
 	return retVal;
 }
 
-AABoundingBox KS_MechanicalComponent::computeAABB(){
+/*AABoundingBox KS_MechanicalComponent::computeAABB(){
 	P3D AABB_blf(DBL_MAX, DBL_MAX, DBL_MAX);
 	P3D AABB_trb(-DBL_MAX, -DBL_MAX, -DBL_MAX);
 
@@ -481,5 +488,5 @@ AABoundingBox KS_MechanicalComponent::computeAABB(){
 	}
 
 	return AABoundingBox(AABB_blf, AABB_trb);
-}
+}*/
 

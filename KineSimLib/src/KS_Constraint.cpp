@@ -13,11 +13,25 @@ void KS_Constraint::addEnergyGradientTo(dVector& gradient){
 	for (int j=0;j<getNumberOfAffectedComponents();j++){
 		KS_MechanicalComponent* c = getIthAffectedComponent(j);
 		for (int i=0;i<KS_MechanicalComponent::getStateSize();i++)
-			gradient[KS_MechanicalComponent::getStateSize() * c->getComponentIndex() + i] += get_dE_dsi(j)->at(i);
+			gradient[KS_MechanicalComponent::getStateSize() * c->getComponentIndex() + i] += (*get_dE_dsi(j))[i];
 	}
 }
 
-void KS_Constraint::addEnergyHessianTo(SparseMatrix& hessian){
+void KS_Constraint::addEnergyHessianTo(DynamicArray<MTriplet>& hessianEntries)
+{
+	computeEnergyHessian();
+
+	//write out the hessian blocks
+	for (int i = 0; i<getNumberOfAffectedComponents(); i++)
+		for (int j = 0; j<getNumberOfAffectedComponents(); j++) {
+			int startRow = KS_MechanicalComponent::getStateSize() * getIthAffectedComponent(i)->getComponentIndex();
+			int startCol = KS_MechanicalComponent::getStateSize() * getIthAffectedComponent(j)->getComponentIndex();
+			addSparseMatrixDenseBlockToTriplet(hessianEntries, startRow, startCol, *get_ddE_dsidsj(i, j), true);
+		}
+
+}
+
+/*void KS_Constraint::addEnergyHessianTo(SparseMatrix& hessian){
 	if (hBlocks.size() == 0)
 		for (int i=0;i<getNumberOfAffectedComponents()*getNumberOfAffectedComponents();i++)
 			hBlocks.push_back(SparseMatrixBlockHandle());
@@ -32,18 +46,29 @@ void KS_Constraint::addEnergyHessianTo(SparseMatrix& hessian){
 			assert(hBlockIndex<(int)hBlocks.size());
 			hBlocks[hBlockIndex].addBlockValues(&hessian, get_ddE_dsidsj(i,j)->getData());
 		}
-}
+}*/
 
 //writes out the values of the current constraints at the appropriate location in the constraint vector
 void KS_Constraint::writeConstraintValuesTo(dVector& C){
 	dVector* constraintValues = getConstraintValues();
 	for (uint i=0;i<constraintValues->size();i++){
-		C[i + constraintStartIndex] = constraintValues->at(i);
+		C[i + constraintStartIndex] = (*constraintValues)[i];
+	}
+}
+
+void KS_Constraint::writeConstraintJacobianValuesTo(DynamicArray<MTriplet>& dCdsEntries)
+{
+	computeConstraintJacobian();
+	//write out the constraint jacobian values
+	for (int i = 0; i<getNumberOfAffectedComponents(); i++) {
+		int startRow = constraintStartIndex;
+		int startCol = KS_MechanicalComponent::getStateSize() * getIthAffectedComponent(i)->getComponentIndex();
+		addSparseMatrixDenseBlockToTriplet(dCdsEntries, startRow, startCol, *getConstraintJacobian(i), true);
 	}
 }
 
 //writes out the values of the jacobian of the constraint vector at the appropriate location in the given sparse matrix
-void KS_Constraint::writeConstraintJacobianValuesTo(SparseMatrix& dCds){
+/*void KS_Constraint::writeConstraintJacobianValuesTo(SparseMatrix& dCds){
 	if (dCdsBlocks.size() == 0)
 		for (int i=0;i<getNumberOfAffectedComponents();i++)
 			dCdsBlocks.push_back(SparseMatrixBlockHandle());
@@ -56,13 +81,13 @@ void KS_Constraint::writeConstraintJacobianValuesTo(SparseMatrix& dCds){
 		assert(i<(int)dCdsBlocks.size());
 		dCdsBlocks[i].setBlockValues(&dCds, getConstraintJacobian(i)->getData());
 	}
-}
+}*/
 
-void KS_Constraint::cleanSparseMatrixBlocks(){
+/*void KS_Constraint::cleanSparseMatrixBlocks(){
 	hBlocks.clear();
 	dCdsBlocks.clear();
 	dCdsiBlocks.clear();
-}
+}*/
 
 
 void KS_Constraint::setAffectedComponentsState(const dVector& state){
@@ -73,23 +98,29 @@ void KS_Constraint::setAffectedComponentsState(const dVector& state){
 	}
 }
 
-void KS_Constraint::testEnergyGradientAndHessian(){
+/*void KS_Constraint::testEnergyGradientAndHessian(){
 	computeEnergyGradient();
 	computeEnergyHessian();
 	computeConstraintJacobian();
 
 
 	int stateSize = getNumberOfAffectedComponents()*KS_MechanicalComponent::getStateSize();
-	dVector state(stateSize, 0);
+	//dVector state(stateSize, 0);
+	dVector state;
+	state.resize(stateSize); state.setZero();
 	for (int i=0;i<getNumberOfAffectedComponents();i++){
 		KS_MechanicalComponent* c = getIthAffectedComponent(i);
 		int i0 = i* KS_MechanicalComponent::getStateSize();
 		state[i0+0] = c->getGamma();
 		state[i0+1] = c->getBeta();
 		state[i0+2] = c->getAlpha();
-		state[i0+3] = c->getWorldCenterPosition().x;
-		state[i0+4] = c->getWorldCenterPosition().y;
-		state[i0+5] = c->getWorldCenterPosition().z;
+		//state[i0+3] = c->getWorldCenterPosition().x;
+		state[i0 + 3] = c->getWorldCenterPosition()[0];
+		//state[i0+4] = c->getWorldCenterPosition().y;
+		state[i0 + 4] = c->getWorldCenterPosition()[1];
+		//state[i0+5] = c->getWorldCenterPosition().z;
+		state[i0 + 5] = c->getWorldCenterPosition()[2];
+
 	}
 	
 	//now we need to do the finite differences in order to estimate the gradient...
@@ -121,15 +152,15 @@ void KS_Constraint::testEnergyGradientAndHessian(){
 	for (int i=0;i<getNumberOfAffectedComponents();i++){
 		dVector* analyticGradient = get_dE_dsi(i);
 		for (int j=0;j<KS_MechanicalComponent::getStateSize(); j++){
-			if (fabs(analyticGradient->at(j) - gradient[KS_MechanicalComponent::getStateSize()*i+j]) > 0.0001){
-				Logger::print("Mismatch in gradient at(%d)! analytic: %lf, fd:%lf, error: %lf\n", KS_MechanicalComponent::getStateSize()*i+j, analyticGradient->at(j), gradient[KS_MechanicalComponent::getStateSize()*i+j], fabs(analyticGradient->at(j) - gradient[KS_MechanicalComponent::getStateSize()*i+j]));
+			if (fabs((*analyticGradient)[j] - gradient[KS_MechanicalComponent::getStateSize()*i+j]) > 0.0001){
+				Logger::print("Mismatch in gradient at(%d)! analytic: %lf, fd:%lf, error: %lf\n", KS_MechanicalComponent::getStateSize()*i+j, (*analyticGradient)[j], gradient[KS_MechanicalComponent::getStateSize()*i+j], fabs((*analyticGradient)[j] - gradient[KS_MechanicalComponent::getStateSize()*i+j]));
 			}
 		}
 	}
 
-	Matrix hessian;
+	MatrixNxM hessian;
 	hessian.resize(KS_MechanicalComponent::getStateSize() * getNumberOfAffectedComponents(), KS_MechanicalComponent::getStateSize() * getNumberOfAffectedComponents());
-	hessian.setToZeros();
+	hessian.setZero();
 	dVector gradP, gradM;
 	gradP.resize(gradient.size(), 0);
 	gradM.resize(gradient.size(), 0);
@@ -142,7 +173,7 @@ void KS_Constraint::testEnergyGradientAndHessian(){
 		for (int j=0;j<getNumberOfAffectedComponents();j++){
 			dVector* analyticGradient = get_dE_dsi(j);
 			for (int k=0;k<KS_MechanicalComponent::getStateSize(); k++)
-				gradP[KS_MechanicalComponent::getStateSize()*j+k] = analyticGradient->at(k);
+				gradP[KS_MechanicalComponent::getStateSize()*j+k] = (*analyticGradient)[k];
 		}
 
 		state[i] = pValue - ds;
@@ -151,7 +182,7 @@ void KS_Constraint::testEnergyGradientAndHessian(){
 		for (int j=0;j<getNumberOfAffectedComponents();j++){
 			dVector* analyticGradient = get_dE_dsi(j);
 			for (int k=0;k<KS_MechanicalComponent::getStateSize(); k++)
-				gradM[KS_MechanicalComponent::getStateSize()*j+k] = analyticGradient->at(k);
+				gradM[KS_MechanicalComponent::getStateSize()*j+k] = (*analyticGradient)[k];
 		}
 
 		//now compute the derivative using central finite differences
@@ -167,13 +198,13 @@ void KS_Constraint::testEnergyGradientAndHessian(){
 
 	//now compare the hessians...
 	Logger::print("Checking hessian!\n");
-	for (int i=0;i<hessian.getRowCount();i++){
-		for (int j=0;j<hessian.getColCount();j++){
+	for (int i=0;i<hessian.rows();i++){
+		for (int j=0;j<hessian.cols();j++){
 			double valAnalytic = get_ddE_dsidsj(i/KS_MechanicalComponent::getStateSize(), j/KS_MechanicalComponent::getStateSize())->operator () (i % KS_MechanicalComponent::getStateSize(), j % KS_MechanicalComponent::getStateSize());
 			if (fabs(hessian(i,j) - valAnalytic) > 0.0001){
 				Logger::print("Mismatch in hessian at (%d, %d)! analytic: %lf, fd:%lf, error: %lf\n", i,j,valAnalytic, hessian(i,j), fabs(hessian(i,j) - valAnalytic));
 			}
 		}
 	}
-}
+}*/
 
