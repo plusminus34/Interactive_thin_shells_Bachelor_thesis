@@ -117,14 +117,14 @@ Robot* SimulationWindow::loadRobot(const char* fName) {
 	return robot;
 }
 
-void SimulationWindow::loadMotionPlan(LocomotionEngineMotionPlan* mp) {
+void SimulationWindow::loadMotionPlan(MotionPlanner* mp) {
 	delete trackingController;
 	delete playbackController;
 
-	trackingController = new TrackingController(robot, mp);
+	trackingController = new TrackingController(robot, mp->locomotionManager->motionPlan);
 	playbackController = new PlaybackController(robot, mp);
 
-	this->mp = mp;
+	this->mp = mp->locomotionManager->motionPlan;
 
 	stridePhase = 0;
 }

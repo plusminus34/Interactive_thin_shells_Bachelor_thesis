@@ -1,7 +1,8 @@
 #include "PlaybackController.h"
 
-PlaybackController::PlaybackController(Robot *robot, LocomotionEngineMotionPlan *motionPlan) : RobotController(robot, motionPlan) {
-	loadMotionPlan(motionPlan);
+PlaybackController::PlaybackController(Robot *robot, MotionPlanner *motionPlanner) : RobotController(robot, motionPlanner->locomotionManager->motionPlan) {
+	stridePhase = 0;
+	this->motionPlanner = motionPlanner;
 }
 
 PlaybackController::~PlaybackController(void) {
@@ -19,16 +20,7 @@ bool PlaybackController::advanceInTime(double timeStep) {
 }
 
 void PlaybackController::computeDesiredState() {
-	RobotController::computeDesiredState();
-}
-
-void PlaybackController::loadMotionPlan(LocomotionEngineMotionPlan* motionPlan, double phase){
-	stridePhase = phase;
-	this->motionPlan = motionPlan;
-
-	RobotState startRobotState(robot);
-	motionPlan->robotStateTrajectory.getRobotPoseAt(phase, startRobotState);
-	robot->setState(&startRobotState);
+	desiredState = motionPlanner->getPreplanedRobotStateAtTime(motionPlanner->motionPlanStartTime + stridePhase * motionPlanner->locomotionManager->motionPlan->motionPlanDuration);
 }
 
 void PlaybackController::computeControlSignals(double timeStep) {

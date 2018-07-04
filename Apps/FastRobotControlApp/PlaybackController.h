@@ -6,10 +6,11 @@
 #include <RobotDesignerLib/LocomotionEngineManagerGRF.h>
 #include <RobotDesignerLib/LocomotionEngineManagerIP.h>
 #include <RobotDesignerLib/RobotController.h>
+#include "MotionPlanner.h"
 
 class PlaybackController : public RobotController {
 public:
-	PlaybackController(Robot* robot, LocomotionEngineMotionPlan *motionPlan);
+	PlaybackController(Robot* robot, MotionPlanner *motionPlanner);
 	~PlaybackController(void);
 
 	//advance the phase of the motion by timeStep...
@@ -28,8 +29,7 @@ public:
 	virtual void drawDebugInfo();
 	virtual void initialize();
 
-	virtual void loadMotionPlan(LocomotionEngineMotionPlan* motionPlan, double phase = 0);
-
 	virtual void draw();
+	MotionPlanner *motionPlanner = NULL;
 };
 

@@ -25,7 +25,7 @@ FastRobotControlApp::FastRobotControlApp(){
 	simWindow = new SimulationWindow(0, 0, 100, 100, this);
 
 	mainMenu->addGroup("Options");
-	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "Playback", "Tracking"});
+	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "Playback", "Tracking", "No controller"});
 
 	nanogui::Widget *tools = new nanogui::Widget(mainMenu->window());
 	mainMenu->addWidget("", tools);
@@ -262,7 +262,7 @@ void FastRobotControlApp::loadToSim(){
 
 	plannerWindow->initializeLocomotionEngine();
 	startingRobotState = plannerWindow->motionPlanner->locomotionManager->motionPlan->initialRS;
-	simWindow->loadMotionPlan(plannerWindow->motionPlanner->locomotionManager->motionPlan);
+	simWindow->loadMotionPlan(plannerWindow->motionPlanner);
 	Logger::consolePrint("The robot has %d legs, weighs %lf kgs and is %lf m tall...\n", robot->bFrame->limbs.size(), robot->getMass(), robot->root->getCMPosition().y());
 }
 
@@ -288,8 +288,10 @@ void FastRobotControlApp::setActiveController() {
 
 // Run the App tasks
 void FastRobotControlApp::process() {
-//	plannerWindow->motionPlanner->generateMotionPlan();
-//	return;
+	if (plannerWindow->motionPlanner->initialized == false)
+		plannerWindow->motionPlanner->generateMotionPlan();
+
+	setActiveController();
 
 	double dt = controlFrequency;
 
@@ -311,6 +313,7 @@ void FastRobotControlApp::process() {
 			simWindow->stridePhase -= n * dPhase;
 			plannerWindow->motionPlanner->motionPlanStartTime = timeAtStrideStart + n * timePerdPhase;
 			plannerWindow->ffpViewer->cursorPosition = simWindow->stridePhase;
+			//hmmm, there will be a slight mismatch here. We are using the current state of the robot as initial conditions for motion planning, but the motion planning process starts "a little while back" when the stride phase was actually 0... but I guess we're within the resoultion of the timestep anyway...
 			plannerWindow->motionPlanner->generateMotionPlan();
 		}
 		if (slowMo)

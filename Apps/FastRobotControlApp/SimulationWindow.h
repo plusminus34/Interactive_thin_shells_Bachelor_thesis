@@ -50,7 +50,7 @@ public:
 
 	void clear();
 	Robot* loadRobot(const char*);
-	void loadMotionPlan(LocomotionEngineMotionPlan* mp);
+	void loadMotionPlan(MotionPlanner* mp);
 
 	void advanceSimulation(double dt);
 
