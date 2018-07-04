@@ -15,7 +15,7 @@
 #include <FEMSimLib/Pin.h>
 
 Paper3DApp::Paper3DApp() {
-	setWindowTitle("Test Paper3D Application...");
+	setWindowTitle("3D Paper Application");
 	/*
 	delete camera;
 	GLTrackingCamera *cam = new GLTrackingCamera();
@@ -53,7 +53,8 @@ Paper3DApp::Paper3DApp() {
 	//slightly deformed initial configuration to avoid some annoying problems occurring if everything is in one plane
 	for (int i = 0; i < dim_x; ++i)
 		for (int j = 0; j < dim_y; ++j) {
-			P3D newPos(i*h, j*h, (i + j) * h / (dim_x + dim_y));
+			double dz = 0.5 * (i + j) * h / (dim_x + dim_y);
+			P3D newPos(i*h, j*h, dz*dz);
 			simMesh->nodes[dim_y*i + j]->setWorldPosition(newPos);
 		}
 
