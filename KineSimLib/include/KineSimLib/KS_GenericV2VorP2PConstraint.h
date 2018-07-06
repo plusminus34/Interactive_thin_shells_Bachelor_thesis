@@ -17,12 +17,16 @@ public:
 		this->x2 = x2_;
 		this->c2 = c2_;
 		weight=w;
+		//Logger::print("comp1 %lf %lf %lf\n", c1->getWorldCenterPosition()[0], c1->getWorldCenterPosition()[1], c1->getWorldCenterPosition()[2]);
+		//Logger::print("comp2 %lf %lf %lf\n" ,c2->getWorldCenterPosition()[0], c2->getWorldCenterPosition()[1], c2->getWorldCenterPosition()[2]);
+		//here position is correct
 	}
 
 	virtual KS_V2VorP2PConstraint* clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut)const{
 		KS_V2VorP2PConstraint* constraint = new KS_V2VorP2PConstraint(*this);
 		constraint->c1=pCompIn;
 		constraint->c2=pCompOut;
+		Logger::print("clone called\n");
 		return constraint;
 	}
 
@@ -32,6 +36,16 @@ public:
 	virtual void movePinOnC1(T x){this->x1 = x;}
 	virtual void movePinOnC2(T x){this->x2 = x;}
 
+
+	V3D getErrorVector() {
+		/*Logger::print("comp1 %lf %lf %lf\n", c1->getWorldCenterPosition()[0], c1->getWorldCenterPosition()[1], c1->getWorldCenterPosition()[2]);
+		Logger::print("comp2 %lf %lf %lf\n", c2->getWorldCenterPosition()[0], c2->getWorldCenterPosition()[1], c2->getWorldCenterPosition()[2]);
+		Logger::print("porv1 %lf %lf %lf\n", x1[0], x1[1], x1[2]);
+		Logger::print("porv2 %lf %lf %lf\n", x2[0], x2[1], x2[2]);*/
+
+		return (c1->get_w(x1) - c2->get_w(x2))*weight;
+	}
+	//we need to ensure that c1.W(x1) == c2.W(x2)
 
 	//compute the constraints and their jacobian, as well as the energy (1/2 C'C), and its gradient and hessian, all of them evaluated at the current state of the assembly
 	virtual double getEnergy(){
@@ -129,10 +143,7 @@ public:
 	virtual MatrixNxM* getConstraintJacobian(int i) {if (i == 0) return &dCds1; return &dCds2;}
 
 private:
-	V3D getErrorVector(){
-		return (c1->get_w(x1) - c2->get_w(x2))*weight;
-	}
-	//we need to ensure that c1.W(x1) == c2.W(x2)
+	
 	T x1;
 	KS_MechanicalComponent *c1;
 	T x2;

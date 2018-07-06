@@ -12,8 +12,11 @@ void KS_Constraint::addEnergyGradientTo(dVector& gradient){
 	//compute the gradient, and write it out
 	for (int j=0;j<getNumberOfAffectedComponents();j++){
 		KS_MechanicalComponent* c = getIthAffectedComponent(j);
-		for (int i=0;i<KS_MechanicalComponent::getStateSize();i++)
+		for (int i = 0; i < KS_MechanicalComponent::getStateSize(); i++) {
 			gradient[KS_MechanicalComponent::getStateSize() * c->getComponentIndex() + i] += (*get_dE_dsi(j))[i];
+			//Logger::print("gradient %d %lf\n", i, (*get_dE_dsi(j))[i]);
+		}
+
 	}
 }
 

@@ -265,9 +265,22 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 
 	fclose(f);
 	initConstraints();
-	s.resize(6 * getComponentCount()); s.setZero();
-	sSolver.resize(6 * getComponentCount()); sSolver.setZero();
-	Logger::print("%d\n", getComponentCount());
+	s.resize(6 * getComponentCount()); //s.setZero();
+	sSolver.resize(6 * getComponentCount()); //sSolver.setZero();
+	Logger::print(" number of components %d\n", getComponentCount());
+	Logger::print(" number of connections %d\n", getConnectionCount());
+	for (int i = 0; i < m_components.size(); i++) {
+		m_components[i]->setupGeometry();
+		s[KS_MechanicalComponent::getStateSize() * i + 0]= m_components[i]->getGamma(); 
+	    s[KS_MechanicalComponent::getStateSize() * i + 1]= m_components[i]->getBeta(); 
+		s[KS_MechanicalComponent::getStateSize() * i + 2]= m_components[i]->getAlpha(); 
+		s[KS_MechanicalComponent::getStateSize() * i + 3]= m_components[i]->getWorldCenterPosition()[0];
+		s[KS_MechanicalComponent::getStateSize() * i + 4]= m_components[i]->getWorldCenterPosition()[1];
+	    s[KS_MechanicalComponent::getStateSize() * i + 5]= m_components[i]->getWorldCenterPosition()[2];
+		//P3D temp = m_components[i]->getWorldCenterPosition();
+		//Logger::print("components i x y z %d %lf %lf %lf\n", i, temp[0], temp[1], temp[2]);
+	}
+
 	AConstraintEnergy = new KS_AssemblyConstraintEnergy();
 	AConstraintEnergy->initialize(this);
 	return true;

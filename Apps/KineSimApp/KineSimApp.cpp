@@ -3,11 +3,17 @@
 #include <GUILib/GLMesh.h>
 #include <GUILib/GLContentManager.h>
 #include <MathLib/MathLib.h>
+#include <KineSimLib/KS_BindComponentsConnection.h>
 
 KineSimApp::KineSimApp()
 {
 	setWindowTitle("Test Application for KineSim");
+	mech1 = new KS_MechanicalAssembly();
+	mech1->readFromFile("../data/KineSimApp/fourBar.mech");
+	// double check if mechanism has full initialization at this point otherwise initiliaze those members now
 
+	mainMenu->addGroup("sim parameters");
+	menuScreen->performLayout();
 }
 
 KineSimApp::~KineSimApp(void){
@@ -22,9 +28,13 @@ void KineSimApp::process() {
 
 	while (simulationTime < 1.0 * maxRunningTime) {
 
-
-
+		simulationTime += simTimeStep;
+		mech1->solveAssembly();
+		KS_BindComponentsConnection* tmp = static_cast<KS_BindComponentsConnection*>(mech1->getConnection(1));
+		tmp->getMotorAngle();
+		Logger::print("getMotorAngle %lf\n", tmp->getMotorAngle());
 	}
+
 
 }
 
@@ -53,6 +63,8 @@ void KineSimApp::drawScene() {
 	glVertex3d(p0[0], p0[1], p0[2]);
 	glVertex3d(pz[0], pz[1], pz[2]);
 	glEnd();
+	drawSphere(p0, l/16);
+	mech1->draw();
 
 }
 
@@ -62,36 +74,46 @@ void KineSimApp::drawAuxiliarySceneInfo() {
 
 // Restart the application.
 void KineSimApp::restart() {
-	
+	//mech1->s
 }
 
 bool KineSimApp::onKeyEvent(int key, int action, int mods)
 {
+	if (GLApplication::onKeyEvent(key, action, mods) == true) return true;
+
 	return false;
 }
 
 bool KineSimApp::onCharacterPressedEvent(int key, int mods)
 {
+	if (GLApplication::onCharacterPressedEvent(key, mods) == true) return true;
+
 	return false;
 }
 
 bool KineSimApp::onMouseButtonEvent(int button, int action, int mods, double xPos, double yPos)
 {
+	if (GLApplication::onMouseButtonEvent(button, action, mods, xPos, yPos)) return true;
+
 	return false;
 }
 
 bool KineSimApp::onMouseMoveEvent(double xPos, double yPos)
 {
+	if (GLApplication::onMouseMoveEvent(xPos, yPos) == true) return true;
+
 	return false;
 }
 
 bool KineSimApp::onMouseWheelScrollEvent(double xOffset, double yOffset)
 {
+	if (GLApplication::onMouseWheelScrollEvent(xOffset, yOffset) == true) return true;
 	return false;
 }
 
 bool KineSimApp::processCommandLine(const std::string & cmdLine)
 {
+	if (GLApplication::processCommandLine(cmdLine) == true) return true;
 	return false;
 }
 

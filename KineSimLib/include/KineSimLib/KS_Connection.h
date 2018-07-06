@@ -13,6 +13,7 @@ class GLMesh;
 
 class KS_Connection{
 	friend class KS_MotionMatchObjective_v3;
+	friend class KineSimApp;
 public:
 	KS_Connection(void);
 	virtual ~KS_Connection(void);
@@ -37,6 +38,8 @@ public:
 	//GLMesh* getPin(){return m_compOut->getMesh(m_pin);}
 	void setPin(int p){m_pin=p;}
 	int getPin(){return m_pin;}
+	//virtual void draw()=0; // consider adding a separate draw function for handling joints TODO
+
 
 protected:
 	KS_MechanicalComponent* m_compIn;
@@ -48,6 +51,7 @@ protected:
 	char compOutName[200];
 
 	bool isNew;
+
 
 	//returns true if the input line was processed, false otherwise
 	bool processInputLine(char* line, KS_MechanicalAssembly* ma);

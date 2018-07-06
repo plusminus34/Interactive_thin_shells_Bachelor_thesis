@@ -17,7 +17,8 @@ public:
 		strcpy(meshName,name);
 	}
 
-	virtual void setupGeometry() {assert(false); }
+	//virtual void setupGeometry() {assert(false); }
+	virtual void setupGeometry();
 	virtual bool loadFromFile(FILE* f);
 	virtual bool writeToFile(FILE* f);
 	virtual KS_GenericComponent* clone() const;

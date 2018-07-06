@@ -23,6 +23,7 @@ private:
 	KS_V2VConstraint* v2vConstraintForWelding;
 	bool weldComponents;
 	bool allowArbitraryRelativeRotation;
+	bool motorized = false;
 
 public:
 	KS_BindComponentsConnection(void);
@@ -50,6 +51,7 @@ public:
 	P3D getWorldCoordsPinPosition(){
 		return (this->m_compIn->get_w(pOnC1) + this->m_compOut->get_w(pOnC2))/2.0;
 	}
+	virtual double getMotorAngle() { return m_compOut->getAlpha() - m_compIn->getAlpha(); }
 
 };
 

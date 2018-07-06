@@ -5,6 +5,7 @@
 #include <map>
 #include <GUILib/TranslateWidget.h>
 
+#include <KineSimLib/KS_MechanicalAssembly.h>
 //#include <RBSimLib/AbstractRBEngine.h>
 //#include <RBSimLib/WorldOracle.h>
 
@@ -13,7 +14,11 @@
  */
 class KineSimApp : public GLApplication {
 private:
-	
+	KS_MechanicalAssembly * mech1;
+	bool checkDerivatives = false;
+	double simTimeStep = 1;
+
+
 
 public:
 	// constructor

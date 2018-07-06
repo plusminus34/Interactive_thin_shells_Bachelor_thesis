@@ -1,0 +1,38 @@
+GenericComponent
+	name bodyOne
+	positionInWorld 0.0 0.0 0.0
+End
+
+BoundToWorldConnection
+	componentOut bodyOne
+	freezePhase
+End
+
+GenericComponent
+	name bodyTwo
+	positionInWorld 6.0 4.0 0.0
+End
+
+BindComponentsConnection
+	componentIn bodyOne
+	componentOut bodyTwo
+	pinOnCompIn 1.0 0.0 0.0
+	pinOnCompOut -1.0 0.0 0.0
+	vecOnCompIn 0.0 0.0 1.0
+	vecOnCompOut 0.0 0.0 1.0
+End
+
+GenericComponent
+	name bodyThree
+	positionInWorld 5.0 5.0 0.0
+End
+
+BindComponentsConnection
+	componentIn bodyTwo
+	componentOut bodyThree
+	pinOnCompIn 1.0 0.0 0.0
+	pinOnCompOut -1.0 0.0 0.0
+	vecOnCompIn 0.0 0.0 1.0
+	vecOnCompOut 0.0 0.0 1.0
+End
+

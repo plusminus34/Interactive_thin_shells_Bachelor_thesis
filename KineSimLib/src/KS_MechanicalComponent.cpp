@@ -3,10 +3,13 @@
 #include <MathLib/Quaternion.h>
 #include <MathLib/Transformation.h>
 #include <KineSimLib/Triangle.h>
+#include <GUILib/GLUtils.h>
+
 
 int KS_MechanicalComponent::m_stateSize = 6;
 
 KS_MechanicalComponent::KS_MechanicalComponent(const char* name){
+	//Logger::print("Constructor mechanical component calld \n");
 	setName(name);
 	position = P3D(0,0,0);
 
@@ -21,6 +24,7 @@ KS_MechanicalComponent::KS_MechanicalComponent(const char* name){
 	selected = false;
 	//meshColor = ThreeTuple(0.5, 0.5, 0.8);
 	layerNumber = 0;
+	points_list.clear(); points_list.push_back(position);
 }
 
 KS_MechanicalComponent::~KS_MechanicalComponent(void){
@@ -41,6 +45,7 @@ V3D KS_MechanicalComponent::get_x(const V3D& w) const{
 //w represents the world coordinates for the point (or vector) x, which is expressed in the local coordinate frame of the component. The function works both for local points or vectors
 P3D KS_MechanicalComponent::get_w(const P3D& x) const {
 	//w = (R*x) + p where R is the overall rotation, and p is the global position of the component
+	//Logger::print("get_w version P3D gets called %lf %lf %lf\n", position[0], getWorldCenterPosition()[1], getWorldCenterPosition()[2]);
 	return R_gamma*(R_beta*(R_alpha*x)) + position;
 }
 
@@ -277,13 +282,19 @@ void KS_MechanicalComponent::writeBaseComponentToFile(FILE* f){
 //returns true if the input line was processed, false otherwise
 bool KS_MechanicalComponent::processInputLine(char* line){
 	int lineType = getKSLineType(line);
+	
 	switch (lineType) {
 		case KS_NAME:
 			strcpy(m_name, trim(line));
 			return true;
 			break;
 		case KS_POSITION_IN_WORLD:
+			//double px, py, pz;
 			if (sscanf(line, "%lf %lf %lf", &position[0], &position[1], &position[2]) != 3) assert(false);
+			//position = P3D(px, py, pz);
+			Logger::print("position %lf %lf %lf\n", position[0], position[1], position[2]);
+			//lets add this point to the points_list
+			//points_list.push_back(position);
 			return true;
 			break;
 		case KS_ANGLE:
@@ -383,6 +394,7 @@ void KS_MechanicalComponent::loadTriangleMeshFromFile(char* fName){
 	tmpMesh->computeNormals();
 	//tmpMesh->setColour(meshColor[0], meshColor[1], meshColor[2], 1);
 	meshes.push_back(tmpMesh);
+	Logger::print("loading mesh..");
 }
 
 void TracerParticle::addTrajectoryPoint(){
@@ -393,7 +405,7 @@ void TracerParticle::addTrajectoryPoint(){
 	This method draws the meshes of the component.
 */
 void KS_MechanicalComponent::draw(){
-  #ifdef DISPLAY
+  /*#ifdef DISPLAY
 	glPushMatrix();
 
 	TransformationMatrix toWorld;
@@ -409,7 +421,55 @@ void KS_MechanicalComponent::draw(){
 		meshes[i]->drawMesh(!selected);
 
 	glPopMatrix();
-#endif	
+#endif*/
+//set up the OpenGL transformation matrices to match the rotation and position of the rigid body - meshes, CDPs, etc, are stored in local coordinates	
+
+	glPushMatrix();
+//translation part
+
+	//glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
+
+	glTranslated(position[0], position[1], position[2]);
+
+	//and rotation part
+	glRotated(DEG(gamma), n_gamma[0], n_gamma[1], n_gamma[2]);
+	glRotated(DEG(beta), n_beta[0], n_beta[1], n_beta[2]);
+	glRotated(DEG(alpha), n_alpha[0], n_alpha[1], n_alpha[2]);
+
+
+	//glPushAttrib(GL_ENABLE_BIT);
+	
+	
+	//glPopAttrib();
+
+	// now we'll draw the object's mesh
+	for (uint i = 0; i < meshes.size(); i++) {
+		//glPushMatrix();
+		//Logger::print("getPolyCount%d\n",meshes[i]->getTriangleCount());
+		meshes[i]->drawMesh();
+		//glPopMatrix();
+	}
+		//meshes[i]->drawMesh(!selected);
+
+	/*if (meshes.size()>0 && (flags & SHOW_MESH)) {
+		for (uint i = 0; i < meshes.size(); i++) {
+			if (i < meshTransformations.size())
+			{
+				glPushMatrix();
+				applyGLMatrixTransform(meshTransformations[i]);
+				meshes[i]->drawMesh();
+				glPopMatrix();
+			}
+			else
+				meshes[i]->drawMesh();
+		}
+	}*/
+	//glPopAttrib();
+
+	glPopMatrix();
+	
+
+
 }
 
 
@@ -470,7 +530,7 @@ uint KS_MechanicalComponent::renderToObjFile(FILE* fp, uint vertexIdxOffset, dou
 	return retVal;
 }
 
-/*AABoundingBox KS_MechanicalComponent::computeAABB(){
+/*AxisAlignedBoundingBox KS_MechanicalComponent::computeAABB(){
 	P3D AABB_blf(DBL_MAX, DBL_MAX, DBL_MAX);
 	P3D AABB_trb(-DBL_MAX, -DBL_MAX, -DBL_MAX);
 
@@ -487,6 +547,6 @@ uint KS_MechanicalComponent::renderToObjFile(FILE* fp, uint vertexIdxOffset, dou
 		}
 	}
 
-	return AABoundingBox(AABB_blf, AABB_trb);
+	return AxisAlignedBoundingBox(AABB_blf, AABB_trb);
 }*/
 

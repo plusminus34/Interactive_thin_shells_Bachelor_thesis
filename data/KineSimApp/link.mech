@@ -1,0 +1,9 @@
+GenericComponent
+	name body1
+	positionInWorld 1.0 1.0 1.0
+End
+
+BoundToWorldConnection
+	componentOut body1
+	freezePhase
+End

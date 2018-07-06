@@ -10,6 +10,7 @@ class KS_MechanicalAssembly{
 friend class APP_KSSimulator;
 friend class APP_KSEditor;
 friend class APP_KSMotionCurveOptimizer;
+friend class KineSimApp;
 public:
 	typedef std::vector<KS_MechanicalComponent*> ComponentArray;
 	typedef std::vector<KS_Connection*> ConnectionArray;

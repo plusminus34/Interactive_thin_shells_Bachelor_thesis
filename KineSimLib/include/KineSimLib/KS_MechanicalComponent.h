@@ -45,7 +45,7 @@ public:
 	
 	void setName(const char* name) { strcpy(this->m_name, name); }
 	char* getName() {return m_name;}
-	virtual void setupGeometry(){}
+	virtual void setupGeometry() = 0;
 	void clearTracerParticles();
 	void addTracerParticlesToList(DynamicArray<P3D>& tracerParticleList);
 
@@ -64,6 +64,9 @@ public:
 
 	void setWorldCenterPosition(const P3D& pos);
 	P3D getWorldCenterPosition() const;
+
+	DynamicArray<P3D> getPoints_list() { return points_list; }
+	void setPoints_list(DynamicArray<P3D>& Points_list) { points_list= Points_list; }
 
 	virtual double getThickness(){return 0;}
 
@@ -166,6 +169,8 @@ protected:
 	V3D n_alpha, n_beta, n_gamma;			//rotation axes (n_alpha is special because it represents the component's local coordinates normal)
 	//from the quantities above we compute these quaternions for ease of use
 	Quaternion R_alpha, R_beta, R_gamma;
+
+	DynamicArray<P3D> points_list;
 
 	DynamicArray<TracerParticle> tracerParticles;
 	//returns true if the input line was processed, false otherwise

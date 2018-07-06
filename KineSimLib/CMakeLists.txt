@@ -26,6 +26,7 @@ target_link_libraries(
 		MathLib
 		OptimizationLib
 		GUILib
+		BulletCollision
 		${ODE_LIBRARIES}
 		${OPENGL_LIBRARIES}
 	PRIVATE

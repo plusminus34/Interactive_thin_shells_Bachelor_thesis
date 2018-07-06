@@ -1,0 +1,566 @@
+# the character --------------------------------------------------------------------------------------------------------
+
+GenericComponent
+	name body
+	positionInWorld 1.75 1.55 0
+	inputMesh ../data/CDMA/obj/bernieV2/body.obj
+End
+
+BoundToWorldConnection
+	componentOut body
+	freezePhase
+End
+
+GenericComponent
+	name head
+	phase 0.263384
+	positionInWorld 1.515686 3.368963 0.000000
+	inputMesh ../data/CDMA/obj/bernieV2/head.obj
+End
+
+GenericComponent
+	name walker
+	phase -0.342279
+	positionInWorld 0.072798 -0.298918 -0.000000
+	inputMesh ../data/CDMA/obj/bernieV2/walker.obj
+End
+
+GenericComponent
+	name upperArms
+	phase -0.263384
+	positionInWorld 1.619825 1.717243 -0.000000
+	inputMesh ../data/CDMA/obj/bernieV2/upperArms.obj
+End
+
+
+BindComponentsConnection
+	componentIn upperArms
+	componentOut body
+	pinOnCompIn 0 0.5 0.7
+	pinOnCompOut 0.0 0.65 0.7
+	allowArbitraryRelativeRotation
+End
+
+BindComponentsConnection
+	componentIn upperArms
+	componentOut body
+	pinOnCompIn 0 0.5 -0.7
+	pinOnCompOut 0.0 0.65 -0.7
+	allowArbitraryRelativeRotation
+End
+
+
+BindComponentsConnection
+	componentIn upperArms
+	componentOut walker
+	pinOnCompIn 0 -0.5 0
+	pinOnCompOut 0.82 1.92 0
+End
+
+GenericComponent
+	name leftUpperLeg
+	phase -0.260845
+	positionInWorld 1.645262 -0.079703 0.400000
+	inputMesh ../data/CDMA/obj/bernieV2/upperLeg.obj
+End
+
+GenericComponent
+	name leftLowerLeg
+	phase 0.679237
+	positionInWorld 1.722094 -0.928875 0.400000
+	inputMesh ../data/CDMA/obj/bernieV2/shin.obj
+	tracerParticle 0.000000 -1.300000 0.000000
+End
+
+GenericComponent
+	name leftFoot
+	phase 0.334565
+	positionInWorld 2.067244 -1.596074 0.400000
+	inputMesh ../data/CDMA/obj/bernieV2/foot.obj
+End
+
+Bar
+	name leftHeelBar
+	phase 0.868343
+	positionInWorld 2.043379 -0.866809 0.300000
+	width 0.1
+	thickness 0.1
+	barEndPoints 0.000000 -0.635 0.000000 0.585077
+End
+
+BindComponentsConnection
+	componentIn body
+	componentOut leftUpperLeg
+	pinOnCompIn 0.05 -1.05 0.4
+	pinOnCompOut 0 0.6 0
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+BindComponentsConnection
+	componentIn leftUpperLeg
+	componentOut leftLowerLeg
+	pinOnCompIn -0.05 -0.55 0.0
+	pinOnCompOut 0 0.425 0
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+BindComponentsConnection
+	componentIn leftLowerLeg
+	componentOut leftFoot
+	pinOnCompIn -0.000000 -0.79 0.000000
+	pinOnCompOut 0.160.000000 0.000000
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+
+BindComponentsConnection
+	componentIn leftHeelBar
+	componentOut leftFoot
+	pinOnCompIn -0.000000 -0.635 0.05
+	pinOnCompOut 0.54 0.15 -0.05
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+
+BindComponentsConnection
+	componentIn leftHeelBar
+	componentOut leftUpperLeg
+	pinOnCompIn -0.000000 0.65 0.05
+	pinOnCompOut 0. -0.38 -0.05
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+
+GenericComponent
+	name rightUpperLeg
+	phase -0.513771
+	positionInWorld 1.505121 -0.022538 -0.400000
+	inputMesh ../data/CDMA/obj/bernieV2/upperLeg.obj
+End
+
+GenericComponent
+	name rightLowerLeg
+	phase 0.104386
+	positionInWorld 1.235554 -0.899645 -0.400000
+	inputMesh ../data/CDMA/obj/bernieV2/shin.obj
+	tracerParticle 0.000000 -1.300000 0.000000	
+End
+
+Bar
+	name rightHeelBar
+	phase 0.311106
+	positionInWorld 1.517337 -0.972277 -0.300000
+	width 0.1
+	thickness 0.1
+	barEndPoints 0.000000 -0.635 0.000000 0.585077
+End
+
+GenericComponent
+	name rightFoot
+	phase -0.107021
+	positionInWorld 1.158784 -1.668254 -0.400000
+	inputMesh ../data/CDMA/obj/bernieV2/foot.obj
+End
+
+BindComponentsConnection
+	componentIn body
+	componentOut rightUpperLeg
+	pinOnCompIn 0.05 -1.05 -0.4
+	pinOnCompOut 0 0.6 0
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+BindComponentsConnection
+	componentIn rightUpperLeg
+	componentOut rightLowerLeg
+	pinOnCompIn -0.05 -0.55 0.0
+	pinOnCompOut 0 0.425 0
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+
+BindComponentsConnection
+	componentIn rightLowerLeg
+	componentOut rightFoot
+	pinOnCompIn -0.000000 -0.79 0.000000
+	pinOnCompOut 0.16 0.000000 0.000000
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+
+BindComponentsConnection
+	componentIn rightHeelBar
+	componentOut rightFoot
+	pinOnCompIn -0.000000 -0.635 -0.05
+	pinOnCompOut 0.54 0.15 0.05
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+
+BindComponentsConnection
+	componentIn rightHeelBar
+	componentOut rightUpperLeg
+	pinOnCompIn -0.000000 0.65 -0.05
+	pinOnCompOut 0. -0.38 0.05
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+# ----------------------------------- assembly to drive the walker
+
+GenericComponent 
+	name walkerCrank
+	phase 0.000000
+	positionInWorld 1.680000 0.700000 -0.000000
+	inputMesh ../data/CDMA/obj/bernieV2/walkerCrank.obj
+End
+
+PhaseDriverConnection
+	componentOut walkerCrank
+	scale -0.2	
+End
+
+BindComponentsConnection
+	componentIn walkerCrank
+	componentOut body
+	pinOnCompIn 0 0 0.7
+	pinOnCompOut -0.07000 -0.850000 0.7
+	allowArbitraryRelativeRotation
+End
+
+BindComponentsConnection
+	componentIn walkerCrank
+	componentOut body
+	pinOnCompIn 0 0 -0.7
+	pinOnCompOut -0.07000 -0.850000 -0.7
+	allowArbitraryRelativeRotation
+End
+
+
+
+# ----------------------------------- connection to walker on the left side
+
+Bar walkerDrivingBar1L
+	phase -0.174449
+	positionInWorld 1.080000 0.450000 0.730000
+	width 0.1
+	thickness 0.1
+	barEndPoints 0 -0.03 0 0.3
+End
+
+BindComponentsConnection
+	componentIn body
+	componentOut walkerDrivingBar1L
+	pinOnCompIn -0.67 -1.1 0.73
+	pinOnCompOut 0 0 0
+End
+
+Bar walkerDrivingBar2L
+	phase 1.479777
+	positionInWorld 1.132070 0.745447 0.730000
+	width 0.1
+	thickness 0.1
+	barEndPoints 0 -0.5 0 0.5
+	tracerParticle 0 0.5 0
+End
+
+BindComponentsConnection
+	componentIn walkerDrivingBar1L
+	componentOut walkerDrivingBar2L
+	pinOnCompIn 0 0.3 0
+	pinOnCompOut 0 0 0
+End
+
+BindComponentsConnection
+	componentIn walkerCrank
+	componentOut walkerDrivingBar2L
+	pinOnCompIn -0.05 0 0.73
+	pinOnCompOut 0 -0.5 0
+End
+
+BindComponentsConnection
+	componentIn walkerDrivingBar2L
+	componentOut walker
+	pinOnCompIn 0 0.5 0
+	pinOnCompOut 0.163 1.215 0.73
+End
+
+
+# ----------------------------------- connection to walker on the right side
+
+Bar walkerDrivingBar1R
+	phase -0.174449
+	positionInWorld 1.080000 0.450000 -0.730000
+	width 0.1
+	thickness 0.1
+	barEndPoints 0 -0.03 0 0.3
+End
+
+BindComponentsConnection
+	componentIn body
+	componentOut walkerDrivingBar1R
+ 	pinOnCompIn -0.67 -1.1 -0.73
+	pinOnCompOut 0 0 0
+End
+
+Bar walkerDrivingBar2R
+	phase 1.479777
+	positionInWorld 1.132070 0.745447 -0.730000
+	width 0.1
+	thickness 0.1
+	barEndPoints 0 -0.5 0 0.5
+	tracerParticle 0 0.5 0
+End
+
+BindComponentsConnection
+	componentIn walkerDrivingBar1R
+	componentOut walkerDrivingBar2R
+	pinOnCompIn 0 0.3 0
+	pinOnCompOut 0 0 0
+End
+
+BindComponentsConnection
+	componentIn walkerCrank
+	componentOut walkerDrivingBar2R
+	pinOnCompIn -0.05 0 -0.73
+	pinOnCompOut 0 -0.5 0
+End
+
+
+BindComponentsConnection
+	componentIn walkerDrivingBar2R
+	componentOut walker
+	pinOnCompIn 0 0.5 0
+	pinOnCompOut 0.163 1.215 -0.73
+End
+
+# ---------------------------------------- set up crank that will drive both legs
+
+# NOTE: we can parameterize location of crank on body, as well as length of crank arm...
+
+GenericComponent
+	name legsCrank
+	phase 0.000000
+	positionInWorld 1.239000 0.712000 -0.000000
+	inputMesh ../data/CDMA/obj/bernieV2/legsCrank.obj
+End
+
+BindComponentsConnection
+	componentIn legsCrank
+	componentOut body
+	pinOnCompIn 0 0 -0.4
+	pinOnCompOut -0.511 -0.838 -0.400000
+	allowArbitraryRelativeRotation
+End
+
+BindComponentsConnection
+	componentIn legsCrank
+	componentOut body
+	pinOnCompIn 0 0 0.4
+	pinOnCompOut -0.511 -0.838 0.400000
+	allowArbitraryRelativeRotation
+End
+
+
+PhaseDriverConnection
+	componentOut legsCrank
+	scale 0.1
+End
+
+
+# ---------------------------------------- assembly for left leg
+
+Bar
+	name mainBarL
+	phase -0.147528
+	positionInWorld 1.239000 0.572000 0.250000
+	width 0.1
+	thickness 0.1
+	barEndPoints 0.000000 -1.124 0.000000 0.020000
+End
+
+Bar
+	name supportBarL
+	phase -1.195663
+	positionInWorld 1.890000 0.508000 0.300000
+	width 0.1
+	thickness 0.1
+	barEndPoints 0.000000 -0.754 0.000000 0.050000
+End
+
+BindComponentsConnection
+	componentIn legsCrank
+	componentOut mainBarL
+	pinOnCompIn 0 -0.14 0.25
+	pinOnCompOut 0.000000 0.000000 0
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+BindComponentsConnection
+	componentIn supportBarL
+	componentOut body
+	pinOnCompIn 0.000000 0.000000 0
+	pinOnCompOut 0.140000 -1.042000 0.300000
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+
+BindComponentsConnection
+	componentIn supportBarL
+	componentOut mainBarL
+	pinOnCompIn 0.000000 -0.754 -0.025000
+	pinOnCompOut 0.000000 -0.344 0.025000
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+
+BindComponentsConnection
+	componentIn leftLowerLeg
+	componentOut mainBarL
+	pinOnCompIn -0.260000 0.710000 -0.100000
+	pinOnCompOut 0.000000 -1.124 0.050000
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+
+# ---------------------------------------- assembly for right leg
+
+Bar
+	name mainBarR
+	phase -0.303583
+	positionInWorld 1.239000 0.852000 -0.250000
+	width 0.1
+	thickness 0.1
+	barEndPoints 0.000000 -1.124 0.000000 0.020000
+End
+
+
+Bar
+	name supportBarR
+	phase -1.591661
+	positionInWorld 1.890000 0.508000 -0.300000
+	width 0.1
+	thickness 0.1
+	barEndPoints 0.000000 -0.754 0.000000 0.050000
+End
+
+BindComponentsConnection
+	componentIn legsCrank
+	componentOut mainBarR
+	pinOnCompIn 0 0.14 -0.25
+	pinOnCompOut 0.000000 0.000000 0.0
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+
+BindComponentsConnection
+	componentIn supportBarR
+	componentOut body
+	pinOnCompIn 0.000000 0.000000 0.000000
+	pinOnCompOut 0.140000 -1.042000 -0.300000
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+
+BindComponentsConnection
+	componentIn supportBarR
+	componentOut mainBarR
+	pinOnCompIn 0.000000 -0.754 0.025000
+	pinOnCompOut 0.000000 -0.344 -0.025000
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+
+BindComponentsConnection
+	componentIn rightLowerLeg
+	componentOut mainBarR
+	pinOnCompIn -0.260000 0.710000 0.100000
+	pinOnCompOut 0.000000 -1.124 -0.050000
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+End
+
+# --------------------------------------------------------------- connection for head movement
+
+
+BindComponentsConnection
+	componentIn head
+	componentOut body
+	pinOnCompIn 0 -0.9 -0.5
+	pinOnCompOut 0 0.95 -0.5
+	allowArbitraryRelativeRotation
+End
+
+BindComponentsConnection
+	componentIn head
+	componentOut body
+	pinOnCompIn 0 -0.9 0.5
+	pinOnCompOut 0 0.95 0.5
+	allowArbitraryRelativeRotation
+End
+
+SpurGear
+	name shoulderGear
+	phase -0.263384
+	positionInWorld 1.750000 2.200000 0.200000
+	gearMeshOffsetAngle 0.000000
+	thickness 0.1
+	radius 0.15
+	pitchSurfaceAngle 0.000000
+	numberOfTeeth 15
+	teethHeight 0.030000
+	teethPressureAngle 0.200000	
+End
+
+BindComponentsConnection
+	componentIn upperArms
+	componentOut shoulderGear
+	pinOnCompIn 0 0.5 0.2
+	pinOnCompOut 0 0 0
+	weldComponents
+End
+
+
+SpurGear
+	name neckGear
+	phase 0.263384
+	positionInWorld 1.750000 2.500000 0.200000
+	gearMeshOffsetAngle 0.2
+	thickness 0.1
+	radius 0.15
+	pitchSurfaceAngle 0.000000
+	numberOfTeeth 15
+	teethHeight 0.030000
+	teethPressureAngle 0.200000	
+End
+
+BindComponentsConnection
+	componentIn head
+	componentOut neckGear
+	pinOnCompIn 0 -0.9 0.2
+	pinOnCompOut 0 0 0
+	weldComponents
+End
+
+Gear2GearConnection
+	componentIn neckGear
+	componentOut shoulderGear
+	#todo: set initial offset between the gears...
+End
+

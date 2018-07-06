@@ -35,7 +35,7 @@ void KS_AssemblyConstraintEnergy::initialize(KS_MechanicalAssembly* a){
 		constraints[i]->setConstraintStartIndex(scalarConstraintCount);
 		scalarConstraintCount += constraints[i]->getConstraintCount();
 	}
-
+	Logger::print(" number of constraints %d\n", scalarConstraintCount);
 	C.resize(scalarConstraintCount);
 	//dCds.resize(scalarConstraintCount, a->getComponentCount() * KS_MechanicalComponent::getStateSize(), false);
 	//dCds.resize(scalarConstraintCount, a->getComponentCount() * KS_MechanicalComponent::getStateSize());
@@ -50,10 +50,13 @@ void KS_AssemblyConstraintEnergy::updateRegularizingSolutionTo(const dVector &cu
 }
 
 double KS_AssemblyConstraintEnergy::computeValue(const dVector& s){
+	//Logger::print("compute valued called\n");
 	assembly->setAssemblyState(s);
 	double totalConstraintEnergy = 0;
-	for (uint i=0;i<constraints.size();i++)
+	for (uint i = 0; i < constraints.size(); i++) {
 		totalConstraintEnergy += constraints[i]->getEnergy();
+		//Logger::print("getEnergy %lf\n", constraints[i]->getEnergy());
+	}
 	
 	//add the regularizer contribution
 	//dVector vd((int)s.size(), 0);
@@ -116,6 +119,9 @@ void KS_AssemblyConstraintEnergy::addHessianEntriesTo(DynamicArray<MTriplet>& he
 
 void KS_AssemblyConstraintEnergy::addGradientTo(dVector & grad, const dVector & s)
 {
+	grad.resize(s.size());
+	grad.setZero();
+	//Logger::print("compute gradient called\n");
 	assembly->setAssemblyState(s);
 	dE_ds.setZero();//setValues(dE_ds, 0);
 
@@ -132,6 +138,9 @@ void KS_AssemblyConstraintEnergy::addGradientTo(dVector & grad, const dVector & 
 	dE_ds = vreg * regularizer + dE_ds * 1.0;//replaced add
 
 	grad = dE_ds;
+	/*for (int i = 0; i < s.size(); i++) {
+		Logger::print("gradient %lf\n", grad[i]);
+	}*/
 
 }
 
