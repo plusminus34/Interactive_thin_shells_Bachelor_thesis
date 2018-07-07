@@ -71,7 +71,7 @@ public:
 	ConstrainedObjectiveFunction* constrainedObjectiveFunction;
 	bool useObjectivesOnly = false;
 	bool writeParamsToFile = true;
-	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod;
+	NewtonFunctionMinimizer::HessCorrectionMethod hessCorrectionMethod = NewtonFunctionMinimizer::HessCorrectionMethod::DynamicRegularization;
 	enum class OptMethod { Newton, lbfgs } optimizationMethod = OptMethod::Newton;
 
 	NewtonFunctionMinimizer minimizerNewton;

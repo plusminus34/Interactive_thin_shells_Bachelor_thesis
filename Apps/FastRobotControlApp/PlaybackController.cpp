@@ -20,7 +20,8 @@ bool PlaybackController::advanceInTime(double timeStep) {
 }
 
 void PlaybackController::computeDesiredState() {
-	desiredState = motionPlanner->getPreplanedRobotStateAtTime(motionPlanner->motionPlanStartTime + stridePhase * motionPlanner->locomotionManager->motionPlan->motionPlanDuration);
+//	desiredState = motionPlanner->getPreplanedRobotStateAtStridePhase(stridePhase);
+	desiredState = motionPlanner->getMOPTRobotStateAtStridePhase(stridePhase);
 }
 
 void PlaybackController::computeControlSignals(double timeStep) {
@@ -32,13 +33,9 @@ void PlaybackController::applyControlSignals(double timeStep) {
 }
 
 void PlaybackController::drawDebugInfo() {
-
+	applyControlSignals(0.01);
 }
 
 void PlaybackController::initialize() {
 	stridePhase = 0;
-	RobotState moptRobotState(robot);
-	motionPlan->robotStateTrajectory.getRobotStateAt(stridePhase, motionPlan->motionPlanDuration, moptRobotState);
-	robot->setState(&moptRobotState);
 }
-

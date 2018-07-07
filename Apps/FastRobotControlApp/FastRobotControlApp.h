@@ -35,6 +35,8 @@ public:
 	MotionPlannerWindow* plannerWindow = NULL;
 	SimulationWindow* simWindow = NULL;
 
+	bool breakAfterReplan = false;
+
 	bool shouldShowSimWindow();
 	bool shouldShowPlannerWindow();
 

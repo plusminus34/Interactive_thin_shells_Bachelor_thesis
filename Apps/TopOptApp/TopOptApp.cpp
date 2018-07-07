@@ -126,7 +126,7 @@ TopOptApp::TopOptApp() {
 	slider = new nanogui::Slider(panel);
 	slider->setValue(0.001f);
 	slider->setFixedWidth(80);
-	range.first = 0; range.second = 0.1;
+	range.first = 0.0f; range.second = 0.1f;
 	slider->setRange(range);
 	slider->setValue((float)energyFunction->binaryDensityObjectiveWeight);
 	slider->setCallback([this](float val) { energyFunction->binaryDensityObjectiveWeight = val; });

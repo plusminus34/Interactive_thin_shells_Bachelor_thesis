@@ -36,6 +36,9 @@ public:
 	RobotState plannerStartState;
 
 	RobotState getPreplanedRobotStateAtTime(double t);
+	RobotState getPreplanedRobotStateAtStridePhase(double p);
+
+	RobotState getMOPTRobotStateAtStridePhase(double p);
 
 	double globalMOPTRegularizer = 0.01;
 	double motionPlanDuration = 0.8;

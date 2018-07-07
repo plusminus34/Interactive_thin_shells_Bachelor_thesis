@@ -305,7 +305,7 @@ inline Quaternion updateRotationGivenAngularVelocity(const Quaternion& q, const 
 
 
 /**
-	returns the angular velocity that explains how we got from qStart to qEnd in dt time.
+	returns the angular velocity that explains how we got from qStart to qEnd in dt time (qEnd = qDueToAngVelOverDT * qStart)
 */
 inline V3D estimateAngularVelocity(const Quaternion& qStart, const Quaternion& qEnd, double dt) {
 	//qEnd = rot(w_p, dt) * qStart

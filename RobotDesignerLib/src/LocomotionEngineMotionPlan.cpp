@@ -187,9 +187,9 @@ V3D LocomotionEngine_COMTrajectory::getAxis(int i) {
 	return axis[i];
 }
 
-P3D LocomotionEngine_COMTrajectory::getCOMPositionAt(double t){
-	boundToRange(&t, 0, 1);
-	double tSize = t * (double)(pos[0].size()-1);
+P3D LocomotionEngine_COMTrajectory::getCOMPositionAt(double p){
+	boundToRange(&p, 0, 1);
+	double tSize = p * (double)(pos[0].size()-1);
 
 	int tLow = (int)floor(tSize);
 	int tHigh = (int)ceil(tSize);
@@ -206,9 +206,26 @@ P3D LocomotionEngine_COMTrajectory::getCOMPositionAt(double t){
 	return interpolatedPoint;
 }
 
-P3D LocomotionEngine_COMTrajectory::getCOMEulerAnglesAt(double t) {
-	boundToRange(&t, 0, 1);
-	double tSize = t * (double)(orientation[0].size() - 1);
+V3D LocomotionEngine_COMTrajectory::getCOMVelocityAt(double p, double strideDuration) {
+	double dp = 0.010417;
+	double dt = dp * strideDuration;
+
+//	P3D pNow = getCOMPositionAt(p);
+//	P3D pNext = getCOMPositionAt(p + dp);
+
+	return (getCOMPositionAt(p + dp) - getCOMPositionAt(p)) / dt;
+}
+
+V3D LocomotionEngine_COMTrajectory::getCOMAngularVelocityAt(double p, double strideDuration) {
+	double dp = 0.010417;
+	double dt = dp * strideDuration;
+
+	return estimateAngularVelocity(getCOMOrientationAt(p), getCOMOrientationAt(p + dp), dt);
+}
+
+P3D LocomotionEngine_COMTrajectory::getCOMEulerAnglesAt(double p) {
+	boundToRange(&p, 0, 1);
+	double tSize = p * (double)(orientation[0].size() - 1);
 
 	int tLow = (int)floor(tSize);
 	int tHigh = (int)ceil(tSize);
@@ -225,8 +242,8 @@ P3D LocomotionEngine_COMTrajectory::getCOMEulerAnglesAt(double t) {
 	return interpolatedPoint;
 }
 
-Quaternion LocomotionEngine_COMTrajectory::getCOMOrientationAt(double t) {
-	P3D eulerAngles = getCOMEulerAnglesAt(t);
+Quaternion LocomotionEngine_COMTrajectory::getCOMOrientationAt(double p) {
+	P3D eulerAngles = getCOMEulerAnglesAt(p);
 	return getRotationQuaternion(eulerAngles[0], axis[0]) *
 			getRotationQuaternion(eulerAngles[1], axis[1]) * getRotationQuaternion(eulerAngles[2], axis[2]);
 }

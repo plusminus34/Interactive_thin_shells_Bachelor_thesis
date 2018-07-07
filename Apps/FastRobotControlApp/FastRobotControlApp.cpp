@@ -7,6 +7,15 @@
 #include <ControlLib/SimpleLimb.h>
 #include "MotionPlanner.h"
 
+//should we use the old MOPT plan to initialize the new one?!? It just needs to be shifted over by a number of steps, which we know already...
+//maybe MOPT velocities should also be evaluated by looking at midpoints of intervals before and after...
+//save also the high level commands (speed, turning rate)
+//turning does not seem to work at all right now...
+
+//#define DEBUG_MOPT
+
+//#define PRINT_TRACKING_DEBUG
+
 //work towards:
 //  - implement some graceful failure mode, when the robot gets too far from the plan, or when the plan generation seems to fail...
 //	- validate on a quadruped, and on a cassie-like biped
@@ -26,6 +35,8 @@ FastRobotControlApp::FastRobotControlApp(){
 
 	mainMenu->addGroup("Options");
 	mainMenu->addVariable("Run Mode", runOption, true)->setItems({ "Playback", "Tracking", "No controller"});
+
+	mainMenu->addVariable("Pause After Replan", breakAfterReplan);
 
 	nanogui::Widget *tools = new nanogui::Widget(mainMenu->window());
 	mainMenu->addWidget("", tools);
@@ -56,6 +67,30 @@ FastRobotControlApp::FastRobotControlApp(){
 	loadFile("..\\data\\RobotDesigner\\SpotMiniDemo.batch");
 	robot->forward = V3D(0, 0, 1);
 	robot->right = V3D(-1, 0, 0);
+
+#ifdef DEBUG_MOPT
+	/**------DEBUG-------**/
+	RobotState rs(robot);
+
+//	rs.readFromFile("..\\out\\badStartingState.rs");
+//	plannerWindow->motionPlanner->motionPlanStartTime = 0.666667;
+//	simWindow->stridePhase = 0.010417;
+//	plannerWindow->motionPlanner->forwardSpeedTarget = 1;
+//	plannerWindow->motionPlanner->sidewaysSpeedTarget = 0;
+//	plannerWindow->motionPlanner->turningSpeedTarget = 0;
+
+
+	rs.readFromFile("..\\out\\badStartingState2.rs");
+	plannerWindow->motionPlanner->motionPlanStartTime = 8.525000;
+	globalTime = plannerWindow->motionPlanner->motionPlanStartTime;
+	simWindow->stridePhase = 0.0;
+	plannerWindow->motionPlanner->forwardSpeedTarget = 1;
+	plannerWindow->motionPlanner->sidewaysSpeedTarget = 0;
+	plannerWindow->motionPlanner->turningSpeedTarget = -2;
+
+	robot->setState(&rs);
+
+#endif
 
 	plannerWindow->motionPlanner->generateMotionPlan();
 
@@ -308,17 +343,79 @@ void FastRobotControlApp::process() {
 
 		//we are using a discrete number of steps to keep the (discrete) footfall pattern consistent. Otherwise we'd need to interpolate between stance/swing phases and there are no good answers...
 		if (simWindow->stridePhase > n * dPhase) {
+#ifdef PRINT_TRACKING_DEBUG
+/*
+double p_heading = plannerWindow->motionPlanner->prePlanHeadingTrajectory.evaluate_linear(globalTime);
+double p_turningSpeed = plannerWindow->motionPlanner->prePlanTurningSpeedTrajectory.evaluate_linear(globalTime);
+double p_speedForward = plannerWindow->motionPlanner->prePlanBodyVelocityTrajectory.evaluate_linear(globalTime).z();
+double p_posForward = plannerWindow->motionPlanner->prePlanBodyTrajectory.evaluate_linear(globalTime).z();
+Logger::consolePrint("Target --> heading: %lf, turning speed: %lf, p.z: %lf, v.z: %lf, globalTime: %lf\n",
+p_heading, p_turningSpeed, p_posForward, p_speedForward, globalTime);
+
+//current quantities
+RobotState currentRS(robot);
+double c_heading = currentRS.getOrientation().getRotationAngle(Globals::worldUp);
+double c_turningSpeed = currentRS.getAngularVelocity().dot(Globals::worldUp);
+double c_speedForward = currentRS.getVelocity().z();
+double c_posForward = currentRS.getPosition().z();
+Logger::consolePrint("Current--> heading: %lf, turning speed: %lf, p.z: %lf, v.z: %lf, stridePhase: %lf\n",
+c_heading, c_turningSpeed, c_posForward, c_speedForward, simWindow->stridePhase);
+*/
+
+			//planned qunatities
+			P3D p_pos = plannerWindow->motionPlanner->prePlanBodyTrajectory.evaluate_linear(globalTime);
+			P3D p_vel = plannerWindow->motionPlanner->prePlanBodyVelocityTrajectory.evaluate_linear(globalTime);
+			double p_heading = plannerWindow->motionPlanner->prePlanHeadingTrajectory.evaluate_linear(globalTime);
+			double p_turningSpeed = plannerWindow->motionPlanner->prePlanTurningSpeedTrajectory.evaluate_linear(globalTime);
+			Logger::consolePrint("Target --> pos: %lf %lf %lf, vel: %lf %lf %lf, heading: %lf, turning speed: %lf\n",
+				p_pos.x(), p_pos.y(), p_pos.z(),
+				p_vel.x(), p_vel.y(), p_vel.z(),
+				p_heading, p_turningSpeed);
+
+			//current quantities
+			RobotState currentRS(robot);
+			P3D c_pos = currentRS.getPosition();
+			P3D c_vel = currentRS.getVelocity();
+			double c_heading = currentRS.getOrientation().getRotationAngle(Globals::worldUp);
+			double c_turningSpeed = currentRS.getAngularVelocity().dot(Globals::worldUp);
+			Logger::consolePrint("Current--> pos: %lf %lf %lf, vel: %lf %lf %lf, heading: %lf, turning speed: %lf\n",
+				c_pos.x(), c_pos.y(), c_pos.z(),
+				c_vel.x(), c_vel.y(), c_vel.z(),
+				c_heading, c_turningSpeed);
+#endif
+
 			//restart the entire motion planning process...
 			double timeAtStrideStart = globalTime - simWindow->stridePhase * plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration;
 			simWindow->stridePhase -= n * dPhase;
 			plannerWindow->motionPlanner->motionPlanStartTime = timeAtStrideStart + n * timePerdPhase;
 			plannerWindow->ffpViewer->cursorPosition = simWindow->stridePhase;
+
+#ifdef DEBUG_MOPT
+			plannerWindow->motionPlanner->locomotionManager->printDebugInfo = true;
+			plannerWindow->motionPlanner->locomotionManager->checkDerivatives = false;
+#else
+			plannerWindow->motionPlanner->locomotionManager->printDebugInfo = false;
+			plannerWindow->motionPlanner->locomotionManager->checkDerivatives = false;
+#endif
+
 			//hmmm, there will be a slight mismatch here. We are using the current state of the robot as initial conditions for motion planning, but the motion planning process starts "a little while back" when the stride phase was actually 0... but I guess we're within the resoultion of the timestep anyway...
 			plannerWindow->motionPlanner->generateMotionPlan();
+
+#ifdef DEBUG_MOPT
+			RobotState rs(robot);
+			rs.writeToFile("..\\out\\startingState.rs");
+			Logger::consolePrint("motionPlanStartTime: %lf, stridePhase: %lf, walking speed forward: %lf, walking speed sideways: %lf, turning speed: %lf\n", plannerWindow->motionPlanner->motionPlanStartTime, simWindow->stridePhase, plannerWindow->motionPlanner->forwardSpeedTarget, plannerWindow->motionPlanner->sidewaysSpeedTarget, plannerWindow->motionPlanner->turningSpeedTarget);
+#endif
+			if (breakAfterReplan)
+				appIsRunning = false;
+
 		}
 		if (slowMo)
 			break;
 	}
+
+	plannerWindow->ffpViewer->cursorPosition = simWindow->stridePhase;
+
 }
 
 // Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
@@ -329,10 +426,12 @@ void FastRobotControlApp::drawScene() {
 // This is the wild west of drawing - things that want to ignore depth buffer, camera transformations, etc. Not pretty, quite hacky, but flexible. Individual apps should be careful with implementing this method. It always gets called right at the end of the draw function
 void FastRobotControlApp::drawAuxiliarySceneInfo() {
 	if (shouldShowPlannerWindow()) {
-		if (appIsRunning && simWindow)
-			plannerWindow->ffpViewer->cursorPosition = simWindow->stridePhase;
 
 		plannerWindow->setAnimationParams(plannerWindow->ffpViewer->cursorPosition, walkCycleIndex);
+
+		if (followCameraTarget)
+			plannerWindow->getCamera()->followTarget(getCameraTarget());
+
 		plannerWindow->draw();
 		plannerWindow->drawAuxiliarySceneInfo();
 	}

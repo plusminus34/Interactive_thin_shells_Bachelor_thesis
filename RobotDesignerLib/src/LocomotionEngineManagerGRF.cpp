@@ -535,7 +535,7 @@ void LocomotionEngineManagerGRFv3::setupObjectives() {
 	
 	//smooth motion regularizers
 //	ef->addObjectiveFunction(new MPO_FeetPathSmoothnessObjective(ef->theMotionPlan, "foot path smoothness objective", 10.0), "Smooth Regularizer");
-	ef->addObjectiveFunction(new MPO_SmoothCOMTrajectories(ef->theMotionPlan, "smoothCOM", 5000), "Smooth Regularizer");
+	ef->addObjectiveFunction(new MPO_SmoothCOMTrajectories(ef->theMotionPlan, "smoothCOM", 10000), "Smooth Regularizer");
 
 	ef->addObjectiveFunction(new MPO_GRFStanceRegularizer(ef->theMotionPlan, "GRF stance regularizer", 1e-7), "Regularizers");
 }

@@ -179,20 +179,19 @@ void SimulationWindow::advanceSimulation(double dt) {
 	activeController->stridePhase = stridePhase;
 
 	if (activeController == playbackController){
+		activeController->advanceInTime(dt);
 		activeController->computeControlSignals(dt);
 		activeController->applyControlSignals(dt);
-		activeController->advanceInTime(dt);
 	}
 	else {
 		double simulationTime = 0;
 
 		while (simulationTime < dt) {
 			simulationTime += simTimeStep;
+			activeController->advanceInTime(simTimeStep);
 
 			activeController->computeControlSignals(simTimeStep);
 			doPhysicsStep(simTimeStep);
-
-			activeController->advanceInTime(simTimeStep);
 		}
 	}
 

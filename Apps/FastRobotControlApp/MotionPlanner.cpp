@@ -155,6 +155,40 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 	robot->setState(&tmpState);
 }
 
+RobotState MotionPlanner::getPreplanedRobotStateAtStridePhase(double p) {
+	return getPreplanedRobotStateAtTime(motionPlanStartTime + p * locomotionManager->motionPlan->motionPlanDuration);
+}
+
+RobotState MotionPlanner::getMOPTRobotStateAtStridePhase(double p) {
+	RobotState oldState(robot);
+	RobotState newState(robot);
+
+	newState.setPosition(locomotionManager->motionPlan->bodyTrajectory.getCOMPositionAt(p));
+	newState.setOrientation(locomotionManager->motionPlan->bodyTrajectory.getCOMOrientationAt(p));
+	newState.setVelocity(locomotionManager->motionPlan->bodyTrajectory.getCOMVelocityAt(p, locomotionManager->motionPlan->motionPlanDuration));
+	newState.setAngularVelocity(locomotionManager->motionPlan->bodyTrajectory.getCOMAngularVelocityAt(p, locomotionManager->motionPlan->motionPlanDuration));
+	robot->setState(&newState);
+
+	IK_Solver ikSolver(robot);
+	ikSolver.ikPlan->setTargetIKStateFromRobot();
+	ikSolver.ikPlan->optimizeRootConfiguration = false;
+
+	for (uint eeIndex = 0; eeIndex < locomotionManager->motionPlan->endEffectorTrajectories.size(); eeIndex++) {
+		ikSolver.ikPlan->endEffectors.push_back(IK_EndEffector());
+		ikSolver.ikPlan->endEffectors.back().endEffectorLocalCoords = locomotionManager->motionPlan->endEffectorTrajectories[eeIndex].endEffectorLocalCoords;
+		ikSolver.ikPlan->endEffectors.back().endEffectorRB = locomotionManager->motionPlan->endEffectorTrajectories[eeIndex].endEffectorRB;
+		ikSolver.ikPlan->endEffectors.back().targetEEPos = locomotionManager->motionPlan->endEffectorTrajectories[eeIndex].getEEPositionAt(p);
+	}
+
+	ikSolver.ikEnergyFunction->setupSubObjectives();
+	ikSolver.ikEnergyFunction->regularizer = 0.1;
+	ikSolver.solve(20);
+
+	newState = RobotState(robot);
+	robot->setState(&oldState);
+	return newState;
+}
+
 RobotState MotionPlanner::getPreplanedRobotStateAtTime(double t) {
 	RobotState oldState(robot);
 	RobotState newState(robot);
@@ -294,9 +328,6 @@ void MotionPlanner::generateMotionPlan() {
 	initialized = true;
 	double energyVal = 0;
 
-	locomotionManager->printDebugInfo = false;
-	locomotionManager->checkDerivatives = false;
-
 	Timer t;
 	if (defaultFootFallPattern.stepPatterns.size() < currentMOPTFootFallPattern.stepPatterns.size())
 		defaultFootFallPattern = currentMOPTFootFallPattern;
@@ -306,9 +337,12 @@ void MotionPlanner::generateMotionPlan() {
 
 	prepareMOPTPlan(locomotionManager->motionPlan);
 
-	locomotionManager->runMOPTStep(OPT_GRFS);
-	for (int i = 0; i<10; i++)
-		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
+	energyVal = locomotionManager->runMOPTStep(OPT_GRFS);
+//	for (int i = 0; i<10; i++)
+//		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
+
+//	for (int i = 0; i<5; i++)
+//		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_COM_ORIENTATIONS);
 
 	Logger::consolePrint("It took %lfs to generate motion plan, final energy value: %lf\n", t.timeEllapsed(), energyVal);
 }

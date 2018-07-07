@@ -147,12 +147,12 @@ public:
 
 	V3D getAxis(int i);
 
-	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
-	P3D getCOMPositionAt(double t);
-
-	P3D getCOMEulerAnglesAt(double t);
-
+	//p is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
+	P3D getCOMPositionAt(double p);
+	P3D getCOMEulerAnglesAt(double p);
 	Quaternion getCOMOrientationAt(double t);
+	V3D getCOMVelocityAt(double p, double strideDuration);
+	V3D getCOMAngularVelocityAt(double p, double strideDuration);
 
 	P3D getCOMPositionAtTimeIndex(int j);
 	P3D getTargetCOMPositionAtTimeIndex(int j);
