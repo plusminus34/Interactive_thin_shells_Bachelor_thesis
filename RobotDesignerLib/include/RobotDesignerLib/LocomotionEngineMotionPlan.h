@@ -125,6 +125,7 @@ public:
 
 class LocomotionEngine_COMTrajectory{
 public:
+	LocomotionEngineMotionPlan* mp = NULL;
 
 	int nPoints;
 	dVector pos[3];
@@ -141,7 +142,7 @@ public:
 	V3D initialLinearVelocity, initialAngularVelocity;
 
 public:
-	LocomotionEngine_COMTrajectory();
+	LocomotionEngine_COMTrajectory(LocomotionEngineMotionPlan* mp);
 
 	void initialize(int nPoints, const P3D& desComPos, const V3D& comRotationAngles, const V3D& axis_0, const V3D& axis_1, const V3D& axis_2);
 
@@ -151,8 +152,8 @@ public:
 	P3D getCOMPositionAt(double p);
 	P3D getCOMEulerAnglesAt(double p);
 	Quaternion getCOMOrientationAt(double t);
-	V3D getCOMVelocityAt(double p, double strideDuration);
-	V3D getCOMAngularVelocityAt(double p, double strideDuration);
+	V3D getCOMVelocityAt(double p);
+	V3D getCOMAngularVelocityAt(double p);
 
 	P3D getCOMPositionAtTimeIndex(int j);
 	P3D getTargetCOMPositionAtTimeIndex(int j);

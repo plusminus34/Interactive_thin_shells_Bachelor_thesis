@@ -161,8 +161,8 @@ double LocomotionEngine_EndEffectorTrajectory::getEEWeightAt(double t){
 	return EEWeights[tIndex];
 }
 
-LocomotionEngine_COMTrajectory::LocomotionEngine_COMTrajectory(){
-
+LocomotionEngine_COMTrajectory::LocomotionEngine_COMTrajectory(LocomotionEngineMotionPlan* mp){
+	this->mp = mp;
 }
 
 void LocomotionEngine_COMTrajectory::initialize(int nPoints, const P3D &desComPos, const V3D& comRotationAngles, const V3D &axis_0, const V3D &axis_1, const V3D &axis_2){
@@ -206,21 +206,75 @@ P3D LocomotionEngine_COMTrajectory::getCOMPositionAt(double p){
 	return interpolatedPoint;
 }
 
-V3D LocomotionEngine_COMTrajectory::getCOMVelocityAt(double p, double strideDuration) {
-	double dp = 0.010417;
-	double dt = dp * strideDuration;
+V3D LocomotionEngine_COMTrajectory::getCOMVelocityAt(double p) {
+	double dp = 0.01;
+	double dt = dp * mp->motionPlanDuration;
 
-//	P3D pNow = getCOMPositionAt(p);
-//	P3D pNext = getCOMPositionAt(p + dp);
+	if (useInitialVelocities == false)
+		return (getCOMPositionAt(p + dp) - getCOMPositionAt(p)) / dt;
 
-	return (getCOMPositionAt(p + dp) - getCOMPositionAt(p)) / dt;
+	//figure out the indices of the time steps before and after this...
+	double tSize = p * (double)(pos[0].size() - 1);
+	int tLow = (int)floor(tSize);
+	int tHigh = (int)ceil(tSize);
+
+	//and the interpolation weights
+	double kLow = 1.0 - (tSize - tLow);
+	double kHigh = 1.0 - kLow;
+
+	V3D vLow, vHigh;
+
+	double h = mp->motionPlanDuration / (mp->nSamplePoints - 1);
+
+	if (tLow == 0){
+		if (useInitialVelocities)
+			vLow = initialLinearVelocity;
+		else if (mp->wrapAroundBoundaryIndex == 0)
+			vLow = (getCOMPositionAtTimeIndex(mp->nSamplePoints-1) - getCOMPositionAtTimeIndex(mp->nSamplePoints - 2)) / h;
+		else
+			vLow = V3D();
+	}else
+		vLow = (getCOMPositionAtTimeIndex(tLow) - getCOMPositionAtTimeIndex(tLow - 1)) / h;
+
+	vHigh = (getCOMPositionAtTimeIndex(tHigh) - getCOMPositionAtTimeIndex(tLow)) / h;
+
+	return vLow * kLow + vHigh * kHigh;
 }
 
-V3D LocomotionEngine_COMTrajectory::getCOMAngularVelocityAt(double p, double strideDuration) {
-	double dp = 0.010417;
-	double dt = dp * strideDuration;
+V3D LocomotionEngine_COMTrajectory::getCOMAngularVelocityAt(double p) {
+	double dp = 0.01;
+	double dt = dp * mp->motionPlanDuration;
 
-	return estimateAngularVelocity(getCOMOrientationAt(p), getCOMOrientationAt(p + dp), dt);
+	if (useInitialVelocities == false)
+		return estimateAngularVelocity(getCOMOrientationAt(p), getCOMOrientationAt(p + dp), dt);
+
+	//figure out the indices of the time steps before and after this...
+	double tSize = p * (double)(pos[0].size() - 1);
+	int tLow = (int)floor(tSize);
+	int tHigh = (int)ceil(tSize);
+
+	//and the interpolation weights
+	double kLow = 1.0 - (tSize - tLow);
+	double kHigh = 1.0 - kLow;
+
+	V3D wLow, wHigh;
+
+	double h = mp->motionPlanDuration / (mp->nSamplePoints - 1);
+
+	if (tLow == 0) {
+		if (useInitialVelocities)
+			wLow = initialAngularVelocity;
+		else if (mp->wrapAroundBoundaryIndex == 0)
+			wLow = estimateAngularVelocity(getCOMOrientationAtTimeIndex(mp->nSamplePoints - 2), getCOMOrientationAtTimeIndex(mp->nSamplePoints - 2), h);
+		else
+			wLow = V3D();
+	}
+	else
+		wLow = estimateAngularVelocity(getCOMOrientationAtTimeIndex(tLow-1), getCOMOrientationAtTimeIndex(tLow), h);
+
+	wHigh = estimateAngularVelocity(getCOMOrientationAtTimeIndex(tLow), getCOMOrientationAtTimeIndex(tHigh), h);
+
+	return wLow * kLow + wHigh * kHigh;
 }
 
 P3D LocomotionEngine_COMTrajectory::getCOMEulerAnglesAt(double p) {
@@ -381,7 +435,7 @@ P3D LocomotionEngine_RobotStateTrajectory::getBodyPositionAtTimeIndex(int j){
 	return P3D(qArray[j][0], qArray[j][1], qArray[j][2]);
 }
 
-LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSamplingPoints){
+LocomotionEngineMotionPlan::LocomotionEngineMotionPlan(Robot* robot, int nSamplingPoints) : bodyTrajectory(this) {
 	wrapAroundBoundaryIndex = -1;
 	optimizeCOMPositions = true;
 	optimizeEndEffectorPositions = false;

@@ -37,6 +37,9 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 
 	//we will be adding samples every 0.1s
 	double dt = 0.1;
+	if (locomotionManager && locomotionManager->motionPlan)
+		dt = locomotionManager->motionPlan->motionPlanDuration / (locomotionManager->motionPlan->nSamplePoints - 1);
+
 	for (double t = motionPlanStartTime; t <= motionPlanStartTime + preplanTimeHorizon; t += dt) {
 		prePlanBodyTrajectory.addKnot(t, V3D() + currentBodyPos);
 		prePlanBodyVelocityTrajectory.addKnot(t, currentBodyVel);
@@ -165,8 +168,8 @@ RobotState MotionPlanner::getMOPTRobotStateAtStridePhase(double p) {
 
 	newState.setPosition(locomotionManager->motionPlan->bodyTrajectory.getCOMPositionAt(p));
 	newState.setOrientation(locomotionManager->motionPlan->bodyTrajectory.getCOMOrientationAt(p));
-	newState.setVelocity(locomotionManager->motionPlan->bodyTrajectory.getCOMVelocityAt(p, locomotionManager->motionPlan->motionPlanDuration));
-	newState.setAngularVelocity(locomotionManager->motionPlan->bodyTrajectory.getCOMAngularVelocityAt(p, locomotionManager->motionPlan->motionPlanDuration));
+	newState.setVelocity(locomotionManager->motionPlan->bodyTrajectory.getCOMVelocityAt(p));
+	newState.setAngularVelocity(locomotionManager->motionPlan->bodyTrajectory.getCOMAngularVelocityAt(p));
 	robot->setState(&newState);
 
 	IK_Solver ikSolver(robot);
