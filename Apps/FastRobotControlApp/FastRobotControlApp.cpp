@@ -81,9 +81,9 @@ FastRobotControlApp::FastRobotControlApp(){
 
 
 	rs.readFromFile("..\\out\\badStartingState2.rs");
-	plannerWindow->motionPlanner->motionPlanStartTime = 8.525000;
-	globalTime = plannerWindow->motionPlanner->motionPlanStartTime;
-	simWindow->stridePhase = 0.0;
+	plannerWindow->motionPlanner->motionPlanStartTime = (8 + 0.010417) * plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
+	plannerWindow->motionPlanner->motionPlanStartTime = 8 * plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
+	simWindow->stridePhase = 0.010417;
 	plannerWindow->motionPlanner->forwardSpeedTarget = 1;
 	plannerWindow->motionPlanner->sidewaysSpeedTarget = 0;
 	plannerWindow->motionPlanner->turningSpeedTarget = -2;
@@ -337,21 +337,6 @@ void FastRobotControlApp::process() {
 		globalTime += dt;
 		simWindow->advanceSimulation(dt);
 
-		double p_heading = plannerWindow->motionPlanner->prePlanHeadingTrajectory.evaluate_linear(globalTime);
-		double p_turningSpeed = plannerWindow->motionPlanner->prePlanTurningSpeedTrajectory.evaluate_linear(globalTime);
-		double p_speedForward = plannerWindow->motionPlanner->prePlanBodyVelocityTrajectory.evaluate_linear(globalTime).z();
-		double p_posForward = plannerWindow->motionPlanner->prePlanBodyTrajectory.evaluate_linear(globalTime).z();
-		Logger::consolePrint("Target --> heading: %lf, turning speed: %lf, p.z: %lf, v.z: %lf, globalTime: %lf\n",
-			p_heading, p_turningSpeed, p_posForward, p_speedForward, globalTime);
-
-		//current quantities
-		RobotState currentRS(robot);
-		double c_heading = currentRS.getOrientation().getRotationAngle(Globals::worldUp);
-		double c_turningSpeed = currentRS.getAngularVelocity().dot(Globals::worldUp);
-		double c_speedForward = currentRS.getVelocity().z();
-		double c_posForward = currentRS.getPosition().z();
-		Logger::consolePrint("Current--> heading: %lf, turning speed: %lf, p.z: %lf, v.z: %lf, stridePhase: %lf\n",
-			c_heading, c_turningSpeed, c_posForward, c_speedForward, simWindow->stridePhase);
 
 		double dPhase = 1.0 / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
 		double timePerdPhase = plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
@@ -360,6 +345,25 @@ void FastRobotControlApp::process() {
 		//we are using a discrete number of steps to keep the (discrete) footfall pattern consistent. Otherwise we'd need to interpolate between stance/swing phases and there are no good answers...
 		if (simWindow->stridePhase > n * dPhase) {
 #ifdef PRINT_TRACKING_DEBUG
+/*
+double p_heading = plannerWindow->motionPlanner->prePlanHeadingTrajectory.evaluate_linear(globalTime);
+double p_turningSpeed = plannerWindow->motionPlanner->prePlanTurningSpeedTrajectory.evaluate_linear(globalTime);
+double p_speedForward = plannerWindow->motionPlanner->prePlanBodyVelocityTrajectory.evaluate_linear(globalTime).z();
+double p_posForward = plannerWindow->motionPlanner->prePlanBodyTrajectory.evaluate_linear(globalTime).z();
+Logger::consolePrint("Target --> heading: %lf, turning speed: %lf, p.z: %lf, v.z: %lf, globalTime: %lf\n",
+p_heading, p_turningSpeed, p_posForward, p_speedForward, globalTime);
+
+//current quantities
+RobotState currentRS(robot);
+double c_heading = currentRS.getOrientation().getRotationAngle(Globals::worldUp);
+double c_turningSpeed = currentRS.getAngularVelocity().dot(Globals::worldUp);
+double c_speedForward = currentRS.getVelocity().z();
+double c_posForward = currentRS.getPosition().z();
+Logger::consolePrint("Current--> heading: %lf, turning speed: %lf, p.z: %lf, v.z: %lf, stridePhase: %lf\n",
+c_heading, c_turningSpeed, c_posForward, c_speedForward, simWindow->stridePhase);
+
+*/
+
 			//planned qunatities
 			P3D p_pos = plannerWindow->motionPlanner->prePlanBodyTrajectory.evaluate_linear(globalTime);
 			P3D p_vel = plannerWindow->motionPlanner->prePlanBodyVelocityTrajectory.evaluate_linear(globalTime);
