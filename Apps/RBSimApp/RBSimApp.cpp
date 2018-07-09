@@ -38,8 +38,8 @@ RBSimApp::RBSimApp(bool maximizeWindows)
     //loadFile("../data/rbs/yumi/yumi_TEMP.rbs");
 
     //loadFile("../data/rbs/wheely.rbs");
-//    loadFile("../data/rbs/bip/bip.rbs");
-	loadFile("../data/robotDesigner/designs/BK3000/skatingBot/robotDesign.rbs");
+    loadFile("../data/rbs/bip/bip.rbs");
+//	loadFile("../data/robotDesigner/designs/BK3000/skatingBot/robotDesign.rbs");
 
 /*
 	Robot *robot = new Robot(rbEngine->rbs[0]);
