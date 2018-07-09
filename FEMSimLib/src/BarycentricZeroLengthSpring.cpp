@@ -64,7 +64,6 @@ void BarycentricZeroLengthSpring::addEnergyHessianTo(const dVector& x, const dVe
 }
 
 void BarycentricZeroLengthSpring::draw(const dVector& x) {
-	/*
 	P3D pi = getCurrentPoint(0, x, x);
 	P3D pj = getCurrentPoint(1, x, x);
 
@@ -72,7 +71,6 @@ void BarycentricZeroLengthSpring::draw(const dVector& x) {
 		glVertex3d(pi[0], pi[1], pi[2]);
 		glVertex3d(pj[0], pj[1], pj[2]);
 	glEnd();
-	*/
 }
 
 void BarycentricZeroLengthSpring::drawRestConfiguration(const dVector& X) {

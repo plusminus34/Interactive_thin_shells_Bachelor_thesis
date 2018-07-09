@@ -51,6 +51,10 @@ double BendingEdge::getAngle(const dVector& x) {
 
 double BendingEdge::getEnergy(const dVector& x, const dVector& X) {
 	double d_angle = getAngle(x) - restAngle;
+	/* alternative energy: 
+	k*3*restEdgeLength*restEdgeLength/restArea  * (phi(angle) - phi(restAngle))^2
+	phi(alpha) = 2 * tan(alpha/2)	and	psi(alpha) = tan(alpha/pow(2,n))	s.t. phi = 2^n psi
+	*/
 	return k * 3 * restEdgeLength*restEdgeLength * d_angle*d_angle / restArea;
 }
 
@@ -89,7 +93,7 @@ void BendingEdge::addEnergyGradientTo(const dVector& x, const dVector& X, dVecto
 	// constant factor depending only on rest shape
 	double K = k * 6 * restEdgeLength*restEdgeLength / restArea;
 	// combine with factor depending on current angle
-	double zeta = K * d_angle;//d_angle will be replaced when using phi, psi
+	double zeta = K * d_angle;// zeta changes when using alternative energy, see Hessian
 
 	P3D component;
 	// dE/dx0
@@ -110,8 +114,8 @@ void BendingEdge::addEnergyHessianTo(const dVector& x, const dVector& X, std::ve
 	// constant factors
 	double d_angle = getAngle(x) - restAngle;
 	double K = k * 6 * restEdgeLength*restEdgeLength / restArea;
-	double zeta = K * d_angle;//actually = K*(phi-rest_phi)*(1+psi*psi)
-	double xi = K;//actually = K*(1+psi*psi)*(2*(psi-rest_psi)*psi + (1+psi*psi))
+	double zeta = K * d_angle;// for alternative enrgy: zeta = K*(phi-rest_phi)*(1+psi*psi)
+	double xi = K;// for alternative enrgy: xi = K*(1+psi*psi)*(2*(psi-rest_psi)*psi + (1+psi*psi))
 
 	//start copied code from gradient
 	Vector3d x0 = n[0]->getCoordinates(x);
@@ -201,13 +205,14 @@ void BendingEdge::addEnergyHessianTo(const dVector& x, const dVector& X, std::ve
 	//Finally, convert to triplets
 	for(int i=0;i<4;++i)
 		for(int j=0;j<4;++j)
-			for(int ii=0;ii<3;++ii)
-				for (int jj = 0;jj < 3;++jj) {
-					int global_j = n[i]->dataStartIndex + ii;
+			for (int ii = 0; ii < 3; ++ii) {
+				int global_j = n[i]->dataStartIndex + ii;
+				for (int jj = 0; jj < 3; ++jj) {
 					int global_i = n[j]->dataStartIndex + jj;
 					if (global_i >= global_j)
 						hesEntries.push_back(MTriplet(global_i, global_j, H[i][j](ii, jj)));
 				}
+			}
 }
 
 void BendingEdge::draw(const dVector& x) {

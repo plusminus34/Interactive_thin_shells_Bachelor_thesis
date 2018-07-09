@@ -34,7 +34,7 @@ void CSTriangle3D::setRestShapeFromCurrentConfiguration(){
 	//matrix that holds three edge vectors
 	Matrix2x2 dX;
 	dX << V1[0], V2[0],
-		V1[1], V2[1];//Rest shape is in the plane
+		V1[1], V2[1];// Warning: Rest shape is assumed to be in the plane
 
 	dXInv = dX.inverse();//TODO .inverse() is baaad
 
@@ -167,7 +167,7 @@ void CSTriangle3D::computeGradientComponents(const dVector& x, const dVector& X)
 	computeDeformationGradient(x, X, F);
 	dEdF.setZero();
 	if (matModel == MM_STVK){
-        strain = F.transpose() * F; strain(0, 0) -= 1; strain(1, 1) -= 1; strain(2,2) -= 1;
+        strain = F.transpose() * F; strain(0, 0) -= 1; strain(1, 1) -= 1;
         strain *= 0.5;
 		Matrix2x2 stress = 2 * shearModulus * strain;
 		stress(0, 0) += bulkModulus * (strain(0, 0) + strain(1, 1));
