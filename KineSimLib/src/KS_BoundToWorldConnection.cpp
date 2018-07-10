@@ -13,8 +13,8 @@ void KS_BoundToWorldConnection::connect(KS_MechanicalComponent* pCompIn, KS_Mech
 	assignConnectedComponents(pCompIn, pCompOut);
 	m_compIn = pCompIn;
 	m_compOut = pCompOut;
-//	m_compOut->addCylinderMesh(20, 0.1, 0.08, P3D(), V3D(0,0,1));
-//	m_pin=m_compOut->getNumOfMeshes()-1;
+	//m_compOut->addCylinderMesh(20, 0.1, 0.08, P3D(), V3D(0,0,1));
+	//m_pin=m_compOut->getNumOfMeshes()-1;
 	//if(!freezePhase) m_compOut->getMesh(m_pin)->setColour(1.0,0.0,0.0,1.0);
 
 	assert(m_compIn == NULL);
@@ -87,7 +87,7 @@ bool KS_BoundToWorldConnection::writeToFile(FILE* f){
 	return true;
 }
 
-KS_BoundToWorldConnection* KS_BoundToWorldConnection::clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut, KS_Ticker* clock) const {
+KS_BoundToWorldConnection* KS_BoundToWorldConnection::clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut) const {
 	KS_BoundToWorldConnection* pin = new KS_BoundToWorldConnection(*this);
 	pin->m_compIn = pCompIn;
 	pin->m_compOut = pCompOut;

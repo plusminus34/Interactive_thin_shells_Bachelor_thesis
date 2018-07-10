@@ -6,6 +6,7 @@ KS_Connection::KS_Connection(void){
 	m_compIn = m_compOut = NULL;
 	m_pin = NULL;
 	isNew=false;
+	isActivated = false;
 }
 
 KS_Connection::~KS_Connection(void){

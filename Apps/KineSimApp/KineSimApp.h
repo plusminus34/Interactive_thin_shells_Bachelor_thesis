@@ -6,8 +6,7 @@
 #include <GUILib/TranslateWidget.h>
 
 #include <KineSimLib/KS_MechanicalAssembly.h>
-//#include <RBSimLib/AbstractRBEngine.h>
-//#include <RBSimLib/WorldOracle.h>
+
 
 /**
  * Test App for Kinematic 3D simulations
@@ -17,6 +16,8 @@ private:
 	KS_MechanicalAssembly * mech1;
 	bool checkDerivatives = false;
 	double simTimeStep = 1;
+	bool logState = false;
+	dVector motorAngleValues;
 
 
 
@@ -52,7 +53,6 @@ public:
 	
 	virtual void saveFile(const char* fName);
 	virtual void loadFile(const char* fName);
-
 };
 
 

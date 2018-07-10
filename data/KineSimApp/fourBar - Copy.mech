@@ -23,22 +23,20 @@ BoundToWorldConnection
 	freezePhase
 End
 
-rMotorConnection
+BindComponentsConnection
 	componentIn body1
 	componentOut body2
 	pinOnCompIn 1.0 0.0 0.0
 	pinOnCompOut -1.0 0.0 0.0
 	vecOnCompIn 0.000000 0.000000 1.000000
 	vecOnCompOut 0.000000 0.000000 1.000000
-	vec2OnCompIn 1.000000 0.000000 0.000000
-	vec2OnCompOut 1.000000 0.000000 0.000000
 End
 
 BindComponentsConnection
 	componentIn body2
 	componentOut body3
 	pinOnCompIn 1.0 0.0 0.0
-	pinOnCompOut -2 0.0 0.0
+	pinOnCompOut -1 0.0 0.0
 	vecOnCompIn 0.000000 0.000000 1.000000
 	vecOnCompOut 0.000000 0.000000 1.000000
 End

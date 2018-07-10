@@ -77,6 +77,9 @@ KeyWord keywords[] = {
 	{"hermiteSplineNSamples", KS_HERMITE_SPLINE_N_SAMPLES},
 	{"hermiteSplineAngles", KS_HERMITE_SPLINE_ANGLES},
 	{"hermiteSplineMagnitudes", KS_HERMITE_SPLINE_MAGNITUDES},
+	{"rMotorConnection",KS_R_MOTOR_CON },
+	{"vec2OnCompIn", KS_VEC2_ON_COMP_IN },
+	{"vec2OnCompOut", KS_VEC2_ON_COMP_OUT },
 	{"layer", KS_LAYER_NUMBER}
 };
 

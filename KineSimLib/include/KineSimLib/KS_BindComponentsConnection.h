@@ -31,7 +31,7 @@ public:
 
 	virtual bool loadFromFile(FILE* f, KS_MechanicalAssembly* ma);
 	virtual bool writeToFile(FILE* f);
-	virtual KS_BindComponentsConnection* clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut, KS_Ticker* clock) const;
+	virtual KS_BindComponentsConnection* clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut) const;
 	virtual void connect(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut);
 
 	void setWeldComponentsFlag(bool flag){

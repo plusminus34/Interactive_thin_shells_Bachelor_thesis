@@ -36,9 +36,7 @@ public:
 };
 
 class KS_MechanicalComponent{
-	friend class APP_KSSimulator;
-	friend class APP_KSEditor;
-	friend class APP_KSMotionCurveOptimizer;
+	friend class KineSimApp;
 public:
 	KS_MechanicalComponent(const char* name);
 	virtual ~KS_MechanicalComponent(void);
@@ -49,7 +47,6 @@ public:
 	void clearTracerParticles();
 	void addTracerParticlesToList(DynamicArray<P3D>& tracerParticleList);
 
-	double getPhase() const { return alpha; }
 	double getAlpha() const { return alpha; }
 	double getBeta() const { return beta; }
 	double getGamma() const { return gamma; }
@@ -59,7 +56,7 @@ public:
 	void setAlphaAxis(const V3D& alphaAxis) {n_alpha = alphaAxis; n_beta.normalize(); setAngles(gamma, beta, alpha);}
 	void setBetaAxis(const V3D& betaAxis){n_beta = betaAxis; n_beta.normalize(); setAngles(gamma, beta, alpha);}
 	void setGammaAxis(const V3D& gammaAxis){n_gamma = gammaAxis; n_gamma.normalize(); setAngles(gamma, beta, alpha);}
-	void setPhase(double a);
+	
 	void setAngles(double val_gamma, double val_beta, double val_alpha);
 
 	void setWorldCenterPosition(const P3D& pos);
@@ -103,8 +100,7 @@ public:
 	void addMesh(GLMesh* m){meshes.push_back(m);}
 	void removeMesh(uint i){delete meshes[i]; meshes.erase(meshes.begin()+i);}
 	void clearMeshes(){meshes.clear();}
-	//void setMeshColor(double r, double g, double b){meshColor.x=r; meshColor.y=g; meshColor.z=b;}
-	//const ThreeTuple& getMeshColor() { return meshColor; }
+	
 
 	void updateTracerParticles();
 	void draw();
@@ -125,12 +121,6 @@ public:
 
 	void addCylinderMesh(int nrVerts, double radius, double length, P3D localCoords, V3D v, bool setMeshColor = false);
 
-	//returns true if the ray intersects the object, false otherwise...
-	//bool isIntersectedByRay(const Ray& r, P3D& res);
-
-
-	//AxisAlignedBoundingBox computeAABB();// double check!!
-	
 	/**
 		This method renders the mechanical component in its current state as a set of vertices 
 		and faces that will be appended to the passed OBJ file.
@@ -157,9 +147,6 @@ protected:
 
 	//visualization only...
 	bool selected;
-
-	//this is the colour of the mesh of this component
-	//ThreeTuple meshColor;
 
 	//State of the component is defined by its position and rotation. The rotation is defined by Euler angles. To avoid gimbal locks, the rotation
 	//axes of the last two euler angles can be changed as needed. The first rotation axis has a special meaning, as it defines the phase of the component,

@@ -71,6 +71,8 @@ void KS_BindComponentsConnection::connect(KS_MechanicalComponent* pCompIn, KS_Me
 	//lets add the pin points to the points_list of the mechanical component
 	DynamicArray<P3D> tmpPointsList = m_compIn->getPoints_list();
 	tmpPointsList.push_back(pOnC1);
+	tmpPointsList.push_back(pOnC1 + P3D(0, .1, 0));
+	tmpPointsList.push_back(pOnC1 + P3D(0, 0, .1));
 	tmpPointsList.push_back(pOnC1/2+P3D(0,.1,0));
 	tmpPointsList.push_back(pOnC1/2+P3D(0, 0, .1));
 
@@ -78,6 +80,8 @@ void KS_BindComponentsConnection::connect(KS_MechanicalComponent* pCompIn, KS_Me
 	m_compIn->setPoints_list(tmpPointsList);
 	tmpPointsList = m_compOut->getPoints_list();
 	tmpPointsList.push_back(pOnC2);
+	tmpPointsList.push_back(pOnC2+P3D(0, .1, 0));
+	tmpPointsList.push_back(pOnC2 + P3D(0, 0, .1));
 	tmpPointsList.push_back(pOnC2/2+P3D(0, .1, 0));
 	tmpPointsList.push_back(pOnC2/2+P3D(0, 0, .1));
 
@@ -205,7 +209,7 @@ bool KS_BindComponentsConnection::writeToFile(FILE* f){
 	return true;
 }
 
-KS_BindComponentsConnection* KS_BindComponentsConnection::clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut, KS_Ticker* clock) const {
+KS_BindComponentsConnection* KS_BindComponentsConnection::clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut) const {
 	KS_BindComponentsConnection* pin = new KS_BindComponentsConnection(*this);
 	pin->m_compIn = pCompIn;
 	pin->m_compOut = pCompOut;

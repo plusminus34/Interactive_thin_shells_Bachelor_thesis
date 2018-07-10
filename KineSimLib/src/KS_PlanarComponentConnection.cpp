@@ -73,7 +73,7 @@ bool KS_PlanarComponentConnection::writeToFile(FILE* f){
 	return true;
 }
 
-KS_PlanarComponentConnection* KS_PlanarComponentConnection::clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut, KS_Ticker* clock) const {
+KS_PlanarComponentConnection* KS_PlanarComponentConnection::clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut) const {
 	KS_PlanarComponentConnection* pin = new KS_PlanarComponentConnection(*this);
 	pin->m_compIn = pCompIn;
 	pin->m_compOut = pCompOut;

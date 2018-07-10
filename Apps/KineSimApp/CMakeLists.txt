@@ -11,8 +11,6 @@ target_link_libraries(${PROJECT_NAME}
 	MathLib
 	GUILib
 	OptimizationLib
-	RBSimLib
-	ControlLib
         KineSimLib
 )
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Apps")

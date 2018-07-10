@@ -55,7 +55,7 @@ double KS_AssemblyConstraintEnergy::computeValue(const dVector& s){
 	double totalConstraintEnergy = 0;
 	for (uint i = 0; i < constraints.size(); i++) {
 		totalConstraintEnergy += constraints[i]->getEnergy();
-		//Logger::print("getEnergy %lf\n", constraints[i]->getEnergy());
+		//Logger::print("getEnergy %d %lf\n", i,constraints[i]->getEnergy());
 	}
 	
 	//add the regularizer contribution

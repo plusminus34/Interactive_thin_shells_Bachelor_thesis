@@ -2,7 +2,6 @@
 #include "KineSimLib/KS_LoaderUtils.h"
 #include <MathLib/Quaternion.h>
 #include <MathLib/Transformation.h>
-#include <KineSimLib/Triangle.h>
 #include <GUILib/GLUtils.h>
 
 
@@ -45,7 +44,6 @@ V3D KS_MechanicalComponent::get_x(const V3D& w) const{
 //w represents the world coordinates for the point (or vector) x, which is expressed in the local coordinate frame of the component. The function works both for local points or vectors
 P3D KS_MechanicalComponent::get_w(const P3D& x) const {
 	//w = (R*x) + p where R is the overall rotation, and p is the global position of the component
-	//Logger::print("get_w version P3D gets called %lf %lf %lf\n", position[0], getWorldCenterPosition()[1], getWorldCenterPosition()[2]);
 	return R_gamma*(R_beta*(R_alpha*x)) + position;
 }
 
@@ -218,11 +216,6 @@ P3D KS_MechanicalComponent::getTracerParticleLocalPosition(int i){
 	return tracerParticles[i].pLocal;
 }
 
-void KS_MechanicalComponent::setPhase(double a){
-	alpha = a;
-	R_alpha = getRotationQuaternion(alpha, n_alpha);
-}
-
 void KS_MechanicalComponent::setAngles(double val_gamma, double val_beta, double val_alpha) { 
 	alpha = val_alpha;
 	beta = val_beta;
@@ -253,8 +246,6 @@ void KS_MechanicalComponent::writeBaseComponentToFile(FILE* f){
 
 	str = getKSString(KS_NAME);
 	fprintf(f, "\t%s %s\n", str, m_name);
-	/*str = getKSString(KS_COLOR);
-	fprintf(f, "\t%s %lf %lf %lf\n", str, meshColor[0], meshColor[1], meshColor[2]);*/
 	str = getKSString(KS_POSITION_IN_WORLD);
 	P3D tmpP = getWorldCenterPosition();
 	fprintf(f, "\t%s %lf %lf %lf\n", str, tmpP[0], tmpP[1], tmpP[2]);
@@ -289,12 +280,8 @@ bool KS_MechanicalComponent::processInputLine(char* line){
 			return true;
 			break;
 		case KS_POSITION_IN_WORLD:
-			//double px, py, pz;
 			if (sscanf(line, "%lf %lf %lf", &position[0], &position[1], &position[2]) != 3) assert(false);
-			//position = P3D(px, py, pz);
 			Logger::print("position %lf %lf %lf\n", position[0], position[1], position[2]);
-			//lets add this point to the points_list
-			//points_list.push_back(position);
 			return true;
 			break;
 		case KS_ANGLE:
@@ -302,10 +289,6 @@ bool KS_MechanicalComponent::processInputLine(char* line){
 			setAngles(gamma, beta, alpha);
 			return true;
 			break;
-		/*case KS_COLOR:
-			if (sscanf(line, "%lf %lf %lf", &meshColor.x, &meshColor.y, &meshColor.z) != 3) assert(false);
-			return true;
-			break;*/
 		case KS_TRACER_PARTICLE:{
 				P3D tmpP;
 				if (sscanf(line, "%lf %lf %lf", &tmpP[0], &tmpP[1], &tmpP[2]) != 3) assert(false);
@@ -383,8 +366,6 @@ void KS_MechanicalComponent::addCylinderMesh(int nrVerts, double radius, double 
 		tmpMesh->addPoly(poly);
 	}
 
-	/*if (setMeshColor)
-		tmpMesh->setColour(meshColor[0], meshColor[1], meshColor[2], 1);*/
 	tmpMesh->computeNormals();
 	meshes.push_back(tmpMesh);
 }
@@ -392,7 +373,6 @@ void KS_MechanicalComponent::addCylinderMesh(int nrVerts, double radius, double 
 void KS_MechanicalComponent::loadTriangleMeshFromFile(char* fName){
 	GLMesh* tmpMesh = OBJReader::loadOBJFile(fName);
 	tmpMesh->computeNormals();
-	//tmpMesh->setColour(meshColor[0], meshColor[1], meshColor[2], 1);
 	meshes.push_back(tmpMesh);
 	Logger::print("loading mesh..");
 }
@@ -405,66 +385,19 @@ void TracerParticle::addTrajectoryPoint(){
 	This method draws the meshes of the component.
 */
 void KS_MechanicalComponent::draw(){
-  /*#ifdef DISPLAY
-	glPushMatrix();
-
-	TransformationMatrix toWorld;
-	Quaternion qToWorld = R_gamma*R_beta*R_alpha;
-	qToWorld.getRotationMatrix(&toWorld);
-	toWorld.setTranslation(position + V3D(0, 0, 1) * layerNumber * LAYER_THICKNESS);
-
-	double values[16];
-	toWorld.getOGLValues(values);
-	glMultMatrixd(values);
-
-	for (uint i=0;i<meshes.size();i++)
-		meshes[i]->drawMesh(!selected);
-
-	glPopMatrix();
-#endif*/
-//set up the OpenGL transformation matrices to match the rotation and position of the rigid body - meshes, CDPs, etc, are stored in local coordinates	
 
 	glPushMatrix();
 //translation part
-
-	//glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
-
 	glTranslated(position[0], position[1], position[2]);
-
 	//and rotation part
 	glRotated(DEG(gamma), n_gamma[0], n_gamma[1], n_gamma[2]);
 	glRotated(DEG(beta), n_beta[0], n_beta[1], n_beta[2]);
 	glRotated(DEG(alpha), n_alpha[0], n_alpha[1], n_alpha[2]);
 
-
-	//glPushAttrib(GL_ENABLE_BIT);
-	
-	
-	//glPopAttrib();
-
 	// now we'll draw the object's mesh
 	for (uint i = 0; i < meshes.size(); i++) {
-		//glPushMatrix();
-		//Logger::print("getPolyCount%d\n",meshes[i]->getTriangleCount());
 		meshes[i]->drawMesh();
-		//glPopMatrix();
 	}
-		//meshes[i]->drawMesh(!selected);
-
-	/*if (meshes.size()>0 && (flags & SHOW_MESH)) {
-		for (uint i = 0; i < meshes.size(); i++) {
-			if (i < meshTransformations.size())
-			{
-				glPushMatrix();
-				applyGLMatrixTransform(meshTransformations[i]);
-				meshes[i]->drawMesh();
-				glPopMatrix();
-			}
-			else
-				meshes[i]->drawMesh();
-		}
-	}*/
-	//glPopAttrib();
 
 	glPopMatrix();
 	
@@ -477,38 +410,15 @@ void KS_MechanicalComponent::draw(){
 	This method draws the tracer particles
 */
 void KS_MechanicalComponent::drawTracerParticles(){
-  #ifdef DISPLAY
 	glLineWidth(2.0);
 	for (uint i=0;i<tracerParticles.size();i++){
 		glColor3f(0.0f,1.0f,0);
 		glBegin(GL_LINE_STRIP);
 		for (uint j=0;j<tracerParticles[i].trajectory.size();j++)
-			glVertex3d(tracerParticles[i].trajectory[j].x, tracerParticles[i].trajectory[j].y, tracerParticles[i].trajectory[j].z);
+			glVertex3d(tracerParticles[i].trajectory[j][0], tracerParticles[i].trajectory[j][1], tracerParticles[i].trajectory[j][2]);
 		glEnd();
 	}
-#endif	
 }
-
-
-//returns true if the ray intersects the object, false otherwise...
-/*bool KS_MechanicalComponent::isIntersectedByRay(const Ray& r, P3D& res){
-	//TODO: we might want to reintroduce the AABB as a first test, perhaps even a bounding/encapsulating sphere
-	Ray localCoordRay(get_x(r.origin), get_x(r.direction));
-	for (uint i=0;i<meshes.size();i++){
-		GLMesh* mesh = meshes[i];
-		for (uint j=0; j<mesh->triangles.size(); j++){
-			//go through all the triangles and the quads and do collision checks....
-			GLIndexedTriangle& git = mesh->triangles[j];
-			Triangle triangle(mesh->getVertex(git.indexes[0]), mesh->getVertex(git.indexes[1]), mesh->getVertex(git.indexes[2]));
-			if (triangle.isIntersectedByRay(localCoordRay, res)){
-				res = get_w(res);
-				return true;
-			}
-		}
-	}
-
-	return false;
-}*/
 
 uint KS_MechanicalComponent::renderToObjFile(FILE* fp, uint vertexIdxOffset, double scale)
 {
@@ -529,24 +439,4 @@ uint KS_MechanicalComponent::renderToObjFile(FILE* fp, uint vertexIdxOffset, dou
 		retVal += meshes[i]->renderToObjFile(fp, vertexIdxOffset + retVal, quat, this->position);
 	return retVal;
 }
-
-/*AxisAlignedBoundingBox KS_MechanicalComponent::computeAABB(){
-	P3D AABB_blf(DBL_MAX, DBL_MAX, DBL_MAX);
-	P3D AABB_trb(-DBL_MAX, -DBL_MAX, -DBL_MAX);
-
-	for (uint i=0; i<meshes.size();i++){
-		for (int j=0; j<meshes[i]->getVertexCount(); j++){
-			P3D p = get_w(meshes[i]->getVertex(j));
-			if (p.x < AABB_blf.x) AABB_blf.x = p.x;
-			if (p.y < AABB_blf.y) AABB_blf.y = p.y;
-			if (p.z < AABB_blf.z) AABB_blf.z = p.z;
-
-			if (p.x > AABB_trb.x) AABB_trb.x = p.x;
-			if (p.y > AABB_trb.y) AABB_trb.y = p.y;
-			if (p.z > AABB_trb.z) AABB_trb.z = p.z;
-		}
-	}
-
-	return AxisAlignedBoundingBox(AABB_blf, AABB_trb);
-}*/
 

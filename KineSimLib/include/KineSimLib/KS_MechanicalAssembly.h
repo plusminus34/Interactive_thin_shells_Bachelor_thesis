@@ -1,15 +1,11 @@
 #pragma once
 
 #include "KS_MechanicalComponent.h"
-#include "KS_Ticker.h"
 #include "KS_Connection.h"
 #include <MathLib/Ray.h>
 #include "KS_AssemblyConstraintEnergy.h"
 
 class KS_MechanicalAssembly{
-friend class APP_KSSimulator;
-friend class APP_KSEditor;
-friend class APP_KSMotionCurveOptimizer;
 friend class KineSimApp;
 public:
 	typedef std::vector<KS_MechanicalComponent*> ComponentArray;
@@ -26,8 +22,6 @@ public:
 	bool readFromFile(const char* szFile);
 	void writeToFile(const char* szFile);
 
-	static void createParameterizedAssemblyFrom(const char* inputKSFile, const char* outputParameterizedAssemblyFile);
-
 	bool addComponent(KS_MechanicalComponent* pComp);
 	void removeComponent(uint i);
 	void addConnection(KS_Connection* pConn);
@@ -37,8 +31,8 @@ public:
 	int getConnectionCount() const {return (int)m_connections.size();}
 	void setConnectionCount(int i){m_connections.resize(i,NULL);}
 	//assumes a single input driver for now
-	void stepAssembly(bool updateDriver = true);
-	void restartTicker();
+	void stepAssembly();
+	
 	void updateTracerParticles();
 	void drawTracerParticles();
 
@@ -64,39 +58,21 @@ public:
 
 	void draw();
 
-	//KS_MechanicalComponent* getFirstComponentIntersectedByRay(const Ray& ray);
-
-	//KS_MechanicalComponent* getFirstComponentIntersectedByRay(const Ray& ray, P3D& worldP);
-
-
-	void setTickerValue(double val){
-		m_ticker.setTickerValue(val);
-
-		for (uint i=0;i<m_connections.size();i++)
-			m_connections[i]->updateConnection();
-	}
-
-	double getTickerValue(){
-		return m_ticker.tick();
-	}
-
-	//AABoundingBox computeAABB();
-
 	void writeMeshToFile(const char* objFName);
 
 	KS_AssemblyConstraintEnergy* AConstraintEnergy;
 
 	virtual void solveAssembly();
 
+	void logMechS(const char* szFile);
+
+
 protected:
 	ComponentArray m_components;
 	ConnectionArray m_connections;
 
-	KS_Ticker m_ticker;
-
 	// preparing for solveAssembly
 	dVector s, sSolver;
-
 
 };
 

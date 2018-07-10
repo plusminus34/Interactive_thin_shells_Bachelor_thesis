@@ -43,18 +43,16 @@ void KS_GenericComponent::setupGeometry()
 {
 	GLMesh* tmpMesh = new GLMesh();
 	tmpMesh->clear();
-	Logger::print("points_list size %d\n", points_list.size());
+	
 	/*for (int i = 0; i < points_list.size(); i++) {
 		Logger::print("points_list %lf %lf %lf\n", points_list[i][0], points_list[i][1], points_list[i][2]);
 	}*/
-	Logger::print("getVertexCount before convexhull %d\n", tmpMesh->getPolyCount());
+	//Logger::print("getVertexCount before convexhull %d\n", tmpMesh->getPolyCount());
 	ConvexHull3D::computeConvexHullFromSetOfPoints(points_list, tmpMesh, false);
-	Logger::print("getVertexCount after convexhull %d\n", tmpMesh->getPolyCount());
+	//Logger::print("getVertexCount after convexhull %d\n", tmpMesh->getPolyCount());
 	tmpMesh->calBoundingBox();
 	tmpMesh->computeNormals();
 	meshes.push_back(tmpMesh);
-	//tmpMesh->writeToOFF(".. / data / KineSimApp / mesh1.txt");
-	//tmpMesh->writeTriangulatedMeshToObj(".. / data / KineSimApp / mesh2.txt");
 
 	
 }

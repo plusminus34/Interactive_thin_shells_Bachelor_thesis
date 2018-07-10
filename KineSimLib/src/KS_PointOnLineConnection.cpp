@@ -114,7 +114,7 @@ bool KS_PointOnLineConnection::writeToFile(FILE* f){
 	return true;
 }
 
-KS_PointOnLineConnection* KS_PointOnLineConnection::clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut, KS_Ticker* clock)const{
+KS_PointOnLineConnection* KS_PointOnLineConnection::clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut)const{
 	KS_PointOnLineConnection* pin = new KS_PointOnLineConnection(*this);
 	pin->connect(pCompIn,pCompOut);
 	return pin;

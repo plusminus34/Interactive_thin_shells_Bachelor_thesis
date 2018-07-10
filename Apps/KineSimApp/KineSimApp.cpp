@@ -4,6 +4,8 @@
 #include <GUILib/GLContentManager.h>
 #include <MathLib/MathLib.h>
 #include <KineSimLib/KS_BindComponentsConnection.h>
+#include <KineSimLib/KS_rMotorConnection.h>
+
 
 KineSimApp::KineSimApp()
 {
@@ -11,10 +13,22 @@ KineSimApp::KineSimApp()
 	mech1 = new KS_MechanicalAssembly();
 	mech1->readFromFile("../data/KineSimApp/fourBar.mech");
 	// double check if mechanism has full initialization at this point otherwise initiliaze those members now
+	motorAngleValues.resize(mech1->getConnectionCount());
+	motorAngleValues.setZero();
 
 	mainMenu->addGroup("sim parameters");
+	mainMenu->addVariable("logState", logState);
+
+	for (int i = 0; i < mech1->getConnectionCount(); i++) {
+		if (mech1->m_connections[i]->isMotorized())
+			mainMenu->addVariable("MotorAngle for motorized jointIndex "+ std::to_string(i), motorAngleValues[i]);
+	}
+	
+
 	menuScreen->performLayout();
 }
+	
+	
 
 KineSimApp::~KineSimApp(void){
 
@@ -29,16 +43,18 @@ void KineSimApp::process() {
 	while (simulationTime < 1.0 * maxRunningTime) {
 
 		simulationTime += simTimeStep;
+		for (int i = 0; i < mech1->getConnectionCount(); i++) {
+			if (mech1->m_connections[i]->isMotorized())
+				mech1->m_connections[i]->setOffset(motorAngleValues[i]);
+		}
+		mech1->stepAssembly();
 		mech1->solveAssembly();
-		KS_BindComponentsConnection* tmp = static_cast<KS_BindComponentsConnection*>(mech1->getConnection(1));
-		tmp->getMotorAngle();
-		Logger::print("getMotorAngle %lf\n", tmp->getMotorAngle());
+		if (logState)
+			mech1->logMechS("../data/KineSimApp/mechState.txt");
 	}
 
 
 }
-
-
 
 
 void KineSimApp::drawScene() {
@@ -124,8 +140,5 @@ void KineSimApp::saveFile(const char * fName)
 void KineSimApp::loadFile(const char * fName)
 {
 }
-
-
-
 
 

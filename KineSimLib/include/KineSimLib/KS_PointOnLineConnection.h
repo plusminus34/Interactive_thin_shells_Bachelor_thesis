@@ -23,7 +23,7 @@ public:
 
 	virtual bool loadFromFile(FILE* f, KS_MechanicalAssembly* ma);
 	virtual bool writeToFile(FILE* f);
-	virtual KS_PointOnLineConnection* clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut, KS_Ticker* clock) const;
+	virtual KS_PointOnLineConnection* clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut) const;
 	virtual void connect(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut);
 
 	virtual void addConstraintsToList(std::vector<KS_Constraint*>& constraints) {
