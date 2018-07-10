@@ -15,10 +15,10 @@ public:
 	Robot* robot = NULL;
 
 	//these are the global goals for the longer horizon plan...
-	double preplanTimeHorizon = 5;		//seconds
-	double forwardSpeedTarget = 1.0;	//speed target for the longer horizon plan
+	double preplanTimeHorizon = 2;		//seconds
+	double forwardSpeedTarget = 0.6;	//speed target for the longer horizon plan
 	double sidewaysSpeedTarget = 0;		//speed target for the longer horizon plan
-	double turningSpeedTarget = 0;		//turning speed target for the longer horizon plan
+	double turningSpeedTarget = -0.1;		//turning speed target for the longer horizon plan
 	double bodyHeightTarget = 0.5;		//body height target for the longer horizon plan
 	double motionPlanStartTime = 0;		//the global time for the entire planning/control framework
 	double swingFootHeight = 0.03;	

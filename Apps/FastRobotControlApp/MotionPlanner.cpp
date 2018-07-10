@@ -107,7 +107,7 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 				P3D eePosAtStancePhaseEnd = prePlanBodyTrajectory.evaluate_linear(stancePhaseEnd) + (V3D() + localCoordsEEPos).rotate(prePlanHeadingTrajectory.evaluate_linear(stancePhaseEnd), Globals::worldUp);
 
 				//now, decide where this stance location should be in world coordinates (assuming the leg wasn't in stance to begin with)
-				if (stancePhaseStart > motionPlanStartTime) {
+				if (stancePhaseStart > motionPlanStartTime + 0.05) { // make sure we're not at the very end of a swing phase
 					P3D worldEEPos = (eePosAtStancePhaseStart + eePosAtStancePhaseEnd) / 2.0;
 					worldEEPos.setComponentAlong(Globals::worldUp, 0);
 					prePlanEETrajectories[eeIndex].addKnot(stancePhaseStart, worldEEPos);

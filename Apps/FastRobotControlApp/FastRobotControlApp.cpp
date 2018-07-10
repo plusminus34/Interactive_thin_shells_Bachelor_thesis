@@ -78,36 +78,19 @@ FastRobotControlApp::FastRobotControlApp(){
 	robot->forward = V3D(0, 0, 1);
 	robot->right = V3D(-1, 0, 0);
 
-	plannerWindow->motionPlanner->motionPlanDuration = 0.6;
+	plannerWindow->motionPlanner->motionPlanDuration = 0.8;
 
 #ifdef DEBUG_MOPT
 	/**------DEBUG-------**/
 	RobotState rs(robot);
 
-//	rs.readFromFile("..\\out\\badStartingState.rs");
-//	plannerWindow->motionPlanner->motionPlanStartTime = 0.666667;
-//	simWindow->stridePhase = 0.010417;
-//	plannerWindow->motionPlanner->forwardSpeedTarget = 1;
-//	plannerWindow->motionPlanner->sidewaysSpeedTarget = 0;
-//	plannerWindow->motionPlanner->turningSpeedTarget = 0;
-
-/*
-	rs.readFromFile("..\\out\\badStartingState2.rs");
-	plannerWindow->motionPlanner->motionPlanStartTime = (8 + 0.010417) * plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
-	plannerWindow->motionPlanner->motionPlanStartTime = 8 * plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
+	rs.readFromFile("..\\out\\badStartingState.rs");
+	plannerWindow->motionPlanner->motionPlanStartTime = 1.2;
+	globalTime = 1.208333;
 	simWindow->stridePhase = 0.010417;
-	plannerWindow->motionPlanner->forwardSpeedTarget = 1;
+	plannerWindow->motionPlanner->forwardSpeedTarget = 0.6;
 	plannerWindow->motionPlanner->sidewaysSpeedTarget = 0;
-	plannerWindow->motionPlanner->turningSpeedTarget = -2;
-*/
-
-	rs.readFromFile("..\\out\\badStartingState3.rs");
-	plannerWindow->motionPlanner->motionPlanStartTime = 0.125000;
-	plannerWindow->motionPlanner->motionPlanStartTime = 0.125000;
-	simWindow->stridePhase = 0.0;
-	plannerWindow->motionPlanner->forwardSpeedTarget = 1;
-	plannerWindow->motionPlanner->sidewaysSpeedTarget = 0;
-	plannerWindow->motionPlanner->turningSpeedTarget = -2;
+	plannerWindow->motionPlanner->turningSpeedTarget = -0.1;
 
 	robot->setState(&rs);
 

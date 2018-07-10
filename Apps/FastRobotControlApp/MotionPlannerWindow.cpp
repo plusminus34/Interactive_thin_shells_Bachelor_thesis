@@ -107,7 +107,7 @@ void MotionPlannerWindow::drawScene() {
 		ffpViewer->ffp = &motionPlanner->currentMOPTFootFallPattern;
 
 		motionPlanner->draw();
-		V3D offset = motionPlanner->plannerStartState.getOrientation().rotate(V3D(0.5, 0, 0));
+		V3D offset = motionPlanner->plannerStartState.getOrientation().rotate(V3D(0.5 * 0, 0, 0));
 		glTranslated(offset.x(), offset.y(), offset.z());
 		motionPlanner->locomotionManager->motionPlan->drawMotionPlan(ffpViewer->cursorPosition, false, false, false, false, true, true, true, true, true);
 	}
