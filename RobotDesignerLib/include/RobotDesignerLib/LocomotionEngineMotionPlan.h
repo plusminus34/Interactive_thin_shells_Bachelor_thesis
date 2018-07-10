@@ -357,6 +357,8 @@ public:
 
 	void readParamsFromFile(FILE* fp);
 
+	void setNumberOfSamplePoints(int n);
+
 	void readParamsFromFile(const char* fName);
 
 	void writeRobotMotionAnglesToFile(const char* fName);

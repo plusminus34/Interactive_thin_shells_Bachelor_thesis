@@ -30,7 +30,7 @@ public:
 	//keep track of the desired foot fall pattern for all feet...
 	DynamicArray<StepPattern> stepPatterns;
 
-	int strideSamplePoints;
+	int strideSamplePoints = 10;
 
 	bool dirty = false;
 
@@ -170,10 +170,12 @@ public:
 		int tmpStepPatterns = 0;
 		fscanf(fp, "%d %d", &tmpStrideSamplePoints, &tmpStepPatterns);
 
-		if (strideSamplePoints != tmpStrideSamplePoints || tmpStepPatterns != (int)stepPatterns.size()){
+		if (/*strideSamplePoints != tmpStrideSamplePoints ||*/ tmpStepPatterns != (int)stepPatterns.size()){
 			Logger::consolePrint("FFP from file is incompatible with current settings. Skipping...\n");
 			return;
 		}
+
+		strideSamplePoints = tmpStrideSamplePoints;
 
 		for (uint i = 0; i < stepPatterns.size(); i++)
 			fscanf(fp, "%d %d", &stepPatterns[i].startIndex, &stepPatterns[i].endIndex);

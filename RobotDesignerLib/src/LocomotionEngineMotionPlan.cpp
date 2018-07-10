@@ -1162,6 +1162,22 @@ void LocomotionEngineMotionPlan::writeParamsToFile(const char *fName){
 	fclose(fp);
 }
 
+void LocomotionEngineMotionPlan::setNumberOfSamplePoints(int n) {
+	if (nSamplePoints != n){
+		nSamplePoints = n;
+
+		robotRepresentation->setQ(initialRobotState);
+		robotStateTrajectory.initialize(nSamplePoints);
+
+		for (uint i = 0; i < endEffectorTrajectories.size(); i++)
+			endEffectorTrajectories[i].initialize(nSamplePoints);
+
+		V3D comRotationAngles(initialRobotState[3], initialRobotState[4], initialRobotState[5]);
+		bodyTrajectory.initialize(nSamplePoints, defaultCOMPosition, comRotationAngles, robotRepresentation->getQAxis(3),
+			robotRepresentation->getQAxis(4), robotRepresentation->getQAxis(5));
+	}
+}
+
 void LocomotionEngineMotionPlan::readParamsFromFile(FILE *fp) {
 	int nSamplePoints_, eeCount_, robotDim_;
 
@@ -1172,18 +1188,7 @@ void LocomotionEngineMotionPlan::readParamsFromFile(FILE *fp) {
 		return;
 	}
 
-	nSamplePoints = nSamplePoints_;
-
-
-	robotRepresentation->setQ(initialRobotState);
-	robotStateTrajectory.initialize(nSamplePoints);
-
-	for (uint i = 0; i < endEffectorTrajectories.size(); i++)
-		endEffectorTrajectories[i].initialize(nSamplePoints);
-
-	V3D comRotationAngles(initialRobotState[3], initialRobotState[4], initialRobotState[5]);
-	bodyTrajectory.initialize(nSamplePoints, defaultCOMPosition, comRotationAngles, robotRepresentation->getQAxis(3),
-		robotRepresentation->getQAxis(4), robotRepresentation->getQAxis(5));
+	setNumberOfSamplePoints(nSamplePoints_);
 
 	for (int i = 0; i < nSamplePoints; i++)
 		fscanf(fp, "%lf %lf %lf", &bodyTrajectory.pos[0][i], &bodyTrajectory.pos[1][i], &bodyTrajectory.pos[2][i]);

@@ -56,6 +56,8 @@ public:
 
 	void generateMotionPlan();
 
+	double optimizeMotionPlan();
+
 	void draw();
 };
 

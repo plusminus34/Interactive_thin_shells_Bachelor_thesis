@@ -38,7 +38,7 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 	//we will be adding samples every 0.1s
 	double dt = 0.1;
 	if (locomotionManager && locomotionManager->motionPlan)
-		dt = locomotionManager->motionPlan->motionPlanDuration / (locomotionManager->motionPlan->nSamplePoints - 1);
+		dt = motionPlanDuration / (locomotionManager->motionPlan->nSamplePoints - 1);
 
 	for (double t = motionPlanStartTime; t <= motionPlanStartTime + preplanTimeHorizon; t += dt) {
 		prePlanBodyTrajectory.addKnot(t, V3D() + currentBodyPos);
@@ -133,8 +133,9 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 			count = 1;
 			//if the end effector starts out in swing, then we need to make sure the height profile is still ok
 			double swingPhaseAtStart = cffp.stepPatterns[eeIndex].getSwingPhase(motionPlanStartTime);
-			if (swingPhaseAtStart < 0) Logger::consolePrint("Uh-oh, we have a problem...\n");
-			if (swingPhaseAtStart < 0.5) {
+			if (swingPhaseAtStart < 0) 
+				Logger::consolePrint("Uh-oh, we have a problem...\n");
+			else if (swingPhaseAtStart < 0.5) {
 				double timeToGroundStrike = cffp.stepPatterns[eeIndex].getFirstTimeInStanceAfter(motionPlanStartTime) - motionPlanStartTime;
 				double swingDuration = timeToGroundStrike / (1 - swingPhaseAtStart);
 //				Logger::consolePrint("swing duration: %lf\n", swingDuration);
@@ -159,7 +160,7 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 }
 
 RobotState MotionPlanner::getPreplanedRobotStateAtStridePhase(double p) {
-	return getPreplanedRobotStateAtTime(motionPlanStartTime + p * locomotionManager->motionPlan->motionPlanDuration);
+	return getPreplanedRobotStateAtTime(motionPlanStartTime + p * motionPlanDuration);
 }
 
 RobotState MotionPlanner::getMOPTRobotStateAtStridePhase(double p) {
@@ -272,6 +273,8 @@ void MotionPlanner::prepareMOPTPlan(LocomotionEngineMotionPlan* motionPlan) {
 	motionPlan->motionPlanDuration = motionPlanDuration;
 	motionPlan->wrapAroundBoundaryIndex = -1;
 
+	motionPlan->setNumberOfSamplePoints(defaultFootFallPattern.strideSamplePoints + 1);
+
 	double h = motionPlan->motionPlanDuration / (motionPlan->nSamplePoints - 1);
 
 	for (int i = 0; i < motionPlan->nSamplePoints; i++) {
@@ -340,12 +343,20 @@ void MotionPlanner::generateMotionPlan() {
 
 	prepareMOPTPlan(locomotionManager->motionPlan);
 
-	energyVal = locomotionManager->runMOPTStep(OPT_GRFS);
-	for (int i = 0; i<10; i++)
-		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
+	for (int i = 0; i<2; i++)
+		energyVal = locomotionManager->runMOPTStep(OPT_GRFS);
+	energyVal = optimizeMotionPlan();
 
 //	for (int i = 0; i<5; i++)
 //		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_COM_ORIENTATIONS);
 
 	Logger::consolePrint("It took %lfs to generate motion plan, final energy value: %lf\n", t.timeEllapsed(), energyVal);
 }
+
+double MotionPlanner::optimizeMotionPlan() {
+	double energyVal = 0;
+	for (int i = 0; i<10; i++)
+		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
+	return energyVal;
+}
+

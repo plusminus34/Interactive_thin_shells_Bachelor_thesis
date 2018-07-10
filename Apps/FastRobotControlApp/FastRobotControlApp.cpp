@@ -7,12 +7,15 @@
 #include <ControlLib/SimpleLimb.h>
 #include "MotionPlanner.h"
 
-//should we use the old MOPT plan to initialize the new one?!? It just needs to be shifted over by a number of steps, which we know already...
-//maybe MOPT velocities should also be evaluated by looking at midpoints of intervals before and after...
-//save also the high level commands (speed, turning rate)
-//turning does not seem to work at all right now...
 
-#define DEBUG_MOPT
+//- change the stride duration. 0.8 is quite long...
+//- try a few different footfall patterns (walking, flying trot, pacing)
+//- optimize foot positions too? And maybe a shorter horizon in MOPT?
+
+//should we use the old MOPT plan to initialize the new one?!? It just needs to be shifted over by a number of steps, which we know already...
+//there might be drift due to the global motion time... perhaps re-sync?
+
+//#define DEBUG_MOPT
 
 //#define PRINT_TRACKING_DEBUG
 
@@ -23,6 +26,8 @@
 //	- mopt that combines locomotion and manipulation
 //	- MOPT for multi-robot systems, including locomotion and manipulation
 //	- interactive MOPT - add an obstacle in the scene, given current state of robot it figures out how to avoid it, etc.
+//	- gait transitions
+
 
 FastRobotControlApp::FastRobotControlApp(){
 	bgColorR = bgColorG = bgColorB = bgColorA = 1;
@@ -51,9 +56,14 @@ FastRobotControlApp::FastRobotControlApp(){
 		plannerWindow->motionPlanner->generateMotionPlan();
 	});
 
+	button = new nanogui::Button(tools, "optMOPT");
+	button->setFontSize(14);
+	button->setCallback([this]() {
+		plannerWindow->motionPlanner->optimizeMotionPlan();
+	});
+
 	mainMenu->addGroup("MOPT Options");
 	plannerWindow->addMenuItems();
-
 
 	mainMenu->addGroup("Sim Options");
 	simWindow->addMenuItems();
@@ -64,9 +74,11 @@ FastRobotControlApp::FastRobotControlApp(){
 	menuScreen->performLayout();
 	setupWindows();
 
-	loadFile("..\\data\\RobotDesigner\\SpotMiniDemo.batch");
+	loadFile("..\\data\\RobotDesigner\\SpotMiniWalk.batch");
 	robot->forward = V3D(0, 0, 1);
 	robot->right = V3D(-1, 0, 0);
+
+	plannerWindow->motionPlanner->motionPlanDuration = 0.6;
 
 #ifdef DEBUG_MOPT
 	/**------DEBUG-------**/
@@ -79,11 +91,20 @@ FastRobotControlApp::FastRobotControlApp(){
 //	plannerWindow->motionPlanner->sidewaysSpeedTarget = 0;
 //	plannerWindow->motionPlanner->turningSpeedTarget = 0;
 
-
+/*
 	rs.readFromFile("..\\out\\badStartingState2.rs");
 	plannerWindow->motionPlanner->motionPlanStartTime = (8 + 0.010417) * plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
 	plannerWindow->motionPlanner->motionPlanStartTime = 8 * plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration / (plannerWindow->motionPlanner->locomotionManager->motionPlan->nSamplePoints - 1);
 	simWindow->stridePhase = 0.010417;
+	plannerWindow->motionPlanner->forwardSpeedTarget = 1;
+	plannerWindow->motionPlanner->sidewaysSpeedTarget = 0;
+	plannerWindow->motionPlanner->turningSpeedTarget = -2;
+*/
+
+	rs.readFromFile("..\\out\\badStartingState3.rs");
+	plannerWindow->motionPlanner->motionPlanStartTime = 0.125000;
+	plannerWindow->motionPlanner->motionPlanStartTime = 0.125000;
+	simWindow->stridePhase = 0.0;
 	plannerWindow->motionPlanner->forwardSpeedTarget = 1;
 	plannerWindow->motionPlanner->sidewaysSpeedTarget = 0;
 	plannerWindow->motionPlanner->turningSpeedTarget = -2;
@@ -406,7 +427,7 @@ c_heading, c_turningSpeed, c_posForward, c_speedForward, simWindow->stridePhase)
 #ifdef DEBUG_MOPT
 			RobotState rs(robot);
 			rs.writeToFile("..\\out\\startingState.rs");
-			Logger::consolePrint("motionPlanStartTime: %lf, stridePhase: %lf, walking speed forward: %lf, walking speed sideways: %lf, turning speed: %lf\n", plannerWindow->motionPlanner->motionPlanStartTime, simWindow->stridePhase, plannerWindow->motionPlanner->forwardSpeedTarget, plannerWindow->motionPlanner->sidewaysSpeedTarget, plannerWindow->motionPlanner->turningSpeedTarget);
+			Logger::consolePrint("motionPlanStartTime: %lf, global time: %lf, stridePhase: %lf, walking speed forward: %lf, walking speed sideways: %lf, turning speed: %lf\n", plannerWindow->motionPlanner->motionPlanStartTime, globalTime, simWindow->stridePhase, plannerWindow->motionPlanner->forwardSpeedTarget, plannerWindow->motionPlanner->sidewaysSpeedTarget, plannerWindow->motionPlanner->turningSpeedTarget);
 #endif
 			if (breakAfterReplan)
 				appIsRunning = false;
