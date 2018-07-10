@@ -22,10 +22,11 @@ add_subdirectory(FEMSim3DApp)
 add_subdirectory(RBSimApp)
 add_subdirectory(WheeledRobotSimApp)
 add_subdirectory(RobotDesignerApp)
-add_subdirectory(FastRobotControlApp)
 add_subdirectory(PhysicalRobotControlApp)
 add_subdirectory(BenderApp)
 add_subdirectory(Plush)
 add_subdirectory(PlotExampleApp)
 add_subdirectory(CompliantRobotDesignApp)
+add_subdirectory(KineSimApp)
+
 

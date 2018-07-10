@@ -51,5 +51,6 @@ add_subdirectory(RobotDesignerLib)
 add_subdirectory(PlushHelpers)
 add_subdirectory(Apps)
 add_subdirectory(YuMiLib)
+add_subdirectory(KineSimLib)
 
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "_CMakeTargets")
