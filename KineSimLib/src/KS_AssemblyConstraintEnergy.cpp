@@ -21,23 +21,6 @@ void KS_AssemblyConstraintEnergy::initialize(KS_MechanicalAssembly* a){
 	//ddE_dsds.resize(stateCount, stateCount, true);
 	ddE_dsds.setZero();
 
-	constraints.clear();
-
-	for (int i=0; i<a->getConnectionCount(); i++){
-		a->getConnection(i)->addConstraintsToList(constraints);
-	}
-
-	scalarConstraintCount = 0;
-	for (uint i=0;i<constraints.size();i++){
-		//constraints[i]->cleanSparseMatrixBlocks();
-		constraints[i]->setConstraintStartIndex(scalarConstraintCount);
-		scalarConstraintCount += constraints[i]->getConstraintCount();
-	}
-	Logger::print(" number of constraints %d\n", scalarConstraintCount);
-	C.resize(scalarConstraintCount);
-	//dCds.resize(scalarConstraintCount, a->getComponentCount() * KS_MechanicalComponent::getStateSize(), false);
-	//dCds.resize(scalarConstraintCount, a->getComponentCount() * KS_MechanicalComponent::getStateSize());
-	dCdsEntries.clear();
 	m_s0.resize(stateCount);
 	assembly->getAssemblyState(m_s0);
 }
@@ -115,20 +98,4 @@ void KS_AssemblyConstraintEnergy::addGradientTo(dVector & grad, const dVector & 
 void KS_AssemblyConstraintEnergy::setCurrentBestSolution(const dVector& s){
 	assembly->setAssemblyState(s);
 	updateRegularizingSolutionTo(s);
-}
-
-dVector* KS_AssemblyConstraintEnergy::getConstraintVectorAt(const dVector& s){
-	assembly->setAssemblyState(s);
-	for (uint i=0;i<constraints.size();i++)
-		constraints[i]->writeConstraintValuesTo(C);
-	return &C;
-}
-
-
-void KS_AssemblyConstraintEnergy::getConstraintJacobianAt(const dVector& s){
-	assembly->setAssemblyState(s);
-	//dCds.setZero();
-	for (uint i=0;i<constraints.size();i++)
-		constraints[i]->writeConstraintJacobianValuesTo(dCdsEntries);
-	//return &dCds;
 }

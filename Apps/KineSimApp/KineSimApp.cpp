@@ -50,11 +50,16 @@ void KineSimApp::process() {
 		for (int i = 0; i < mech1->getConnectionCount(); i++) {
 			if (mech1->m_connections[i]->isMotorized())
 				mech1->m_connections[i]->setOffset(motorAngleValues[i]);
+
+			motorAngleValues[i] += 0.1;
 		}
 		mech1->stepAssembly();
 		mech1->solveAssembly();
 		if (logState)
 			mech1->logMechS("../data/KineSimApp/mechState.txt");
+
+		
+
 	}
 
 
@@ -62,6 +67,9 @@ void KineSimApp::process() {
 
 
 void KineSimApp::drawScene() {
+
+	glEnable(GL_LIGHTING);
+
 	P3D p0(0.0, 0.0, 0.0);
 	double l = 0.2;
 	//double dtheta = 0.1;

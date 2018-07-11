@@ -35,51 +35,6 @@ V3D KS_PointOnLineConstraint::getErrorVector(){
 	return wl.cross(wx-wp);
 }
 
-//each constraint is composed of several scalar constraints - this is how many
-int KS_PointOnLineConstraint::getConstraintCount(){
-	return 3;
-}
-
-//returns the current values of the constraints
-dVector* KS_PointOnLineConstraint::getConstraintValues(){
-	V3D v = getErrorVector();
-	C.resize(3, 0);
-	C[0] = v[0]; C[1] = v[1]; C[2] = v[2];
-	return &C;
-}
-
-void KS_PointOnLineConstraint::computeConstraintJacobian(){
-	FAST_RESIZE_MAT(dwx_ds1, 3, KS_MechanicalComponent::getStateSize());
-	FAST_RESIZE_MAT(dwp_ds2, 3, KS_MechanicalComponent::getStateSize());
-	FAST_RESIZE_MAT(dwl_ds2, 3, KS_MechanicalComponent::getStateSize());
-	FAST_RESIZE_MAT(wlCross, 3, 3);
-	FAST_RESIZE_MAT(wvCross, 3, 3);
-
-	FAST_RESIZE_MAT(dCds1, getConstraintCount(), KS_MechanicalComponent::getStateSize());
-	FAST_RESIZE_MAT(dCds2, getConstraintCount(), KS_MechanicalComponent::getStateSize());
-
-	V3D v = (wx - wp);
-	//the energy of the constraint is 1/2 * y' * y, and gradient and hessian follow
-	c1->get_dw_ds(x, dwx_ds1);
-	c2->get_dw_ds(p, dwp_ds2);
-	c2->get_dw_ds(l, dwl_ds2);
-
-	//toCrossProductMatrix(wlCross, wl);
-	wlCross = getCrossProductMatrix(wl);
-	//toCrossProductMatrix(wvCross, v);
-	wvCross= getCrossProductMatrix(v);
-	
-	//compute dC_ds1 = lx * dx/ds1 (lx = cross product matrix corresponding to l)
-	//dCds1.setToAB(wlCross, dwx_ds1);
-	dCds1=wlCross*dwx_ds1;
-
-	//compute dE_ds2 = -lx * dp/ds2 -v'* vx * (lx = cross product matrix corresponding to l, vx same, but for v)
-	/*dCds2.setToAB(wlCross, dwp_ds2);
-	dCds2.addProductAB(wvCross, dwl_ds2);*/
-	dCds2 = wlCross * dwp_ds2;
-	dCds2 += wvCross * dwl_ds2;
-	dCds2 *= -1;
-}
 
 void KS_PointOnLineConstraint::computeEnergyGradient(){
 	FAST_RESIZE_MAT(dwx_ds1, 3, KS_MechanicalComponent::getStateSize());
@@ -112,7 +67,7 @@ void KS_PointOnLineConstraint::computeEnergyGradient(){
 	//compute dE_ds1 = y' * lx * dx/ds1 (lx = cross product matrix corresponding to l)
 	//dy_ds1.setToAB(wlCross, dwx_ds1);
 	dy_ds1 = wlCross * dwx_ds1;
-	dCds1 = dy_ds1;
+
 	//preMultiply(dy_ds1, tmpY, 1, dE_ds1);
 	dE_ds1 = tmpY.transpose()*dy_ds1;
 	//compute dE_ds2 = -y' * lx * dp/ds2 -v'* vx * (lx = cross product matrix corresponding to l, vx same, but for v)
@@ -142,9 +97,6 @@ void KS_PointOnLineConstraint::computeEnergyHessian(){
 	FAST_RESIZE_VEC(tmpE, KS_MechanicalComponent::getStateSize());
 	FAST_RESIZE_VEC(tmpY, 3);
 	FAST_RESIZE_VEC(tmpV, 3);
-
-	FAST_RESIZE_MAT(dCds1, getConstraintCount(), KS_MechanicalComponent::getStateSize());
-	FAST_RESIZE_MAT(dCds2, getConstraintCount(), KS_MechanicalComponent::getStateSize());
 
 	V3D y = getErrorVector();
 	V3D v = (wx - wp);

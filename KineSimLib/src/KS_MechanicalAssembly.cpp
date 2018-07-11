@@ -151,7 +151,7 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 	sSolver.resize(6 * getComponentCount()); //sSolver.setZero();
 	Logger::print(" number of components %d\n", getComponentCount());
 	Logger::print(" number of connections %d\n", getConnectionCount());
-	for (int i = 0; i < m_components.size(); i++) {
+	for (uint i = 0; i < m_components.size(); i++) {
 		m_components[i]->setupGeometry();
 		s[KS_MechanicalComponent::getStateSize() * i + 0]= m_components[i]->getGamma(); 
 	    s[KS_MechanicalComponent::getStateSize() * i + 1]= m_components[i]->getBeta(); 

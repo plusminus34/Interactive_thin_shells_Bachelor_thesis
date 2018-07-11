@@ -29,10 +29,6 @@ public:
 	//this method gets called whenever a new best solution to the objective function is found
 	virtual void setCurrentBestSolution(const dVector& s);
 
-	virtual dVector* getConstraintVectorAt(const dVector& s);
-	//virtual SparseMatrix* getConstraintJacobianAt(const dVector& s);
-	virtual void getConstraintJacobianAt(const dVector& s);
-
 	void setRegularizer(double val){
 		regularizer = val;
 	}
@@ -44,13 +40,7 @@ private:
 	KS_MechanicalAssembly* assembly;
 	//this is the array of constraints in the simulator
 	std::vector<KS_Constraint*> constraints;
-
-	//constraint values
-	dVector C;
-	//jacobian of the constraints
-	//SparseMatrix dCds;
-	DynamicArray<MTriplet>& dCdsEntries= DynamicArray<MTriplet>();
-
+	
 	//The total energy of the system is the sum of the individual energy terms of the constraint. The gradient of this scalar function is this
 	dVector dE_ds;
 	//and the hessian of the sum of the energy terms is a sparse matrix...

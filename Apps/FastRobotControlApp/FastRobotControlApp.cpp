@@ -73,11 +73,11 @@ FastRobotControlApp::FastRobotControlApp(){
 	menuScreen->performLayout();
 	setupWindows();
 
-	loadFile("..\\data\\RobotDesigner\\SpotMiniWalk.batch");
+	loadFile("..\\data\\RobotDesigner\\SpotMiniTrot.batch");
 	robot->forward = V3D(0, 0, 1);
 	robot->right = V3D(-1, 0, 0);
 
-	plannerWindow->motionPlanner->motionPlanDuration = 0.8;
+	plannerWindow->motionPlanner->motionPlanDuration = 0.6;
 
 #ifdef DEBUG_MOPT
 	/**------DEBUG-------**/

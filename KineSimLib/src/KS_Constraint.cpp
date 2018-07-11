@@ -34,24 +34,6 @@ void KS_Constraint::addEnergyHessianTo(DynamicArray<MTriplet>& hessianEntries)
 
 }
 
-//writes out the values of the current constraints at the appropriate location in the constraint vector
-void KS_Constraint::writeConstraintValuesTo(dVector& C){
-	dVector* constraintValues = getConstraintValues();
-	for (uint i=0;i<constraintValues->size();i++){
-		C[i + constraintStartIndex] = (*constraintValues)[i];
-	}
-}
-
-void KS_Constraint::writeConstraintJacobianValuesTo(DynamicArray<MTriplet>& dCdsEntries)
-{
-	computeConstraintJacobian();
-	//write out the constraint jacobian values
-	for (int i = 0; i<getNumberOfAffectedComponents(); i++) {
-		int startRow = constraintStartIndex;
-		int startCol = KS_MechanicalComponent::getStateSize() * getIthAffectedComponent(i)->getComponentIndex();
-		addSparseMatrixDenseBlockToTriplet(dCdsEntries, startRow, startCol, *getConstraintJacobian(i), true);
-	}
-}
 
 void KS_Constraint::setAffectedComponentsState(const dVector& state){
 	for (int i=0;i<getNumberOfAffectedComponents();i++){
