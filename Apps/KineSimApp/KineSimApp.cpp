@@ -13,15 +13,19 @@ KineSimApp::KineSimApp()
 	mech1 = new KS_MechanicalAssembly();
 	mech1->readFromFile("../data/KineSimApp/fourBar.mech");
 	// double check if mechanism has full initialization at this point otherwise initiliaze those members now
+	mech1->getAssemblyState(startingMechState);
 	motorAngleValues.resize(mech1->getConnectionCount());
 	motorAngleValues.setZero();
 
 	mainMenu->addGroup("sim parameters");
 	mainMenu->addVariable("logState", logState);
+	mainMenu->addVariable("newtonSolver", mech1->newtonSolver);
+	mainMenu->addVariable("bfgsSolver", mech1->bfgsSolver);
+
 
 	for (int i = 0; i < mech1->getConnectionCount(); i++) {
 		if (mech1->m_connections[i]->isMotorized())
-			mainMenu->addVariable("MotorAngle for motorized jointIndex "+ std::to_string(i), motorAngleValues[i]);
+			mainMenu->addVariable("MotorAngle for motorized jointIndex:   "+ std::to_string(i), motorAngleValues[i]);
 	}
 	
 
@@ -90,7 +94,7 @@ void KineSimApp::drawAuxiliarySceneInfo() {
 
 // Restart the application.
 void KineSimApp::restart() {
-	//mech1->s
+	mech1->setAssemblyState(startingMechState);
 }
 
 bool KineSimApp::onKeyEvent(int key, int action, int mods)

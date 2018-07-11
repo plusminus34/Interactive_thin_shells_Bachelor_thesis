@@ -11,7 +11,6 @@
 class KS_BoundToWorldConnection : public KS_Connection{
 private:
 	KS_LockedComponentConstraint* lcCon;
-	bool freezePhase;
 public:
 	KS_BoundToWorldConnection(void);
 	~KS_BoundToWorldConnection(void);
@@ -22,8 +21,6 @@ public:
 	virtual void connect(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut);
 
 	virtual void addConstraintsToList(std::vector<KS_Constraint*>& constraints) {constraints.push_back(lcCon);}
-
-	void setFreezePhase(bool fp);
 
 	void setTargetPosition(const P3D& pos){
 		if (lcCon)

@@ -21,7 +21,6 @@ KS_MechanicalComponent::KS_MechanicalComponent(const char* name){
 	setAngles(0, 0, 0);
 
 	selected = false;
-	//meshColor = ThreeTuple(0.5, 0.5, 0.8);
 	layerNumber = 0;
 	points_list.clear(); points_list.push_back(position);
 }
@@ -281,7 +280,6 @@ bool KS_MechanicalComponent::processInputLine(char* line){
 			break;
 		case KS_POSITION_IN_WORLD:
 			if (sscanf(line, "%lf %lf %lf", &position[0], &position[1], &position[2]) != 3) assert(false);
-			Logger::print("position %lf %lf %lf\n", position[0], position[1], position[2]);
 			return true;
 			break;
 		case KS_ANGLE:

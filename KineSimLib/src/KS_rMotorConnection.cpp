@@ -45,10 +45,7 @@ void KS_rMotorConnection::connect(KS_MechanicalComponent* pCompIn, KS_Mechanical
 	tmpPointsList.push_back(pOnC2 / 2 + P3D(0, 0, .1));
 
 	m_compOut->setPoints_list(tmpPointsList);
-	/*if(isActivated) 
-		m_compOut->getMesh(m_pin)->setColour(1.0,0.0,0.0,1.0);
-	else
-		m_compOut->getMesh(m_pin)->setColour(0.6,0.5,0.5,1.0);*/
+	
 	if(isActivated)
 		rMotorAngleConstraint = new KS_V2VConstraint(vOnC1, m_compIn, vOnC2, m_compOut);
 	pt2ptConstraint = new KS_P2PConstraint(pOnC1, m_compIn, pOnC2, m_compOut); 
@@ -79,8 +76,6 @@ bool KS_rMotorConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* ma){
 	}
 	//have a temporary buffer used to read the file line by line...
 	char buffer[1000];
-	DynamicArray<double> frames, angles;
-	uint offset;
 	//this is where it happens.
 	while (!feof(f)){
 		//get a line from the file...
@@ -117,45 +112,6 @@ bool KS_rMotorConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* ma){
 			case KS_IS_ACTIVATED:
 				if (sscanf(line, "%d", &isActivated) != 1) assert(false);
 				break;
-			/*case KS_USE_SINUSOIDAL_SIGNAL:
-				if (sscanf(line, "%lf %lf %lf %lf", &m_amplitude, &m_frequency, &m_offset, &m_sinPhaseOffset) < 3) assert(false);
-				break;
-			case KS_CONSTANT_SPEED_PROFILE:
-				useCSP=true;
-				if (sscanf(line," %lf %d %lf", &m_amplitude, &m_frames, &m_offset) !=3) assert(false);
-				break;
-			case KS_SCALE:
-				sscanf(line, "%lf", &m_stepScale);
-				break;
-			case KS_NONCONSTANT_SPEED_PROFILE:
-				if (sscanf(line, "%i %lf ", &m_frames, &m_rate) != 2) assert(false);
-				useRBF=true;
-
-				motorPhaseAngle.clear();
-
-
-				frames.resize(m_frames+1);
-				angles.resize(m_frames+1);
-				offset=1;
-				while((offset<strlen(line))&&(line[offset]!=' ')) offset++; 
-				for(int i=0;i<m_frames;i++){
-					frames[i]=i*m_rate;
-					offset++;
-					while((offset<strlen(line))&&(line[offset]!=' '&&line[offset]!='\t')) offset++; 
-					if (sscanf(line+offset, "%lf", &angles[i]) != 1) assert(false);
-
-					motorPhaseAngle.addKnot(frames[i], angles[i]);
-				}
-
-				motorPhaseAngle.addKnot(frames[m_frames-1]+1, angles[0]);
-
-				frames[frames.size()-1] = m_frames*m_rate;
-				angles[frames.size()-1] = angles[0];
-
-				m_rbf = new RBF1D();
-				m_rbf->setRBFData(frames,angles);
-				m_frames=int(m_frames*m_rate);
-				break;*/
 			case KS_END:
 				connect(this->m_compIn, this->m_compOut);
 				return true;
@@ -176,7 +132,7 @@ bool KS_rMotorConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* ma){
 bool KS_rMotorConnection::writeToFile(FILE* f){
 	char* str;
 
-	str = getKSString(KS_MOTOR_CON);
+	str = getKSString(KS_R_MOTOR_CON);
 	fprintf(f, "%s\n", str);
 
 	writeBaseConnectionToFile(f);
@@ -193,24 +149,14 @@ bool KS_rMotorConnection::writeToFile(FILE* f){
 	str = getKSString(KS_VEC_ON_COMP_OUT);
 	fprintf(f, "\t%s %lf %lf %lf\n", str, nOnC2[0], nOnC2[1], nOnC2[2]);
 
+	str = getKSString(KS_VEC2_ON_COMP_IN);
+	fprintf(f, "\t%s %lf %lf %lf\n", str, vOnC1[0], vOnC1[1], vOnC1[2]);
+
+	str = getKSString(KS_VEC2_ON_COMP_OUT);
+	fprintf(f, "\t%s %lf %lf %lf\n", str, vOnC2[0], vOnC2[1], vOnC2[2]);
+
 	str = getKSString(KS_IS_ACTIVATED);
 	fprintf(f, "\t%s %d \n", str, isActivated);
-	
-	/*if(useRBF){
-		str = getKSString(KS_NONCONSTANT_SPEED_PROFILE);
-		fprintf(f, "\t%s %i %lf", str, int(m_frames/m_rate), m_rate);
-		for(int i=0;i<m_frames/m_rate;i++)
-			fprintf(f," %lf",m_rbf->evaluate(i*m_rate));
-		fprintf(f,"\n");
-		str = getKSString(KS_SCALE);
-		fprintf(f, "\t%s %lf \n", str, m_stepScale);
-	}else if(useCSP){
-		str = getKSString(KS_CONSTANT_SPEED_PROFILE);
-		fprintf(f, "\t%s %lf %d %lf\n", str, m_amplitude, m_frames, m_offset);
-	}else{
-		str = getKSString(KS_USE_SINUSOIDAL_SIGNAL);
-		fprintf(f, "\t%s %lf %lf %lf\n", str, m_amplitude, m_frequency, m_offset);
-	}*/
 
 	str = getKSString(KS_END);
 	fprintf(f, "%s\n\n\n", str);

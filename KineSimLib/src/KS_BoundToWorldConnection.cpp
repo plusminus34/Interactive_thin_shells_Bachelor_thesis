@@ -1,7 +1,6 @@
 #include "KineSimLib/KS_BoundToWorldConnection.h"
 
 KS_BoundToWorldConnection::KS_BoundToWorldConnection(void){
-	freezePhase = false;
 	lcCon = NULL;
 }
 
@@ -13,17 +12,9 @@ void KS_BoundToWorldConnection::connect(KS_MechanicalComponent* pCompIn, KS_Mech
 	assignConnectedComponents(pCompIn, pCompOut);
 	m_compIn = pCompIn;
 	m_compOut = pCompOut;
-	//m_compOut->addCylinderMesh(20, 0.1, 0.08, P3D(), V3D(0,0,1));
-	//m_pin=m_compOut->getNumOfMeshes()-1;
-	//if(!freezePhase) m_compOut->getMesh(m_pin)->setColour(1.0,0.0,0.0,1.0);
 
 	assert(m_compIn == NULL);
-	// replaced three tuples x y z
-	lcCon = new KS_LockedComponentConstraint(m_compOut, m_compOut->getAlpha(), freezePhase, m_compOut->getBeta(), true, m_compOut->getGamma(), true, m_compOut->getWorldCenterPosition()[0], true, m_compOut->getWorldCenterPosition()[1], true, m_compOut->getWorldCenterPosition()[2], true); 
-}
-
-void KS_BoundToWorldConnection::setFreezePhase(bool fp){
-	freezePhase = fp;
+	lcCon = new KS_LockedComponentConstraint(m_compOut, m_compOut->getAlpha(), true, m_compOut->getBeta(), true, m_compOut->getGamma(), true, m_compOut->getWorldCenterPosition()[0], true, m_compOut->getWorldCenterPosition()[1], true, m_compOut->getWorldCenterPosition()[2], true); 
 }
 
 bool KS_BoundToWorldConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* ma){
@@ -54,9 +45,6 @@ bool KS_BoundToWorldConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* ma)
 				connect(this->m_compIn, this->m_compOut);
 				return true;
 				break;
-			case KS_FREEZE_PHASE:
-				freezePhase = true;
-				break;
 			default:
 				Logger::print("Incorrect KS input file. Unexpected line: %s\n", buffer);
 				return false;
@@ -75,11 +63,6 @@ bool KS_BoundToWorldConnection::writeToFile(FILE* f){
 	fprintf(f, "%s\n", str);
 
 	writeBaseConnectionToFile(f);
-
-	if (freezePhase){
-		str = getKSString(KS_FREEZE_PHASE);
-		fprintf(f, "\t%s\n", str);
-	}
 
 	str = getKSString(KS_END);
 	fprintf(f, "%s\n\n\n", str);

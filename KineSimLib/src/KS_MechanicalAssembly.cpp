@@ -18,7 +18,6 @@ using namespace std;
 
 KS_MechanicalAssembly::KS_MechanicalAssembly(void){
 	AConstraintEnergy = NULL;
-	
 }
 
 KS_MechanicalAssembly::KS_MechanicalAssembly(KS_MechanicalAssembly &a){
@@ -81,7 +80,6 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 
 	 m_components.clear();
      m_connections.clear();
-
 
 	FILE* f = fopen(szFile, "r");
 	if (f == NULL){
@@ -333,10 +331,18 @@ void KS_MechanicalAssembly::solveAssembly()
 	double functionValue = AConstraintEnergy->computeValue(sSolver);
 	Logger::consolePrint("energy value before solve C: %lf\n", functionValue);
 
-	//NewtonFunctionMinimizer minimizer(20);
-	BFGSFunctionMinimizer minimizer(10);
-	minimizer.printOutput = false;
-	minimizer.minimize(AConstraintEnergy, sSolver, functionValue);
+	if (newtonSolver) {
+		NewtonFunctionMinimizer minimizer(20);
+		minimizer.printOutput = false;
+		minimizer.minimize(AConstraintEnergy, sSolver, functionValue);
+	}
+		
+	if (bfgsSolver) {
+		BFGSFunctionMinimizer minimizer(10);
+		minimizer.printOutput = false;
+		minimizer.minimize(AConstraintEnergy, sSolver, functionValue);
+	}
+	
 
 	Logger::consolePrint("energy value after solve C: %lf\n", functionValue);
 	

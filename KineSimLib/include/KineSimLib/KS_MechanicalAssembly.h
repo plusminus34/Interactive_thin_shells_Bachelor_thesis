@@ -30,7 +30,6 @@ public:
 	void setComponentCount(int i){m_components.resize(i,NULL);}
 	int getConnectionCount() const {return (int)m_connections.size();}
 	void setConnectionCount(int i){m_connections.resize(i,NULL);}
-	//assumes a single input driver for now
 	void stepAssembly();
 	
 	void updateTracerParticles();
@@ -68,6 +67,7 @@ public:
 
 
 protected:
+	bool newtonSolver = false, bfgsSolver=true;
 	ComponentArray m_components;
 	ConnectionArray m_connections;
 

@@ -57,13 +57,7 @@ dVector* KS_LockedComponentConstraint::getConstraintValues(){
 	//C.clear();
 	C.resize(getConstraintCount()); C.setZero();
 	int cIndex = 0;
-	/*if (freezeGamma) C.push_back((c->getGamma() - gammaD) * anglesWeight);
-	if (freezeBeta) C.push_back((c->getBeta() - betaD) * anglesWeight);
-	if (freezeAlpha) C.push_back((c->getAlpha() - alphaD) * anglesWeight);
 
-	if (freezePx) C.push_back((c->getWorldCenterPosition().x - pxD)*positionWeight);
-	if (freezePy) C.push_back((c->getWorldCenterPosition().y - pyD)*positionWeight);
-	if (freezePz) C.push_back((c->getWorldCenterPosition().z - pzD)*positionWeight);*/
 	if (freezeGamma) { C[cIndex]=(c->getGamma() - gammaD) * anglesWeight; cIndex++; }
 	if (freezeBeta)  { C[cIndex]=(c->getBeta() - betaD) * anglesWeight; cIndex++; }
 	if (freezeAlpha) { C[cIndex]=(c->getAlpha() - alphaD) * anglesWeight; cIndex++; }

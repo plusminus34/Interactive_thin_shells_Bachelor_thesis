@@ -79,7 +79,7 @@ public:
 	//return the jacobian that relates the change in world coordinates w with the change in state s=(gamma, beta, alpha, p.x, p.y, p.z)
 	void get_dw_ds(const P3D& x, MatrixNxM& dw_ds);
 	void get_dw_ds(const V3D& x, MatrixNxM& dw_ds);
-	//return the matrix that relates the change in change of w with the change in rotation angle alpha(phase)
+	//return the matrix that relates the change in change of w with the change in rotation angle alpha
 	void get_ddw_dads(const P3D& x, MatrixNxM& ddw_das);
 	void get_ddw_dads(const V3D& x, MatrixNxM& ddw_das);
 	//return the matrix that relates the change in change of w with the change in rotation angle beta
@@ -149,15 +149,14 @@ protected:
 	bool selected;
 
 	//State of the component is defined by its position and rotation. The rotation is defined by Euler angles. To avoid gimbal locks, the rotation
-	//axes of the last two euler angles can be changed as needed. The first rotation axis has a special meaning, as it defines the phase of the component,
-	//so it remains constant.
+	//axes of the last two euler angles can be changed as needed. 
 	P3D position;							//position of component in world coordinates
 	double alpha, beta, gamma;					//rotation angles along the normal of the component
 	V3D n_alpha, n_beta, n_gamma;			//rotation axes (n_alpha is special because it represents the component's local coordinates normal)
 	//from the quantities above we compute these quaternions for ease of use
 	Quaternion R_alpha, R_beta, R_gamma;
 
-	DynamicArray<P3D> points_list;
+	DynamicArray<P3D> points_list;// add points here for creating mesh from the convexhull
 
 	DynamicArray<TracerParticle> tracerParticles;
 	//returns true if the input line was processed, false otherwise

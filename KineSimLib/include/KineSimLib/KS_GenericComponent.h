@@ -12,12 +12,10 @@ public:
 	~KS_GenericComponent(void);
 	
 	virtual void addMesh(GLMesh* m,char* name){
-		//m->setColour(meshColor[0], meshColor[1], meshColor[2], 1);// todo: add this function or remove it
 		meshes.push_back(m);
 		strcpy(meshName,name);
 	}
 
-	//virtual void setupGeometry() {assert(false); }
 	virtual void setupGeometry();
 	virtual bool loadFromFile(FILE* f);
 	virtual bool writeToFile(FILE* f);

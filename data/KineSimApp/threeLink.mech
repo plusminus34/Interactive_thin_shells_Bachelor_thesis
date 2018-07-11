@@ -5,7 +5,6 @@ End
 
 BoundToWorldConnection
 	componentOut bodyOne
-	freezePhase
 End
 
 GenericComponent

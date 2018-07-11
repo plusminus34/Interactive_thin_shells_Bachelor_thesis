@@ -20,7 +20,6 @@ End
 
 BoundToWorldConnection
 	componentOut body1
-	freezePhase
 End
 
 rMotorConnection

@@ -24,49 +24,8 @@ void KS_BindComponentsConnection::connect(KS_MechanicalComponent* pCompIn, KS_Me
 	m_compIn = pCompIn;
 	m_compOut = pCompOut;
 
-
-	//Logger::print("comp1 %lf %lf %lf\n", m_compIn->getWorldCenterPosition()[0], m_compIn->getWorldCenterPosition()[1], m_compIn->getWorldCenterPosition()[2]);
-	//Logger::print("comp2 %lf %lf %lf\n", m_compOut->getWorldCenterPosition()[0], m_compOut->getWorldCenterPosition()[1], m_compOut->getWorldCenterPosition()[2]);
-
-	//m_compIn->
-/*
-	double spacing = 0.3;//mm
-	double scale = 38.0 / pinJointScale;
-
-
-	V3D worldPinPos = m_compIn->get_w(pOnC1);
-	logPrint3("Connection between %s and %s\n", m_compIn->getName(), m_compOut->getName());
-	logPrint3("\tWorld coords of pin joint: %lf %lf %lf\n", worldPinPos.x(), worldPinPos.y(), worldPinPos.z());
-	V3D localPinPos = m_compOut->get_x(worldPinPos);
-	logPrint3("\tLocal coords of pin joint: %lf %lf %lf\n", localPinPos.x(), localPinPos.y(), localPinPos.z());
-	
-	bool createJunctions = false;
-/ *
-	if(createJunctions)
-	{
-		//reinforce the components a bit...
-		m_compIn->addBump(V3D(pOnC1.x(), pOnC1.y(), 0), 5.0/scale, m_compIn->getThickness(), nOnC1);
-		m_compOut->addBump(V3D(pOnC2.x(), pOnC2.y(), 0), 5.0/scale, m_compOut->getThickness(), nOnC2);
-
-		m_compIn->addBump(pOnC1, (3.0+spacing)/scale, (m_compOut->getThickness() + m_compIn->getThickness()) * 1.3 + 3 * spacing/scale, nOnC1); //outer
-		m_compIn->addBump(pOnC1, 3.0/scale, (m_compOut->getThickness() + m_compIn->getThickness()) * 1.3 + 3 * spacing/scale, nOnC1); //inner
-
-		m_compIn->addBump(pOnC1 + V3D(0,0,1) * ((m_compOut->getThickness() + m_compIn->getThickness())/2 + 1.5 * spacing/scale + 0.025/2), 5.0/scale, 2.0/scale, nOnC1); //end stop 1
-		m_compIn->addBump(pOnC1 - V3D(0,0,1) * ((m_compOut->getThickness() + m_compIn->getThickness())/2 + 1.5 * spacing/scale + 0.025/2), 5.0/scale, 2.0/scale, nOnC1); //end stop 1
-
-		if (createPinJoint){
-			m_compIn->addBump(pOnC1, 0.03, 0.4, nOnC1);
-			m_compOut->addBump(pOnC2, 0.03, 0.4, nOnC2);
-		}
-	}
-* /
-//	m_compIn->addBump(pOnC1, 0.03 * pinJointScale, 0.3, nOnC1);
-//	m_compOut->addBump(pOnC2, 0.03 * pinJointScale, 0.3, nOnC2);
-* /
-*/  
 	m_compOut->addCylinderMesh(20, 0.03, 0.08, pOnC2, nOnC2);
 	m_pin=m_compOut->getNumOfMeshes()-1;
-	//m_compOut->getMesh(m_pin)->setColour(0.0,0.0,0.0,1.0);
 
 	//lets add the pin points to the points_list of the mechanical component
 	DynamicArray<P3D> tmpPointsList = m_compIn->getPoints_list();

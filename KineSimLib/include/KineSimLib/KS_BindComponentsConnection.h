@@ -7,7 +7,7 @@
 
 /**
 	this type of connection only allows 1DOF relative motion between two components. It creates a point-to-point constraint
-	and, depending on the option passed in, one or more vector-to-vector and phaseToPhase constraints.
+	and, depending on the option passed in, one or more vector-to-vector and point to point constraints.
 
 	By default, this connection allows the components to rotate relative to each other about the constrained vector axis. If this
 	is not desireable (i.e. the components should be welded together), then use the weldComponents flag, which freezes the

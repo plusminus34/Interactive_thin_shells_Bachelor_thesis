@@ -33,8 +33,6 @@ public:
 	//virtual SparseMatrix* getConstraintJacobianAt(const dVector& s);
 	virtual void getConstraintJacobianAt(const dVector& s);
 
-	//virtual void getPlanarConstraintJacobianAt(const dVector& s, Matrix &J);
-
 	void setRegularizer(double val){
 		regularizer = val;
 	}

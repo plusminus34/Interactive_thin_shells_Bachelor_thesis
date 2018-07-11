@@ -18,6 +18,7 @@ private:
 	double simTimeStep = 1;
 	bool logState = false;
 	dVector motorAngleValues;
+	dVector startingMechState;
 
 
 
