@@ -7,7 +7,6 @@
 #include <ControlLib/SimpleLimb.h>
 #include "MotionPlanner.h"
 
-
 //- change the stride duration. 0.8 is quite long...
 //- try a few different footfall patterns (walking, flying trot, pacing)
 //- optimize foot positions too? And maybe a shorter horizon in MOPT?
@@ -289,7 +288,6 @@ void FastRobotControlApp::loadFile(const char* fName) {
 		plannerWindow->loadMotionPlanFromFile(fName);
 		return;
 	}
-
 }
 
 void FastRobotControlApp::loadToSim(){
@@ -391,9 +389,12 @@ c_heading, c_turningSpeed, c_posForward, c_speedForward, simWindow->stridePhase)
 #endif
 
 			//restart the entire motion planning process...
-			double timeAtStrideStart = globalTime - simWindow->stridePhase * plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration;
-			simWindow->stridePhase -= n * dPhase;
-			plannerWindow->motionPlanner->motionPlanStartTime = timeAtStrideStart + n * timePerdPhase;
+			//double timeAtStrideStart = globalTime - simWindow->stridePhase * plannerWindow->motionPlanner->locomotionManager->motionPlan->motionPlanDuration;
+			//simWindow->stridePhase -= n * dPhase;
+			//plannerWindow->motionPlanner->motionPlanStartTime = timeAtStrideStart + n * timePerdPhase;
+			simWindow->stridePhase = 0;
+			plannerWindow->motionPlanner->motionPlanStartTime = globalTime;
+			plannerWindow->motionPlanner->nTimeStepsForSync += n;
 			plannerWindow->ffpViewer->cursorPosition = simWindow->stridePhase;
 
 #ifdef DEBUG_MOPT

@@ -302,17 +302,10 @@ public:
 	}
 
 	//this method assumes that the foot fall pattern (ffp) starts at time = 0 and then repeats forever. The time start then defines the appropriate point in the locomotion cycle that we should be starting from...
-	void populateFromRepeatingFootFallPattern(FootFallPattern& ffp, double ffpDuration, double timeStart, double timeEnd) {
-		for (uint i = 0; i < stepPatterns.size(); i++) {
-			if (StepPattern* p = ffp.getStepPatternForLimb(stepPatterns[i].limb)) {
-				int n = (int)(timeStart / ffpDuration);
-				double t = n * ffpDuration;
-				while (t < timeEnd) {
-					stepPatterns[i].addSwingPhase(t + (double)p->startIndex / (ffp.strideSamplePoints) * ffpDuration, t + (double)(p->endIndex+1) / (ffp.strideSamplePoints) * ffpDuration);
-					t += ffpDuration;
-				}
-			}
-		}
-	}
+	void populateFromRepeatingFootFallPattern(FootFallPattern& ffp, double ffpDuration, double timeStart, double timeEnd);
+
+	//this method assumes that the foot fall pattern (ffp) starts at time = timeStart and then repeats forever. The time start then defines the appropriate point in the locomotion cycle that we should be starting from...
+	void populateFromRepeatingFootFallPatternWithTimeIndexOffset(FootFallPattern& ffp, double ffpDuration, int nStepsOffset, double timeStart, double timeEnd);
+
 };
 
