@@ -27,8 +27,6 @@ KineSimApp::KineSimApp()
 		if (mech1->m_connections[i]->isMotorized())
 			mainMenu->addVariable("MotorAngle for motorized jointIndex:   "+ std::to_string(i), motorAngleValues[i]);
 	}
-	
-
 	menuScreen->performLayout();
 }
 	
@@ -57,8 +55,6 @@ void KineSimApp::process() {
 		mech1->solveAssembly();
 		if (logState)
 			mech1->logMechS("../data/KineSimApp/mechState.txt");
-
-		
 
 	}
 
@@ -103,6 +99,8 @@ void KineSimApp::drawAuxiliarySceneInfo() {
 // Restart the application.
 void KineSimApp::restart() {
 	mech1->setAssemblyState(startingMechState);
+	mech1->s = startingMechState;
+	motorAngleValues.setZero();
 }
 
 bool KineSimApp::onKeyEvent(int key, int action, int mods)

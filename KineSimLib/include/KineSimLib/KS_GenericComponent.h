@@ -3,7 +3,6 @@
 
 
 class KS_GenericComponent : public KS_MechanicalComponent{
-friend class KS_GUIDesigner;
 private:
 	char meshName[200];
 

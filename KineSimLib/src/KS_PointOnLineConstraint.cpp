@@ -1,4 +1,3 @@
-
 #include "KineSimLib/KS_PointOnLineConstraint.h"
 
 
@@ -184,3 +183,6 @@ void KS_PointOnLineConstraint::computeEnergyHessian(){
 	ddE_ds1ds2=ddE_ds2ds1.transpose();
 }
 
+int KS_PointOnLineConstraint::getConstraintCount() {
+	return 3;
+}

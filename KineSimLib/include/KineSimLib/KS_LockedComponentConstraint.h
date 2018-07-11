@@ -12,7 +12,6 @@ public:
 	virtual double getEnergy();
 	virtual void computeEnergyGradient();
 	virtual void computeEnergyHessian();
-	virtual void computeConstraintJacobian();
 
 	virtual int getNumberOfAffectedComponents() {return 1;}
 	virtual KS_MechanicalComponent* getIthAffectedComponent(int i){return c;}
@@ -26,10 +25,6 @@ public:
 
 	//each constraint is composed of several scalar constraints - this is how many
 	virtual int getConstraintCount();
-	//returns the current values of the constraints
-	virtual dVector* getConstraintValues();
-	//returns the jacobian that tells us how the values of the constraint change with the state of the ith component involved in the constraint
-	virtual MatrixNxM* getConstraintJacobian(int i) {return &dCds;}
 
 
 protected:
@@ -40,13 +35,6 @@ protected:
 	//tmp variables
 	dVector dE_ds;
 	MatrixNxM ddE_dsds;
-
-	//and these are the blocks for the constraint jacobian
-	MatrixNxM dCds;
-
-	//scalar constraints
-	dVector C;
-
 
 	double anglesWeight;
 	double positionWeight;

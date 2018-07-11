@@ -1,15 +1,11 @@
 #pragma once
 
 #include <OptimizationLib/ObjectiveFunction.h>
-//#include "KS_Constraint.h"
-//#include "KS_MechanicalAssembly.h"
-//#include <MathLib/SparseMatrix.h>
 
 class KS_MechanicalAssembly;
 class KS_Constraint;
 
 class KS_AssemblyConstraintEnergy : public ObjectiveFunction {
-friend class KS_MechanicalAssemblySimulator;
 public:
 	KS_AssemblyConstraintEnergy(void);
 	virtual ~KS_AssemblyConstraintEnergy(void);

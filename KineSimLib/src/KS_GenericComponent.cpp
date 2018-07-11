@@ -11,8 +11,6 @@ KS_GenericComponent* KS_GenericComponent::clone() const {
 	KS_GenericComponent* comp = new KS_GenericComponent(*this);
 	for(uint i=0;i<meshes.size();i++)
 		comp->meshes[i]=this->meshes[i]->clone();
-	for(uint i=0;i<this->tracerParticles.size();i++)
-		comp->tracerParticles[i].mc=dynamic_cast<KS_MechanicalComponent*>(comp);
 	return comp;
 }
 

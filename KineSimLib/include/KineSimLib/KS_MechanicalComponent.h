@@ -15,25 +15,7 @@
 #include <MathLib/Ray.h>
 #include <MathLib/BoundingBox.h>
 
-class KS_MechanicalComponent;
 
-class TracerParticle{
-public:
-	KS_MechanicalComponent * mc;
-	P3D pLocal;
-
-	DynamicArray<P3D> trajectory;
-
-	TracerParticle(KS_MechanicalComponent *mc_, P3D pLocal_){
-		this->mc = mc_;
-		this->pLocal = pLocal_;
-	}
-
-	TracerParticle() : mc(NULL), pLocal(P3D(0, 0, 0)) {
-	}
-
-	void addTrajectoryPoint();
-};
 
 class KS_MechanicalComponent{
 	friend class KineSimApp;
@@ -44,8 +26,6 @@ public:
 	void setName(const char* name) { strcpy(this->m_name, name); }
 	char* getName() {return m_name;}
 	virtual void setupGeometry() = 0;
-	void clearTracerParticles();
-	void addTracerParticlesToList(DynamicArray<P3D>& tracerParticleList);
 
 	double getAlpha() const { return alpha; }
 	double getBeta() const { return beta; }
@@ -102,22 +82,7 @@ public:
 	void clearMeshes(){meshes.clear();}
 	
 
-	void updateTracerParticles();
 	void draw();
-	void drawTracerParticles();
-
-	int getTracerParticleCount(){
-		return (int)tracerParticles.size();
-	}
-
-	P3D getTracerParticlePosition(int i);
-	P3D getTracerParticleLocalPosition(int i);
-
-	TracerParticle& getTracerParticle(int i){
-		return tracerParticles[i];
-	}
-
-	void setTracerParticles(DynamicArray<TracerParticle> v) { tracerParticles.clear(); tracerParticles.resize(v.size()); std::copy(v.begin(), v.end(), tracerParticles.begin());}
 
 	void addCylinderMesh(int nrVerts, double radius, double length, P3D localCoords, V3D v, bool setMeshColor = false);
 
@@ -158,7 +123,6 @@ protected:
 
 	DynamicArray<P3D> points_list;// add points here for creating mesh from the convexhull
 
-	DynamicArray<TracerParticle> tracerParticles;
 	//returns true if the input line was processed, false otherwise
 
 	bool processInputLine(char* line);

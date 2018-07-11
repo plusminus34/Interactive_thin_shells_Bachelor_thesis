@@ -31,12 +31,6 @@ public:
 	int getConnectionCount() const {return (int)m_connections.size();}
 	void setConnectionCount(int i){m_connections.resize(i,NULL);}
 	void stepAssembly();
-	
-	void updateTracerParticles();
-	void drawTracerParticles();
-
-	void clearTracerParticles();
-	void getTracerParticles(DynamicArray<P3D>& tracerParticleList);
 
 	KS_MechanicalComponent* getComponent(int i){return m_components[i];}
 	KS_Connection* getConnection(int i){return m_connections[i];}

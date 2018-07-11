@@ -65,7 +65,7 @@ void KS_rMotorConnection::updateConnection()
 	vOnC1 = V3D(1, 0, 0);
 	vOnC1 = getRotationQuaternion(m_offset, nOnC1)*vOnC1;
 	rMotorAngleConstraint->movePinOnC1(vOnC1);
-	Logger::print("roated vec %lf %lf %lf\n", vOnC1[0], vOnC1[1], vOnC1[2]);
+	//Logger::print("roated vec %lf %lf %lf\n", vOnC1[0], vOnC1[1], vOnC1[2]);
 }
 
 

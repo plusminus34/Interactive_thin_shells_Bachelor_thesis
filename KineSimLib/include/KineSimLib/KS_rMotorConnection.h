@@ -33,8 +33,6 @@ protected:
 	//offset of the relative angle;
 	double m_offset;
 		
-	Trajectory1D motorAngle;
-
 	bool isActivated;
 	
 	P3D pOnC1, pOnC2;

@@ -52,27 +52,8 @@ int KS_LockedComponentConstraint::getConstraintCount(){
 	return freezeAlpha + freezeBeta + freezeGamma + freezePx + freezePy + freezePz;
 }
 
-//returns the current values of the constraints
-dVector* KS_LockedComponentConstraint::getConstraintValues(){
-	//C.clear();
-	C.resize(getConstraintCount()); C.setZero();
-	int cIndex = 0;
-
-	if (freezeGamma) { C[cIndex]=(c->getGamma() - gammaD) * anglesWeight; cIndex++; }
-	if (freezeBeta)  { C[cIndex]=(c->getBeta() - betaD) * anglesWeight; cIndex++; }
-	if (freezeAlpha) { C[cIndex]=(c->getAlpha() - alphaD) * anglesWeight; cIndex++; }
-	//replaced x y z
-	if (freezePx) { C[cIndex]=(c->getWorldCenterPosition()[0] - pxD)*positionWeight; cIndex++; }
-	if (freezePy) { C[cIndex]=(c->getWorldCenterPosition()[1] - pyD)*positionWeight; cIndex++; }
-	if (freezePz) { C[cIndex]=(c->getWorldCenterPosition()[2] - pzD)*positionWeight; cIndex++; }
-
-	return &C;
-}
-
 void KS_LockedComponentConstraint::computeEnergyGradient(){
 	FAST_RESIZE_VEC(dE_ds, KS_MechanicalComponent::getStateSize());
-
-	FAST_RESIZE_MAT(dCds, getConstraintCount(), KS_MechanicalComponent::getStateSize());
 	//replaced x y z
 	dE_ds[0] = freezeGamma * (c->getGamma() - gammaD) * anglesWeight;
 	dE_ds[1] = freezeBeta * (c->getBeta() - betaD) * anglesWeight;
@@ -92,16 +73,4 @@ void KS_LockedComponentConstraint::computeEnergyHessian(){
 	if (freezePx) ddE_dsds(3,3) = positionWeight;
 	if (freezePy) ddE_dsds(4,4) = positionWeight;
 	if (freezePz) ddE_dsds(5,5) = positionWeight;
-}
-
-void KS_LockedComponentConstraint::computeConstraintJacobian(){
-	FAST_RESIZE_MAT(dCds, getConstraintCount(), KS_MechanicalComponent::getStateSize());
-
-	int cIndex = 0;
-	if (freezeGamma){dCds(cIndex, 0) =  anglesWeight; cIndex++;}
-	if (freezeBeta){dCds(cIndex, 1) =  anglesWeight; cIndex++;}
-	if (freezeAlpha){dCds(cIndex, 2) =  anglesWeight; cIndex++;}
-	if (freezePx){dCds(cIndex, 3) = positionWeight; cIndex++;}
-	if (freezePy){dCds(cIndex, 4) = positionWeight; cIndex++;}
-	if (freezePz){dCds(cIndex, 5) = positionWeight; cIndex++;}
 }

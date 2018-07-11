@@ -159,8 +159,6 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 		s[KS_MechanicalComponent::getStateSize() * i + 3]= m_components[i]->getWorldCenterPosition()[0];
 		s[KS_MechanicalComponent::getStateSize() * i + 4]= m_components[i]->getWorldCenterPosition()[1];
 	    s[KS_MechanicalComponent::getStateSize() * i + 5]= m_components[i]->getWorldCenterPosition()[2];
-		//P3D temp = m_components[i]->getWorldCenterPosition();
-		//Logger::print("components i x y z %d %lf %lf %lf\n", i, temp[0], temp[1], temp[2]);
 	}
 
 	AConstraintEnergy = new KS_AssemblyConstraintEnergy();
@@ -230,32 +228,12 @@ void KS_MechanicalAssembly::addConnection(KS_Connection* pConn){
 	m_connections.push_back(pConn);
 }
 
-void KS_MechanicalAssembly::updateTracerParticles(){
-	for (uint i = 0; i<m_components.size(); i++)
-		m_components[i]->updateTracerParticles();
-}
-
-void KS_MechanicalAssembly::drawTracerParticles(){
-	for (uint i = 0; i<m_components.size(); i++)
-		m_components[i]->drawTracerParticles();
-}
 
 void KS_MechanicalAssembly::stepAssembly(){
 	for (uint i=0;i<m_connections.size();i++)
 		m_connections[i]->updateConnection();
 }
 
-void KS_MechanicalAssembly::clearTracerParticles(){
-	for (uint i=0;i<this->m_components.size();i++){
-		m_components[i]->clearTracerParticles();
-	}
-}
-
-void KS_MechanicalAssembly::getTracerParticles(DynamicArray<P3D>& tracerParticleList){
-	tracerParticleList.clear();
-	for (uint i=0;i<this->m_components.size();i++)
-		m_components[i]->addTracerParticlesToList(tracerParticleList);
-}
 
 void KS_MechanicalAssembly::draw(){
 	for (uint i=0;i<this->m_components.size();i++){

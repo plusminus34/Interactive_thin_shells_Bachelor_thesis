@@ -186,34 +186,8 @@ P3D KS_MechanicalComponent::getWorldCenterPosition() const{
 	return position;
 }
 
-void KS_MechanicalComponent::updateTracerParticles(){
-	for (uint i=0;i<tracerParticles.size();i++){
-		tracerParticles[i].addTrajectoryPoint();
-	}
-}
 
-void KS_MechanicalComponent::clearTracerParticles(){
-	for (uint i=0;i<tracerParticles.size();i++){
-		tracerParticles[i].trajectory.clear();
-	}
-}
 
-void KS_MechanicalComponent::addTracerParticlesToList(DynamicArray<P3D>& tracerParticleList){
-	for (uint i=0;i<tracerParticles.size();i++)
-		tracerParticleList.push_back(get_w(tracerParticles[i].pLocal));
-}
-
-P3D KS_MechanicalComponent::getTracerParticlePosition(int i){
-	if ((uint)i<0 || (uint)i>=tracerParticles.size())
-		return get_w(P3D(0,0,0));
-	return get_w(tracerParticles[i].pLocal);
-}
-
-P3D KS_MechanicalComponent::getTracerParticleLocalPosition(int i){
-	if ((uint)i<0 || (uint)i>=tracerParticles.size())
-		return P3D(0,0,0);
-	return tracerParticles[i].pLocal;
-}
 
 void KS_MechanicalComponent::setAngles(double val_gamma, double val_beta, double val_alpha) { 
 	alpha = val_alpha;
@@ -261,11 +235,6 @@ void KS_MechanicalComponent::writeBaseComponentToFile(FILE* f){
 	str = getKSString(KS_LAYER_NUMBER);
 	fprintf(f, "\t%s %d \n", str, layerNumber);
 
-	for (uint i=0; i<tracerParticles.size();i++){
-		str = getKSString(KS_TRACER_PARTICLE);
-		fprintf(f, "\t%s %lf %lf %lf\n", str, tracerParticles[i].pLocal[0], tracerParticles[i].pLocal[1], tracerParticles[i].pLocal[2]);
-	}
-
 }
 
 
@@ -286,13 +255,6 @@ bool KS_MechanicalComponent::processInputLine(char* line){
 			if (sscanf(line, "%lf", &alpha) != 1) assert(false);
 			setAngles(gamma, beta, alpha);
 			return true;
-			break;
-		case KS_TRACER_PARTICLE:{
-				P3D tmpP;
-				if (sscanf(line, "%lf %lf %lf", &tmpP[0], &tmpP[1], &tmpP[2]) != 3) assert(false);
-				tracerParticles.push_back(TracerParticle(this, tmpP));
-				return true;
-			}
 			break;
 		case KS_BETA_AXIS:
 			if (sscanf(line, "%lf %lf %lf", &n_beta[0], &n_beta[1], &n_beta[2]) != 3) assert(false);
@@ -375,10 +337,6 @@ void KS_MechanicalComponent::loadTriangleMeshFromFile(char* fName){
 	Logger::print("loading mesh..");
 }
 
-void TracerParticle::addTrajectoryPoint(){
-	trajectory.push_back(mc->get_w(pLocal));
-}
-
 /**
 	This method draws the meshes of the component.
 */
@@ -403,20 +361,6 @@ void KS_MechanicalComponent::draw(){
 
 }
 
-
-/**
-	This method draws the tracer particles
-*/
-void KS_MechanicalComponent::drawTracerParticles(){
-	glLineWidth(2.0);
-	for (uint i=0;i<tracerParticles.size();i++){
-		glColor3f(0.0f,1.0f,0);
-		glBegin(GL_LINE_STRIP);
-		for (uint j=0;j<tracerParticles[i].trajectory.size();j++)
-			glVertex3d(tracerParticles[i].trajectory[j][0], tracerParticles[i].trajectory[j][1], tracerParticles[i].trajectory[j][2]);
-		glEnd();
-	}
-}
 
 uint KS_MechanicalComponent::renderToObjFile(FILE* fp, uint vertexIdxOffset, double scale)
 {

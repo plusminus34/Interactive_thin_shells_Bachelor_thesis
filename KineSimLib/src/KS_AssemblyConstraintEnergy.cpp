@@ -21,6 +21,19 @@ void KS_AssemblyConstraintEnergy::initialize(KS_MechanicalAssembly* a){
 	//ddE_dsds.resize(stateCount, stateCount, true);
 	ddE_dsds.setZero();
 
+	constraints.clear();
+
+	for (int i = 0; i<a->getConnectionCount(); i++) {
+		a->getConnection(i)->addConstraintsToList(constraints);
+	}
+
+	scalarConstraintCount = 0;
+	for (uint i = 0; i<constraints.size(); i++) {
+		scalarConstraintCount += constraints[i]->getConstraintCount();
+	}
+	Logger::print(" number of constraints %d\n", scalarConstraintCount);
+
+
 	m_s0.resize(stateCount);
 	assembly->getAssemblyState(m_s0);
 }

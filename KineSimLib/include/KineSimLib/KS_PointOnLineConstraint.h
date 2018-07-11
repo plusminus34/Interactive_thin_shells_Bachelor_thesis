@@ -35,13 +35,13 @@ public:
 	virtual void computeEnergyGradient();
 	virtual void computeEnergyHessian();
 
-
 	virtual int getNumberOfAffectedComponents() {return 2;}
 	virtual KS_MechanicalComponent* getIthAffectedComponent(int i){if (i==0) return c1; else return c2;}
 
 	//for testing purposes only...
 	virtual dVector* get_dE_dsi(int i) {if (i==0) return &dE_ds1; else return &dE_ds2;}
 	virtual MatrixNxM* get_ddE_dsidsj(int i, int j) {if (i == 0 && j == 0) return &ddE_ds1ds1; if (i==0 && j==1) return &ddE_ds1ds2; if (i==1 && j==0) return &ddE_ds2ds1; return &ddE_ds2ds2;}
+	virtual int getConstraintCount();
 
 
 };

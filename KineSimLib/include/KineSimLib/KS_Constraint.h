@@ -32,9 +32,6 @@ public:
 	virtual KS_Constraint* clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut) const = 0;
 	virtual ~KS_Constraint(void);
 
-	void setConstraintStartIndex(int index) {constraintStartIndex = index;}
-	int getConstraintStartIndex(){return constraintStartIndex;} 
-
 	//add energy gradient and hessian of this constraint to the global ones...
 	virtual void addEnergyGradientTo(dVector& gradient);
 	//virtual void addEnergyHessianTo(SparseMatrix& hessian);
@@ -54,12 +51,10 @@ public:
 	virtual MatrixNxM* get_ddE_dsidsj(int i, int j) = 0;
 
 	void setAffectedComponentsState(const dVector& state);
+	virtual int getConstraintCount() = 0;
 protected:
-	/*std::vector<SparseMatrixBlockHandle> hBlocks;
-	std::vector<SparseMatrixBlockHandle> dCdsBlocks;
-	std::vector<SparseMatrixBlockHandle> dCdsiBlocks;*/
 
-	//this will keep track of 
-	int constraintStartIndex;
+
+
 };
 

@@ -34,9 +34,7 @@ public:
 	virtual void movePinOnC2(T x){this->x2 = x;}
 
 
-	V3D getErrorVector() {
-		return (c1->get_w(x1) - c2->get_w(x2))*weight;
-	}
+	
 	//we need to ensure that c1.W(x1) == c2.W(x2)
 
 	//compute the constraints and their jacobian, as well as the energy (1/2 C'C), and its gradient and hessian, all of them evaluated at the current state of the assembly
@@ -103,16 +101,6 @@ public:
 		ddE_ds2ds1=ddE_ds1ds2.transpose();
 	}
 
-	virtual void computeConstraintJacobian(){
-		FAST_RESIZE_MAT(dCds1, getConstraintCount(), KS_MechanicalComponent::getStateSize());
-		FAST_RESIZE_MAT(dCds2, getConstraintCount(), KS_MechanicalComponent::getStateSize());
-
-		c1->get_dw_ds(x1, dCds1);
-		dCds1*=weight;
-		c2->get_dw_ds(x2, dCds2);
-		dCds2*=-weight;
-	}
-
 	virtual int getNumberOfAffectedComponents() {return 2;}
 	virtual KS_MechanicalComponent* getIthAffectedComponent(int i){if (i==0) return c1; else return c2;}
 
@@ -124,18 +112,13 @@ public:
 	virtual int getConstraintCount(){
 		return 3;
 	}
-	//returns the current values of the constraints
-	virtual dVector* getConstraintValues(){
-		V3D v = getErrorVector();
-		C.resize(3, 0);
-		C[0] = v[0]; C[1] = v[1]; C[2] = v[2];//replaced previous three tuple x y z
-		return &C;
-	}
-	//returns the jacobian that tells us how the values of the constraint change with the state of the ith component involved in the constraint
-	virtual MatrixNxM* getConstraintJacobian(int i) {if (i == 0) return &dCds1; return &dCds2;}
 
 private:
 	
+	V3D getErrorVector() {
+		return (c1->get_w(x1) - c2->get_w(x2))*weight;
+	}
+
 	T x1;
 	KS_MechanicalComponent *c1;
 	T x2;
@@ -148,12 +131,6 @@ private:
 
 	//these are the blocks for the energy hessian
 	MatrixNxM ddE_ds1ds1, ddE_ds1ds2, ddE_ds2ds2, ddE_ds2ds1, tmpMat;
-
-	//and these are the blocks for the constraint jacobian
-	MatrixNxM dCds1, dCds2;
-
-	//scalar constraints
-	dVector C;
 
 	double weight;
 };

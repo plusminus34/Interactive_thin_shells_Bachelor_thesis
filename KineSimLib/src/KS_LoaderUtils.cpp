@@ -36,7 +36,6 @@ KeyWord keywords[] = {
 	{"PointOnLineConnection", KS_POINT_ON_LINE_CON},
 	{"inputMesh", KS_INPUT_MESH},
 	{"GenericComponent", KS_GENERIC_COMPONENT},
-	{"tracerParticle", KS_TRACER_PARTICLE},
 	{"scale", KS_SCALE},
 	{"PARAMETER", KS_PARAMETER},
 	{"CONSTANT", KS_CONSTANT},	
