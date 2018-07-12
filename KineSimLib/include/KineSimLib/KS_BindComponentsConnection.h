@@ -23,7 +23,6 @@ private:
 	KS_V2VConstraint* v2vConstraintForWelding;
 	bool weldComponents;
 	bool allowArbitraryRelativeRotation;
-	bool motorized = false;
 
 public:
 	KS_BindComponentsConnection(void);

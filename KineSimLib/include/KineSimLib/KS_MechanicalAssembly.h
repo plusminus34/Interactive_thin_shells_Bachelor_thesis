@@ -7,6 +7,9 @@
 
 class KS_MechanicalAssembly{
 friend class KineSimApp;
+friend class KS_MechanismController;
+friend class KS_UIMechanismController;
+
 public:
 	typedef std::vector<KS_MechanicalComponent*> ComponentArray;
 	typedef std::vector<KS_Connection*> ConnectionArray;
@@ -20,6 +23,7 @@ public:
 	~KS_MechanicalAssembly(void);
 	//init from file
 	bool readFromFile(const char* szFile);
+	void readMechStateFromFile(const char* fName);
 	void writeToFile(const char* szFile);
 
 	bool addComponent(KS_MechanicalComponent* pComp);
@@ -59,11 +63,18 @@ public:
 
 	void logMechS(const char* szFile);
 
+	void setActuatedConnections();
+
+	void updateActuatedConnections();
+
 
 protected:
-	bool newtonSolver = false, bfgsSolver=true;
+	bool newtonSolver = true, bfgsSolver=false;
 	ComponentArray m_components;
 	ConnectionArray m_connections;
+
+	//collect all the actuated connections for which isActuated flag is set to true; this is passed to the controller class
+	ConnectionArray actuated_connections;
 
 	// preparing for solveAssembly
 	dVector s, sSolver;

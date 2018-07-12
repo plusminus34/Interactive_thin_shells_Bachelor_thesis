@@ -6,6 +6,7 @@
 #include <GUILib/TranslateWidget.h>
 
 #include <KineSimLib/KS_MechanicalAssembly.h>
+#include <KineSimLib/KS_UIMechanismController.h>
 
 
 /**
@@ -13,12 +14,13 @@
  */
 class KineSimApp : public GLApplication {
 private:
-	KS_MechanicalAssembly * mech1;
+	KS_MechanicalAssembly * mech1 = NULL;
+	KS_UIMechanismController* uiController = NULL;
 	bool checkDerivatives = false;
 	double simTimeStep = 1;
 	bool logState = false;
-	dVector motorAngleValues;
-	dVector startingMechState;
+	//dVector motorAngleValues;
+	//dVector startingMechState;
 
 
 

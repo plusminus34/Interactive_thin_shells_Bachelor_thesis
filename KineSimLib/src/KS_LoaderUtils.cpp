@@ -30,7 +30,6 @@ KeyWord keywords[] = {
 	{"vecOnCompOut", KS_VEC_ON_COMP_OUT},
 	{"Shaft", KS_SHAFT},
 	{"weldComponents", KS_WELD_COMPONENTS},
-	{"isActivated",KS_IS_ACTIVATED},
 	{"allowArbitraryRelativeRotation", KS_ALLOW_ARBITRARY_ROTATION},
 	{"lineOnCompOut", KS_LINE_ON_COMP_OUT},
 	{"PointOnLineConnection", KS_POINT_ON_LINE_CON},

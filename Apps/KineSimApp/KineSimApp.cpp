@@ -5,35 +5,35 @@
 #include <MathLib/MathLib.h>
 #include <KineSimLib/KS_BindComponentsConnection.h>
 #include <KineSimLib/KS_rMotorConnection.h>
+#include <KineSimLib/KS_UIMechanismController.h>
 
 
 KineSimApp::KineSimApp()
-{
+{   
 	setWindowTitle("Test Application for KineSim");
+	delete mech1; delete uiController;
 	mech1 = new KS_MechanicalAssembly();
 	mech1->readFromFile("../data/KineSimApp/fourBar.mech");
-	// double check if mechanism has full initialization at this point otherwise initiliaze those members now
-	mech1->getAssemblyState(startingMechState);
-	motorAngleValues.resize(mech1->getConnectionCount());
-	motorAngleValues.setZero();
+	mech1->readMechStateFromFile("../data/KineSimApp/s_fourBar.txt");
+	mech1->setAssemblyState(mech1->s);
+
+	uiController = new KS_UIMechanismController(mech1, this);
 
 	mainMenu->addGroup("sim parameters");
 	mainMenu->addVariable("logState", logState);
 	mainMenu->addVariable("newtonSolver", mech1->newtonSolver);
 	mainMenu->addVariable("bfgsSolver", mech1->bfgsSolver);
 
-
-	for (int i = 0; i < mech1->getConnectionCount(); i++) {
-		if (mech1->m_connections[i]->isMotorized())
-			mainMenu->addVariable("MotorAngle for motorized jointIndex:   "+ std::to_string(i), motorAngleValues[i]);
-	}
+	uiController->boxes = false;	uiController->sliders = true;
+	uiController->setMotorAngleValues(uiController->motorAngleValues);
 	menuScreen->performLayout();
 }
 	
 	
 
 KineSimApp::~KineSimApp(void){
-
+	delete mech1;
+	delete uiController;
 }
 
 void KineSimApp::process() {
@@ -45,13 +45,7 @@ void KineSimApp::process() {
 	while (simulationTime < 1.0 * maxRunningTime) {
 
 		simulationTime += simTimeStep;
-		for (int i = 0; i < mech1->getConnectionCount(); i++) {
-			if (mech1->m_connections[i]->isMotorized())
-				mech1->m_connections[i]->setOffset(motorAngleValues[i]);
-
-			motorAngleValues[i] += 0.1;
-		}
-		mech1->stepAssembly();
+		uiController->activateMechanismController();
 		mech1->solveAssembly();
 		if (logState)
 			mech1->logMechS("../data/KineSimApp/mechState.txt");
@@ -98,9 +92,9 @@ void KineSimApp::drawAuxiliarySceneInfo() {
 
 // Restart the application.
 void KineSimApp::restart() {
-	mech1->setAssemblyState(startingMechState);
-	mech1->s = startingMechState;
-	motorAngleValues.setZero();
+	mech1->setAssemblyState(uiController->startingMechState);
+	mech1->s = uiController->startingMechState;
+	uiController->motorAngleValues.setZero();
 }
 
 bool KineSimApp::onKeyEvent(int key, int action, int mods)

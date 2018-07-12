@@ -160,10 +160,21 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 		s[KS_MechanicalComponent::getStateSize() * i + 4]= m_components[i]->getWorldCenterPosition()[1];
 	    s[KS_MechanicalComponent::getStateSize() * i + 5]= m_components[i]->getWorldCenterPosition()[2];
 	}
-
+	setActuatedConnections();
 	AConstraintEnergy = new KS_AssemblyConstraintEnergy();
 	AConstraintEnergy->initialize(this);
 	return true;
+}
+
+void KS_MechanicalAssembly::readMechStateFromFile(const char * fName)
+{
+	FILE* fp = fopen(fName, "r");
+	double temp;
+	for (int i = 0; i < s.size(); i++) {
+		fscanf(fp, "%lf", &temp);
+		s[i] = temp;
+	}
+	fclose(fp);
 }
 
 void KS_MechanicalAssembly::writeToFile(const char* szFile){
@@ -343,5 +354,21 @@ void KS_MechanicalAssembly::logMechS(const char* szFile)
 		fprintf(fp2, "%lf\n", p[i]);
 	}*/
 	fclose(fp2);
+}
+
+void KS_MechanicalAssembly::setActuatedConnections()
+{
+	actuated_connections.clear();
+	for (uint i = 0; i < m_connections.size(); i++) {
+		if (m_connections[i]->isMotorized())
+			actuated_connections.push_back(m_connections[i]);
+	}
+}
+
+void KS_MechanicalAssembly::updateActuatedConnections()
+{
+	for (uint i = 0; i < actuated_connections.size(); i++) {
+			actuated_connections[i]->updateConnection();
+	}
 }
 

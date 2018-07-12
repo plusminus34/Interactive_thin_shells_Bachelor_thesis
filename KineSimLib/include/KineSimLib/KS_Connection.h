@@ -26,7 +26,7 @@ public:
 
 	void writeBaseConnectionToFile(FILE* f);
 
-	virtual bool isNewConnection(){return isNew;}
+	//virtual bool isNewConnection(){return isNew;}
 
 	virtual void addConstraintsToList(DynamicArray<KS_Constraint*>& constraints) {assert(false);}
 
@@ -38,7 +38,7 @@ public:
 	void setPin(int p){m_pin=p;}
 	int getPin(){return m_pin;}
 
-	virtual bool isMotorized() { return isActivated; }
+	virtual bool isMotorized() { return isActuated; }
 
 
 protected:
@@ -50,8 +50,8 @@ protected:
 	char compInName[200];
 	char compOutName[200];
 
-	bool isNew;
-	bool isActivated;
+	//bool isNew;
+	bool isActuated;
 
 
 	//returns true if the input line was processed, false otherwise

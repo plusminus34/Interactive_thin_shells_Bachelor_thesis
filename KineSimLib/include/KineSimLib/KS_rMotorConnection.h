@@ -17,7 +17,7 @@ public:
 	void setOffset(double offset) {m_offset = offset;}
 	double getOffset() { return m_offset; }
 
-	bool isOn(){return isActivated;}
+	//bool isOn(){return isActivated;}
 
 	bool loadFromFile(FILE* f, KS_MechanicalAssembly* ma);
 	virtual bool writeToFile(FILE* f);
@@ -26,14 +26,14 @@ public:
 
 	virtual void updateConnection();
 
-	virtual bool isMotorized() { return isActivated; }
+	//virtual bool isMotorized() { return isActuated; }
 
 
 protected:
 	//offset of the relative angle;
 	double m_offset;
 		
-	bool isActivated;
+	//bool isActivated;
 	
 	P3D pOnC1, pOnC2;
 	V3D nOnC1, nOnC2, vOnC1, vOnC2;// firs two correspond to the rotation axes and the last two should correspond to vectors normal to the rotation axes

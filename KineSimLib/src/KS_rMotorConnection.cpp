@@ -7,7 +7,7 @@ KS_rMotorConnection::KS_rMotorConnection(void){
 	pt2ptConstraint = NULL;
 	v2vConstraint = NULL;
 	m_offset=0.0;
-	isActivated=true;
+	isActuated=true;
 	
 	nOnC1 = V3D(0,0,1);
 	nOnC2 = V3D(0,0,1);
@@ -46,15 +46,15 @@ void KS_rMotorConnection::connect(KS_MechanicalComponent* pCompIn, KS_Mechanical
 
 	m_compOut->setPoints_list(tmpPointsList);
 	
-	if(isActivated)
-		rMotorAngleConstraint = new KS_V2VConstraint(vOnC1, m_compIn, vOnC2, m_compOut);
+	
+	rMotorAngleConstraint = new KS_V2VConstraint(vOnC1, m_compIn, vOnC2, m_compOut);
 	pt2ptConstraint = new KS_P2PConstraint(pOnC1, m_compIn, pOnC2, m_compOut); 
 	v2vConstraint = new KS_V2VConstraint(nOnC1, m_compIn, nOnC2, m_compOut);
 }
 
 void KS_rMotorConnection::addConstraintsToList(std::vector<KS_Constraint*>& constraints){
-	if(isActivated)
-		constraints.push_back(rMotorAngleConstraint);
+	
+	constraints.push_back(rMotorAngleConstraint);
 	constraints.push_back(pt2ptConstraint);
 	constraints.push_back(v2vConstraint);
 }
@@ -109,9 +109,6 @@ bool KS_rMotorConnection::loadFromFile(FILE* f, KS_MechanicalAssembly* ma){
 				if (sscanf(line, "%lf %lf %lf", &vOnC2[0], &vOnC2[1], &vOnC2[2]) != 3) assert(false);
 				vOnC1.normalize();
 				break;
-			case KS_IS_ACTIVATED:
-				if (sscanf(line, "%d", &isActivated) != 1) assert(false);
-				break;
 			case KS_END:
 				connect(this->m_compIn, this->m_compOut);
 				return true;
@@ -154,9 +151,6 @@ bool KS_rMotorConnection::writeToFile(FILE* f){
 
 	str = getKSString(KS_VEC2_ON_COMP_OUT);
 	fprintf(f, "\t%s %lf %lf %lf\n", str, vOnC2[0], vOnC2[1], vOnC2[2]);
-
-	str = getKSString(KS_IS_ACTIVATED);
-	fprintf(f, "\t%s %d \n", str, isActivated);
 
 	str = getKSString(KS_END);
 	fprintf(f, "%s\n\n\n", str);
