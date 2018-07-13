@@ -36,9 +36,7 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 	prePlanTurningSpeedTrajectory.clear();
 
 	//we will be adding samples every 0.1s
-	double dt = 0.1;
-	if (locomotionManager && locomotionManager->motionPlan)
-		dt = motionPlanDuration / (locomotionManager->motionPlan->nSamplePoints - 1);
+	double dt = motionPlanDuration / (defaultFootFallPattern.strideSamplePoints);
 
 	for (double t = motionPlanStartTime; t <= motionPlanStartTime + preplanTimeHorizon; t += dt) {
 		prePlanBodyTrajectory.addKnot(t, V3D() + currentBodyPos);
