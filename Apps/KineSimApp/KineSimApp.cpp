@@ -13,8 +13,8 @@ KineSimApp::KineSimApp()
 	setWindowTitle("Test Application for KineSim");
 	delete mech1; delete uiController;
 	mech1 = new KS_MechanicalAssembly();
-	mech1->readFromFile("../data/KineSimApp/fourBar.mech");
-	mech1->readMechStateFromFile("../data/KineSimApp/s_fourBar.txt");
+	mech1->readFromFile("../data/KineSimApp/threeLink3d.mech");
+	mech1->readMechStateFromFile("../data/KineSimApp/s_threeLink3d.txt");
 	mech1->setAssemblyState(mech1->s);
 
 	uiController = new KS_UIMechanismController(mech1, this);
