@@ -55,10 +55,25 @@ FastRobotControlApp::FastRobotControlApp(){
 		plannerWindow->motionPlanner->generateMotionPlan();
 	});
 
-	button = new nanogui::Button(tools, "optMOPT");
+	button = new nanogui::Button(tools, "opt COM");
 	button->setFontSize(14);
 	button->setCallback([this]() {
-		plannerWindow->motionPlanner->optimizeMotionPlan();
+		double energyVal = plannerWindow->motionPlanner->locomotionManager->runMOPTStep(OPT_COM_POSITIONS);
+		Logger::consolePrint("energy val: %lf\n", energyVal);
+	});
+
+	button = new nanogui::Button(tools, "opt COM + GRFS");
+	button->setFontSize(14);
+	button->setCallback([this]() {
+		double energyVal = plannerWindow->motionPlanner->locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
+		Logger::consolePrint("energy val: %lf\n", energyVal);
+	});
+
+	button = new nanogui::Button(tools, "opt COM + GRFS + EEs");
+	button->setFontSize(14);
+	button->setCallback([this]() {
+		double energyVal = plannerWindow->motionPlanner->locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_END_EFFECTORS);
+		Logger::consolePrint("energy val: %lf\n", energyVal);
 	});
 
 	mainMenu->addGroup("MOPT Options");
@@ -79,9 +94,11 @@ FastRobotControlApp::FastRobotControlApp(){
 
 	plannerWindow->motionPlanner->motionPlanDuration = 0.6;
 
+	RobotState rs(robot);
+	rs.setVelocity(robot->right * 1.0);
+
 #ifdef DEBUG_MOPT
 	/**------DEBUG-------**/
-	RobotState rs(robot);
 /*
 	rs.readFromFile("..\\out\\badStartingState.rs");
 	plannerWindow->motionPlanner->motionPlanStartTime = 1.2;
@@ -91,9 +108,11 @@ FastRobotControlApp::FastRobotControlApp(){
 	plannerWindow->motionPlanner->sidewaysSpeedTarget = 0;
 	plannerWindow->motionPlanner->turningSpeedTarget = -0.1;
 */
-	robot->setState(&rs);
 
 #endif
+
+	robot->setState(&rs);
+
 
 	plannerWindow->motionPlanner->generateMotionPlan();
 

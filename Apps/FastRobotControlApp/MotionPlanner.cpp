@@ -358,10 +358,3 @@ void MotionPlanner::generateMotionPlan() {
 	Logger::consolePrint("It took %lfs to generate motion plan, final energy value: %lf\n", t.timeEllapsed(), energyVal);
 }
 
-double MotionPlanner::optimizeMotionPlan() {
-	double energyVal = 0;
-	for (int i = 0; i<10; i++)
-		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
-	return energyVal;
-}
-

@@ -74,8 +74,6 @@ MPO_DefaultEEPosObjective::~MPO_DefaultEEPosObjective(void) {
 double MPO_DefaultEEPosObjective::computeValue(const dVector& p) {
 	// assume the parameters of the motion plan have been set already by the collection of objective functions class
 	// theMotionPlan->setMPParametersFromList(p);
-	if (theMotionPlan->feetPositionsParamsStartIndex < 0)
-		return 0;
 	double retVal = 0;
 	double wMax = 10000;
 
