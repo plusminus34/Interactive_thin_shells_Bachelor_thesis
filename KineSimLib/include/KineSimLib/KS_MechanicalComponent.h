@@ -42,7 +42,7 @@ public:
 	void setWorldCenterPosition(const P3D& pos);
 	P3D getWorldCenterPosition() const;
 
-	DynamicArray<P3D> getPoints_list() { return points_list; }
+	DynamicArray<P3D>& getPoints_list() { return points_list; }
 	void setPoints_list(DynamicArray<P3D>& Points_list) { points_list= Points_list; }
 
 	virtual double getThickness(){return 0;}
@@ -85,7 +85,7 @@ public:
 	void draw();
 
 	void addCylinderMesh(int nrVerts, double radius, double length, P3D localCoords, V3D v, bool setMeshColor = false);
-
+	void addCubeAroundApoint(const P3D& p, double d);
 	/**
 		This method renders the mechanical component in its current state as a set of vertices 
 		and faces that will be appended to the passed OBJ file.

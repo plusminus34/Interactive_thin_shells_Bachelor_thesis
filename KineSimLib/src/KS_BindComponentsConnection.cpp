@@ -24,27 +24,14 @@ void KS_BindComponentsConnection::connect(KS_MechanicalComponent* pCompIn, KS_Me
 	m_compIn = pCompIn;
 	m_compOut = pCompOut;
 
-	m_compOut->addCylinderMesh(20, 0.03, 0.08, pOnC2, nOnC2);
+	m_compOut->addCylinderMesh(20, 0.12, 0.12, pOnC2, nOnC2);
 	m_pin=m_compOut->getNumOfMeshes()-1;
 
 	//lets add the pin points to the points_list of the mechanical component
-	DynamicArray<P3D> tmpPointsList = m_compIn->getPoints_list();
-	tmpPointsList.push_back(pOnC1);
-	tmpPointsList.push_back(pOnC1 + P3D(0, .1, 0));
-	tmpPointsList.push_back(pOnC1 + P3D(0, 0, .1));
-	tmpPointsList.push_back(pOnC1/2+P3D(0,.1,0));
-	tmpPointsList.push_back(pOnC1/2+P3D(0, 0, .1));
 
+	m_compIn->addCubeAroundApoint(pOnC1, 0.05);
+	m_compOut->addCubeAroundApoint(pOnC2, 0.05);
 
-	m_compIn->setPoints_list(tmpPointsList);
-	tmpPointsList = m_compOut->getPoints_list();
-	tmpPointsList.push_back(pOnC2);
-	tmpPointsList.push_back(pOnC2+P3D(0, .1, 0));
-	tmpPointsList.push_back(pOnC2 + P3D(0, 0, .1));
-	tmpPointsList.push_back(pOnC2/2+P3D(0, .1, 0));
-	tmpPointsList.push_back(pOnC2/2+P3D(0, 0, .1));
-
-	m_compOut->setPoints_list(tmpPointsList);
 	//Logger::print("size compout %d\n", m_compOut->getPoints_list().size());
 
 	p2pConstraint = new KS_P2PConstraint(pOnC1, m_compIn, pOnC2, m_compOut); 

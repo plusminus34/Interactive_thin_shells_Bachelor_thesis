@@ -22,7 +22,8 @@ KS_MechanicalComponent::KS_MechanicalComponent(const char* name){
 
 	selected = false;
 	layerNumber = 0;
-	points_list.clear(); points_list.push_back(position);
+	points_list.clear();
+	addCubeAroundApoint(position, 0.05);
 }
 
 KS_MechanicalComponent::~KS_MechanicalComponent(void){
@@ -328,6 +329,21 @@ void KS_MechanicalComponent::addCylinderMesh(int nrVerts, double radius, double 
 
 	tmpMesh->computeNormals();
 	meshes.push_back(tmpMesh);
+}
+
+void KS_MechanicalComponent::addCubeAroundApoint(const P3D & p, double d)
+{
+	//DynamicArray<P3D> tmpPointsList = getPoints_list();
+	points_list.push_back(p);
+	points_list.push_back(p + P3D(d, d, -d));
+	points_list.push_back(p + P3D(d, d, d));
+	points_list.push_back(p + P3D(d, -d, -d));
+	points_list.push_back(p + P3D(d, -d, d));
+	points_list.push_back(p + P3D(-d, d, -d));
+	points_list.push_back(p + P3D(-d, d, d));
+	points_list.push_back(p + P3D(-d, -d, -d));
+	points_list.push_back(p + P3D(-d, -d, d));
+	//setPoints_list(tmpPointsList);
 }
 
 void KS_MechanicalComponent::loadTriangleMeshFromFile(char* fName){

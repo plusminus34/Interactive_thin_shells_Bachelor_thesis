@@ -25,26 +25,13 @@ void KS_rMotorConnection::connect(KS_MechanicalComponent* pCompIn, KS_Mechanical
 	assignConnectedComponents(pCompIn, pCompOut);
 	m_compIn = pCompIn;
 	m_compOut = pCompOut;
-	m_compOut->addCylinderMesh(20, 0.06, 0.08, pOnC2, nOnC2);
+	m_compOut->addCylinderMesh(20, 0.12, 0.12, pOnC2, nOnC2);
 	m_pin=m_compOut->getNumOfMeshes()-1;
 
-	DynamicArray<P3D> tmpPointsList = m_compIn->getPoints_list();
-	tmpPointsList.push_back(pOnC1);
-	tmpPointsList.push_back(pOnC1 + P3D(0, .1, 0));
-	tmpPointsList.push_back(pOnC1 + P3D(0, 0, .1));
-	tmpPointsList.push_back(pOnC1 / 2 + P3D(0, .1, 0));
-	tmpPointsList.push_back(pOnC1 / 2 + P3D(0, 0, .1));
+    //lets add points to the list
+	m_compIn->addCubeAroundApoint(pOnC1,0.05);
+	m_compOut->addCubeAroundApoint(pOnC2, 0.05);
 
-
-	m_compIn->setPoints_list(tmpPointsList);
-	tmpPointsList = m_compOut->getPoints_list();
-	tmpPointsList.push_back(pOnC2);
-	tmpPointsList.push_back(pOnC2 + P3D(0, .1, 0));
-	tmpPointsList.push_back(pOnC2 + P3D(0, 0, .1));
-	tmpPointsList.push_back(pOnC2 / 2 + P3D(0, .1, 0));
-	tmpPointsList.push_back(pOnC2 / 2 + P3D(0, 0, .1));
-
-	m_compOut->setPoints_list(tmpPointsList);
 	
 	
 	rMotorAngleConstraint = new KS_V2VConstraint(vOnC1, m_compIn, vOnC2, m_compOut);
