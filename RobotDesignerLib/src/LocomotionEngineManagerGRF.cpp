@@ -509,7 +509,7 @@ void LocomotionEngineManagerGRFv3::setupObjectives() {
 	//we will assume here that only GRFs and COM trajectories will be optimized here...
 
 	//consistancy constraints (between robot states and other auxiliary variables)
-//	ef->addObjectiveFunction(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0), "Consistency Constraints (Kinematics)");
+	ef->addObjectiveFunction(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0), "Consistency Constraints (Kinematics)");
 //	ef->addObjectiveFunction(new MPO_EndEffectorGroundObjective(ef->theMotionPlan, "EE height objective (stance)", 10000.0), "Consistency Constraints (Kinematics)");
 //	ef->addObjectiveFunction(new MPO_EEPosSwingObjective(ef->theMotionPlan, "EE height objective (swing)", 10000.0), "Consistency Constraints (Kinematics)");
 
@@ -531,8 +531,10 @@ void LocomotionEngineManagerGRFv3::setupObjectives() {
 //	ef->addObjectiveFunction(new MPO_COMTurningObjective(ef->theMotionPlan, "COM turning objective (YAW)", 50.0), "Objectives");
 //	ef->addObjectiveFunction(new MPO_BodyFrameObjective(ef->theMotionPlan, "Body choreography objective", 10000), "Objectives");
 //	ef->addObjectiveFunction(new MPO_EEPosObjective(ef->theMotionPlan, "EE choreography objective", 10000), "Objectives");
-	ef->addObjectiveFunction(new MPO_DesiredBodyTrajectoryObjective(ef->theMotionPlan, "Body trajectories objective", 10000), "Objectives");
-	
+
+	ef->addObjectiveFunction(new MPO_DefaultBodyTrajectoryObjective(ef->theMotionPlan, "Default body trajectories objective", 10000), "Objectives");
+	ef->addObjectiveFunction(new MPO_DefaultEEPosObjective(ef->theMotionPlan, "Default end effector trajectories objective", 10000), "Objectives");
+
 	//smooth motion regularizers
 //	ef->addObjectiveFunction(new MPO_FeetPathSmoothnessObjective(ef->theMotionPlan, "foot path smoothness objective", 10.0), "Smooth Regularizer");
 	ef->addObjectiveFunction(new MPO_SmoothCOMTrajectories(ef->theMotionPlan, "smoothCOM", 10000), "Smooth Regularizer");

@@ -20,3 +20,18 @@ private:
 	LocomotionEngineMotionPlan* theMotionPlan;
 };
 
+class MPO_DefaultEEPosObjective : public ObjectiveFunction {
+	public:
+	MPO_DefaultEEPosObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
+	virtual ~MPO_DefaultEEPosObjective(void);
+
+	virtual double computeValue(const dVector& p);
+
+	virtual void addGradientTo(dVector& grad, const dVector& p);
+	virtual void addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p);
+
+private:
+	//the energy function operates on a motion plan...
+	LocomotionEngineMotionPlan* theMotionPlan;
+};
+

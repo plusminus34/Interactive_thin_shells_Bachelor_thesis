@@ -76,16 +76,16 @@ void MPO_BodyFrameObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessian
 
 
 /////////////////////////////////////////////////////////////////////
-MPO_DesiredBodyTrajectoryObjective::MPO_DesiredBodyTrajectoryObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
+MPO_DefaultBodyTrajectoryObjective::MPO_DefaultBodyTrajectoryObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight) {
 	theMotionPlan = mp;
 	this->description = objectiveDescription;
 	this->weight = weight;
 }
 
-MPO_DesiredBodyTrajectoryObjective::~MPO_DesiredBodyTrajectoryObjective(void) {
+MPO_DefaultBodyTrajectoryObjective::~MPO_DefaultBodyTrajectoryObjective(void) {
 }
 
-double MPO_DesiredBodyTrajectoryObjective::computeValue(const dVector& p) {
+double MPO_DefaultBodyTrajectoryObjective::computeValue(const dVector& p) {
 	// assume the parameters of the motion plan have been set already by the collection of objective functions class
 	// theMotionPlan->setMPParametersFromList(p);
 	double retVal = 0;
@@ -103,7 +103,7 @@ double MPO_DesiredBodyTrajectoryObjective::computeValue(const dVector& p) {
 	return retVal * weight;
 }
 
-void MPO_DesiredBodyTrajectoryObjective::addGradientTo(dVector& grad, const dVector& p) {
+void MPO_DefaultBodyTrajectoryObjective::addGradientTo(dVector& grad, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 
@@ -134,7 +134,7 @@ void MPO_DesiredBodyTrajectoryObjective::addGradientTo(dVector& grad, const dVec
 	}
 }
 
-void MPO_DesiredBodyTrajectoryObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
+void MPO_DefaultBodyTrajectoryObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector& p) {
 	//	assume the parameters of the motion plan have been set already by the collection of objective functions class
 	//	theMotionPlan->setMPParametersFromList(p);
 

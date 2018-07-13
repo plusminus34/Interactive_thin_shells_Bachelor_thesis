@@ -82,7 +82,7 @@ FastRobotControlApp::FastRobotControlApp(){
 #ifdef DEBUG_MOPT
 	/**------DEBUG-------**/
 	RobotState rs(robot);
-
+/*
 	rs.readFromFile("..\\out\\badStartingState.rs");
 	plannerWindow->motionPlanner->motionPlanStartTime = 1.2;
 	globalTime = 1.208333;
@@ -90,7 +90,7 @@ FastRobotControlApp::FastRobotControlApp(){
 	plannerWindow->motionPlanner->forwardSpeedTarget = 0.6;
 	plannerWindow->motionPlanner->sidewaysSpeedTarget = 0;
 	plannerWindow->motionPlanner->turningSpeedTarget = -0.1;
-
+*/
 	robot->setState(&rs);
 
 #endif
@@ -399,7 +399,7 @@ c_heading, c_turningSpeed, c_posForward, c_speedForward, simWindow->stridePhase)
 
 #ifdef DEBUG_MOPT
 			plannerWindow->motionPlanner->locomotionManager->printDebugInfo = true;
-			plannerWindow->motionPlanner->locomotionManager->checkDerivatives = false;
+			plannerWindow->motionPlanner->locomotionManager->checkDerivatives = true;
 #else
 			plannerWindow->motionPlanner->locomotionManager->printDebugInfo = false;
 			plannerWindow->motionPlanner->locomotionManager->checkDerivatives = false;
