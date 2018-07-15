@@ -36,9 +36,7 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 	prePlanTurningSpeedTrajectory.clear();
 
 	//we will be adding samples every 0.1s
-	double dt = 0.1;
-	if (locomotionManager && locomotionManager->motionPlan)
-		dt = motionPlanDuration / (locomotionManager->motionPlan->nSamplePoints - 1);
+	double dt = motionPlanDuration / (defaultFootFallPattern.strideSamplePoints);
 
 	for (double t = motionPlanStartTime; t <= motionPlanStartTime + preplanTimeHorizon; t += dt) {
 		prePlanBodyTrajectory.addKnot(t, V3D() + currentBodyPos);
@@ -110,6 +108,11 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 				if (stancePhaseStart > motionPlanStartTime + 0.05) { // make sure we're not at the very end of a swing phase
 					P3D worldEEPos = (eePosAtStancePhaseStart + eePosAtStancePhaseEnd) / 2.0;
 					worldEEPos.setComponentAlong(Globals::worldUp, 0);
+
+					//now, to this stepping location add a feedback term
+//					V3D velError = ;
+//					V3D feedbackTerm = 
+
 					prePlanEETrajectories[eeIndex].addKnot(stancePhaseStart, worldEEPos);
 					prePlanEETrajectories[eeIndex].addKnot(stancePhaseEnd, worldEEPos);
 				}
@@ -283,7 +286,7 @@ void MotionPlanner::prepareMOPTPlan(LocomotionEngineMotionPlan* motionPlan) {
 		for (uint j = 0; j < motionPlan->endEffectorTrajectories.size(); j++) {
 			auto eeTraj = &motionPlan->endEffectorTrajectories[j];
 			eeTraj->contactForce[i] = V3D();
-			eeTraj->EEPos[i] = prePlanEETrajectories[j].evaluate_linear(t);
+			eeTraj->targetEEPos[i] = eeTraj->EEPos[i] = prePlanEETrajectories[j].evaluate_linear(t);
 
 			bool inStanceNow = cffp.stepPatterns[j].isInStanceAt(t);
 			bool inStanceNext = cffp.stepPatterns[j].isInStanceAt(t + h / 2);
@@ -345,18 +348,13 @@ void MotionPlanner::generateMotionPlan() {
 
 	for (int i = 0; i<2; i++)
 		energyVal = locomotionManager->runMOPTStep(OPT_GRFS);
-	energyVal = optimizeMotionPlan();
 
-//	for (int i = 0; i<5; i++)
-//		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_COM_ORIENTATIONS);
+	for (int i = 0; i<5; i++)
+		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
+
+	for (int i = 0; i<5; i++)
+		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS | OPT_END_EFFECTORS);
 
 	Logger::consolePrint("It took %lfs to generate motion plan, final energy value: %lf\n", t.timeEllapsed(), energyVal);
-}
-
-double MotionPlanner::optimizeMotionPlan() {
-	double energyVal = 0;
-	for (int i = 0; i<10; i++)
-		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
-	return energyVal;
 }
 

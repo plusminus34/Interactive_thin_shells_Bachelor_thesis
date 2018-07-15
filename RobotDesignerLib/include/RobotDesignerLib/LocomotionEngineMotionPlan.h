@@ -31,6 +31,7 @@ public:
 	// world coords of end effector position
 	// for a wheel, EEPos is the point of contact with the ground
 	DynamicArray<P3D> EEPos;
+	DynamicArray<P3D> targetEEPos;
 	DynamicArray<V3D> contactForce;
 	DynamicArray<double> contactFlag;
 	DynamicArray<double> EEWeights;

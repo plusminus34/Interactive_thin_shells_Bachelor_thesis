@@ -20,10 +20,10 @@ private:
 	LocomotionEngineMotionPlan* theMotionPlan;
 };
 
-class MPO_DesiredBodyTrajectoryObjective : public ObjectiveFunction {
+class MPO_DefaultBodyTrajectoryObjective : public ObjectiveFunction {
 public:
-	MPO_DesiredBodyTrajectoryObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
-	virtual ~MPO_DesiredBodyTrajectoryObjective(void);
+	MPO_DefaultBodyTrajectoryObjective(LocomotionEngineMotionPlan* mp, const std::string& objectiveDescription, double weight);
+	virtual ~MPO_DefaultBodyTrajectoryObjective(void);
 
 	virtual double computeValue(const dVector& p);
 

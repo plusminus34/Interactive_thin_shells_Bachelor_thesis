@@ -24,6 +24,7 @@ LocomotionEngine_EndEffectorTrajectory::LocomotionEngine_EndEffectorTrajectory()
 void LocomotionEngine_EndEffectorTrajectory::initialize(int nPos){
 	contactForce.resize(nPos);
 	EEPos.resize(nPos);
+	targetEEPos.resize(nPos);
 	wheelSpeed.resize(nPos);
 	wheelYawAngle.resize(nPos);
 	wheelTiltAngle.resize(nPos, 0/*M_PI*0.25*/);
