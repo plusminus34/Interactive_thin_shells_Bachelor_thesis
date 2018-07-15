@@ -6,6 +6,7 @@ class KS_MechanicalAssembly;
 class KS_Constraint;
 
 class KS_AssemblyConstraintEnergy : public ObjectiveFunction {
+	friend class KS_IKConstraintEnergy;
 public:
 	KS_AssemblyConstraintEnergy(void);
 	virtual ~KS_AssemblyConstraintEnergy(void);
@@ -37,13 +38,14 @@ private:
 	//this is the array of constraints in the simulator
 	std::vector<KS_Constraint*> constraints;
 	
-	//The total energy of the system is the sum of the individual energy terms of the constraint. The gradient of this scalar function is this
-	dVector dE_ds;
-	//and the hessian of the sum of the energy terms is a sparse matrix...
-	SparseMatrix ddE_dsds;
+	
+	
 	dVector m_s0;
 	double regularizer;
-
+    // gradient and the hessian
+	dVector dE_ds;
+	DynamicArray<MTriplet> hessianEntries= DynamicArray<MTriplet>();// need this to pass over to the iKConstrainEnergy;
+	SparseMatrix ddE_dsds;
 	int scalarConstraintCount;
 };
 

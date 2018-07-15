@@ -10,7 +10,8 @@ public:
 	KS_MechanismController(KS_MechanicalAssembly* mech);
 	virtual ~KS_MechanismController(void);
 	
-	virtual void setMotorAngleValues(dVector& motorAngleValues) = 0; //each controller will have its own way of specifying the target motor angle values
+	virtual void setMotorAngleValues() = 0; //each controller will have its own way of specifying the target motor angle values
+	virtual void updateMotorConnections();
 	virtual void activateMechanismController(); // updates the motor angles in the connections;
 
 	virtual void initialize(KS_MechanicalAssembly* mech); // initializes the members

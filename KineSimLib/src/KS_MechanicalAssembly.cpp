@@ -312,16 +312,16 @@ void KS_MechanicalAssembly::solveAssembly()
 {
 	sSolver = s;
 
-	if (1) {
+	if (0) {
 		AConstraintEnergy->testGradientWithFD(sSolver);
 		AConstraintEnergy->testHessianWithFD(sSolver);
 	}
 
 	double functionValue = AConstraintEnergy->computeValue(sSolver);
-	Logger::consolePrint("energy value before solve C: %lf\n", functionValue);
+	//Logger::consolePrint("ASSenergy value before solve C: %lf\n", functionValue);
 
 	if (newtonSolver) {
-		NewtonFunctionMinimizer minimizer(20);
+		NewtonFunctionMinimizer minimizer(10);
 		minimizer.printOutput = false;
 		minimizer.minimize(AConstraintEnergy, sSolver, functionValue);
 	}
@@ -333,7 +333,7 @@ void KS_MechanicalAssembly::solveAssembly()
 	}
 	
 
-	Logger::consolePrint("energy value after solve C: %lf\n", functionValue);
+	//Logger::consolePrint("ASSenergy value after solve C: %lf\n", functionValue);
 	
 
 	s = sSolver;

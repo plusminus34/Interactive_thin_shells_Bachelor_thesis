@@ -9,6 +9,8 @@ class KS_MechanicalAssembly{
 friend class KineSimApp;
 friend class KS_MechanismController;
 friend class KS_UIMechanismController;
+friend class KS_IKMechanismController;
+friend class KS_IKConstraintEnergy;
 
 public:
 	typedef std::vector<KS_MechanicalComponent*> ComponentArray;

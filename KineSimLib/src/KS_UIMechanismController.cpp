@@ -29,7 +29,7 @@ KS_UIMechanismController::~KS_UIMechanismController(void)
 {
 }
 
-void KS_UIMechanismController::setMotorAngleValues(dVector & motorAngleValues)
+void KS_UIMechanismController::setMotorAngleValues()
 {
 	Logger::print("actuated connection count %d\n", getActuatedConnectionCount());
 	if (boxes) {
@@ -70,10 +70,8 @@ void KS_UIMechanismController::activateMechanismController()
 			motorAngleValues[i] = motorAngles["motor " + std::to_string(i+1)];
 		}
 	}
-	for (int i = 0; i <getActuatedConnectionCount(); i++) {
-		mechanism->actuated_connections[i]->setOffset(motorAngleValues[i]);
-	}
-	mechanism->updateActuatedConnections();
+	updateMotorConnections();
+	mechanism->solveAssembly();
 }
 
 void KS_UIMechanismController::updateUI()

@@ -18,8 +18,8 @@ void KS_AssemblyConstraintEnergy::initialize(KS_MechanicalAssembly* a){
 	int stateCount = a->getComponentCount() * KS_MechanicalComponent::getStateSize();
 	dE_ds.resize(stateCount); dE_ds.setZero(); //setValues(dE_ds, 0);
 	ddE_dsds.resize(stateCount, stateCount);
-	//ddE_dsds.resize(stateCount, stateCount, true);
 	ddE_dsds.setZero();
+	hessianEntries.clear(); 
 
 	constraints.clear();
 
@@ -67,15 +67,21 @@ double KS_AssemblyConstraintEnergy::computeValue(const dVector& s){
 
 void KS_AssemblyConstraintEnergy::addHessianEntriesTo(DynamicArray<MTriplet>& hessianEntries, const dVector & s)
 {
+	hessianEntries.clear();
+	int stateCount = assembly->getComponentCount() * KS_MechanicalComponent::getStateSize();
+	ddE_dsds.resize(stateCount, stateCount);
+	ddE_dsds.setZero();
 	assembly->setAssemblyState(s);
 	//ddE_dsds.setZero();
 	for (int i = 0; i<(int)constraints.size(); i++)
 		constraints[i]->addEnergyHessianTo(hessianEntries);
 
 	//add the regularizer now... TODO: maybe we should have block handles or something to add to the diagonal faster...
-	for (int i = 0; i<ddE_dsds.rows(); i++)
+	for (int i = 0; i<stateCount; i++)
 		hessianEntries.push_back(MTriplet(i, i, regularizer));
 		//ddE_dsds.addToElementAt(i, i, regularizer);
+	this->hessianEntries = hessianEntries;
+	ddE_dsds.setFromTriplets(hessianEntries.begin(), hessianEntries.end());
 
 	//return &ddE_dsds;
 }
@@ -86,10 +92,10 @@ void KS_AssemblyConstraintEnergy::addGradientTo(dVector & grad, const dVector & 
 	grad.setZero();
 	//Logger::print("compute gradient called\n");
 	assembly->setAssemblyState(s);
-	dE_ds.setZero();//setValues(dE_ds, 0);
+	grad.setZero();//setValues(dE_ds, 0);
 
 	for (uint i = 0; i<constraints.size(); i++)
-		constraints[i]->addEnergyGradientTo(dE_ds);
+		constraints[i]->addEnergyGradientTo(grad);
 
 	//add the regularizer now... 
 	//dVector vreg((int)s.size(), 0);
@@ -98,9 +104,9 @@ void KS_AssemblyConstraintEnergy::addGradientTo(dVector & grad, const dVector & 
 	//add(s,1.0,m_s0,-1.0,vreg);
 	vreg = s * 1.0 + m_s0 * (-1.0); //replaced add
 									//add(vreg,regularizer,dE_ds,1.0,dE_ds);
-	dE_ds = vreg * regularizer + dE_ds * 1.0;//replaced add
+	grad = vreg * regularizer + grad * 1.0;//replaced add
 
-	grad = dE_ds;
+	dE_ds = grad;
 	/*for (int i = 0; i < s.size(); i++) {
 		Logger::print("gradient %lf\n", grad[i]);
 	}*/
