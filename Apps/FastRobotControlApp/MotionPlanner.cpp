@@ -349,7 +349,7 @@ void MotionPlanner::generateMotionPlan() {
 	for (int i = 0; i<2; i++)
 		energyVal = locomotionManager->runMOPTStep(OPT_GRFS);
 
-	for (int i = 0; i<5; i++)
+	for (int i = 0; i<3; i++)
 		energyVal = locomotionManager->runMOPTStep(OPT_GRFS | OPT_COM_POSITIONS);
 
 	for (int i = 0; i<5; i++)

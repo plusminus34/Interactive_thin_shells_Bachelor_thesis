@@ -7,18 +7,14 @@
 #include <ControlLib/SimpleLimb.h>
 #include "MotionPlanner.h"
 
-//- change the stride duration. 0.8 is quite long...
-//- try a few different footfall patterns (walking, flying trot, pacing)
-//- optimize foot positions too? And maybe a shorter horizon in MOPT?
-
-//should we use the old MOPT plan to initialize the new one?!? It just needs to be shifted over by a number of steps, which we know already...
-//there might be drift due to the global motion time... perhaps re-sync?
 
 //#define DEBUG_MOPT
 
 //#define PRINT_TRACKING_DEBUG
 
 //work towards:
+//	- compare with a more reactive controller. Essentially, just follow the pre-plan, whuch has stepping feedback added on, then init mopt but don't optimize, and that's it...
+//	- should we use the old MOPT plan to initialize the new one?!? It just needs to be shifted over by a number of steps, which we know already...
 //  - implement some graceful failure mode, when the robot gets too far from the plan, or when the plan generation seems to fail...
 //	- validate on a quadruped, and on a cassie-like biped
 //	- long horizon motion plans that include a change in gait, legs being used as arms, etc
@@ -89,6 +85,8 @@ FastRobotControlApp::FastRobotControlApp(){
 	setupWindows();
 
 	loadFile("..\\data\\RobotDesigner\\SpotMiniTrot.batch");
+//	loadFile("..\\data\\RobotDesigner\\SpotMiniFlyingTrot.batch");
+//	loadFile("..\\data\\RobotDesigner\\SpotMiniWalk.batch");
 	robot->forward = V3D(0, 0, 1);
 	robot->right = V3D(-1, 0, 0);
 
