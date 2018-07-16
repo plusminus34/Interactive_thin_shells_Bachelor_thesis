@@ -73,15 +73,9 @@ void KS_IKMechanismController::setMotorAngleValues()
 
 void KS_IKMechanismController::activateMechanismController()
 {
-	/*for (int i = 0; i <getActuatedConnectionCount(); i++) {
-		mechanism->actuated_connections[i]->setOffset(motorAngleValues[i]);
-	}*/
-	//updateMotorConnections();
 	xEEd = xEE["xEE"]; yEEd = yEE["yEE"]; zEEd = zEE["zEE"];
-	//mechanism->updateActuatedConnections();
-	//Logger::print("Just before solving for motorAngles\n");
 	solveMotorAngles();
-
+	ikConstraintEnergy->setCurrentBestSolution(motorAngleValues);
 }
 
 void KS_IKMechanismController::updateUI()

@@ -7,6 +7,8 @@ class KS_Constraint;
 
 class KS_AssemblyConstraintEnergy : public ObjectiveFunction {
 	friend class KS_IKConstraintEnergy;
+	friend class KS_UIMechanismController;
+	//friend class KS_MechanicalAssembly;
 public:
 	KS_AssemblyConstraintEnergy(void);
 	virtual ~KS_AssemblyConstraintEnergy(void);

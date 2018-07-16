@@ -72,6 +72,7 @@ void KS_UIMechanismController::activateMechanismController()
 	}
 	updateMotorConnections();
 	mechanism->solveAssembly();
+	mechanism->AConstraintEnergy->setCurrentBestSolution(mechanism->s);
 }
 
 void KS_UIMechanismController::updateUI()

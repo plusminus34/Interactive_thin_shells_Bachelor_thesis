@@ -19,6 +19,7 @@ KineSimApp::KineSimApp()
 	mech1->readFromFile("../data/KineSimApp/fourBar.mech");
 	mech1->readMechStateFromFile("../data/KineSimApp/s_fourBar.txt");
 	mech1->setAssemblyState(mech1->s);
+	//mech1->AConstraintEnergy->setRegularizer(0.001);
 
 
 	mainMenu->addGroup("sim parameters");
@@ -35,7 +36,8 @@ KineSimApp::KineSimApp()
 	if (ikControl) {
 		delete ikController;
 		ikController = new KS_IKMechanismController(mech1, mech1->m_components[2],this);
-		ikController->yEEDOF = 1;		//ikController->yEEDOF = 1; ikController->zEEDOF = 1;
+		ikController->ikConstraintEnergy->setRegularizer(0.1);
+		ikController->xEEDOF = 1;		//ikController->yEEDOF = 1; ikController->zEEDOF = 1;
 		ikController->setMotorAngleValues();
 	}
 
