@@ -28,6 +28,10 @@ public:
 
 	//virtual bool isMotorized() { return isActuated; }
 
+	virtual void computeddAE_ds_dp1();
+	MatrixNxM& getdAE_ds_dp1() { return  ddAE_ds_dp1; }
+	MatrixNxM& getdAE_ds_dp2() { return  ddAE_ds_dp2; }
+
 
 protected:
 	//offset of the relative angle;
@@ -41,6 +45,9 @@ protected:
 	KS_V2VConstraint* rMotorAngleConstraint;
 	KS_P2PConstraint* pt2ptConstraint;
 	KS_V2VConstraint* v2vConstraint;
+
+	MatrixNxM ddAE_ds_dp1Temp, ddAE_ds_dp2Temp, ddAE_ds_dp1, ddAE_ds_dp2, dw2_ds2_p;
+	V3D ddAE_ds_dpTemp2;
 
 };
 

@@ -148,7 +148,7 @@ void KS_IKMechanismController::solveMotorAngles()
 	dVector currenMechState = mechanism->s;
 	dVector currentMotorValues = motorAngleValues;
 
-	if (1) {
+	if (0) {
 		ikConstraintEnergy->testGradientWithFD(motorAngleValuesSolver);
 		//ikConstraintEnergy->testHessianWithFD(motorAngleValuesSolver);
 	}

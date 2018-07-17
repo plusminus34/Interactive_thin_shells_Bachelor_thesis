@@ -33,6 +33,8 @@ public:
 	void computedO_ds(const dVector& p);
 	void computedS_dp(const dVector& p);
 
+	void computeddAE_ds_dpAnalytic(const dVector & p);
+
 private:
 	//this is the mechanical assembly that the simulator acts on
 	KS_MechanicalAssembly* mechanism;
@@ -42,11 +44,9 @@ private:
 	double regularizer;
 	dVector dO_ds; //computeGradofEEObjectiveWithMechanismState
 	dVector dAE_ds; // gradient of the assembly constraint energy with respect to the mechanism state
-	MatrixNxM ddAE_ds_dp;//gradiant of the gradient with respect to the control parameters with fixed mechanism state
+	MatrixNxM ddAE_ds_dp, ddAE_ds_dpA;//gradiant of the gradient with respect to the control parameters with fixed mechanism state
 	MatrixNxM dS_dp;//compute the gradient of the mech state with respect to the control variables 
 	int stateSize, stateCount, actCount;
-	dVector mechCurrentStateAtCurrentIter;
-	/*dVector lastValidMotorAngleValues;
-	dVector lastValidMechState;*/
+	dVector currentMechState;
 };
 

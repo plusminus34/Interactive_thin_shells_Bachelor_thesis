@@ -322,7 +322,7 @@ void KS_MechanicalAssembly::solveAssembly()
 	//Logger::consolePrint("ASSenergy value before solve C: %lf\n", functionValue);
 
 	if (newtonSolver) {
-		NewtonFunctionMinimizer minimizer(5);
+		NewtonFunctionMinimizer minimizer(10);
 		minimizer.printOutput = false;
 		minimizer.minimize(AConstraintEnergy, sSolver, functionValue);
 	}
@@ -372,4 +372,3 @@ void KS_MechanicalAssembly::updateActuatedConnections()
 			actuated_connections[i]->updateConnection();
 	}
 }
-

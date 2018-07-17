@@ -69,7 +69,6 @@ public:
 
 	void updateActuatedConnections();
 
-
 protected:
 	bool newtonSolver = true, bfgsSolver=false;
 	ComponentArray m_components;

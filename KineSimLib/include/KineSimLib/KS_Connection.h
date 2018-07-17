@@ -12,6 +12,7 @@ class GLMesh;
 
 class KS_Connection{
 	friend class KineSimApp;
+	friend class KS_IKConstraintEnergy;
 public:
 	KS_Connection(void);
 	virtual ~KS_Connection(void);
@@ -39,6 +40,9 @@ public:
 	int getPin(){return m_pin;}
 
 	virtual bool isMotorized() { return isActuated; }
+	virtual void computeddAE_ds_dp1() { assert(false); }
+	virtual MatrixNxM& getdAE_ds_dp1() { assert(false); return ddAE_ds_dp1; };// find better way of doing this
+	virtual MatrixNxM& getdAE_ds_dp2() { assert(false); return ddAE_ds_dp1; };// find better way of doing this
 
 
 protected:
@@ -46,6 +50,7 @@ protected:
 	KS_MechanicalComponent* m_compOut;
 
 	int m_pin;
+	MatrixNxM ddAE_ds_dp1, ddAE_ds_dp2;
 
 	char compInName[200];
 	char compOutName[200];

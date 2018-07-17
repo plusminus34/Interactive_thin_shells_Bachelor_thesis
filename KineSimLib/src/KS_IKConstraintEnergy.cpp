@@ -29,6 +29,7 @@ void KS_IKConstraintEnergy::initialize(KS_MechanicalAssembly* a, KS_IKMechanismC
 	dO_ds.resize(stateCount); dO_ds.setZero(); //computeGradofEEObjectiveWithMechanismState
 	dAE_ds.resize(stateCount); dAE_ds.setZero(); // gradient of the assembly constraint energy with respect to the mechanism state
 	ddAE_ds_dp.resize(stateCount, actCount); ddAE_ds_dp.setZero();//gradiant of the gradient with respect to the control parameters with fixed mechanism state
+	ddAE_ds_dpA.resize(stateCount, actCount); ddAE_ds_dpA.setZero();// analytic gradiant of the gradient with respect to the control parameters with fixed mechanism state
 	dS_dp.resize(stateCount, actCount); dS_dp.setZero();//compute the gradient of the mech state with respect to the control variables 
 
 }
@@ -42,15 +43,13 @@ double KS_IKConstraintEnergy::computeValue(const dVector& p) {
 
 	ikMechanismController->motorAngleValues = p;
 	ikMechanismController->updateMotorConnections();
-	//Logger::print("i am here with p%lf\n",p[0]);
-	
 	mechanism->solveAssembly();
-	dVector currentMechState = mechanism->s;
+	currentMechState = mechanism->s;
 	mechanism->AConstraintEnergy->setCurrentBestSolution(mechanism->s);
-	mechCurrentStateAtCurrentIter = currentMechState;
+	//mechanism->setAssemblyState(mechanism->s);
 	double totalIkConstraintEnergy = 0;
 	totalIkConstraintEnergy +=
-	0.5*10*((ikMechanismController->xEEDOF)*SQR(ikMechanismController->eeComponent->getWorldCenterPosition()[0] - ikMechanismController->xEEd) +
+	0.5*((ikMechanismController->xEEDOF)*SQR(ikMechanismController->eeComponent->getWorldCenterPosition()[0] - ikMechanismController->xEEd) +
 		(ikMechanismController->yEEDOF)*SQR(ikMechanismController->eeComponent->getWorldCenterPosition()[1] - ikMechanismController->yEEd) +
 		(ikMechanismController->zEEDOF)*SQR(ikMechanismController->eeComponent->getWorldCenterPosition()[2] - ikMechanismController->zEEd) +
 		(ikMechanismController->alphaEEDOF)*SQR(ikMechanismController->eeComponent->getAlpha() - ikMechanismController->alphaEEd) +
@@ -63,7 +62,7 @@ double KS_IKConstraintEnergy::computeValue(const dVector& p) {
 	vd = p * 1.0 + m_p0 * (-1);
 	double nrmvd2 = vd.squaredNorm();
 	totalIkConstraintEnergy += 0.5*regularizer*nrmvd2;
-	//Logger::print("ASS energy and IKConstraintEnergy  %lf %lf\n", mechanism->AConstraintEnergy->computeValue(currentMechState), totalIkConstraintEnergy);
+	Logger::print("ASS energy and IKConstraintEnergy  %lf %lf\n", mechanism->AConstraintEnergy->computeValue(mechanism->s), totalIkConstraintEnergy);
 		return totalIkConstraintEnergy;
 }
 
@@ -73,22 +72,11 @@ void KS_IKConstraintEnergy::addGradientTo(dVector & grad, const dVector & p)
 	grad.setZero();
 	computedO_ds(p);
 	computedS_dp(p);
-	//Logger::print("dods cols and dsdp rows %d %d\n", dO_ds.cols(), dS_dp.rows());
 	grad += -1.0*((dO_ds.transpose()*dS_dp).transpose());
 
 	dVector vreg; vreg.resize(actCount); vreg.setZero();
 	vreg = p * 1.0 + m_p0 * (-1.0); 
-	grad = vreg * regularizer + grad * 1.0;//replaced add
-
-	//grad += (dO_ds*dS_dp).transpose();
-	//Logger::print("dsdp first and second column norm and dods norm %lf %lf %Lf\n", dS_dp.col(0).norm(), dS_dp.col(1).norm(), dO_ds.norm());
-	/*for (int i = 0; i < dO_ds.size(); i++) {
-	Logger::print("dO_ds %lf\n", dO_ds[i]);
-	Logger::print("dS_dp col1 %lf\n", dS_dp.col(0)[i]);
-	Logger::print("dS_dp col2 %lf\n", dS_dp.col(1)[i]);
-	Logger::print("ddAE_ds_dp col1 %lf\n", ddAE_ds_dp.col(0)[i]);
-	Logger::print("ddAE_ds_dp col2 %lf\n", ddAE_ds_dp.col(1)[i]);
-	}*/
+	grad = vreg * regularizer + grad * 1.0;
 
 };
 
@@ -101,17 +89,16 @@ void KS_IKConstraintEnergy::setCurrentBestSolution(const dVector& p){
 
 
 void KS_IKConstraintEnergy::computedO_ds(const dVector& p)
-{
-	dVector currentMechState = mechanism->s;
-	mechanism->setAssemblyState(mechCurrentStateAtCurrentIter);
+{   
+	mechanism->setAssemblyState(currentMechState);
 	int eeCompInd= ikMechanismController->eeComponent->getComponentIndex()*stateSize;
 	dVector tmp; tmp.resize(stateCount); tmp.setZero();
 	tmp[0+ eeCompInd] = (ikMechanismController->gammaEEDOF)*(ikMechanismController->eeComponent->getGamma() - ikMechanismController->gammaEEd);
 	tmp[1+ eeCompInd] = (ikMechanismController->betaEEDOF)*(ikMechanismController->eeComponent->getBeta() - ikMechanismController->betaEEd); 
 	tmp[2+ eeCompInd] = (ikMechanismController->alphaEEDOF)*(ikMechanismController->eeComponent->getAlpha() - ikMechanismController->alphaEEd); 
-	tmp[3+ eeCompInd] = 10*(ikMechanismController->xEEDOF)*(ikMechanismController->eeComponent->getWorldCenterPosition()[0] - ikMechanismController->xEEd);
-	tmp[4+ eeCompInd] = 10*(ikMechanismController->yEEDOF)*(ikMechanismController->eeComponent->getWorldCenterPosition()[1] - ikMechanismController->yEEd);
-	tmp[5+ eeCompInd] = 10*(ikMechanismController->zEEDOF)*(ikMechanismController->eeComponent->getWorldCenterPosition()[2] - ikMechanismController->zEEd);
+	tmp[3+ eeCompInd] = (ikMechanismController->xEEDOF)*(ikMechanismController->eeComponent->getWorldCenterPosition()[0] - ikMechanismController->xEEd);
+	tmp[4+ eeCompInd] = (ikMechanismController->yEEDOF)*(ikMechanismController->eeComponent->getWorldCenterPosition()[1] - ikMechanismController->yEEd);
+	tmp[5+ eeCompInd] = (ikMechanismController->zEEDOF)*(ikMechanismController->eeComponent->getWorldCenterPosition()[2] - ikMechanismController->zEEd);
 	dO_ds = tmp;
 	/*for (int i = 0; i < dO_ds.size(); i++) {
 		Logger::print("dO_ds %lf\n", dO_ds[i]);
@@ -133,10 +120,35 @@ void KS_IKConstraintEnergy::computedS_dp(const dVector& p)
 	ddE_dsds.setFromTriplets(tmPhessianEntries.begin(), tmPhessianEntries.end());
 	solver.compute(ddE_dsds);*/
 	solver.compute(mechanism->AConstraintEnergy->ddE_dsds);
-	computeddAE_ds_dp(p);
-	dS_dp = solver.solve(ddAE_ds_dp);
+	//computeddAE_ds_dp(p);
+	//dS_dp = solver.solve(ddAE_ds_dp);
+	computeddAE_ds_dpAnalytic(p);
+	dS_dp = solver.solve(ddAE_ds_dpA);
 	//dS_dp = ddE_dsds.triangularView<Eigen::Lower>().solve(ddAE_ds_dp);
 	//Logger::print("dS_dp norm %lf\n", dS_dp.norm());
+}
+
+void KS_IKConstraintEnergy::computeddAE_ds_dpAnalytic(const dVector & p)
+{
+	ddAE_ds_dpA.resize(stateCount, actCount);
+	ddAE_ds_dpA.setZero();
+	ikMechanismController->motorAngleValues = p;
+	ikMechanismController->updateMotorConnections();
+	mechanism->setAssemblyState(currentMechState);
+	for (uint i = 0; i < actCount; i++) {
+		mechanism->actuated_connections[i]->computeddAE_ds_dp1();
+		int cIn = mechanism->actuated_connections[i]->m_compIn->getComponentIndex()*KS_MechanicalComponent::getStateSize();
+		int cOut = mechanism->actuated_connections[i]->m_compOut->getComponentIndex()*KS_MechanicalComponent::getStateSize();
+		//Logger::print("cIn %d\n", cIn);
+		MatrixNxM tmp1=mechanism->actuated_connections[i]->getdAE_ds_dp1();
+		MatrixNxM tmp2 = mechanism->actuated_connections[i]->getdAE_ds_dp2();
+		//Logger::print(" tmp.size() %d %d\n", tmp.rows(), tmp.cols());
+		for (int j = 0; j < tmp1.size(); j++) {
+			ddAE_ds_dpA(cIn + j, i) += tmp1(0, j);
+			ddAE_ds_dpA(cOut + j, i) += -tmp2(0, j);
+		}
+		
+	}
 }
 
 void KS_IKConstraintEnergy::computedAE_ds(const dVector & p)
@@ -145,7 +157,7 @@ void KS_IKConstraintEnergy::computedAE_ds(const dVector & p)
 	ikMechanismController->motorAngleValues = p;
 	ikMechanismController->updateMotorConnections();
 	dAE_ds.setZero();
-	mechanism->AConstraintEnergy->addGradientTo(dAE_ds, mechCurrentStateAtCurrentIter);
+	mechanism->AConstraintEnergy->addGradientTo(dAE_ds, currentMechState);
 }
 
 void KS_IKConstraintEnergy::computeddAE_ds_dp(const dVector& p)

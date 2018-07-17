@@ -19,6 +19,7 @@
 
 class KS_MechanicalComponent{
 	friend class KineSimApp;
+	friend class KS_rMotorConnection;
 public:
 	KS_MechanicalComponent(const char* name);
 	virtual ~KS_MechanicalComponent(void);
