@@ -322,7 +322,7 @@ void KS_MechanicalAssembly::solveAssembly()
 	//Logger::consolePrint("ASSenergy value before solve C: %lf\n", functionValue);
 
 	if (newtonSolver) {
-		NewtonFunctionMinimizer minimizer(10);
+		NewtonFunctionMinimizer minimizer(5);
 		minimizer.printOutput = false;
 		minimizer.minimize(AConstraintEnergy, sSolver, functionValue);
 	}

@@ -162,7 +162,7 @@ void KS_IKMechanismController::solveMotorAngles()
 	double functionValue = ikConstraintEnergy->computeValue(motorAngleValuesSolver);
 	Logger::consolePrint("IK energy value before solve C: %lf\n", functionValue);
 
-	BFGSFunctionMinimizer minimizer(10);
+	BFGSFunctionMinimizer minimizer(5);
 	minimizer.printOutput = false;
 	minimizer.minimize(ikConstraintEnergy, motorAngleValuesSolver, functionValue);
 

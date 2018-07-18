@@ -46,7 +46,6 @@ double KS_IKConstraintEnergy::computeValue(const dVector& p) {
 	mechanism->solveAssembly();
 	currentMechState = mechanism->s;
 	mechanism->AConstraintEnergy->setCurrentBestSolution(mechanism->s);
-	//mechanism->setAssemblyState(mechanism->s);
 	double totalIkConstraintEnergy = 0;
 	totalIkConstraintEnergy +=
 	0.5*((ikMechanismController->xEEDOF)*SQR(ikMechanismController->eeComponent->getWorldCenterPosition()[0] - ikMechanismController->xEEd) +
@@ -62,7 +61,7 @@ double KS_IKConstraintEnergy::computeValue(const dVector& p) {
 	vd = p * 1.0 + m_p0 * (-1);
 	double nrmvd2 = vd.squaredNorm();
 	totalIkConstraintEnergy += 0.5*regularizer*nrmvd2;
-	//Logger::print("ASS energy and IKConstraintEnergy  %lf %lf\n", mechanism->AConstraintEnergy->computeValue(mechanism->s), totalIkConstraintEnergy);
+	Logger::print("ASS energy and IKConstraintEnergy  %lf %lf\n", mechanism->AConstraintEnergy->computeValue(mechanism->s), totalIkConstraintEnergy);
 		return totalIkConstraintEnergy;
 }
 

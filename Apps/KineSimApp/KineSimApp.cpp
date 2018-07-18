@@ -37,7 +37,7 @@ KineSimApp::KineSimApp()
 		delete ikController;
 		ikController = new KS_IKMechanismController(mech1, mech1->m_components[3],this);
 		ikController->ikConstraintEnergy->setRegularizer(0.01);
-		ikController->zEEDOF = 1;		//ikController->yEEDOF = 1; ikController->zEEDOF = 1;
+		ikController->xEEDOF = 1;		ikController->yEEDOF = 1; ikController->zEEDOF = 1;
 		ikController->setMotorAngleValues();
 	}
 
