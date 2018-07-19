@@ -27,6 +27,10 @@ void KS_AssemblyConstraintEnergy::initialize(KS_MechanicalAssembly* a){
 		a->getConnection(i)->addConstraintsToList(constraints);
 	}
 
+	for (int i = 0; i<a->getAcConnectionCount(); i++) {
+		a->getMotorConnection(i)->addConstraintsToList(constraints);
+	}
+
 	scalarConstraintCount = 0;
 	for (uint i = 0; i<constraints.size(); i++) {
 		scalarConstraintCount += constraints[i]->getConstraintCount();

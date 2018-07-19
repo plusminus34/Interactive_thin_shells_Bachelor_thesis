@@ -61,7 +61,7 @@ double KS_IKConstraintEnergy::computeValue(const dVector& p) {
 	vd = p * 1.0 + m_p0 * (-1);
 	double nrmvd2 = vd.squaredNorm();
 	totalIkConstraintEnergy += 0.5*regularizer*nrmvd2;
-	Logger::print("ASS energy and IKConstraintEnergy  %lf %lf\n", mechanism->AConstraintEnergy->computeValue(mechanism->s), totalIkConstraintEnergy);
+	//Logger::print("ASS energy and IKConstraintEnergy  %lf %lf\n", mechanism->AConstraintEnergy->computeValue(mechanism->s), totalIkConstraintEnergy);
 		return totalIkConstraintEnergy;
 }
 
@@ -134,17 +134,19 @@ void KS_IKConstraintEnergy::computeddAE_ds_dpAnalytic(const dVector & p)
 	ikMechanismController->motorAngleValues = p;
 	ikMechanismController->updateMotorConnections();
 	mechanism->setAssemblyState(currentMechState);
-	for (uint i = 0; i < actCount; i++) {
-		mechanism->actuated_connections[i]->computeddAE_ds_dp1();
-		int cIn = mechanism->actuated_connections[i]->m_compIn->getComponentIndex()*KS_MechanicalComponent::getStateSize();
+	for (int i = 0; i < actCount; i++) {
+		mechanism->actuated_connections[i]->computeddAE_ds_dp();
+		if (mechanism->actuated_connections[i]->m_compIn != NULL) {
+			int cIn = mechanism->actuated_connections[i]->m_compIn->getComponentIndex()*KS_MechanicalComponent::getStateSize();
+			MatrixNxM tmp1 = mechanism->actuated_connections[i]->getdAE_ds_dp1();
+			for (int j = 0; j < tmp1.size(); j++) {
+				ddAE_ds_dpA(cIn + j, i) += tmp1(0, j);
+			}
+		}
 		int cOut = mechanism->actuated_connections[i]->m_compOut->getComponentIndex()*KS_MechanicalComponent::getStateSize();
-		//Logger::print("cIn %d\n", cIn);
-		MatrixNxM tmp1=mechanism->actuated_connections[i]->getdAE_ds_dp1();
 		MatrixNxM tmp2 = mechanism->actuated_connections[i]->getdAE_ds_dp2();
-		//Logger::print(" tmp.size() %d %d\n", tmp.rows(), tmp.cols());
-		for (int j = 0; j < tmp1.size(); j++) {
-			ddAE_ds_dpA(cIn + j, i) += tmp1(0, j);
-			ddAE_ds_dpA(cOut + j, i) += -tmp2(0, j);
+		for (int j = 0; j < tmp2.size(); j++) {
+			ddAE_ds_dpA(cOut + j, i) += tmp2(0, j);
 		}
 		
 	}
@@ -152,7 +154,6 @@ void KS_IKConstraintEnergy::computeddAE_ds_dpAnalytic(const dVector & p)
 
 void KS_IKConstraintEnergy::computedAE_ds(const dVector & p)
 {
-	dVector currentMechState = mechanism->s;// this doesn't change during
 	ikMechanismController->motorAngleValues = p;
 	ikMechanismController->updateMotorConnections();
 	dAE_ds.setZero();

@@ -223,7 +223,7 @@ void KS_MechanicalComponent::writeBaseComponentToFile(FILE* f){
 	str = getKSString(KS_POSITION_IN_WORLD);
 	P3D tmpP = getWorldCenterPosition();
 	fprintf(f, "\t%s %lf %lf %lf\n", str, tmpP[0], tmpP[1], tmpP[2]);
-	str = getKSString(KS_ANGLE);
+	str = getKSString(KS_ALPHA);
 	fprintf(f, "\t%s %lf\n", str, alpha);
 	str = getKSString(KS_BETA);
 	fprintf(f, "\t%s %lf\n", str, beta);
@@ -252,7 +252,7 @@ bool KS_MechanicalComponent::processInputLine(char* line){
 			if (sscanf(line, "%lf %lf %lf", &position[0], &position[1], &position[2]) != 3) assert(false);
 			return true;
 			break;
-		case KS_ANGLE:
+		case KS_ALPHA:
 			if (sscanf(line, "%lf", &alpha) != 1) assert(false);
 			setAngles(gamma, beta, alpha);
 			return true;

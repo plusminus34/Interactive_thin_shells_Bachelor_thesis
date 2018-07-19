@@ -78,7 +78,7 @@ void KS_UIMechanismController::activateMechanismController()
 void KS_UIMechanismController::updateUI()
 {
 	for (auto &w : motorAnglesWidget) {
-		w.second.slider->setValue(motorAngles[w.first]);
+		w.second.slider->setValue((float)motorAngles[w.first]);
 		w.second.textBox->setValue(toString(motorAngles[w.first], 3));
 	}
 
@@ -92,7 +92,7 @@ KS_UIMechanismController::SliderText KS_UIMechanismController::addSliderTextVari
 	new nanogui::Label(panel, name);
 
 	nanogui::Slider *slider = new nanogui::Slider(panel);
-	slider->setValue(*var);
+	slider->setValue((float)*var);
 	slider->setRange(range);
 	slider->setFixedWidth(140);
 
@@ -112,7 +112,7 @@ KS_UIMechanismController::SliderText KS_UIMechanismController::addSliderTextVari
 	textBox->setCallback([var, slider, precision](const std::string &str) {
 		double value = std::atof(str.c_str());
 		*var = value;
-		slider->setValue(value);
+		slider->setValue((float)value);
 		return true;
 	});
 

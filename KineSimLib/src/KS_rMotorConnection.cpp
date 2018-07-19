@@ -14,8 +14,6 @@ KS_rMotorConnection::KS_rMotorConnection(void){
 	vOnC1 = V3D(1, 0, 0);
 	vOnC2 = V3D(1, 0, 0);
 
-	ddAE_ds_dp1.resize(1, KS_MechanicalComponent::getStateSize()); ddAE_ds_dp1.setZero();
-	ddAE_ds_dp2.resize(1, KS_MechanicalComponent::getStateSize()); ddAE_ds_dp2.setZero();
 	ddAE_ds_dp1Temp.resize(3, KS_MechanicalComponent::getStateSize()); ddAE_ds_dp1Temp.setZero();
 	ddAE_ds_dp2Temp.resize(3, KS_MechanicalComponent::getStateSize()); ddAE_ds_dp2Temp.setZero();
 	dw2_ds2_p.resize(3, KS_MechanicalComponent::getStateSize()); dw2_ds2_p.setZero();
@@ -164,10 +162,8 @@ KS_rMotorConnection* KS_rMotorConnection::clone(KS_MechanicalComponent* pCompIn,
 }
 
 
-void KS_rMotorConnection::computeddAE_ds_dp1()
+void KS_rMotorConnection::computeddAE_ds_dp()
 {
-	ddAE_ds_dp1.resize(1, KS_MechanicalComponent::getStateSize()); ddAE_ds_dp1.setZero();
-	ddAE_ds_dp2.resize(1, KS_MechanicalComponent::getStateSize()); ddAE_ds_dp2.setZero();
 	ddAE_ds_dp1Temp.resize(3, KS_MechanicalComponent::getStateSize()); ddAE_ds_dp1Temp.setZero();
 	ddAE_ds_dp2Temp.resize(3, KS_MechanicalComponent::getStateSize()); ddAE_ds_dp2Temp.setZero();
 	dw2_ds2_p.resize(3, KS_MechanicalComponent::getStateSize()); dw2_ds2_p.setZero();
@@ -175,23 +171,11 @@ void KS_rMotorConnection::computeddAE_ds_dp1()
 	//(c1->get_w(x1) - c2->get_w(x2))*(c1->get_dw_ds(x1, dw1_ds1));
 	//dE_ds2 = -1 * tmpV.transpose()*dw2_ds2;
 	//(c1->get_w(x1) - c2->get_w(x2))*(c1->get_dw_ds(x2, dw1_ds2));
-	//V3D dw_dalpha = [const V3D x] { return m_compIn->R_gamma * (m_compIn->R_beta*(m_compIn->n_alpha.cross(m_compIn->R_alpha*x))); }
-	//V3D dw_dbeta(const V3D& x) { return  m_compIn->R_gamma * (m_compIn->n_beta.cross(m_compIn->R_beta*(m_compIn->R_alpha*x))); }
-	//V3D dw_dgamma(const V3D& x) { return m_compIn->n_gamma.cross(m_compIn->R_gamma*(m_compIn->R_beta*(m_compIn->R_alpha*x))); }
 	//dE_ds1 = tmpV.transpose()*dw1_ds1;
 	Matrix3x3 tmp; tmp.setIdentity();
-	//auto glambda = [](auto a, auto&& b) { return a < b; };
 	auto dw_dalpha = [this](const V3D x) { return m_compIn->R_gamma * (m_compIn->R_beta*(m_compIn->n_alpha.cross(m_compIn->R_alpha*x))); };
 	auto dw_dbeta = [this](const V3D x) {return  m_compIn->R_gamma * (m_compIn->n_beta.cross(m_compIn->R_beta*(m_compIn->R_alpha*x)));  };
 	auto dw_dgamma = [this](const V3D x) {return m_compIn->n_gamma.cross(m_compIn->R_gamma*(m_compIn->R_beta*(m_compIn->R_alpha*x)));  };
-
-	/*//m_compIn->get_w(V3D(tmp.col(0)));
-	//dw_dgamma(vOnC1);
-		/*- m_compOut->get_w(vOnC2)).transpose()*dw_dgamma(vOnC1) +
-		(m_compIn->get_w(vOnC1) - m_compOut->get_w(vOnC2)).transpose()*dw_dgamma(V3D(tmp.col(0))));
-	MatrixNxM temp=((m_compIn->get_w(V3D(tmp.col(0))) - m_compOut->get_w(vOnC2)).transpose()*dw_dgamma(vOnC1) +
-		(m_compIn->get_w(vOnC1) - m_compOut->get_w(vOnC2)).transpose()*dw_dgamma(V3D(tmp.col(0))));
-	Logger::print("temp %d %d %lf\n",temp.rows(),temp.cols(),temp(0,0) );*/
 
 	for (int i = 0; i < 3; i++) {
 		ddAE_ds_dp1Temp(i, 0) += (m_compIn->get_w(V3D(tmp.col(i))) - m_compOut->get_w(vOnC2)).transpose()*dw_dgamma(vOnC1);
@@ -212,6 +196,6 @@ void KS_rMotorConnection::computeddAE_ds_dp1()
 	V3D vOnC1tmp = V3D(1, 0, 0);
 	ddAE_ds_dpTemp2=nOnC1.cross(getRotationQuaternion(m_offset, nOnC1)*vOnC1tmp);
 	ddAE_ds_dp1 = ddAE_ds_dpTemp2.transpose()*ddAE_ds_dp1Temp;
-	ddAE_ds_dp2 = ddAE_ds_dpTemp2.transpose()*ddAE_ds_dp2Temp;
+	ddAE_ds_dp2 = -ddAE_ds_dpTemp2.transpose()*ddAE_ds_dp2Temp;
 
 }

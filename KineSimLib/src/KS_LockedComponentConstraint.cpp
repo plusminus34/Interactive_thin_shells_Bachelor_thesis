@@ -17,6 +17,7 @@ KS_LockedComponentConstraint::KS_LockedComponentConstraint(KS_MechanicalComponen
 
 	anglesWeight = 100;
 	positionWeight=100;
+	PositionWeight = P3D(positionWeight, positionWeight, positionWeight);
 }
 
 KS_LockedComponentConstraint* KS_LockedComponentConstraint::clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut)const{
@@ -40,9 +41,9 @@ double KS_LockedComponentConstraint::getEnergy(){
 					freezeBeta * SQR(c->getBeta() - betaD) * anglesWeight +
 					freezeGamma * SQR(c->getGamma() - gammaD) * anglesWeight +
 
-					freezePx * SQR(c->getWorldCenterPosition()[0] - pxD) * positionWeight +
-					freezePy * SQR(c->getWorldCenterPosition()[1] - pyD) * positionWeight+
-					freezePz * SQR(c->getWorldCenterPosition()[2] - pzD) * positionWeight
+					freezePx * SQR(c->getWorldCenterPosition()[0] - pxD) * PositionWeight[0] +
+					freezePy * SQR(c->getWorldCenterPosition()[1] - pyD) * PositionWeight[1] +
+					freezePz * SQR(c->getWorldCenterPosition()[2] - pzD) * PositionWeight[2]
 				);	
 	//replaced x y z
 }
@@ -58,9 +59,9 @@ void KS_LockedComponentConstraint::computeEnergyGradient(){
 	dE_ds[0] = freezeGamma * (c->getGamma() - gammaD) * anglesWeight;
 	dE_ds[1] = freezeBeta * (c->getBeta() - betaD) * anglesWeight;
 	dE_ds[2] = freezeAlpha * (c->getAlpha() - alphaD) * anglesWeight;
-	dE_ds[3] = freezePx * (c->getWorldCenterPosition()[0] - pxD)*positionWeight;
-	dE_ds[4] = freezePy * (c->getWorldCenterPosition()[1] - pyD)*positionWeight;
-	dE_ds[5] = freezePz * (c->getWorldCenterPosition()[2] - pzD)*positionWeight;
+	dE_ds[3] = freezePx * (c->getWorldCenterPosition()[0] - pxD)*PositionWeight[0];
+	dE_ds[4] = freezePy * (c->getWorldCenterPosition()[1] - pyD)*PositionWeight[1];
+	dE_ds[5] = freezePz * (c->getWorldCenterPosition()[2] - pzD)*PositionWeight[2];
 }
 
 void KS_LockedComponentConstraint::computeEnergyHessian(){
@@ -70,7 +71,7 @@ void KS_LockedComponentConstraint::computeEnergyHessian(){
 	if (freezeBeta) ddE_dsds(1,1) =  anglesWeight;
 	if (freezeAlpha) ddE_dsds(2,2) = anglesWeight;
 
-	if (freezePx) ddE_dsds(3,3) = positionWeight;
-	if (freezePy) ddE_dsds(4,4) = positionWeight;
-	if (freezePz) ddE_dsds(5,5) = positionWeight;
+	if (freezePx) ddE_dsds(3,3) = PositionWeight[0];
+	if (freezePy) ddE_dsds(4,4) = PositionWeight[1];
+	if (freezePz) ddE_dsds(5,5) = PositionWeight[2];
 }

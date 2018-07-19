@@ -3,7 +3,7 @@
 
 KeyWord keywords[] = {
 	{"positionInWorld", KS_POSITION_IN_WORLD},
-	{"phase", KS_ANGLE},
+	{"alpha", KS_ALPHA },
 	{"AssemblyTickCount", KS_ASSEMBLY_TICK_COUNT},
 	{"beta", KS_BETA},
 	{"gamma", KS_GAMMA},
@@ -59,6 +59,7 @@ KeyWord keywords[] = {
 	{"endEffectoralphaDOF",KS_END_EFFECTOR_alphaDOF },
 	{"endEffectorbetaDOF",KS_END_EFFECTOR_betaDOF },
 	{"endEffectorgammaDOF",KS_END_EFFECTOR_gammaDOF},
+	{"xMobileBaseToWorldConnection", KS_XMBASE_CONNECTION},
 	{"layer", KS_LAYER_NUMBER}
 };
 

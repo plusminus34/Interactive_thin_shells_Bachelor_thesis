@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <MathLib/MathLib.h>
-#include <KineSimLib\KS_MechanismController.h>
+#include <KineSimLib/KS_MechanismController.h>
 #include <GUILib/GLApplication.h>
 #include <map>
 

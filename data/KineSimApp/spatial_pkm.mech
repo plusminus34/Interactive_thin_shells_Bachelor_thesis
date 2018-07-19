@@ -1,0 +1,57 @@
+GenericComponent
+	name body1
+	positionInWorld 0.0 0.0 0.0
+End
+
+xMobileBaseToWorldConnection
+	componentOut body1
+End
+
+GenericComponent
+	name body2
+	positionInWorld 6.0 4.0 0.0
+End
+
+GenericComponent
+	name body3
+	positionInWorld 5.0 5.0 1.0
+End
+
+GenericComponent
+	name body4
+	positionInWorld 5.0 5.0 2.0
+End
+
+
+rMotorConnection
+	componentIn body1
+	componentOut body2
+	pinOnCompIn 1.0 0.0 0.0
+	pinOnCompOut -1.0 0.0 0.0
+	vecOnCompIn 0.000000 0.000000 1.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+	vec2OnCompIn 1.000000 0.000000 0.000000
+	vec2OnCompOut 1.000000 0.000000 0.000000
+End
+
+rMotorConnection
+	componentIn body2
+	componentOut body3
+	pinOnCompIn 1.0 0.0 0.0
+	pinOnCompOut 0.0 1.0 0.0
+	vecOnCompIn 0.000000 1.000000 0.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+	vec2OnCompIn 1.000000 0.000000 0.000000
+	vec2OnCompOut 1.000000 0.000000 0.000000
+End
+
+rMotorConnection
+	componentIn body3
+	componentOut body4
+	pinOnCompIn 0.0 -1.0 0.0
+	pinOnCompOut 0.0 1.0 0.0
+	vecOnCompIn 0.000000 1.000000 0.000000
+	vecOnCompOut 0.000000 0.000000 1.000000
+	vec2OnCompIn 1.000000 0.000000 0.000000
+	vec2OnCompOut 1.000000 0.000000 0.000000
+End

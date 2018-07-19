@@ -4,6 +4,7 @@
 #include "KineSimLib/KS_BoundToWorldConnection.h"
 #include "KineSimLib/KS_PointOnLineConnection.h"
 #include "KineSimLib/KS_rMotorConnection.h"
+#include "KineSimLib/KS_xMobileBaseToWorldConnection.h"
 #include "KineSimLib/KS_GenericComponent.h"
 #include "KineSimLib/KS_PlanarComponentConnection.h"
 #include <GUILib/GLUtils.h>
@@ -23,6 +24,7 @@ KS_MechanicalAssembly::KS_MechanicalAssembly(void){
 KS_MechanicalAssembly::KS_MechanicalAssembly(KS_MechanicalAssembly &a){
 	m_components.resize(a.getComponents().size());
 	m_connections.resize(a.getConnections().size());
+	actuated_connections.resize(a.getAcConnections().size());
 	for(uint i=0;i<m_components.size();i++){
 		m_components[i] = a.getComponent(i)->clone();
 	}
@@ -35,16 +37,27 @@ KS_MechanicalAssembly::KS_MechanicalAssembly(KS_MechanicalAssembly &a){
 			mCompOut=this->getComponent(a.getConnection(i)->getOutput()->getComponentIndex());		
 		m_connections[i] = a.getConnection(i)->clone(mCompIn,mCompOut);
 	}
+	for (uint i = 0; i<actuated_connections.size(); i++) {
+		KS_MechanicalComponent* mCompIn = NULL;
+		KS_MechanicalComponent* mCompOut = NULL;
+		if (a.getMotorConnection(i)->getInput() != NULL)
+			mCompIn = this->getComponent(a.getMotorConnection(i)->getInput()->getComponentIndex());
+		if (a.getMotorConnection(i)->getOutput() != NULL)
+			mCompOut = this->getComponent(a.getMotorConnection(i)->getOutput()->getComponentIndex());
+		actuated_connections[i] = a.getMotorConnection(i)->clone(mCompIn, mCompOut);
+	}
 }
 
 KS_MechanicalAssembly::~KS_MechanicalAssembly(void){
 	ComponentIt it1 = m_components.begin();
 	for(it1; it1!=m_components.end();it1++)
 		delete *it1;
-
 	ConnectionIt it2 = m_connections.begin();
 	for(it2; it2!=m_connections.end();it2++)
 		delete *it2;
+	AcConnectionIt it3 = actuated_connections.begin();
+	for (it3; it3 != actuated_connections.end(); it3++)
+		delete *it3;
 	delete AConstraintEnergy;
 }
 
@@ -80,6 +93,7 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 
 	 m_components.clear();
      m_connections.clear();
+	 actuated_connections.clear();
 
 	FILE* f = fopen(szFile, "r");
 	if (f == NULL){
@@ -120,8 +134,13 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 			case KS_R_MOTOR_CON:{
 					KS_rMotorConnection* mC = new KS_rMotorConnection();
 					mC->loadFromFile(f, this);
-					this->addConnection(mC);
+					this->addActuatedConnection(mC);
 				}break;
+			case KS_XMBASE_CONNECTION: {
+				KS_xMobileBaseToWorldConnection* mC = new KS_xMobileBaseToWorldConnection();
+				mC->loadFromFile(f, this);
+				this->addActuatedConnection(mC);
+			}break;
 			case KS_BOUND_TO_WORLD_CON:{
 					KS_BoundToWorldConnection* bwC = new KS_BoundToWorldConnection();
 					bwC->loadFromFile(f, this);
@@ -146,11 +165,11 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 	}
 
 	fclose(f);
-	initConstraints();
-	s.resize(6 * getComponentCount()); //s.setZero();
-	sSolver.resize(6 * getComponentCount()); //sSolver.setZero();
+	//initConstraints();
+	s.resize(6 * getComponentCount()); s.setZero();
+	sSolver.resize(6 * getComponentCount()); sSolver.setZero();
 	Logger::print(" number of components %d\n", getComponentCount());
-	Logger::print(" number of connections %d\n", getConnectionCount());
+	Logger::print(" number of passive connections %d\n", getConnectionCount());
 	for (uint i = 0; i < m_components.size(); i++) {
 		m_components[i]->setupGeometry();
 		s[KS_MechanicalComponent::getStateSize() * i + 0]= m_components[i]->getGamma(); 
@@ -160,7 +179,6 @@ bool KS_MechanicalAssembly::readFromFile(const char* szFile){
 		s[KS_MechanicalComponent::getStateSize() * i + 4]= m_components[i]->getWorldCenterPosition()[1];
 	    s[KS_MechanicalComponent::getStateSize() * i + 5]= m_components[i]->getWorldCenterPosition()[2];
 	}
-	setActuatedConnections();
 	AConstraintEnergy = new KS_AssemblyConstraintEnergy();
 	AConstraintEnergy->initialize(this);
 	return true;
@@ -189,6 +207,9 @@ void KS_MechanicalAssembly::writeToFile(const char* szFile){
 
 	for (uint i=0;i<m_connections.size();i++)
 		m_connections[i]->writeToFile(f);
+
+	for (uint i = 0; i<actuated_connections.size(); i++)
+		actuated_connections[i]->writeToFile(f);
 
 	fclose(f);
 }
@@ -239,12 +260,10 @@ void KS_MechanicalAssembly::addConnection(KS_Connection* pConn){
 	m_connections.push_back(pConn);
 }
 
-
-void KS_MechanicalAssembly::stepAssembly(){
-	for (uint i=0;i<m_connections.size();i++)
-		m_connections[i]->updateConnection();
+void KS_MechanicalAssembly::addActuatedConnection(KS_MotorConnection * pAcConn)
+{
+	actuated_connections.push_back(pAcConn);
 }
-
 
 void KS_MechanicalAssembly::draw(){
 	for (uint i=0;i<this->m_components.size();i++){
@@ -265,6 +284,21 @@ void KS_MechanicalAssembly::initConstraints(){
 				int ibase = comp->getComponentIndex();
 				for(int l = 0; l<KS_MechanicalComponent::getStateSize();l++)
 					vinds.push_back(ibase*KS_MechanicalComponent::getStateSize()+l);
+			}
+		}
+	}
+	for (uint i = 0; i<actuated_connections.size(); i++) {
+		std::vector<KS_Constraint*> constraints;
+		actuated_connections[i]->addConstraintsToList(constraints);
+		for (uint j = 0; j<constraints.size(); j++) {
+			std::vector<int> vinds;
+			KS_Constraint* c = constraints[j];
+			int nc = c->getNumberOfAffectedComponents();
+			for (int k = 0; k<nc; k++) {
+				KS_MechanicalComponent* comp = c->getIthAffectedComponent(k);
+				int ibase = comp->getComponentIndex();
+				for (int l = 0; l<KS_MechanicalComponent::getStateSize(); l++)
+					vinds.push_back(ibase*KS_MechanicalComponent::getStateSize() + l);
 			}
 		}
 	}
@@ -355,15 +389,6 @@ void KS_MechanicalAssembly::logMechS(const char* szFile)
 		fprintf(fp2, "%lf\n", p[i]);
 	}*/
 	fclose(fp2);
-}
-
-void KS_MechanicalAssembly::setActuatedConnections()
-{
-	actuated_connections.clear();
-	for (uint i = 0; i < m_connections.size(); i++) {
-		if (m_connections[i]->isMotorized())
-			actuated_connections.push_back(m_connections[i]);
-	}
 }
 
 void KS_MechanicalAssembly::updateActuatedConnections()

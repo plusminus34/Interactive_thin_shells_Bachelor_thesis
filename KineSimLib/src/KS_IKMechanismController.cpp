@@ -52,15 +52,15 @@ void KS_IKMechanismController::setMotorAngleValues()
 
 		new nanogui::Label(IKControlWindow, "EE prms");
 		for (auto &p : xEE) {
-			xEEWidget[p.first] = addSliderTextVariable(p.first, &p.second, std::pair<double, double>(-3.14, 3.14), IKControlWindow, "", 3);
+			xEEWidget[p.first] = addSliderTextVariable(p.first, &p.second, std::pair<double, double>(-5, 5), IKControlWindow, "", 3);
 		}
 		
 		for (auto &p : yEE) {
-			yEEWidget[p.first] = addSliderTextVariable(p.first, &p.second, std::pair<double, double>(-3.14, 3.14), IKControlWindow, "", 3);
+			yEEWidget[p.first] = addSliderTextVariable(p.first, &p.second, std::pair<double, double>(-5, 5), IKControlWindow, "", 3);
 		}
 
 		for (auto &p : zEE) {
-			zEEWidget[p.first] = addSliderTextVariable(p.first, &p.second, std::pair<double, double>(-3.14, 3.14), IKControlWindow, "", 3);
+			zEEWidget[p.first] = addSliderTextVariable(p.first, &p.second, std::pair<double, double>(-5, 5), IKControlWindow, "", 3);
 		}
 		nanogui::Button* button = new nanogui::Button(IKControlWindow, "Reset EE prms");
 		button->setCallback([this]() {

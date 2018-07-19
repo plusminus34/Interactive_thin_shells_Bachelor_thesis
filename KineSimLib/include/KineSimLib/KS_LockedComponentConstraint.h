@@ -4,6 +4,8 @@
 #include "KS_MechanicalComponent.h"
 
 class KS_LockedComponentConstraint : public KS_Constraint{
+	friend class KS_xMobileBaseToWorldConnection;
+	friend class KS_MobileBaseToWorldConnection;
 public:
 	KS_LockedComponentConstraint(KS_MechanicalComponent *p_c, double p_alphaD, bool p_freezeAlpha, double p_betaD, bool p_freezeBeta, double p_gammaD, bool p_freezeGamma, double p_pxD, bool p_freezePx, double p_pyD, bool p_freezePy, double p_pzD, bool p_freezePz);
 	virtual KS_LockedComponentConstraint* clone(KS_MechanicalComponent* pCompIn, KS_MechanicalComponent* pCompOut)const;
@@ -38,5 +40,6 @@ protected:
 
 	double anglesWeight;
 	double positionWeight;
+	V3D PositionWeight;
 };
 

@@ -16,7 +16,7 @@ KineSimApp::KineSimApp()
 	uiControl = 0; ikControl = 1;
 	delete mech1; 
 	mech1 = new KS_MechanicalAssembly();
-	mech1->readFromFile("../data/KineSimApp/fourLink3d.mech");
+	mech1->readFromFile("../data/KineSimApp/spatial_pkm.mech");
 	mech1->readMechStateFromFile("../data/KineSimApp/s_fourLink3d.txt");
 	mech1->setAssemblyState(mech1->s);
 	mech1->AConstraintEnergy->setRegularizer(0.01);
