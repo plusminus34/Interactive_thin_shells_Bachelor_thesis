@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <MathLib/MathLib.h>
-#include <KineSimLib\KS_MechanismController.h>
+#include <KineSimLib/KS_MechanismController.h>
 #include <GUILib/GLApplication.h>
 #include <map>
 
@@ -12,7 +12,7 @@ public:
 	KS_UIMechanismController(KS_MechanicalAssembly* mech, GLApplication* app);
 
 	virtual ~KS_UIMechanismController(void);
-	virtual void setMotorAngleValues(dVector& motorAngleValues); //each controller will have its own way of specifying the target motor angle values
+	virtual void setMotorAngleValues(); //each controller will have its own way of specifying the target motor angle values
 	void activateMechanismController();
 	struct SliderText {
 		nanogui::Slider *slider;

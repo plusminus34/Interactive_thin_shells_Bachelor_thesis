@@ -3,7 +3,6 @@
 #include <MathLib/Matrix.h>
 #include "KS_Constraint.h"
 #include "KS_MechanicalComponent.h"
-
 /*
 	ensures that the world coordinates of point x1 on component 1 are the same as that of point x2 on component 2. Alternatively, it ensures
 	that vector x1 on component 1 is aligned to vecotr x2 on component 2. The difference is in the value of the flag that is provided as input.

@@ -6,26 +6,41 @@
 #include <KineSimLib/KS_BindComponentsConnection.h>
 #include <KineSimLib/KS_rMotorConnection.h>
 #include <KineSimLib/KS_UIMechanismController.h>
+#include <KineSimLib/KS_IKMechanismController.h>
+
 
 
 KineSimApp::KineSimApp()
 {   
 	setWindowTitle("Test Application for KineSim");
-	delete mech1; delete uiController;
+	uiControl = 0; ikControl = 1;
+	delete mech1; 
 	mech1 = new KS_MechanicalAssembly();
-	mech1->readFromFile("../data/KineSimApp/threeLink3d.mech");
-	mech1->readMechStateFromFile("../data/KineSimApp/s_threeLink3d.txt");
+	mech1->readFromFile("../data/KineSimApp/spatial_pkm.mech");
+	mech1->readMechStateFromFile("../data/KineSimApp/s_fourLink3d.txt");
 	mech1->setAssemblyState(mech1->s);
+	mech1->AConstraintEnergy->setRegularizer(0.01);
 
-	uiController = new KS_UIMechanismController(mech1, this);
 
 	mainMenu->addGroup("sim parameters");
 	mainMenu->addVariable("logState", logState);
 	mainMenu->addVariable("newtonSolver", mech1->newtonSolver);
 	mainMenu->addVariable("bfgsSolver", mech1->bfgsSolver);
 
-	uiController->boxes = false;	uiController->sliders = true;
-	uiController->setMotorAngleValues(uiController->motorAngleValues);
+	if (uiControl) {
+		delete uiController;
+		uiController = new KS_UIMechanismController(mech1, this);
+		uiController->boxes = 0;	uiController->sliders = 1;
+		uiController->setMotorAngleValues();
+	}
+	if (ikControl) {
+		delete ikController;
+		ikController = new KS_IKMechanismController(mech1, mech1->m_components[3],this);
+		ikController->ikConstraintEnergy->setRegularizer(0.01);
+		ikController->xEEDOF = 1;		ikController->yEEDOF = 1; ikController->zEEDOF = 1;
+		ikController->setMotorAngleValues();
+	}
+
 	menuScreen->performLayout();
 }
 	
@@ -33,7 +48,10 @@ KineSimApp::KineSimApp()
 
 KineSimApp::~KineSimApp(void){
 	delete mech1;
-	delete uiController;
+	if (uiControl)
+		delete uiController;
+	if (ikControl)
+		delete ikController;
 }
 
 void KineSimApp::process() {
@@ -45,8 +63,12 @@ void KineSimApp::process() {
 	while (simulationTime < 1.0 * maxRunningTime) {
 
 		simulationTime += simTimeStep;
-		uiController->activateMechanismController();
-		mech1->solveAssembly();
+		if (uiControl) {
+			uiController->activateMechanismController();
+		}
+		if (ikControl) {
+			ikController->activateMechanismController();
+		}
 		if (logState)
 			mech1->logMechS("../data/KineSimApp/mechState.txt");
 
@@ -92,9 +114,17 @@ void KineSimApp::drawAuxiliarySceneInfo() {
 
 // Restart the application.
 void KineSimApp::restart() {
-	mech1->setAssemblyState(uiController->startingMechState);
-	mech1->s = uiController->startingMechState;
-	uiController->motorAngleValues.setZero();
+	
+	if (uiControl) {
+		mech1->setAssemblyState(uiController->startingMechState);
+		mech1->s = uiController->startingMechState;
+		uiController->motorAngleValues.setZero();
+	}
+	if (ikControl) {
+		mech1->setAssemblyState(ikController->startingMechState);
+		mech1->s = ikController->startingMechState;
+		ikController->motorAngleValues.setZero();
+	}
 }
 
 bool KineSimApp::onKeyEvent(int key, int action, int mods)

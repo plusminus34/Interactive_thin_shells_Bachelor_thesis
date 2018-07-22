@@ -11,7 +11,6 @@ class KS_Constraint;
 class GLMesh;
 
 class KS_Connection{
-	friend class KineSimApp;
 public:
 	KS_Connection(void);
 	virtual ~KS_Connection(void);
@@ -26,20 +25,11 @@ public:
 
 	void writeBaseConnectionToFile(FILE* f);
 
-	//virtual bool isNewConnection(){return isNew;}
-
 	virtual void addConstraintsToList(DynamicArray<KS_Constraint*>& constraints) {assert(false);}
-
-	virtual void updateConnection(){};
-
-	virtual void setOffset(double offset) {};
 
 	//GLMesh* getPin(){return m_compOut->getMesh(m_pin);}
 	void setPin(int p){m_pin=p;}
 	int getPin(){return m_pin;}
-
-	virtual bool isMotorized() { return isActuated; }
-
 
 protected:
 	KS_MechanicalComponent* m_compIn;
@@ -49,10 +39,6 @@ protected:
 
 	char compInName[200];
 	char compOutName[200];
-
-	//bool isNew;
-	bool isActuated;
-
 
 	//returns true if the input line was processed, false otherwise
 	bool processInputLine(char* line, KS_MechanicalAssembly* ma);

@@ -3,7 +3,7 @@
 
 KeyWord keywords[] = {
 	{"positionInWorld", KS_POSITION_IN_WORLD},
-	{"phase", KS_ANGLE},
+	{"alpha", KS_ALPHA },
 	{"AssemblyTickCount", KS_ASSEMBLY_TICK_COUNT},
 	{"beta", KS_BETA},
 	{"gamma", KS_GAMMA},
@@ -52,6 +52,14 @@ KeyWord keywords[] = {
 	{"rMotorConnection",KS_R_MOTOR_CON },
 	{"vec2OnCompIn", KS_VEC2_ON_COMP_IN },
 	{"vec2OnCompOut", KS_VEC2_ON_COMP_OUT },
+	{"endEffector",   KS_END_EFFECTOR},
+	{"endEffectorxDOF",KS_END_EFFECTOR_xDOF},
+	{"endEffectoryDOF",KS_END_EFFECTOR_yDOF },
+	{"endEffectorzDOF",KS_END_EFFECTOR_zDOF },
+	{"endEffectoralphaDOF",KS_END_EFFECTOR_alphaDOF },
+	{"endEffectorbetaDOF",KS_END_EFFECTOR_betaDOF },
+	{"endEffectorgammaDOF",KS_END_EFFECTOR_gammaDOF},
+	{"xMobileBaseToWorldConnection", KS_XMBASE_CONNECTION},
 	{"layer", KS_LAYER_NUMBER}
 };
 

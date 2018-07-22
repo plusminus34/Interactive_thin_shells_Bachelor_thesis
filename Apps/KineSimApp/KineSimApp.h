@@ -16,11 +16,11 @@ class KineSimApp : public GLApplication {
 private:
 	KS_MechanicalAssembly * mech1 = NULL;
 	KS_UIMechanismController* uiController = NULL;
+	KS_IKMechanismController* ikController = NULL;
 	bool checkDerivatives = false;
+	bool uiControl = false, ikControl = false;
 	double simTimeStep = 1;
 	bool logState = false;
-	//dVector motorAngleValues;
-	//dVector startingMechState;
 
 
 
