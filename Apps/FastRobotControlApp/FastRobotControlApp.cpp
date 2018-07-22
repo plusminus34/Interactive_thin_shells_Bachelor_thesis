@@ -91,9 +91,10 @@ FastRobotControlApp::FastRobotControlApp(){
 	robot->right = V3D(-1, 0, 0);
 
 	plannerWindow->motionPlanner->motionPlanDuration = 0.6;
+	plannerWindow->motionPlanner->forwardSpeedTarget = 0.0;
 
 	RobotState rs(robot);
-	rs.setVelocity(robot->right * 1.0);
+//	rs.setVelocity(robot->right * 1.0);
 
 #ifdef DEBUG_MOPT
 	/**------DEBUG-------**/

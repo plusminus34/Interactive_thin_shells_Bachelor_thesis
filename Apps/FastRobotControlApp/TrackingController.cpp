@@ -6,16 +6,16 @@ TrackingController::TrackingController(Robot *robot, LocomotionEngineMotionPlan 
 	this->robot = robot;
 	this->motionPlan = motionPlan;
 
-	controller = new MOPTQPTrackingController(robot);
+	controller = new SimpleMOPTTrackingController(robot);
 }
 
 void TrackingController::initialize() {
 	//all the joints of the robots will be controlled via position control, so initialize this mode of operation
 	for (uint i = 0; i < robot->jointList.size(); i++)
 		robot->jointList[i]->controlMode = TORQUE_MODE;
-	stridePhase = 0;
-	RobotState rs = controller->getTargetRobotState(motionPlan, stridePhase);
-	robot->setState(&rs);
+//	stridePhase = 0;
+//	RobotState rs = motionPlan->initialRS;
+//	robot->setState(&rs);
 }
 
 TrackingController::~TrackingController(void){

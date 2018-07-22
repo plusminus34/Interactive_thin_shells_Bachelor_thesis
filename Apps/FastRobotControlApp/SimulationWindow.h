@@ -26,6 +26,7 @@ public:
 	WorldOracle* worldOracle = NULL;
 
 	double simTimeStep = 1/120.0;
+	int nPhysicsSubsteps = 4;
 
 	TrackingController* trackingController = NULL;
 	PlaybackController* playbackController = NULL;

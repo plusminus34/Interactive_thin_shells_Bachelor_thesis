@@ -164,10 +164,12 @@ void SimulationWindow::setPerturbationForceFromMouseInput(double xPos, double yP
 }
 
 void SimulationWindow::doPhysicsStep(double simStep) {
-	activeController->applyControlSignals(simStep);
-	rbEngine->applyForceTo(robot->root, perturbationForce * forceScale, P3D());
-	rbEngine->step(simStep);
-	robot->bFrame->updateStateInformation();
+	for (int i = 0; i < nPhysicsSubsteps; i++) {
+		activeController->applyControlSignals(simStep / nPhysicsSubsteps);
+		rbEngine->applyForceTo(robot->root, perturbationForce * forceScale, P3D());
+		rbEngine->step(simStep / nPhysicsSubsteps);
+		robot->bFrame->updateStateInformation();
+	}
 }
 
 void SimulationWindow::advanceSimulation(double dt) {
@@ -189,7 +191,6 @@ void SimulationWindow::advanceSimulation(double dt) {
 		while (simulationTime < dt) {
 			simulationTime += simTimeStep;
 			activeController->advanceInTime(simTimeStep);
-
 			activeController->computeControlSignals(simTimeStep);
 			doPhysicsStep(simTimeStep);
 		}

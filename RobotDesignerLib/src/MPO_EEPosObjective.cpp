@@ -79,9 +79,7 @@ double MPO_DefaultEEPosObjective::computeValue(const dVector& p) {
 
 	for (int j = 0; j < theMotionPlan->nSamplePoints; j++) {
 		double w = wMax;
-		//we want the end effector positions to not change at all in the beginning, and thereafter increasingly a bit more, but only if needed...
-		double h = theMotionPlan->motionPlanDuration * j / (theMotionPlan->nSamplePoints - 1);
-		if (h > 0.05) w = 1;
+		if (j > 0) w = 1;
 		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); i++) {
 			V3D error = theMotionPlan->endEffectorTrajectories[i].targetEEPos[j] - theMotionPlan->endEffectorTrajectories[i].EEPos[j];
 
@@ -103,9 +101,8 @@ void MPO_DefaultEEPosObjective::addGradientTo(dVector& grad, const dVector& p) {
 
 	for (int j = 0; j < theMotionPlan->nSamplePoints; j++) {
 		double w = wMax;
-		//we want the end effector positions to not change at all in the beginning, and thereafter increasingly a bit more, but only if needed...
-		double h = theMotionPlan->motionPlanDuration * j / (theMotionPlan->nSamplePoints - 1);
-		if (h > 0.05) w = 1;
+		if (j > 0) w = 1;
+
 		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); i++) {
 			int idx = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
 			V3D error = theMotionPlan->endEffectorTrajectories[i].targetEEPos[j] - theMotionPlan->endEffectorTrajectories[i].EEPos[j];
@@ -127,9 +124,8 @@ void MPO_DefaultEEPosObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hess
 	double wMax = 10000;
 	for (int j = 0; j < theMotionPlan->nSamplePoints; j++) {
 		double w = wMax;
-		//we want the end effector positions to not change at all in the beginning, and thereafter increasingly a bit more, but only if needed...
-		double h = theMotionPlan->motionPlanDuration * j / (theMotionPlan->nSamplePoints - 1);
-		if (h > 0.05) w = 1;
+		if (j > 0) w = 1;
+
 		for (uint i = 0; i < theMotionPlan->endEffectorTrajectories.size(); i++) {
 			int idx = theMotionPlan->feetPositionsParamsStartIndex + j * nLimbs * 3 + i * 3;
 			ADD_HES_ELEMENT(hessianEntries, idx + 0, idx + 0, 1, weight*w);

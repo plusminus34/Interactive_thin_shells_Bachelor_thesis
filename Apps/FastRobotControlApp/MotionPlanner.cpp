@@ -110,8 +110,9 @@ void MotionPlanner::preplan(RobotState* currentRobotState) {
 					worldEEPos.setComponentAlong(Globals::worldUp, 0);
 
 					//now, to this stepping location add a feedback term
-//					V3D velError = ;
-//					V3D feedbackTerm = 
+//					V3D vErr = currentVelocity - plannedVelocity;
+//					vErr.y() = 0;
+//					V3D steppingOffset =  vErr * sqrt(currentHeight / fabs(Globals::g));
 
 					prePlanEETrajectories[eeIndex].addKnot(stancePhaseStart, worldEEPos);
 					prePlanEETrajectories[eeIndex].addKnot(stancePhaseEnd, worldEEPos);

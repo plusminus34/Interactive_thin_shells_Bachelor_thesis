@@ -2,7 +2,7 @@
 
 #include <ControlLib/Robot.h>
 #include <RobotDesignerLib/LocomotionEngineMotionPlan.h>
-#include <RobotDesignerLib/MOPTQPTrackingController.h>
+#include "SimpleMOPTTrackingController.h"
 #include <RobotDesignerLib/RobotController.h>
 
 class TrackingController : public RobotController {
@@ -23,7 +23,7 @@ public:
 		controller->doDebug = doDebug;
 	}
 
-	MOPTQPTrackingController* controller = NULL;
+	SimpleMOPTTrackingController* controller = NULL;
 
 public:
 
