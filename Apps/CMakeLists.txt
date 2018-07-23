@@ -27,12 +27,7 @@ add_subdirectory(PhysicalRobotControlApp)
 add_subdirectory(BenderApp)
 add_subdirectory(Plush)
 add_subdirectory(PlotExampleApp)
-<<<<<<< HEAD
 add_subdirectory(Paper2DApp)
 add_subdirectory(Paper3DApp)
-=======
 add_subdirectory(CompliantRobotDesignApp)
 add_subdirectory(KineSimApp)
-
-
->>>>>>> b2910e5d17d3c5b2eff794bf3d2c183e13ef7b15
