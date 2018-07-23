@@ -210,6 +210,13 @@ public:
 		return root;
 	}
 
+	inline void draw(int flags) {
+		//draw the robot configuration...
+		getRoot()->draw(flags);
+		for (int i = 0; i<getJointCount(); i++)
+			getJoint(i)->child->draw(flags);
+	}
+
 	double getMass(){
 		return mass;
 	}
@@ -239,6 +246,16 @@ private:
 
 public:
 	~RobotState() {
+	}
+
+	RobotState(const RobotState& other) {
+		rootQ = other.rootQ;
+		rootPos = other.rootPos;
+		rootVel = other.rootVel;
+		rootAngVel = other.rootAngVel;
+		headingAxis = other.headingAxis;
+		joints = other.joints;
+		auxiliaryJoints = other.auxiliaryJoints;
 	}
 
 	RobotState(int jCount = 0, int aJCount = 0){

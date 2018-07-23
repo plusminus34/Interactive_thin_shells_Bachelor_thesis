@@ -18,13 +18,13 @@ double MPO_COMOrientationFluctuationRegularizer::computeValue(const dVector& s) 
 	if (theMotionPlan->wrapAroundBoundaryIndex >= 0) {		
 		double val = 0;
 		for (int j = 0; j < theMotionPlan->nSamplePoints-1; j++) {
-			V3D orientationJplus(theMotionPlan->COMTrajectory.orientation[0][j + 1], theMotionPlan->COMTrajectory.orientation[1][j + 1], theMotionPlan->COMTrajectory.orientation[2][j + 1]);
-			V3D orientationJ(theMotionPlan->COMTrajectory.orientation[0][j], theMotionPlan->COMTrajectory.orientation[1][j], theMotionPlan->COMTrajectory.orientation[2][j]);
+			V3D orientationJplus(theMotionPlan->bodyTrajectory.orientation[0][j + 1], theMotionPlan->bodyTrajectory.orientation[1][j + 1], theMotionPlan->bodyTrajectory.orientation[2][j + 1]);
+			V3D orientationJ(theMotionPlan->bodyTrajectory.orientation[0][j], theMotionPlan->bodyTrajectory.orientation[1][j], theMotionPlan->bodyTrajectory.orientation[2][j]);
 			V3D diff = orientationJplus - orientationJ;
 			val += diff.length2();
 		}
-		V3D orientationStart(theMotionPlan->COMTrajectory.orientation[0][0], theMotionPlan->COMTrajectory.orientation[1][0], theMotionPlan->COMTrajectory.orientation[2][0]);
-		V3D orientationEnd(theMotionPlan->COMTrajectory.orientation[0][theMotionPlan->nSamplePoints - 1], theMotionPlan->COMTrajectory.orientation[1][theMotionPlan->nSamplePoints - 1], theMotionPlan->COMTrajectory.orientation[2][theMotionPlan->nSamplePoints - 1]);
+		V3D orientationStart(theMotionPlan->bodyTrajectory.orientation[0][0], theMotionPlan->bodyTrajectory.orientation[1][0], theMotionPlan->bodyTrajectory.orientation[2][0]);
+		V3D orientationEnd(theMotionPlan->bodyTrajectory.orientation[0][theMotionPlan->nSamplePoints - 1], theMotionPlan->bodyTrajectory.orientation[1][theMotionPlan->nSamplePoints - 1], theMotionPlan->bodyTrajectory.orientation[2][theMotionPlan->nSamplePoints - 1]);
 		V3D diff = orientationStart - orientationEnd;
 		val += diff.length2();
 		return val * weight;
@@ -40,17 +40,17 @@ void MPO_COMOrientationFluctuationRegularizer::addGradientTo(dVector& grad, cons
 		for (int j = 0; j < theMotionPlan->nSamplePoints; j++) {
 
 			V3D gradient;
-			V3D orientationJplus(theMotionPlan->COMTrajectory.orientation[0][j + 1], theMotionPlan->COMTrajectory.orientation[1][j + 1], theMotionPlan->COMTrajectory.orientation[2][j + 1]);
-			V3D orientationJ(theMotionPlan->COMTrajectory.orientation[0][j], theMotionPlan->COMTrajectory.orientation[1][j], theMotionPlan->COMTrajectory.orientation[2][j]);
-			V3D orientationJminus(theMotionPlan->COMTrajectory.orientation[0][j - 1], theMotionPlan->COMTrajectory.orientation[1][j - 1], theMotionPlan->COMTrajectory.orientation[2][j - 1]);
+			V3D orientationJplus(theMotionPlan->bodyTrajectory.orientation[0][j + 1], theMotionPlan->bodyTrajectory.orientation[1][j + 1], theMotionPlan->bodyTrajectory.orientation[2][j + 1]);
+			V3D orientationJ(theMotionPlan->bodyTrajectory.orientation[0][j], theMotionPlan->bodyTrajectory.orientation[1][j], theMotionPlan->bodyTrajectory.orientation[2][j]);
+			V3D orientationJminus(theMotionPlan->bodyTrajectory.orientation[0][j - 1], theMotionPlan->bodyTrajectory.orientation[1][j - 1], theMotionPlan->bodyTrajectory.orientation[2][j - 1]);
 
 			if (j == 0) {
 				int endIndex = theMotionPlan->nSamplePoints-1;
-				V3D orientationJend(theMotionPlan->COMTrajectory.orientation[0][endIndex], theMotionPlan->COMTrajectory.orientation[1][endIndex], theMotionPlan->COMTrajectory.orientation[2][endIndex]);
+				V3D orientationJend(theMotionPlan->bodyTrajectory.orientation[0][endIndex], theMotionPlan->bodyTrajectory.orientation[1][endIndex], theMotionPlan->bodyTrajectory.orientation[2][endIndex]);
 				gradient = (orientationJ * 2 - orientationJplus - orientationJend) * 2;
 			}
 			else if (j == theMotionPlan->nSamplePoints - 1) {
-				V3D orientationJstart(theMotionPlan->COMTrajectory.orientation[0][0], theMotionPlan->COMTrajectory.orientation[1][0], theMotionPlan->COMTrajectory.orientation[2][0]);
+				V3D orientationJstart(theMotionPlan->bodyTrajectory.orientation[0][0], theMotionPlan->bodyTrajectory.orientation[1][0], theMotionPlan->bodyTrajectory.orientation[2][0]);
 				gradient = (orientationJ * 2 - orientationJminus - orientationJstart) * 2;
 			}
 			else {

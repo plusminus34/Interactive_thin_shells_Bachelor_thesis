@@ -46,6 +46,10 @@ void drawCone(P3D org, V3D v, double r, int nrPoints = 6);
 // draws an arrow from start to end
 void drawArrow(const P3D& start, const P3D& end, double r, int nPoints = 6);
 
+inline void drawArrow(const P3D& start, const V3D& dir, double r, int nPoints = 6) {
+	drawArrow(start, start + dir, r, nPoints);
+}
+
 // draw an axis-aligned box defined by the two corner points
 void drawBox(const P3D& min, const P3D& max);
 

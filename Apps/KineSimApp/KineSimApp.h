@@ -3,29 +3,32 @@
 #include <GUILib/GLApplication.h>
 #include <string>
 #include <map>
+#include <GUILib/TranslateWidget.h>
+
+#include <KineSimLib/KS_MechanicalAssembly.h>
+#include <KineSimLib/KS_UIMechanismController.h>
+
 
 /**
- * Test App
+ * Test App for Kinematic 3D simulations
  */
-class PDEsApp : public GLApplication {
+class KineSimApp : public GLApplication {
 private:
+	KS_MechanicalAssembly * mech1 = NULL;
+	KS_UIMechanismController* uiController = NULL;
+	KS_IKMechanismController* ikController = NULL;
+	bool checkDerivatives = false;
+	bool uiControl = false, ikControl = false;
+	double simTimeStep = 1;
+	bool logState = false;
 
-	Ray lastClickedRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
-	Ray currentRay = Ray(P3D(0, 0, 0), V3D(0, 0, 1));
 
-	bool isDrawing = false;
-
-	enum RUN_OPTIONS {
-		HEAT_DIFFUSION_EQUATION = 0,
-		WAVE_EQUATION,
-	};
-	RUN_OPTIONS runOption = HEAT_DIFFUSION_EQUATION;
 
 public:
 	// constructor
-	PDEsApp();
+	KineSimApp();
 	// destructor
-	virtual ~PDEsApp(void);
+	virtual ~KineSimApp(void);
 	// Run the App tasks
 	virtual void process();
 	// Draw the App scene - camera transformations, lighting, shadows, reflections, etc apply to everything drawn by this method
@@ -34,7 +37,6 @@ public:
 	virtual void drawAuxiliarySceneInfo();
 	// Restart the application.
 	virtual void restart();
-
 
 	//input callbacks...
 
@@ -51,12 +53,9 @@ public:
 	virtual bool onMouseWheelScrollEvent(double xOffset, double yOffset);
 
 	virtual bool processCommandLine(const std::string& cmdLine);
-
-	double getColorFor(double val);
 	
 	virtual void saveFile(const char* fName);
 	virtual void loadFile(const char* fName);
-
 };
 
 

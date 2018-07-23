@@ -76,13 +76,13 @@ double MPO_COMTrajectoryObjective::computeValue(const dVector& s) {
 
 	double retVal = 0;
 
-	V3D errV = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeIndex2) - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeIndex1);
+	V3D errV = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(timeIndex2) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(timeIndex1);
 	retVal += 0.5 * errV.length2();
 
 	//we also want the COM, on average, to not move much...
 	P3D avgCOMPos;
 	for (int i = 0; i < theMotionPlan->nSamplePoints; i++)
-		avgCOMPos += theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(i) / theMotionPlan->nSamplePoints;
+		avgCOMPos += theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(i) / theMotionPlan->nSamplePoints;
 	V3D comPosErr(theMotionPlan->defaultCOMPosition, avgCOMPos);
 
 	retVal += 0.5 * comPosErr.length2();
@@ -97,7 +97,7 @@ void MPO_COMTrajectoryObjective::addGradientTo(dVector& grad, const dVector& p) 
 
 	//and now compute the gradient with respect to the robot q's
 	if (theMotionPlan->COMPositionsParamsStartIndex >= 0) {
-		V3D errV = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeIndex2) - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeIndex1);
+		V3D errV = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(timeIndex2) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(timeIndex1);
 		for (int i = 0; i < 3;i++){
 			grad[theMotionPlan->COMPositionsParamsStartIndex + 3 * timeIndex2 + i] += errV[i] * weight;
 			grad[theMotionPlan->COMPositionsParamsStartIndex + 3 * timeIndex1 + i] -= errV[i] * weight;
@@ -105,7 +105,7 @@ void MPO_COMTrajectoryObjective::addGradientTo(dVector& grad, const dVector& p) 
 
 		P3D avgCOMPos;
 		for (int i = 0; i < theMotionPlan->nSamplePoints; i++)
-			avgCOMPos += theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(i) / theMotionPlan->nSamplePoints;
+			avgCOMPos += theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(i) / theMotionPlan->nSamplePoints;
 		V3D comPosErr(theMotionPlan->defaultCOMPosition, avgCOMPos);
 
 		for (int j = 0; j < 3; j++)

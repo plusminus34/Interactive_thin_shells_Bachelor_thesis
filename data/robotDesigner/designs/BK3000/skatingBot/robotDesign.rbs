@@ -1,0 +1,799 @@
+RigidBody
+	name rb0
+	mass 0.368000
+	moi 0.003543 0.003699 0.000237 0.000000 0.000000 0.000000
+	position 0.000000 0.3 -0.000098
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 1.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/BodyMesh.obj
+	mesh ../data/robotDesigner/meshes/3DP-smallMotorPlate.obj
+	mesh ../out/LivingConnectorMesh1.obj
+	mesh ../out/LivingBracketMesh2.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	mesh ../data/robotDesigner/meshes/3DP-smallMotorPlate.obj
+	mesh ../out/LivingConnectorMesh16.obj
+	mesh ../out/LivingBracketMesh17.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	mesh ../data/robotDesigner/meshes/3DP-smallMotorPlate.obj
+	mesh ../out/LivingConnectorMesh31.obj
+	mesh ../out/LivingBracketMesh32.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	mesh ../data/robotDesigner/meshes/3DP-smallMotorPlate.obj
+	mesh ../out/LivingConnectorMesh46.obj
+	mesh ../out/LivingBracketMesh47.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.000000 0.002646 0.000098
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.014350 0.002646 0.096945
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.020541 -0.000323 0.096945
+	meshTransformation -0.500000 0.500000 0.500000 0.500000 -0.046732 -0.000792 0.096945
+	meshTransformation -0.500000 0.500000 0.500000 0.500000 -0.046732 -0.000792 0.096945
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.014350 0.002646 0.096945
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.020541 -0.000323 0.096945
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 0.046732 -0.000792 0.096945
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 0.046732 -0.000792 0.096945
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.014350 0.002646 -0.096945
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.020541 -0.000323 -0.096945
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 0.046732 -0.000792 -0.096945
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 0.046732 -0.000792 -0.096945
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.014350 0.002646 -0.096945
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.020541 -0.000323 -0.096945
+	meshTransformation -0.500000 0.500000 0.500000 0.500000 -0.046732 -0.000792 -0.096945
+	meshTransformation -0.500000 0.500000 0.500000 0.500000 -0.046732 -0.000792 -0.096945
+	mappingInfo -1 -1
+	CDP Box -0.071732 -0.025792 -0.121945 0.071732 0.024208 0.121945
+/End
+
+
+RigidBody
+	name rb1
+	mass 0.246000
+	moi 0.000075 0.000112 0.000127 -0.000010 -0.000000 -0.000000
+	position -0.067156 -0.006189 0.096847
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	mesh ../out/LivingConnectorMesh3.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation -0.500000 0.500000 0.500000 0.500000 0.020424 0.002751 0.000000
+	meshTransformation -0.500000 0.500000 0.500000 0.500000 0.020424 0.002751 0.000000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.008000 0.008000 -0.000000
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 -0.012424 -0.010751 -0.000000
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 -0.012424 -0.010751 -0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb2
+	mass 0.082000
+	moi 0.000020 0.000020 0.000020 0.000000 0.000000 0.000000
+	position -0.079580 -0.053936 0.096847
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/LivingBracketMesh4.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	mesh ../out/LivingConnectorMesh5.obj
+	mesh ../out/LivingBracketMesh6.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 0.000000 0.036997 0.000000
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 0.000000 0.036997 0.000000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.000000 0.000000 -0.000000
+	meshTransformation 0.707106 0.000000 -0.707107 0.000000 0.000000 -0.036997 0.000000
+	meshTransformation 0.707106 0.000000 -0.707107 0.000000 0.000000 -0.036997 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb3
+	mass 0.246000
+	moi 0.000355 0.000060 0.000355 0.000000 -0.000000 0.000000
+	position -0.079580 -0.133318 0.096847
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	mesh ../out/LivingConnectorMesh7.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation 0.707106 0.000000 -0.707107 0.000000 -0.000000 0.042386 -0.000000
+	meshTransformation 0.707106 0.000000 -0.707107 0.000000 -0.000000 0.042386 -0.000000
+	meshTransformation 0.976296 0.216440 0.000000 0.000000 0.000000 0.000000 -0.000000
+	meshTransformation -0.000000 0.707106 0.000000 0.707107 0.000000 -0.042386 0.000000
+	meshTransformation -0.000000 0.707106 0.000000 0.707107 0.000000 -0.042386 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb4
+	mass 0.460000
+	moi 0.000492 0.000477 0.000134 -0.000000 0.000000 -0.000001
+	position -0.079580 -0.215074 0.096010
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/LivingBracketMesh8.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	mesh ../out/LivingConnectorMesh9.obj
+	mesh ../out/LivingConnectorMesh10.obj
+	mesh ../out/LivingConnectorMesh11.obj
+	mesh ../out/LivingWheelEEMesh13.obj
+	mesh ../out/LivingConnectorMesh12.obj
+	mesh ../out/LivingWheelEEMesh14.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshTransformation -0.000000 0.707106 0.000000 0.707107 0.000000 0.039369 0.000838
+	meshTransformation -0.000000 0.707106 0.000000 0.707107 0.000000 0.039369 0.000838
+	meshTransformation 1.000000 0.000000 0.000000 -0.000000 0.000000 0.011869 0.000838
+	meshTransformation -0.000000 0.707107 -0.000000 0.707107 0.000000 -0.003131 0.000838
+	meshTransformation 1.000000 0.000000 0.000000 -0.000000 0.000000 -0.002704 0.023875
+	meshTransformation -0.000000 0.707107 0.707107 -0.000000 -0.000000 -0.002276 0.039412
+	meshTransformation 1.000000 0.000000 0.000000 -0.000000 0.000000 -0.002704 -0.023766
+	meshTransformation 0.707106 0.000000 0.000000 0.707107 -0.000000 -0.002276 -0.040870
+	endEffector -0.000000 -0.002276 0.039412 0.030000 2 -1.000000 0.000000 0.000000 5
+	endEffector -0.000000 -0.002276 -0.040870 0.030000 2 1.000000 0.000001 -0.000000 7
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb5
+	mass 0.246000
+	moi 0.000075 0.000112 0.000127 0.000010 0.000000 -0.000000
+	position 0.067156 -0.006189 0.096847
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	mesh ../out/LivingConnectorMesh18.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 -0.020424 0.002751 0.000000
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 -0.020424 0.002751 0.000000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.008000 0.008000 -0.000000
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 0.012424 -0.010751 -0.000000
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 0.012424 -0.010751 -0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb6
+	mass 0.082000
+	moi 0.000020 0.000020 0.000020 0.000000 0.000000 0.000000
+	position 0.079580 -0.053936 0.096847
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/LivingBracketMesh19.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	mesh ../out/LivingConnectorMesh20.obj
+	mesh ../out/LivingBracketMesh21.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 -0.000000 0.036997 0.000000
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 -0.000000 0.036997 0.000000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.000000 0.000000 -0.000000
+	meshTransformation 0.707106 0.000000 0.707107 -0.000000 -0.000000 -0.036997 0.000000
+	meshTransformation 0.707106 0.000000 0.707107 -0.000000 -0.000000 -0.036997 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb7
+	mass 0.246000
+	moi 0.000355 0.000060 0.000355 -0.000000 0.000000 0.000000
+	position 0.079580 -0.133318 0.096847
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	mesh ../out/LivingConnectorMesh22.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation 0.707106 0.000000 0.707107 -0.000000 0.000000 0.042386 -0.000000
+	meshTransformation 0.707106 0.000000 0.707107 -0.000000 0.000000 0.042386 -0.000000
+	meshTransformation 0.976296 0.216440 -0.000000 -0.000000 -0.000000 0.000000 -0.000000
+	meshTransformation 0.000000 -0.707106 0.000000 0.707107 -0.000000 -0.042386 0.000000
+	meshTransformation 0.000000 -0.707106 0.000000 0.707107 -0.000000 -0.042386 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb8
+	mass 0.460000
+	moi 0.000492 0.000477 0.000134 0.000000 0.000000 -0.000001
+	position 0.079580 -0.214752 0.096010
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/LivingBracketMesh23.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	mesh ../out/LivingConnectorMesh24.obj
+	mesh ../out/LivingConnectorMesh25.obj
+	mesh ../out/LivingConnectorMesh26.obj
+	mesh ../out/LivingWheelEEMesh27.obj
+	mesh ../out/LivingConnectorMesh28.obj
+	mesh ../out/LivingWheelEEMesh29.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshTransformation 0.000000 -0.707106 0.000000 0.707107 0.000000 0.039047 0.000838
+	meshTransformation 0.000000 -0.707106 0.000000 0.707107 0.000000 0.039047 0.000838
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 -0.000000 0.011975 0.000838
+	meshTransformation 0.500000 -0.500000 0.500000 -0.500000 0.000000 -0.002598 0.000838
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 -0.000000 -0.002598 0.023875
+	meshTransformation -0.000000 0.707107 -0.707107 0.000000 -0.000000 -0.002598 0.039412
+	meshTransformation 1.000000 0.000000 -0.000000 0.000000 0.000000 -0.002598 -0.023766
+	meshTransformation 0.707106 0.000000 -0.000000 -0.707107 0.000000 -0.002598 -0.040870
+	endEffector -0.000000 -0.002598 0.039412 0.030000 2 1.000000 0.000000 0.000000 5
+	endEffector 0.000000 -0.002598 -0.040870 0.030000 2 -1.000000 0.000001 -0.000000 7
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb9
+	mass 0.246000
+	moi 0.000075 0.000112 0.000127 0.000010 0.000000 -0.000000
+	position 0.067156 -0.006188 -0.097043
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	mesh ../out/LivingConnectorMesh33.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 -0.020424 0.002750 0.000000
+	meshTransformation 0.500000 -0.500000 0.500000 0.500000 -0.020424 0.002750 0.000000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.008000 0.008000 0.000000
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 0.012424 -0.010750 0.000000
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 0.012424 -0.010750 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb10
+	mass 0.082000
+	moi 0.000020 0.000020 0.000020 0.000000 0.000000 0.000000
+	position 0.079580 -0.053936 -0.097043
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/LivingBracketMesh34.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	mesh ../out/LivingConnectorMesh35.obj
+	mesh ../out/LivingBracketMesh36.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 0.000000 0.036997 -0.000000
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 0.000000 0.036997 -0.000000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000
+	meshTransformation 0.707106 -0.000000 0.707107 0.000000 0.000000 -0.036997 -0.000000
+	meshTransformation 0.707106 -0.000000 0.707107 0.000000 0.000000 -0.036997 -0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb11
+	mass 0.246000
+	moi 0.000355 0.000060 0.000355 0.000000 -0.000000 0.000000
+	position 0.079580 -0.133318 -0.097043
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	mesh ../out/LivingConnectorMesh37.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation 0.707106 -0.000000 0.707107 0.000000 -0.000000 0.042386 -0.000000
+	meshTransformation 0.707106 -0.000000 0.707107 0.000000 -0.000000 0.042386 -0.000000
+	meshTransformation 0.976296 -0.216440 -0.000000 0.000000 0.000000 0.000000 0.000000
+	meshTransformation -0.000000 -0.707106 -0.000000 0.707107 0.000000 -0.042386 0.000000
+	meshTransformation -0.000000 -0.707106 -0.000000 0.707107 0.000000 -0.042386 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb12
+	mass 0.460000
+	moi 0.000492 0.000477 0.000134 -0.000000 0.000000 -0.000001
+	position 0.079580 -0.214752 -0.097881
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/LivingBracketMesh38.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	mesh ../out/LivingConnectorMesh39.obj
+	mesh ../out/LivingConnectorMesh40.obj
+	mesh ../out/LivingConnectorMesh41.obj
+	mesh ../out/LivingWheelEEMesh42.obj
+	mesh ../out/LivingConnectorMesh43.obj
+	mesh ../out/LivingWheelEEMesh44.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshTransformation -0.000000 -0.707106 -0.000000 0.707107 -0.000000 0.039047 0.000838
+	meshTransformation -0.000000 -0.707106 -0.000000 0.707107 -0.000000 0.039047 0.000838
+	meshTransformation 1.000000 -0.000000 -0.000000 -0.000000 0.000000 0.011975 0.000838
+	meshTransformation 0.500000 -0.500000 0.500000 -0.500000 -0.000000 -0.002598 0.000838
+	meshTransformation 1.000000 -0.000000 -0.000000 -0.000000 -0.000000 -0.002598 0.023875
+	meshTransformation 0.000000 -0.707107 0.707107 -0.000000 -0.000000 -0.002598 0.039412
+	meshTransformation 1.000000 -0.000000 -0.000000 -0.000000 0.000000 -0.002598 -0.023766
+	meshTransformation 0.707106 0.000000 -0.000000 -0.707107 0.000000 -0.002598 -0.040870
+	endEffector -0.000000 -0.002598 0.039412 0.030000 2 1.000000 -0.000000 0.000000 5
+	endEffector 0.000000 -0.002598 -0.040870 0.030000 2 -1.000000 0.000001 -0.000000 7
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb13
+	mass 0.246000
+	moi 0.000075 0.000112 0.000127 -0.000010 -0.000000 -0.000000
+	position -0.067156 -0.006188 -0.097043
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	mesh ../out/LivingConnectorMesh48.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation -0.500000 0.500000 0.500000 0.500000 0.020424 0.002750 0.000000
+	meshTransformation -0.500000 0.500000 0.500000 0.500000 0.020424 0.002750 0.000000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 -0.008000 0.008000 0.000000
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 -0.012424 -0.010750 0.000000
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 -0.012424 -0.010750 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb14
+	mass 0.082000
+	moi 0.000020 0.000020 0.000020 0.000000 0.000000 0.000000
+	position -0.079580 -0.053936 -0.097043
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/LivingBracketMesh49.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	mesh ../out/LivingConnectorMesh50.obj
+	mesh ../out/LivingBracketMesh51.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 -0.000000 0.036997 -0.000000
+	meshTransformation 0.000000 1.000000 0.000000 0.000000 -0.000000 0.036997 -0.000000
+	meshTransformation 1.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000
+	meshTransformation 0.707106 -0.000000 -0.707107 -0.000000 -0.000000 -0.036997 -0.000000
+	meshTransformation 0.707106 -0.000000 -0.707107 -0.000000 -0.000000 -0.036997 -0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb15
+	mass 0.246000
+	moi 0.000355 0.000060 0.000355 -0.000000 0.000000 0.000000
+	position -0.079580 -0.133318 -0.097043
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	mesh ../out/LivingConnectorMesh52.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_parent.obj
+	mesh ../data/robotDesigner/meshes/BK3002_bodyBracket_d.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription motor
+	meshDescription motor
+	meshTransformation 0.707106 -0.000000 -0.707107 -0.000000 0.000000 0.042386 -0.000000
+	meshTransformation 0.707106 -0.000000 -0.707107 -0.000000 0.000000 0.042386 -0.000000
+	meshTransformation 0.976296 -0.216440 0.000000 -0.000000 -0.000000 0.000000 0.000000
+	meshTransformation 0.000000 0.707106 -0.000000 0.707107 -0.000000 -0.042386 0.000000
+	meshTransformation 0.000000 0.707106 -0.000000 0.707107 -0.000000 -0.042386 0.000000
+	mappingInfo -1 -1
+/End
+
+
+RigidBody
+	name rb16
+	mass 0.460000
+	moi 0.000492 0.000477 0.000134 0.000000 0.000000 -0.000001
+	position -0.079580 -0.215073 -0.097881
+	orientation 0.000000 0.000000 0.000000 0.000000
+	velocity 0.000000 0.000000 0.000000
+	angularVelocity 0.000000 0.000000 0.000000
+	frictionCoefficient 0.800000
+	restitutionCoefficient 0.200000
+	thickness 0.030000
+	mesh ../out/LivingBracketMesh53.obj
+	mesh ../data/robotDesigner/meshes/TGY306G_child.obj
+	mesh ../out/LivingConnectorMesh54.obj
+	mesh ../out/LivingConnectorMesh55.obj
+	mesh ../out/LivingConnectorMesh56.obj
+	mesh ../out/LivingWheelEEMesh58.obj
+	mesh ../out/LivingConnectorMesh57.obj
+	mesh ../out/LivingWheelEEMesh59.obj
+	meshDescription motor
+	meshDescription motor
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshDescription skeleton
+	meshTransformation 0.000000 0.707106 -0.000000 0.707107 -0.000000 0.039369 0.000838
+	meshTransformation 0.000000 0.707106 -0.000000 0.707107 -0.000000 0.039369 0.000838
+	meshTransformation 1.000000 -0.000000 0.000000 0.000000 -0.000000 0.011869 0.000838
+	meshTransformation 0.000000 0.707107 0.000000 0.707107 -0.000000 -0.003131 0.000838
+	meshTransformation 1.000000 -0.000000 0.000000 0.000000 -0.000000 -0.002704 0.023875
+	meshTransformation -0.000000 0.707107 0.707107 -0.000000 0.000000 -0.002276 0.039412
+	meshTransformation 1.000000 -0.000000 0.000000 0.000000 0.000000 -0.002704 -0.023766
+	meshTransformation 0.707106 0.000000 0.000000 0.707107 0.000000 -0.002276 -0.040870
+	endEffector 0.000000 -0.002276 0.039412 0.030000 2 -1.000000 -0.000000 0.000000 5
+	endEffector 0.000000 -0.002276 -0.040870 0.030000 2 1.000000 0.000001 -0.000000 7
+	mappingInfo -1 -1
+/End
+
+
+	hingeJoint
+		jointAxes 0.000000 1.000000 0.000000
+		motorID -1
+		defaultAngle -0.000000
+		mappingInfo 0 2
+		name rb0_rb1
+		parent rb0
+		child rb1
+		jointCPos 0.020424 0.002751 0.000000
+		jointPPos -0.046732 -0.000792 0.096945
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 0.000000 -1.000000
+		motorID -1
+		defaultAngle 0.000000
+		mappingInfo 0 4
+		name rb1_rb2
+		parent rb1
+		child rb2
+		jointCPos 0.000000 0.036997 0.000000
+		jointPPos -0.012424 -0.010751 -0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes -1.000000 -0.000000 -0.000001
+		motorID -1
+		defaultAngle 0.436332
+		mappingInfo 0 6
+		name rb2_rb3
+		parent rb2
+		child rb3
+		jointCPos -0.000000 0.042386 -0.000000
+		jointPPos 0.000000 -0.036997 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 1.000000 0.000000 0.000001
+		motorID -1
+		defaultAngle 0.436332
+		mappingInfo 0 8
+		name rb3_rb4
+		parent rb3
+		child rb4
+		jointCPos 0.000000 0.039369 0.000838
+		jointPPos 0.000000 -0.042386 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 1.000000 0.000000
+		motorID -1
+		defaultAngle -0.000000
+		mappingInfo 1 2
+		name rb0_rb5
+		parent rb0
+		child rb5
+		jointCPos -0.020424 0.002751 0.000000
+		jointPPos 0.046732 -0.000792 0.096945
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 0.000000 -1.000000
+		motorID -1
+		defaultAngle 0.000000
+		mappingInfo 1 4
+		name rb5_rb6
+		parent rb5
+		child rb6
+		jointCPos -0.000000 0.036997 0.000000
+		jointPPos 0.012424 -0.010751 -0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 1.000000 -0.000000 -0.000001
+		motorID -1
+		defaultAngle -0.436332
+		mappingInfo 1 6
+		name rb6_rb7
+		parent rb6
+		child rb7
+		jointCPos 0.000000 0.042386 -0.000000
+		jointPPos -0.000000 -0.036997 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes -1.000000 0.000000 0.000001
+		motorID -1
+		defaultAngle -0.436332
+		mappingInfo 1 8
+		name rb7_rb8
+		parent rb7
+		child rb8
+		jointCPos 0.000000 0.039047 0.000838
+		jointPPos -0.000000 -0.042386 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 1.000000 0.000000
+		motorID -1
+		defaultAngle -0.000000
+		mappingInfo 2 2
+		name rb0_rb9
+		parent rb0
+		child rb9
+		jointCPos -0.020424 0.002750 0.000000
+		jointPPos 0.046732 -0.000792 -0.096945
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 0.000000 -1.000000
+		motorID -1
+		defaultAngle 0.000000
+		mappingInfo 2 4
+		name rb9_rb10
+		parent rb9
+		child rb10
+		jointCPos 0.000000 0.036997 -0.000000
+		jointPPos 0.012424 -0.010750 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 1.000000 0.000000 -0.000001
+		motorID -1
+		defaultAngle 0.436332
+		mappingInfo 2 6
+		name rb10_rb11
+		parent rb10
+		child rb11
+		jointCPos -0.000000 0.042386 -0.000000
+		jointPPos 0.000000 -0.036997 -0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes -1.000000 -0.000000 0.000001
+		motorID -1
+		defaultAngle 0.436332
+		mappingInfo 2 8
+		name rb11_rb12
+		parent rb11
+		child rb12
+		jointCPos -0.000000 0.039047 0.000838
+		jointPPos 0.000000 -0.042386 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 1.000000 0.000000
+		motorID -1
+		defaultAngle -0.000000
+		mappingInfo 3 2
+		name rb0_rb13
+		parent rb0
+		child rb13
+		jointCPos 0.020424 0.002750 0.000000
+		jointPPos -0.046732 -0.000792 -0.096945
+	/Joint
+
+
+	hingeJoint
+		jointAxes 0.000000 0.000000 -1.000000
+		motorID -1
+		defaultAngle 0.000000
+		mappingInfo 3 4
+		name rb13_rb14
+		parent rb13
+		child rb14
+		jointCPos -0.000000 0.036997 -0.000000
+		jointPPos -0.012424 -0.010750 0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes -1.000000 0.000000 -0.000001
+		motorID -1
+		defaultAngle -0.436332
+		mappingInfo 3 6
+		name rb14_rb15
+		parent rb14
+		child rb15
+		jointCPos 0.000000 0.042386 -0.000000
+		jointPPos -0.000000 -0.036997 -0.000000
+	/Joint
+
+
+	hingeJoint
+		jointAxes 1.000000 -0.000000 0.000001
+		motorID -1
+		defaultAngle -0.436332
+		mappingInfo 3 8
+		name rb15_rb16
+		parent rb15
+		child rb16
+		jointCPos -0.000000 0.039369 0.000838
+		jointPPos -0.000000 -0.042386 0.000000
+	/Joint
+
+

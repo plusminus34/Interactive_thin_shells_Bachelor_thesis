@@ -31,6 +31,7 @@ public:
 	// world coords of end effector position
 	// for a wheel, EEPos is the point of contact with the ground
 	DynamicArray<P3D> EEPos;
+	DynamicArray<P3D> targetEEPos;
 	DynamicArray<V3D> contactForce;
 	DynamicArray<double> contactFlag;
 	DynamicArray<double> EEWeights;
@@ -52,6 +53,9 @@ public:
 
 	RigidBody* endEffectorRB;
 	P3D endEffectorLocalCoords;
+
+	//stored in the coordinate frame of the root
+	V3D rootToEEOriginalOffset_local;
 
 	DynamicArray<double> targetEEPosY;
 
@@ -122,30 +126,42 @@ public:
 
 class LocomotionEngine_COMTrajectory{
 public:
+	LocomotionEngineMotionPlan* mp = NULL;
 
 	int nPoints;
 	dVector pos[3];
 	//orientation is stored as euler angles...
 	dVector orientation[3];
+
+	dVector desiredPos[3];
+	dVector desiredOrientation[3];
+
 	V3D axis[3];
 
+	//for non-periodic motions, we might sometimes want to account for the initial velocity
+	bool useInitialVelocities = false;
+	V3D initialLinearVelocity, initialAngularVelocity;
+
 public:
-	LocomotionEngine_COMTrajectory();
+	LocomotionEngine_COMTrajectory(LocomotionEngineMotionPlan* mp);
 
 	void initialize(int nPoints, const P3D& desComPos, const V3D& comRotationAngles, const V3D& axis_0, const V3D& axis_1, const V3D& axis_2);
 
 	V3D getAxis(int i);
 
-	//t is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
-	P3D getCOMPositionAt(double t);
-
-	P3D getCOMEulerAnglesAt(double t);
-
+	//p is assumed to be between 0 and 1, which is a normalized scale of the whole motion plan...
+	P3D getCOMPositionAt(double p);
+	P3D getCOMEulerAnglesAt(double p);
 	Quaternion getCOMOrientationAt(double t);
+	V3D getCOMVelocityAt(double p);
+	V3D getCOMAngularVelocityAt(double p);
 
 	P3D getCOMPositionAtTimeIndex(int j);
+	P3D getTargetCOMPositionAtTimeIndex(int j);
+
 
 	P3D getCOMEulerAnglesAtTimeIndex(int j);
+	P3D getTargetCOMEulerAnglesAtTimeIndex(int j);
 
 	Quaternion getCOMOrientationAtTimeIndex(int j);
 };
@@ -232,6 +248,7 @@ public:
 	double jointAngleLimit = PI / 4;
 	double EEminDistance = 0.02;
 	dVector initialRobotState;
+	RobotState initialRS;
 	
 	// Parameters for wheel motor speed constraint
 	double wheelSpeedLimit = 0;
@@ -298,7 +315,7 @@ public:
 
 public:
 	DynamicArray<LocomotionEngine_EndEffectorTrajectory> endEffectorTrajectories;
-	LocomotionEngine_COMTrajectory COMTrajectory;
+	LocomotionEngine_COMTrajectory bodyTrajectory;
 	LocomotionEngine_RobotStateTrajectory robotStateTrajectory;
 
 	Robot* robot;
@@ -340,6 +357,8 @@ public:
 	}
 
 	void readParamsFromFile(FILE* fp);
+
+	void setNumberOfSamplePoints(int n);
 
 	void readParamsFromFile(const char* fName);
 

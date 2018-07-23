@@ -30,7 +30,6 @@ public:
 	virtual void setDebugMode(bool doDebug) {}
 
 public:
-	double totalTime = 0;
 	double stridePhase = 0;
 	Robot *robot;
 	LocomotionEngineMotionPlan *motionPlan;

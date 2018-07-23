@@ -121,7 +121,7 @@ double V3D::getComponentAlong(const V3D& other) const {
 
 void V3D::setComponentAlong(const V3D& other, double val) {
 	double oldVal = getComponentAlong(other);
-	*this *= (val - oldVal);
+	*this += other*(val - oldVal);
 }
 
 void V3D::addOffsetToComponentAlong(const V3D& other, double offset) {

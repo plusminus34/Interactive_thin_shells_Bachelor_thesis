@@ -87,7 +87,7 @@ void MPO_DefaultRobotStateConstraint::addHessianEntriesTo(DynamicArray<MTriplet>
 
 		for (uint k = 0; k < dofs.size(); ++k) {
 			dofs[k].v->deriv().value() = 1.0;
-			for (int l = 0; l <= k; ++l) {
+			for (uint l = 0; l <= k; ++l) {
 				dofs[l].v->value().deriv() = 1.0;
 				ScalarDiffDiff energy = computeEnergy(qDefault, q);
 				ADD_HES_ELEMENT(hessianEntries,

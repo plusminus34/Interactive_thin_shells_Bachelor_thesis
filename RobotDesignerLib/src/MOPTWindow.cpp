@@ -5,7 +5,7 @@
 #include <RobotDesignerLib/LocomotionEngineManagerIP.h>
 #include "../Apps/RobotDesignerApp/RobotDesignerApp.h"
 
-MOPTWindow::MOPTWindow(int x, int y, int w, int h, RobotDesignerApp* theApp) : GLWindow3D(x, y, w, h) {
+MOPTWindow::MOPTWindow(int x, int y, int w, int h, BaseRobotControlApp* theApp) : GLWindow3D(x, y, w, h) {
 	this->theApp = theApp;
 
 	ffpViewer = new FootFallPatternViewer(x, 0, (int)(w), (int)(h / 4.0));
@@ -142,7 +142,7 @@ void MOPTWindow::addMenuItems() {
 	theApp->mainMenu->addVariable<bool>("Log data",
 		[this](bool val) {if (locomotionManager) locomotionManager->printDebugInfo = val; },
 		[this] { if (locomotionManager) return locomotionManager->printDebugInfo; else return false; });
-	theApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "IPv1", "IPv2" });
+	theApp->mainMenu->addVariable("Mopt Mode", optimizeOption, true)->setItems({ "GRFv1", "GRFv2", "GRFv3", "IPv1", "IPv2" });
 	
 	theApp->mainMenu->addVariable("Optimization method", moptParams.optimizationMethod, true)->setItems({ "Newton", "BFGS" });
 
@@ -299,6 +299,8 @@ LocomotionEngineManager* MOPTWindow::initializeNewMP(bool doWarmStart){
 		locomotionManager = new LocomotionEngineManagerGRFv1(robot, &footFallPattern, nTimeSteps + 1); break;
 	case GRF_OPT_V2:
 		locomotionManager = new LocomotionEngineManagerGRFv2(robot, &footFallPattern, nTimeSteps + 1, periodicMotion); break;
+	case GRF_OPT_V3:
+		locomotionManager = new LocomotionEngineManagerGRFv3(robot, &footFallPattern, nTimeSteps + 1); break;
 	case IP_OPT:
 		locomotionManager = new LocomotionEngineManagerIPv1(robot, &footFallPattern, nTimeSteps + 1); break;
 	case IP_OPT_V2:
@@ -415,8 +417,8 @@ void MOPTWindow::drawScene() {
 
 		int startIndex = locomotionManager->motionPlan->wrapAroundBoundaryIndex;
 		if (startIndex < 0)  startIndex = 0;
-		COMSpeed = locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(locomotionManager->motionPlan->nSamplePoints - 1) - 
-			       locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(startIndex);
+		COMSpeed = locomotionManager->motionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(locomotionManager->motionPlan->nSamplePoints - 1) - 
+			       locomotionManager->motionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(startIndex);
 			
 	}
 	for (auto widget : EEwidgets)
@@ -477,7 +479,7 @@ bool MOPTWindow::onKeyEvent(int key, int action, int mods) {
 			auto widget = std::make_shared<CompositeWidget>();
 			COMWidgets.push_back(widget);
 
-			widget->setPos(locomotionManager->motionPlan->COMTrajectory.getCOMPositionAtTimeIndex(timeStep));
+			widget->setPos(locomotionManager->motionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(timeStep));
 			auto bodyPosObj = make_shared<BodyFrameObjective>();
 			bodyPosObj->sampleNum = timeStep;
 			bodyPosObj->pos = P3D(widget->getPos());

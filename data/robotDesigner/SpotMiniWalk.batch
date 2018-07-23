@@ -1,0 +1,7 @@
+load ..\data\robotsAndMotionPlans\spotMini\robot2.rbs
+load ..\data\robotsAndMotionPlans\spotMini\robot.rs
+toSim
+load ..\data\robotsAndMotionPlans\spotMini\walk.ffp
+
+end
+

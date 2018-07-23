@@ -1,7 +1,6 @@
 #include <RobotDesignerLib/RobotController.h>
 
 RobotController::RobotController(Robot* robot, LocomotionEngineMotionPlan *motionPlan) : desiredState(robot) {
-	totalTime = 0;
 	this->robot = robot;
 	this->motionPlan = motionPlan;
 
@@ -13,7 +12,6 @@ RobotController::~RobotController(){
 }
 
 bool RobotController::advanceInTime(double timeStep) {
-	totalTime += timeStep;
 	stridePhase += timeStep / this->motionPlan->motionPlanDuration;
 	if (stridePhase > 1.0){
 		stridePhase -= 1.0;

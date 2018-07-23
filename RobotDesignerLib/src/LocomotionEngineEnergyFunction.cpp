@@ -189,7 +189,6 @@ void LocomotionEngine_EnergyFunction::setCurrentBestSolution(const dVector& p){
 			tmpObj->updateDummyMatrices();
 	}
 
-
 	if (printDebugInfo){
 		Logger::consolePrint("-------------------------------\n");
 		Logger::logPrint("-------------------------------\n");
@@ -208,6 +207,6 @@ void LocomotionEngine_EnergyFunction::setCurrentBestSolution(const dVector& p){
 
 void LocomotionEngine_EnergyFunction::setWeights(const dVector& weights)
 {
-	for (int i = 0; i < objectives.size(); i++)
+	for (uint i = 0; i < objectives.size(); i++)
 		objectives[i]->weight = weights(i);
 }

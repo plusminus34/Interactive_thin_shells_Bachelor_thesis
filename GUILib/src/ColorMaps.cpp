@@ -9,7 +9,7 @@ Eigen::Vector3f ColorMaps::getColorAt(const ColorMaps::ColorMap &colorMap, float
 	// scale by start and end
 	t = startAt + t*(endAt - startAt);
 
-	int im = std::floor(t*(float)(colorMap.size()));
+	int im = (int)std::floor(t*(float)(colorMap.size()));
 	int ip = std::min(im+1, (int)colorMap.size()-1);
 
 	if(im == ip)

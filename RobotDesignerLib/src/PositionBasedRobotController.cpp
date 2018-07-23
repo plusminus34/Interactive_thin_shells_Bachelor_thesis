@@ -3,7 +3,6 @@
 
 
 PositionBasedRobotController::PositionBasedRobotController(Robot *robot, LocomotionEngineMotionPlan *motionPlan) : RobotController(robot, motionPlan){
-	totalTime = 0;
 	this->robot = robot;
 	this->motionPlan = motionPlan;
 

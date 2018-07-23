@@ -9,6 +9,7 @@ SimpleLimb::SimpleLimb(const char *limbName, RigidBody* eeRB, RigidBody* root) {
 		eeRB = eeRB->pJoints[0]->parent;
 	this->rootJoint = eeRB->pJoints[0];
 	origin = rootJoint->parent;
+
 	initializeJointList();
 }
 

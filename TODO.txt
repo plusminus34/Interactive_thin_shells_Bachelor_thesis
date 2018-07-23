@@ -1,5 +1,7 @@
 - add shadows
 - levelset demo:
 	- growth, erosion, boolean operations, multiple-levelsets and object segmentation, ensure a part (e.g. top opt result) has constant thickness (growth is proportional to error in desired value of level set?, or just set value of depest parts, and then reconstruct a signed distance field from that)
+- bring back CDMC and model an animatronic figure with it
+- get the discrete shell simulator as well
 	
 	

@@ -8,7 +8,19 @@
 
 class AxisAlignedBoundingBox{
 public:
-  AxisAlignedBoundingBox(P3D bmin_g=P3D(0,0,0), P3D bmax_g=P3D(1,1,1)): bmin_(bmin_g), bmax_(bmax_g) { updateData();}
+  AxisAlignedBoundingBox(P3D bmin_g=P3D(0,0,0), P3D bmax_g=P3D(1,1,1)): bmin_(bmin_g), bmax_(bmax_g) { 
+	  P3D min, max;
+	  min.x() = MIN(bmin_.x(), bmax_.x());
+	  min.y() = MIN(bmin_.y(), bmax_.y());
+	  min.z() = MIN(bmin_.z(), bmax_.z());
+	  max.x() = MAX(bmin_.x(), bmax_.x());
+	  max.y() = MAX(bmin_.y(), bmax_.y());
+	  max.z() = MAX(bmin_.z(), bmax_.z());
+
+	  bmin_ = min;
+	  bmax_ = max;
+	  updateData();
+  }
  
   // accessors
   P3D bmin() { return bmin_;}

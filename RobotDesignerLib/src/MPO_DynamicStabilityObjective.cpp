@@ -20,7 +20,7 @@ V3D MPO_DynamicStabilityObjective::getErrorVector(int j){
 
 	int nIntervalCounts = theMotionPlan->nSamplePoints-1;
 
-	P3D x = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
+	P3D x = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
 
 	double timeStep = theMotionPlan->motionPlanDuration / (nIntervalCounts);
 	int jmm, jm, jp, jpp;
@@ -28,8 +28,8 @@ V3D MPO_DynamicStabilityObjective::getErrorVector(int j){
 	if (jmm < 0 || jm < 0 || jp < 0 || jpp < 0)
 		return V3D();
 	
-	V3D vp = (theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jpp) - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jp))/timeStep;
-	V3D vm = (theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jm) - theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(jmm))/timeStep;
+	V3D vp = (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jpp) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jp))/timeStep;
+	V3D vm = (theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jm) - theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(jmm))/timeStep;
 	V3D xDotDot = (vp - vm)/timeStep;
 
 //	P3D zmp = x - xDotDot * (x.y / (xDotDot.y + fabs(SimGlobals::g)));

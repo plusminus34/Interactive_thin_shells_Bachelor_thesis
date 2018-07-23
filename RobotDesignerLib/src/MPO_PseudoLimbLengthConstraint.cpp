@@ -21,7 +21,7 @@ double MPO_PseudoLimbLengthConstraint::computeValue(const dVector& s) {
 			
 			//we want the dist from ee to com to be > limb length
 			double limb_length= (theMotionPlan->endEffectorTrajectories[i].theLimb->getLength()*tolerance + theMotionPlan->pseudoLimbEpsilon);
-			V3D pseudoLimb(theMotionPlan->endEffectorTrajectories[i].EEPos[j], theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j));
+			V3D pseudoLimb(theMotionPlan->endEffectorTrajectories[i].EEPos[j], theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j));
 			double pseudoLimb_length = pseudoLimb.length();
 			//cout << pseudoLimb_length << ",";
 
@@ -59,7 +59,7 @@ void MPO_PseudoLimbLengthConstraint::addGradientTo(dVector& grad, const dVector&
 				
 				double limb_length = (theMotionPlan->endEffectorTrajectories[i].theLimb->getLength()*tolerance + theMotionPlan->pseudoLimbEpsilon);
 				P3D ee = theMotionPlan->endEffectorTrajectories[i].EEPos[j];
-				P3D xcom = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);				
+				P3D xcom = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);				
 				V3D pseudoLimb(ee,xcom);
 				double pseudoLimb_length = pseudoLimb.length(); // =D  ie. SoftUnilateralConstraint(D)
 				
@@ -107,7 +107,7 @@ void MPO_PseudoLimbLengthConstraint::addHessianEntriesTo(DynamicArray<MTriplet>&
 				
 				double limb_length = (theMotionPlan->endEffectorTrajectories[i].theLimb->getLength()*tolerance + theMotionPlan->pseudoLimbEpsilon);
 				P3D ee = theMotionPlan->endEffectorTrajectories[i].EEPos[j];
-				P3D xcom = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
+				P3D xcom = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
 				V3D pseudoLimb(ee, xcom);
 				double pseudoLimb_length = pseudoLimb.length(); // =D  ie. SoftUnilateralConstraint(D)
 

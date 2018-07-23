@@ -17,7 +17,7 @@ private:
 	bool computeStaticSolution = false;
 	bool checkDerivatives = false;
 
-	MaterialModel2D matModel = MM_LINEAR_ISOTROPIC;// MM_NEO_HOOKEAN;
+	MaterialModel2D matModel = MM_NEO_HOOKEAN;// MM_LINEAR_ISOTROPIC;// MM_NEO_HOOKEAN;
 
 	double simTimeStep = 1/100.0;
 

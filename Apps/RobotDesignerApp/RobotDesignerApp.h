@@ -19,6 +19,7 @@
 #include <RobotDesignerLib/SimWindow.h>
 #include <RobotDesignerLib/MotionPlanAnalysis.h>
 #include <RobotDesignerLib/EnergyWindow.h>
+#include <RobotDesignerLib/BaseRobotControlApp.h>
 
 #ifdef USE_MATLAB
 	#define RUN_IN_MATLAB(x) x
@@ -34,7 +35,7 @@ class EnergyWindow;
 /**
  * Robot Design and Simulation interface
  */
-class RobotDesignerApp : public GLApplication {
+class RobotDesignerApp : public BaseRobotControlApp {
 public:
 	ModularDesignWindow *designWindow = NULL;
 	MOPTWindow* moptWindow = NULL;
@@ -49,10 +50,6 @@ public:
 	bool shouldShowMOPTWindow();
 	bool shouldShowIEditWindow();
 	bool shouldShowDesignWindow();
-
-
-	Robot* robot = NULL;
-	RobotState startingRobotState = RobotState(13);
 
 	bool drawMotionPlan = false;
 
@@ -88,7 +85,6 @@ public:
 #endif
 	bool doDebug = false;
 
-	double slowMoFactor = 5.0;
 
 public:
 	// constructor

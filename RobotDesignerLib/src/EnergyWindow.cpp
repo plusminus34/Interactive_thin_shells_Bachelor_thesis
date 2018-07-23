@@ -1,9 +1,9 @@
 #include <RobotDesignerLib/EnergyWindow.h>
 #include <GUILib/ColorMaps.h>
 
-EnergyWindow::EnergyWindow(RobotDesignerApp *app)
+EnergyWindow::EnergyWindow(IntelligentRobotEditingWindow *iEditWindow)
 {
-	this->rdApp = app;
+	this->iEditWindow = iEditWindow;
 	plotXValues.resize(numPlotValues);
 	for (int i = 0; i < numPlotValues; ++i) {
 		plotXValues[i] = (float)i;
@@ -165,9 +165,10 @@ void EnergyWindow::createEnergyMenu(LocomotionEngine_EnergyFunction *energyFunct
 
 void EnergyWindow::DoParameterOptimizationStep(ObjectiveFunction * energyFunction)
 {
-	TotalEnergyForDesignOptimization.push_back(energyHist["Total energy"].back());
-	rdApp->iEditWindow->DoDesignParametersOptimizationStep(energyFunction);
-
+	if (iEditWindow) {
+		TotalEnergyForDesignOptimization.push_back(energyHist["Total energy"].back());
+		iEditWindow->DoDesignParametersOptimizationStep(energyFunction);
+	}
 }
 
 void EnergyWindow::updateEnergiesWith(LocomotionEngine_EnergyFunction *energyFunction, const dVector &params)

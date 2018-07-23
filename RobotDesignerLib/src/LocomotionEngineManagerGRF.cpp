@@ -447,8 +447,8 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 	//functional objectives
 	ef->addObjectiveFunction(new MPO_COMTravelObjective(ef->theMotionPlan, "COM Travel objective", 50.0), "Objectives");
 	ef->addObjectiveFunction(new MPO_COMTurningObjective(ef->theMotionPlan, "COM turning objective (YAW)", 50.0), "Objectives");
-	ef->addObjectiveFunction(new MPO_BodyFrameObjective(ef->theMotionPlan, "EE position objective", 10000), "Objectives");
-	ef->addObjectiveFunction(new MPO_EEPosObjective(ef->theMotionPlan, "COM position objective", 10000), "Objectives");
+	ef->addObjectiveFunction(new MPO_BodyFrameObjective(ef->theMotionPlan, "body choreography objective", 10000), "Objectives");
+	ef->addObjectiveFunction(new MPO_EEPosObjective(ef->theMotionPlan, "EE choreography objective", 10000), "Objectives");
 
 	//smooth motion regularizers
 	ef->addObjectiveFunction(new MPO_SmoothStanceLegMotionObjective(ef->theMotionPlan, "robot stance leg smooth joint angle trajectories", 0.01), "Smooth Regularizer");
@@ -480,4 +480,67 @@ void LocomotionEngineManagerGRFv2::setupObjectives() {
 }
 
 LocomotionEngineManagerGRFv2::~LocomotionEngineManagerGRFv2(){
+}
+
+
+
+
+/*************************************************************************************************************************/
+/* For GRFv3, constraints are transformed into objectives with high weights, so this one employs a Newton-style solver   */
+/* Furthermore, robot states are not explicitly optimized, at least not at the same time as everything else              */
+/*************************************************************************************************************************/
+LocomotionEngineManagerGRFv3::LocomotionEngineManagerGRFv3() : LocomotionEngineManagerGRF() {
+}
+
+LocomotionEngineManagerGRFv3::LocomotionEngineManagerGRFv3(Robot* robot, FootFallPattern* ffp, int nSamplePoints) : LocomotionEngineManagerGRF(robot, ffp, nSamplePoints, false) {
+	setupObjectives();
+	useObjectivesOnly = true;
+}
+
+void LocomotionEngineManagerGRFv3::setupObjectives() {
+	LocomotionEngine_EnergyFunction* ef = energyFunction;
+	int nSamples = ef->theMotionPlan->nSamplePoints;
+	int dimCount = ef->theMotionPlan->robotRepresentation->getDimensionCount();
+
+	for (uint i = 0; i < ef->objectives.size(); i++)
+		delete ef->objectives[i];
+	ef->objectives.clear();
+
+	//we will assume here that only GRFs and COM trajectories will be optimized here...
+
+	//consistancy constraints (between robot states and other auxiliary variables)
+	ef->addObjectiveFunction(new MPO_FeetSlidingObjective(ef->theMotionPlan, "feet sliding objective", 10000.0), "Consistency Constraints (Kinematics)");
+
+	//consistancy constraints (dynamics, F=ma, GRF feasibility, etc)
+	ef->addObjectiveFunction(new MPO_GRFSwingRegularizer(ef->theMotionPlan, "GRF 0 in swing constraint", 1.0), "Consistency Constraints (Dynamics)");
+	ef->addObjectiveFunction(new MPO_GRFVerticalLowerBoundConstraints(ef->theMotionPlan, "GRF is positive constraint", 1.0), "Consistency Constraints (Dynamics)");
+	ef->addObjectiveFunction(new MPO_ForceAccelObjective(ef->theMotionPlan, "force acceleration objective", 100.0), "Consistency Constraints (Dynamics)");
+	ef->addObjectiveFunction(new MPO_TorqueAngularAccelObjective(ef->theMotionPlan, "torque angular acceleration objective", 1.0), "Consistency Constraints (Dynamics)");
+	ef->addObjectiveFunction(new MPO_GRFFrictionConstraints(ef->theMotionPlan, "GRF friction constraints", 1.0), "Consistency Constraints (Dynamics)");
+
+	ef->addObjectiveFunction(new MPO_DefaultBodyTrajectoryObjective(ef->theMotionPlan, "Default body trajectories objective", 1000), "Objectives");
+	ef->addObjectiveFunction(new MPO_DefaultEEPosObjective(ef->theMotionPlan, "Default end effector trajectories objective", 10), "Objectives");
+
+	//smooth motion regularizers
+	ef->addObjectiveFunction(new MPO_FeetPathSmoothnessObjective(ef->theMotionPlan, "foot path smoothness objective", 10.0), "Smooth Regularizer");
+	ef->addObjectiveFunction(new MPO_SmoothCOMTrajectories(ef->theMotionPlan, "smoothCOM", 1000), "Smooth Regularizer");
+
+	ef->addObjectiveFunction(new MPO_GRFStanceRegularizer(ef->theMotionPlan, "GRF stance regularizer", 1e-8), "Regularizers");
+}
+
+LocomotionEngineManagerGRFv3::~LocomotionEngineManagerGRFv3() {
+}
+
+void LocomotionEngineManagerGRFv3::warmStartMOpt() {
+
+}
+
+void LocomotionEngineManagerGRFv3::setDefaultOptimizationFlags() {
+	motionPlan->optimizeEndEffectorPositions = false;
+	motionPlan->optimizeWheels = false;
+	motionPlan->optimizeCOMPositions = true;
+	motionPlan->optimizeCOMOrientations = true;
+	motionPlan->optimizeRobotStates = false;
+	motionPlan->optimizeContactForces = true;
+	motionPlan->optimizeBarycentricWeights = false;
 }

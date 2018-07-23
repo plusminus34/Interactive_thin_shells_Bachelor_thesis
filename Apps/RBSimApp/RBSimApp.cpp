@@ -39,6 +39,29 @@ RBSimApp::RBSimApp(bool maximizeWindows)
 
     //loadFile("../data/rbs/wheely.rbs");
     loadFile("../data/rbs/bip/bip.rbs");
+//	loadFile("../data/robotDesigner/designs/BK3000/skatingBot/robotDesign.rbs");
+
+/*
+	Robot *robot = new Robot(rbEngine->rbs[0]);
+	robot->addWheelsAsAuxiliaryRBs(rbEngine);
+
+	for (uint i = 0; i < robot->jointList.size(); i++)
+		robot->jointList[i]->controlMode = POSITION_MODE;
+
+	for (int i = 0; i < robot->getRigidBodyCount(); i++) {
+		RigidBody* rb = robot->getRigidBody(i);
+		for (uint j = 0; j < rb->rbProperties.endEffectorPoints.size(); j++) {
+			RBEndEffector* ee = &(rb->rbProperties.endEffectorPoints[j]);
+			if (ee->wheelJoint && (ee->isActiveWheel() || ee->isFreeToMoveWheel())) {
+				if (ee->isActiveWheel())
+					ee->wheelJoint->controlMode = VELOCITY_MODE;
+				else
+					ee->wheelJoint->controlMode = PASSIVE;
+			}
+		}
+	}
+*/
+
 
 //    loadFile("../data/robotsAndMotionPlans/crab/robot.rbs");
 

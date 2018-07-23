@@ -10,13 +10,12 @@
 #include <OptimizationLib/SQPFunctionMinimizer.h>
 #include <OptimizationLib/GradientDescentFunctionMinimizer.h>
 
-//sag-free simulations as an application of shape optimization
-//adjoint method for non-linear top-opt
+
+//#define MANUAL_OPT_DEMO
 
 //Objectives:
 //- compliance/stored energy
 //- smoothness of solution (in case dithering artifacts come up)
-//- L0 regularizer to force solution to choose a side...
 
 //Constraints:
 //- upper bound on total mass based on desired value
@@ -48,9 +47,13 @@ TopOptApp::TopOptApp() {
 	externalLoads.resize(simMesh->nodes.size());
 	resize(densityParams, simMesh->elements.size()); densityParams.setOnes();
 
-	externalLoads[nCols * (nRows -1)] = V3D(0,-0.05,0);
-
 	showGroundPlane = false;
+
+#ifdef MANUAL_OPT_DEMO
+	targetMassRatio = 100;
+#else
+	externalLoads[nCols * (nRows - 1)] = V3D(0, -0.15, 0);
+#endif
 
 	mainMenu->addGroup("FEM Sim options");
 	mainMenu->addVariable<MaterialModel2D>("MaterialModel",
@@ -123,7 +126,7 @@ TopOptApp::TopOptApp() {
 	slider = new nanogui::Slider(panel);
 	slider->setValue(0.001f);
 	slider->setFixedWidth(80);
-	range.first = 0; range.second = 0.1;
+	range.first = 0.0f; range.second = 0.1f;
 	slider->setRange(range);
 	slider->setValue((float)energyFunction->binaryDensityObjectiveWeight);
 	slider->setCallback([this](float val) { energyFunction->binaryDensityObjectiveWeight = val; });
@@ -147,6 +150,12 @@ TopOptApp::TopOptApp() {
 }
 
 void TopOptApp::applyDensityParametersToSimMesh() {
+	for (uint i = 0; i < simMesh->elements.size(); i++) {
+		if (CSTElement2D* e = dynamic_cast<CSTElement2D*>(simMesh->elements[i]))
+			e->matModel = matModel;
+	}
+
+
 	constraints->setTotalMassUpperBound(initialMass * targetMassRatio / 100.0);
 
 	for (uint i = 0; i < simMesh->elements.size(); i++)

@@ -55,7 +55,7 @@ RobotState MOPTQPTrackingController::getTargetRobotState(LocomotionEngineMotionP
 
 //this target mopt state needs to be adapted based on the current configuration of the robot... this method computes the quantities required to perform this retargetting operation...
 void MOPTQPTrackingController::computeRobotStateTransferQuantities(LocomotionEngineMotionPlan *motionPlan, double stridePhase, double &moptGroundHeight, double &currentGroundHeight, Quaternion& headingOffset, P3D& moptEEFrameOrigin, P3D&robotEEFrameOrigin) {
-	headingOffset = computeHeading(motionPlan->COMTrajectory.getCOMOrientationAt(stridePhase), Globals::worldUp).getComplexConjugate() * computeHeading(robot->root->getOrientation(), Globals::worldUp);
+	headingOffset = computeHeading(motionPlan->bodyTrajectory.getCOMOrientationAt(stridePhase), Globals::worldUp).getComplexConjugate() * computeHeading(robot->root->getOrientation(), Globals::worldUp);
 	currentGroundHeight = 0;
 	moptGroundHeight = 0;
 
@@ -78,7 +78,7 @@ void MOPTQPTrackingController::computeRobotStateTransferQuantities(LocomotionEng
 		robotEEFrameOrigin /= nStanceEEs;
 	}
 	else {
-		moptEEFrameOrigin = motionPlan->COMTrajectory.getCOMPositionAt(stridePhase);
+		moptEEFrameOrigin = motionPlan->bodyTrajectory.getCOMPositionAt(stridePhase);
 		robotEEFrameOrigin = robot->bFrame->bodyState.position;
 	}
 	moptEEFrameOrigin.y() = moptGroundHeight;
@@ -99,11 +99,11 @@ V3D MOPTQPTrackingController::estimateMOPTCOMVelocity(LocomotionEngineMotionPlan
 	double dStridePhase = 0.01;
 	double dt = dStridePhase * motionPlan->motionPlanDuration;
 
-	P3D posNow = motionPlan->COMTrajectory.getCOMPositionAt(stridePhase);
-	P3D posFuture = motionPlan->COMTrajectory.getCOMPositionAt(stridePhase + dStridePhase);
+	P3D posNow = motionPlan->bodyTrajectory.getCOMPositionAt(stridePhase);
+	P3D posFuture = motionPlan->bodyTrajectory.getCOMPositionAt(stridePhase + dStridePhase);
 	if (stridePhase + dt > 1) {
-		posNow = motionPlan->COMTrajectory.getCOMPositionAt(stridePhase - dStridePhase);
-		posFuture = motionPlan->COMTrajectory.getCOMPositionAt(stridePhase);
+		posNow = motionPlan->bodyTrajectory.getCOMPositionAt(stridePhase - dStridePhase);
+		posFuture = motionPlan->bodyTrajectory.getCOMPositionAt(stridePhase);
 	}
 
 	return V3D(posNow, posFuture) / dt;

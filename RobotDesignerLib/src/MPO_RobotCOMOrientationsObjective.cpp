@@ -17,7 +17,7 @@ double MPO_RobotCOMOrientationsObjective::computeValue(const dVector& p){
 	//we want the COM to be as close as possible to the center of the feet that are in contact with the ground, which corresponds to weights as large as possible and equal to each other...
 	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
         V3D comOrientation = (V3D)(theMotionPlan->robotStateTrajectory.qArray[j].segment<3>(3));
-		V3D err = V3D(P3D(comOrientation), theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(j));
+		V3D err = V3D(P3D(comOrientation), theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(j));
 		retVal += 0.5 * err.length2();
 	}
 	return retVal * weight;
@@ -29,7 +29,7 @@ void MPO_RobotCOMOrientationsObjective::addGradientTo(dVector& grad, const dVect
 
 	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
         V3D comOrientation = (V3D)(theMotionPlan->robotStateTrajectory.qArray[j].segment<3>(3));
-		P3D desOrientation = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(j);
+		P3D desOrientation = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(j);
 		V3D err = V3D(P3D(comOrientation), desOrientation);
 
 		//compute the gradient with respect to the COM positions
@@ -49,7 +49,7 @@ void MPO_RobotCOMOrientationsObjective::addHessianEntriesTo(DynamicArray<MTriple
 
 	for (int j = 0; j<theMotionPlan->nSamplePoints; j++) {
         V3D comOrientation = (V3D)(theMotionPlan->robotStateTrajectory.qArray[j].segment<3>(3));
-		P3D desOrientation = theMotionPlan->COMTrajectory.getCOMEulerAnglesAtTimeIndex(j);
+		P3D desOrientation = theMotionPlan->bodyTrajectory.getCOMEulerAnglesAtTimeIndex(j);
 		V3D err = V3D(P3D(comOrientation), desOrientation);
 		int indexI = theMotionPlan->COMOrientationsParamsStartIndex + 3 * j;
 		int indexJ = theMotionPlan->robotStatesParamsStartIndex + (j * theMotionPlan->robotStateTrajectory.nStateDim) + 3;

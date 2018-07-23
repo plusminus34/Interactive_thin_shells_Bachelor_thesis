@@ -73,7 +73,7 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 			VectorXf y(nTimeSteps);
 			for (int i = 0; i < nTimeSteps; ++i){
 				x[i] = (float)i/((float)nTimeSteps-1);
-				y[i] = eeTraj.wheelSpeed[i];
+				y[i] = (float)eeTraj.wheelSpeed[i];
 			}
 
 			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::viridis, (float)index/(float)nEEs, 0.3f), 1.f));
@@ -87,7 +87,7 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 			VectorXf y(nTimeSteps);
 			for (int i = 0; i < nTimeSteps; ++i){
 				x[i] = (float)i/((float)nTimeSteps-1);
-				y[i] = eeTraj.wheelTiltAngle[i];
+				y[i] = (float)eeTraj.wheelTiltAngle[i];
 			}
 
 			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::viridis, (float)index/(float)nEEs, 0.3f), 1.f));
@@ -101,7 +101,7 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 			VectorXf y(nTimeSteps);
 			for (int i = 0; i < nTimeSteps; ++i){
 				x[i] = (float)i/((float)nTimeSteps-1);
-				y[i] = eeTraj.wheelYawAngle[i];
+				y[i] = (float)eeTraj.wheelYawAngle[i];
 			}
 
 			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::viridis, (float)index/(float)nEEs, 0.3f), 1.f));
@@ -115,7 +115,7 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 			VectorXf y(nTimeSteps);
 			for (int i = 0; i < nTimeSteps; ++i){
 				x[i] = (float)i/((float)nTimeSteps-1);
-				y[i] = eeTraj.EEPos[i][1];
+				y[i] = (float)eeTraj.EEPos[i][1];
 			}
 
 			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)index/(float)nEEs, 0.2f), 1.f));
@@ -129,7 +129,7 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 			VectorXf y(nTimeSteps);
 			for (int i = 0; i < nTimeSteps; ++i){
 				x[i] = (float)i/((float)nTimeSteps-1);
-				y[i] = eeTraj.contactForce[i].norm();
+				y[i] = (float)eeTraj.contactForce[i].norm();
 			}
 
 			PlotData data(x, y, nanogui::Color(ColorMaps::getColorAt(ColorMaps::plasma, (float)index/(float)nEEs, 0.2f), 1.f));
@@ -156,7 +156,7 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 
 		for (int i = 0; i < nTimeSteps; ++i) {
 			for (int j = 0; j < nJoints; ++j)
-				y[j][i] = rsTraj.qArray[i][j+6];
+				y[j][i] = (float)rsTraj.qArray[i][j+6];
 		}
 
 		for (int i = 0; i < nJoints; ++i) {
@@ -180,7 +180,7 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 
 		for (int i = 0; i < nTimeSteps; ++i) {
 			for (int j = 0; j < 3; ++j)
-				y[j][i] = rsTraj.qArray[i][j];
+				y[j][i] = (float)rsTraj.qArray[i][j];
 		}
 
 		for (int i = 0; i < 3; ++i) {
@@ -204,7 +204,7 @@ void MotionPlanAnalysis::updateFromMotionPlan(const LocomotionEngineMotionPlan *
 
 		for (int i = 0; i < nTimeSteps; ++i) {
 			for (int j = 0; j < 3; ++j)
-				y[j][i] = rsTraj.qArray[i][j+3];
+				y[j][i] = (float)rsTraj.qArray[i][j+3];
 		}
 
 		for (int i = 0; i < 3; ++i) {
@@ -283,8 +283,8 @@ void MotionPlanAnalysis::updatePlotScaling()
 		// set min/max of plot
 		// Note: we don't use `plot->updateMinMax()`, because "time" will mess it up
 		float range = std::max(1e-6f, dataMax[1] - dataMin[1]);
-		dataMin[1] -= 0.1*range;
-		dataMax[1] += 0.1*range;
+		dataMin[1] -= (float)0.1*range;
+		dataMax[1] += (float)0.1*range;
 		plot->setDataMin(dataMin);
 		plot->setDataMax(dataMax);
 	}

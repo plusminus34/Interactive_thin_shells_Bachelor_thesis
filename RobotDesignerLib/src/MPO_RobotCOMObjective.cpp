@@ -30,7 +30,7 @@ double MPO_RobotCOMObjective::computeValue(const dVector& p){
 
 		comPos /= totalMass;
 
-		V3D err = V3D(comPos, theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j));
+		V3D err = V3D(comPos, theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j));
 		retVal += 0.5 * err.length2();
 	}
 	return retVal * weight;
@@ -43,13 +43,13 @@ void MPO_RobotCOMObjective::addGradientTo(dVector& grad, const dVector& p) {
 	MatrixNxM dpdq;
 
 	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
-		P3D desComPos = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
+		P3D desComPos = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
 
 		dVector q_t;
 		theMotionPlan->robotStateTrajectory.getQAtTimeIndex(j, q_t);
 		theMotionPlan->robotRepresentation->setQ(q_t);
 
-//		P3D comPos = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
+//		P3D comPos = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
 
 		double totalMass = 0;
 		P3D comPos;
@@ -93,13 +93,13 @@ void MPO_RobotCOMObjective::addHessianEntriesTo(DynamicArray<MTriplet>& hessianE
 	dpdq.resize(theMotionPlan->robot->bFrame->bodyLinks.size());
 
 	for (int j=0;j<theMotionPlan->nSamplePoints;j++){
-		P3D desComPos = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
+		P3D desComPos = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
 
 		dVector q_t;
 		theMotionPlan->robotStateTrajectory.getQAtTimeIndex(j, q_t);
 		theMotionPlan->robotRepresentation->setQ(q_t);
 
-//		P3D comPos = theMotionPlan->COMTrajectory.getCOMPositionAtTimeIndex(j);
+//		P3D comPos = theMotionPlan->bodyTrajectory.getCOMPositionAtTimeIndex(j);
 
 		double totalMass = 0;
 		P3D comPos;
