@@ -1,3 +1,11 @@
+# Interactive design of complex objects from thin shells - Bachelor Thesis
+
+This repo contains my bachelor thesis. It's about bending/cutting/connecting a virtual sheet of paper. I remember it as being fun to do, though the cutting tool had me wrangle with a few (literal) corner cases.
+
+The report is bachelor_thesis_wiggerl.pdf in the main folder here.
+
+What follows is the README from the original project, in case you want to give it a try.
+
 # Simulation and Control Playground
 
 # Table of Contents
